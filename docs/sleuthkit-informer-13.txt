@@ -1,0 +1,410 @@
+                        The Sleuth Kit Informer
+
+                    http://www.sleuthkit.org/informer
+                http://sleuthkit.sourceforge.net/informer
+
+                             Brian Carrier
+                      carrier at sleuthkit dot org
+
+                               Issue #13
+                             March 15, 2004
+
+
+
+CONTENTS
+--------------------------------------------------------------------
+- Introduction
+- What's New?
+- Call For Papers
+- Did You Know?
+- UNIX Incident Verification With Autopsy 
+
+
+
+INTRODUCTION
+--------------------------------------------------------------------
+
+I'm almost done!  Releasing version 2.00 of Autopsy that is.  I'm
+polishing up the final changes and documentation and it will be
+released later this week.  March 19 is the birthday of Autopsy and
+The Sleuth Kit's predecessor, TCTutils, also the goal release date
+for version 2.00.
+
+This issue of the Informer will focus on the new live analysis
+feature of (the unreleased) Autopsy.  This issue also has a lot
+entries in the "What's New?" category because we are on a bimonthly
+schedule.   If you missed getting the February issue of The Informer
+and have lessons to share with people then make sure you read the
+Call For Papers section so that you can learn how to submit articles
+of your own.
+
+
+
+WHAT'S NEW?
+--------------------------------------------------------------------
+A new version (1.68) of The Sleuth Kit was released.  It contains
+a couple of bug fixes.  There have been discussions on the
+sleuthkit-developers list about what new functions should be added
+to the next big version 2.00 release.  Michael Cohen has been looking
+into support for disk images, split images, RAID images, and other
+non-raw formats.  David Collett has been looking into output formats
+for TSK tools so that they can be imported into databases.
+
+Version 2.00 of Autopsy will be released later this week.  I'm
+adding the final touches and documentation and the goal is to release
+it on March 19, which is the 3 year anniversary of the first release
+of Autopsy and TCTutils.   Version 2.00 has a new internal design
+and has live analysis features (see below article).  If you can't
+wait for a few days and want one of the beta copies, let me know.
+
+Guido Metzner has been translating The Sleuth Kit Informer into
+German.  If anyone else is translating this, let me know and I'll
+add a link.
+
+    http://www.guframe.de/sleuthkit.html
+
+
+I started to provide a GPG signature of the source code as it is
+released.  I have meant to do this for ages.  This can help to
+ensure that the code being downloaded has not been modified by an
+attacker.
+
+
+
+CALL FOR PAPERS
+--------------------------------------------------------------------
+
+I posted a call for papers on the website in late  January for
+people that are interested in writing articles for the Informer.
+Here is the relevant section:
+
+The Sleuth Kit Informer is looking for articles on open source tools
+and techniques for digital investigations (computer / digital
+forensics) and incident response. Articles that discuss The Sleuth
+Kit and Autopsy are appreciated, but not required. Example topics
+include (but are not limited to):
+
+- Tutorials on open source tools
+- User experiences and reviews of open source tools
+- New investigation techniques using open source tools
+- Open source tool testing results 
+
+http://www.sleuthkit.org/informer/cfp.html
+
+
+Writing these articles takes away from my development time of new
+tool features, so any help is appreciated.  To keep with the incident
+verification theme, any articles on the basics of using 'netstat',
+'lsof', etc. to look for signs of an intrusion are also welcome for
+the next few issues.  If we get enough interest, I'll consider going
+back to a monthly schedule.
+
+
+
+DID YOU KNOW?
+--------------------------------------------------------------------
+
+Have you ever noticed that the number of occurrences and locations
+of keywords for regular expressions in Autopsy are not always
+accurate?  This came up on one of the mailing lists this past month
+and I'll explain it again here.
+
+Previous issues of The Informer have covered keyword searching, but
+the general idea in Autopsy is that it runs the 'strings' command
+on the image file and then uses 'grep' to find the keyword.  The
+'strings' command returns a long ASCII string that grep examines.
+If the keyword is found in the string, then grep fill flag the
+string and autopsy will search the string to find the exact location
+of the keyword.
+
+This is easy if a non-regular expression is used, but much more
+difficult with regular expressions because 'grep' regular expressions
+are different from Perl regular expressions.  I do not have a way
+to convert the grep regular expression to Perl and therefore I only
+return the number of big strings that have the keyword and the
+location of the start of the big string.  There could be more than
+one keyword in the string, in which case the total occurrences value
+is too small.  The location will also be off because it points to
+the start of the large string and not the specific keyword.
+
+If anyone knows of, or wants to write, a grep to perl regular
+expression converter, let me know so that we can update this.
+
+
+
+UNIX INCIDENT VERIFICATION WITH AUTOPSY
+--------------------------------------------------------------------
+
+INTRODUCTION
+
+For a couple of years, I have been saying that Autopsy can be used
+to analyze a live system, but it has taken me a while to make it
+EASY to use to analyze a live system.  When version 2.0 of Autopsy
+is released later this week, you will find that it is much easier
+to configure so that it runs on a CD-ROM so that you can examine a
+system that is suspected of being compromised.  This will allow you
+to view files that are hidden by rootkits and will not change the
+access times on files that are viewed.
+
+This article will give an overview of how to use the new features
+and what features are available for dead analysis are not for live
+analysis.  I will also show the future work for Autopsy.  This
+article uses many of the same concepts as the "UNIX Incident
+Verification with The Sleuth Kit" article in issue #10 of the
+Informer.
+
+MOTIVATION
+
+Some may be asking "why would I want a live analysis feature?".
+The primary motivation is for a more automated Incident Verification
+procedure.  We saw in issue #10 of the Informer, that The Sleuth
+Kit can be used to verify an incident because it can show files
+that are hidden by rootkits and will not update the access times
+on files when they are read.  Executing a bunch of command line
+tools is tedious though and Autopsy can provide a more automated
+investigation procedure.
+
+The basic scenario is that Autopsy and The Sleuth Kit will be burned
+to a CD and inserted into a suspect computer.  An investigator will
+connect to Autopsy on the suspect UNIX computer with her HTML browser
+on a trusted laptop and remotely examine the hard disk contents.
+If the computer is found to have been compromised, then it can be
+taken offline and acquired using normal procedures.
+
+Recall from issue #10 that I used two guidelines for incident
+verification:
+
+  1.  Minimize the amount of trust that you place in the system so
+  that more accurate information is collected.
+
+  2. Minimize the amount of data that you change on the system so
+  that evidence is preserved.
+
+
+CREATING THE CD
+
+To satisfy guideline #1 from above, we want to minimize the amount
+of trust that we place in the system, so we use our own executables.
+At a minimum, we need The Sleuth Kit and Autopsy on the CD and you
+will probably have additional tools to examine open network ports
+and running processes.  This has been the most difficult part of
+using Autopsy for live analysis because Autopsy relies on a given
+directory structure and locations that it can write to.
+
+It is now very easy with v2.  With v2, you compile TSK and Autopsy
+on a similar system to the one that will be investigated just like
+you do for a dead analysis.  Try the 'make static' with TSK to see
+if you can make static executables for your platform.  After both
+Autopsy and TSK have been compiled, you execute the 'make-live-cd'
+command in Autopsy.  This script will make a 'live-cd' sub-directory
+in the autopsy directory, which contains a copy of autopsy and
+copies of TSK executables, grep, strings, perl etc:
+
+    # ./make-live-cd 
+    Making base directory (./live-cd/)
+    Copying executables
+    Copying autopsy files
+    Creating configuration file using existing settings
+
+
+The 'live-cd' directory has a 'bin' directory where additional
+executables can be copied to and then the whole directory can be
+burned to a CD.
+
+
+BASIC USAGE
+
+After the CD has been created and there is a system suspected of
+being compromised, then it is time to take advantage of the new
+features.  There are two scenarios for live analysis.  The first
+scenario uses a network share from a trusted system that you can
+write to.  In this case, autopsy is run as normal and you specify
+the evidence locker directory as the mounted disk.  The evidence
+locker is specified with '-d':
+
+    # ./autopsy -d /mnt/ev_lock 10.1.32.123
+
+The above would start autopsy, use '/mnt/ev_lock/' as the evidence
+locker and would allow connections from 10.1.32.123 (where the
+investigator would connect from using an HTML browser).  Remember that
+we do not want to write to the suspect system, so we should only use
+a network share and not a local directory in this scenario.
+
+The second scenario does not use an evidence locker and does not
+intentionally write any data to disk.  This scenario does not need
+the network share and each of the devices (or partitions) that will
+be analyzed are specified on the command line using the '-i' flags.
+The '-i' flag requires three arguments: the device, the file system
+type, and the mounting point.  For example, to examine the '/dev/hda5'
+and '/dev/hda8' partitions on a Linux system, the following could
+be used:
+
+    # ./autopsy -i /dev/hda5 linux-ext3 / -i /dev/hda8 linux-ext3 /usr/ \
+    10.1.32.123
+
+The file system type must be one of the types that are supported
+by TSK.  The remote IP address must also be given, otherwise you
+will have to use a browser on the suspect system and that will write
+data to the disk.
+
+When you use the '-i' flag, then autopsy will start in the 'Host
+Manager' view where you can select the image that you want to
+analyze.  You will skip the case and host configuration.  The default
+case name will be 'live', the default host name is 'local', and the
+default investigator name is 'unknown'.
+
+
+DIFFERENCES WITH DEAD ANALYSIS
+
+There are some features that are not available for live analysis
+because they write files to the disk.  In this section, I am using
+the term live analysis for the scenario where there is not a mounted
+network share and there is not evidence locker.
+
+No auditing is performed during a live analysis because there is
+no where to write the logs.  In the future, if this is needed, then
+a method of writing logs to a floppy disk could be configured.
+Timelines of file activity cannot be created because they need to
+create files.  Hash databases are also not currently used, although
+they could in the future.  It may be difficult to maintain the
+latest hash database on the same CD as the latest autopsy and TSK
+version though.  Notes and event sequencer notes cannot be created.
+
+Keyword searches can be performed, but the strings file and unallocated
+only search cannot be performed because they both require a file
+to be created.  The search results are also not cached.  You can
+also not sort files by their type (all executables, all pictures
+etc.).  In many cases, you would not want to do many of these
+operations because they are time intensive and you are generally
+looking for obvious and quick evidence during the incident verification.
+If you need theses features, then you can use the network share
+scenario.
+
+
+SIMILARITIES WITH DEAD ANALYSIS
+
+Now that we know what is different, I'll cover what is the same.
+All of the file mode analysis is the same, except that you cannot
+get the file type.  The method that is used to compile 'file' in
+TSK does not allow autopsy to easily move it around.  This behavior
+may change in the future.  Meta data, data unit, and file system
+mode all work as usual.
+
+You can still export file contents to your trusted laptop because
+it uses the HTTP to save the file.  So, you can select the export
+button on a log file to save a copy.  You can also generate ASCII
+reports and save them to your local analysis station.
+
+
+GUIDELINE COMPLIANCE
+
+All of these features may sound great, but lets examine how well
+the new Autopsy satisfies the two guidelines.  I think it is always
+important to compare a new tool or technique against generic
+guidelines.
+
+The first guideline was about not trusting the local system.  No
+software-based live analysis tool can be 100% independent from the
+local system because it always needs to request service from the
+operating system.  With Autopsy, we use our own copies of the Autopsy
+perl code, TSK executables, grep, and strings.
+
+There is one large problem with the current Autopsy model and it
+is because of Perl.   Perl is a beast and contains many modules and
+libraries.  When the 'make-live-cd' script is run, a copy of the
+'perl' executable is copied to the 'live-cd' directory, but that
+is it.  The executable will still need the modules and libraries
+on the local system.  Solving this may require building a special
+version of Perl that is more static.  I need to investigate this
+more.
+
+Another method of getting around this limitation is to use the
+'perl2exe' program that converts a Perl script to a dynamic executable.
+The resulting executable will still rely on dynamic libraries on
+the suspect system, but  it seems a little cleaner.  The perl2exe
+program is a commercial tool.
+
+One of the benefits of the Autopsy design, is that Autopsy did not
+exist on the system when it was suspected of being compromised.
+Therefore, the attacker will not know that Autopsy will be used to
+investigate the system and therefore will be less likely to tamper
+with its dependencies.  If the investigation tools are running on
+the system during the attack, then I would guess that the attacker
+will be more likely to tamper with them.
+
+The second guideline was about modifying data on the system.  I
+described the features that were removed in the previous section.
+This was easy to do because there were functions that write the
+logs or notes.  Each of those starts with a check to see if logging
+is enabled.  Timelines and file type sorting were also disabled
+because it required writing to disk.
+
+I can never guarantee that no data will be written from a live
+analysis.  Memory will be overwritten when the software is loaded
+and the access times on dynamic libraries will updated.  Running
+the tools may require the operating system to write memory to the
+page file, which may overwrite data from the attacker.
+
+This is a shameless plug, but for those that are interested in live
+analysis, then you may want to check out a paper that a colleague,
+Joe Grand (author of pdd), and I wrote about a hardware device to
+acquire memory from a live system.  It does not overwrite memory
+because there is no process to load and it access the physical
+memory directly so it does not rely on the local operating system.
+It was recently published in the new Journal of Digital Investigation
+(reference is below and that issue of the journal is currently free
+to view).
+
+
+
+FUTURE WORK
+
+There is always more to do, and I'll cover that here.  
+
+I would like to also include other system utilities, such as 'ps' or
+'netstat' on the CD and allow the Autopsy user to run the commands
+from within autopsy.  This should be fairly easy, but the difficult
+part is that many of the operating systems use different flags for
+different tools.
+
+I would like to start incorporating scripts into the tool (for both dead
+and live analysis).  This will allow you to more easily detect rootkits
+or other signatures.   
+
+The biggest thing that needs future work is using Perl.  Autopsy
+still relies on the version of Perl on the suspect system and that
+could run into problems if an attacker modifies it.  Using the 
+perl2exe tool can reduce the risk, but it is a commercial tool.
+
+
+CONCLUSION
+
+The live analysis mode of Autopsy allows you to more easily analyze
+a system that is suspected of being compromised.  It can also be
+used to examine a honeypot.  Live analysis is not ideal because you
+are stilly relying on the suspect operating system for data, but
+it is required in some situations.  More work needs to be done with
+Autopsy so that it depends less on the local system.  
+
+
+
+REFERENCES
+Autopsy
+    http://www.sleuthkit.org/autopsy/ 
+
+perl2exe
+    http://www.indigostar.com/perl2exe.htm
+
+Sleuth Kit
+    http://www.sleuthkit.org/sleuthkit 
+
+Sleuth Kit Informer #10
+    http://www.sleuthkit.org/informer/sleuthkit-informer-10.html
+
+A hardware-based memory acquisition procedure for digital investigations
+    Brian D. Carrier and Joe Grand
+	Volume 1, Issue 1 - Journal of Digital Investigations
+    http://www.sciencedirect.com/science/journal/17422876
+
+--------------------------------------------------------------------
+Copyright (c) 2004 by Brian Carrier.  All Rights Reserved

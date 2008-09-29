@@ -1,0 +1,19 @@
+h3 {
+	font-size: 18px;
+	color: #000000;
+}
+h2 {
+	font-size: 20px;
+	color: #000000;
+}
+h1 {
+	font-size: 24px;
+	color: #000000;
+}
+body {
+	font-family: Helvetica, Geneva, Arial, sans-serif;
+	font-size: 14px;
+	color: #000000;
+	#background-color: #dedede;
+}
+

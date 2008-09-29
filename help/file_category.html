@@ -1,0 +1,99 @@
+<HTML>
+<HEAD><TITLE>Autopsy File Category Help</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+
+<CENTER><H2>File Category Type Analysis Help</H2></CENTER>
+
+<H3>Overview</H3>
+Analyzing large file system images can be very daunting.  One way 
+of identifying files that should be examined is to sort the files based
+on file type.  This mode of Autopsy will allow one to sort the files
+in an image based on type and to exclude known files (i.e. data 
+reduction).  It also allows one to flag files that are known to be bad.
+
+<H3>Procedure</H3>
+The <TT>sorter</TT> document in the <TT>docs</TT> directory of The
+Sleuth Kit has more details on the details, but this will provide
+an overview of the interface given by Autopsy.
+
+<P>
+The first step is to <U>Sort</U> the image.  There are several
+options to choose when doing this.  The <TT>sorter</TT> tool from
+The Sleuth Kit will perform the sorting.  There are two major
+actions that <TT>sorter</TT> can do:  sort files by type and validate
+extensions.
+
+<P>
+By default, Autopsy will perform both actions.  If you do not want
+it to do a given action, deselect it.   
+
+
+<P>Within sorting, there are two options:
+
+<UL>
+<LI> The first is to save the output.  By default,
+details about each file will be added to a category file.  For
+example, a JPEG image will have the meta data address and image
+name saved to the <TT>images</TT> file.  By selecting the <U>Save</U>
+option, a directory will be created for each category and a copy
+of the files will be saved.  This could require lots of disk space
+(as much as the original image size).
+
+<LI> The second option is to save unknown file types.  There are
+configuration files that contain rules about common data types.  If
+a file is encountered that does not have a rule, it is added to an
+<TT>unknown</TT> file.  If this is not desired, select the <U>Do Not
+Save Unknown</U> option.  
+</UL>
+
+<P>
+During the sorting process, the <TT>sorter</TT> tool will also examine
+the extension of the file.  If the file type is known, it has known
+extensions, and the file does not have one of those extensions, it will
+be added to a <TT>mismatch</TT> file.  This can be deselected if it is
+not wanted.  
+
+
+<H3>Hash Databases</H3>
+One easy way of data reduction is to use hash databases.  The <TT>sorter</TT>
+tool can use three different hash databases.  Each can be configured
+within Autopsy and used in other screens.  
+
+<UL>
+  <LI><B>NIST NSRL</B>: The NIST NSRL contains hashes of trusted operating
+  systems and programs.  This is used to ignore known files.  Files found
+  in the NSRL will not be included in the file categories (to save time
+  when reviewing the files).  If the file is in the NSRL and has an
+  extension mismatch, it will be noted in a special file.  
+
+  <LI><B>Ignore Database</B>: This database must be created by the user
+  and added to the host.  It is similar to the NSRL in that it contains 
+  hashes of known good files.  They will be ignored in the same way that
+  those from NSRL are.  
+
+  <LI><B>Alert Database</B>: This database must also be created by the
+  user and added to the  host.  It contains hashes of files that are
+  known to be bad and should identified if found in the image.  This would
+  include known rootkits or photographs.  Hits from this databases are
+  found in the <TT>alert</TT> file.
+</UL>
+
+<P>
+More details can be found in the <A HREF="hash_db.html">Hash
+Database</A> Help.
+
+<H3>Output</H3>
+Currently, there is no way to view the output from within Autopsy.
+All data can be found in the <TT>output</TT> directory of the host.
+A directory is created for the <TT>sorter</TT> output.  View the
+<TT>index.html</TT> file and it contains links to the other files.
+
+<p>
+<h3>References</h3>
+Issues 3, 4, and 5 of <a href="http://www.sleuthkit.org/informer/"  target=\"_blank\">The
+Sleuth Kit Informer</a> discussed using the 'sorter' tool.
+
+
+<HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>

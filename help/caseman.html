@@ -1,0 +1,161 @@
+<HTML>
+<HEAD><TITLE>Autopsy Case Management Help</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+
+
+<CENTER><H2>Case Management</H2></CENTER>
+<P> 
+<H3>Overview</H3>
+Autopsy organizes images based on the case and host that they came
+from.  A case contains one or more hosts (a new case should be
+created for each investigation).  Each host can contain one or more
+images, which correspond to disks or partitions on the host.
+
+
+<P>
+<H3>Creating a New Case</H3>
+From the Main Menu (at startup) select <U>New Case</U>.  You will
+have to enter the case name and an optional short description.
+The case name must be a valid directory name (no spaces - no
+symbols).  A list of investigators will also be requested.  These
+will be used for the audit logs, not for authentication.  A directory
+with the same name as the case will be created in the Evidence
+Locker.  To later rename the case, simply rename the directory.
+
+<P>
+For example:
+<TABLE CELLSPACING=8>
+<TR>
+  <TD>Case Name:</TD><TD><TT>bankofmars</TT></TD>
+</TR>
+<TR>
+  <TD>Case Description:</TD><TD><TT>Theft of $1,000,000,000.01 from The Bank of Mars</TT></TD>
+</TR>
+<TR>
+  <TD>Investigators:</TD><TD><TT>gadget</TT></TD>
+</TR>
+</TABLE>
+
+<P>
+<H3>Adding a New Host</H3>
+A Host must then be created in the Case.  Select the Case that was
+just created from the Case Gallery and enter the Host Gallery.
+Select <U>Add Host</U> and enter the host name, a short description,
+and time information such as time zone and clock skew.  The clock
+skew is how many seconds the system was off from a synchronized
+clock.  Adding a host will create a directory in the case directory
+and subdirectories in the host for the images, output data, logs,
+and reports.   If you do not add a time zone, then it will default to
+the time zone of your analysis system.  A list of time zones can be
+found <a href="timezones.html">here</a>.
+
+<P>
+You can optionally add the path to <A HREF="hash_db.html">hash databases</A>.
+
+<P>
+For example, the 'Bank of Mars' incident could have two hosts
+involved:
+
+<TABLE CELLSPACING=8>
+<TR>
+  <TD>Host Name:</TD><TD><TT>db_server</TT></TD>
+</TR>
+<TR>
+  <TD>Host Description:</TD><TD><TT>Main Database Server - Solaris</TT></TD>
+</TR>
+<TR>
+  <TD>Timezone:</TD><TD><TT>EST5EDT</TT></TD>
+</TR>
+<TR>
+  <TD>Timeskew:</TD><TD><TT>-100</TT></TD>
+</TR>
+<TR>
+  <TD>Known Good Database:</TD><TD><TT>none</TT></TD>
+</TR>
+<TR>
+  <TD>Known Bad Database:</TD><TD><TT>none</TT></TD>
+</TR>
+</TABLE>
+
+<P>
+<TABLE CELLSPACING=8>
+<TR>
+  <TD>Host Name:</TD><TD><TT>file_server</TT></TD>
+</TR>
+<TR>
+  <TD>Host Description:</TD><TD><TT>Windows File Server - Win 2k</TT></TD>
+</TR>
+<TR>
+  <TD>Timezone:</TD><TD><TT>CST6CDT</TT></TD>
+</TR>
+<TR>
+  <TD>Timeskew:</TD><TD><TT>0</TT></TD>
+</TR>
+<TR>
+  <TD>Known Good Database:</TD><TD><TT>/usr/local/forensics/hash/win2k.txt</TT></TD>
+</TR>
+<TR>
+  <TD>Known Bad Database:</TD><TD><TT>/usr/local/forensics/hash/win_hack.txt</TT></TD>
+</TR>
+</TABLE>
+
+<P>
+<H3>Adding a New Image</H3>
+Next, images must be added to the host.  Select the host that was
+just added from the Host Gallery and enter the Host Manager.  Select
+<U>Add Image File</U> and a new form is shown.  The first text box in
+the form is for the path of the image file.  If you are importing a
+split image, then the extension must be ordered based on the file order.
+Supply a '*' in the file name extension where the numbers or letters are.
+(i.e. .../image.*).  The image file can be
+of a full disk or of an individual partition.  You must select which
+it is though.  Before they can analyzed, the images will have to
+be located in the evidence locker.  You are given a choice to either
+create a symbolic link from the current location, to copy the file,
+or to move the file from its current location to the host directory.
+Select the desired import method.  For example:
+
+<TABLE CELLSPACING=8>
+<tr><td>Image Path:</TD><TD><TT>/mnt/sys1/disk2.*</TT></TD></TR>
+<tr><td>Type:</td><td><tt>Disk</tt></td></tr>
+<tr><td>Import Action:</TD><TD><TT>symlink</TT></TD></TR>
+</table>
+
+<p>
+If you are importing a split image, then the next window will confirm the
+order of the images.  After that, the next window will allow you to specify
+or calculate the MD5 for the file.  This should be of the full file and if you
+are importing a split image then it should be for all files combined.  
+If you are importing a volume image, then Autopsy will try to determine the
+file system type.  You will also need to specify the mounting point.  This is used for cosmetic purposes only when printing the full path of files.
+
+<p>
+If the image file is a disk image then Autopsy will list all of the partitions and try to determine the file system in each one.  You have the option to not import a partition and to change the file system type. 
+
+<P>
+<H3>MD5 Values</H3>
+Each host has an <TT>md5.txt</TT> file that contains
+the MD5 value for files in that directory.  Autopsy  uses that file
+to validate the integrity of files.   By default, when a file is
+imported into Autopsy, its MD5 will be calculated.  If it is already
+known, then it can be entered in the 'Add Images' window.
+
+
+<P>
+<H3>Host Subdirectories</H3>
+Each host has an <TT>images</TT> directory and an <TT>output</TT>
+directory.  All data generated by Autopsy is saved to the <TT>output</TT>
+directory.  The theory behind this design, was to allow the <TT>images</TT>
+directory to have strict permissions to prevent accidently modifying
+the images.  Therefore, the <TT>images</TT> directory can have its write
+bits removed to prevent modifications.
+
+<p>
+<h3>References</h3>
+Issue 2 of <a href="http://www.sleuthkit.org/informer/"  target=\"_blank\">The Sleuth Kit Informer</a> discusses case management and how to break a disk image into file system images.
+
+
+
+<P><HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>

@@ -1,0 +1,183 @@
+<HTML>
+<HEAD><TITLE>Autopsy Timeline Analysis Help</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+
+<CENTER><H2>Timeline Mode</H2></CENTER>
+<H3>Overview</H3>
+<P>
+For some investigations, creating a timeline of activity can be 
+useful to identify places where the analysis should begin.   Of
+course file times can be easily modified by an attacker, so they
+can not be 100% trusted.  But, Autopsy can create timelines of
+file activity.  
+
+<P>
+Files have at least three times associated with them.  The details of
+each time varies with the file system type.  
+
+<P>
+The following times exist for UNIX file systems (EXT2FS & FFS): 
+
+<UL>
+  <LI><B>Modified</B>: When the file data was last 
+  modified.  This time can be modified using the utimes()
+  function.  This time is preserved in a 'tar' archive, so it is
+  possible to have M-times of files prior to when they were introduced
+  to the system.  
+
+  <LI><B>Accessed</B>: When the file data was last
+  accessed.  This time can be modified using the utimes() function.
+
+  <LI><B>Changed</B>: When the file status (inode data)
+  was last changed.  This time can not be set using the utimes()
+  function in UNIX (but it will be set when utimes() is used to modify
+  other values).
+</UL>
+
+The EXT2FS file system also has a Deleted time, but it is not displayed
+in the timeline.
+
+<P>
+A FAT File system has the following times:
+<UL>
+  <LI><B>Written</B>: When the file was last written to.
+  It is the ONLY required time in the FAT file system.
+
+  <LI><B>Accessed</B>: When the file was last accessed.  In
+  FAT, it is only accurate to the day (not minute).  It is an optional
+  value, so some Operating Systems may not update it.
+
+  <LI><B>Created</B>: When the file was created.  It is 
+  also optional, so some Operating Systems may not update it.  In fact,
+  many Windows installations have a C-Time of 0 for directories such as
+  <TT>C:\\Windows</TT> and <TT>C:\\Program Files</TT>.  
+</UL>
+
+<P>
+The NTFS File system has several times, four of which are
+used in the timeline.  These times are gathered from the
+<TT>\$STANDARD_INFORMATION</TT> attribute. 
+<UL>
+  <LI><B>Written</B>: When the file was last written to.
+
+  <LI><B>Accessed</B>: When the file was last accessed.  
+
+  <LI><B>Changed</B>: When the MFT entry was last modified.
+
+  <LI><B>Created</B>: When the file was created.
+</UL>
+
+
+<H3>How to Create a Timeline</H3>
+Creating a timeline takes two steps.  The first step extracts and
+saves the needed data from each file system images.  This step
+stores the data from each specific file system in a generic format.
+Historically (from TCT), this file was called the <TT>body</TT>
+file.  The second step takes the <TT>body</TT> file as input and
+generates an ASCII timeline of file activity between two specified
+dates.  The resulting timeline can be viewed in Autopsy or using
+a text editor.
+
+
+<H3>Creating the Body File</H3>
+The file meta-data must be extracted from the file system images and saved
+to the <TT>body</TT> file.  There are three major types of files that data 
+can be extracted for:  
+<UL>
+  <LI><B>Allocated Files</B>:
+Files that are seen when doing an 'ls' or 'dir' in a directory.  In
+other words, these are the files that have an allocated file name 
+structure.  
+
+  <LI><B>Unallocated Files</B>:
+Files that have been deleted, but that TSK can still access. 
+Files in this category include orphan files, which are files that
+no longer have a name, but whose metadata still exists. 
+If a deleted file name points to an allocated metadata structure, 
+then the name will say (realloc) next to it.
+
+</UL>
+
+<P>
+To create the <TT>body</TT> file, select the images to analyze from
+the list on top.  Next, select which types of data that you want to
+extract.  By default all types are extracted.  Lastly, identify the 
+name of the body file to create.  The file will be created in the
+<TT>output</TT> directory and an entry will be added to the host config
+file.   You will be given the option to calculate the MD5 value of
+the new file.
+
+
+<H3>Creating the Timeline</H3>
+The next window allows one to create a timeline based on the newly
+created <TT>body</TT> file.  Or, one can select the option from
+the left-hand side menu.  The range of dates must be selected as
+well as the name of the timeline file.  The resulting timeline will
+use the time zone for the host. 
+
+<P>
+If the images are from a
+UNIX file system, then the password and group files can be used to
+change the UID and GID to actual names.  If the partition from the
+root directory exists in the host, select it from the pull down
+list and Autopsy will find the <TT>/etc/passwd</TT> and
+<TT>/etc/group</TT> file contents.
+
+<P>
+The timeline  will be created in the <TT>output</TT> directory.
+You will be given the option to calculate the MD5 hash value of
+the new file.
+
+<H3>Viewing the Timeline</H3>
+The timeline can be viewed in Autopsy.  Timelines tend to be very
+large though and have thousands of lines.  HTML browsers can not
+handle tables of this size very well and typically have trouble
+processing it.  Therefore, Autopsy only allows you to view the
+timeline one month at a time.  It will likely be easier to open a
+shell and examine the timeline in a text editor or pager such as
+'less' or 'more'.
+
+<P>
+The 'summary' link will show a page that contains a monthly summary
+of activity.  It shows how many many events occured in that month
+and links to the details.  This allows one to get a high level 
+view of when a lot of activity last occured.  
+
+<P>
+The following columns are in the timeline (in order):
+<UL>
+  <LI><B>Date and time</B>of the activity.  If no date is given,
+  then the activity occured at the same time as the previous entry
+  with a time.
+
+  <LI><B>Size</B>.  The size of the file.
+
+  <LI><B>Entry Type</B>.  The 'm', 'a', 'c', and 'b' letters will exist to 
+  identify which of the activity types this entry corresponds to.  'm' is
+  for modified times, 'a' is for access times, 'c' is for change times, and
+  'b' is for created (or born) times.
+
+  <LI><B>Mode</B.  The UNIX mode is shown.
+
+  <LI><B>UID</B>.  The User Id or User name is shown.  If a password
+  file was provided when the timeline was created, then the colunn should
+  only have names.  
+
+  <LI><B>GID</B>.  The Group Id or Group name is shown.  If a group
+  file was provided when the timeline was created, then the colunn should
+  only have names.  
+
+  <LI><B>Meta Data Address</B>.  The inode or MFT entry address for the 
+  associated file.  
+
+  <LI><B>File Name</B>.  The name of the file and the destination of a 
+  symbolic link.  Deleted entries will have '(deleted)' at the end and 
+  deleted entries that point to an allocated meta data structure will
+  have '(realloc)'.  
+
+
+</UL>
+
+<HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>

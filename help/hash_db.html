@@ -1,0 +1,141 @@
+<HTML>
+<HEAD><TITLE>Autopsy Hash Database Help</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+
+<CENTER><H2>Hash Database Help</H2></CENTER>          
+
+<H3>Overview</H3>
+Hash databases are used to quickly identify known good and known
+bad files using the MD5 or SHA-1 checksum value.  Autopsy uses
+three types of hash databases to help the investigator reduce the
+number of files that they have to look at.
+
+<P>
+The <B>NIST National Software Reference Library (NSRL)</B> contains
+hashes of files that are found in operating systems and software
+distributions.  These files are <I>known to be good</I> in that they came
+from trusted sources and are typically on authorized systems.  When
+processing files in the image, this database can be used to ignore
+files because they are assumed to be known and therefore uninteresting.
+The location of this database is configured when Autopsy is installed.
+The NSRL must be obtained from NIST at <TT>www.nsrl.nist.gov</TT>.
+
+<P>
+The <B>Ignore Database</B> is a database that the investigator must
+create.  It is similar to the NIST NSRL in that it contains files
+that are <I>known to be good</I> and can be ignored if the user
+chooses to do so (only applicable when in <A HREF="file_category.html">File
+Type Category Analysis</A>).  Examples of files in this category include
+system binaries for standard builds.  See <A HREF="#db_create">Database
+Creation</A> for information on creating this database.  Its location
+is configured when the host is created and can be edited in the
+host configuration file.
+
+<P>
+The <B>Alert Database</B> is a database that the investigator must
+create.  It contains hashes of <I>known bad</I> files.  These are
+the files that an investigator wants to know about if they exist
+on the system.  Examples of this include rootkits or unauthorized
+photographs.
+When using the <A HREF="file_category.html">File Type Category
+Analysis</A>, these files will be saved in a special file.  See <A
+HREF="#db_create">Database Creation</A> for information on creating
+this database.  Its location is configured when the host is created
+and can be edited in the host configuration file.
+
+
+<H3>Database Uses</H3>
+Autopsy uses the hash databases in three ways.  
+
+<UL>
+  <LI><B><A HREF="file_category.html">File Type Category Analysis</A></B>: The
+  hash databases are used to identify the <I>known bad</I> files and
+  ignore the <I>known good</I> files.  
+
+  <LI><B><A HREF="meta_mode.html">Meta Data Analysis</A></B>: The hash
+  databases can be used to identify a file from the meta data view.  If
+  the databases are configured, the hash from a given file can be looked
+  up by pressing the 'lookup' button.    
+  All three databases can be used in this view.  This view can be found
+  from the File Analysis mode by selecting the meta data address in
+  the directory listing window.
+
+  <LI><B>Hash Database Manager</B>: From the Host Gallery view, 
+  the Hash Database Manager can be entered.  This is where one can
+  re-index the databases and perform single lookups in any of the
+  databases.  
+</UL>
+
+
+<A NAME="db_create">
+<H3>Database Creation</H3>
+Currently, Autopsy will only allows one to look entries up in a 
+hash database.  It does not allow one to easily create a database,
+but this will describe the process (it is quite simple).  
+
+<P>
+Autopsy uses the <TT>hfind</TT> tool from The Sleuth Kit to do the
+lookups.  This tool requires the database to be indexed so that it
+can perform a fast lookup using a binary search algorithm (instead
+of a slower sequential search that a tool like grep would do).
+When ever a hash database is updated (or created), it must be
+indexed.  This can be done in Autopsy in the Hash Database Manager
+(Note that the database must already be configured though).
+
+<P>
+The NIST NSRL obviously does not have to be created, but it does have
+to be indexed before it is used.
+
+<P>
+To make a hash database, we will create a file with the same format
+as the <TT>md5sum</TT> command uses.  This is just the MD5 hash,
+some white space, and the file name.  For example:<BR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;<TT>c4a6761b486de3c6abf7cf2c554289e5
+&nbsp;&nbsp;&nbsp;&nbsp;/bin/ps</TT><P>
+
+Make a file with this format for every line (it does not have to
+be sorted).  For example, if you have a trusted system then you can make
+a hash database of its system binaries using the following:<BR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;<TT># md5sum /bin/* /sbin/* > bin-md5.db</TT><P>
+
+After creation, hash databases must be indexed and sorted (this
+includes the NSRL).  Databases will be indexed by using the
+<TT>hfind</TT> tool.  The NSRL database would be indexed with:<BR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;<TT># hfind -i nsrl-md5  PATH_TO_NSRL/NSRLFile.txt</TT><P>
+
+A database made by <TT>md5sum</TT> would be indexed with:<BR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;<TT># hfind -i md5sum  bin-md5.db</TT><P>
+
+Or, if Autopsy has this file configured from when the host was added,
+then it can be re-indexed from the Hash Database Manager.
+
+<H3>Autopsy Configuration</H3>
+The alert and ignore databases are stored in the host configuration file
+with the headers of 'exclude_db' and 'alert_db'.  For example:<BR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;<TT>alert_db&nbsp;&nbsp;&nbsp;&nbsp;'/usr/local/hash/bad.db'</TT><P>
+These entries can be edited at any time.  
+
+<P>
+The NSRL database is configured in the <TT>conf.pl</TT> file in the
+directory where Autopsy was installed.  It has the $NSRLDB variable.  
+For example:<BR>
+
+&nbsp;&nbsp;&nbsp;&nbsp;<TT>$NSRLDB = '/usr/local/hash/nsrl/NSRLFile.txt';</TT><P>
+
+It can be edited, added, and removed at any time (but you must restart
+Autopsy).  
+
+
+<p>
+<h3>References</h3>
+Issues 6 and 7 of <a href="http://www.sleuthkit.org/informer/"  target=\"_blank\">The
+Sleuth Kit Informer</a> discussed hash databases.
+
+<HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>

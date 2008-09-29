@@ -1,0 +1,221 @@
+<HTML>
+<HEAD><TITLE>Autopsy File Analysis Help</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+
+<CENTER><H2>File Analysis</H2></CENTER>
+<H3>Overview</H3>
+The File Analysis mode allows one to analyze an image from the file
+and directory perspective.  This provides the same interface that users
+typically use with a normal computer.  This mode will also display 
+information about deleted files though.  
+
+<P>
+This mode will allow one to examine the contents of files and directories
+for evidence.  It even allows one to perform basic binary analysis by
+extracting the ASCII strings from a binary file.  The files can also
+be sorted by any field.  
+
+
+<H3>Directory List</H3>
+<P>
+The left-hand side window has four main options:
+<UL>
+  <li>Directory Seek
+  <li>File Name Search
+  <LI>Hide / Expand Directories
+  <LI>Show All Deleted Files
+</UL>
+
+<P>
+By default, the directory listing is not shown when this mode is
+first entered.  By select the <U>Expand Directories</U> button,
+the full list of directories will be shown.  The number of '+'
+symbols represent the depth of the directory.   As this is an HTML
+interface and there is no state management occurring (no cookies
+or session id), it would be difficult to have an interface where
+one or more directories are expanded yet the rest are collapsed.
+
+<P>
+Selecting the <U>All Deleted Files</U> link will display all of the deleted
+files in the image on the right-hand side.
+
+<P>
+There is a text box where a directory (or file) name can be
+entered and it will be displayed on the right-hand side.  This
+makes it easy to jump to a directory without going through the
+directory listings.  For example, to seek to the 'windows\system32'
+folder, you can enter that string into the box instead of scrolling
+through the directories.
+
+<p>
+There is also a text box where a pattern of a file name can be
+entered and all files that match that pattern will be displayed on
+the right-hand side.  The search pattern is a Perl regular expression,
+so some values, such as '.' or '*' will need to be escaped.  The
+search is done case insensitive.  To find all files that have a JPG
+extension, the following could be used "\.jpg".  Or to find all files
+that begin with a dot, then we could use "^\.".  
+
+
+<H3>Directory Contents</H3>
+<P>
+The window in the upper right-hand side contains the directory
+contents.  In a file system, a directory allocates data units on
+the disk and fills the data units with structures that contain the
+name of the file and the address of the meta data structure.  This
+view parses the file name structures in the directory.  It is filled
+by either selecting a directory from the left-hand side directory
+list or a directory from within the same window.  The entries can
+be resorted by clicking on any of the header values.
+
+<P>
+The column headers have the following definitions:
+<UL>
+  <LI><B>del</B>: A check in this column represents a deleted file.
+  See below for a discussion on the different color types of deleted files.
+
+  <LI><B>Type</B>: This column contains the "type" that the file or
+  directory is. There are two values.  The first (<TT>dir</TT>) is the
+  type according to the directory entry structure.  The directory entry
+  is where the file name is located.  The second value (<TT>in</TT>) is
+  the type according to the meta data structure.
+  These should be the same except
+  for deleted files.  They are both given to help the investigator
+  identify if a deleted file has been reallocated or not.  For example,
+  if the meta data structure type is different than the file name
+  type, then it is likely that one of the structures was reallocated for
+  a new file.  
+
+  <LI><B>Name</B>: The name of the file or directory.  Clicking on the
+  name displays file contents in the bottom window or directory contents
+  in the same window.  For deleted files, no link will exist if the meta
+  data structure address 
+  has been cleared (which many OS do).  To identify the destination of 
+  a UNIX symbolic link,
+  click on the address at the end of the row.  Note that the name
+  will not be a link if the size of the file is 0 or if the meta data
+  structure is unknown.  
+
+  <LI><B>Modified Time</B>: This column exists for UNIX and NTFS file 
+  systems.  It shows the last time that the file data was last modified.
+  In other words, when was data last written to the data units allocated
+  by the file.  In UNIX, the <TT>utimes()</TT> function can modify this
+  value vary easily.  
+
+  <LI><B>Written Time</B>: This column exists for FAT file systems and
+  is the time when the file was last written to.  Of the three times,
+  this is the only value that is required by the FAT specification.  
+
+  <LI><B>Accessed Time</B>: This column contains the last accessed time of
+  the file data.  On a FAT image, this value is optional and is only
+  accurate to the day (not hours or seconds).  This value can be 
+  modified by the utimes() function in UNIX.
+
+  <LI><B>Changed Time</B>: This column exists for UNIX and NTFS file
+  systems.  It is the last time that the file status (or meta data) was
+  changed.  This is different than the Modified time because modified
+  deals with the file data and this deals with the descriptive data
+  in the inode or MFT entry.    This value cannot be changed by the
+  <TT>utimes()</TT> function in UNIX.  
+
+  <LI><B>Created Time</B>: This column exists for NTFS and FAT file systems.  It
+  is the time when the file was created.  According to the FAT spec,
+  it is an optional time.  
+
+  <LI><B>Size</B>: The size of the file.  Note that if the size of the
+  file is 0, no link will be shown with the name.  
+
+  <LI><B>UID</B>: The User ID of the file owner.
+
+  <LI><B>GID</B>: The Group ID of the file owner.
+
+  <LI><B>Meta Data</B>: The file name structures contain a pointer to
+  the meta data structure that describes the file.  This column contains
+  the address of the structure.  Selecting this value
+  will display the details in the bottom window.
+  If the value is invalid, then a link will not exist.  If it is for
+  a deleted file name that has a meta data structure with an allocated
+  status, a "realloc" string will 
+  exist to identify this.  
+
+</UL>
+The <U>Add Note</U> link allows you to make a comment about this directory and 
+have it saved in your personal notes file.  
+
+<P>
+The <U>Generate MD5 List</U>
+link will generate the MD5 value for every file in the directory and
+allow you to save it as a text file.  Using fingerprint data bases,
+This makes it easy to check for files that were modified by an attacker.
+
+<P>
+The path on top of the window has hyperlinks in it that allow the
+user to easily change to a previous directory.  
+
+<P>
+There are two different colors used for deleted files.  The difference
+is based on the status of the data structures in the file.  A <FONT
+COLOR="red">bright red</FONT> entry means that the file
+name data structure is not allocated and the meta data structure
+that it points to is also not allocated.  This is what we would
+expect of a recently deleted file.  This means that we can trust
+the data we are seeing as long as the meta data structure was not
+allocated and unallocated since the deletion.  If it is <FONT
+COLOR="#800000">darker red</FONT>, then the meta data
+structure has been reallocated and the data is most likely not
+accurate.
+
+
+<P>
+The file size reported by the meta data structure is very important
+with The Sleuth Kit.  The Sleuth Kit uses this value to identify
+how many data units to display.  If this size is 0, but the meta
+data structure points to data blocks still, they will not be shown.
+You can force Autopsy to display the values by selecting the meta
+data address and using the 'force' option.
+
+<P>
+To look a file up in one of the <A HREF="./hash_db.html">Hash
+Databases</A>, then select the meta data address.  That view will
+provide an interface to the databases.
+
+<H3>File Contents</H3>
+<P>
+The lower right-hand side window displays the contents of a specified
+file.  The contents can be viewed in either the raw format (which your
+browser will not likely display much of if the file is non-ASCII) or
+through 'strings'.  The strings option is helpful for a quick analysis
+of a binary file.
+
+<P>
+Also shown is the file type.  This is determined by running the 'file' 
+command on the output.  It uses the magic header and footer values to
+guess the file type.  If the file type is an image or HTML, an option
+will exist to <U>View</U> the data in its interpreted form (i.e. as
+a picture or as a web page instead of the raw data).  Note that
+any HTML that is viewed will be processed in a sanitized environment 
+that does not load pictures and will not allow one to connect to a 
+remote site.  To view the native picture, select 'Export' and open
+the HTML document in another browser.  Refer to issue #1 of The Sleuth
+Kit Informer for more details on the sanitizing.  
+
+<P>
+The <U>Report</U> options create ASCII reports that contain the file 
+contents as well as data such as MD5 values and dates.  
+
+<P>
+The <U>Export</U> button extracts the file out of the image so you can save it
+locally and use other tools on it. 
+
+<P>
+The <U>Add Note</U> button adds a personal note to the investigator log for
+future reference.
+
+<p>
+<h3>References</h3>
+Issue 1 of <a href="http://www.sleuthkit.org/informer/"  target=\"_blank\">The Sleuth
+Kit Informer</a>.
+
+<HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>

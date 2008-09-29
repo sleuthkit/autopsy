@@ -1,0 +1,532 @@
+7/1/08: Update: Updated FAT sizes based on new "special" files.
+
+7/9/08: Update: Updated NTFS processing for orphan files / removed
+ifind -p etc.
+
+7/9/08: Update: Updated mactime and time formats to ISO formats.
+
+9/13/08: Update: Changed usage to new TSK d* to blk* names.
+
+9/26/08: Bug Fix: Input check on host was printing invalid host values 
+w/out encoding HTML entities.  Reported by Russ McRee.
+
+--------------------------- Version 2.10 --------------------------------
+2/20/08: Bug Fix: Added 'tsk' to the path for sorter to find the 'images'
+config file.  Reported by Russell Reynolds.
+
+3/2/08: Update: Modified the adding of disk image process to save a 
+call to mmls (reported by Pope). 
+
+3/2/08: Update: Added more basic control char filtering back into Print(). 
+
+--------------------------- Version 2.09 --------------------------------
+2/4/07: Update: Bind only to localhost network if remote addr is local.  
+Suggested by Markus Waldeck.
+
+4/19/07: Bug Fix: Event sequencer notes for file did not have clock skew
+in the times.  Reported by Len CulBreath.
+
+12/21/07: Update: updated configure and install process for TSK 2.50
+
+1/28/08: Update: Added NSRL support back in.
+
+--------------------------- Version 2.08 --------------------------------
+
+8/23/06: Bug Fix: The configure script did not like TSK directory names
+with a space in them.
+
+8/23/06: Update: The PATH variable is not entirely cleared anymore.
+Instead, it is replaced by the basic bin directories (this was causing
+some problems with Cygwin).
+
+8/31/06: Update: If Autopsy is running under Cygwin, then it will set
+the PATH to contain the basic bin directories.  Otherwise, it is clear
+(original behavior).
+
+
+--------------------------- Version 2.07 --------------------------------
+3/15/06: Bug Fix: Caseman.pm had DATA_DIR instead of DATADIR and a
+concatenation error message occurred.  Reported by Jason DePriest.
+
+5/3/06: Update: Added support for ISO9660 file systems.
+
+5/3/06: Update: Added support for AFF and AFD image formats.
+
+5/03/06: Update: Added image format type to image details screen.
+
+5/3/06: Update: Added hexdump view for file analysis and reports (initial
+patch by Patrick Knight).
+
+5/3/06: Update: Changed number of dashes in reports to 70 instead of 62.
+
+5/4/06: Update: Integrity checking disabled for non-raw image files
+until a specialized tool exists in TSK to abstract the embedded hash
+calculation.
+
+5/8/06: Update: Added support for AFM files.
+
+
+
+--------------------------- Version 2.06 --------------------------------
+05/02/05: Fix: Typo in timeline creation window (reported by Surago Jones).
+
+06/15/05: Update: Added css style sheet and changed some formatting.
+
+08/13/05: Update: Added "utf-8" as HTML type so that TSK unicode
+output will be properly dispayed.
+
+10/13/05: Update: Removed print_output() function contents because
+it broke the Unicode chars.
+
+10/13/05: Update: Require 5.8 version of Perl now (in config and
+in source) because it has best Unicode support.
+
+
+
+--------------------------- Version 2.05 --------------------------------
+03/16/05: Update: Image name is given in the Image Details window
+when adding a new image file.  (Suggested by Surago Jones).
+
+03/17/05: Bug Fix: swap and raw host config entries could not be
+read after the conversion because of a regular expression bug in
+the read  code. (Reported by Surago Jones) (BUG: 1165235)
+
+03/21/05: Bug Fix: When a new host was added to a case with no
+investigator names, then it would prompt you to select a name from
+an empty list.  (BUG: 1167970).
+
+03/25/05: Update: Check return status of rename functions and print
+error if failed.
+
+04/04/05: Bug Fix: A missing volume type message was reported when
+adding a disk image.  The flow of add_img_prep was modified to
+ensure that it was set.  (Reported by Bradley Bitzkowski) (BUG:
+1177042)
+
+04/08/05: Update: A thumbnail of images is shown when selected in the File
+mode. Suggested by and patch by Guy Voncken.
+
+
+--------------------------- Version 2.04 --------------------------------
+10/22/04: Update: Changed the way that NTFS lists directory contents.  No 
+  longer lists the deleted entries from 'fls', only from 'ifind'.  Reduces
+  the inaccurate information. 
+
+02/XX/05: Update: Incorporated new TSK 2 features:
+  - Disk images (split and raw)
+  - new config file formats
+  - moved images and output md5.txt file into one
+
+03/01/05: Update: Changed behavior of some links that created new
+Autopsy Windows
+
+03/05/05: Update: timeline output can be in comma delimited format
+
+03/05/05: Update: Added SSN and credit card seach patterns from
+  Jerry Shenk.
+
+03/05/05: Update: Added temporal data when a note is creaed.
+
+03/11/05: Update: Changed to new TSK names for srch_strings and img_stat
+
+03/15/05: Update: improved handling of white space around investigator
+names and image names (suggested by Brian Baskin).
+
+
+--------------------------- Version 2.03 --------------------------------
+08/24/04: Update: Added SHA-1 hash to the metadata view.
+
+09/01/04: Update: Added sstrings instead of local version of strings.
+
+09/05/04: Update: Added more help text.
+
+09/06/04: Update: Use the local version of file if TSK version is
+not found.
+
+09/06/04: Update: Added links to the notes and events page after a
+note or event has been created.
+
+09/06/04: Update: Added Unicode extract and search functionality using
+the 'sstrings' tool from TSK.
+
+
+--------------------------- Version 2.02 --------------------------------
+07/19/04: Bug Fix: print_err message in Caseman.lib did not have correct
+Print:: package, which caused an error (BUG: 994199).
+
+07/29/04: Update: Added support for NTFS 'ifind -p' option to find deleted
+files that do not have a name in the parent directory.  
+
+07/29/04: Update: Added a filter to remove duplicate entries from a file
+listing.  Duplicate names with the same name and meta address are 
+removed.
+
+07/29/04: Update: OS X no longer needs the strings script, Autopsy
+will adjust for the different flags.
+
+07/29/04: Update: When a deleted file name is entered into the find 
+directory box, the recover bit is set so the full contents are shown.
+
+
+--------------------------- Version 2.01 --------------------------------
+03/29/04: Update: Changed text for the data integrity option when
+adding a new image.
+
+04/20/04: Bug Fix: Fixed error that occured when data browsing with
+a raw or swap image.  The TSK usage for these file system types was
+inconsistent and it was fixed in version 1.69.  (BUG: 925382).
+(Reported by Harald Katzer)
+
+05/03/04: Update: Changed regular expression in META so that the
+new recovery listing in FAT istat will not show up as a hyperlink.
+
+05/03/04: Update: Removed usage of '-H' with 'icat' in File.PM.
+
+05/20/04: Bug Fix: Fixed the incorrect error message that was printed
+when installing autopsy with a newer version of TSK than 1.68.
+(BUG: 938909)
+
+05/20/04: Update: Added new feature that allows perl regular
+expressions to be used to find file names.
+
+05/20/04: Update: Added file recovery features to File.pm, Meta.pm,
+and Appview.pm.
+
+05/27/04: Update: Added a space to $REG_ZONE2 so that CYGWIN would
+work if no zone was given (Marcus Muller).
+
+/05/27/04: Update: Added 'p' as an option for the type of a file in the 
+'fls' output and made the $::REG_MTYPE global for the pattern.
+
+05/28/04: Update: Cleaned up code so that commands and directories
+do not have double slashes (//) sometimes. This caused problems
+with CYGWIN (reported by Marcus Muller).
+
+05/28/04: Bug Fix: Keyword search of unallocated space would link to
+incorrect data unit (although the address was correct).  (Reported by
+Jorge Ortiz, David Perez, Raul Siles).  (BUG: 962410).
+
+05/28/04: Update: Updated dcat usage and syntax to reflect changes to
+TSK.  
+
+05/28/04: Update: Changed the messages printed when multiple data units
+were displayed.  Now the number of units or range are given instead of 
+number of bytes.
+
+
+--------------------------- Version 2.00 --------------------------------
+11/25/03: Update: made evidence locker directory names constant (define.pl)
+11/25/03: Update: Started process of re-architecture
+12/2/03: Update: Replaced logo.jpg with Hash the Hound
+12/7/03: Update: Added favicon.ico with Hash
+01/06/04: Update: Changed command line arguments
+01/24/04: Update: made it only a warning if cookie file can't be opened
+02/15/04: Update: Timezone is now optional.  Defaults to local if not given.
+02/15/04: Update: Timezone value optional in () in file listing (prevents
+  parsing errors if incorrect timezone is given
+03/16/04: Bug Fix: Fixed zombie problem by ignoring child signal
+(BUG: 860186)  Reported by Angus Marshall.
+03/18/04: Update: New layout for adding cases, hosts, and images.
+03/18/04: Update: changed HTML to use lowercase values instead of all caps.
+03/18/04: Update: New windows are no longer opened when changing modes.
+03/19/04: Release: Big release with a new redesign and a few other
+  changes (live analysis)
+
+--------------------------- Version 1.75 --------------------------------
+09/22/03: Update: Changed the internal 'get_' functions that parse the
+  URL arguments to error instead of just return 0 when a problem occurs.
+10/22/03: Bug Fix: Check for an investigator name before trying to log
+  to the exec log.  This is a problem when indexing a hash database, an
+  error message is printed because of the null string.  reported by
+  Brian Baskin.
+11/10/03: Update: Improved error message when strings can't be parsed.
+  (Bug: 823081)
+11/15/03: Update: Improved messages in installation script
+11/15/03: Bug Fix: Added 'defined' checks to command output to prevent
+  string errors when command fails.  (BUG 842824)
+11/15/03: Update: Added 'HEIGHT' value to HTML images to make images
+  align better and load faster and with the right size
+11/15/03: Update: Added a timer so that a char is printed every 5 seconds
+  during keyword searching, file type sorting, and MD5 for images.
+
+--------------------------- Version 1.74 --------------------------------
+08/03/03: Bug Fix: Notes could not be added for some files because
+  the HTML code was missing a closing bracket.
+08/18/03: Bug Fix: added POSIX:settz() because some versions of Perl do
+  not use the most recent ENV{TZ} variable when running 'localtime'.  This
+  cause some incorrect times for events in the sequencer.
+08/19/03: Update: NSRL is no longer used with 'sorter' until it is 
+  easier to identify which files in the NSRL are known good and which
+  are known bad.
+08/20/03: Update: Added support for swap and raw images for searching
+  and data unit analysis.
+08/20/03: Update: Added the unit size to the display of the Data Unit
+  mode.
+08/20/03: Update: Search for perl5.6.0 first during install
+08/21/03: Update: Changed use of backticks to pipes for executing commands
+08/21/03: ?: Added a 'sleep(1)' to the pipe to prevent the loss of data
+  that can be seen with perl5.8.0 in the buffer.  This should be fixed
+  in a better way though.
+08/21/03: Update: The exact command executed is now saved to the log
+  directory.
+08/21/03: Update: Changed 'date' regexp to make year optional.
+08/22/03: Update: Added warning if Perl 5.8 is used because of the buffer
+  problem.
+08/22/03: Bug Fix: Fixed some keyword escape values in the search mode.
+08/22/03: Update: Added a new help page on the limitations of keyword
+  searching.  
+08/22/03: Update: Moved the unallocated space and strings file creation
+  to the Image Details view instead of the keyword search window
+  (suggested by: Paul Bakker)
+08/25/03: Update: improved wording of the Add Image window to better
+  explain the mounting point.
+08/26/03: Update: When adding sequencer notes in manually, the time
+  is set to the last note entered to make it easier to add notes from
+  logs and external sources.
+08/26/03: Update: The keyword search display has a final clause that 
+  prints the results even if they are not found in the 'index' method.
+  This prevents any hits from being lost during the analysis of the 
+  output.
+08/26/03: Bug Fix: strings less than 4 chars would not be found before
+  because 'strings' only shows strings that are 4 or more in length
+08/28/03: Update: if more than 1000 keyword hits are found, then a message
+ is reported and the user must choose a new keyword.  This prevents the
+ browser from hanging from a huge HTML table.
+08/28/03: Update: A '.' is printed during the keyword search for each
+  100 hits as a status update.
+
+
+--------------------------- Version 1.73 --------------------------------
+06/10/03: Bug Fix: The '-i day' was not added to the mactime code and
+  caused an error (reported by Cathy Buckman)
+
+--------------------------- Version 1.72 ---------------------------------
+04/09/03: Bug Fix: The Java Script check on the main page broke in 1.71
+  because the document.write was on multiple lines
+04/11/03: Bug Fix: Keyword Search False Hit code had a bug that it
+  would be printed in error and message was improved
+04/22/03: Update: Added examples to case management help file
+05/06/03: Bug Fix: calc_md5 did not need 'o' tag on end of regular
+  expression because it would not work if the method was called more
+  than once.  (Paul Bakker)
+06/01/03: Bug Fix: Some keyword searches with $ in it were failing
+06/01/03: Update: Keyword searches are now saved to a file and can be
+  found in the keyword seach main menu
+06/01/03: Update: Changed the format a little of the keyword search
+  menu
+06/01/03: Update: Added grep cheat sheet
+06/03/03: Update: Tables now have alternating colors for file listing 
+  and timeline viewing
+06/03/03: Update: Sequencer mode added
+06/03/03: Update: Sequencer help file added
+06/04/03: Bug Fix: Added 'LANG=C LC_ALL=C' to sorter & mactime to prevent 
+  UTF-8 errors (Debugging help from Daniel Schwartzer)
+06/04/03: Bug Fix: The regular expression for viewing timelines did not
+  allow multiple users to have the same UID (reported by Cathy Buckman)
+06/05/03: Update: Added button for Event Sequencer and added tables to
+  the standard notes reading window
+06/09/03: Update: Added '-i day' flag to mactime for new feature in
+  The Sleuth Kit
+
+--------------------------- Version 1.71 ---------------------------------
+02/27/03: Bug Fix: Regular expression searches w/out a strings file had
+  problems because the '-n' value was being incorrectly calculated.  
+03/17/03: Update: Added more logging to investigator log
+03/17/03: Bug Fix: The case opening was not being logged in the case log
+03/17/03: Update: The current 'mode' tab is also a hyperlink now
+03/17/03: Bug Fix: Fixed bug that did not allow the path for a strings
+  file to have a space in it.
+03/17/03: Update: When no port and remote address are given on the
+  command line, port 9999 and localhost are used.  Documents also
+  updated to reflect new syntax.  
+03/18/03: Update: Use the 'x' repetition operator for ASCII reports
+  instead of a row of dashes.
+03/18/03: Update: Added <NOFRAMES> tag to MAIN_FR and incorporated more
+  '<<EOF' HTML code.
+03/19/03: Update: Added $FIL_NAME function that translates a name to
+  a meta data address using 'ifind -n'
+03/19/03: Update: A directory name can be entered in the $FIL_DIR
+  frame now to jump to a directory or file
+03/19/03: Update: The directory path in $FIL_LIST was changed to have
+  hyperlinks that allow one to jump to a previous directory (using
+  $FILE_NAME)
+03/19/03: Update: Cleaned up HTML code in $FIL_LIST 
+03/20/03: Update: passwd and group files are now imported in timelines
+  by selecting the image - no more inode values
+03/20/03: Update: Cleaned up HTML code in timeline section
+03/21/03: Update: Added '-z' flag to usage of 'file' so that comressed
+  files are opened.  
+03/21/03: Bug Fix: Some special values needed to be escaped in the
+  grep keyword search (for non regular expressions) (\.]^$"-).
+03/24/03: Update: Changed how images are added (symlinks, copies,
+  or moves).  
+03/24/03: Update: Added a file system sanity check when adding one
+03/27/03: Update: Added a check to the 'File Type' mode that extracts
+  just graphic images and makes thumbnails.  
+03/27/03: Update: Added '-i' flag when 'mactime' is run to create the
+  summary file for timelines.
+03/27/03: Update: Added link to summary page with hyper links to actual
+  month for timelines
+03/27/03: Update: Added more HTML table columns for date in timeline view
+03/27/03: Update: Made the 'ifind' process optional in Data Unit and key
+  word searching mode (makes browsing faster)
+03/27/03: Update: Evidence Locker now contains entries for when a case
+  is created or opened.
+03/30/03: Update: Improved the help file for time lines.
+03/31/03: Update: Changed addresses to sleuthkit.org
+
+
+
+--------------------------- Version 1.70 ---------------------------------
+Interface Changes:
+  - Too many to note individually
+  - New windows are created when modes or images are changed
+  - Improved error messages
+  - Can load the unallocated image in the Data Unit Mode
+  - Case management
+
+12/10/02: Update: Help is now a directory and contents can be viewed at
+  any time.  
+01/02/03: Update: Added support for sorter and hfind tools in TASK
+01/02/03: Update: NSRL now requested at startup
+01/02/03: Update: Alert and exclude hash databases are options when making
+  a new host now
+01/09/03: Update: Carriage Returns are now sent if it is a Windows client
+01/09/03: Update: Improved the pre-defined IP keyword search expression
+01/10/03: Update: Changed use of "_new" as target to "_blank"
+01/28/03: Update: Installation and other system directories can now 
+  have spaces and other symbols in them (Dave Goldsmith)
+
+
+--------------------------- Version 1.62 ---------------------------------
+10/07/02: Update: Added File Type to block mode
+10/07/02: Update: Can now add notes to 'dls' image blocks
+10/07/02: Update: One can now view as many consecutive data units as they
+  want in data mode.  Many other changes and updates were done with this
+  as well. (inspired by the Honeynet sotm)
+10/07/02: Update: The File System details view for FAT now has hyperlinks
+  to view the run and follow to the next run. 
+10/09/02: Bug Fix: Removed use of 'use integer' so that large blocks do
+  no turn into '-1' when doing a keyword search (Michael Stone - Loyola)
+
+
+--------------------------- Version 1.61 ---------------------------------
+08/28/02: Update: White space is allowed at the begining of the morgue file 
+08/28/02: Bug Fix: No error is generated if md5.txt does not exist from 
+  main menu
+08/28/02: Update: Improved error messages 
+08/28/02: Update: Added code to Main Menu to check for Java Script turned on 
+09/19/02: Update: fsmorgue can be a symlink in the morgue directory 
+
+
+--------------------------- Version 1.60 ---------------------------------
+- Changed NTFS c-time to Changed from Created (5/20/02)
+- Fixed a couple little bugs with parsing NTFS output (5/20/02)
+- Improved sorting (name is case insensitive and name is used as 
+  secondary sorting index) (5/20/02)
+- Improved error messages of invalid input to inode & block mode
+- Added ability to import password and group files when making a time line
+  (5/28/02)
+- Fixed bug that did not allow IP addresses to be used for the ACL when
+  DNS was not available (5/30/02)
+- Fixed some issues to make Internet Explorer not complain so much (05/30/02)
+- Improved the logging so that one can retrace their actions (05/31/02)
+- Moved autopsy.log to logs directory (05/31/02)
+- Added ability to write Notes about a given block, inode, or file (06/04/02) 
+  (suggestion by Dave Dittrich)
+- Set default investigators name (an error was generated if no name was given)
+  (06/04/02)
+- Added links in the help page to the window help pages (06/05/02)
+- Updated timeline to reflect new format in new TASK (06/19/02)
+- Added '-C' flag to turn off cookies on command line (06/20/02)
+- Added new main menu (06/20/02)
+- Made MD5 generation 'opt-out' (06/22/02)
+- New code to remove duplicate entries in md5.txt and fsmorgue
+- fsmorgue can have whitespace at end of line (7/6/02)
+- An error is generated if an image in fsmorgue does not exist (7/6/02)
+- updated automatic date search (7/9/02)
+- New feature allows one to save the MD5 values of all files in a directory,
+  which makes the Solaris Finger Print Database easier (7/12)
+
+
+--------------------------- Version 1.50 ---------------------------------
+- Modified to support TASK instead of TCT and TCTUTILs (8/25/01)
+- Removed chmod 'bug' for the cookie file (8/25/01)
+- Fixed number of hits bug in Search mode (off by one) (8/25/01)
+- Added ftype support (8/28/01)
+- Added ftype field to reports (8/28/01)
+- Encoded dir arg in FIL_DEL
+- Filter option holds for usage of next and rev in block mode
+- If using fat, a separate option is given to run find_inode due to how
+  slow it runs
+- removed use of zoneinfo in favor of the new timezone value in fsmorgue.
+- strings now uses '-a' flag to show all strings
+- When doing a search, the length of the string is given as the '-n'
+  flag to strings to speed up the search
+- Allow user to "force" blocks when an inode size is 0 (the istat -b flag) 
+- use the md5 that comes with TCT/TASK
+- multiple images with the same mounting point can now exist
+- Added the morgue directory to the MENU to make it easier to manage 
+  multiple hosts
+- Files are sorted by name by default 
+- can import strings files and create them if needed
+- Run files through 'file' to get data type
+- case insensitive searches
+- MAC headers correspond to file system type (create vs change)
+- Deleted files are displayed in red
+- Correct address name used (fragment, sector etc.)
+- Support for NTFS attributes
+- parse bad tags from HTML when viewing it (send sterile pict)
+- cookie file has port number to aid in scripting
+- cookie files are deleted upon closing
+- log messages are printed for each request
+- added integrity checker
+- renamed aux directory to base to make Windows happy
+- added time line support
+- added fsstat support
+- Added built-in search values in search.pl
+
+
+May 29, 2001	1.01 released
+- Fixed Hex link when in search mode (3/23/01)
+- Corrected heading of ctime (Addam Schroll, Purdue University) (4/24/01)
+- Parses output of new istat correctly (5/1/01)
+- When viewing 'inode as a file', the image and inode are sent as the dir
+  name (5/1/01)
+- Added wait() to collect zombies in Linux (5/22/01)
+- Added auto-flush to prevent repeat log entries (5/22/01)
+- Added a 'save as' option to file and inode browsing (Addam Schroll)
+  (5/22/01)
+- Added option for unrm block numbers (due to blockcalc) (5/22/01)
+- Improved side menu for inode, block, and search (5/22/01)
+- Added "Content-Disposition" so that reports and "save as" have a 
+  unique default filename. (5/23/01)
+- Organization changes to Main Menu (5/24/01)
+- Automated installation process (5/24/01)
+
+March 19, 2001	1.0 released
+- Added man page for autopsy (3/10/01)
+- Directory entries in config files no longer require an / at the end
+- Morgue file names can have a '.' in them (but still not '/') (3/10)
+- autopsy first checks for /dev/urandom for random cookie (3/10/01)
+- morgue directory is a command line option to autopsy (3/10/01)
+- the lib variable in autopsy is no longer set to './' so that it
+  can be run outside of /usr/local/autopsy (3/10/01)
+- changed all references of device to image (3/11/01)
+- changed all reports to print full image path (3/11/01)
+- Investigator is a command line option to autopsy (3/11/01)
+- CGI support removed.  Only autopsy is supported (3/16/01)
+- renamed autopsyd to autopsy (3/16/01)
+- Fixed UID and GID heading (3/16/01)
+- Run image through strings before grep to prevent memory errors (3/16/01)
+- output of find_file and find_inode is prepended with rdir (3/16/01)
+
+
+Feb 27, 2001	0.2b released
+- Added stand alone server, autopsyd (as suggested by Dan Farmer)
+- Reorganized files due to new program
+- Changed names of some executables that changed in TCTUTILs
+
+Feb 19, 2001 	0.1b released
+
+------------------------------------------------------------------------
