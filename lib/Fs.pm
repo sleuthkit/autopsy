@@ -14,6 +14,7 @@ $Fs::types[9]  = "bsdi";
 $Fs::types[10] = "freebsd";
 $Fs::types[11] = "openbsd";
 $Fs::types[12] = "solaris";
+$Fs::types[13] = "hfs";
 
 # These need to be updated as The Sleuth Kit supports more file systems
 #
@@ -158,3 +159,13 @@ $Fs::has_crtime{'iso9660'} = 1;
 $Fs::has_mtime{'iso9660'}  = 0;
 $Fs::meta_str{'iso9660'}   = "Directory Entry";
 $Fs::is_fs{'iso9660'}      = 1;
+
+# HFS
+$Fs::first_meta{'hfs'} = $Fs::root_meta{'hfs'} = 2;
+$Fs::first_addr{'hfs'} = 0;
+$Fs::addr_unit{'hfs'}  = 'Block';
+$Fs::has_ctime{'hfs'}  = 1;
+$Fs::has_crtime{'hfs'} = 1;
+$Fs::has_mtime{'hfs'}  = 1;
+$Fs::meta_str{'hfs'}   = "Record";
+$Fs::is_fs{'hfs'}      = 1;

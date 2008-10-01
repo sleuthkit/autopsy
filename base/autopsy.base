@@ -294,6 +294,25 @@ $::TSKDIR = $1
 #
 check_tools();
 
+
+
+# Currently, HFS is in beta and not enabled by default. 
+# Autopsy has been configured for it though, so disable it if
+# the user has not compiled support into TSK.  remove this when
+# HFS support is standard.
+# This redirects stderr to stdout so we can easily capture it
+my $out = `\'$::TSKDIR/fls\' -f list 2>&1`;
+unless ($out =~ /hfs/) {
+    for (my $i = 0; $i < @Fs::types; $i++) {
+        if ($Fs::types[$i] eq "hfs") {
+            $Fs::types[$i] = "";
+            last;
+        }
+    }
+}
+
+
+
 # remove environment stuff that we don't need and that could be insecure
 # We allow basic bin directories for CYGWIN though, since they are
 # required for the CYGWIN dlls

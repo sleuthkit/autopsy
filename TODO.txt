@@ -1,3 +1,5 @@
+Remove HFS check in autopsy.base when HFS support is standard.
+
 Look into adding the unallocated partiion space when an image is added.
 Look into integrating clamshell or other AV
 

@@ -10,6 +10,9 @@ ifind -p etc.
 9/26/08: Bug Fix: Input check on host was printing invalid host values 
 w/out encoding HTML entities.  Reported by Russ McRee.
 
+10/01/08: Update: HFS support is enabled if TSK was compiled with 
+support for it.
+
 --------------------------- Version 2.10 --------------------------------
 2/20/08: Bug Fix: Added 'tsk' to the path for sorter to find the 'images'
 config file.  Reported by Russell Reynolds.
