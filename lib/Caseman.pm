@@ -326,7 +326,7 @@ sub read_case_config {
         next if ((/^\#/) || (/^\s+$/));
         s/^\s+//;
         s/\s+$//;
-        $Caseman::cvals{$1} = $2 if (/^(\S+)\s+(.*)$/);
+        $Caseman::cvals{$1} = Print::html_encode($2) if (/^(\S+)\s+(.*)$/);
     }
     close(CONFIG);
 
@@ -647,7 +647,7 @@ sub case_open {
                 print " CHECKED";
                 $first = 1;
             }
-            print ">$c</td>";
+            print ">" . Print::html_encode($c) . "</td>";
 
             Caseman::read_case_config($c);
 
@@ -720,11 +720,6 @@ sub case_details {
 
     read_case_config();
 
-    $Caseman::cvals{'desc'} = "&nbsp;"
-      unless (exists $Caseman::cvals{'desc'});
-    $Caseman::cvals{'created'} = "&nbsp;"
-      unless (exists $Caseman::cvals{'created'});
-
     print "<br><br>"
       . "<center>"
       . "<img src=\"pict/menu_h_cdet.jpg\" alt=\"Case Details\">"
@@ -755,7 +750,9 @@ sub case_details {
         else {
             print "  <tr><td>&nbsp;</td>";
         }
-        print "<td align=\"left\"><tt>$i</tt></td></tr>\n";
+        print "<td align=\"left\"><tt>"
+          . Print::html_encode($i)
+          . "</tt></td></tr>\n";
     }
 
     print "</table>\n"
@@ -1343,14 +1340,14 @@ sub read_host_config {
 
         # desc XYZ
         elsif (/^desc\s+(.*)$/) {
-            $Caseman::host_desc = "$1";
+            $Caseman::host_desc = Print::html_encode($1);
         }
 
         # hash databases
-        elsif (/^alert_db\s+'(.*)'$/) {
+        elsif (/^alert_db\s+'($::REG_HASHDB)'$/) {
             $Caseman::alert_db = "$1";
         }
-        elsif (/^exclude_db\s+'(.*)'$/) {
+        elsif (/^exclude_db\s+'($::REG_HASHDB)'$/) {
             $Caseman::exclude_db = "$1";
         }
         else {
@@ -1883,7 +1880,7 @@ sub host_open {
                 print " CHECKED";
                 $first = 1;
             }
-            print "> $h </td>";
+            print "> " . Print::html_encode($h) . " </td>";
 
             my $fname = Caseman::host_config_fname($h);
             open CONFIG, "<$fname"
@@ -1895,7 +1892,7 @@ sub host_open {
                 s/\s+$//;
 
                 if (/^desc\s+(.*)$/) {
-                    $desc = $1;
+                    $desc = Print::html_encode($1);
                     last;
                 }
             }
@@ -1927,7 +1924,7 @@ sub host_open {
             foreach my $i (@invs) {
                 print "<option value=\"$i\"";
                 print " selected" if ($cur_inv eq $i);
-                print ">$i</option>\n";
+                print ">" . Print::html_encode($i) . "</option>\n";
             }
             print "</select>\n";
         }
@@ -2061,21 +2058,27 @@ sub host_details {
 
       # Actual Directory
       "<tr><td align=\"right\"><b>Directory:</b></td>"
-      . "<td align=\"left\"><tt>$::host_dir</tt></td></tr>\n"
+      . "<td align=\"left\"><tt>"
+      . Print::html_encode($::host_dir)
+      . "</tt></td></tr>\n"
       . "<tr><td colspan=2>&nbsp;</td></tr>\n"
       .
 
       # Alert Database
       "<tr><td align=\"right\"><b>Alert Hash Database:</b></td>"
       . "<td align=\"left\"><tt>"
-      . (($Caseman::alert_db ne "") ? $Caseman::alert_db : "&nbsp;")
+      . (($Caseman::alert_db ne "")
+        ? Print::html_encode($Caseman::alert_db)
+        : "&nbsp;")
       . "</tt></td></tr>\n"
       .
 
       # Exclude Database
       "<tr><td align=\"right\"><b>Exclude Hash Database:</b></td>"
       . "<td align=\"left\"><tt>"
-      . (($Caseman::exclude_db ne "") ? $Caseman::exclude_db : "&nbsp;")
+      . (($Caseman::exclude_db ne "")
+        ? Print::html_encode($Caseman::exclude_db)
+        : "&nbsp;")
       . "</tt></td></tr>\n"
       . "</table>\n";
 
@@ -2229,7 +2232,10 @@ sub vol_open {
         $mnt[$i] = $1 if ($mnt[$i] =~ /^\d(.*?)--AUTOPSY--$::REG_VNAME$/o);
         print "<tr>" . "<td><input type=\"radio\" name=\"vol\" value=$vol";
         print " CHECKED" if ($i == 0);
-        print "></td>" . "<td><tt>$mnt[$i]</tt></td>";
+        print "></td>"
+          . "<td><tt>"
+          . Print::html_encode($mnt[$i])
+          . "</tt></td>";
 
         # image name and ftype
         print
@@ -2253,8 +2259,11 @@ sub vol_open {
 "<tr><td>&nbsp;</td><td>&nbsp;</td><td>(<input type=\"radio\" name=\"vol\" "
           . "value=$sort[$i]";
         print " CHECKED" if ($#mnt == 0);
-        print
-"> unalloc)</td><td><tt>$Caseman::vol2sname{$sort[$i]}</tt></td><td>$Caseman::vol2ftype{$sort[$i]}</td></tr>\n";
+        print "> unalloc)</td><td><tt>"
+          . Print::html_encode($Caseman::vol2sname{$sort[$i]})
+          . "</tt></td><td>"
+          . Print::html_encode($Caseman::vol2ftype{$sort[$i]})
+          . "</td></tr>\n";
     }
 
     # Begin Button
