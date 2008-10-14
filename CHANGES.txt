@@ -16,6 +16,9 @@ support for it.
 10/08/08: Bug Fix: Added some more HTML entity escaping to case management
 values (such as description).  Reported by Daniel Medianero.
 
+10/13/08: Update: Added perl version check back into configure, but used
+perl $] variable to do checking.  Based on patch by Joerg Friedrich.
+
 --------------------------- Version 2.10 --------------------------------
 2/20/08: Bug Fix: Added 'tsk' to the path for sorter to find the 'images'
 config file.  Reported by Russell Reynolds.

@@ -61,12 +61,17 @@ found=0;
 for d in $dirs
   do if (test -x ${d}perl) then
     if (test -n "`${d}perl -v 2> /dev/null | awk '/This is perl/ {print $0}'`") then
-      ver=`${d}perl -v 2> /dev/null | awk '/This is perl,/ {print $4}'`;
-      echo "perl found: ${d}perl (version $ver)";
-      echo "#!${d}perl -wT" > ./config.tmp;
-      echo "#!${d}perl" > ./config2.tmp;
-      found=1; 
-      break; 
+      ver=`${d}perl -e 'print $];'`;
+      if (`${d}perl -e 'exit( $] >= 5.008);'`) then 
+        echo "old version of perl found: ${d}perl (version $ver) -- continuing";
+      else      
+        echo "perl found: ${d}perl (version $ver)";
+        echo "#!${d}perl -wT" > ./config.tmp;
+        echo "#!${d}perl" > ./config2.tmp;
+        perlexe="${d}perl";
+        found=1; 
+        break; 
+      fi;
     fi;
   fi;
 done
@@ -79,13 +84,13 @@ if (test $found -eq 0) then
     read perlexe;
     if (test -x "$perlexe") then
       if (test -n "`$perlexe -v 2> /dev/null | awk '/This is perl/ {print $0}'`")       then
-        ver=`$perlexe -v 2> /dev/null | awk '/This is perl,/ {print $4}'`;
-        if (test "$ver" '<' "v5.8.0") then 
+        ver=`$perlexe -e 'print $];'`;
+        if (`$perlexe -e 'exit( $] >= 5.008);'`) then 
           echo "This version of Perl is too old, 5.8.0 or older needed";
-        else	  
+        else      
           echo "Correct version found";
-          echo "#!${d}perl -wT" > ./config.tmp;
-          echo "#!${d}perl" > ./config2.tmp;
+          echo "#!${perlexe} -wT" > ./config.tmp;
+          echo "#!${perlexe}" > ./config2.tmp;
           found=1; 
           break; 
         fi;
@@ -99,7 +104,7 @@ if (test $found -eq 0) then
 fi
 
 # Check if this version of Perl supports large files
-if (test -z "`${d}perl -V 2> /dev/null | awk '/USE_LARGE_FILES/ {print $0}'`") then
+if (test -z "`$perlexe -V 2> /dev/null | awk '/USE_LARGE_FILES/ {print $0}'`") then
   echo ''
   echo '    NOTE: It appears that your Perl does not support large files.';
   echo '    You therefore will not be able to analyze images larger than 2GB.';
