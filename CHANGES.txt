@@ -1,3 +1,8 @@
+--------------------------- Version 2.XX --------------------------------
+11/7/08: Bug Fix: Changed case management code to not error when 'dls ...' 
+line was encountered. 
+
+--------------------------- Version 2.20 --------------------------------
 7/1/08: Update: Updated FAT sizes based on new "special" files.
 
 7/9/08: Update: Updated NTFS processing for orphan files / removed
