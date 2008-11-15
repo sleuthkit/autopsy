@@ -52,7 +52,6 @@ files appended to each other?
 --------------------- GENERAL -----------------------------
 - Add foremost
 - link in meta data to list just unallocated / used
-- HTML encode output data (TASK outout)
 - Make data bases updatable in the host details view
 - Option to mount images in loopback when it is a Linux system
 - read config files in autopsy itself and not everytime ...

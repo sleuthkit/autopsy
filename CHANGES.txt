@@ -2,6 +2,8 @@
 11/7/08: Bug Fix: Changed case management code to not error when 'dls ...' 
 line was encountered. 
 
+11/14/08: Bug Fix: Fixed bug 2288406 (parsing of new fls -l format when file name searching and deleted file listing)
+
 --------------------------- Version 2.20 --------------------------------
 7/1/08: Update: Updated FAT sizes based on new "special" files.
 
