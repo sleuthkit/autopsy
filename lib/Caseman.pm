@@ -1242,7 +1242,8 @@ sub read_host_config {
 
         # blkls entry
         # blkls themname	myname
-        elsif (/^blkls\s+($::REG_VNAME)\s+($::REG_VNAME)\s+($::REG_IMG)$/o) {
+        elsif ((/^blkls\s+($::REG_VNAME)\s+($::REG_VNAME)\s+($::REG_IMG)$/o) || 
+          (/^dls\s+($::REG_VNAME)\s+($::REG_VNAME)\s+($::REG_IMG)$/o)) {
             my $i   = $3;
             my $par = $2;
             my $me  = $1;

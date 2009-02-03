@@ -971,11 +971,13 @@ EOF3
 
         # for valid files and directories make a link
         # Special rule for $OrphanFiles directory, which has a size of 0
-        if (   ($meta_int[$i] >= $Fs::first_meta{$ftype})
+        if (
+               ($meta_int[$i] >= $Fs::first_meta{$ftype})
             && (($size[$i] > 0) || ($name[$i] =~ /^\$Orphan/))
             && (   ($itype[$i] eq 'r')
                 || ($itype[$i] eq 'd')
-                || ($itype[$i] eq 'v')))
+                || ($itype[$i] eq 'v'))
+          )
         {
             print "  <td><a href=\"$url\" target=\"$target\">$lcolor";
         }
@@ -1191,18 +1193,14 @@ sub file_list_file {
       . "<td>$sp</td>\n";
 
     # Mod / Written
-    print "  <td><img border=\"0\" ";
-    if ($Fs::mtime_str{$ftype} eq 'Modified') {
-        print "src=\"pict/file_h_mod_link.jpg\" "
-          . "width=\"62\" height=20 "
-          . "alt=\"Modified Time\">";
-    }
-    else {
-        print "src=\"pict/file_h_wr_link.jpg\" "
+    if ($Fs::has_mtime{$ftype}) {
+        print "  <td><img border=\"0\" "
+          . "src=\"pict/file_h_wr_link.jpg\" "
           . "width=\"60\" "
-          . "alt=\"Written Time\">";
+          . "alt=\"Written Time\">"
+          . "</td>\n"
+          . "<td>$sp</td>\n";
     }
-    print "</td>\n" . "<td>$sp</td>\n";
 
     # Access
     print "  <td><img border=\"0\" "
@@ -1212,19 +1210,25 @@ sub file_list_file {
       . "</td>\n"
       . "<td>$sp</td>\n";
 
-    # Change / Create
-    print "  <td><img border=\"0\" ";
-    if ($Fs::ctime_str{$ftype} eq 'Changed') {
-        print "src=\"pict/file_h_chg_link.jpg\" "
-          . "width=\"62\" height=20 "
-          . "alt=\"Change Time\">";
+    # Change
+    if ($Fs::has_ctime{$ftype}) {
+        print "  <td><img border=\"0\" "
+          . "src=\"pict/file_h_chg_link.jpg\" "
+          . "width=\"62\" "
+          . "alt=\"Change Time\">"
+          . "</td>\n"
+          . "<td>$sp</td>\n";
     }
-    else {
-        print "src=\"pict/file_h_cre_link.jpg\" "
-          . "width=\"59\" height=20 "
-          . "alt=\"Create Time\">";
+
+    # Create
+    if ($Fs::has_crtime{$ftype}) {
+        print "  <td><img border=\"0\" "
+          . "src=\"pict/file_h_cre_link.jpg\" "
+          . "width=\"59\" "
+          . "alt=\"Create Time\">"
+          . "</td>\n"
+          . "<td>$sp</td>\n";
     }
-    print "</td>\n" . "<td>$sp</td>\n";
 
     # Size
     print "  <td><img border=\"0\" "
@@ -1260,9 +1264,8 @@ sub file_list_file {
 
     my $row = 0;
     while ($_ = Exec::read_pipe_line(*OUT)) {
-
         if (
-/^($::REG_MTYPE)\/($::REG_MTYPE)\s*(\*?)\s*($::REG_META)(\(realloc\))?:\t(.+?)\t($::REG_DATE)\t($::REG_DATE)\t($::REG_DATE)\t(\d+)\t(\d+)\t(\d+)$/o
+/^($::REG_MTYPE)\/($::REG_MTYPE)\s*(\*?)\s*($::REG_META)(\(realloc\))?:\t(.+?)\t($::REG_DATE)\t($::REG_DATE)\t($::REG_DATE)\t($::REG_DATE)\t(\d+)\t(\d+)\t(\d+)$/o
           )
         {
 
@@ -1274,13 +1277,14 @@ sub file_list_file {
             my $i  = $4;
             my $r  = 0;
             $r = 1 if (defined $5);
-            my $n = $6;
-            my $m = $7;
-            my $a = $8;
-            my $c = $9;
-            my $s = $10;
-            my $g = $11;
-            my $u = $12;
+            my $n  = $6;
+            my $m  = $7;
+            my $a  = $8;
+            my $c  = $9;
+            my $cr = $10;
+            my $s  = $11;
+            my $g  = $12;
+            my $u  = $13;
 
             if ($n =~ /^\/(.*)/) {
                 $n = $1;
@@ -1378,14 +1382,19 @@ sub file_list_file {
               if ($a =~ /($::REG_DAY\s+$::REG_TIME)\s+($::REG_ZONE2)/o);
             $c = "$1&nbsp;$2"
               if ($c =~ /($::REG_DAY\s+$::REG_TIME)\s+($::REG_ZONE2)/o);
+            $cr = "$1&nbsp;$2"
+              if ($cr =~ /($::REG_DAY\s+$::REG_TIME)\s+($::REG_ZONE2)/o);
 
-            print "<td>$color$m</td>"
-              . "<td>$sp</td>\n"
-              . "<td>$color$a</td>"
-              . "<td>$sp</td>\n"
-              . "<td>$color$c</td>"
-              . "<td>$sp</td>\n"
-              . "<td>$color$s</td>"
+            print "<td>$color$m</td>" . "<td>$sp</td>\n"
+              if ($Fs::has_mtime{$ftype});
+
+            print "<td>$color$a</td>" . "<td>$sp</td>\n";
+            print "<td>$color$c</td>" . "<td>$sp</td>\n"
+              if ($Fs::has_ctime{$ftype});
+            print "<td>$color$cr</td>" . "<td>$sp</td>\n"
+              if ($Fs::has_crtime{$ftype});
+
+            print "<td>$color$s</td>"
               . "<td>$sp</td>\n"
               . "<td>$color$g</td>"
               . "<td>$sp</td>\n"
@@ -1470,18 +1479,14 @@ sub file_list_del {
       . "<td>$sp</td>\n";
 
     # Mod / Written
-    print "  <td><img border=\"0\" ";
-    if ($Fs::mtime_str{$ftype} eq 'Modified') {
-        print "src=\"pict/file_h_mod_link.jpg\" "
-          . "width=\"62\" height=20 "
-          . "alt=\"Modified Time\">";
-    }
-    else {
-        print "src=\"pict/file_h_wr_link.jpg\" "
+    if ($Fs::has_mtime{$ftype}) {
+        print "  <td><img border=\"0\" "
+          . "src=\"pict/file_h_wr_link.jpg\" "
           . "width=\"60\" "
-          . "alt=\"Written Time\">";
+          . "alt=\"Written Time\">"
+          . "</td>\n"
+          . "<td>$sp</td>\n";
     }
-    print "</td>\n" . "<td>$sp</td>\n";
 
     # Access
     print "  <td><img border=\"0\" "
@@ -1491,19 +1496,25 @@ sub file_list_del {
       . "</td>\n"
       . "<td>$sp</td>\n";
 
-    # Change / Create
-    print "  <td><img border=\"0\" ";
-    if ($Fs::ctime_str{$ftype} eq 'Changed') {
-        print "src=\"pict/file_h_chg_link.jpg\" "
-          . "width=\"62\" height=20 "
-          . "alt=\"Change Time\">";
+    # Change
+    if ($Fs::has_ctime{$ftype}) {
+        print "  <td><img border=\"0\" "
+          . "src=\"pict/file_h_chg_link.jpg\" "
+          . "width=\"62\" "
+          . "alt=\"Change Time\">"
+          . "</td>\n"
+          . "<td>$sp</td>\n";
     }
-    else {
-        print "src=\"pict/file_h_cre_link.jpg\" "
-          . "width=\"59\" height=20 "
-          . "alt=\"Create Time\">";
+
+    # Create
+    if ($Fs::has_crtime{$ftype}) {
+        print "  <td><img border=\"0\" "
+          . "src=\"pict/file_h_cre_link.jpg\" "
+          . "width=\"59\" "
+          . "alt=\"Create Time\">"
+          . "</td>\n"
+          . "<td>$sp</td>\n";
     }
-    print "</td>\n" . "<td>$sp</td>\n";
 
     # Size
     print "  <td><img border=\"0\" "
@@ -1541,7 +1552,7 @@ sub file_list_del {
     while ($_ = Exec::read_pipe_line(*OUT)) {
 
         if (
-/^($::REG_MTYPE)\/($::REG_MTYPE)\s*(\*?)\s*($::REG_META)(\(realloc\))?:\t(.+?)\t($::REG_DATE)\t($::REG_DATE)\t($::REG_DATE)\t(\d+)\t(\d+)\t(\d+)$/o
+/^($::REG_MTYPE)\/($::REG_MTYPE)\s*(\*?)\s*($::REG_META)(\(realloc\))?:\t(.+?)\t($::REG_DATE)\t($::REG_DATE)\t($::REG_DATE)\t($::REG_DATE)\t(\d+)\t(\d+)\t(\d+)$/o
           )
         {
 
@@ -1553,13 +1564,14 @@ sub file_list_del {
             my $i  = $4;
             my $r  = 0;
             $r = 1 if (defined $5);
-            my $n = $6;
-            my $m = $7;
-            my $a = $8;
-            my $c = $9;
-            my $s = $10;
-            my $g = $11;
-            my $u = $12;
+            my $n  = $6;
+            my $m  = $7;
+            my $a  = $8;
+            my $c  = $9;
+            my $cr = $10;
+            my $s  = $11;
+            my $g  = $12;
+            my $u  = $13;
 
             if ($n =~ /^\/(.*)/) {
                 $n = $1;
@@ -1618,14 +1630,23 @@ sub file_list_del {
               if ($a =~ /($::REG_DAY\s+$::REG_TIME)\s+($::REG_ZONE2)/o);
             $c = "$1&nbsp;$2"
               if ($c =~ /($::REG_DAY\s+$::REG_TIME)\s+($::REG_ZONE2)/o);
+            $cr = "$1&nbsp;$2"
+              if ($cr =~ /($::REG_DAY\s+$::REG_TIME)\s+($::REG_ZONE2)/o);
 
             print "<td><font color=\"$::DEL_COLOR[$r]\">$m</td>"
               . "<td>$sp</td>\n"
-              . "<td><font color=\"$::DEL_COLOR[$r]\">$a</td>"
+              if ($Fs::has_mtime{$ftype});
+
+            print "<td><font color=\"$::DEL_COLOR[$r]\">$a</td>"
+              . "<td>$sp</td>\n";
+            print "<td><font color=\"$::DEL_COLOR[$r]\">$c</td>"
               . "<td>$sp</td>\n"
-              . "<td><font color=\"$::DEL_COLOR[$r]\">$c</td>"
+              if ($Fs::has_ctime{$ftype});
+            print "<td><font color=\"$::DEL_COLOR[$r]\">$cr</td>"
               . "<td>$sp</td>\n"
-              . "<td><font color=\"$::DEL_COLOR[$r]\">$s</td>"
+              if ($Fs::has_crtime{$ftype});
+
+            print "<td><font color=\"$::DEL_COLOR[$r]\">$s</td>"
               . "<td>$sp</td>\n"
               . "<td><font color=\"$::DEL_COLOR[$r]\">$g</td>"
               . "<td>$sp</td>\n"
@@ -1876,8 +1897,7 @@ sub content {
         );
 
         print "Contents Of File: $fname\n\n\n";
-        Print::print_output($_)
-          while ($_ = Exec::read_pipe_data(*OUT, 1024));
+        Print::print_output($_) while ($_ = Exec::read_pipe_data(*OUT, 1024));
         close(OUT);
     }
     elsif ($sort == $FIL_SORT_HEX) {
@@ -1905,8 +1925,7 @@ sub content {
         );
 
         print "ASCII String Contents Of File: $fname\n\n\n\n";
-        Print::print_output($_)
-          while ($_ = Exec::read_pipe_line(*OUT));
+        Print::print_output($_) while ($_ = Exec::read_pipe_line(*OUT));
         close(OUT);
     }
 
@@ -2170,8 +2189,7 @@ sub report {
         Exec::exec_pipe(*OUT,
 "'$::TSKDIR/icat' -f $ftype $recflag -o $offset -i $imgtype $img $meta"
         );
-        Print::print_output($_)
-          while ($_ = Exec::read_pipe_data(*OUT, 1024));
+        Print::print_output($_) while ($_ = Exec::read_pipe_data(*OUT, 1024));
         close(OUT);
     }
     elsif ($sort == $FIL_SORT_HEX) {
@@ -2189,8 +2207,7 @@ sub report {
         Exec::exec_pipe(*OUT,
 "'$::TSKDIR/icat' -f $ftype $recflag -o $offset -i $imgtype $img $meta | '$::TSKDIR/srch_strings' -a"
         );
-        Print::print_output($_)
-          while ($_ = Exec::read_pipe_line(*OUT));
+        Print::print_output($_) while ($_ = Exec::read_pipe_line(*OUT));
         close(OUT);
     }
 
