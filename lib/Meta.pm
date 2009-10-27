@@ -413,7 +413,7 @@ sub stats {
     if (exists($Args::args{'force'})) {
         my $f = Args::get_force();
         Exec::exec_pipe(*OUT,
-"'$::TSKDIR/istat' -f $ftype $tz -s $Caseman::ts -b $f -o $offset -i $imgtype $img $meta"
+"'$::TSKDIR/istat' -f $ftype $tz -s $Caseman::ts -B $f -o $offset -i $imgtype $img $meta"
         );
     }
     else {

@@ -1,3 +1,5 @@
+10/27/09: Update: Change istat to use -B instead of -b (new change in TSK).
+
 --------------------------- Version 2.21 --------------------------------
 11/7/08: Bug Fix: Changed case management code to not error when 'dls ...' 
 line was encountered. 
