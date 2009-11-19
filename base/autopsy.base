@@ -483,6 +483,7 @@ while (1) {
 # Error messages
 sub forbid {
     my $ip = shift;
+    $ip = "" unless defined ($ip);
 
     print "HTTP/1.0 403 Forbidden$::HTTP_NL"
       . "Content-type: text/html$::HTTP_NL$::HTTP_NL"
@@ -542,6 +543,8 @@ sub spawn_cli {
 
     while (<STDIN>) {
 
+        last if (/^\s+$/);
+
         if (/^GET \/+(\S*)\s?HTTP/) {
             my $url = $1;
             my $script;
@@ -592,6 +595,21 @@ sub spawn_cli {
 
                 # Turn timer off
                 alarm(0);
+
+                 my $has_ref = 0;
+                 while (<STDIN>) {
+                     last if (/^\s+$/);
+                     if (/^Referer: /) {
+                         $has_ref = 1;
+                         last;
+                     }
+                 }
+     
+                 if (($has_ref == 0) && ($args ne "")) {
+                     Print::log_session_info("ERROR: Missing referer value");
+                     forbid();
+                     return 1;
+                 }
 
                 # Print status
                 print "HTTP/1.0 200 OK$::HTTP_NL";
@@ -781,16 +799,16 @@ sub check_tools {
         print "ERROR: Sleuth Kit img_stat executable missing\n";
         exit(1);
     }
-    unless (-x "$::FILE_EXE") {
-        print "ERROR: Sleuth Kit (or local) file executable missing\n";
+    unless ((defined $::FILE_EXE) && (-x "$::FILE_EXE")) {
+        print "ERROR: File executable ($::FILE_EXE) missing\n";
         exit(1);
     }
     unless (-x $::TSKDIR . "/fsstat") {
         print "ERROR: Sleuth Kit fsstat executable missing\n";
         exit(1);
     }
-    unless (-x "$::MD5_EXE") {
-        print "ERROR: md5 executable missing\n";
+    unless ((defined $::MD5_EXE) && (-x "$::MD5_EXE")) {
+        print "ERROR: md5 executable ($::MD5_EXE) missing\n";
         exit(1);
     }
     if ($::SHA1_EXE ne "") {
