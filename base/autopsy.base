@@ -799,7 +799,11 @@ sub check_tools {
         print "ERROR: Sleuth Kit img_stat executable missing\n";
         exit(1);
     }
-    unless ((defined $::FILE_EXE) && (-x "$::FILE_EXE")) {
+    unless (defined $::FILE_EXE) {
+        print "ERROR: File executable location not defined in config file\n";
+        exit(1);
+    }
+    unless (-x "$::FILE_EXE") {
         print "ERROR: File executable ($::FILE_EXE) missing\n";
         exit(1);
     }
@@ -807,7 +811,11 @@ sub check_tools {
         print "ERROR: Sleuth Kit fsstat executable missing\n";
         exit(1);
     }
-    unless ((defined $::MD5_EXE) && (-x "$::MD5_EXE")) {
+    unless (defined $::MD5_EXE) {
+        print "ERROR: MD5 executable location not defined in config file\n";
+        exit(1);
+    }
+    unless (-x "$::MD5_EXE") {
         print "ERROR: md5 executable ($::MD5_EXE) missing\n";
         exit(1);
     }

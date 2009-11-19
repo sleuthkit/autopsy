@@ -52,92 +52,6 @@ echo ""
 echo "   Autopsy Forensic Browser Installation"
 echo ""
 
-#############################################################################
-# Setup Perl locations
-#############################################################################
-
-found=0;
-
-for d in $dirs
-  do if (test -x ${d}perl) then
-    if (test -n "`${d}perl -v 2> /dev/null | awk '/This is perl/ {print $0}'`") then
-      ver=`${d}perl -e 'print $];'`;
-      if (`${d}perl -e 'exit( $] >= 5.008);'`) then 
-        echo "old version of perl found: ${d}perl (version $ver) -- continuing";
-      else      
-        echo "perl found: ${d}perl (version $ver)";
-        echo "#!${d}perl -wT" > ./config.tmp;
-        echo "#!${d}perl" > ./config2.tmp;
-        perlexe="${d}perl";
-        found=1; 
-        break; 
-      fi;
-    fi;
-  fi;
-done
-
-# If it wasn't found, then prompt for it.
-if (test $found -eq 0) then
-  echo 'ERROR: perl not found or the incorrect version found';
-  while (test 1 -eq 1) 
-    do echo 'Enter location of perl executable:';
-    read perlexe;
-    if (test -x "$perlexe") then
-      if (test -n "`$perlexe -v 2> /dev/null | awk '/This is perl/ {print $0}'`")       then
-        ver=`$perlexe -e 'print $];'`;
-        if (`$perlexe -e 'exit( $] >= 5.008);'`) then 
-          echo "This version of Perl is too old, 5.8.0 or older needed";
-        else      
-          echo "Correct version found";
-          echo "#!${perlexe} -wT" > ./config.tmp;
-          echo "#!${perlexe}" > ./config2.tmp;
-          found=1; 
-          break; 
-        fi;
-      else
-        echo "Perl found, but is not working.  Try another";
-      fi;
-    else
-      echo "file not found";
-    fi
-  done
-fi
-
-# Check if this version of Perl supports large files
-if (test -z "`$perlexe -V 2> /dev/null | awk '/USE_LARGE_FILES/ {print $0}'`") then
-  echo ''
-  echo '    NOTE: It appears that your Perl does not support large files.';
-  echo '    You therefore will not be able to analyze images larger than 2GB.';
-  echo '    Download the source version from www.cpan.org and compile a new version.';
-  echo "  [Press Enter to Continue]";
-  read foo;
-  echo ''
-fi;
-
-# Get current working directory for lib
-echo "use lib '$PWD/';" >> ./config.tmp
-echo "use lib '$PWD/lib/';" >> ./config.tmp
-
-# Write autopsy
-if (test -f ./autopsy) then
-  echo "autopsy already exists, overwrite? (y/n):";
-  read rep;
-  if (test "$rep" = "y") then
-    cat ./config.tmp base/autopsy.base > ./autopsy
-    cat ./config2.tmp base/make-live-cd.base > ./make-live-cd
-  else 
-    echo '  original version was kept';
-  fi
-else
-  cat ./config.tmp base/autopsy.base > ./autopsy
-  cat ./config2.tmp base/make-live-cd.base > ./make-live-cd
-fi
-chmod 0755 ./autopsy
-chmod 0755 ./make-live-cd
-
-# cleanup
-rm -f ./config.tmp
-rm -f ./config2.tmp
 
 
 #############################################################################
@@ -150,36 +64,7 @@ conf='conf.pl'
 if (test -f $conf) then
   echo "A configuration file already exists, overwrite? (y/n):";
   read rep;
-  if (test "$rep" = "n") then
-    exit 0;
-  fi
-fi
-
-# echo ''
-# echo '---------------------------------------------------------------'
-# echo ''
-# echo 'Autopsy can use the configuration file from a previous installation'
-# echo ''
-# echo 'Would you like to use a previous configuration file (y/n) [n]'
-# read rep;
-# if (test "$rep" = "y") then
-
-#  echo 'Enter the directory of the previous installation (or cancel):'
-#  while (test 1 -eq 1) 
-#    do read prevdir;
-#    if (test "$prevdir" = "cancel") then
-#		break;
-#	fi;
-#    if (test -f "${prevdir}/conf.pl") then
-#		/bin/cp "${prevdir}/conf.pl" .
-#		echo '  Configuration file copied from $prevdir';
-
-#		# Check the config status
-#		exit 0;
-#	fi;
-#    echo 'Configuration file not found, try again (or 'cancel' to stop):'
-#  done;
-#fi;
+  if (test "$rep" = "y") then
 
 
 # First add the variables that are static
@@ -483,13 +368,103 @@ fi
 echo \$LOCKDIR = \'${locker}\'\; >> $conf;
 
 
+  fi
+fi
+
+# Start of non-conf.pl file configuration
+
+#############################################################################
+# Setup Perl locations
+#############################################################################
+found=0;
+
+for d in $dirs
+  do if (test -x ${d}perl) then
+    if (test -n "`${d}perl -v 2> /dev/null | awk '/This is perl/ {print $0}'`") then
+      ver=`${d}perl -e 'print $];'`;
+      if (`${d}perl -e 'exit( $] >= 5.008);'`) then 
+        echo "old version of perl found: ${d}perl (version $ver) -- continuing";
+      else      
+        echo "perl found: ${d}perl (version $ver)";
+        echo "#!${d}perl -wT" > ./config.tmp;
+        echo "#!${d}perl" > ./config2.tmp;
+        perlexe="${d}perl";
+        found=1; 
+        break; 
+      fi;
+    fi;
+  fi;
+done
+
+# If it wasn't found, then prompt for it.
+if (test $found -eq 0) then
+  echo 'ERROR: perl not found or the incorrect version found';
+  while (test 1 -eq 1) 
+    do echo 'Enter location of perl executable:';
+    read perlexe;
+    if (test -x "$perlexe") then
+      if (test -n "`$perlexe -v 2> /dev/null | awk '/This is perl/ {print $0}'`")       then
+        ver=`$perlexe -e 'print $];'`;
+        if (`$perlexe -e 'exit( $] >= 5.008);'`) then 
+          echo "This version of Perl is too old, 5.8.0 or older needed";
+        else      
+          echo "Correct version found";
+          echo "#!${perlexe} -wT" > ./config.tmp;
+          echo "#!${perlexe}" > ./config2.tmp;
+          found=1; 
+          break; 
+        fi;
+      else
+        echo "Perl found, but is not working.  Try another";
+      fi;
+    else
+      echo "file not found";
+    fi
+  done
+fi
+
+# Check if this version of Perl supports large files
+if (test -z "`$perlexe -V 2> /dev/null | awk '/USE_LARGE_FILES/ {print $0}'`") then
+  echo ''
+  echo '    NOTE: It appears that your Perl does not support large files.';
+  echo '    You therefore will not be able to analyze images larger than 2GB.';
+  echo '    Download the source version from www.cpan.org and compile a new version.';
+  echo "  [Press Enter to Continue]";
+  read foo;
+  echo ''
+fi;
+
+# Get current working directory for lib
+echo "use lib '$PWD/';" >> ./config.tmp
+echo "use lib '$PWD/lib/';" >> ./config.tmp
+
+if (test -f ./autopsy) then
+  echo "autopsy already exists, overwrite? (y/n):";
+  read rep;
+  if (test "$rep" = "y") then
+    cat ./config.tmp base/autopsy.base > ./autopsy
+    cat ./config2.tmp base/make-live-cd.base > ./make-live-cd
+  else 
+    echo '  original version was kept';
+  fi
+else
+  cat ./config.tmp base/autopsy.base > ./autopsy
+  cat ./config2.tmp base/make-live-cd.base > ./make-live-cd
+fi
+chmod 0755 ./autopsy
+chmod 0755 ./make-live-cd
+
+# cleanup
+rm -f ./config.tmp
+rm -f ./config2.tmp
+
+
 #############################################################################
 # CLEANUP
 #############################################################################
 echo ''
 echo '---------------------------------------------------------------'
 echo ''
-echo "Settings saved to $conf."
 echo "Execute the './autopsy' command to start with default settings."
 echo ''
 
