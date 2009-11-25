@@ -37,12 +37,18 @@ die "Error copying grep executable"
   unless (-x "$CD/bin/grep");
 
 
+die "Missing MD5 executable ($::MD5_EXE)"
+  unless (-x "$::MD5_EXE");
+`cp '$::MD5_EXE' '$CD/bin/md5sum'`; 
+die "Error copying MD5 executable" 
+  unless (-x "$CD/bin/md5sum");
+
 # Sleuth Kit Binaries
 die "Missing Sleuth Kit Directory ($TSKDIR)"
   unless (-d "$TSKDIR");
 
 foreach my $exec ("blkcalc", "blkcat", "blkls", "blkstat", "ffind", "fls", "fsstat", 
-  "icat", "ifind", "ils", "istat", "md5", "sha1", "srch_strings", "img_stat", "mmls") {
+  "icat", "ifind", "ils", "istat", "srch_strings", "img_stat", "mmls") {
 
 	die "Missing Sleuth Kit executable ($exec)" 
 	  unless (-x "$TSKDIR/$exec");
@@ -139,6 +145,7 @@ print CONF "\n";
 print CONF "# System Utilities\n";
 print CONF "\$GREP_EXE = './bin/grep';\n";
 print CONF "\$FILE_EXE = './bin/file';\n";
+print CONF "\$MD5_EXE = './bin/md5sum';\n";
 print CONF "\$TSKDIR = './bin/';\n";
 
 close CONF;
