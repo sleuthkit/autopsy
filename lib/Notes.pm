@@ -249,8 +249,7 @@ sub write_data {
 
     # The actual notes and a line at the bottom
     print NOTES "\n$Args::args{'note'}\n\n" . "-" x 70 . "\n";
-    print "<p>$Args::args{'note'}<p>";
-
+    print "<p>".Print::html_encode($Args::args{'note'})."<p>";
     close(NOTES);
 
     print "<hr>\n"
@@ -376,7 +375,7 @@ sub write_file {
 
         # The actual notes and a line at the bottom
         print NOTES "\n$Args::args{'note'}\n\n" . "-" x 70 . "\n";
-        print "<p>$Args::args{'note'}<p>";
+        print "<p>".Print::html_encode($Args::args{'note'})."<p>";
 
         close(NOTES);
     }
@@ -527,7 +526,7 @@ sub read_norm {
             }
         }
         else {
-            print "$_<br>";
+            print Print::html_encode($_);
         }
 
         if (/^Volume: ($::REG_VNAME)   Meta: ([0-9\-]+)/o) {
@@ -690,7 +689,7 @@ sub write_seq_man {
     print "Event Added to Sequencer file:<br><br>\n"
       . "$::d2m[$Args::args{'mon'}] $Args::args{'day'}, $Args::args{'year'} "
       . "$Args::args{'hour'}:$Args::args{'min'}:$Args::args{'sec'}<br><br>\n"
-      . "$Args::args{'note'}<br>\n"
+      . Print::html_encode($Args::args{'note'})."<br>\n"
       . "<p><a href=\"$::PROGNAME?mod=$::MOD_NOTES&view=$Notes::READ_SEQ&$Args::baseargs&"
       . "year=$Args::enc_args{'year'}&mon=$Args::enc_args{'mon'}&day=$Args::enc_args{'day'}&"
       . "hour=$Args::enc_args{'hour'}&min=$Args::enc_args{'min'}&sec=$Args::enc_args{'sec'}\">"
@@ -849,6 +848,7 @@ sub read_seq {
             print "</td>\n";
 
             # Print the actual note
+            $note[$i] = Print::html_encode($note[$i]);
             $note[$i] = "&nbsp;" if ($note[$i] eq "");
             print "<td align=left>$note[$i]</td></tr>\n";
 
