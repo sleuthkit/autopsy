@@ -155,7 +155,7 @@ sub print_html_header_frameset {
 <head>
   <title>$text</title>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <link rel="stylesheet" href="/global.css">
+  <link rel="stylesheet" href="global.css">
 </head>
 
 EOF
@@ -169,7 +169,7 @@ sub print_html_footer_frameset {
 sub print_html_header {
     print_html_header_frameset(shift);
     print "<body bgcolor=\"$::BACK_COLOR\">\n\n";
-    print "<link rel=\"SHORTCUT ICON\" href=\"/pict/favicon.ico\">\n";
+    print "<link rel=\"SHORTCUT ICON\" href=\"pict/favicon.ico\">\n";
 }
 
 sub print_html_footer {
@@ -182,7 +182,7 @@ sub print_html_header_tabs {
     print_html_header_frameset(shift);
     print "<body marginheight=0 marginwidth=0 topmargin=0 "
       . "leftmargin=0 rightmargin=0 botmargin=0 bgcolor=\"$::BACK_COLOR\">\n\n";
-    print "<link rel=\"SHORTCUT ICON\" href=\"/pict/favicon.ico\">\n";
+    print "<link rel=\"SHORTCUT ICON\" href=\"pict/favicon.ico\">\n";
     $is_body = 1;
 }
 
@@ -206,7 +206,7 @@ sub print_html_header_javascript {
 <head>
   <title>$text</title>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <link rel="stylesheet" href="/global.css">
+  <link rel="stylesheet" href="global.css">
   <script language=\"JavaScript\">
   <!-- hide script from old browsers
   document.write(\'<center><font color=\"red\"><p>WARNING: Your browser currently has Java Script enabled.</font><p>You do not need Java Script to use Autopsy and it is recommended that it be turned off for security reasons.<hr></center>\');
@@ -215,7 +215,7 @@ sub print_html_header_javascript {
 </head>
 
 <body bgcolor=\"$::BACK_COLOR\">
-<link rel=\"SHORTCUT ICON\" href=\"/pict/favicon.ico\">
+<link rel=\"SHORTCUT ICON\" href=\"pict/favicon.ico\">
 
 EOF
 }
