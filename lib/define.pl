@@ -1,5 +1,5 @@
 #
-$VER = '2.21';
+$VER = '2.22';
 
 $HTTP_NL    = "\x0a";
 $notes_file = "";

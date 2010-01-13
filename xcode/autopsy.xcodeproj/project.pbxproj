@@ -90,9 +90,11 @@
 		02670C5B079A2F7E00BA95F3 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 027355510E7C4D6D002BD6DB /* Build configuration list for PBXProject "autopsy" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 02670C57079A2F7E00BA95F3;
 			projectDirPath = "";
+			projectRoot = "";
 			targets = (
 			);
 		};
