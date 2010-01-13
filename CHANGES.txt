@@ -1,4 +1,13 @@
+--------------------------- Version 2.22 --------------------------------
 10/27/09: Update: Change istat to use -B instead of -b (new change in TSK).
+
+11/19/09: Update: Improved configure script process and error message for
+FILE_EXE check.
+
+11/25/09: Fixed MD5 exe bug when building live CD
+
+12/30/09: Fixed issue 2923857 re: cookie errors for the icon and css file 
+links when cookies are used. 
 
 --------------------------- Version 2.21 --------------------------------
 11/7/08: Bug Fix: Changed case management code to not error when 'dls ...' 
