@@ -61,10 +61,15 @@ echo ""
 
 conf='conf.pl'
 
+rep=""
 if (test -f $conf) then
   echo "A configuration file already exists, overwrite? (y/n):";
   read rep;
-  if (test "$rep" = "y") then
+else
+  rep="y"
+fi
+
+if (test "$rep" = "y") then
 
 
 # First add the variables that are static
@@ -367,8 +372,6 @@ fi
 
 echo \$LOCKDIR = \'${locker}\'\; >> $conf;
 
-
-  fi
 fi
 
 # Start of non-conf.pl file configuration
