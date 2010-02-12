@@ -257,7 +257,7 @@ sub enter {
                   . "<input type=\"hidden\" name=\"srchidx\" value=\"$srch_idx\">\n"
                   . Args::make_hidden();
 
-                print "<input type=\"SUBMIT\" value=\"$prev_str ($prev_cnt)\">"
+                print "<input type=\"SUBMIT\" value=\"".Print::html_encode($prev_str)." ($prev_cnt)\">"
                   . "<br></form>\n";
 
                 if ($row_idx == 3) {

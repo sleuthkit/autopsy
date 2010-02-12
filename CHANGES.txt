@@ -1,4 +1,8 @@
 --------------------------- Version 2.22 --------------------------------
+2/12/10: bug fix: resolved issue 2950693 where previous searches
+were not shown if they used quotes.
+
+--------------------------- Version 2.22 --------------------------------
 10/27/09: Update: Change istat to use -B instead of -b (new change in TSK).
 
 11/19/09: Update: Improved configure script process and error message for
