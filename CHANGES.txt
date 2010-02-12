@@ -2,6 +2,12 @@
 2/12/10: bug fix: resolved issue 2950693 where previous searches
 were not shown if they used quotes.
 
+2/12/10: bug fix: resolved issue 2932385 where wrong flag was being used
+to do only doing category searching"
+
+2/12/10: bug fix: resolved issue 2779244 where wrong sorter path was
+being used.
+
 --------------------------- Version 2.22 --------------------------------
 10/27/09: Update: Change istat to use -B instead of -b (new change in TSK).
 

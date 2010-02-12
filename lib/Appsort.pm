@@ -251,7 +251,7 @@ sub run {
 
     # If both actions are wanted then no flags are needed
     $sort_args .= "-e " if (($ext == 1) && ($cat == 0));
-    $sort_args .= "-i " if (($ext == 0) && ($cat == 1));
+    $sort_args .= "-E " if (($ext == 0) && ($cat == 1));
 
     my $sort_dir = get_sorter_dir();
 
@@ -259,7 +259,7 @@ sub run {
         if (   (exists $Args::args{'sorter_img'})
             && ($Args::args{'sorter_img'} == 1))
         {
-            my $config = "$::TSKDIR/../share/tsk/sorter/images.sort";
+            my $config = "$::TSKDIR/../share/tsk3/sorter/images.sort";
 
             Print::print_err("images configuration file not found ($config)")
               unless (-e "$config");
