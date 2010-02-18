@@ -1,4 +1,4 @@
---------------------------- Version 2.22 --------------------------------
+--------------------------- Version 2.23 --------------------------------
 2/12/10: bug fix: resolved issue 2950693 where previous searches
 were not shown if they used quotes.
 
