@@ -460,7 +460,8 @@ sub stats {
                 print "$_<br>\n";
             }
             $mode = 1 if (/^Direct Blocks|^Sectors/);
-            $mode = 1 if (/^Attributes/);
+            $mode = 1 if (/^Attributes:/);  # HFS gets messed up without ":"
+            $mode = 1 if (/^Data Fork Blocks:/); 
 
             if ((/^size: (\d+)/) && ($1 == 0)) {
                 $force = 1;
