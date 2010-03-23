@@ -291,7 +291,9 @@ echo "  Version $ver found";
 
 if (test "$ver" '<' "$minver") then 
   echo "Your version of The Sleuth Kit is not current enough - $minver is needed";
-  exit 1;
+  if (test "$ver" '>' "0.0.0") then 
+    exit 1;
+  fi;
 elif (test "$ver" '<' "$curtskver") then 
 	echo '';
     echo "*** NOTE: A more recent version ($curtskver) of The Sleuth Kit Exists ***"
