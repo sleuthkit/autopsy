@@ -2,14 +2,17 @@
                 http://www.sleuthkit.org/autopsy
 
               Brian Carrier [carrier@sleuthkit.org]
-                  Last Update: January 29, 2008
+                     Last Update: March 2010
 
 
 Installation 
 -----------------------------------------------------------------------------
 1. Install The Sleuth Kit (see README for download locations).   This
    includes doing a 'make install' so that the executables and files
-   are installed in a single directory. 
+   are installed in a single directory.  Note that this does not 
+   currently work natively on Windows.  It will work using Cygwin, but
+   you must install and build The Sleuth Kit in Cygwin and not use the
+   Win32 executables that are available on the sleuthkit.org website.
 
 2. Untar the Autopsy file. 
 
