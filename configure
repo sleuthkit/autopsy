@@ -4,7 +4,7 @@
 minver="3.1.0";
 
 # The last released version of TSK
-curtskver="3.1.0";
+curtskver="3.1.1";
 
 # Configuration script for the Autopsy Forensic Browser
 #
