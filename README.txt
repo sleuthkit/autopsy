@@ -1,7 +1,7 @@
                      Autopsy Forensic Browser 
                  http://www.sleuthkit.org/autopsy
 
-                    Last Updated: January 2008
+                     Last Updated: March 2010
 
 
 Quick Overview
@@ -220,7 +220,9 @@ Kit Informer for more details.
 Requirements
 -----------------------------------------------------------------------------
 Supported Platforms:
-Autopsy will run on any system that is supported by The Sleuth Kit.
+Autopsy will run on any Unix-like system that is supported by The
+Sleuth Kit.  To run in Windows, you must install and run both The
+Sleuth Kit and Autopsy in Cygwin.
 
 Autopsy needs the following software:
 

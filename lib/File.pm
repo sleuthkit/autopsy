@@ -970,10 +970,10 @@ EOF3
           . "  <td>$sp</td>\n";
 
         # for valid files and directories make a link
-        # Special rule for $OrphanFiles directory, which has a size of 0
+        # Special rule for $OrphanFiles directory and HFS directories, which have a size of 0
         if (
                ($meta_int[$i] >= $Fs::first_meta{$ftype})
-            && (($size[$i] > 0) || ($name[$i] =~ /^\$Orphan/))
+            && (($size[$i] > 0) || (($name[$i] =~ /^\$Orphan/) && ($itype[$i] eq 'd')) || (($ftype =~ /hfs/) && ($itype[$i] eq 'd')))
             && (   ($itype[$i] eq 'r')
                 || ($itype[$i] eq 'd')
                 || ($itype[$i] eq 'v'))
