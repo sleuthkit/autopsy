@@ -1,0 +1,138 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXFileReference section */
+		02B041C40E9070E400E46A87 /* .perltidyrc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = .perltidyrc; sourceTree = "<group>"; };
+		02B041C50E9070E400E46A87 /* Appsort.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Appsort.pm; sourceTree = "<group>"; };
+		02B041C60E9070E400E46A87 /* Appview.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Appview.pm; sourceTree = "<group>"; };
+		02B041C70E9070E400E46A87 /* Args.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Args.pm; sourceTree = "<group>"; };
+		02B041C80E9070E400E46A87 /* Caseman.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Caseman.pm; sourceTree = "<group>"; };
+		02B041C90E9070E400E46A87 /* Data.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Data.pm; sourceTree = "<group>"; };
+		02B041CA0E9070E400E46A87 /* define.pl */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = define.pl; sourceTree = "<group>"; };
+		02B041CB0E9070E400E46A87 /* Exec.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Exec.pm; sourceTree = "<group>"; };
+		02B041CC0E9070E400E46A87 /* File.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = File.pm; sourceTree = "<group>"; };
+		02B041CD0E9070E400E46A87 /* Filesystem.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Filesystem.pm; sourceTree = "<group>"; };
+		02B041CE0E9070E400E46A87 /* Frame.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Frame.pm; sourceTree = "<group>"; };
+		02B041CF0E9070E400E46A87 /* Fs.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Fs.pm; sourceTree = "<group>"; };
+		02B041D00E9070E400E46A87 /* Hash.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Hash.pm; sourceTree = "<group>"; };
+		02B041D10E9070E400E46A87 /* Kwsrch.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Kwsrch.pm; sourceTree = "<group>"; };
+		02B041D20E9070E400E46A87 /* Main.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Main.pm; sourceTree = "<group>"; };
+		02B041D30E9070E400E46A87 /* Meta.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Meta.pm; sourceTree = "<group>"; };
+		02B041D40E9070E400E46A87 /* Notes.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Notes.pm; sourceTree = "<group>"; };
+		02B041D50E9070E400E46A87 /* Print.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Print.pm; sourceTree = "<group>"; };
+		02B041D60E9070E400E46A87 /* search.pl */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = search.pl; sourceTree = "<group>"; };
+		02B041D70E9070E400E46A87 /* Timeline.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Timeline.pm; sourceTree = "<group>"; };
+		02B041D80E9070E400E46A87 /* Vs.pm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = Vs.pm; sourceTree = "<group>"; };
+		02B041DA0E90710300E46A87 /* .perltidyrc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = .perltidyrc; sourceTree = "<group>"; };
+		02B041DB0E90710300E46A87 /* autopsy.base */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = autopsy.base; sourceTree = "<group>"; };
+		02B041DD0E90710400E46A87 /* make-live-cd.base */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = "make-live-cd.base"; sourceTree = "<group>"; };
+		02EF3BBF0860F668001CA8B0 /* global.css */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = global.css; path = ../global.css; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		02670C57079A2F7E00BA95F3 = {
+			isa = PBXGroup;
+			children = (
+				02B041D90E90710300E46A87 /* base */,
+				02B041C30E9070E400E46A87 /* lib */,
+				02EF3BBF0860F668001CA8B0 /* global.css */,
+			);
+			sourceTree = "<group>";
+		};
+		02B041C30E9070E400E46A87 /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				02B041C40E9070E400E46A87 /* .perltidyrc */,
+				02B041C50E9070E400E46A87 /* Appsort.pm */,
+				02B041C60E9070E400E46A87 /* Appview.pm */,
+				02B041C70E9070E400E46A87 /* Args.pm */,
+				02B041C80E9070E400E46A87 /* Caseman.pm */,
+				02B041C90E9070E400E46A87 /* Data.pm */,
+				02B041CA0E9070E400E46A87 /* define.pl */,
+				02B041CB0E9070E400E46A87 /* Exec.pm */,
+				02B041CC0E9070E400E46A87 /* File.pm */,
+				02B041CD0E9070E400E46A87 /* Filesystem.pm */,
+				02B041CE0E9070E400E46A87 /* Frame.pm */,
+				02B041CF0E9070E400E46A87 /* Fs.pm */,
+				02B041D00E9070E400E46A87 /* Hash.pm */,
+				02B041D10E9070E400E46A87 /* Kwsrch.pm */,
+				02B041D20E9070E400E46A87 /* Main.pm */,
+				02B041D30E9070E400E46A87 /* Meta.pm */,
+				02B041D40E9070E400E46A87 /* Notes.pm */,
+				02B041D50E9070E400E46A87 /* Print.pm */,
+				02B041D60E9070E400E46A87 /* search.pl */,
+				02B041D70E9070E400E46A87 /* Timeline.pm */,
+				02B041D80E9070E400E46A87 /* Vs.pm */,
+			);
+			name = lib;
+			path = ../lib;
+			sourceTree = SOURCE_ROOT;
+		};
+		02B041D90E90710300E46A87 /* base */ = {
+			isa = PBXGroup;
+			children = (
+				02B041DA0E90710300E46A87 /* .perltidyrc */,
+				02B041DB0E90710300E46A87 /* autopsy.base */,
+				02B041DD0E90710400E46A87 /* make-live-cd.base */,
+			);
+			name = base;
+			path = ../base;
+			sourceTree = SOURCE_ROOT;
+		};
+/* End PBXGroup section */
+
+/* Begin PBXProject section */
+		02670C5B079A2F7E00BA95F3 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 027355510E7C4D6D002BD6DB /* Build configuration list for PBXProject "autopsy" */;
+			compatibilityVersion = "Xcode 2.4";
+			hasScannedForEncodings = 1;
+			mainGroup = 02670C57079A2F7E00BA95F3;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		027355520E7C4D6D002BD6DB /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Development;
+		};
+		027355530E7C4D6D002BD6DB /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Deployment;
+		};
+		027355540E7C4D6D002BD6DB /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Default;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		027355510E7C4D6D002BD6DB /* Build configuration list for PBXProject "autopsy" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				027355520E7C4D6D002BD6DB /* Development */,
+				027355530E7C4D6D002BD6DB /* Deployment */,
+				027355540E7C4D6D002BD6DB /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 02670C5B079A2F7E00BA95F3 /* Project object */;
+}

@@ -1,0 +1,68 @@
+<HTML>
+<HEAD><TITLE>Autopsy Keyword Search Help</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+
+
+<CENTER><H2>Keyword Search</H2></CENTER>
+<H3>Overview</H3>
+<P>
+This mode searches an image for a given string.  This is most useful
+when searching for deleted content.  To decrease the time required
+for a search, a "strings" file can serve as an index.  This file
+will contain only the ASCII strings in the image.  
+
+<P>
+Autopsy will also prompt you to create a file of unallocated data if one
+does not exist.  This obviously is useful for recovering deleted data. 
+If a string is found in this file, Autopsy will also report the location
+in the original image.  
+
+<H3>Entering the String</H3>
+
+Enter the string or regular expression into the text box.  Autopsy
+allows you to search for a either a specific string or using 'grep'
+style regular expressions.  A case insensitive search will occur
+if the appropriate box is checked, otherwise it is case sensitive.
+You will also have the option of searching for the string as an
+ASCII or a Unicode string.  Unicode is much more common in Windows
+systems than Unix systems.  If both types are selected, then two
+searches will be done.
+
+<P>
+If you have not generated a strings file or unallocated data file yet,
+that option will exist.
+
+<P>
+The <U>Load Unallocated Image</U> or <U>Load Allocated Image</U> button
+exists to switch between the two file types if they have both been
+generated.  
+
+<P>
+Autopsy also has the ability to perform pre-configured searches.  They
+are shown in the "Predefined Searches" section.  
+
+<H3>Viewing the Results</H3>
+After the image has been searched, a list of "hits" will appear on the
+left-hand side.  Each data unit that contains the string is listed with
+the offset of each occurrence.  If a regular expression is used, then the
+exact location is not given.  
+
+<P>
+If the search was done on an unallocated data file, then an option will
+exist next to each address to also view the original.  Doing so could
+reveal the inode that allocated it.
+
+<H3>Previous Searches</H3>
+The search results are saved to a file so it is easy to recall the
+results with out having to perform the search again.  
+
+<H3>Regular Expressions</H3>
+You can use grep regular expressions in the search
+(refer to the 'grep' <A HREF="grep.html">
+help page</A> and man page for more details).   To search for
+a couple of different words you would use: <TT>(foo) | (bar)</TT>.
+
+
+<HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>

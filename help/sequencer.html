@@ -1,0 +1,49 @@
+<HTML>
+<HEAD><TITLE>Autopsy Event Sequencer Help</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+
+<CENTER><H2>Event Sequencer</H2></CENTER>
+
+<H3>Overview</H3>
+<P>
+In many investigations, evidence is not found in the order that it was
+created during the incident.  The notes feature in Autopsy allows one to
+make notes about certain files, but it does not help one to put a 
+series of events in order.  
+
+<P>
+The Event Sequencer allows the investigator to make notes and comments
+about pieces of evidence.   Each note must have a time associated with
+it.  For files and meta data, the times can be one or more of the
+MAC times.  Other notes can have times entered manually.  The sequencer
+will sort the events after each is entered so that the investigator can
+quickly identify where there are gaps in the findings. 
+
+<H3>Adding an Event</H3>
+<P>
+To add an event for a file, directory, or meta data structure, select
+the <U>Add Note</U> button.  At the bottom will be check boxes that allow
+an event to be generated for each of the file's times.  The "standard"
+note does not have to be generated if it is not needed.  
+
+<P>
+To add an event from a different source, go to the Event Sequencer from
+the Host Gallery (where the images are listed).  At the bottom of
+the window will be an area where the new event can be added.  The
+<B>Source</B> of the event will be shown where the file name of
+a file event is normally shown.  Examples of this type include 
+entries from firewall logs or reports from the help desk. 
+
+<H3>Viewing the Sequence Events</H3>
+<P>
+The <U>Event Sequencer</U> button can be found in the Host Gallery.  
+This window shows the events that are sorted by the time.  Events that
+correspond to a file, directory, or meta data structure will have either
+[M-Time], [A-Time], or [C-Time] in the note that shows what time this 
+event was generated from.  Clicking on the name will show the contents of 
+the file or directory.  
+
+
+<HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>

@@ -1,0 +1,46 @@
+<HTML>
+<HEAD><TITLE>Autopsy Image Details Help</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+
+<CENTER><H2>Image Details</H2></CENTER>
+
+<P>
+<H3>Overview</H3>
+Sometimes there are details about an image that do not correspond to
+any file in particular.  Those details can likely be found in this
+mode.  This mode gives the general details of the image and therefore
+the contents will vary depending on the file system type.  
+
+<P>
+<H3>FFS & EXT2FS</H3>
+For the UNIX file systems, this mode will contain the details from
+the super block.  This generally includes times that the file system
+was last mounted and any special flags.  It also has the range of
+inode addresses and fragment addresses.   For advanced file recovery,
+you can also identify the group layout and on-disk structure details.
+These could be useful for restricting where you search for data.
+Files will allocate blocks and fragments in the same Cylinder or
+Block group as their inode is in, so your attention can be restricted
+to that area.
+
+
+<P>
+<H3>FAT</H3>
+For FAT file systems, this mode will contain the File Allocation
+Table.  It will have the cluster runs, which can be selected to
+view their contents in <A HREF="data_mode.html">data unit</A>
+analysis mode.  Or, if the file is fragmented, the pointer can
+be selected and the screen will link to the next cluster chain.  
+
+
+<P>
+<H3>NTFS</H3>
+The unique information for an NTFS image is the numerical type
+associated with attributes.  These values can be dynamic and this
+area will identify what they are for that file system.  
+
+
+<P>
+<HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>

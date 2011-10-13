@@ -1,0 +1,879 @@
+#
+# autopsy gui server
+# Autopsy Forensic Browser
+#
+#
+# This file requires The Sleuth Kit
+#    www.sleuthkit.org
+#
+#
+# Brian Carrier [carrier@sleuthkit.org]
+# Copyright (c) 2001-2005 by Brian Carrier.  All rights reserved
+#
+#
+# This file is part of the Autopsy Forensic Browser (Autopsy)
+#
+# Autopsy is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# Autopsy is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Autopsy; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+#
+# THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR ANY PARTICULAR PURPOSE.
+# IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, LOSS OF USE, DATA, OR PROFITS OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# refer to Security Considerations in README for a description of the
+# cookie authentication
+#
+
+require 5.008;
+
+use strict;
+use Socket;
+
+use Main;
+use Print;
+require Fs;
+require Caseman;
+
+require 'conf.pl';
+require 'lib/define.pl';
+
+# Import variables from conf.pl
+use vars '$LOCKDIR', '$INSTALLDIR', '$PICTDIR';
+use vars '$SANITIZE_TAG', '$SANITIZE_PICT';
+use vars '$USE_STIMEOUT', '$STIMEOUT', '$CTIMEOUT';
+use vars '$SAVE_COOKIE',  '$GREP_EXE', '$FILE_EXE';
+use vars '$NSRLDB';
+
+# Default port
+my $port = 9999;
+
+# Default 'remote' host
+my $rema = 'localhost';
+
+$| = 1;
+
+$::LIVE      = 0;
+$::USE_NOTES = 1;
+$::USE_LOG   = 1;
+
+sub usage {
+    print
+"\n\nusage: $0 [-c] [-C] [-d evid_locker] [-i device filesystem mnt] [-p port] [remoteaddr]\n";
+    print "  -c: force a cookie in the URL\n";
+    print "  -C: force NO cookie in the URL\n";
+    print "  -d dir: specify the evidence locker directory\n";
+    print "  -i device filesystem mnt: Specify info for live analysis\n";
+    print "  -p port: specify the server port (default: $port)\n";
+    print "  remoteaddr: specify the host with the browser (default: $rema)\n";
+    exit 1;
+}
+
+my $cook_force = 0;
+
+my $vol_cnt = 0;
+
+# Were options given?
+while ((scalar(@ARGV) > 0) && ($ARGV[0] =~ /^-/)) {
+    my $f = shift;
+
+    # Evidence Locker
+    if ($f eq '-d') {
+        if (scalar(@ARGV) == 0) {
+            print "Missing Directory\n";
+            usage();
+        }
+
+        my $d = shift;
+
+        # We need to do this for the tainting
+        # We don't need to check for special characters in this case because
+        # all commands will be run with the same permissions as the
+        # original user.  We will check for the obvious ';' though
+        if ($d =~ /;/) {
+            print "Illegal argument\n";
+            exit(1);
+        }
+
+        # If the path is relative, autopsyfunc will get screwed up when
+        # this is run from a directory other than where autopsyfunc is
+        # so force full paths
+        elsif ($d !~ /^\//) {
+            print "The evidence locker must be full path (i.e. begin with /)\n";
+            exit(1);
+        }
+        elsif ($d =~ /(.*)/) {
+            $LOCKDIR = $1;
+        }
+    }
+
+    # Force no cookie
+    elsif ($f eq '-C') {
+        $::USE_COOKIE = 0;
+        $cook_force   = 1;
+    }
+
+    # force a cookie
+    elsif ($f eq '-c') {
+        $::USE_COOKIE = 1;
+        $cook_force   = 1;
+    }
+
+    elsif ($f eq '-i') {
+        $::LIVE        = 1;
+        $::USE_LOG     = 0;
+        $::USE_NOTES   = 0;
+        $::SAVE_COOKIE = 0;
+
+        if (scalar(@ARGV) < 3) {
+            print "Missing device, file system, and mount point arguments\n";
+            usage();
+        }
+
+        my $vol = "vol" . $vol_cnt;
+        $vol_cnt++;
+
+        my $dev = shift;
+        if ($dev =~ /($::REG_IMG_PATH)/) {
+            $dev = $1;
+        }
+        else {
+            print "invalid device: $dev\n";
+            usage();
+        }
+
+        unless ((-e "$dev") || (-l "$dev")) {
+            print "Device ($dev) not found\n";
+            usage();
+        }
+
+        my $fs = shift;
+        if ($fs =~ /($::REG_FTYPE)/) {
+            $fs = $1;
+        }
+        else {
+            print "invalid file system: $fs\n";
+            usage();
+        }
+        unless ((exists $Fs::root_meta{$fs})
+            && (defined $Fs::root_meta{$fs}))
+        {
+            print "File system not supported: $fs\n";
+            usage();
+        }
+        $Caseman::vol2ftype{$vol} = "$fs";
+
+        my $mnt = shift;
+        if ($mnt =~ /($::REG_MNT)/) {
+            $mnt = $1;
+        }
+        else {
+            print "invalid mount point: $mnt\n";
+            usage();
+        }
+        $Caseman::vol2mnt{$vol}   = "$mnt";
+        $Caseman::vol2cat{$vol}   = "part";
+        $Caseman::vol2itype{$vol} = "raw";
+        $Caseman::vol2start{$vol} = 0;
+        $Caseman::vol2end{$vol}   = 0;
+
+        # This makes me nervous ...
+        $Caseman::vol2par{$vol}   = $vol;
+        $Caseman::vol2path{$vol}  = "$dev";
+        $Caseman::vol2sname{$vol} = "$dev";
+    }
+
+    # Specify a different port
+    elsif ($f eq '-p') {
+        if (scalar(@ARGV) == 0) {
+            print "Missing port argument\n";
+            usage();
+        }
+
+        my $p = shift;
+        if ($p =~ /(\d+)/) {
+            $p = $1;
+        }
+        else {
+            print "invalid port: $p\n";
+            usage();
+        }
+        if (($p < 1) || ($p > 65535)) {
+            print "invalid port: $port\n";
+            usage();
+        }
+        $port = $p;
+    }
+
+    else {
+        print "Invalid flag: $f\n";
+        usage();
+    }
+}
+
+# remote address
+if (scalar(@ARGV) > 0) {
+    $rema = shift;
+}
+
+# Get remote address
+my @acl_addr;    # Array of host addresses
+my $hn;          # Host name
+my $tmp;
+if ($rema =~ /(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/) {
+    $acl_addr[0] = pack('C4', ($1, $2, $3, $4));
+    $hn = $rema;
+}
+else {
+    ($hn, $tmp, $tmp, $tmp, @acl_addr) = gethostbyname($rema);
+    unless (defined $tmp) {
+        print "Host not found: $rema\n";
+        usage();
+    }
+}
+
+# Determine the address that will be used to access this server
+my $lclhost;
+my @ta = unpack('C4', $acl_addr[0]);
+
+my $bindaddr;
+
+# If we are being accessed by localhost, we need that and not the hostname
+if (   ($ta[0] == 127)
+    && ($ta[1] == 0)
+    && ($ta[2] == 0)
+    && ($ta[3] == 1))
+{
+    $lclhost  = "localhost";
+    $bindaddr = $acl_addr[0];
+
+    # Force no cookie to be used unless we already set this value
+    # with arguments
+    $::USE_COOKIE = 0 unless ($cook_force == 1);
+}
+else {
+    $lclhost = `/bin/hostname`;
+    chop $lclhost;
+
+    $bindaddr = INADDR_ANY;
+
+    # Force a cookie to be used unless we already set this value
+    # with arguments
+    $::USE_COOKIE = 1 unless ($cook_force == 1);
+}
+
+# Verify the variables defined in the configuration files
+check_vars();
+
+# Remove the final '/' from TSKDIR if it exists
+$::TSKDIR = $1
+  if ($::TSKDIR =~ /(.*?)\/$/);
+
+#
+# Verify that all of the required executables exist
+#
+check_tools();
+
+
+
+# Currently, HFS is in beta and not enabled by default. 
+# Autopsy has been configured for it though, so disable it if
+# the user has not compiled support into TSK.  remove this when
+# HFS support is standard.
+# This redirects stderr to stdout so we can easily capture it
+my $out = `\'$::TSKDIR/fls\' -f list 2>&1`;
+unless ($out =~ /hfs/) {
+    for (my $i = 0; $i < @Fs::types; $i++) {
+        if ($Fs::types[$i] eq "hfs") {
+            $Fs::types[$i] = "";
+            last;
+        }
+    }
+}
+
+
+
+# remove environment stuff that we don't need and that could be insecure
+# We allow basic bin directories for CYGWIN though, since they are
+# required for the CYGWIN dlls
+my $UNAME = "";
+if (-e "/bin/uname") {
+    $UNAME = "/bin/uname";
+}
+elsif (-e "/usr/bin/uname") {
+    $UNAME = "/usr/bin/uname";
+}
+
+my $ispathclear = 1;
+if (($UNAME ne "") && (`$UNAME` =~ /^CYGWIN/)) {
+    $ENV{PATH} = '/bin:/usr/bin:/usr/local/bin';
+    $ispathclear = 0;
+}
+else {
+    $ENV{PATH} = '';
+}
+delete @ENV{'IFS', 'CDPATH', 'ENV', 'BASH_ENV'};
+
+my $date = localtime;
+
+if ($::LIVE == 0) {
+
+    # Remove the final '/' if it exists
+    $LOCKDIR = $1
+      if ($LOCKDIR =~ /(.*?)\/$/);
+}
+
+# Setup socket
+my $proto = getprotobyname('tcp');
+socket(Server, PF_INET, SOCK_STREAM, $proto)
+  or die "Error creating network socket: $!";
+
+setsockopt(Server, SOL_SOCKET, SO_REUSEADDR, 1)
+  or die "Error setting network socket options (reuse): $!";
+
+setsockopt(Server, SOL_SOCKET, SO_KEEPALIVE, 1)
+  or die "Error setting network socket options (keep alive): $!";
+
+bind(Server, sockaddr_in($port, $bindaddr))
+  or die "Error binding to port $port (is Autopsy already running?): $!";
+
+listen(Server, SOMAXCONN)
+  or die "Error listening to socket for connections: $!";
+
+my $magic;    # magic authentication cookie
+my $cook_file;
+my $cookie_url = "";
+
+if ($::USE_COOKIE == 1) {
+
+    # Try for a real random device, or use rand if all else fails
+    if (-e "/dev/urandom") {
+        my $r;
+        open RAND, "</dev/urandom" or die "can not open /dev/urandom";
+        read RAND, $r, 4;
+        $magic = unpack "I", $r;
+        read RAND, $r, 4;
+        $magic .= unpack "I", $r;
+        close RAND;
+    }
+    else {
+        $magic = int(rand 0xffffffff) . int(rand 0xffffffff);
+    }
+
+    $cookie_url = "$magic/";
+
+    # Save to file in case the stdout gets overwritten
+    if ($SAVE_COOKIE == 1) {
+        $cook_file = "$LOCKDIR/.$port.cookie";
+        if (open COOK, ">$cook_file") {
+            chmod 0600, "$cook_file";
+            print COOK "$magic\n";
+            close COOK;
+        }
+        else {
+            print "WARNING: Cannot open file to save cookie in ($cook_file)";
+        }
+    }
+}
+
+print <<EOF;
+
+============================================================================
+
+                       Autopsy Forensic Browser 
+                  http://www.sleuthkit.org/autopsy/
+                             ver $::VER 
+
+============================================================================
+EOF
+
+if ($::LIVE == 0) {
+    print "Evidence Locker: $LOCKDIR\n";
+}
+else {
+    print "Live Analysis Mode\n";
+}
+if ($ispathclear == 0) {
+    print
+"\nCYGWIN Mode (Internal path contains /bin, /usr/bin, and /usr/local/bin)\n\n";
+}
+
+print <<EOF2;
+Start Time: $date
+Remote Host: $rema
+Local Port: $port
+
+Open an HTML browser on the remote host and paste this URL in it:
+
+    http://$lclhost:${port}/${cookie_url}$::PROGNAME
+
+Keep this process running and use <ctrl-c> to exit
+EOF2
+
+Print::log_session_info("Starting session on port $port and $hn\n");
+
+# Set the server alarm
+$SIG{ALRM} = \&SIG_ALARM_SERVER;
+$SIG{INT}  = \&SIG_CLOSE;
+
+# setting this to ignore will automatically wait for children
+$SIG{CHLD} = 'IGNORE';
+
+# Wait for Connections
+while (1) {
+
+    alarm($STIMEOUT) if ($USE_STIMEOUT == 1);
+
+    my $raddr = accept(CLIENT, Server);
+    next unless ($raddr);
+    my ($rport, $riaddr) = sockaddr_in($raddr);
+
+    die "Error creating child" unless (defined(my $pid = fork()));
+
+    if (0 == $pid) {
+        open(STDOUT, ">&CLIENT") or die "Can't dup client to stdout";
+
+        # open(STDERR, ">&CLIENT") or die "Can't dup client to stdout";
+        open(STDIN, "<&CLIENT") or die "Can't dup client to stdin";
+        $| = 1;
+
+        my @rip = unpack('C4', $riaddr);
+
+        # Check ACL
+        foreach $tmp (@acl_addr) {
+            if ($tmp eq $riaddr) {
+                spawn_cli($riaddr);
+                close CLIENT;
+                exit 0;
+            }
+        }
+
+        forbid("$rip[0].$rip[1].$rip[2].$rip[3]");
+        Print::log_session_info("ERROR: Unauthorized Connection from: "
+              . "$rip[0].$rip[1].$rip[2].$rip[3]\n");
+
+        close CLIENT;
+        exit 1;
+    }
+    else {
+        close CLIENT;
+    }
+}
+
+# Error messages
+sub forbid {
+    my $ip = shift;
+    $ip = "" unless defined ($ip);
+
+    print "HTTP/1.0 403 Forbidden$::HTTP_NL"
+      . "Content-type: text/html$::HTTP_NL$::HTTP_NL"
+      . "<html><center>\n"
+      . "<h2>Access Denied</h2>\n"
+      . "<h3>Your connection from: $ip has been logged</h3>\n"
+      . "</center></html>$::HTTP_NL$::HTTP_NL$::HTTP_NL";
+
+    return;
+}
+
+sub bad_req {
+    print "HTTP/1.0 404 Bad Request$::HTTP_NL"
+      . "Content-type: text/html$::HTTP_NL$::HTTP_NL"
+      . "<html><body><center>\n"
+      . "<h2>Invalid URL<br><tt>"
+      . shift()
+      . "</tt></h2>\n"
+      . "</center></body></html>"
+      . "$::HTTP_NL$::HTTP_NL$::HTTP_NL";
+
+    return;
+}
+
+# Alarm Functions
+sub SIG_ALARM_CLIENT {
+    Print::log_session_info("Connection timed out\n");
+    close CLIENT;
+    exit 1;
+}
+
+sub SIG_ALARM_SERVER {
+    print "Server Timeout ($STIMEOUT seconds), Exiting\n";
+    Print::log_session_info("Server Timeout ($STIMEOUT seconds), Exiting\n");
+    exit 0;
+}
+
+# Close the system down when Control-C is given
+sub SIG_CLOSE {
+
+    # delete the cookie file
+    if (($::USE_COOKIE == 1) && ($SAVE_COOKIE == 1)) {
+        unlink "$cook_file";
+    }
+
+    print "End Time: " . localtime() . "\n";
+    Print::log_session_info("Ending session on port $port and $hn\n");
+    exit 0;
+}
+
+# Pass the remote IP address as the argument for logging
+sub spawn_cli {
+
+    # Set timeout for 10 seconds if we dont get any input
+    alarm($CTIMEOUT);
+    $SIG{ALRM} = \&SIG_ALARM_CLIENT;
+
+    while (<STDIN>) {
+
+        last if (/^\s+$/);
+
+        if (/^GET \/+(\S*)\s?HTTP/) {
+            my $url = $1;
+            my $script;
+            my $args;
+
+            if (/\x0d\x0a$/) {
+                $::HTTP_NL = "\x0d\x0a";
+            }
+            else {
+                $::HTTP_NL = "\x0a";
+            }
+
+            # Magic Cookie
+            # If we are using cookies, then the url should be:
+            # cookie/autopsy?var=val ...
+            if ($::USE_COOKIE == 1) {
+
+                if (   ($url =~ /^(\d+)\/+([\w\.\/]+)(?:\?(.*))?$/)
+                    && ($1 == $magic))
+                {
+                    $script = $2;
+                    $args   = $3;
+                }
+                else {
+                    my @rip = unpack('C4', shift());
+                    Print::log_session_info("ERROR: Incorrect Cookie from: "
+                          . "$rip[0].$rip[1].$rip[2].$rip[3]\n");
+                    forbid("$rip[0].$rip[1].$rip[2].$rip[3]");
+                    return 1;
+                }
+            }
+
+            # if we aren't using cookies, then it should be:
+            # autopsy?var=val ...
+            else {
+                if ($url =~ /^\/?([\w\.\/]+)(?:\?(.*))?$/) {
+                    $script = $1;
+                    $args   = $2;
+                }
+                else {
+                    bad_req($url);
+                    return 1;
+                }
+            }
+
+            if ($script eq $::PROGNAME) {
+                $args = "" unless (defined $args);
+
+                # Turn timer off
+                alarm(0);
+
+                 my $has_ref = 0;
+                 while (<STDIN>) {
+                     last if (/^\s+$/);
+                     if (/^Referer: /) {
+                         $has_ref = 1;
+                         last;
+                     }
+                 }
+     
+                 if (($has_ref == 0) && ($args ne "")) {
+                     Print::log_session_info("ERROR: Missing referer value");
+                     forbid();
+                     return 1;
+                 }
+
+                # Print status
+                print "HTTP/1.0 200 OK$::HTTP_NL";
+                ::main($args);
+            }
+            elsif ($script eq "global.css") {
+                show_file($script);
+            }
+
+            # Display the sanitized picture or reference error
+            elsif ($script eq $::SANITIZE_TAG) {
+                Appview::sanitize_pict($args);
+                return 1;
+            }
+
+            # Display a picture or help file
+            elsif (($script =~ /^(pict\/[\w\.\/]+)/)
+                || ($script =~ /^(help\/[\w\.\/]+)/))
+            {
+                show_file($1);
+            }
+            elsif ($script eq 'about') {
+                about();
+            }
+
+            # I'm not sure why this is needed, but there are reqs for it
+            elsif ($script eq 'favicon.ico') {
+                show_file("pict/favicon.ico");
+            }
+            else {
+                bad_req($url);
+                Print::log_session_info("Unknown function: $script\n");
+                return 1;
+            }
+            return 0;
+        }
+    }    # end of while (<>)
+
+}    # end of spawn_cli
+
+# Print the contents of a local picture or help file
+sub show_file {
+    my $file = "$INSTALLDIR/" . shift;
+
+    if (-e "$file") {
+        print "HTTP/1.0 200 OK$::HTTP_NL";
+
+        open FILE, "<$file"
+          or die "can not open $file";
+
+        if ($file =~ /\.css$/i) {
+            print "Content-type: text/css$::HTTP_NL$::HTTP_NL";
+        }
+        elsif ($file =~ /\.jpg$/i) {
+            print "Content-type: image/jpeg$::HTTP_NL$::HTTP_NL";
+        }
+        elsif ($file =~ /\.gif$/i) {
+            print "Content-type: image/gif$::HTTP_NL$::HTTP_NL";
+        }
+        elsif ($file =~ /\.ico$/i) {
+            print "Content-type: image/ico$::HTTP_NL$::HTTP_NL";
+        }
+        elsif ($file =~ /\.html$/i) {
+            print "Content-type: text/html$::HTTP_NL$::HTTP_NL";
+        }
+        else {
+            print "HTTP/1.0 404 Bad Request$::HTTP_NL"
+              . "Content-type: text/html$::HTTP_NL$::HTTP_NL"
+              . "<html>\n"
+              . "<head><title>Error</title></head>\n"
+              . "<h2><center>Unknown Extension</h2>\n"
+              . "</center></html>$::HTTP_NL$::HTTP_NL$::HTTP_NL";
+            exit(1);
+        }
+
+        while (<FILE>) {
+            print "$_";
+        }
+        close(FILE);
+
+        print "$::HTTP_NL$::HTTP_NL";
+    }
+    else {
+        print "HTTP/1.0 404 Bad Request$::HTTP_NL"
+          . "Content-type: text/html$::HTTP_NL$::HTTP_NL"
+          . "<html>\n"
+          . "<head><title>Error</title></head>\n"
+          . "<h2><center>File Not Found</h2>"
+          . "</center></html>$::HTTP_NL$::HTTP_NL$::HTTP_NL";
+        exit(1);
+    }
+
+    return;
+}
+
+sub about {
+
+    print "HTTP/1.0 200 OK$::HTTP_NL"
+      . "Content-type: text/html$::HTTP_NL$::HTTP_NL";
+
+    my $tskver = ::get_tskver();
+
+    print <<EOF;
+
+<html>
+<head><title>About Autopsy</title></head>
+
+<body BGCOLOR=#CCCC99>
+
+<center><h2>About Autopsy</h2>
+  <br>
+  <img src=\"pict/logo.jpg\" alt=\"Logo\">
+  <br><br>
+  <b>Version</b>: $::VER
+  <br>
+  <tt><a href="http://www.sleuthkit.org/autopsy/">http://www.sleuthkit.org/autopsy/</a></tt>
+  <br>
+  <tt><a href="http://www.sleuthkit.org/informer/">http://www.sleuthkit.org/informer/</a></tt>
+</center>
+
+
+<h3>Credits</h3>
+<UL>
+  <LI>Code Development: Brian Carrier (carrier at sleuthkit dot org)
+  <LI>Interface Assistance: Samir Kapuria
+  <LI>Mascot: Hash the Hound
+</UL>
+
+<h3>Configuration</h3>
+<b>The Sleuth Kit</b>:<br> 
+&nbsp;&nbsp;URL: <a href="http://www.sleuthkit.org/sleuthkit/">
+  <tt>http://www.sleuthkit.org/sleuthkit/</tt></a><br> 
+&nbsp;&nbsp;Installation Location: <tt>$::TSKDIR</tt><br>
+&nbsp;&nbsp;Version: $tskver<br>
+<b>Evidence Locker</b>: <tt>$LOCKDIR</tt><br>
+<b>grep</b>: <tt>$GREP_EXE</tt><br>
+<b>file</b>: <tt>$FILE_EXE</tt><br>
+<b><a href="http://www.nsrl.nist.gov/">NIST NSRL</a></b>: <tt>$NSRLDB</tt><br>
+
+</body></html>
+
+EOF
+    return 0;
+}
+
+### Check that the required tools are there
+sub check_tools {
+
+    # Sleuth Kit execs
+    unless (-x $::TSKDIR . "/icat") {
+        print "ERROR: Sleuth Kit icat executable missing: $::TSKDIR\n";
+        exit(1);
+    }
+    unless (-x $::TSKDIR . "/istat") {
+        print "ERROR: Sleuth Kit istat executable missing\n";
+        exit(1);
+    }
+    unless (-x $::TSKDIR . "/ifind") {
+        print "ERROR: Sleuth Kit ifind executable missing\n";
+        exit(1);
+    }
+    unless (-x $::TSKDIR . "/ils") {
+        print "ERROR: Sleuth Kit ils executable missing\n";
+        exit(1);
+    }
+    unless (-x $::TSKDIR . "/fls") {
+        print "ERROR: Sleuth Kit fls executable missing\n";
+        exit(1);
+    }
+    unless (-x $::TSKDIR . "/ffind") {
+        print "ERROR: Sleuth Kit ffind executable missing\n";
+        exit(1);
+    }
+    unless (-x $::TSKDIR . "/blkcat") {
+        print "ERROR: Sleuth Kit blkcat executable missing\n";
+        exit(1);
+    }
+    unless (-x $::TSKDIR . "/blkcalc") {
+        print "ERROR: Sleuth Kit blkcalc executable missing\n";
+        exit(1);
+    }
+    unless (-x $::TSKDIR . "/blkls") {
+        print "ERROR: Sleuth Kit blkls executable missing\n";
+        exit(1);
+    }
+    unless (-x $::TSKDIR . "/img_stat") {
+        print "ERROR: Sleuth Kit img_stat executable missing\n";
+        exit(1);
+    }
+    unless (defined $::FILE_EXE) {
+        print "ERROR: File executable location not defined in config file\n";
+        exit(1);
+    }
+    unless (-x "$::FILE_EXE") {
+        print "ERROR: File executable ($::FILE_EXE) missing\n";
+        exit(1);
+    }
+    unless (-x $::TSKDIR . "/fsstat") {
+        print "ERROR: Sleuth Kit fsstat executable missing\n";
+        exit(1);
+    }
+    unless (defined $::MD5_EXE) {
+        print "ERROR: MD5 executable location not defined in config file\n";
+        exit(1);
+    }
+    unless (-x "$::MD5_EXE") {
+        print "ERROR: md5 executable ($::MD5_EXE) missing\n";
+        exit(1);
+    }
+    if ($::SHA1_EXE ne "") {
+        unless (-x "$::SHA1_EXE") {
+            print "ERROR: sha1 executable missing\n";
+            exit(1);
+        }
+    }
+    unless (-x $::TSKDIR . "/srch_strings") {
+        print "ERROR: Sleuth Kit srch_strings executable missing\n";
+        exit(1);
+    }
+
+    if ($::LIVE == 0) {
+        unless (-x $::TSKDIR . "/sorter") {
+            print "ERROR: Sleuth Kit sorter executable missing\n";
+            exit(1);
+        }
+        unless (-x $::TSKDIR . "/hfind") {
+            print "ERROR: Sleuth Kit hfind executable missing\n";
+            print
+              "  You likely have an old version of The Sleuth Kit or TASK\n";
+            exit(1);
+        }
+    }
+
+    unless (-x "$GREP_EXE") {
+        print "ERROR: grep executable missing\n";
+        exit(1);
+    }
+}
+
+# check values that should be defined in the configuration files
+# This will show incomplete installations
+sub check_vars {
+    unless ((defined $::TSKDIR) && ($::TSKDIR ne "")) {
+        print "ERROR: TSKDIR variable not set in configuration file\n";
+        print "  This could been caused by an incomplete installation\n";
+        exit(1);
+    }
+
+    unless (-d "$::TSKDIR") {
+        print "Invalid Sleuth Kit binary directory: $::TSKDIR\n";
+        exit(1);
+    }
+
+    return if ($::LIVE == 1);
+
+    # Verify The evidence locker directory
+    unless ((defined $LOCKDIR) && ($LOCKDIR ne "")) {
+        print "ERROR: LOCKDIR variable not set in configuration file\n";
+        print "  This could been caused by an incomplete installation\n";
+        exit(1);
+    }
+
+    unless (-d "$LOCKDIR") {
+        print "Invalid evidence locker directory: $LOCKDIR\n";
+        exit(1);
+    }
+}

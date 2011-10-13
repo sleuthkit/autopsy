@@ -1,0 +1,153 @@
+#
+# This makes a directory ($CD) with the needed files to burn to
+# a CD for live analysis
+#
+# Current limitations are that Perl needs to be on the suspect system and
+# that it uses the untrusted Perl files.
+
+require 'conf.pl';
+use vars '$USE_STIMEOUT', '$STIMEOUT', '$CTIMEOUT', '$SAVE_COOKIE';
+use vars '$GREP_EXE', '$TSKDIR';
+
+
+my $CD = "./live-cd/";
+
+# Make the directories
+if (-d "$CD") {
+	print "Live CD directory already exists ($CD)\n";
+	print "Plese delete and run this again\n";
+	exit (1);
+}
+
+print "Making base directory ($CD)\n";
+die "Error making Live CD directory ($CD)"
+  unless (mkdir "$CD", 0775);
+
+die "Error making Live CD binaries directory ($CD)"
+  unless (mkdir "$CD/bin/", 0775);
+
+
+print "Copying executables\n";
+
+# Copy the executables
+die "Missing grep executable ($GREP_EXE)" 
+  unless (-x "$GREP_EXE");
+`cp '$GREP_EXE' '$CD/bin/grep'`; 
+die "Error copying grep executable" 
+  unless (-x "$CD/bin/grep");
+
+
+die "Missing MD5 executable ($::MD5_EXE)"
+  unless (-x "$::MD5_EXE");
+`cp '$::MD5_EXE' '$CD/bin/md5sum'`; 
+die "Error copying MD5 executable" 
+  unless (-x "$CD/bin/md5sum");
+
+# Sleuth Kit Binaries
+die "Missing Sleuth Kit Directory ($TSKDIR)"
+  unless (-d "$TSKDIR");
+
+foreach my $exec ("blkcalc", "blkcat", "blkls", "blkstat", "ffind", "fls", "fsstat", 
+  "icat", "ifind", "ils", "istat", "srch_strings", "img_stat", "mmls") {
+
+	die "Missing Sleuth Kit executable ($exec)" 
+	  unless (-x "$TSKDIR/$exec");
+
+	`cp '$TSKDIR/$exec' '$CD/bin/$exec'`; 
+
+	die "Error copying Sleuth Kit executable ($exec)" 
+	  unless (-x "$CD/bin/$exec");
+}
+
+
+# Make a fake file
+open FILE, ">$CD/bin/file" or die ("Error creating Live CD file exec");
+print FILE "#!./bin/perl\n";
+print FILE "print STDOUT \"File Type Not Supported During Live Analysis\n\";\n";
+close FILE;
+`chmod +x "$CD/bin/file"`;
+
+
+# Copy the autopsy directories
+print "Copying autopsy files\n";
+`cp -r help "$CD"`;
+`cp -r lib "$CD"`;
+`cp -r pict "$CD"`;
+
+
+# Get the path for Perl from the current autopsy
+open AUT, "<./autopsy" or die ("Error opening normal autopsy exec");
+my $perl;
+while (<AUT>) {		
+	$perl = $_;
+	last;
+}
+close AUT;
+
+if ($perl =~ /^#!(\S+)/) { 
+	$perl = $1;
+} else {
+	die "Error parsing Perl location from autopsy"
+}
+
+
+# Copy the perl exec
+# @@@ I'm not sure if just copying the bin is enough ...
+die "Missing Perl executable ($perl)" 
+  unless (-x "$perl");
+
+`cp '$perl' '$CD/bin/perl'`; 
+
+die "Error copying perl executable" 
+  unless (-x "$CD/bin/perl");
+
+
+# Make a new autopsy 
+open AUT, ">$CD/autopsy" or die ("Error opening Live CD autopsy exec");
+
+print AUT "#!./bin/perl -wT\n";
+print AUT "use lib '.';\n";
+print AUT "use lib './lib/';\n";
+
+
+open BASE, "<./base/autopsy.base" or die ("Error opening base autopsy");
+
+print AUT $_
+  while (<BASE>);
+
+close (AUT);
+close (BASE);
+
+`chmod +x "$CD/autopsy"`;
+
+
+print "Creating configuration file using existing settings\n";
+
+# Make the configuration file
+open CONF, ">$CD/conf.pl" or die ("Error opening Live CD Config file");
+
+print CONF "# Configuration file for Live CD version of Autopsy\n";
+print CONF "# http://www.sleuthkit.org/autopsy\n";
+print CONF "# Created on ".localtime()."\n\n";
+
+# Variables
+print CONF "\$USE_STIMEOUT = $USE_STIMEOUT;\n";
+print CONF "\$STIMEOUT = $STIMEOUT;\n";
+print CONF "\$CTIMEOUT = $CTIMEOUT;\n";
+print CONF "\$SAVE_COOKIE = $SAVE_COOKIE;\n";
+
+print CONF "\n";
+print CONF "\$INSTALLDIR = './';\n";
+print CONF "\$NSRLDB = '';\n";
+print CONF "\$LOCKDIR = './read-only-live-version/';\n";
+
+print CONF "\n";
+print CONF "# System Utilities\n";
+print CONF "\$GREP_EXE = './bin/grep';\n";
+print CONF "\$FILE_EXE = './bin/file';\n";
+print CONF "\$MD5_EXE = './bin/md5sum';\n";
+print CONF "\$TSKDIR = './bin/';\n";
+
+close CONF;
+
+print "\n";

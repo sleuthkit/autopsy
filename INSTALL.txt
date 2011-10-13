@@ -1,0 +1,39 @@
+                    Autopsy Forensic Browser
+                http://www.sleuthkit.org/autopsy
+
+              Brian Carrier [carrier@sleuthkit.org]
+                     Last Update: March 2010
+
+
+Installation 
+-----------------------------------------------------------------------------
+1. Install The Sleuth Kit (see README for download locations).   This
+   includes doing a 'make install' so that the executables and files
+   are installed in a single directory.  Note that this does not 
+   currently work natively on Windows.  It will work using Cygwin, but
+   you must install and build The Sleuth Kit in Cygwin and not use the
+   Win32 executables that are available on the sleuthkit.org website.
+
+2. Untar the Autopsy file. 
+
+3. Run 'make'.  It will try to locate the grep and strings utilities.
+   If any are not found, it will prompt you for the location.  It will
+   also search for the TSK installation. 
+
+4. The install script will ask if you have the NIST National Software
+   Reference Library (NSRL).  If you do, you will need to enter the
+   path of it.  The NSRL is available from www.nsrl.nist.gov.
+   
+5. You will be prompted for the Evidence Locker location.  This is the
+   base directory where all cases will be stored.  You must create this
+   directory on your own.  
+
+
+Live Analysis
+------------------------------------------------------------------------------
+Type 'make live' or run the 'make-live-cd' script to build the 'live-cd'
+directory.  The 'live-cd' directory can be burned to a CD.
+
+------------------------------------------------------------------------------
+Brian Carrier [carrier@sleuthkit.org]
+

@@ -1,0 +1,70 @@
+<HTML>
+<HEAD><TITLE>Autopsy grep Cheat Sheet</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+
+<CENTER><H2>grep Cheat Sheet</H2></CENTER>
+
+<H3>Escaped Values</H3>
+Autopsy uses the <TT>grep</TT> utility to search an image.  grep requires
+that some values be "escaped" if they are searched for.  Autopsy
+will automatically escape those values if the serach is being done for
+a <U>non-regular expression</U>.  The escaped values include:
+<UL>
+  <LI>\
+  <LI>.
+  <LI>[
+  <LI>^
+  <LI>$
+  <LI>'
+  <LI>*
+  <LI>initial -
+</UL>
+
+
+<H3>Regular Expressions</H3>
+Refer to the man page for 'grep' for more details of creating regular
+expressions.  Autopsy uses the '-E' flag with 'grep' to specify 
+extended regular expressions.  The following have special meaning
+with grep:
+
+<UL>
+  <LI><B>[A-Za-z]</B>: Any lower and upper case letter
+  <LI><B>[:alpha:]</B>: same as above
+  <LI><B>[0-9]</B>: Any number
+  <LI><B>[:digit:]</B>: same as above
+  <LI><B>[0-9A-Za-z]</B>: Any lower and upper case letter or digit
+  <LI><B>[:alnum:]</B>: same as above
+  <LI><B>[:space:]</B>: Any white space
+</UL>
+
+
+<P>
+To specify how many times something can occur, the following are used:
+<UL>
+  <LI><B>?</B>: Optional and can only occur once
+  <LI><B>*</B>: Optional and can occur more than once
+  <LI><B>+</B>: Required and can occur more than once
+</UL>
+
+<P>
+To specify more than one string to match, use the <B>|</B> operator.
+
+<H3>Examples</H3>
+
+<P>
+To search for 'Jane Smith' or 'Jack Smith': (Jane)|(Jack) Smith
+
+<P>
+To ensure it matches if a tab is between the first and last name:
+(Jane)|(Jack)[:space:]Smith
+
+<P>
+To search for 'Jane Smith' or 'Jane Anne Smith':
+Jane( Anne)? Smith
+
+<P>
+or: Jane([:space:]Anne)?[:space:]Smith
+
+<HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>

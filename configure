@@ -1,0 +1,475 @@
+#!/bin/sh
+
+# Minimum version of TSK that is required
+minver="3.1.0";
+
+# The last released version of TSK
+curtskver="3.1.1";
+
+# Configuration script for the Autopsy Forensic Browser
+#
+# Brian Carrier [carrier@sleuthkit.org]
+#
+# Copyright (c) 2003-2008 by Brian Carrier.  All rights reserved
+#
+# Copyright (c) 2001-2003 by Brian Carrier, @stake.  All rights reserved
+#
+# Copyright (c) 2001 by Brian Carrier.  All rights reserved
+#
+# This file is part of the Autopsy Forensic Browser (Autopsy)
+#
+# Autopsy is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# Autopsy is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Autopsy; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA  
+##
+# THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR ANY PARTICULAR PURPOSE.
+# IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, LOSS OF USE, DATA, OR PROFITS OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+# Directories to search in
+dirs='/usr/local/bin/ /usr/bin/ /usr/ccs/bin/ /bin/ /usr/ucb/bin/ /sbin/ /usr/sbin/ /usr/local/sbin/'
+
+
+echo ""
+echo "   Autopsy Forensic Browser Installation"
+echo ""
+
+
+
+#############################################################################
+# create conf.pl
+#############################################################################
+
+
+conf='conf.pl'
+
+rep=""
+if (test -f $conf) then
+  echo "A configuration file already exists, overwrite? (y/n):";
+  read rep;
+else
+  rep="y"
+fi
+
+if (test "$rep" = "y") then
+
+
+# First add the variables that are static
+#
+# DEFAULT USER SETTINGS
+#
+echo '# Autopsy configuration settings' > $conf
+echo '' >> $conf
+echo '# when set to 1, the server will stop after it receives no' >> $conf
+echo '# connections for STIMEOUT seconds. ' >> $conf
+echo '$USE_STIMEOUT = 0;' >> $conf
+echo '$STIMEOUT = 3600;'>> $conf    
+
+echo '' >> $conf
+echo '# number of seconds that child waits for input from client' >> $conf
+echo '$CTIMEOUT = 15;' >> $conf
+
+echo '' >> $conf
+echo '# set to 1 to save the cookie value in a file (for scripting)' >> $conf
+echo '$SAVE_COOKIE = 1;' >> $conf
+
+
+#############################################################################
+# INSTALLATION DIRECTORY
+#############################################################################
+echo '' >> $conf;
+echo \$INSTALLDIR = \'$PWD/\'\; >> $conf; 
+
+
+# Now add the variables that need user interaction
+
+#
+# FIND THE UTILITIES
+#
+echo '' >> $conf
+echo '' >> $conf
+echo '# System Utilities' >> $conf
+
+
+
+#
+# GREP
+#
+echo ''
+echo '---------------------------------------------------------------'
+echo ''
+found=0
+for d in $dirs 
+  do if (test -x ${d}grep) then
+    echo \$GREP_EXE = \'${d}grep\'\; >> $conf; 
+    echo "grep found: ${d}grep";
+    grepexe="${d}grep";
+    found=1; 
+    break; 
+  fi;
+done
+
+# Prompt if not found
+if (test $found -eq 0) then
+  echo 'ERROR: grep utility not found';
+  echo 'Enter location of executable:';
+  while (test 1 -eq 1) 
+    do read grepexe;
+    if (test -x "$grepexe") then
+	  echo \$GREP_EXE = \'$grepexe\'\; >> $conf; 
+      break;
+    else
+      echo 'grep was not found (try again):';
+    fi;
+  done
+fi
+
+
+#
+# FILE
+#
+found=0
+for d in $dirs 
+  do if (test -x ${d}file) then
+    echo \$FILE_EXE = \'${d}file\'\; >> $conf; 
+    echo "file found: ${d}file";
+    found=1; 
+    break; 
+  fi;
+done
+
+# Prompt if not found
+if (test $found -eq 0) then
+  echo 'ERROR: file utility not found';
+  echo 'Enter location of executable:';
+  while (test 1 -eq 1) 
+    do read fileexe;
+    if (test -x "$fileexe") then
+	  echo \$FILE_EXE = \'$filexe\'\; >> $conf; 
+      break;
+    else
+      echo 'file was not found (try again):';
+    fi;
+  done
+fi
+
+#
+# MD5
+#
+found=0
+for d in $dirs 
+  do if (test -x ${d}md5) then
+    echo \$MD5_EXE = \'${d}md5\'\; >> $conf; 
+    echo "md5 found: ${d}md5";
+    found=1; 
+    break; 
+  elif (test -x ${d}md5sum) then
+    echo \$MD5_EXE = \'${d}md5sum\'\; >> $conf; 
+    echo "md5 found: ${d}md5sum";
+    found=1; 
+    break; 
+  fi;
+done
+
+# Prompt if not found
+if (test $found -eq 0) then
+  echo 'ERROR: md5/md5sum utility not found';
+  echo 'Enter location of executable:';
+  while (test 1 -eq 1) 
+    do read md5exe;
+    if (test -x "$md5exe") then
+	  echo \$MD5_EXE = \'$md5exe\'\; >> $conf; 
+      break;
+    else
+      echo 'md5 was not found (try again):';
+    fi;
+  done
+fi
+
+
+#
+# SHA-1
+#
+found=0
+for d in $dirs 
+  do if (test -x ${d}sha15) then
+    echo \$SHA1_EXE = \'${d}sha\'\; >> $conf; 
+    echo "sha1 found: ${d}sha1";
+    found=1; 
+    break; 
+  elif (test -x ${d}sha1sum) then
+    echo \$SHA1_EXE = \'${d}sha1sum\'\; >> $conf; 
+    echo "sha1 found: ${d}sha1sum";
+    found=1; 
+    break; 
+  fi;
+done
+
+if (test $found -eq 0) then
+  echo 'WARNING: sha1/sha1sum utility not found';
+  echo \$SHA1_EXE = \'\'\; >> $conf; 
+fi;
+
+
+
+#############################################################################
+# The Sleuth Kit
+#############################################################################
+
+echo '' >> $conf
+echo '' >> $conf
+echo '# Directories' >> $conf
+
+echo ''
+echo '---------------------------------------------------------------'
+echo ''
+echo 'Searching for Sleuth Kit Installation.'
+found=0
+for d in $dirs 
+  do if ((test -x ${d}fls) && (test -x ${d}ffind) && (test -x ${d}blkstat) && \
+          (test -x ${d}blkls) && (test -x ${d}blkcat) && \
+          (test -x ${d}mmls) && (test -x ${d}mmstat) && \
+          (test -x ${d}fsstat) && (test -x ${d}img_stat) && \
+          (test -x ${d}istat) && (test -x ${d}ifind) && \
+          (test -x ${d}icat) && (test -x ${d}ils) && \
+          (test -x ${d}srch_strings) && \
+          (test -x ${d}mactime) && (test -x ${d}sorter)) then
+    echo \$TSKDIR = \'${d}\'\; >> $conf;
+    tskdir=${d};
+    echo "Found in: ${d}";
+    found=1; 
+    break; 
+  fi;
+done
+
+if (test $found -eq 0) then
+  echo 'Sleuth Kit tools were not found in the standard install locations.'
+  echo 'If you have not installed them, do so now and configure autopsy again.'
+  echo 'If you have installed them in a non-standard location, then'
+  echo '  enter the "bin" directory now:'
+
+  while (test 1 -eq 1) 
+    do read tskdir;
+    if ((test -x ${tskdir}/fls) && (test -x ${tskdir}/ffind) && (test -x ${tskdir}/blkstat) && \
+          (test -x ${tskdir}/blkls) && (test -x ${tskdir}/blkcat) && \
+          (test -x ${tskdir}/mmls) && (test -x ${tskdir}/mmstat) && \
+          (test -x ${tskdir}/fsstat) && (test -x ${tskdir}/img_stat) && \
+          (test -x ${tskdir}/istat) && (test -x ${tskdir}/ifind) && \
+          (test -x ${tskdir}/icat) && (test -x ${tskdir}/ils) && \
+          (test -x ${tskdir}/srch_strings) && \
+          (test -x ${tskdir}/mactime) && (test -x ${tskdir}/sorter)) then
+      echo \$TSKDIR = \'${tskdir}\'\; >> $conf;
+      break;
+    else
+      echo 'TSK tools were not found or incomplete (try again):';
+    fi;
+  done
+fi;
+
+# Test for latest version
+ver=`"${tskdir}/fls" -V | awk '/The Sleuth Kit ver / {print $5}'`;
+echo "  Version $ver found";
+
+
+if (test "$ver" '<' "$minver") then 
+  echo "Your version of The Sleuth Kit is not current enough - $minver is needed";
+  if (test "$ver" '>' "0.0.0") then 
+    exit 1;
+  fi;
+elif (test "$ver" '<' "$curtskver") then 
+	echo '';
+    echo "*** NOTE: A more recent version ($curtskver) of The Sleuth Kit Exists ***"
+	echo "  [Press Enter to Continue]";
+	read foo;
+
+else
+	echo '  Required version found';
+fi
+
+
+
+# NSRL
+echo ''
+echo '---------------------------------------------------------------'
+echo ''
+echo 'The NIST National Software Reference Library (NSRL) contains'
+echo 'hash values of known good and bad files.'
+echo '         http://www.nsrl.nist.gov'
+echo ''
+echo 'Have you purchased or downloaded a copy of the NSRL (y/n) [n]'
+read rep;
+if (test "$rep" = "y") then
+
+  echo 'Enter the directory where you installed it:'
+  while (test 1 -eq 1) 
+    do read nsrldir;
+    if (test "$nsrldir" = "cancel") then
+        echo \$NSRLDB = \'\'\; >> $conf;
+		break;
+	fi;
+    if (test -f "${nsrldir}/NSRLFile.txt") then
+      echo '  NSRL database was found (NSRLFile.txt)';
+      echo \$NSRLDB = \'${nsrldir}/NSRLFile.txt\'\; >> $conf;
+
+	  if (test -f "${nsrldir}/NSRLFile.txt-md5.idx") then
+		echo '  NSRL Index file found (NSRLFile.txt-md5.idx)';
+      else
+        echo '  NSRL Index file not found, do you want it created? (y/n) [n]:'
+        read rep;
+        if (test "$rep" = "y") then
+          echo ''
+          echo '-------------- begin hfind output --------------'
+          "${tskdir}/hfind" -i nsrl-md5 "${nsrldir}/NSRLFile.txt";
+          echo '--------------- end hfind output ---------------'
+          echo ''
+		fi;
+	  fi;
+      break;
+    else
+      echo 'The NSRL was not found (the directory should have NSRLFile.txt in it)';
+	  echo 'Enter a new directory (or cancel to stop):';
+    fi;
+  done
+else
+  echo \$NSRLDB = \'\'\; >> $conf;
+fi;
+
+#############################################################################
+# EVIDENCE LOCKER
+#############################################################################
+mdone=0
+echo ''
+echo '---------------------------------------------------------------'
+echo ''
+echo 'Autopsy saves configuration files, audit logs, and output to the'
+echo 'Evidence Locker directory.'
+echo ''
+echo 'Enter the directory that you want to use for the Evidence Locker:';
+read locker;
+if (test -d "${locker}") then
+  echo "  $locker already exists"
+else
+  echo '';
+  echo "WARNING: $locker does not exist"
+  mdone=1
+fi
+
+echo \$LOCKDIR = \'${locker}\'\; >> $conf;
+
+fi
+
+# Start of non-conf.pl file configuration
+
+#############################################################################
+# Setup Perl locations
+#############################################################################
+found=0;
+
+for d in $dirs
+  do if (test -x ${d}perl) then
+    if (test -n "`${d}perl -v 2> /dev/null | awk '/This is perl/ {print $0}'`") then
+      ver=`${d}perl -e 'print $];'`;
+      if (`${d}perl -e 'exit( $] >= 5.008);'`) then 
+        echo "old version of perl found: ${d}perl (version $ver) -- continuing";
+      else      
+        echo "perl found: ${d}perl (version $ver)";
+        echo "#!${d}perl -wT" > ./config.tmp;
+        echo "#!${d}perl" > ./config2.tmp;
+        perlexe="${d}perl";
+        found=1; 
+        break; 
+      fi;
+    fi;
+  fi;
+done
+
+# If it wasn't found, then prompt for it.
+if (test $found -eq 0) then
+  echo 'ERROR: perl not found or the incorrect version found';
+  while (test 1 -eq 1) 
+    do echo 'Enter location of perl executable:';
+    read perlexe;
+    if (test -x "$perlexe") then
+      if (test -n "`$perlexe -v 2> /dev/null | awk '/This is perl/ {print $0}'`")       then
+        ver=`$perlexe -e 'print $];'`;
+        if (`$perlexe -e 'exit( $] >= 5.008);'`) then 
+          echo "This version of Perl is too old, 5.8.0 or older needed";
+        else      
+          echo "Correct version found";
+          echo "#!${perlexe} -wT" > ./config.tmp;
+          echo "#!${perlexe}" > ./config2.tmp;
+          found=1; 
+          break; 
+        fi;
+      else
+        echo "Perl found, but is not working.  Try another";
+      fi;
+    else
+      echo "file not found";
+    fi
+  done
+fi
+
+# Check if this version of Perl supports large files
+if (test -z "`$perlexe -V 2> /dev/null | awk '/USE_LARGE_FILES/ {print $0}'`") then
+  echo ''
+  echo '    NOTE: It appears that your Perl does not support large files.';
+  echo '    You therefore will not be able to analyze images larger than 2GB.';
+  echo '    Download the source version from www.cpan.org and compile a new version.';
+  echo "  [Press Enter to Continue]";
+  read foo;
+  echo ''
+fi;
+
+# Get current working directory for lib
+echo "use lib '$PWD/';" >> ./config.tmp
+echo "use lib '$PWD/lib/';" >> ./config.tmp
+
+if (test -f ./autopsy) then
+  echo "autopsy already exists, overwrite? (y/n):";
+  read rep;
+  if (test "$rep" = "y") then
+    cat ./config.tmp base/autopsy.base > ./autopsy
+    cat ./config2.tmp base/make-live-cd.base > ./make-live-cd
+  else 
+    echo '  original version was kept';
+  fi
+else
+  cat ./config.tmp base/autopsy.base > ./autopsy
+  cat ./config2.tmp base/make-live-cd.base > ./make-live-cd
+fi
+chmod 0755 ./autopsy
+chmod 0755 ./make-live-cd
+
+# cleanup
+rm -f ./config.tmp
+rm -f ./config2.tmp
+
+
+#############################################################################
+# CLEANUP
+#############################################################################
+echo ''
+echo '---------------------------------------------------------------'
+echo ''
+echo "Execute the './autopsy' command to start with default settings."
+echo ''
+

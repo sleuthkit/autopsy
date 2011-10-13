@@ -1,0 +1,75 @@
+<HTML>
+<HEAD><TITLE>Autopsy grep Search Limitations</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+
+<CENTER><H2><TT>grep</TT> Search Limitations</H2></CENTER>
+
+<H3>Overview</H3>
+<P>
+Keyword searches are very basic in Autopsy.  Autopsy uses the
+<TT>strings</TT> and <TT>grep</TT> tools on the image and when a
+hit is found, it uses <TT>ifind</TT> and <TT>ffind</TT> to identify
+the file that has allocated the string.  This is a very simple and
+basic method of searching and is not ideal.  This will cause false
+positives and will miss data that crosses a fragmented part of a file.
+The limitations are outlined in this file.
+
+<H3>What Will Be Found</H3>
+<TT>strings</TT> is first run on the image and the data is passed
+to <TT>grep</TT> to do the actual search.  This process will find
+ASCII and UNICODE strings that are consecutive anywhere in the file.   This is
+frequently referred to as the physical layout.  For example, it
+will find strings in the middle of an allocated sector, in an
+unallocated sector, in slack space, and in meta data strutures.
+This will find a string that crosses sectors, which is good if the
+two sectors are for the same file.
+
+<P>
+This technique leads to several types of false positives.  For example,
+a string that crosses from the allocated space of a file into the slack
+space would be found by <TT>grep</TT>.  A string that starts in the slack space
+and ends in the allocated space of a file will also be found.  A string 
+that crosses sectors of two different allocated files will also be found.  The
+user must identify if the hit is an actual hit or a false positive.  
+
+<h3>What Will Be Found, but May Be Confusing</h3>
+<p>
+If you are searching with regular expressions, then the exact
+location and number of hits may not be correctly reported.  If the
+count is incorrect, then it will be too small.  If the location
+is incorrect, then it will be too early (and could even be in the
+next data unit).  The reason that this is in accurate is because
+the <tt>grep</tt> tool will return a long string to Autopsy that
+will contain one or more occurances of the keyword.  Autopsy can
+not search the long string to find the exact number and location
+of the regular expression keywords like it can for non-regular
+expression keywords, so it returns only the starting location of
+the long string.
+
+<H3>What Will NOT Be Found</H3>
+The biggest category of 'hits' that will not occur using this technique
+is strings in a file that cross fragmented data units.  For example, consider
+a file that has two clusters allocated, cluster 100 and cluster 150.  A 
+string "mississippi" could have "missi" in the final 5 bytes of cluster 100
+and "ssippi" in the initial 6 bytes of cluster 150.  The string exists from
+the logial level, but not at the physical level.  Therefore, the <TT>grep</TT>
+search would not find the string.  
+
+<P>
+Although not because of <TT>grep</TT>, Autopsy will also not find
+data in the slack space during an unallocated-only search.  The
+extraction tool for The Sleuth Kit (<TT>blkls</TT>) differentiates
+between unallocated sectors in FAT and NTFS and slack space.  There
+is currently no way in Autopsy to extract the slack space and search
+it.  Autopsy currently only extracts the unallocated sectors and not
+the allocated sectors that may have deleted data in them.
+
+
+<H3>Conclusion</H3>
+Autopsy has basic keyword search functionality.  Future versions may provide
+more features and better search results.  In the mean time, it is important
+that users understand the abilities and limitations of the tool so that they
+can be taken into account during the investigation.  
+<HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>

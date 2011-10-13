@@ -1,0 +1,93 @@
+<HTML>
+<HEAD><TITLE>Autopsy Metadata Analysis Help</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+
+<CENTER><H2>Metadata Analysis</H2></CENTER>
+<H3>Overview</H3>
+The Metadata Analysis mode allows the investigator to view the
+details of metadata structures.  The metadata structures on the
+on-disk structures that contain the details of a file, such as
+times and pointers to the allocated data units.  FFS and EXT2FS
+file systems call them inode structures, NTFS file systems call
+them Master File Table (MFT) entries (or File Entries), and the
+FAT file system calls them directory entries.  This mode is useful
+for recovering data and getting a detailed look at a file. 
+
+<H3>Input</H3>
+To view the contents of a structure, enter the address in the text
+box on the left and select <U>Display</U>.
+
+<P>
+The <U>Allocation List</U> button can also be used to view the
+allocation status of metadata structures in groups of 500.
+
+<H3>Viewing</H3>
+The structure details are displayed on the right-hand side.
+Typically, the metadata structure does not have the name of the
+file that uses that structure, so Autopsy will try to locate the
+file name.  This process is slow with a FAT file system, so it is
+not done by default.
+
+<P>
+The <U>File Type</U> is given, which is the output of the 'file'
+tool.  This tool uses any header information in the file to
+guess what its type is.  The MD5 value of the file is also given.
+
+<P>
+If Autopsy has been configured to use hash databases, then one can
+select which databases to look for the file in.  See 
+<A HREF="hash_db.html">Hash Databases</A> for more details.  
+
+<P>
+The rest of the information will vary depending on the file
+system type.  In general, the allocation status will be given as
+well as the size and each data unit that it has allocated.  A
+link will exist for each data unit that will show its contents.  
+
+<P>
+The <U>Report</U> option generates an ASCII report with the structure
+details, MD5 values, and dates in it.  The <U>View Contents</U> option
+displays the allocated data contents as one large file.  The <U>Export</U>
+option allows one to save the data contents to a file.  The
+<U>Add Note</U> button allows one to add a comment about this structure so
+that it can be later recalled. 
+
+<H3>NTFS Notes</H3>
+<P>
+NTFS is a much different design than UNIX file systems and the meta
+data structures are addressed differently.  They typically have
+the form of <TT>A-B-C</TT>, <TT>88-128-3</TT> for example.  The
+<TT>A</TT> value is the address of the file in the Master File
+Table, 88 for example. This is similar to the inode value in UNIX.
+Each file has several attributes, including at least one in files
+for the data.  The <TT>B</TT> value is the type of attribute.  In
+most cases, the data attribute has a type of 128 so this is commonly
+seen.  But, if you want to see the file name attribute, you could
+specify that type and see the contents if you like (it is fairly
+boring).  The final value, <TT>C</TT>, is the id.  Every attribute
+has a unique id value.  So, if there are multiple attributes with
+the same type, you can specify the type.
+
+<H3>FAT Notes</H3>
+<P>
+FAT does not give addresses to the directory entry structures.  in
+FAT, directory entries can be stored anywhere on the disk.  They
+are stored in the clusters allocated to the parent directory.  This
+is unlike NTFS or UNIX where the structures are in a large table
+that does not move.  get around that,
+
+
+<P>
+The addressing issue was solved by providing an address to every
+32-byte area in the Data Area.  Whether that data was currently a
+directory entry or not.  This makes it easy to find a given address
+and scale when new files are created.  The downside is that not
+every address is possible, so it is likely that you will see jumps
+in the address values.  See the documentation in The Sleuth Kit
+for more details.
+
+
+<P>
+<HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>

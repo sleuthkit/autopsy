@@ -1,0 +1,103 @@
+<HTML>
+<HEAD><TITLE>General Autopsy Help</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+
+<CENTER><H2>General Autopsy Help</H2></CENTER>
+<P>
+The Autopsy Forensic Browser is a graphical interface to command
+line forensics tools and standard UNIX utilities.   It allows
+you to perform volume and file system analysis on UNIX and Windows systems.
+
+<P>
+All data are saved in a directory in the Evidence Locker, which
+was specified at install time or at run time.  See 
+<A HREF="caseman.html">Case Management</A> 
+for more information.  In the normal mode, Autopsy imports an
+image file from a disk or partition.  In the live mode, Autopsy
+can analyze a running system and does not save any data to the 
+local disk. 
+
+
+<P>
+The browser has the following modes: 
+<UL>
+
+<LI>
+<B><A HREF="file_mode.html">Files</A></B>:
+Allows you to browse the image file as a file system and view the
+contents of files and directories.   This mode even shows deleted
+file names and Alternate Data Streams in NTFS images.  You can sort
+the files and directories on meta data.
+
+<LI><B><A HREF="meta_mode.html">
+Meta Data</A></B>:
+Allows you to analyze the image file by examining the meta data structures.
+The address of a structure is entered and the details are shown.
+This mode is useful for examining unallocated structures and getting
+all details about allocated files (including all data units and
+other information such as MD5 value).
+
+
+<LI><B><A HREF="data_mode.html">
+Data Unit</A></B>:
+Allows browsing by block number.  This is most useful when used
+with searching or meta data browsing.  The contents of the block
+can be displayed in ASCII, hex dump, or through <I>strings(1)</I>.
+The meta data structure that has allocated the block will be
+displayed (if any) along with the file name (if any).
+
+
+<LI><B><A HREF="srch_mode.html">
+Keyword Search </A></B>:
+Search an image file using <I>grep(1)</I> for a given string or regular
+expression.  The result will be a list of data units that have the
+string.  Each data unit can be selected to view the contents.
+
+
+<LI><B><A HREF="fs_mode.html">
+Image Details</A></B>:
+List the details about the file or volume system.  The output of
+this mode depends on the file system.  Examples of the file system
+data include the last mount time, the last mount location, and a
+detailed break down of block group information or File Allocation
+Table contents.
+
+<LI><B><A HREF="int_mode.html">
+Image Integrity</A></B>:
+The integrity of the data can be validated at any
+point by selecting this mode.  It uses the values in <TT>md5.txt</TT> to
+identify if any data have been modified in the analysis process.
+
+<LI><B><A HREF="tl.html">
+File Activity Timelines</A></B>:
+Autopsy can create timelines of file activity based on the Modified,
+Access, and Change (Create in FAT/NTFS) times (MAC).  The timeline
+will contain details about deleted and allocated content.  The
+resulting timeline can be either viewed within Autopsy or using
+other text viewing tools (WARNING: many HTML browsers do not handle
+large tables like a timeline very well so using a text editor is 
+recommended).
+
+<LI><B><A HREF="file_category.html">
+File Type Categories</A></B>:
+Autopsy can sort the files in an image file based on their file type.
+For example, all JPEG and GIF files would be identified as images
+and all executable files would be identified.  This mode will also
+ignore files that are found in hash databases of known good files,
+identify files that are found in a hash database of known bad files,
+and identify files that have an extension that is not consistent
+with their file type.
+
+
+<LI><B>Report Generation</B>:  
+Each of the above browsing techniques allows a report to be generated.
+This report lists the date, md5 value, investigator, and other
+context information in a text format.  This can be used for record
+keeping when deleted blocks of data have been found.
+
+</UL>
+
+
+<HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>

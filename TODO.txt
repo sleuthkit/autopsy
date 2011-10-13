@@ -1,0 +1,58 @@
+Remove HFS check in autopsy.base when HFS support is standard.
+
+Look into adding the unallocated partiion space when an image is added.
+Look into integrating clamshell or other AV
+
+There is an error when viewing the event sequencer notes about
+initialized in "ne".
+
+test date search
+
+Add SHA-1 to more places (images, lookups etc.)
+
+Get "Can't ignore signal CHLD, forcing to default." message with
+file type sorting (BUG: 919829).
+
+Figure out details around having Perl on the live analysis CD.
+(BUG: 919831)
+
+
+-------------------- FILE MODE ----------------------------
+- Make a file system depend seperator for / or \
+
+- check for tar during install
+  - List contents like HTML does now
+
+--------------------- SEARCH -----------------------------
+- new mode where searching is done on output of 'icat' of allocated
+  inodes
+
+- Bug: if the string that matches a keyword starts with spaces, then 
+  the 'index' function returns the idx to the start of the spaces and not
+  the substring.  (BUG 842858)
+
+--------------------- TIMELINE -----------------------------
+
+
+--------------------- LOGGING -----------------------------
+- New Report Creation:
+
+- Add pulldown in notes for common things:
+  - New MD5 / SHA-1
+  - Part of rootkit
+  - Suspected child porn
+  - known child porn
+
+--------------------- SORTER -----------------------------
+- Should sorter be at the host level instead of image, with output
+files appended to each other?
+
+- Allow one to browse output files
+
+--------------------- GENERAL -----------------------------
+- Add foremost
+- link in meta data to list just unallocated / used
+- Make data bases updatable in the host details view
+- Option to mount images in loopback when it is a Linux system
+- read config files in autopsy itself and not everytime ...
+- Make a way to kill intensive processes (searching, fls)

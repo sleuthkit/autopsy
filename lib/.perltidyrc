@@ -1,0 +1,5 @@
+-i=4	# indent of 4
+-pt=2	# paren tightness
+-sbt=2	# square paren tightness
+-bt=2	# curly paren tightness
+-nsfs	# no space after semi in for loop

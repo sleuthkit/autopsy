@@ -1,0 +1,97 @@
+<HTML>
+<HEAD><TITLE>Autopsy Data Unit Analysis Help</TITLE></HEAD>
+<BODY BGCOLOR=#CCCC99>
+<CENTER><H2>Data Unit Analysis</H2></CENTER>
+
+
+<H3>Overview</H3>
+<P>
+The Data Analysis Mode allows an investigator to view the contents
+of an individual data unit.  Data units is a generic term used to
+describe the areas on the disk that are used to store data.  Each
+file system calls the data unit a different thing (i.e.  Fragments
+or Clusters).  This mode is most useful when recovering and analyzing
+deleted data.
+
+<H3>Input</H3>
+<P>
+To view the contents of a specific address, enter it into the text
+box on the left-hand side.  By default, only one data unit will be
+displayed.  To view more than one consecutive unit, enter the
+number in the text box below. 
+
+<P>
+It is common to extract the unallocated space from a file system
+image and analyze it for deleted material.  The 'blkls' tool in The
+Sleuth Kit allows one to extract the data.  If interesting data is
+found in the 'blkls' file, the next step could be to find its location
+in the original image and examine the surrounding data.  To do
+this, simply calculate which data unit the data was found in (by
+dividing the byte offset of the interesting data by the data unit
+size (which can be found in <U>Image Details</U>)).  Enter that
+address into the original text box and select the <U>Unallocated</U>
+type.  This will find the original location and display it for you.
+
+<P>
+If Autopsy knows about the 'blkls' image, then it can be loaded at any
+time by selecting the <U>Load Unallocated</U> button.  Then, any
+data unit in that file can be examined.  
+
+
+<P>
+The <B>Lazarus</B> tool was part of <TT>TCT</TT>.  It analyzes a chunk
+of data and identifies what file type it is and tries to group 
+consecutive types together.  Lazarus numbers its output though starting
+with 1.  Therefore, instead of subtracting 1 every time you want to view
+a data unit identified by Lazarus, simply select the check box.  
+
+<P>
+Press the <U>Ok</U> button to display the contents of the address on
+the right-hand side of the window.  
+
+<P>
+The <U>Allocation List</U> link displays the allocation status of  
+addresses in intervals of 500.  
+
+
+<H3>Viewing</H3>
+<P>
+After the unit address has been entered, the contents are displayed
+in the right-hand side.  Filters can be used to view the data in the
+desired format (strings, hexdump, ASCII).
+
+<P>
+A report can be generated so that the contents and meta-data about
+it will be saved on record.  To save the contents locally, press the
+<U>Export Contents</U> button.  The <U>Add Note</U> button will allow
+one to add a comment about the given data unit so that it can be
+easily recalled later.  
+
+<P>
+The file type is also displayed.  This is identified by running
+the output through the 'file' command in The Sleuth Kit.
+
+
+
+<P>
+Autopsy will try to find the meta-data structure that allocated
+the unit and display both its address and a file name.  This process
+is very slow for FAT file systems, so this process is not done by
+default during analysis.
+
+<H3>FAT Notes</H3>
+<P>
+The Sleuth Kit and Autopsy do not use clusters when dealing with a FAT image.
+Only sectors are used.  The reason is because FAT does not start
+addressing clusters until many sectors into the file system.  If
+clusters were used to address data units, then there would be no
+way to address the sectors in the FAT and secondary FAT.  Therefore,
+sectors are used for all addresses.  NTFS changed the way clusters
+were addressed and do not have this problem.  See the documentation
+in The Sleuth Kit for more details.
+
+
+<P>
+<HR>
+<FONT SIZE=0>Brian Carrier</FONT>
+</BODY></HTML>
