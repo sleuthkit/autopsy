@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+OpenIDE-Module: org.sleuthkit.autopsy.corecomponents/0
+OpenIDE-Module-Implementation-Version: 1
+OpenIDE-Module-Install: org/sleuthkit/autopsy/corecomponents/Installer.class
+OpenIDE-Module-Layer: org/sleuthkit/autopsy/corecomponents/layer.xml
+OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/corecomponents/Bundle.properties
+OpenIDE-Module-Requires: org.openide.windows.WindowManager, org.netbeans.api.javahelp.Help
+

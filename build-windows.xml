@@ -1,0 +1,14 @@
+<project name="AutopsyTSKTargets">
+    <target name="copyTSKLibs">
+        <property environment="env"/>
+        <condition property="ewfFound">
+            <isset property="env.LIBEWF_HOME"/>
+        </condition>
+        <fail unless="ewfFound" message="LIBEWF_HOME must be set as an environment variable."/>
+
+        <!-- Need a way to specify Debug versus release -->
+        <copy file="${env.TSK_HOME}/win32/release/libtsk_jni.dll" tofile="${basedir}/DataModel/release/modules/lib/libtsk_jni.dll"/>
+        <copy file="${env.LIBEWF_HOME}/msvscpp/Release/libewf.dll" tofile="${basedir}/DataModel/release/modules/lib/libewf.dll"/> 
+        <copy file="${env.LIBEWF_HOME}/msvscpp/zlib/zlib1.dll" tofile="${basedir}/DataModel/release/modules/lib/zlib1.dll"/>
+    </target>
+</project>

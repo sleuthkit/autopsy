@@ -1,0 +1,45 @@
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+    <head>
+        <title>Adding An Image</title>
+        <link rel="stylesheet" href="nbdocs:/org/netbeans/modules/usersguide/ide.css" type="text/css">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+        <h2>Adding An Image</h2>
+        <p>
+            There are several ways to add an image to the currently opened case:
+            <ul type="circle">
+                <li>Go to "File" and select "Add Image..." </li>
+                <li>Select the <img src="addImage-icon.png" alt="Add Image Icon" /> icon on the toolbar</li>
+            </ul>
+
+        <p>
+            After that, a "Add Image" wizard dialog will show up. Then follow these following steps:</p>
+        <ul>
+            <li>Select "Image Type", then enter the "Image Path" to the image that you want to analyze (you can also use the "Browse" button to browse the location of your image). Also specify the timezone that you want. When everything is completed, press "Next" button.<br><br>
+            &nbsp; &nbsp; <img src="AddImageWizard1_Help.png" alt="Add Image Wizard Panel 1 Help" /> </li>
+            <li>Autopsy needs to analyze the image to populate its database with file system metadata. If you have configured hash databases, you will be given the option of looking up files in the hash database during the ingest.  Press the "Create Database" button to create the database. When the database creation process is done, you can press the "Next" button.<br><br>
+            &nbsp; &nbsp; <img src="AddImageWizard2_Help.png" alt="Add Image Wizard Panel 2 Help" /> </li>
+            <li>After the database is created, the image can be analyzed.  You will be given the option to add another image or start the analysis. <br><br>
+            &nbsp; &nbsp; <img src="AddImageWizard3_Help.png" alt="Add Image Wizard Panel 3 Help" /> </li>
+        </ul>
+        <p>Note that Autopsy will store the path to the image in its configuration file.  If the image moves, then Autopsy will give an error because it can't find the image file.
+    </body>
+</html>
+<!--
+Tip: to create a link which will open in an external web browser, try:
+<object classid="java:org.netbeans.modules.javahelp.BrowserDisplayer">
+    <param name="content" value="http://www.netbeans.org/">
+    <param name="text" value="<html><u>http://www.netbeans.org/</u></html>">
+    <param name="textFontSize" value="medium">
+    <param name="textColor" value="blue">
+</object>
+To create a link to a help set from another module, you need to know the code name base and path, e.g.:
+<a href="nbdocs://org.netbeans.modules.usersguide/org/netbeans/modules/usersguide/configure/configure_options.html">Using the Options Window</a>
+(This link will behave sanely if that module is disabled or missing.)
+-->

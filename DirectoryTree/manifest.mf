@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+OpenIDE-Module: org.sleuthkit.autopsy.directorytree/0
+OpenIDE-Module-Implementation-Version: 1
+OpenIDE-Module-Layer: org/sleuthkit/autopsy/directorytree/layer.xml
+OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/directorytree/Bundle.properties
+OpenIDE-Module-Requires: org.openide.windows.WindowManager, org.netbeans.api.javahelp.Help
+

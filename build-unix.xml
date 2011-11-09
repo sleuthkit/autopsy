@@ -1,0 +1,8 @@
+<project name="AutopsyTSKTargets">
+    <target name="copyTSKLibs">
+    <property environment="env"/>
+        <copy file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.dylib" tofile="${basedir}/DataModel/release/modules/lib/libtsk_jni.dylib"/>
+        <!-- <copy file="${env.TSK_HOME}/win32/libewf/msvscpp/Release/libewf.dll" tofile="${basedir}/DataModel/release/modules/lib/libewf.dll"/> 
+        <copy file="${env.TSK_HOME}/win32/libewf/msvscpp/zlib/zlib1.dll" tofile="${basedir}/DataModel/release/modules/lib/zlib1.dll"/> -->
+    </target>
+</project>

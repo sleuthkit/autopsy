@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+    <folder name="Actions">
+        <folder name="Tools">
+            <file name="org-sleuthkit-autopsy-menuactions-FileBrowserAction.instance">
+                <attr name="delegate" newvalue="org.sleuthkit.autopsy.menuactions.FileBrowserAction"/>
+                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.menuactions.Bundle#CTL_FileBrowserAction"/>
+                <attr name="noIconInMenu" boolvalue="false"/>
+            </file>
+        </folder>
+        <folder name="Window">
+        </folder>
+    </folder>
+    <folder name="Menu">
+        <folder name="Tools">
+            <file name="org-sleuthkit-autopsy-menuactions-DataExplorerMenu.instance">
+                <attr name="position" intvalue="1225"/>
+            </file>
+            <file name="org-sleuthkit-autopsy-menuactions-DataExplorerMenu-separatoAfter.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="1250"/>
+            </file>
+            <file name="org-sleuthkit-autopsy-menuactions-FileBrowserAction-separatorAfter.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="1301"/>
+            </file>
+        </folder>
+        <folder name="Window">
+            <file name="org-netbeans-modules-favorites-View.shadow_hidden"/>
+            <file name="org-sleuthkit-autopsy-menuactions-DataResultMenu-separatoBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="75"/>
+            </file>
+            <file name="org-sleuthkit-autopsy-menuactions-DataResultMenu.instance">
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-menuactions-DataResultMenu.instance"/>
+                <attr name="position" intvalue="100"/>
+            </file>
+            <file name="org-sleuthkit-autopsy-menuactions-DataResultMenu-separatoAfter.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="125"/>
+            </file>
+            <file name="org-sleuthkit-autopsy-menuactions-DataContentMenu.instance">
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-menuactions-DataContentMenu.instance"/>
+                <attr name="position" intvalue="150"/>
+            </file>
+            <file name="org-sleuthkit-autopsy-menuactions-DataContentMenu-separatorAfter.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="175"/>
+            </file>
+       </folder>
+    </folder>
+</filesystem>

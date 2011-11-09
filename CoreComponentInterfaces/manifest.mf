@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+OpenIDE-Module: org.sleuthkit.autopsy.corecomponentinterfaces/0
+OpenIDE-Module-Implementation-Version: 1
+OpenIDE-Module-Layer: org/sleuthkit/autopsy/corecomponentinterfaces/layer.xml
+OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/corecomponentinterfaces/Bundle.properties
+OpenIDE-Module-Requires: org.openide.windows.WindowManager
+
