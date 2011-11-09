@@ -1,3 +1,16 @@
+3.0.0b2 (Nov 9, 2011)
+New Features:
+- New database design
+- Hashlookup / calculation
+- Minor overall improvements
+
+3.0.0b1 (Aug 16, 2011)
+- Initial release
+- Windows only
+- Directory tree
+- File Search
+- Table and thumbnail viewer
+
 --------------------------- Version 2.24 --------------------------------
 3/22/10: Bug Fix: resolved issue 2950986 to support HFS directories. 
 
