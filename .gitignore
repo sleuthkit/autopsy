@@ -1,4 +1,5 @@
 /Case/build/
+/Case/nbproject/private/
 /CoreComponentInterfaces/build/
 /DirectoryTree/build/
 /CoreComponents/build/
@@ -15,3 +16,4 @@
 /DataModel/release/modules/lib/libewf.dll
 /DataModel/release/modules/lib/libtsk_jni.dll
 /DataModel/release/modules/lib/zlib1.dll
+/KeywordSearch/build/
