@@ -1,0 +1,59 @@
+This file outlines what it takes to build Autopsy from source.
+
+Note that it currently only works out of the box on Windows.  We
+are working on getting the process working under non-WIndows systems.
+It generally works, but needs some custom mangling to find the
+correct C libraries.
+
+STEPS:
+1) Download and install 32-bit version of JDK (32-bit is currently
+needed even if you have a 64-bit system).
+
+2) Ensure that JDK_HOME is set to the root JDK directory. 
+
+3) Download and install Netbeans IDE (http://netbeans.org/)
+
+4) Download and build the release version of Libewf 20100226 (note that TSK will fail with the new alpha versions).  All you need is the dll file. 
+- http://sourceforge.net/projects/libewf/
+
+5) Set LIBEWF_HOME environment variable to root directory of LIBEWF
+
+6) Download and build release version of Sleuth Kit (TSK) 3.3.  You
+need to build the tsk_jni project.
+- At the time of this writing, 3.3 is not released.  You can get it from either
+-- GIT: git://github.com/sleuthkit/sleuthkit.git
+-- SVN: http://svn.github.com/sleuthkit/sleuthkit.git
+
+7) Build the TSK JAR file by typing 'ant' in bindings/java from a
+command line or by opening the project in NetBeans.
+
+8) Set TSK_HOME environment variable to the root directory of TSK
+
+9) Start NetBean IDE and open the Autopsy project.
+
+10) Choose to build the Autopsy project / module.  It is the highest
+level project that will then cause the other modules to be compiled.
+
+
+BACKGROUND:
+Here are some notes to shed some light on what is going on during
+the build process.
+
+- Building the TSK library and JAR file place the files inside of
+the TSK directory.
+
+- NetBeans uses ant to build Autopsy.  The build target will locate
+TSK (and LIBEWF) based on the environment variables and copy the
+needed JAR and library files into the DataModel module in the Autopsy
+project (see build-X.xml for details).   If you want to use the
+debug version of the TSK dll, then edit the copy line in the
+build-windows.xml file to copy from the Debug folder.
+
+- Everytime that you do a source code update of TSK, make sure you
+rebuild both the dll and the JAR file.
+
+
+---------------
+Brian Carrier
+11/9/2011
+carrier <at> sleuthkit <dot> org
