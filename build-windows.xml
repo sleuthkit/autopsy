@@ -11,4 +11,19 @@
         <copy file="${env.LIBEWF_HOME}/msvscpp/Release/libewf.dll" tofile="${basedir}/DataModel/release/modules/lib/libewf.dll"/> 
         <copy file="${env.LIBEWF_HOME}/msvscpp/zlib/zlib1.dll" tofile="${basedir}/DataModel/release/modules/lib/zlib1.dll"/>
     </target>
+    
+    <target name="copyExternalLibs">
+        
+        <!-- Get C++ Runtime dlls -->
+        <property environment="env"/>
+        <condition property="crtFound">
+            <isset property="env.CRT_HOME"/>
+        </condition>
+        <fail unless="crtFound" message="CRT_HOME must be set as an environment variable."/>
+
+        <copy file="${env.CRT_HOME}/Microsoft.VC90.CRT.manifest" tofile="${zip-tmp}/${app.name}/${app.name}/modules/lib/Microsoft.VC90.CRT.manifest"/>
+        <copy file="${env.CRT_HOME}/msvcm90.dll" tofile="${zip-tmp}/${app.name}/${app.name}/modules/lib/msvcm90.dll"/> 
+        <copy file="${env.CRT_HOME}/msvcp90.dll" tofile="${zip-tmp}/${app.name}/${app.name}/modules/lib/msvcp90.dll"/> 
+        <copy file="${env.CRT_HOME}/msvcr90.dll" tofile="${zip-tmp}/${app.name}/${app.name}/modules/lib/msvcr90.dll"/> 
+    </target>
 </project>

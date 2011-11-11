@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 OpenIDE-Module: org.sleuthkit.autopsy.menuactions/0
-OpenIDE-Module-Implementation-Version: 1
+OpenIDE-Module-Implementation-Version: 2
 OpenIDE-Module-Layer: org/sleuthkit/autopsy/menuactions/layer.xml
 OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/menuactions/Bundle.properties
 

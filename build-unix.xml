@@ -5,4 +5,6 @@
         <!-- <copy file="${env.TSK_HOME}/win32/libewf/msvscpp/Release/libewf.dll" tofile="${basedir}/DataModel/release/modules/lib/libewf.dll"/> 
         <copy file="${env.TSK_HOME}/win32/libewf/msvscpp/zlib/zlib1.dll" tofile="${basedir}/DataModel/release/modules/lib/zlib1.dll"/> -->
     </target>
+    <target name="copyExternalLibs">
+    </target>
 </project>

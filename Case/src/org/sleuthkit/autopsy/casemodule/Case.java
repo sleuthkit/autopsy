@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
  */
 public class Case {
     // change the CTL_MainWindow_Title in Bundle.properties as well if you change this value
-    private static final String autopsyVer = "3.0.0b1"; // current version of autopsy. Changed it when the version is changed
+    private static final String autopsyVer = "3.0.0b2"; // current version of autopsy. Changed it when the version is changed
     private static final String appName = "Autopsy " + autopsyVer;
 
     /**
