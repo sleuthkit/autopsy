@@ -3,6 +3,7 @@ New Features:
 - New database design
 - Hashlookup / calculation
 - Minor overall improvements
+- NOTE: Cases created with b1 are not supported in b2 (different DB)
 
 3.0.0b1 (Aug 16, 2011)
 - Initial release

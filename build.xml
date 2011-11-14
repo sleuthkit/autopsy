@@ -56,6 +56,7 @@
         <!-- step (3) do your copying stuff here, check the ant doc for copy, move, etc file -->
         <copy file="${basedir}/README.txt" tofile="${zip-tmp}/${app.name}/README.txt"/>
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
+        <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <antcall target="copyExternalLibs"></antcall>
         
         <!-- step (4) zip again, but with the version numbers in the dir -->
