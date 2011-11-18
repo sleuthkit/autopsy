@@ -1,5 +1,4 @@
 /Case/build/
-/Case/nbproject/private/
 /CoreComponentInterfaces/build/
 /DirectoryTree/build/
 /CoreComponents/build/
@@ -9,11 +8,16 @@
 /MenuActions/build/
 /Logging/build/
 /FileSearch/build/
-/nbproject/private/
 /DataModel/release/modules/lib/libewf.dll
 /DataModel/release/modules/ext/Tsk_DataModel.jar
 /DataModel/release/modules/ext/sqlite-jdbc-3.6.20.jar
 /DataModel/release/modules/lib/libewf.dll
 /DataModel/release/modules/lib/libtsk_jni.dll
 /DataModel/release/modules/lib/zlib1.dll
+
 /KeywordSearch/build/
+/KeywordSearch/release/
+
+
+*/nbproject/private/*
+/nbproject/private/*
