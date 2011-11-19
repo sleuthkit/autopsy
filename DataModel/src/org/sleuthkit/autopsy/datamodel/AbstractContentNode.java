@@ -97,14 +97,6 @@ abstract class AbstractContentNode<T extends Content> extends AbstractNode imple
     public byte[] read(long offset, long len) throws TskException {
         return content.read(offset, len);
     }
-
-    /**
-     * Returns the location of the file ID / Metadata address on the columns on
-     * the directory table.
-     *
-     * @return
-     */
-    abstract public int getFileIDColumn();
     
     /**
      * Returns the content of this node.
@@ -238,6 +230,5 @@ abstract class AbstractContentNode<T extends Content> extends AbstractNode imple
         public List<String> visit(VolumeSystem vs) {
             return vs.getParent().accept(this);
         }
-
     }
 }

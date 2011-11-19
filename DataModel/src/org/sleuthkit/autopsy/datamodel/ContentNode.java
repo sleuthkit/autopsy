@@ -66,14 +66,6 @@ public interface ContentNode {
     public byte[] read(long offset, long len) throws TskException;
 
     /**
-     * Returns the location of the file ID / Metadata address on the columns on
-     * the directory table.
-     *
-     * @return
-     */
-    public int getFileIDColumn();
-
-    /**
      * Returns the content of this node.
      *
      * @return content  the content of this node (can be image, volume, directory, or file)

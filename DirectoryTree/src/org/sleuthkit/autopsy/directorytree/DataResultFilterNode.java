@@ -206,11 +206,6 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
     }
 
     @Override
-    public int getFileIDColumn() {
-        return ((ContentNode) currentNode).getFileIDColumn();
-    }
-
-    @Override
     public Content getContent() {
         return ((ContentNode) currentNode).getContent();
     }

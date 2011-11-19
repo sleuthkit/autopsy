@@ -101,11 +101,6 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
     }
 
     @Override
-    public int getFileIDColumn() {
-        return 1;
-    }
-
-    @Override
     public <T> T accept(ContentNodeVisitor<T> v) {
         return v.visit(this);
     }

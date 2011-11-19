@@ -90,11 +90,6 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         return objs;
     }
 
-    @Override
-    public int getFileIDColumn() {
-        return 1;
-    }
-
     /**
      * Right click action for volume node
      *

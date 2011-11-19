@@ -94,12 +94,7 @@ public class FileNode extends AbstractFsContentNode<File> {
                 });
         return objs;
     }
-
-    @Override
-    public int getFileIDColumn() {
-        return 1; // change this later when it's defined
-    }
-
+    
     @Override
     public <T> T accept(ContentNodeVisitor<T> v) {
         return v.visit(this);

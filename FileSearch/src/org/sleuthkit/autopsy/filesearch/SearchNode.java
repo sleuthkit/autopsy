@@ -91,11 +91,6 @@ class SearchNode extends AbstractNode implements ContentNode {
     }
 
     @Override
-    public int getFileIDColumn() {
-        return -1; // change this later when needed
-    }
-
-    @Override
     public Content getContent() {
         return null;
     }
