@@ -23,7 +23,10 @@ import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.Volume;
 
 /**
  * This class sets the actions for the nodes in the directory tree and creates

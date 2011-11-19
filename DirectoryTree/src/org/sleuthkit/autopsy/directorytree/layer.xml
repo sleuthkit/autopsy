@@ -26,6 +26,7 @@
         <file name="org-sleuthkit-autopsy-directorytree-DirectoryTreeTopComponent.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent.getDefault"/>
+            <attr name="position" intvalue="100"/>
         </file>
     </folder>
     <folder name="Windows2">

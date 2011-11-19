@@ -7,6 +7,73 @@
             <suite-component/>
             <module-dependencies>
                 <dependency>
+                    <code-name-base>org.openide.awt</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>7.31.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.openide.nodes</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>7.21.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.openide.util</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>8.15.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.openide.util.lookup</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>8.8.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.openide.windows</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>6.40.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.casemodule</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.0</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.corecomponentinterfaces</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.0</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.corecomponents</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.0</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.sleuthkit.autopsy.datamodel</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -16,10 +83,40 @@
                     </run-dependency>
                 </dependency>
             </module-dependencies>
-            <public-packages/>
+            <public-packages>
+                <package>org.sleuthkit.autopsy.keywordsearch</package>
+            </public-packages>
+            <class-path-extension>
+                <runtime-relative-path>ext/slf4j-api-1.6.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-api-1.6.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-io-1.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-io-1.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-httpclient-3.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-httpclient-3.1.jar</binary-origin>
+            </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/apache-solr-solrj-3.4.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/apache-solr-solrj-3.4.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-codec-1.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-codec-1.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/wstx-asl-3.2.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/wstx-asl-3.2.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jcl-over-slf4j-1.6.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jcl-over-slf4j-1.6.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/geronimo-stax-api_1.0_spec-1.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/geronimo-stax-api_1.0_spec-1.0.1.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

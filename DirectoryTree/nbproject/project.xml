@@ -116,6 +116,15 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.keywordsearch</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>0-1</release-version>
+                        <specification-version>0.0</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.sleuthkit.autopsy.logging</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>

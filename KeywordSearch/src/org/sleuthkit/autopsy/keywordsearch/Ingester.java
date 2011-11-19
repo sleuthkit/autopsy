@@ -14,14 +14,17 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
 import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
+import org.apache.solr.common.SolrException;
+import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.ContentStream;
-import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskException;
 
 /**
  * Handles ingesting files to a Solr server, given the url string for it
  */
 class Ingester {
+    private static final Logger logger = Logger.getLogger(Ingester.class.getName());
     
 
     private SolrServer solr;
@@ -39,15 +42,30 @@ class Ingester {
         }
     }
     
+    Ingester(SolrServer solr) {
+        this.solr = solr;
+    }
+    
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
+        
+        // Warn if files might have been left uncommited.
         if (uncommitedIngests) {
-            Logger.getLogger(Ingester.class.getName()).warning("Ingester was used to add files that it never committed!");
+            logger.warning("Ingester was used to add files that it never committed!");
         }
     }
 
-    void ingest(File f) throws IngesterException {
+    /**
+     * Sends a file to Solr to have its content extracted and added to the
+     * index. commit() should be called once you're done ingesting files.
+     * 
+     * @param f File to ingest
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException if
+     * there was an error processing the given file, but the Solr server is
+     * probably fine.
+     */
+    void ingest(FsContent f) throws IngesterException {
         Map<String, String> fields = new HashMap<String, String>();
         fields.put("id", Long.toString(f.getId()));
         fields.put("file_name", f.getName());
@@ -57,28 +75,43 @@ class Ingester {
         fields.put("crtime", f.getMtimeAsDate());
 
         ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract");
-        up.addContentStream(new FileContentStream(f));
+        up.addContentStream(new FscContentStream(f));
         setFields(up, fields);
         up.setAction(AbstractUpdateRequest.ACTION.COMMIT, true, true);
         
+        up.setParam("commit", "false");
+        
         try {
             solr.request(up);
+            // should't get any checked exceptions, but Tika problems result in
+            // an unchecked SolrException
         } catch (IOException ex) {
-            throw new IngesterException("Problem posting file contents to Solr", ex);
+            throw new RuntimeException(ex);
         } catch (SolrServerException ex) {
-            throw new IngesterException("Problem posting file contents to Solr", ex);
+            throw new RuntimeException(ex);
+        } catch (SolrException ex) {
+            ErrorCode ec = ErrorCode.getErrorCode(ex.code());
+            
+            // When Tika has problems with a document, it throws a server error
+            // but it's okay to continue with other documents
+            if (ec.equals(ErrorCode.SERVER_ERROR)) { 
+                throw new IngesterException("Problem posting file contents to Solr. SolrException error code: " + ec , ex);
+            } else {
+                throw ex;
+            }
         }
         uncommitedIngests = true;
     }
     
-    void commit() throws IngesterException {
+    void commit() {
         uncommitedIngests = false;
         try {
             solr.commit();
+            // if commit doesn't work, something's broken
         } catch (IOException ex) {
-            throw new IngesterException("Problem making Solr commit", ex);
+            throw new RuntimeException(ex);
         } catch (SolrServerException ex) {
-            throw new IngesterException("Problem making Solr commit", ex);
+            throw new RuntimeException(ex);
         }
     }
 
@@ -88,11 +121,11 @@ class Ingester {
         }
     }
 
-    private static class FileContentStream implements ContentStream {
+    private static class FscContentStream implements ContentStream {
 
-        File f;
+        FsContent f;
 
-        FileContentStream(File f) {
+        FscContentStream(FsContent f) {
             this.f = f;
         }
 
@@ -119,9 +152,15 @@ class Ingester {
         @Override
         public InputStream getStream() throws IOException {
             try {
-                return new ByteArrayInputStream(f.read(0, f.getSize()));
+                long size = f.getSize();
+                if (size > 0) {
+                    return new ByteArrayInputStream(f.read(0, f.getSize()));
+                } else {
+                    // can't read files with size 0
+                    return new ByteArrayInputStream(new byte[0]);
+                }
             } catch (TskException ex) {
-                throw new IOException(ex);
+                throw new IOException("Error reading file '" + f.getName() + "' (id: " + f.getId() + ")", ex);
             }
         }
 
