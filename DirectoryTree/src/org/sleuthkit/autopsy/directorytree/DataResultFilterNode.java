@@ -38,6 +38,7 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.datamodel.ContentNodeVisitor;
+import org.sleuthkit.autopsy.keywordsearch.IndexContentFilesAction;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
@@ -75,28 +76,31 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
 
         List<Action> actions = new ArrayList<Action>();
 
-
         // right click action(s) for image node
         if (this.currentNode instanceof ImageNode) {
             actions.add(new NewWindowViewAction("View in New Window", (ImageNode) this.currentNode));
             actions.addAll(ShowDetailActionVisitor.getActions(((ImageNode) this.currentNode).getContent()));
+            actions.add(new IndexContentFilesAction(((ContentNode) currentNode).getContent(), currentNode.getDisplayName()));
         } // right click action(s) for volume node
         else if (this.currentNode instanceof VolumeNode) {
             actions.add(new NewWindowViewAction("View in New Window", (VolumeNode) this.currentNode));
             //new ShowDetailActionVisitor("Volume Details", this.currentNode.getName(), (VolumeNode) this.currentNode),
             actions.addAll(ShowDetailActionVisitor.getActions(((VolumeNode) this.currentNode).getContent()));
             actions.add(new ChangeViewAction("View", 0, (ContentNode) currentNode));
+            actions.add(new IndexContentFilesAction(((ContentNode) currentNode).getContent(), currentNode.getDisplayName()));
         } // right click action(s) for directory node
         else if (this.currentNode instanceof DirectoryNode) {
             actions.add(new NewWindowViewAction("View in New Window", (DirectoryNode) this.currentNode));
             actions.add(new ChangeViewAction("View", 0, (ContentNode) currentNode));
             actions.add(new ExtractAction("Extract Directory", (DirectoryNode) this.currentNode));
+            actions.add(new IndexContentFilesAction(((ContentNode) currentNode).getContent(), currentNode.getDisplayName()));
         } // right click action(s) for the file node
         else if (this.currentNode instanceof FileNode) {
             actions.add(new ExternalViewerAction("Open File in External Viewer", (FileNode) this.currentNode));
             actions.add(new NewWindowViewAction("View in New Window", (FileNode) this.currentNode));
             actions.add(new ExtractAction("Extract", (FileNode) this.currentNode));
             actions.add(new ChangeViewAction("View", 0, (ContentNode) currentNode));
+            actions.add(new IndexContentFilesAction(((ContentNode) currentNode).getContent(), currentNode.getDisplayName()));
         }
 
         return actions.toArray(new Action[actions.size()]);
