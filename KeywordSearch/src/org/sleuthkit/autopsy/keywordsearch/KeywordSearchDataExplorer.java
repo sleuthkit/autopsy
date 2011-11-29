@@ -1,3 +1,21 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
@@ -22,16 +40,16 @@ import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
-@ServiceProvider(service=DataExplorer.class, position=300)
-public class KeywordSearchDataExplorer implements DataExplorer  {
-    
+@ServiceProvider(service = DataExplorer.class, position = 300)
+public class KeywordSearchDataExplorer implements DataExplorer {
+
     private static KeywordSearchDataExplorer theInstance;
     private KeywordSearchTopComponent tc;
-    
+
     public KeywordSearchDataExplorer() {
         this.setTheInstance();
         this.tc = new KeywordSearchTopComponent();
-        this.tc.addSearchButtonListener(new ActionListener()  {
+        this.tc.addSearchButtonListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -39,7 +57,7 @@ public class KeywordSearchDataExplorer implements DataExplorer  {
             }
         });
     }
-    
+
     private synchronized void setTheInstance() {
         if (theInstance == null) {
             theInstance = this;
@@ -47,41 +65,41 @@ public class KeywordSearchDataExplorer implements DataExplorer  {
             throw new RuntimeException("NOOO!!! Mulitple instances of KeywordSearchTopComponent! BAD!");
         }
     }
-    
+
     private void search(String solrQuery) {
-        
+
         List<FsContent> matches = new ArrayList<FsContent>();
-        
+
         boolean allMatchesFetched = false;
         final int ROWS_PER_FETCH = 10000;
-        
 
-        
+
+
         SolrServer solr = Server.getServer().getSolr();
-        
-                            SolrQuery q = new SolrQuery();
+
+        SolrQuery q = new SolrQuery();
         q.setQuery(solrQuery);
         q.setRows(ROWS_PER_FETCH);
         q.setFields("id");
 
         for (int start = 0; !allMatchesFetched; start = start + ROWS_PER_FETCH) {
-            
 
-        
+
+
             q.setStart(start);
-        
+
             try {
                 QueryResponse response = solr.query(q);
                 SolrDocumentList resultList = response.getResults();
                 long results = resultList.getNumFound();
-                
+
                 allMatchesFetched = start + ROWS_PER_FETCH >= results;
-                
+
                 for (SolrDocument resultDoc : resultList) {
                     long id = Long.parseLong((String) resultDoc.getFieldValue("id"));
 
                     SleuthkitCase sc = Case.getCurrentCase().getSleuthkitCase();
-                    
+
                     // TODO: has to be a better way to get files. Also, need to 
                     // check that we actually get 1 hit for each id
                     ResultSet rs = sc.runQuery("select * from tsk_files where obj_id=" + id);
@@ -90,21 +108,21 @@ public class KeywordSearchDataExplorer implements DataExplorer  {
                 }
 
             } catch (SolrServerException ex) {
+                throw new RuntimeException(ex);
                 // TODO: handle bad query strings, among other issues
             } catch (SQLException ex) {
                 // TODO: handle error getting files from database
             }
 
         }
-        
-            String pathText = "Solr query: " + solrQuery;
-            Node rootNode = new KeywordSearchNode(matches, pathText);
-            
-            TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, matches.size());
-            searchResultWin.requestActive(); // make it the active top component
+
+        String pathText = "Solr query: " + solrQuery;
+        Node rootNode = new KeywordSearchNode(matches, solrQuery);
+
+        TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, matches.size());
+        searchResultWin.requestActive(); // make it the active top component
     }
-    
-    
+
     @Override
     public org.openide.windows.TopComponent getTopComponent() {
         return this.tc;
@@ -112,7 +130,5 @@ public class KeywordSearchDataExplorer implements DataExplorer  {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-
     }
-    
 }

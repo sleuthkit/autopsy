@@ -1,6 +1,23 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -18,18 +35,16 @@ import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.ContentStream;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Handles ingesting files to a Solr server, given the url string for it
  */
 class Ingester {
-    private static final Logger logger = Logger.getLogger(Ingester.class.getName());
-    
 
+    private static final Logger logger = Logger.getLogger(Ingester.class.getName());
     private SolrServer solr;
     private boolean uncommitedIngests = false;
-    
+
     /**
      * New Ingester connected to the server at given url
      * @param url Should be something like "http://localhost:8983/solr"
@@ -41,15 +56,15 @@ class Ingester {
             throw new RuntimeException(ex);
         }
     }
-    
+
     Ingester(SolrServer solr) {
         this.solr = solr;
     }
-    
+
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        
+
         // Warn if files might have been left uncommited.
         if (uncommitedIngests) {
             logger.warning("Ingester was used to add files that it never committed!");
@@ -78,9 +93,9 @@ class Ingester {
         up.addContentStream(new FscContentStream(f));
         setFields(up, fields);
         up.setAction(AbstractUpdateRequest.ACTION.COMMIT, true, true);
-        
+
         up.setParam("commit", "false");
-        
+
         try {
             solr.request(up);
             // should't get any checked exceptions, but Tika problems result in
@@ -91,18 +106,19 @@ class Ingester {
             throw new RuntimeException(ex);
         } catch (SolrException ex) {
             ErrorCode ec = ErrorCode.getErrorCode(ex.code());
-            
+
             // When Tika has problems with a document, it throws a server error
             // but it's okay to continue with other documents
-            if (ec.equals(ErrorCode.SERVER_ERROR)) { 
-                throw new IngesterException("Problem posting file contents to Solr. SolrException error code: " + ec , ex);
+            if (ec.equals(ErrorCode.SERVER_ERROR)) {
+                throw new IngesterException("Problem posting file contents to Solr. SolrException error code: " + ec, ex);
             } else {
                 throw ex;
             }
         }
+        
         uncommitedIngests = true;
     }
-    
+
     void commit() {
         uncommitedIngests = false;
         try {
@@ -151,17 +167,7 @@ class Ingester {
 
         @Override
         public InputStream getStream() throws IOException {
-            try {
-                long size = f.getSize();
-                if (size > 0) {
-                    return new ByteArrayInputStream(f.read(0, f.getSize()));
-                } else {
-                    // can't read files with size 0
-                    return new ByteArrayInputStream(new byte[0]);
-                }
-            } catch (TskException ex) {
-                throw new IOException("Error reading file '" + f.getName() + "' (id: " + f.getId() + ")", ex);
-            }
+            return new ReadContentInputStream(f);
         }
 
         @Override
@@ -169,8 +175,9 @@ class Ingester {
             throw new UnsupportedOperationException("Not supported yet.");
         }
     }
-    
+
     static class IngesterException extends Exception {
+
         IngesterException(String message, Throwable ex) {
             super(message, ex);
         }

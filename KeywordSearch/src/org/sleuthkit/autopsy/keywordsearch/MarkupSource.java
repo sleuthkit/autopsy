@@ -18,33 +18,17 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.net.MalformedURLException;
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+public interface MarkupSource {
 
-class Server {
+    /**
+     * @return text optionally marked up with the subsest of HTML that Swing
+     * components can handle in their setText() method.
+     */
+    String getMarkup();
 
-    private static final String url = "http://localhost:8983/solr";
-    private static final Server S = new Server(url);
-
-    static Server getServer() {
-        return S;
-    }
-    private SolrServer solr;
-
-    Server(String url) {
-        try {
-            this.solr = new CommonsHttpSolrServer(url);
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    Ingester getIngester() {
-        return new Ingester(this.solr);
-    }
-
-    SolrServer getSolr() {
-        return this.solr;
-    }
+    /**
+     * @return title of markup source
+     */
+    @Override
+    String toString();
 }

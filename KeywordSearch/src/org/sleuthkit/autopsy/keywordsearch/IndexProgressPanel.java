@@ -1,20 +1,29 @@
 /*
- * IndexProgressPanel.java
+ * Autopsy Forensic Browser
  *
- * Created on Nov 15, 2011, 5:19:59 PM
+ * Copyright 2011 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionListener;
 
-/**
- *
- * @author pmartel
- */
-public class IndexProgressPanel extends javax.swing.JPanel {
+class IndexProgressPanel extends javax.swing.JPanel {
 
     /** Creates new form IndexProgressPanel */
-    public IndexProgressPanel() {
+    IndexProgressPanel() {
         initComponents();
         progressBar.setMinimum(0);
         progressBar.setMaximum(100);
@@ -69,7 +78,6 @@ public class IndexProgressPanel extends javax.swing.JPanel {
     private javax.swing.JLabel statusText;
     // End of variables declaration//GEN-END:variables
 
-
     /**
      * Sets a listener for the Cancel button
      * @param e  The action listener
@@ -77,12 +85,12 @@ public class IndexProgressPanel extends javax.swing.JPanel {
     void addCancelButtonActionListener(ActionListener e) {
         this.cancelButton.addActionListener(e);
     }
-    
+
     void setProgressBar(int percent) {
         progressBar.setIndeterminate(false);
         progressBar.setValue(percent);
     }
-    
+
     void setStatusText(String text) {
         statusText.setText(text);
     }
