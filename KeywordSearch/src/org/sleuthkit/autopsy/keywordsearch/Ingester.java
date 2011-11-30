@@ -98,13 +98,16 @@ class Ingester {
 
         try {
             solr.request(up);
-            // should't get any checked exceptions, but Tika problems result in
-            // an unchecked SolrException
+            // should't get any checked exceptions, 
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            // It's possible that we will have IO errors 
+            throw new IngesterException("Problem reading file.", ex);
         } catch (SolrServerException ex) {
+            // If there's a problem talking to Solr, something is fundamentally
+            // wrong with ingest
             throw new RuntimeException(ex);
         } catch (SolrException ex) {
+            // Tika problems result in an unchecked SolrException
             ErrorCode ec = ErrorCode.getErrorCode(ex.code());
 
             // When Tika has problems with a document, it throws a server error
@@ -112,6 +115,7 @@ class Ingester {
             if (ec.equals(ErrorCode.SERVER_ERROR)) {
                 throw new IngesterException("Problem posting file contents to Solr. SolrException error code: " + ec, ex);
             } else {
+                // shouldn't get any other error codes
                 throw ex;
             }
         }

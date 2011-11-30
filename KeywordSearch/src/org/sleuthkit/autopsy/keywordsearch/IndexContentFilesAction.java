@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -32,6 +33,8 @@ import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.Content;
@@ -62,10 +65,10 @@ public class IndexContentFilesAction extends AbstractAction {
         // initialize panel
         final IndexProgressPanel panel = new IndexProgressPanel();
 
-        final SwingWorker task = new SwingWorker<Void, String>() {
+        final SwingWorker task = new SwingWorker<Integer, String>() {
 
             @Override
-            protected Void doInBackground() throws Exception {
+            protected Integer doInBackground() throws Exception {
                 Ingester ingester = new Ingester("http://localhost:8983/solr");
 
                 Collection<FsContent> files = c.accept(new GetIngestableFilesContentVisitor());
@@ -74,10 +77,11 @@ public class IndexContentFilesAction extends AbstractAction {
 
                 int fileCount = files.size();
                 int finishedFiles = 0;
+                int problemFiles = 0;
 
                 for (FsContent f : files) {
                     if (isCancelled()) {
-                        return null;
+                        return problemFiles;
                     }
 
                     this.publish("Indexing " + (finishedFiles + 1) + "/" + fileCount + ": " + f.getName());
@@ -86,6 +90,7 @@ public class IndexContentFilesAction extends AbstractAction {
                         ingester.ingest(f);
                     } catch (IngesterException ex) {
                         logger.log(Level.INFO, "Ingester had a problem with file '" + f.getName() + "' (id: " + f.getId() + ").", ex);
+                        problemFiles++;
                     }
 
                     setProgress(++finishedFiles * 100 / fileCount);
@@ -93,14 +98,16 @@ public class IndexContentFilesAction extends AbstractAction {
 
                 ingester.commit();
 
-                return null;
+                return problemFiles;
             }
 
             @Override
             protected void done() {
+                int problemFiles = 0;
+                
                 try {
                     if (!this.isCancelled()) {
-                        get();
+                        problemFiles = get();
                     }
 
                 } catch (InterruptedException ex) {
@@ -111,6 +118,9 @@ public class IndexContentFilesAction extends AbstractAction {
                 } finally {
                     popUpWindow.setVisible(false);
                     popUpWindow.dispose();
+                    if (problemFiles > 0) {
+                        displayProblemFilesDialog(problemFiles);
+                    }
                 }
             }
 
@@ -158,5 +168,18 @@ public class IndexContentFilesAction extends AbstractAction {
         task.execute();
         // display the window
         popUpWindow.setVisible(true);
+    }
+    
+    
+    private void displayProblemFilesDialog(int problemFiles) {
+        final Component parentComponent = null; // Use default window frame.
+        final String message = "Had trouble indexing " + problemFiles + " of the files. See the log for details.";
+        final String title = "Problem indexing some files";
+        final int messageType = JOptionPane.WARNING_MESSAGE;
+        JOptionPane.showMessageDialog(
+                parentComponent,
+                message,
+                title,
+                messageType);
     }
 }
