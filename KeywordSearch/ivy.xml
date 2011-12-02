@@ -1,0 +1,12 @@
+
+<ivy-module version="2.0">
+    <info organisation="org.sleuthkit.autopsy" module="keywordsearch"/>
+    <dependencies>
+        <dependency org="org.apache.solr" name="solr-cell" rev="3.5.0"/>
+        <dependency org="org.apache.solr" name="solr-solrj" rev="3.5.0"/>
+        <dependency org="org.apache.solr" name="solr" rev="3.5.0"/>
+        <dependency org="org.apache.solr" name="solr" rev="3.5.0"/>
+        <dependency org="org.mortbay.jetty" name="start" rev="6.1.26"/>
+        <dependency org="commons-lang" name="commons-lang" rev="2.4"/>
+    </dependencies>
+</ivy-module>

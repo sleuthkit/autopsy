@@ -34,22 +34,28 @@ import javax.swing.AbstractAction;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 
 public class IndexContentFilesAction extends AbstractAction {
-
+    
+    private static final Logger logger = Logger.getLogger(IndexContentFilesAction.class.getName());
+    
     private Content c;
     private String name;
-    private static final Logger logger = Logger.getLogger(IndexContentFilesAction.class.getName());
-
+    private Server.Core solrCore;
+    
     public IndexContentFilesAction(Content c, String name) {
+        this(c, name, KeywordSearch.getServer().getCore());
+    }
+    
+    IndexContentFilesAction(Content c, String name, Server.Core solrCore) {
         super("Index files...");
         this.c = c;
         this.name = name;
+        this.solrCore = solrCore;
     }
 
     @Override
@@ -69,7 +75,7 @@ public class IndexContentFilesAction extends AbstractAction {
 
             @Override
             protected Integer doInBackground() throws Exception {
-                Ingester ingester = new Ingester("http://localhost:8983/solr");
+                Ingester ingester = solrCore.getIngester();
 
                 Collection<FsContent> files = c.accept(new GetIngestableFilesContentVisitor());
 

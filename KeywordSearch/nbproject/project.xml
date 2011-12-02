@@ -15,6 +15,14 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
+                    <code-name-base>org.openide.modules</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>7.23.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.openide.nodes</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -99,24 +107,24 @@
                 <binary-origin>release/modules/ext/commons-httpclient-3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/apache-solr-solrj-3.4.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/apache-solr-solrj-3.4.0.jar</binary-origin>
+                <runtime-relative-path>ext/commons-codec-1.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-codec-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-codec-1.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-codec-1.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/wstx-asl-3.2.7.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/wstx-asl-3.2.7.jar</binary-origin>
+                <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang-2.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jcl-over-slf4j-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jcl-over-slf4j-1.6.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/geronimo-stax-api_1.0_spec-1.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/geronimo-stax-api_1.0_spec-1.0.1.jar</binary-origin>
+                <runtime-relative-path>ext/slf4j-jdk14-1.6.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/slf4j-jdk14-1.6.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/solr-solrj-3.5.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-3.5.0.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.sleuthkit.autopsy.keywordsearch.Server.Core;
 import org.sleuthkit.datamodel.Content;
 
 class HighlightedMatchesSource implements MarkupSource {
@@ -30,11 +31,19 @@ class HighlightedMatchesSource implements MarkupSource {
     private static final Logger logger = Logger.getLogger(HighlightedMatchesSource.class.getName());
     Content content;
     String solrQuery;
-
+    Core solrCore;
+    
     HighlightedMatchesSource(Content content, String solrQuery) {
+        this(content, solrQuery, KeywordSearch.getServer().getCore());
+    }
+
+    HighlightedMatchesSource(Content content, String solrQuery, Core solrCore) {
         this.content = content;
         this.solrQuery = solrQuery;
+        this.solrCore = solrCore;
     }
+    
+    
 
     @Override
     public String getMarkup() {
@@ -46,15 +55,19 @@ class HighlightedMatchesSource implements MarkupSource {
         q.setHighlightSimplePre("<span style=\"background:yellow\">");
         q.setHighlightSimplePost("</span>");
         q.setHighlightFragsize(0); // don't fragment the highlight
+        
+        
+        //TODO: remove (only for debugging)
+        String queryString = q.toString();
 
 
         try {
-            QueryResponse response = Server.getServer().getSolr().query(q);
+            QueryResponse response = solrCore.query(q);
             List<String> contentHighlights = response.getHighlighting().get(Long.toString(content.getId())).get("content");
             if (contentHighlights == null) {
                 return "<span style=\"background:red\">No matches in content.</span>";
             } else {
-                return "<pre>" + contentHighlights.get(0) + "</pre>";
+                return "<pre>" + contentHighlights.get(0).trim() + "</pre>";
             }
         } catch (SolrServerException ex) {
             throw new RuntimeException(ex);

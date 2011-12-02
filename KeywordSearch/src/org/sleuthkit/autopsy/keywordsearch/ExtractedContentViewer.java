@@ -26,12 +26,13 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ContentNode;
+import org.apache.commons.lang.StringEscapeUtils;
+
 
 @ServiceProvider(service = DataContentViewer.class)
 public class ExtractedContentViewer implements DataContentViewer {
@@ -62,8 +63,8 @@ public class ExtractedContentViewer implements DataContentViewer {
             @Override
             public String getMarkup() {
                 try {
-                    String content = getSolrContent(selectedNode);
-                    return "<pre>" + content + "</pre>";
+                    String content = StringEscapeUtils.escapeHtml(getSolrContent(selectedNode));
+                    return "<pre>" + content.trim() + "</pre>";
                 } catch (SolrServerException ex) {
                     logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
                     return "";
@@ -115,14 +116,14 @@ public class ExtractedContentViewer implements DataContentViewer {
             return true;
         }
 
-        SolrServer solr = Server.getServer().getSolr();
+        Server.Core solrCore = KeywordSearch.getServer().getCore();
         SolrQuery q = new SolrQuery();
         q.setQuery("*:*");
         q.addFilterQuery("id:" + node.getContent().getId());
         q.setFields("id");
 
         try {
-            return !solr.query(q).getResults().isEmpty();
+            return !solrCore.query(q).getResults().isEmpty();
         } catch (SolrServerException ex) {
             logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex);
             return false;
@@ -136,14 +137,15 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     private String getSolrContent(ContentNode cNode) throws SolrServerException {
-        SolrServer solr = Server.getServer().getSolr();
+        Server.Core solrCore = KeywordSearch.getServer().getCore();
         SolrQuery q = new SolrQuery();
         q.setQuery("*:*");
         q.addFilterQuery("id:" + cNode.getContent().getId());
         q.setFields("content");
 
+        //TODO: for debugging, remove
         String queryURL = q.toString();
-        String content = (String) solr.query(q).getResults().get(0).getFieldValue("content");
+        String content = (String) solrCore.query(q).getResults().get(0).getFieldValue("content");
         return content;
     }
 }

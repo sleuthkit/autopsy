@@ -26,7 +26,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
@@ -75,7 +74,7 @@ public class KeywordSearchDataExplorer implements DataExplorer {
 
 
 
-        SolrServer solr = Server.getServer().getSolr();
+        Server.Core solrCore = KeywordSearch.getServer().getCore();
 
         SolrQuery q = new SolrQuery();
         q.setQuery(solrQuery);
@@ -84,12 +83,10 @@ public class KeywordSearchDataExplorer implements DataExplorer {
 
         for (int start = 0; !allMatchesFetched; start = start + ROWS_PER_FETCH) {
 
-
-
             q.setStart(start);
 
             try {
-                QueryResponse response = solr.query(q);
+                QueryResponse response = solrCore.query(q);
                 SolrDocumentList resultList = response.getResults();
                 long results = resultList.getNumFound();
 

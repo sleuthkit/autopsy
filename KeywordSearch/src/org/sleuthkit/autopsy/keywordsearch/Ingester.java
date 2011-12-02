@@ -21,14 +21,12 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
 import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
 import org.apache.solr.common.SolrException;
@@ -42,23 +40,11 @@ import org.sleuthkit.datamodel.FsContent;
 class Ingester {
 
     private static final Logger logger = Logger.getLogger(Ingester.class.getName());
-    private SolrServer solr;
+    private SolrServer solrCore;
     private boolean uncommitedIngests = false;
 
-    /**
-     * New Ingester connected to the server at given url
-     * @param url Should be something like "http://localhost:8983/solr"
-     */
-    Ingester(String url) {
-        try {
-            this.solr = new CommonsHttpSolrServer(url);
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    Ingester(SolrServer solr) {
-        this.solr = solr;
+    Ingester(SolrServer solrCore) {
+        this.solrCore = solrCore;
     }
 
     @Override
@@ -67,7 +53,7 @@ class Ingester {
 
         // Warn if files might have been left uncommited.
         if (uncommitedIngests) {
-            logger.warning("Ingester was used to add files that it never committed!");
+            logger.warning("Ingester was used to add files that it never committed.");
         }
     }
 
@@ -97,7 +83,7 @@ class Ingester {
         up.setParam("commit", "false");
 
         try {
-            solr.request(up);
+            solrCore.request(up);
             // should't get any checked exceptions, 
         } catch (IOException ex) {
             // It's possible that we will have IO errors 
@@ -126,7 +112,7 @@ class Ingester {
     void commit() {
         uncommitedIngests = false;
         try {
-            solr.commit();
+            solrCore.commit();
             // if commit doesn't work, something's broken
         } catch (IOException ex) {
             throw new RuntimeException(ex);
