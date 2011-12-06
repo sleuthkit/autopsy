@@ -18,25 +18,35 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 class Server {
-
+    private static final Logger logger = Logger.getLogger(Server.class.getName());
+    
     private static final String DEFAULT_CORE_NAME = "coreCase";
     // TODO: DEFAULT_CORE_NAME needs to be replaced with unique names to support multiple open cases
     
 
     private CommonsHttpSolrServer solr;
-    private String instanceDir = "C:/Users/pmartel/solr-test/maytag/solr";
+    private String instanceDir;
+    private File solrFolder;
 
     Server(String url) {
         try {
@@ -44,16 +54,102 @@ class Server {
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex);
         }
+        
+        solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false);
+        instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr";
     }
+ 
+    
+    /**
+     * Helper class to handle output from Solr
+     */
+    private static class InputStreamPrinter extends Thread {
 
+        InputStream stream;
+
+        InputStreamPrinter(InputStream stream) {
+            this.stream = stream;
+        }
+
+        public void run() {
+            InputStreamReader isr = new InputStreamReader(stream);
+            BufferedReader br = new BufferedReader(isr);
+            String line = null;
+            try {
+                while ((line = br.readLine()) != null) {
+                    System.out.print("SOLR> ");
+                    System.out.println(line);
+                }
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+    }
+    
+    
+    /**
+     * Tries to start a Solr instance. Returns immediately (probably before
+     * the server is ready) and doesn't check whether it was successful.
+     */
     void start() {
+        logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
+        try {
+            Process start = Runtime.getRuntime().exec("java -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar", null, solrFolder);
+            
+            // Handle output to prevent process from blocking
+            (new InputStreamPrinter(start.getInputStream())).start();
+            (new InputStreamPrinter(start.getErrorStream())).start();
+            
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
-    void stop() {
+    /**
+     * Tries to stop a Solr instance.
+     * 
+     * Waits for the stop command to finish
+     * before returning.
+     * @return  true if the stop command finished successfully, else false
+     */
+    boolean stop() {
+        try {
+            logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
+            Process stop = Runtime.getRuntime().exec("java -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar --stop", null, solrFolder);
+            return stop.waitFor() == 0;
+            
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
+  
     
-    
-    
+    /**
+     * Tests if there's a Solr server running by sending it a core-status request.
+     * @return false if the request failed with a connection error, otherwise true
+     */
+    boolean isRunning() {
+
+        try {
+            // making a status request here instead of just doing solr.ping(), because
+            // that doesn't work when there are no cores
+
+            CoreAdminRequest.getStatus(null, solr);
+        } catch (SolrServerException ex) {
+            if (ex.getRootCause() instanceof ConnectException) {
+                return false;
+            } else {
+                throw new RuntimeException("Error checking if server is running", ex);
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException("Error checking if server is running", ex);
+        }
+
+        return true;
+    }
+
     /**** Convenience methods for use while we only open one case at a time ****/
     
     private Core currentCore = null;

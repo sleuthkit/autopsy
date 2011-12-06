@@ -18,18 +18,55 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openide.modules.ModuleInstall;
 import org.sleuthkit.autopsy.casemodule.Case;
 
-public class Installer extends ModuleInstall{
+public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
+
+        Logger logger = Logger.getLogger(Installer.class.getName());
+
         Case.addPropertyChangeListener(new KeywordSearch.CaseChangeListener());
+
+        Server server = KeywordSearch.getServer();
+
+        if (server.isRunning()) {
+
+            logger.log(Level.WARNING, "Already a Solr server on out port, maybe leftoveer from a previous run. Trying to shut it down...");
+            // Send the stop message in case there's a solr server lingering from
+            // a previous run of Autopsy that didn't exit cleanly
+            server.stop();
+
+            try {
+                Thread.sleep(10000); // let it die
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
+
+            if (server.isRunning()) {
+                throw new IllegalStateException("There's already a server running on our port that can't be shutdown.");
+            } else {
+                logger.log(Level.INFO, "Old Solr server shutdown successfully.");
+            }
+        }
+        
+        server.start();
+            try {
+                Thread.sleep(1000); // give it a sec
+                //TODO: idle loop while waiting for it to start
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
+
     }
-    
-    // TODO: need logic for starting & shutting down the server.
-    // startup should be robust enough to deal with a still running server
-    // from a previous crash.
-   
+
+    @Override
+    public boolean closing() {
+        KeywordSearch.getServer().stop();
+        return true;
+    }
 }
