@@ -1,12 +1,20 @@
 
 <ivy-module version="2.0">
     <info organisation="org.sleuthkit.autopsy" module="keywordsearch"/>
+    <configurations >
+        <conf name="autopsy"/>
+        <conf name="solr-libs"/>
+        <conf name="solr-war"/>
+        <conf name="start-solr"/>
+        <conf name="jetty-libs"/>
+    </configurations>
     <dependencies>
-        <dependency org="org.apache.solr" name="solr-cell" rev="3.5.0"/>
-        <dependency org="org.apache.solr" name="solr-solrj" rev="3.5.0"/>
-        <dependency org="org.apache.solr" name="solr" rev="3.5.0"/>
-        <dependency org="org.apache.solr" name="solr" rev="3.5.0"/>
-        <dependency org="org.mortbay.jetty" name="start" rev="6.1.26"/>
-        <dependency org="commons-lang" name="commons-lang" rev="2.4"/>
+        <dependency conf="solr-libs->default" org="org.apache.solr" name="solr-cell" rev="3.5.0"/>
+        <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="3.5.0" transitive="false" /> <!-- the war file -->
+        <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="3.5.0"/>
+        <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
+        <dependency conf="start-solr->default" org="org.mortbay.jetty" name="start" rev="6.1.26"/>
+        <dependency conf="jetty-libs->default" org="org.mortbay.jetty" name="jetty" rev="6.1.26"/>
+        <dependency conf="jetty-libs->default" org="org.mortbay.jetty" name="jsp-2.1" rev="6.1.14"/>
     </dependencies>
 </ivy-module>

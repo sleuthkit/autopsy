@@ -16,8 +16,11 @@
 /DataModel/release/modules/lib/zlib1.dll
 
 /KeywordSearch/build/
-/KeywordSearch/release/
-
+/KeywordSearch/release/modules/ext/
+/KeywordSearch/release/solr/lib/
+/KeywordSearch/release/solr/solr/lib/
+/KeywordSearch/release/solr/start.jar
+/KeywordSearch/release/solr/webapps/solr.war
 
 */nbproject/private/*
 /nbproject/private/*
