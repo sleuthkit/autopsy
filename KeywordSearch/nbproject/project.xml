@@ -119,10 +119,6 @@
                 <binary-origin>release/modules/ext/jcl-over-slf4j-1.6.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/slf4j-jdk14-1.6.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/slf4j-jdk14-1.6.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/solr-solrj-3.5.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/solr-solrj-3.5.0.jar</binary-origin>
             </class-path-extension>
