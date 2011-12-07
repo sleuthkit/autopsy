@@ -33,7 +33,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.apache.commons.lang.StringEscapeUtils;
 
-
+/**
+ * Displays marked-up (HTML) content for a Node. The sources are all the 
+ * MarkupSource items in the selected Node's lookup, plus the content that
+ * Solr extracted (if there is any).
+ */
 @ServiceProvider(service = DataContentViewer.class)
 public class ExtractedContentViewer implements DataContentViewer {
 
@@ -46,36 +50,39 @@ public class ExtractedContentViewer implements DataContentViewer {
     @Override
     public void setNode(final ContentNode selectedNode) {
 
-        // to clear it
+        // to clear the viewer
         if (selectedNode == null) {
             resetComponent();
             return;
         }
 
-        // custom markup from the node (if available) and default markup
-        // fetched from solr
+        // sources are custom markup from the node (if available) and default
+        // markup is fetched from solr
         List<MarkupSource> sources = new ArrayList<MarkupSource>();
 
         sources.addAll(((Node) selectedNode).getLookup().lookupAll(MarkupSource.class));
 
-        sources.add(new MarkupSource() {
 
-            @Override
-            public String getMarkup() {
-                try {
-                    String content = StringEscapeUtils.escapeHtml(getSolrContent(selectedNode));
-                    return "<pre>" + content.trim() + "</pre>";
-                } catch (SolrServerException ex) {
-                    logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
-                    return "";
+        if (solrHasContent(selectedNode)) {
+            sources.add(new MarkupSource() {
+
+                @Override
+                public String getMarkup() {
+                    try {
+                        String content = StringEscapeUtils.escapeHtml(getSolrContent(selectedNode));
+                        return "<pre>" + content.trim() + "</pre>";
+                    } catch (SolrServerException ex) {
+                        logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
+                        return "";
+                    }
                 }
-            }
 
-            @Override
-            public String toString() {
-                return "Extracted Content";
-            }
-        });
+                @Override
+                public String toString() {
+                    return "Extracted Content";
+                }
+            });
+        }
 
         // first source will be the default displayed
         setPanel(sources);
@@ -112,10 +119,26 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         Collection<? extends MarkupSource> sources = ((Node) node).getLookup().lookupAll(MarkupSource.class);
 
-        if (!sources.isEmpty()) {
-            return true;
-        }
+        return !sources.isEmpty() || solrHasContent(node);
+    }
 
+    /**
+     * Set the MarkupSources for the panel to display (safe to call even if the
+     * panel hasn't been created yet)
+     * @param sources 
+     */
+    private void setPanel(List<MarkupSource> sources) {
+        if (panel != null) {
+            panel.setSources(sources);
+        }
+    }
+
+    /**
+     * Check if Solr has extracted content for a given node
+     * @param node
+     * @return true if Solr has content, else false
+     */
+    private boolean solrHasContent(ContentNode node) {
         Server.Core solrCore = KeywordSearch.getServer().getCore();
         SolrQuery q = new SolrQuery();
         q.setQuery("*:*");
@@ -130,12 +153,13 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
     }
 
-    private void setPanel(List<MarkupSource> sources) {
-        if (panel != null) {
-            panel.setSources(sources);
-        }
-    }
-
+    /**
+     * Get extracted content for a node from Solr
+     * @param cNode a node that has extracted content in Solr (check with
+     * solrHasContent(ContentNode))
+     * @return the extracted content
+     * @throws SolrServerException if something goes wrong
+     */
     private String getSolrContent(ContentNode cNode) throws SolrServerException {
         Server.Core solrCore = KeywordSearch.getServer().getCore();
         SolrQuery q = new SolrQuery();
@@ -143,8 +167,6 @@ public class ExtractedContentViewer implements DataContentViewer {
         q.addFilterQuery("id:" + cNode.getContent().getId());
         q.setFields("content");
 
-        //TODO: for debugging, remove
-        String queryURL = q.toString();
         String content = (String) solrCore.query(q).getResults().get(0).getFieldValue("content");
         return content;
     }

@@ -23,15 +23,15 @@ import java.awt.event.ItemListener;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Panel displays HTML content sent to ExtractedContentViewer, and provides
+ * a combo-box to select between multiple sources.
+ */
 class ExtractedContentPanel extends javax.swing.JPanel {
 
-    /** Creates new form ExtractedContentPanel */
     ExtractedContentPanel() {
         initComponents();
-
-//        DefaultCaret caret = (DefaultCaret)extractedTextPane.getCaret();
-//        caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-
+        
         extractedTextPane.setContentType("text/html");
 
         sourceComboBox.addItemListener(new ItemListener() {
@@ -90,6 +90,12 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     private javax.swing.JComboBox sourceComboBox;
     // End of variables declaration//GEN-END:variables
 
+    
+    /**
+     * Set the available sources (selects the first source in the list by
+     * default)
+     * @param sources 
+     */
     void setSources(List<MarkupSource> sources) {
         sourceComboBox.removeAllItems();
         setPanelText(null);

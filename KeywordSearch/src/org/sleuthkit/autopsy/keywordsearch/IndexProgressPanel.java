@@ -20,6 +20,9 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionListener;
 
+/**
+ * Displays progress as files are indexed
+ */
 class IndexProgressPanel extends javax.swing.JPanel {
 
     /** Creates new form IndexProgressPanel */

@@ -35,7 +35,7 @@ import org.apache.solr.common.util.ContentStream;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
- * Handles ingesting files to a Solr server, given the url string for it
+ * Handles indexing files on a Solr core.
  */
 class Ingester {
 
@@ -62,9 +62,8 @@ class Ingester {
      * index. commit() should be called once you're done ingesting files.
      * 
      * @param f File to ingest
-     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException if
-     * there was an error processing the given file, but the Solr server is
-     * probably fine.
+     * @throws IngesterException if there was an error processing a specific
+     * file, but the Solr server is probably fine.
      */
     void ingest(FsContent f) throws IngesterException {
         Map<String, String> fields = new HashMap<String, String>();
@@ -108,7 +107,11 @@ class Ingester {
         
         uncommitedIngests = true;
     }
-
+    
+    /**
+     * Tells Solr to commit (necessary before ingested files will appear in
+     * searches)
+     */
     void commit() {
         uncommitedIngests = false;
         try {
@@ -121,12 +124,20 @@ class Ingester {
         }
     }
 
+    /**
+     * Helper to set document fields
+     * @param up request with document
+     * @param fields map of field-names->values
+     */
     private static void setFields(ContentStreamUpdateRequest up, Map<String, String> fields) {
         for (Entry<String, String> field : fields.entrySet()) {
             up.setParam("literal." + field.getKey(), field.getValue());
         }
     }
 
+    /**
+     * ContentStream to read() the data from a FsContent object
+     */
     private static class FscContentStream implements ContentStream {
 
         FsContent f;
@@ -166,6 +177,10 @@ class Ingester {
         }
     }
 
+    /**
+     * Indicates that there was an error with the specific ingest operation,
+     * but it's still okay to continue ingesting files.
+     */
     static class IngesterException extends Exception {
 
         IngesterException(String message, Throwable ex) {

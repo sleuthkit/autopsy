@@ -39,6 +39,10 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 
+/**
+ * Action adds all supported files from the given Content object and its
+ * children to the Solr index.
+ */
 public class IndexContentFilesAction extends AbstractAction {
     
     private static final Logger logger = Logger.getLogger(IndexContentFilesAction.class.getName());
@@ -47,6 +51,11 @@ public class IndexContentFilesAction extends AbstractAction {
     private String name;
     private Server.Core solrCore;
     
+    /**
+     * New action
+     * @param c source Content object to get files from
+     * @param name name to refer to the source by when displaying progress
+     */
     public IndexContentFilesAction(Content c, String name) {
         this(c, name, KeywordSearch.getServer().getCore());
     }
@@ -60,9 +69,8 @@ public class IndexContentFilesAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-
-
-        // create the popUp window for it
+        
+        // create the popUp window to display progress
         String title = "Indexing files in " + name;
 
         final JFrame frame = new JFrame(title);
@@ -81,10 +89,11 @@ public class IndexContentFilesAction extends AbstractAction {
 
                 setProgress(0);
 
+                // track number complete or with errors
                 int fileCount = files.size();
                 int finishedFiles = 0;
                 int problemFiles = 0;
-
+                
                 for (FsContent f : files) {
                     if (isCancelled()) {
                         return problemFiles;
@@ -124,6 +133,8 @@ public class IndexContentFilesAction extends AbstractAction {
                 } finally {
                     popUpWindow.setVisible(false);
                     popUpWindow.dispose();
+                    
+                    // notify user if there were problem files
                     if (problemFiles > 0) {
                         displayProblemFilesDialog(problemFiles);
                     }
@@ -133,6 +144,7 @@ public class IndexContentFilesAction extends AbstractAction {
             @Override
             protected void process(List<String> messages) {
 
+                // display the latest message
                 if (!messages.isEmpty()) {
                     panel.setStatusText(messages.get(messages.size() - 1));
                 }

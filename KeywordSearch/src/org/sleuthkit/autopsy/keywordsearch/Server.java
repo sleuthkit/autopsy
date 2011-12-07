@@ -37,6 +37,9 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 
+/**
+ * Handles for keeping track of a Solr server and its cores
+ */
 class Server {
     private static final Logger logger = Logger.getLogger(Server.class.getName());
     
@@ -48,6 +51,10 @@ class Server {
     private String instanceDir;
     private File solrFolder;
 
+    /**
+     * New instance for the server at the given URL
+     * @param url should be something like "http://localhost:8983/solr/"
+     */
     Server(String url) {
         try {
             this.solr = new CommonsHttpSolrServer(url);
@@ -61,7 +68,7 @@ class Server {
  
     
     /**
-     * Helper class to handle output from Solr
+     * Helper threads to handle stderr/stdout from Solr process
      */
     private static class InputStreamPrinter extends Thread {
 
@@ -88,8 +95,9 @@ class Server {
     
     
     /**
-     * Tries to start a Solr instance. Returns immediately (probably before
-     * the server is ready) and doesn't check whether it was successful.
+     * Tries to start a Solr instance in a separate process. Returns immediately
+     * (probably before the server is ready) and doesn't check whether it was
+     * successful.
      */
     void start() {
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
@@ -180,13 +188,23 @@ class Server {
     /**** end single-case specific methods ****/ 
 
     
-    
+    /**
+     * Open a core for the given case
+     * @param c
+     * @return 
+     */
     Core openCore(Case c) {
         String sep = File.separator;
         String dataDir = c.getCaseDirectory() + sep + "keywordsearch" + sep + "data";
         return this.openCore(DEFAULT_CORE_NAME, new File(dataDir));
     }
 
+    /**
+     * Open a new core
+     * @param coreName name to refer to the core by in Solr
+     * @param dataDir directory to load/store the core data from/to
+     * @return new core
+     */
     Core openCore(String coreName, File dataDir) {
         try {
             if (!dataDir.exists()) {
@@ -211,8 +229,10 @@ class Server {
 
     class Core {
 
+        // handle to the core in Solr
         private String name;
-        // server to access a core needs to be built from a URL with the
+        
+        // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
         private SolrServer solrCore;
 
@@ -233,7 +253,7 @@ class Server {
             return solrCore.query(sq);
         }
         
-        void close () {
+        void close() {
             try {
                 CoreAdminRequest.unloadCore(this.name, solr);
             } catch (SolrServerException ex) {

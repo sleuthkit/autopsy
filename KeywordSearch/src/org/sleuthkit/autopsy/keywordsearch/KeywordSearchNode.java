@@ -33,6 +33,9 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskException;
 
+/**
+ * Root Node for keyword search results
+ */
 class KeywordSearchNode extends AbstractNode implements ContentNode {
 
     private String solrQuery;
@@ -40,13 +43,14 @@ class KeywordSearchNode extends AbstractNode implements ContentNode {
     KeywordSearchNode(List<FsContent> keys, final String solrQuery) {
         super(new RootContentChildren(keys) {
 
-            // Use filter node to add a MarkupSource for the search results
-            // to the lookup
+
             @Override
             protected Node[] createNodes(Content key) {
                 Node[] originalNodes = super.createNodes(key);
                 Node[] filterNodes = new Node[originalNodes.length];
 
+                // Use filter node to add a MarkupSource for the search results
+                // to the lookup
                 int i = 0;
                 for (Node original : originalNodes) {
                     MarkupSource markup = new HighlightedMatchesSource(key, solrQuery);

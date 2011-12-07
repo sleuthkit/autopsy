@@ -18,6 +18,10 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+/**
+ * Interface to provide HTML markup (to be displayed in ExtractedContentViewer)
+ * in a Node's lookup
+ */
 public interface MarkupSource {
 
     /**

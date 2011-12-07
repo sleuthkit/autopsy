@@ -39,6 +39,9 @@ import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
+/**
+ * Provides a data explorer to perform Solr searches with
+ */
 @ServiceProvider(service = DataExplorer.class, position = 300)
 public class KeywordSearchDataExplorer implements DataExplorer {
 
@@ -61,18 +64,20 @@ public class KeywordSearchDataExplorer implements DataExplorer {
         if (theInstance == null) {
             theInstance = this;
         } else {
-            throw new RuntimeException("NOOO!!! Mulitple instances of KeywordSearchTopComponent! BAD!");
+            throw new RuntimeException("Tried to instantiate mulitple instances of KeywordSearchTopComponent.");
         }
     }
 
+    /**
+     * Executes a query and populates a DataResult tab with the results
+     * @param solrQuery 
+     */
     private void search(String solrQuery) {
 
         List<FsContent> matches = new ArrayList<FsContent>();
 
         boolean allMatchesFetched = false;
         final int ROWS_PER_FETCH = 10000;
-
-
 
         Server.Core solrCore = KeywordSearch.getServer().getCore();
 

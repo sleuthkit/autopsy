@@ -23,6 +23,9 @@ import java.io.InputStream;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
+/**
+ * InputStream to read bytes from a Content object's data
+ */
 class ReadContentInputStream extends InputStream {
 
     private long position;

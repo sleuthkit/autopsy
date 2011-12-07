@@ -2,7 +2,10 @@
 <ivy-module version="2.0">
     <info organisation="org.sleuthkit.autopsy" module="keywordsearch"/>
     <configurations >
+        <!-- module dependencies -->
         <conf name="autopsy"/>
+        
+        <!-- Solr server dependencies -->
         <conf name="solr-libs"/>
         <conf name="solr-war"/>
         <conf name="start-solr"/>

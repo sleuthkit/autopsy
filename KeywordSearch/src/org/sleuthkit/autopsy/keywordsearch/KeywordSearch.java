@@ -22,6 +22,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import org.sleuthkit.autopsy.casemodule.Case;
 
+/**
+ * Static class to track singletons for KeywordSearch module
+ */
 class KeywordSearch {
 
     private static final String BASE_URL = "http://localhost:8983/solr/";
@@ -36,6 +39,9 @@ class KeywordSearch {
         throw new AssertionError();
     }
 
+    /**
+     * Listener to swap cores when the case changes
+     */
     static class CaseChangeListener implements PropertyChangeListener {
 
         CaseChangeListener() {

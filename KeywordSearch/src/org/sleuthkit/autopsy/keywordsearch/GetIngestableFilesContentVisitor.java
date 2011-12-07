@@ -40,9 +40,19 @@ import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
+
+/**
+ * Visitor for getting all the files to try to index from any Content object.
+ * Currently gets all the files with a file extensions that match a list of
+ * document types that Tika/Solr-Cell supports.
+ */
 class GetIngestableFilesContentVisitor implements ContentVisitor<Collection<FsContent>> {
 
-    private static Logger logger = Logger.getLogger(GetIngestableFilesContentVisitor.class.getName());
+    private static final Logger logger = Logger.getLogger(GetIngestableFilesContentVisitor.class.getName());
+    
+    // TODO: use a more robust method than checking file extension to determine
+    // whether to try a file
+    
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
     private static final String[] supportedExtensions = {"tar", "jar", "zip", "bzip2",
         "gz", "tgz", "doc", "xls", "ppt", "rtf", "pdf", "html", "xhtml", "txt",
@@ -52,6 +62,8 @@ class GetIngestableFilesContentVisitor implements ContentVisitor<Collection<FsCo
     private static final String extensionsLikePredicate;
 
     static {
+        // build the query fragment for matching file extensions
+        
         StringBuilder likes = new StringBuilder("0");
 
         for (String ext : supportedExtensions) {
@@ -68,6 +80,12 @@ class GetIngestableFilesContentVisitor implements ContentVisitor<Collection<FsCo
         return getAllFromChildren(drctr);
     }
 
+    /**
+     * Get the part of a file name after (not including) the last '.' and
+     * coerced to lowercase.
+     * @param fileName
+     * @return the file extension, or an empty string if there is none
+     */
     private String getExtension(String fileName) {
         int lastDot = fileName.lastIndexOf(".");
 
@@ -90,6 +108,9 @@ class GetIngestableFilesContentVisitor implements ContentVisitor<Collection<FsCo
 
     @Override
     public Collection<FsContent> visit(FileSystem fs) {
+        // Files in the database have a filesystem field, so it's quick to
+        // get all the matching files for an entire filesystem with a query
+        
         SleuthkitCase sc = Case.getCurrentCase().getSleuthkitCase();
 
         String query = "SELECT * FROM tsk_files WHERE fs_obj_id = " + fs.getId()
@@ -119,11 +140,17 @@ class GetIngestableFilesContentVisitor implements ContentVisitor<Collection<FsCo
         return getAllFromChildren(vs);
     }
 
-    private Collection<FsContent> getAllFromChildren(Content c) {
+    /**
+     * Aggregate all the matches from visiting the children Content objects of the
+     * one passed
+     * @param parent
+     * @return 
+     */
+    private Collection<FsContent> getAllFromChildren(Content parent) {
         Collection<FsContent> all = new ArrayList<FsContent>();
 
         try {
-            for (Content child : c.getChildren()) {
+            for (Content child : parent.getChildren()) {
                 all.addAll(child.accept(this));
             }
         } catch (TskException ex) {

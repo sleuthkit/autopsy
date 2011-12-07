@@ -23,6 +23,10 @@ import java.util.logging.Logger;
 import org.openide.modules.ModuleInstall;
 import org.sleuthkit.autopsy.casemodule.Case;
 
+/**
+ * Starts up the Solr server when the module is loaded, and stops it when the
+ * application is closed.
+ */
 public class Installer extends ModuleInstall {
 
     @Override
@@ -36,16 +40,11 @@ public class Installer extends ModuleInstall {
 
         if (server.isRunning()) {
 
-            logger.log(Level.WARNING, "Already a Solr server on out port, maybe leftoveer from a previous run. Trying to shut it down...");
+            logger.log(Level.WARNING, "Already a Solr server on out port, maybe leftover from a previous run. Trying to shut it down...");
+
             // Send the stop message in case there's a solr server lingering from
             // a previous run of Autopsy that didn't exit cleanly
             server.stop();
-
-            try {
-                Thread.sleep(10000); // let it die
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
 
             if (server.isRunning()) {
                 throw new IllegalStateException("There's already a server running on our port that can't be shutdown.");
@@ -53,14 +52,14 @@ public class Installer extends ModuleInstall {
                 logger.log(Level.INFO, "Old Solr server shutdown successfully.");
             }
         }
-        
+
         server.start();
-            try {
-                Thread.sleep(1000); // give it a sec
-                //TODO: idle loop while waiting for it to start
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
+        try {
+            Thread.sleep(1000); // give it a sec
+            //TODO: idle loop while waiting for it to start
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
+        }
 
     }
 

@@ -32,6 +32,8 @@
  
 
     <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
+        
+        <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>
         <ivy:retrieve conf="autopsy" sync="true" pattern="/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="solr-war" sync="true" pattern="/release/solr/webapps/solr.war" />

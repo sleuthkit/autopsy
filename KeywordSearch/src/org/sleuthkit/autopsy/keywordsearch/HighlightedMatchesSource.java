@@ -26,13 +26,17 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.sleuthkit.autopsy.keywordsearch.Server.Core;
 import org.sleuthkit.datamodel.Content;
 
+/**
+ * Gets extracted content from Solr with the parts that match the query
+ * highlighted
+ */
 class HighlightedMatchesSource implements MarkupSource {
 
     private static final Logger logger = Logger.getLogger(HighlightedMatchesSource.class.getName());
     Content content;
     String solrQuery;
     Core solrCore;
-    
+
     HighlightedMatchesSource(Content content, String solrQuery) {
         this(content, solrQuery, KeywordSearch.getServer().getCore());
     }
@@ -42,8 +46,6 @@ class HighlightedMatchesSource implements MarkupSource {
         this.solrQuery = solrQuery;
         this.solrCore = solrCore;
     }
-    
-    
 
     @Override
     public String getMarkup() {
@@ -55,11 +57,6 @@ class HighlightedMatchesSource implements MarkupSource {
         q.setHighlightSimplePre("<span style=\"background:yellow\">");
         q.setHighlightSimplePost("</span>");
         q.setHighlightFragsize(0); // don't fragment the highlight
-        
-        
-        //TODO: remove (only for debugging)
-        String queryString = q.toString();
-
 
         try {
             QueryResponse response = solrCore.query(q);
@@ -67,6 +64,7 @@ class HighlightedMatchesSource implements MarkupSource {
             if (contentHighlights == null) {
                 return "<span style=\"background:red\">No matches in content.</span>";
             } else {
+                // extracted content (minus highlight tags) is HTML-escaped
                 return "<pre>" + contentHighlights.get(0).trim() + "</pre>";
             }
         } catch (SolrServerException ex) {
