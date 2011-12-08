@@ -201,11 +201,6 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
     }
 
     @Override
-    public byte[] read(long offset, long len) throws TskException {
-        return ((ContentNode) currentNode).read(offset, len);
-    }
-
-    @Override
     public Content getContent() {
         return ((ContentNode) currentNode).getContent();
     }

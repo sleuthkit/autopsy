@@ -83,13 +83,6 @@ class SearchNode extends AbstractNode implements ContentNode {
         return objs;
     }
 
-
-    @Override
-    public byte[] read(long offset, long len) throws TskException {
-        // change this in the future when needed
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
     @Override
     public Content getContent() {
         return null;

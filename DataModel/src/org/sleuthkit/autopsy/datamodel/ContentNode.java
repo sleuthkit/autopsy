@@ -56,16 +56,6 @@ public interface ContentNode {
     public Object[][] getRowValues(int rows) throws SQLException;
 
     /**
-     * Reads the content of this node.
-     *
-     * @param offset  the starting offset
-     * @param len     the length
-     * @return        the bytes
-     * @throws TskException
-     */
-    public byte[] read(long offset, long len) throws TskException;
-
-    /**
      * Returns the content of this node.
      *
      * @return content  the content of this node (can be image, volume, directory, or file)

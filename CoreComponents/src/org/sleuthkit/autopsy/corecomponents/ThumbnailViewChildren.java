@@ -37,7 +37,7 @@ class ThumbnailViewChildren extends FilterNode.Children {
 
     @Override
     protected Node copyNode(Node arg0) {
-        return new ThumbnailViewNode((ContentNode) arg0);
+        return new ThumbnailViewNode(arg0);
     }
 
     @Override

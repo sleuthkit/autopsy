@@ -39,8 +39,6 @@ public class ContentFilterNode extends FilterNode implements ContentNode {
         super((Node) original, children, lookup);
     }
     
-    
-
     @Override
     public long getID() {
         return ((ContentNode) super.getOriginal()).getID();
@@ -49,11 +47,6 @@ public class ContentFilterNode extends FilterNode implements ContentNode {
     @Override
     public Object[][] getRowValues(int rows) throws SQLException {
         return ((ContentNode) super.getOriginal()).getRowValues(rows);
-    }
-
-    @Override
-    public byte[] read(long offset, long len) throws TskException {
-        return ((ContentNode) super.getOriginal()).read(offset, len);
     }
 
     @Override
