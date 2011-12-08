@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -55,7 +56,12 @@ public class KeywordSearchDataExplorer implements DataExplorer {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                search(tc.getQueryText());
+                tc.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                try {
+                    search(tc.getQueryText());
+                } finally {
+                    tc.setCursor(null);
+                }
             }
         });
     }
