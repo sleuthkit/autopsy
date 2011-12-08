@@ -77,12 +77,7 @@ class SearchNode extends AbstractNode implements ContentNode {
         }
         return objs;
     }
-
-    @Override
-    public Content getContent() {
-        return null;
-    }
-
+    
     @Override
     public String[] getDisplayPath() {
         return new String[]{"KeyWord Search Result:"};

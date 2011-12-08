@@ -49,7 +49,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private transient ExplorerManager em = new ExplorerManager();
     private String firstColumnLabel = "Name";
-    private boolean isImageNode;
 
     /** Creates new form DataResultViewerTable */
     public DataResultViewerTable() {
@@ -59,11 +58,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         // only allow one item to be selected at a time
         ov.getOutline().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
+
         // don't show the root node
         ov.getOutline().setRootVisible(false);
 
-        this.isImageNode = false;
         this.em.addPropertyChangeListener(this);
     }
 
@@ -98,13 +96,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }// </editor-fold>//GEN-END:initComponents
 
     private void tableScrollPanelComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_tableScrollPanelComponentResized
-        if (this.tableScrollPanel.getWidth() < 700 && isImageNode) {
-            ((OutlineView) this.tableScrollPanel).getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        } else {
-            if (isImageNode) {
-                ((OutlineView) this.tableScrollPanel).getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-            }
-        }
     }//GEN-LAST:event_tableScrollPanelComponentResized
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane tableScrollPanel;
@@ -211,53 +202,47 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
 
                 // show the horizontal scroll panel and show all the content & header
-                if (!(selectedNode.getContent() instanceof Image)) {
-                    this.isImageNode = false;
-                    int totalColumns = props.length;
 
-                    //int scrollWidth = ttv.getWidth();
-                    int scrollWidth = ov.getWidth();
-                    int minWidth = scrollWidth / totalColumns;
-                    int margin = 4;
-                    int startColumn = 1;
-                    ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+                int totalColumns = props.length;
 
-                    // get the fontmetrics
-                    //FontMetrics metrics = ttv.getGraphics().getFontMetrics();
-                    FontMetrics metrics = ov.getGraphics().getFontMetrics();
+                //int scrollWidth = ttv.getWidth();
+                int scrollWidth = ov.getWidth();
+                int minWidth = scrollWidth / totalColumns;
+                int margin = 4;
+                int startColumn = 1;
+                ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
-                    // get first 100 rows values for the table
-                    Object[][] content = null;
-                    try {
-                        content = selectedNode.getRowValues(100);
-                    } catch (SQLException ex) {
-                        // TODO: potential exception is being ignored (see below), should be handled 
+                // get the fontmetrics
+                //FontMetrics metrics = ttv.getGraphics().getFontMetrics();
+                FontMetrics metrics = ov.getGraphics().getFontMetrics();
+
+                // get first 100 rows values for the table
+                Object[][] content = null;
+                try {
+                    content = selectedNode.getRowValues(100);
+                } catch (SQLException ex) {
+                    // TODO: potential exception is being ignored (see below), should be handled 
+                }
+
+
+                if (content != null) {
+                    // for the "Name" column
+                    int nodeColWidth = getMaxColumnWidth(0, metrics, margin, 40, firstColumnLabel, content); // Note: 40 is the width of the icon + node lines. Change this value if those values change!
+                    ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(nodeColWidth);
+
+                    // get the max for each other column
+                    for (int colIndex = startColumn; colIndex < totalColumns; colIndex++) {
+                        int colWidth = getMaxColumnWidth(colIndex, metrics, margin, 8, props, content);
+                        ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
                     }
+                }
 
-
-                    if (content != null) {
-                        // for the "Name" column
-                        int nodeColWidth = getMaxColumnWidth(0, metrics, margin, 40, firstColumnLabel, content); // Note: 40 is the width of the icon + node lines. Change this value if those values change!
-                        ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(nodeColWidth);
-
-                        // get the max for each other column
-                        for (int colIndex = startColumn; colIndex < totalColumns; colIndex++) {
-                            int colWidth = getMaxColumnWidth(colIndex, metrics, margin, 8, props, content);
-                            ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
-                        }
-                    }
-
-                    // if there's no content just auto resize all columns
-                    if (!(content.length > 0)) {
-                        // turn on the auto resize
-                        ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-                    }
-                } else {
-                    this.isImageNode = true;
-                    // turn on the auto resize for image result
-                    ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(175);
+                // if there's no content just auto resize all columns
+                if (!(content.length > 0)) {
+                    // turn on the auto resize
                     ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
                 }
+
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node

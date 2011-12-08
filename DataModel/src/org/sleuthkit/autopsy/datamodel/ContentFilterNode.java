@@ -22,7 +22,6 @@ import java.sql.SQLException;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
-import org.sleuthkit.datamodel.Content;
 
 public class ContentFilterNode extends FilterNode implements ContentNode {
 
@@ -41,11 +40,6 @@ public class ContentFilterNode extends FilterNode implements ContentNode {
     @Override
     public Object[][] getRowValues(int rows) throws SQLException {
         return ((ContentNode) super.getOriginal()).getRowValues(rows);
-    }
-
-    @Override
-    public Content getContent() {
-        return ((ContentNode) super.getOriginal()).getContent();
     }
 
     @Override

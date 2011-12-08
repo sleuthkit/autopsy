@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.sql.SQLException;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Interface class that all Data nodes inherit from.
@@ -37,13 +36,6 @@ public interface ContentNode {
      * @throws SQLException
      */
     public Object[][] getRowValues(int rows) throws SQLException;
-
-    /**
-     * Returns the content of this node.
-     *
-     * @return content  the content of this node (can be image, volume, directory, or file)
-     */
-    public Content getContent();
 
     /**
      * Returns full path to this node.

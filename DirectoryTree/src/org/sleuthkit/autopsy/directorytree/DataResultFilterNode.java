@@ -74,27 +74,34 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
 
         List<Action> actions = new ArrayList<Action>();
 
+        // TODO: ContentNode fix - restore right-click actions
+        // TODO: ContentVisitor instead of instanceof
+        
+        Content nodeContent = this.currentNode.getLookup().lookup(Content.class);
+        
 
         // right click action(s) for image node
         if (this.currentNode instanceof ImageNode) {
             actions.add(new NewWindowViewAction("View in New Window", (ImageNode) this.currentNode));
-            actions.addAll(ShowDetailActionVisitor.getActions(((ImageNode) this.currentNode).getContent()));
+            actions.addAll(ShowDetailActionVisitor.getActions(nodeContent));
         } // right click action(s) for volume node
         else if (this.currentNode instanceof VolumeNode) {
             actions.add(new NewWindowViewAction("View in New Window", (VolumeNode) this.currentNode));
             //new ShowDetailActionVisitor("Volume Details", this.currentNode.getName(), (VolumeNode) this.currentNode),
-            actions.addAll(ShowDetailActionVisitor.getActions(((VolumeNode) this.currentNode).getContent()));
+            actions.addAll(ShowDetailActionVisitor.getActions(nodeContent));
             actions.add(new ChangeViewAction("View", 0, (ContentNode) currentNode));
         } // right click action(s) for directory node
         else if (this.currentNode instanceof DirectoryNode) {
             actions.add(new NewWindowViewAction("View in New Window", (DirectoryNode) this.currentNode));
             actions.add(new ChangeViewAction("View", 0, (ContentNode) currentNode));
-            actions.add(new ExtractAction("Extract Directory", (DirectoryNode) this.currentNode));
+            // TODO: ContentNode fix - reimplement ExtractAction
+            //actions.add(new ExtractAction("Extract Directory", (DirectoryNode) this.currentNode));
         } // right click action(s) for the file node
         else if (this.currentNode instanceof FileNode) {
             actions.add(new ExternalViewerAction("Open File in External Viewer", (FileNode) this.currentNode));
             actions.add(new NewWindowViewAction("View in New Window", (FileNode) this.currentNode));
-            actions.add(new ExtractAction("Extract", (FileNode) this.currentNode));
+            // TODO: ContentNode fix - reimplement ExtractAction
+            //actions.add(new ExtractAction("Extract", (FileNode) this.currentNode));
             actions.add(new ChangeViewAction("View", 0, (ContentNode) currentNode));
         }
 
@@ -192,11 +199,6 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
     @Override
     public Object[][] getRowValues(int rows) throws SQLException {
         return ((ContentNode) currentNode).getRowValues(rows);
-    }
-
-    @Override
-    public Content getContent() {
-        return ((ContentNode) currentNode).getContent();
     }
 
     @Override

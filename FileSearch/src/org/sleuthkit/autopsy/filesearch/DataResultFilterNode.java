@@ -28,7 +28,6 @@ import java.sql.SQLException;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.directorytree.ChangeViewAction;
 
 /**
@@ -74,7 +73,8 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
         } // right click action(s) for the file node
         else if (this.currentNode instanceof FileNode) {
             return new Action[]{
-                        new ExtractAction("Extract", (FileNode) this.currentNode),
+                        // TODO: ContentNode fix - reimplement ExtractAction
+                        // new ExtractAction("Extract", (FileNode) this.currentNode),
                         new ChangeViewAction("View", 0, (ContentNode) currentNode),
                         new OpenParentFolderAction("Open Parent Directory", ((ContentNode) currentNode).getSystemPath())
                     };
@@ -97,11 +97,6 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
     @Override
     public Object[][] getRowValues(int rows) throws SQLException {
         return ((ContentNode) currentNode).getRowValues(rows);
-    }
-
-    @Override
-    public Content getContent() {
-        return ((ContentNode) currentNode).getContent();
     }
 
     @Override

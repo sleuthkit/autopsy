@@ -30,8 +30,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -41,7 +41,7 @@ import org.sleuthkit.datamodel.TskException;
 public class ExternalViewerAction extends AbstractAction {
 
     private byte[] content;
-    private FileNode fileNode;
+    private Content contentObject;
     private String fileName;
     private String extension;
     // for error handling
@@ -49,12 +49,12 @@ public class ExternalViewerAction extends AbstractAction {
     private String className = this.getClass().toString();
 
     /** the constructor */
-    public ExternalViewerAction(String title, FileNode fileNode) {
+    public ExternalViewerAction(String title, Node fileNode) {
         super(title);
-        this.fileNode = fileNode;
+        this.contentObject = fileNode.getLookup().lookup(Content.class);
 
-        long size = fileNode.getContent().getSize();
-        String fullFileName = ((Node)fileNode).getDisplayName();
+        long size = contentObject.getSize();
+        String fullFileName = fileNode.getDisplayName();
         if (fullFileName.contains(".") && size > 0) {
             String tempFileName = fullFileName.substring(0, fullFileName.indexOf("."));
             String tempExtension = fullFileName.substring(fullFileName.indexOf("."));
@@ -63,7 +63,7 @@ public class ExternalViewerAction extends AbstractAction {
         } else {
             this.fileName = fullFileName;
             this.extension = "";
-            this.setEnabled(false); // fix this later (right now only extract a file with extension)
+            this.setEnabled(false); //TODO: fix this later (right now only extract a file with extension)
         }
     }
 
@@ -77,7 +77,7 @@ public class ExternalViewerAction extends AbstractAction {
             // the menu should be disabled if we can't read the content (for example: on zero-sized file).
             // Therefore, it should never throw the TSKException.
             try {
-                this.content = fileNode.getContent().read(0, fileNode.getContent().getSize());
+                this.content = contentObject.read(0, contentObject.getSize());
             } catch (TskException ex) {
                 Logger.getLogger(this.className).log(Level.WARNING, "Error: can't read the content of the file.", ex);
             }

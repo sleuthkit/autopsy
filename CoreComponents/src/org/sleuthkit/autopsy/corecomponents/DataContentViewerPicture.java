@@ -31,6 +31,7 @@ import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -90,7 +91,10 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
             if (selectedNode != null) {
                 try {
                     // read the byte of the image file
-                    byte[] dataSource = selectedNode.getContent().read(0, selectedNode.getContent().getSize());
+                    
+                    // TODO: ContentNode fix - get rid of cast to Node
+                    Content content = ((Node) selectedNode).getLookup().lookup(Content.class);
+                    byte[] dataSource = content.read(0, content.getSize());
 
                     // create the input stream for the content
                     InputStream is = new ByteArrayInputStream(dataSource);

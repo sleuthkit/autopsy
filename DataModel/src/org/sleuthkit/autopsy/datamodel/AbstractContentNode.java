@@ -90,16 +90,6 @@ abstract class AbstractContentNode<T extends Content> extends AbstractNode imple
         return content.read(offset, len);
     }
     
-    /**
-     * Returns the content of this node.
-     *
-     * @return content  the content of this node (can be image, volume, directory, or file)
-     */
-    @Override
-    public Content getContent() {
-        return content;
-    }
-    
     private static final ShortNameVisitor shortName = new ShortNameVisitor();
     
     private static final GetPathVisitor getDisplayPath = new GetPathVisitor(shortName);
