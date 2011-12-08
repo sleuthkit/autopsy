@@ -39,7 +39,6 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.datamodel.ContentNodeVisitor;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * This class wraps nodes as they are passed to the DataResult viewers.  It 
@@ -188,11 +187,6 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
         }
 
         return propertySets;
-    }
-
-    @Override
-    public long getID() {
-        return ((ContentNode) currentNode).getID();
     }
 
     @Override

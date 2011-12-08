@@ -20,29 +20,12 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.sql.SQLException;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Interface class that all Data nodes inherit from.
  * Provides basic information such as ID, parent ID, etc.
  */
 public interface ContentNode {
-
-    /**
-     * Returns the programmatic name for this node. This is NOT the name to
-     * display to users, or the plain name of the Content object - use
-     * Node.getDisplayName() for that.
-     *
-     * @return name  the programmatic name for this node
-     */
-    public String getName();
-
-    /**
-     * Gets the ID of this node.
-     *
-     * @return ID  the ID of this node
-     */
-    public long getID();
 
     /**
      * Gets the row values for this node. The main purpose of this method is to

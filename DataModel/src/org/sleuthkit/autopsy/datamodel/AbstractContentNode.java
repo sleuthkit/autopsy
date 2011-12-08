@@ -67,15 +67,6 @@ abstract class AbstractContentNode<T extends Content> extends AbstractNode imple
     }
 
     /**
-     * Gets the ID of this node.
-     *
-     * @return ID  the ID of this node
-     */
-    public long getID() {
-        return content.getId();
-    }
-
-    /**
      * Gets the row values for this node. The main purpose of this method is to
      * get the 'x' number of the row values for this node to set the width of each
      * column of the DataResult Table. Row values is the children and it's properties.
@@ -84,6 +75,7 @@ abstract class AbstractContentNode<T extends Content> extends AbstractNode imple
      * @return rowValues        the row values for this node.
      * @throws SQLException
      */
+    @Override
     abstract public Object[][] getRowValues(int rows) throws SQLException;
 
     /**
@@ -103,6 +95,7 @@ abstract class AbstractContentNode<T extends Content> extends AbstractNode imple
      *
      * @return content  the content of this node (can be image, volume, directory, or file)
      */
+    @Override
     public Content getContent() {
         return content;
     }
@@ -116,6 +109,7 @@ abstract class AbstractContentNode<T extends Content> extends AbstractNode imple
      *
      * @return the path of this node
      */
+    @Override
     public String[] getDisplayPath() {
         return content.accept(getDisplayPath).toArray(new String[]{});
     }
@@ -129,6 +123,7 @@ abstract class AbstractContentNode<T extends Content> extends AbstractNode imple
      * 
      * @return the path of this node
      */
+    @Override
     public String[] getSystemPath() {
         return content.accept(getSystemPath).toArray(new String[]{});
     }

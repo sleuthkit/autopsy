@@ -48,11 +48,6 @@ class SearchNode extends AbstractNode implements ContentNode {
     }
 
     @Override
-    public long getID() {
-        return -1; // change this later when needed
-    }
-
-    @Override
     public Object[][] getRowValues(int rows) throws SQLException {
         int totalNodes = children.getNodesCount();
 

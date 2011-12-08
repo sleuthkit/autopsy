@@ -23,7 +23,6 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskException;
 
 public class ContentFilterNode extends FilterNode implements ContentNode {
 
@@ -37,11 +36,6 @@ public class ContentFilterNode extends FilterNode implements ContentNode {
         
     public ContentFilterNode(ContentNode original, Children children, Lookup lookup)  {
         super((Node) original, children, lookup);
-    }
-    
-    @Override
-    public long getID() {
-        return ((ContentNode) super.getOriginal()).getID();
     }
 
     @Override

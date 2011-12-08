@@ -29,9 +29,7 @@ import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.directorytree.ChangeViewAction;
-import org.sleuthkit.autopsy.directorytree.ExtractAction;
 
 /**
  * This class wraps nodes as they are passed to the DataResult viewers.  It 
@@ -94,11 +92,6 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
     @Override
     public Action getPreferredAction() {
         return null;
-    }
-
-    @Override
-    public long getID() {
-        return ((ContentNode) currentNode).getID();
     }
 
     @Override
