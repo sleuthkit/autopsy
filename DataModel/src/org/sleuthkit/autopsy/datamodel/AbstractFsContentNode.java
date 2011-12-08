@@ -51,7 +51,7 @@ abstract class AbstractFsContentNode<T extends FsContent> extends AbstractConten
 
         // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
         ss.put(new NodeProperty(PROPERTY_NAME, "Name", "no description", content.getName()));
-        ss.put(new NodeProperty(PROPERTY_LOCATION, "Location", "no description", DataConversion.getformattedPath(this.getDisplayPath(), 0)));
+        ss.put(new NodeProperty(PROPERTY_LOCATION, "Location", "no description", DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0)));
         ss.put(new NodeProperty("Modified Time", "Modified Time", "no description", content.getMtimeAsDate()));
         ss.put(new NodeProperty("Changed Time", "Changed Time", "no description", content.getCtimeAsDate()));
         ss.put(new NodeProperty("Access Time", "Access Time", "no description", content.getAtimeAsDate()));

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.sql.SQLException;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.Volume;
@@ -54,40 +53,6 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         this.setDisplayName(tempVolName);
 
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/vol-icon.png");
-    }
-
-    @Override
-    public Object[][] getRowValues(int rows) throws SQLException {
-
-        // how many rows are we returning
-        int maxRows = rows;
-        if (this.getChildren().getNodesCount() < maxRows) {
-            maxRows = this.getChildren().getNodesCount();
-        }
-        Object[][] objs = new Object[maxRows][];
-
-        for (int i = 0; i < maxRows; i++) {
-            PropertySet[] props = this.getChildren().getNodeAt(i).getPropertySets();
-            Property[] property = props[0].getProperties();
-            objs[i] = new Object[property.length - 1]; // - 1 because we don't want to show the location property
-
-            // name property
-            try {
-                objs[i][0] = property[0].getValue();
-            } catch (Exception ex) {
-                objs[i][0] = "n/a";
-            }
-
-            // the rest of the properties(not including the location property)
-            for (int j = 1; j < property.length - 1; j++) {
-                try {
-                    objs[i][j] = property[j + 1].getValue();
-                } catch (Exception ex) {
-                    objs[i][j] = "n/a";
-                }
-            }
-        }
-        return objs;
     }
 
     /**

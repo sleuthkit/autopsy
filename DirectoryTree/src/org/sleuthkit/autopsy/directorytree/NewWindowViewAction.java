@@ -22,12 +22,15 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
+import org.openide.nodes.Node;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Opens new ContentViewer pane in a detached window
@@ -45,7 +48,7 @@ class NewWindowViewAction extends AbstractAction{
     public void actionPerformed(ActionEvent e) {
         Log.noteAction(this.getClass());
         
-        String[] filePaths = this.contentNode.getDisplayPath();
+        String[] filePaths = ContentUtils.getDisplayPath(((Node) contentNode).getLookup().lookup(Content.class));
         String filePath = DataConversion.getformattedPath(filePaths, 0);
 
         DataContentTopComponent dctc = DataContentTopComponent.createUndocked(filePath, this.contentNode);

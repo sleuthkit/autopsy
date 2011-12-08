@@ -22,7 +22,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.FontMetrics;
 import java.io.IOException;
-import java.sql.SQLException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,13 +33,13 @@ import org.openide.explorer.view.OutlineView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 // TODO We should not have anything specific to Image in here...
-import org.sleuthkit.datamodel.Image;
 
 /**
  * DataResult sortable table viewer
@@ -218,11 +218,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 // get first 100 rows values for the table
                 Object[][] content = null;
-                try {
-                    content = selectedNode.getRowValues(100);
-                } catch (SQLException ex) {
-                    // TODO: potential exception is being ignored (see below), should be handled 
-                }
+                //TODO:  ContentNode fix - remove cast to node
+                content = getRowValues((Node) selectedNode, 100);
 
 
                 if (content != null) {
@@ -252,6 +249,32 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         } finally {
             this.setCursor(null);
         }
+    }
+    
+    
+    private static Object[][] getRowValues(Node node, int rows) {
+        // how many rows are we returning
+        int maxRows = Math.min(rows, node.getChildren().getNodesCount());
+        
+        Object[][] objs = new Object[maxRows][];
+
+        for (int i = 0; i < maxRows; i++) {
+            PropertySet[] props = node.getChildren().getNodeAt(i).getPropertySets();
+            Property[] property = props[0].getProperties();
+            objs[i] = new Object[property.length];
+
+
+            for (int j = 0; j < property.length; j++) {
+                try {
+                    objs[i][j] = property[j].getValue();
+                } catch (IllegalAccessException ignore) {
+                    objs[i][j] = "n/a";
+                } catch (InvocationTargetException ignore) {
+                    objs[i][j] = "n/a";
+                }            
+            }
+        }
+        return objs;
     }
 
     @Override

@@ -34,7 +34,9 @@ import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Top component which displays something.
@@ -287,7 +289,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         this.rootNode = selectedNode;
         String path = "";
         if (selectedNode != null) {
-            path = DataConversion.getformattedPath(selectedNode.getDisplayPath(), 0);
+            path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(((Node) selectedNode).getLookup().lookup(Content.class)), 0);
 
             int childrenCount = ((Node) selectedNode).getChildren().getNodesCount(true);
             this.numberMatchLabel.setText(Integer.toString(childrenCount));

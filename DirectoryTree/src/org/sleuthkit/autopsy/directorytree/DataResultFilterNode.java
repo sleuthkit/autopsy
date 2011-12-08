@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
@@ -197,23 +196,8 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
     }
 
     @Override
-    public Object[][] getRowValues(int rows) throws SQLException {
-        return ((ContentNode) currentNode).getRowValues(rows);
-    }
-
-    @Override
-    public String[] getDisplayPath() {
-        return ((ContentNode) currentNode).getDisplayPath();
-    }
-
-    @Override
     public <T> T accept(ContentNodeVisitor<T> v) {
         // TODO: Figure out how visitors should be delegated
         throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public String[] getSystemPath() {
-        return ((ContentNode) currentNode).getSystemPath();
     }
 }

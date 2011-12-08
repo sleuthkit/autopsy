@@ -24,11 +24,12 @@ import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
-import java.sql.SQLException;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.directorytree.ChangeViewAction;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * This class wraps nodes as they are passed to the DataResult viewers.  It 
@@ -68,7 +69,7 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
         else if (this.currentNode instanceof DirectoryNode) {
             return new Action[]{
                         new ChangeViewAction("View", 0, (ContentNode) currentNode),
-                        new OpenParentFolderAction("Open Parent Directory", ((ContentNode) currentNode).getSystemPath())
+                        new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath((currentNode).getLookup().lookup(Content.class)))
                     };
         } // right click action(s) for the file node
         else if (this.currentNode instanceof FileNode) {
@@ -76,7 +77,7 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
                         // TODO: ContentNode fix - reimplement ExtractAction
                         // new ExtractAction("Extract", (FileNode) this.currentNode),
                         new ChangeViewAction("View", 0, (ContentNode) currentNode),
-                        new OpenParentFolderAction("Open Parent Directory", ((ContentNode) currentNode).getSystemPath())
+                        new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath((currentNode).getLookup().lookup(Content.class)))
                     };
         } else {
             return new Action[]{};
@@ -95,23 +96,8 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
     }
 
     @Override
-    public Object[][] getRowValues(int rows) throws SQLException {
-        return ((ContentNode) currentNode).getRowValues(rows);
-    }
-
-    @Override
-    public String[] getDisplayPath() {
-        return ((ContentNode) currentNode).getDisplayPath();
-    }
-
-    @Override
     public <T> T accept(ContentNodeVisitor<T> v) {
         //TODO: figure out how to deal with visitors
         throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public String[] getSystemPath() {
-        return ((ContentNode) currentNode).getSystemPath();
     }
 }

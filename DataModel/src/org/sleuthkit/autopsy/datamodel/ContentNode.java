@@ -18,38 +18,11 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.sql.SQLException;
-
 /**
  * Interface class that all Data nodes inherit from.
  * Provides basic information such as ID, parent ID, etc.
  */
 public interface ContentNode {
-
-    /**
-     * Gets the row values for this node. The main purpose of this method is to
-     * get the 'x' number of the row values for this node to set the width of each
-     * column of the DataResult Table. Row values is the children and it's properties.
-     *
-     * @param rows              the number of rows we want to show
-     * @return rowValues        the row values for this node.
-     * @throws SQLException
-     */
-    public Object[][] getRowValues(int rows) throws SQLException;
-
-    /**
-     * Returns full path to this node.
-     *
-     * @return the path of this node
-     */
-    public String[] getDisplayPath();
-
-    /**
-     * Returns full path to this node.
-     *
-     * @return the path of this node
-     */
-    public String[] getSystemPath();
 
     /**
      * Visitor pattern support.

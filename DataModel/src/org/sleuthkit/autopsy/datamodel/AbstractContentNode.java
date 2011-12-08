@@ -20,20 +20,10 @@
 
 package org.sleuthkit.autopsy.datamodel;
 
-import java.sql.SQLException;
-import java.util.LinkedList;
-import java.util.List;
 import org.openide.nodes.AbstractNode;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskException;
-import org.sleuthkit.datamodel.Volume;
-import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  * Interface class that all Data nodes inherit from.
@@ -53,7 +43,7 @@ abstract class AbstractContentNode<T extends Content> extends AbstractNode imple
     AbstractContentNode(T content) {
         super(new ContentChildren(content), Lookups.singleton(content));
         this.content = content;
-        super.setName(content.accept(systemName));
+        super.setName(ContentUtils.getSystemName(content));
     }
     
     @Override
@@ -67,18 +57,6 @@ abstract class AbstractContentNode<T extends Content> extends AbstractNode imple
     }
 
     /**
-     * Gets the row values for this node. The main purpose of this method is to
-     * get the 'x' number of the row values for this node to set the width of each
-     * column of the DataResult Table. Row values is the children and it's properties.
-     *
-     * @param rows              the number of rows we want to show
-     * @return rowValues        the row values for this node.
-     * @throws SQLException
-     */
-    @Override
-    abstract public Object[][] getRowValues(int rows) throws SQLException;
-
-    /**
      * Reads the content of this node.
      *
      * @param offset  the starting offset
@@ -88,132 +66,5 @@ abstract class AbstractContentNode<T extends Content> extends AbstractNode imple
      */
     public byte[] read(long offset, long len) throws TskException {
         return content.read(offset, len);
-    }
-    
-    private static final ShortNameVisitor shortName = new ShortNameVisitor();
-    
-    private static final GetPathVisitor getDisplayPath = new GetPathVisitor(shortName);
-    
-    /**
-     * Returns full path to this node.
-     *
-     * @return the path of this node
-     */
-    @Override
-    public String[] getDisplayPath() {
-        return content.accept(getDisplayPath).toArray(new String[]{});
-    }
-    
-    private static final SystemNameVisitor systemName = new SystemNameVisitor();
-    
-    private static final GetPathVisitor getSystemPath = new GetPathVisitor(systemName);
-    
-    /**
-     * Returns full path to this node.
-     * 
-     * @return the path of this node
-     */
-    @Override
-    public String[] getSystemPath() {
-        return content.accept(getSystemPath).toArray(new String[]{});
-    }
-    
-    private static class SystemNameVisitor extends ContentVisitor.Default<String> {
-        SystemNameVisitor() {}
-
-        @Override
-        protected String defaultVisit(Content cntnt) {
-            return cntnt.accept(shortName) + ":" + Long.toString(cntnt.getId());
-        }
-    }
-   
-    private static class ShortNameVisitor extends ContentVisitor.Default<String> {
-        ShortNameVisitor() {}
-
-        @Override
-        protected String defaultVisit(Content cntnt) {
-            throw new UnsupportedOperationException("Can't get short name for given content type:" + cntnt.getClass());
-        }
-
-        @Override
-        public String visit(Directory dir) {
-            return DirectoryNode.nameForDirectory(dir);
-        }
-
-        @Override
-        public String visit(File f) {
-            return FileNode.nameForFile(f);
-        }
-
-        @Override
-        public String visit(Volume v) {
-            return VolumeNode.nameForVolume(v);
-        }
-
-        @Override
-        public String visit(Image i) {
-            return ImageNode.nameForImage(i);
-        }
-    }
-    
-    private static class GetPathVisitor implements ContentVisitor<List<String>> { 
-        ContentVisitor<String> toString;
-
-        GetPathVisitor(ContentVisitor<String> toString) {
-            this.toString = toString;
-        }
-
-        @Override
-        public List<String> visit(Directory dir) {
-            List<String> path;
-
-            if (dir.isRoot()) {
-                path = dir.getFileSystem().accept(this);
-            } else {
-                try {
-                    path = dir.getParentDirectory().accept(this);
-                    path.add(toString.visit(dir));
-                } catch (TskException ex) {
-                    throw new RuntimeException("Couldn't get directory path.", ex);
-                }
-            }
-            
-            return path;
-        }
-
-        @Override
-        public List<String> visit(File file) {
-            try {
-                List<String> path = file.getParentDirectory().accept(this);
-                path.add(toString.visit(file));
-                return path;
-            } catch (TskException ex) {
-                throw new RuntimeException("Couldn't get file path.", ex);
-            }
-        }
-
-        @Override
-        public List<String> visit(FileSystem fs) {
-            return fs.getParent().accept(this);
-        }
-
-        @Override
-        public List<String> visit(Image image) {
-           List<String> path = new LinkedList<String>();
-           path.add(toString.visit(image));
-           return path;
-        }
-
-        @Override
-        public List<String> visit(Volume volume) {
-            List<String> path = volume.getParent().accept(this);
-            path.add(toString.visit(volume));
-            return path;
-        }
-
-        @Override
-        public List<String> visit(VolumeSystem vs) {
-            return vs.getParent().accept(this);
-        }
     }
 }

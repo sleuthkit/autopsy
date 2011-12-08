@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -34,7 +35,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Top component that organizes all of the data content viewers.  Doing a lookup on this class will
@@ -227,7 +230,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             if (selectedNode == null) {
                 setName(NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent"));
             } else {
-                String path = DataConversion.getformattedPath(selectedNode.getDisplayPath(), 0);
+                String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(((Node) selectedNode).getLookup().lookup(Content.class)), 0);
                 setName(path);
             }
 

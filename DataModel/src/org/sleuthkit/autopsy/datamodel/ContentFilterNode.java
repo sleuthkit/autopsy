@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.sql.SQLException;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
@@ -35,21 +34,6 @@ public class ContentFilterNode extends FilterNode implements ContentNode {
         
     public ContentFilterNode(ContentNode original, Children children, Lookup lookup)  {
         super((Node) original, children, lookup);
-    }
-
-    @Override
-    public Object[][] getRowValues(int rows) throws SQLException {
-        return ((ContentNode) super.getOriginal()).getRowValues(rows);
-    }
-
-    @Override
-    public String[] getDisplayPath() {
-        return ((ContentNode) super.getOriginal()).getDisplayPath();
-    }
-
-    @Override
-    public String[] getSystemPath() {
-        return ((ContentNode) super.getOriginal()).getSystemPath();
     }
 
     @Override

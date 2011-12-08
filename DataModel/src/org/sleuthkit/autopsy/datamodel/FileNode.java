@@ -18,11 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.sql.SQLException;
-import java.util.Arrays;
 import javax.swing.Action;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -70,30 +67,31 @@ public class FileNode extends AbstractFsContentNode<File> {
         return new Action[]{};
     }
 
-    @Override
-    public Object[][] getRowValues(int rows) throws SQLException {
-        FsContent con = content;
-        Object[][] objs = new Object[1][16];
-        Arrays.fill(objs, 0, 1, new Object[]{
-                    con.getName(),
-                    con.getMtimeAsDate(),
-                    con.getCtimeAsDate(),
-                    con.getAtimeAsDate(),
-                    con.getCrtimeAsDate(),
-                    con.getSize(),
-                    con.getDirFlagsAsString(),
-                    con.getMetaFlagsAsString(),
-                    con.getModeAsString(),
-                    con.getUid(),
-                    con.getGid(),
-                    con.getMeta_addr(),
-                    con.getAttr_type() + "-" + con.getAttr_id(),
-                    con.getDirTypeAsString(),
-                    con.getMetaTypeAsString(),
-                    con.getKnown().getName()
-                });
-        return objs;
-    }
+// TODO: check if there's anything important in here
+//    @Override
+//    public Object[][] getRowValues(int rows) throws SQLException {
+//        FsContent con = content;
+//        Object[][] objs = new Object[1][16];
+//        Arrays.fill(objs, 0, 1, new Object[]{
+//                    con.getName(),
+//                    con.getMtimeAsDate(),
+//                    con.getCtimeAsDate(),
+//                    con.getAtimeAsDate(),
+//                    con.getCrtimeAsDate(),
+//                    con.getSize(),
+//                    con.getDirFlagsAsString(),
+//                    con.getMetaFlagsAsString(),
+//                    con.getModeAsString(),
+//                    con.getUid(),
+//                    con.getGid(),
+//                    con.getMeta_addr(),
+//                    con.getAttr_type() + "-" + con.getAttr_id(),
+//                    con.getDirTypeAsString(),
+//                    con.getMetaTypeAsString(),
+//                    con.getKnown().getName()
+//                });
+//        return objs;
+//    }
     
     @Override
     public <T> T accept(ContentNodeVisitor<T> v) {
