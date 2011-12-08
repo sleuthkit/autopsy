@@ -22,6 +22,7 @@
         <file name="org-sleuthkit-autopsy-filesearch-FileSearchTopComponent.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.filesearch.FileSearchTopComponent.getDefault"/>
+            <attr name="position" intvalue="200"/>
         </file>
     </folder>
     <folder name="Windows2">

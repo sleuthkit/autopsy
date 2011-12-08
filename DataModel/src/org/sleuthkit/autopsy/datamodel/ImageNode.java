@@ -80,11 +80,6 @@ public class ImageNode extends AbstractContentNode<Image> {
     }
 
     @Override
-    public int getFileIDColumn() {
-        return 0;
-    }
-
-    @Override
     public Cookie getCookie(Class clazz) {
         Children ch = getChildren();
 

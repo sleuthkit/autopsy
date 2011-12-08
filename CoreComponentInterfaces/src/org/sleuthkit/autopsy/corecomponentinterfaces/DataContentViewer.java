@@ -39,8 +39,12 @@ public interface DataContentViewer {
     public String getTitle();
 
     /**
-     * Get new DataContentViewer instance.
+     * Get new DataContentViewer instance. (This method is weird. We use the
+     * instance returned by the Lookup as a factory for the instances that
+     * are actually used.)
      */
+    // TODO: extract the factory method out into a seperate interface that
+    // is used for the Lookup.
     public DataContentViewer getInstance();
     
     /**
