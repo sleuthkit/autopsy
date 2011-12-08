@@ -22,10 +22,6 @@ import java.sql.SQLException;
 import java.util.List;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
-import org.openide.util.Lookup;
-import org.openide.util.lookup.Lookups;
-import org.openide.util.lookup.ProxyLookup;
-import org.sleuthkit.autopsy.datamodel.ContentFilterNode;
 import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.datamodel.ContentNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
@@ -53,9 +49,8 @@ class KeywordSearchNode extends AbstractNode implements ContentNode {
                 // to the lookup
                 int i = 0;
                 for (Node original : originalNodes) {
-                    MarkupSource markup = new HighlightedMatchesSource(key, solrQuery);
-                    Lookup filterLookup = new ProxyLookup(Lookups.singleton(markup), original.getLookup());
-                    filterNodes[i++] = new ContentFilterNode((ContentNode) original, null, filterLookup);
+                    HighlightedMatchesSource markup = new HighlightedMatchesSource(key, solrQuery);
+                    filterNodes[i++] = new KeywordSearchFilterNode(markup, original, solrQuery);
                 }
 
                 return filterNodes;
@@ -64,7 +59,8 @@ class KeywordSearchNode extends AbstractNode implements ContentNode {
 
         this.solrQuery = solrQuery;
     }
-
+    
+    
     @Override
     public long getID() {
         throw new UnsupportedOperationException("Not supported yet.");
