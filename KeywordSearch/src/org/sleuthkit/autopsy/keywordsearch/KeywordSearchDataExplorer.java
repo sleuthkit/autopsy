@@ -22,6 +22,7 @@ import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -64,6 +65,8 @@ public class KeywordSearchDataExplorer implements DataExplorer {
                 }
             }
         });
+
+        KeywordSearch.changeSupport.addPropertyChangeListener(KeywordSearch.NUM_FILES_CHANGE_EVT, new IndexChangeListener());
     }
 
     private synchronized void setTheInstance() {
@@ -138,5 +141,29 @@ public class KeywordSearchDataExplorer implements DataExplorer {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
+    }
+
+    
+
+    class IndexChangeListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+           
+            String changed = evt.getPropertyName();
+            //Object oldValue = evt.getOldValue();
+            Object newValue = evt.getNewValue();
+
+            if (newValue != null) {
+                if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
+                    int newFilesIndexed = ((Integer) newValue).intValue();
+                    tc.setFilesIndexed(newFilesIndexed);
+
+                } else {
+                    String msg = "Unsupported change event: " + changed;
+                    throw new UnsupportedOperationException(msg);
+}
+            }
+        }
     }
 }
