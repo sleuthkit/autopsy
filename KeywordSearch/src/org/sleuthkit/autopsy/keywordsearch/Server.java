@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
+import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -146,7 +147,13 @@ class Server {
 
             CoreAdminRequest.getStatus(null, solr);
         } catch (SolrServerException ex) {
-            if (ex.getRootCause() instanceof ConnectException) {
+            
+            Throwable cause = ex.getRootCause();
+            
+            // TODO: check if SocketExceptions should actually happen (is
+            // probably caused by starting a connection as the server finishes
+            // shutting down)
+            if (cause instanceof ConnectException || cause instanceof SocketException) {
                 return false;
             } else {
                 throw new RuntimeException("Error checking if server is running", ex);
