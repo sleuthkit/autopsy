@@ -19,16 +19,30 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.windows.TopComponent;
 
 public class KeywordSearchTopComponent extends TopComponent {
+
+    private Logger logger = Logger.getLogger(KeywordSearchTopComponent.class.getName());
+    private PropertyChangeListener serverChangeListener;
 
     /** Creates new form KeywordSearchTopComponent */
     public KeywordSearchTopComponent() {
         initComponents();
         setName("Keyword Search");
 
+        searchButton.setEnabled(false);
+
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
+
+        //register with server Actions
+        serverChangeListener = new KeywordSearchServerListener();
+        KeywordSearch.getServer().addServerActionListener(serverChangeListener);
     }
 
     /** This method is called from within the constructor to
@@ -44,6 +58,8 @@ public class KeywordSearchTopComponent extends TopComponent {
         queryTextArea = new javax.swing.JTextArea();
         searchButton = new javax.swing.JButton();
         queryLabel = new javax.swing.JLabel();
+        filesIndexedNameLabel = new javax.swing.JLabel();
+        filesIndexedValLabel = new javax.swing.JLabel();
 
         queryTextArea.setColumns(20);
         queryTextArea.setRows(5);
@@ -53,21 +69,24 @@ public class KeywordSearchTopComponent extends TopComponent {
 
         queryLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.queryLabel.text")); // NOI18N
 
+        filesIndexedNameLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.filesIndexedNameLabel.text")); // NOI18N
+
+        filesIndexedValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.filesIndexedValLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(queryLabel)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 599, Short.MAX_VALUE)
+                    .addComponent(searchButton)
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(queryLabel))
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 302, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(searchButton)))
+                        .addComponent(filesIndexedNameLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(filesIndexedValLabel)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -79,10 +98,19 @@ public class KeywordSearchTopComponent extends TopComponent {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(searchButton)
-                .addContainerGap(132, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(filesIndexedNameLabel)
+                    .addComponent(filesIndexedValLabel))
+                .addContainerGap(107, Short.MAX_VALUE))
         );
+
+        filesIndexedNameLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.filesIndexedNameLabel.AccessibleContext.accessibleName")); // NOI18N
+        filesIndexedValLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.filesIndexedValLabel.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel filesIndexedNameLabel;
+    private javax.swing.JLabel filesIndexedValLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel queryLabel;
     private javax.swing.JTextArea queryTextArea;
@@ -96,7 +124,7 @@ public class KeywordSearchTopComponent extends TopComponent {
     String getQueryText() {
         return queryTextArea.getText();
     }
-    
+
     /**
      * Overwrite when you want to change default persistence type. Default
      * persistence type is PERSISTENCE_ALWAYS
@@ -106,5 +134,44 @@ public class KeywordSearchTopComponent extends TopComponent {
     @Override
     public int getPersistenceType() {
         return TopComponent.PERSISTENCE_NEVER;
+    }
+
+    public void setFilesIndexed(int filesIndexed) {
+        filesIndexedValLabel.setText(Integer.toString(filesIndexed));
+        if (filesIndexed == 0) {
+            searchButton.setEnabled(false);
+        } else {
+            searchButton.setEnabled(true);
+        }
+    }
+
+
+    class KeywordSearchServerListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            String eventType = evt.getPropertyName();
+
+            if (eventType.equals(Server.CORE_EVT)) {
+                final Server.CORE_EVT_STATES state = (Server.CORE_EVT_STATES) evt.getNewValue();
+                switch (state) {
+                    case STARTED:
+                        try {
+                            final int numIndexedFiles = KeywordSearch.getServer().getCore().queryNumIndexedFiles();
+                            KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
+                        } catch (SolrServerException se) {
+                            logger.log(Level.SEVERE, "Error executing Solr query, " + se.getMessage());
+                        }
+                        break;
+                    case STOPPED:
+                        break;
+                    default:
+
+                }
+
+            }
+
+
+        }
     }
 }

@@ -35,6 +35,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
@@ -44,13 +45,12 @@ import org.sleuthkit.datamodel.FsContent;
  * children to the Solr index.
  */
 public class IndexContentFilesAction extends AbstractAction {
-    
+
     private static final Logger logger = Logger.getLogger(IndexContentFilesAction.class.getName());
-    
     private Content c;
     private String name;
     private Server.Core solrCore;
-    
+
     /**
      * New action
      * @param c source Content object to get files from
@@ -59,7 +59,7 @@ public class IndexContentFilesAction extends AbstractAction {
     public IndexContentFilesAction(Content c, String name) {
         this(c, name, KeywordSearch.getServer().getCore());
     }
-    
+
     IndexContentFilesAction(Content c, String name, Server.Core solrCore) {
         super("Index files...");
         this.c = c;
@@ -69,7 +69,7 @@ public class IndexContentFilesAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        
+
         // create the popUp window to display progress
         String title = "Indexing files in " + name;
 
@@ -93,7 +93,7 @@ public class IndexContentFilesAction extends AbstractAction {
                 int fileCount = files.size();
                 int finishedFiles = 0;
                 int problemFiles = 0;
-                
+
                 for (FsContent f : files) {
                     if (isCancelled()) {
                         return problemFiles;
@@ -113,13 +113,20 @@ public class IndexContentFilesAction extends AbstractAction {
 
                 ingester.commit();
 
+                try {
+                    final int numIndexedFiles = KeywordSearch.getServer().getCore().queryNumIndexedFiles();
+                    KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
+                } catch (SolrServerException se) {
+                    logger.log(Level.SEVERE, "Error executing Solr query, " + se.getMessage());
+                }
+
                 return problemFiles;
             }
 
             @Override
             protected void done() {
                 int problemFiles = 0;
-                
+
                 try {
                     if (!this.isCancelled()) {
                         problemFiles = get();
@@ -133,7 +140,7 @@ public class IndexContentFilesAction extends AbstractAction {
                 } finally {
                     popUpWindow.setVisible(false);
                     popUpWindow.dispose();
-                    
+
                     // notify user if there were problem files
                     if (problemFiles > 0) {
                         displayProblemFilesDialog(problemFiles);
@@ -187,8 +194,7 @@ public class IndexContentFilesAction extends AbstractAction {
         // display the window
         popUpWindow.setVisible(true);
     }
-    
-    
+
     private void displayProblemFilesDialog(int problemFiles) {
         final Component parentComponent = null; // Use default window frame.
         final String message = "Had trouble indexing " + problemFiles + " of the files. See the log for details.";

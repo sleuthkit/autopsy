@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
@@ -30,6 +31,10 @@ class KeywordSearch {
     private static final String BASE_URL = "http://localhost:8983/solr/";
     private static final Server SERVER = new Server(BASE_URL);
 
+    public static final String NUM_FILES_CHANGE_EVT = "NUM_FILES_CHANGE_EVT";
+    
+    static PropertyChangeSupport changeSupport = new PropertyChangeSupport(KeywordSearch.class);
+    
     static Server getServer() {
         return SERVER;
     }

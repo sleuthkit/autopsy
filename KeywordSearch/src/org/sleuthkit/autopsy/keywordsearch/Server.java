@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +30,7 @@ import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractAction;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -47,10 +50,13 @@ class Server {
     private static final String DEFAULT_CORE_NAME = "coreCase";
     // TODO: DEFAULT_CORE_NAME needs to be replaced with unique names to support multiple open cases
     
+    public static final String CORE_EVT = "CORE_EVT"; 
+    public enum CORE_EVT_STATES { STOPPED, STARTED };
 
     private CommonsHttpSolrServer solr;
     private String instanceDir;
     private File solrFolder;
+    private ServerAction serverAction;
 
     /**
      * New instance for the server at the given URL
@@ -63,10 +69,14 @@ class Server {
             throw new RuntimeException(ex);
         }
         
+        serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false);
         instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr";
     }
  
+    public void addServerActionListener(PropertyChangeListener l) {
+        serverAction.addPropertyChangeListener(l);
+    }
     
     /**
      * Helper threads to handle stderr/stdout from Solr process
@@ -79,6 +89,7 @@ class Server {
             this.stream = stream;
         }
 
+        @Override
         public void run() {
             InputStreamReader isr = new InputStreamReader(stream);
             BufferedReader br = new BufferedReader(isr);
@@ -174,6 +185,7 @@ class Server {
             throw new RuntimeException("Already an open Core!");
         }
         currentCore = openCore(Case.getCurrentCase());
+        serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
     }
     
     void closeCore() {
@@ -182,6 +194,7 @@ class Server {
         }
         currentCore.close();
         currentCore = null;
+        serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
     }
     
     Core getCore() {
@@ -269,5 +282,26 @@ class Server {
                 throw new RuntimeException(ex);
             }
         }
+        
+        /**
+         * Execute query that gets only number of all Solr documents indexed
+         * without actually returning the documents
+         * @return int representing number of indexed files
+         * @throws SolrServerException 
+         */
+        public int queryNumIndexedFiles() throws SolrServerException {
+             SolrQuery q = new SolrQuery("*:*");
+             q.setRows(0); 
+             return (int)query(q).getResults().getNumFound();
+    }
+}
+    
+    class ServerAction extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            logger.log(Level.INFO, e.paramString());
+        }
+        
     }
 }
