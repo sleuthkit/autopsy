@@ -22,6 +22,7 @@ import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
@@ -94,6 +95,10 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
         boolean isSupported(ContentNode node) {
             return this.wrapped.isSupported(node);
+        }
+        
+        boolean isPreferred(ContentNode node) {
+            return this.wrapped.isPreferred(node);
         }
     }
 
@@ -289,7 +294,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             int tempIndex = dataContentTabbedPane.getSelectedIndex();
             for (int i = 0; i < totalTabs; i++) {
                 UpdateWrapper dcv = viewers.get(i);
-                dcv.resetComponent();
+                dcv.resetComponent();             
 
                 // disable an unsupported tab (ex: picture viewer)
                 if (!dcv.isSupported(selectedNode)) {
@@ -305,6 +310,9 @@ public final class DataContentTopComponent extends TopComponent implements DataC
                     }
                 } else {
                     dataContentTabbedPane.setEnabledAt(i, true);
+                    if (dcv.isPreferred(currentNode))
+                        dataContentTabbedPane.setSelectedIndex(i);
+                    
                 }
             }
             int newIndex = dataContentTabbedPane.getSelectedIndex();

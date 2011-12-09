@@ -63,5 +63,12 @@ public interface DataContentViewer {
      * @return True if supported, else false
      */
     public boolean isSupported(ContentNode node);
+    
+     /**
+     * Checks whether the given viewer is preferred for the Node
+     * @param node Node to check for preference
+     * @return True if viewer preferred, else false
+     */
+    public boolean isPreferred(ContentNode node);
 
 }

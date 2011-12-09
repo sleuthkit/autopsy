@@ -299,6 +299,11 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     public boolean isSupported(ContentNode node) {
         return true;
     }
+    
+    @Override
+    public boolean isPreferred(ContentNode node) {
+        return false;
+    }
 
     @Override
     public Component getComponent() {

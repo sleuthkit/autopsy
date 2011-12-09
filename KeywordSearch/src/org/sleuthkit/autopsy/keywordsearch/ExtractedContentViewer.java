@@ -64,6 +64,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
 
         if (solrHasContent(selectedNode)) {
+            
             sources.add(new MarkupSource() {
 
                 @Override
@@ -82,6 +83,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                     return "Extracted Content";
                 }
             });
+            
         }
 
         // first source will be the default displayed
@@ -120,6 +122,11 @@ public class ExtractedContentViewer implements DataContentViewer {
         Collection<? extends MarkupSource> sources = ((Node) node).getLookup().lookupAll(MarkupSource.class);
 
         return !sources.isEmpty() || solrHasContent(node);
+    }
+    
+    @Override
+    public boolean isPreferred(ContentNode node) {
+        return isSupported(node);
     }
 
     /**

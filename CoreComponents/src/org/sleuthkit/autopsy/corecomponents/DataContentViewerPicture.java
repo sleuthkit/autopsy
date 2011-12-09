@@ -148,6 +148,11 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
             return false;
         }
     }
+    
+    @Override
+    public boolean isPreferred(ContentNode node) {
+        return false;
+    }
 
     @Override
     public Component getComponent() {
