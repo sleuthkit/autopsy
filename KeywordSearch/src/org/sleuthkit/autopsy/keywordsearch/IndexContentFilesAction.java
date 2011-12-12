@@ -36,9 +36,12 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.AddImageAction;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.Image;
 
 /**
  * Action adds all supported files from the given Content object and its
@@ -205,5 +208,14 @@ public class IndexContentFilesAction extends AbstractAction {
                 message,
                 title,
                 messageType);
+    }
+
+    @ServiceProvider(service = AddImageAction.IndexImageTask.class)
+    public static class IndexImageTask implements AddImageAction.IndexImageTask {
+
+        @Override
+        public void runTask(Image newImage) {
+            (new IndexContentFilesAction(newImage, "new image")).actionPerformed(null);
+        }
     }
 }
