@@ -21,15 +21,13 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.util.ArrayList;
 import org.openide.nodes.AbstractNode;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
-import org.sleuthkit.autopsy.datamodel.ContentNodeVisitor;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
  *
  * @author jantonius
  */
-class SearchNode extends AbstractNode implements ContentNode {
+class SearchNode extends AbstractNode {
 
     private SearchChildren children;
 
@@ -41,12 +39,5 @@ class SearchNode extends AbstractNode implements ContentNode {
     @Override
     public String getName() {
         return "Search Result";
-    }
-    
-
-    @Override
-    public <T> T accept(ContentNodeVisitor<T> v) {
-        //TODO: figure out how to deal with visitors
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

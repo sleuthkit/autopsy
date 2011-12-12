@@ -50,11 +50,6 @@ class ThumbnailViewNode extends FilterNode {
     }
 
     @Override
-    public Node getOriginal() {
-        return super.getOriginal();
-    }
-
-    @Override
     public Image getIcon(int type) {
         Image icon = null;
 

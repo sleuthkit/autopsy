@@ -29,7 +29,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
 /**
@@ -82,34 +81,23 @@ public class DataResultViewerThumbnail extends AbstractDataResultViewer {
     }
 
     @Override
-    public Node getOriginalSelectedNode() {
+    public Node getSelectedNode() {
         Node result = null;
 
         Node[] selectedNodes = this.getExplorerManager().getSelectedNodes();
         if (selectedNodes.length > 0) {
             result = selectedNodes[0];
-            if (result != null && result instanceof ThumbnailViewNode) {
-                result = ((ThumbnailViewNode) result).getOriginal();
-            }
         }
         return result;
     }
 
     @Override
-    public void setNode(ContentNode givenNode) {
+    public void setNode(Node givenNode) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             if (givenNode != null) {
-                Node root = (Node) givenNode;
-
-                if (root instanceof ThumbnailViewNode) {
-                    root = ((ThumbnailViewNode) root).getOriginal();
-                } else {
-                    Node temp = new AbstractNode(new ThumbnailViewChildren((ContentNode) root));
-                    root = temp;
-                }
-
+                Node root = new AbstractNode(new ThumbnailViewChildren(givenNode));
                 em.setRootContext(root);
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);

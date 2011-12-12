@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import org.sleuthkit.autopsy.datamodel.ContentNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
@@ -35,7 +33,7 @@ import org.sleuthkit.datamodel.Content;
  * This class wraps nodes as they are passed to the DataResult viewers.  It 
  * defines the actions that the node should have. 
  */
-public class DataResultFilterNode extends FilterNode implements ContentNode {
+public class DataResultFilterNode extends FilterNode {
 
     private Node currentNode;
 
@@ -43,11 +41,6 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
     public DataResultFilterNode(Node arg) {
         super(arg, new DataResultFilterChildren(arg));
         this.currentNode = arg;
-    }
-
-    @Override
-    public Node getOriginal() {
-        return super.getOriginal();
     }
 
     /**
@@ -68,16 +61,16 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
         } // right click action(s) for directory node
         else if (this.currentNode instanceof DirectoryNode) {
             return new Action[]{
-                        new ChangeViewAction("View", 0, (ContentNode) currentNode),
-                        new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath((currentNode).getLookup().lookup(Content.class)))
+                        new ChangeViewAction("View", 0, currentNode),
+                        new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath(currentNode.getLookup().lookup(Content.class)))
                     };
         } // right click action(s) for the file node
         else if (this.currentNode instanceof FileNode) {
             return new Action[]{
                         // TODO: ContentNode fix - reimplement ExtractAction
                         // new ExtractAction("Extract", (FileNode) this.currentNode),
-                        new ChangeViewAction("View", 0, (ContentNode) currentNode),
-                        new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath((currentNode).getLookup().lookup(Content.class)))
+                        new ChangeViewAction("View", 0, currentNode),
+                        new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath(currentNode.getLookup().lookup(Content.class)))
                     };
         } else {
             return new Action[]{};
@@ -93,11 +86,5 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
     @Override
     public Action getPreferredAction() {
         return null;
-    }
-
-    @Override
-    public <T> T accept(ContentNodeVisitor<T> v) {
-        //TODO: figure out how to deal with visitors
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

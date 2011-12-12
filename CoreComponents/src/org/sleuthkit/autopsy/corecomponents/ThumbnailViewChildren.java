@@ -20,17 +20,21 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.File;
 
 /**
  * Complementary class to ThumbnailViewNode
  */
 class ThumbnailViewChildren extends FilterNode.Children {
+    
+    private static final IsSupportedContentVisitor isSupportedVisitor = new IsSupportedContentVisitor();
 
     private int totalChildren;
 
     /** the constructor */
-    ThumbnailViewChildren(ContentNode arg) {
+    ThumbnailViewChildren(Node arg) {
         super((Node) arg);
         this.totalChildren = 1;
     }
@@ -42,9 +46,7 @@ class ThumbnailViewChildren extends FilterNode.Children {
 
     @Override
     protected Node[] createNodes(Node arg0) {
-        // filter out the FileNode and the "." and ".." directories
-        if (arg0 != null && //(arg0 instanceof FileNode &&
-                isSupported(arg0)) {
+        if (arg0 != null && isSupported(arg0)) {
             totalChildren++;
             return new Node[]{this.copyNode(arg0)};
         } else {
@@ -58,7 +60,20 @@ class ThumbnailViewChildren extends FilterNode.Children {
 
     public static boolean isSupported(Node node) {
         if (node != null) {
-            String lowerName = node.getDisplayName().toLowerCase();
+            Content content = node.getLookup().lookup(Content.class);
+            if (content != null) {
+                return content.accept(isSupportedVisitor);
+            }
+        }
+        return false;
+    }
+    
+    
+    private static class IsSupportedContentVisitor extends ContentVisitor.Default<Boolean> {
+
+        @Override
+        public Boolean visit(File f) {
+            String lowerName = f.getName().toLowerCase();
             // Note: only supports JPG, GIF, and PNG for now
             // TODO: replace giant OR with check if in list
             return lowerName.endsWith(".jpg")
@@ -71,8 +86,11 @@ class ThumbnailViewChildren extends FilterNode.Children {
                     //node.getName().toLowerCase().endsWith(".tiff") ||
                     //node.getName().toLowerCase().endsWith(".tga") ||
                     lowerName.endsWith(".png");
-        } else {
+        }
+        
+        @Override
+        protected Boolean defaultVisit(Content cntnt) {
             return false;
         }
-    }
+    } 
 }

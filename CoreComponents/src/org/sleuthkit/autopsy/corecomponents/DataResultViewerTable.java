@@ -37,7 +37,6 @@ import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 // TODO We should not have anything specific to Image in here...
 
@@ -107,14 +106,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     @Override
-    public Node getOriginalSelectedNode() {
+    public Node getSelectedNode() {
         Node result = null;
         Node[] selectedNodes = this.getExplorerManager().getSelectedNodes();
         if (selectedNodes.length > 0) {
             result = selectedNodes[0];
-            if (result != null && result instanceof TableFilterNode) {
-                result = ((TableFilterNode) result).getOriginal();
-            }
         }
         return result;
     }
@@ -141,7 +137,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     @Override
-    public void setNode(ContentNode selectedNode) {
+    public void setNode(Node selectedNode) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
@@ -157,9 +153,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             if (hasChildren) {
                 Node root = (Node) selectedNode;
 
-                if (root instanceof TableFilterNode) {
-                    root = ((TableFilterNode) root).getOriginal();
-                } else {
+                if (!(root instanceof TableFilterNode)) {
                     root = new TableFilterNode(root, true);
                 }
 
@@ -218,8 +212,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 // get first 100 rows values for the table
                 Object[][] content = null;
-                //TODO:  ContentNode fix - remove cast to node
-                content = getRowValues((Node) selectedNode, 100);
+                content = getRowValues(selectedNode, 100);
 
 
                 if (content != null) {

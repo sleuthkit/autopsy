@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
-import org.sleuthkit.autopsy.datamodel.ContentNode;
+import org.openide.nodes.Node;
 
 /**
  * The interface for the "top right component" window.
@@ -30,7 +30,7 @@ public interface DataResult {
     /**
      * Sets the "selected" node in this class.
      */
-    public void setNode(ContentNode selectedNode);
+    public void setNode(Node selectedNode);
 
     /**
      * Gets the unique TopComponent ID of this class.

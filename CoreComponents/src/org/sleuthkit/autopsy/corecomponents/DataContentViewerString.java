@@ -24,7 +24,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
@@ -267,7 +266,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     }
 
     @Override
-    public void setNode(ContentNode selectedNode) {
+    public void setNode(Node selectedNode) {
         if (selectedNode != null) {
             Content content = ((Node) selectedNode).getLookup().lookup(Content.class);
             if (content != null) {
@@ -301,7 +300,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     }
 
     @Override
-    public boolean isSupported(ContentNode node) {
+    public boolean isSupported(Node node) {
         return true;
     }
 

@@ -19,8 +19,8 @@
 
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import java.beans.PropertyChangeListener;
+import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 
 /**
@@ -34,7 +34,7 @@ public interface DataContent extends PropertyChangeListener {
      * Sets the "selected" node in this class
      * @param selectedNode node to use
      */
-    public void setNode(ContentNode selectedNode);
+    public void setNode(Node selectedNode);
 
     /**
      * Get the TopComponent that is used when displaying this DataContent

@@ -25,7 +25,6 @@ import javax.swing.AbstractAction;
 import org.openide.nodes.Node;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -37,9 +36,9 @@ import org.sleuthkit.datamodel.Content;
  */
 class NewWindowViewAction extends AbstractAction{
 
-    private ContentNode contentNode ;
+    private Node contentNode ;
 
-    NewWindowViewAction(String title, ContentNode contentNode){
+    NewWindowViewAction(String title, Node contentNode){
         super(title);
         this.contentNode = contentNode;
     }

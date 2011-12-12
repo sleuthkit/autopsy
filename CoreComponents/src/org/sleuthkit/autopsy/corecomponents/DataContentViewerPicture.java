@@ -29,7 +29,6 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
@@ -84,7 +83,7 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
     // End of variables declaration//GEN-END:variables
 
     @Override
-    public void setNode(ContentNode selectedNode) {
+    public void setNode(Node selectedNode) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
@@ -92,8 +91,7 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
                 try {
                     // read the byte of the image file
                     
-                    // TODO: ContentNode fix - get rid of cast to Node
-                    Content content = ((Node) selectedNode).getLookup().lookup(Content.class);
+                    Content content = selectedNode.getLookup().lookup(Content.class);
                     byte[] dataSource = content.read(0, content.getSize());
 
                     // create the input stream for the content
@@ -133,7 +131,7 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
     }
 
     @Override
-    public boolean isSupported(ContentNode cNode) {
+    public boolean isSupported(Node cNode) {
         Node node = (Node) cNode;
 
         if (node != null) {
