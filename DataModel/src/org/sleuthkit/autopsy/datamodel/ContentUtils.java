@@ -19,6 +19,9 @@
 
 package org.sleuthkit.autopsy.datamodel;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 import org.sleuthkit.datamodel.Content;
@@ -32,7 +35,7 @@ import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
- * Static class of 
+ * Static class of utility methods for Content objects
  */
 public final class ContentUtils {
     
@@ -170,4 +173,32 @@ public final class ContentUtils {
         }
     }
     
+    
+    private static final int TO_FILE_BUFFER_SIZE = 8192;
+    
+    /**
+     * Reads all the data from any content object and writes it to a file.
+     * @param content Any content object.
+     * @param outputFile Will be created if it doesn't exist, and overwritten if
+     * it does
+     * @throws IOException 
+     */
+    public static void writeToFile(Content content, java.io.File outputFile) throws IOException {
+
+        InputStream in = new ReadContentInputStream(content);
+        
+        boolean append = false;
+        FileOutputStream out = new FileOutputStream(outputFile, append);
+
+        try {
+            byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
+            int len = in.read(buffer);
+            while (len != -1) {
+                out.write(buffer, 0, len);
+                len = in.read(buffer);
+            }
+        } finally {
+            out.close();
+        }
+    }
 }
