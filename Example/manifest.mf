@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+OpenIDE-Module: org.sleuthkit.autopsy.example
+OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/example/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+
