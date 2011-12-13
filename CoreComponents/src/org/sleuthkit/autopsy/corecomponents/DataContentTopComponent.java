@@ -225,12 +225,20 @@ public final class DataContentTopComponent extends TopComponent implements DataC
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
+            
+            
+            String defaultName = NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent");
             // set the file path
             if (selectedNode == null) {
-                setName(NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent"));
+                setName(defaultName);
             } else {
-                String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(selectedNode.getLookup().lookup(Content.class)), 0);
-                setName(path);
+                Content content = selectedNode.getLookup().lookup(Content.class);
+                if (content != null) {
+                    String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(selectedNode.getLookup().lookup(Content.class)), 0);
+                    setName(path);
+                } else {
+                    setName(defaultName);
+                }
             }
 
             currentNode = selectedNode;
