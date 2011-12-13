@@ -48,7 +48,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     private ExtractedContentFind find;
 
     public ExtractedContentViewer() {
-        find = new ExtractedContentFind(this);
+        find = new ExtractedContentFind();
     }
 
     @Override
@@ -93,8 +93,13 @@ public class ExtractedContentViewer implements DataContentViewer {
                 }
 
                 @Override
-                public String getSearchToken() {
+                public String getAnchorPrefix() {
                     return "";
+                }
+
+                @Override
+                public int getNumberHits() {
+                    return 0;
                 }
             });
 
@@ -202,10 +207,9 @@ public class ExtractedContentViewer implements DataContentViewer {
             MarkupSource source = panel.getSelectedSource();
             if (find.hasNext(source)) {
                 long indexVal = find.getNext(source);
-                logger.log(Level.INFO, "INDEX NEXT: " + indexVal);
-                
+
                 //scroll
-                panel.scrollTo((int)indexVal);
+                panel.scrollToAnchor(source.getAnchorPrefix() + Long.toString(indexVal));
 
                 //update display
                 panel.updateCurrentDisplay(find.getCurrentIndexI(source) + 1);
@@ -229,10 +233,10 @@ public class ExtractedContentViewer implements DataContentViewer {
             MarkupSource source = panel.getSelectedSource();
             if (find.hasPrevious(source)) {
                 long indexVal = find.getPrevious(source);
-                logger.log(Level.INFO, "INDEX PREVIOUS: " + indexVal);
-                //scroll
-                panel.scrollTo((int)indexVal);
 
+                //scroll
+                panel.scrollToAnchor(source.getAnchorPrefix() + Long.toString(indexVal));
+                
                 //update display
                 panel.updateCurrentDisplay(find.getCurrentIndexI(source) + 1);
                 panel.updateTotalDisplay(find.getCurrentIndexTotal(source));
@@ -253,10 +257,10 @@ public class ExtractedContentViewer implements DataContentViewer {
         @Override
         public void actionPerformed(ActionEvent e) {
             MarkupSource source = panel.getSelectedSource();
-
-            //setup find buttons
-
+            
+            //setup find controls
             if (source != null && source.isSearchable()) {
+                find.init(source);
                 panel.updateCurrentDisplay(find.getCurrentIndexI(source) + 1);
                 panel.updateTotalDisplay(find.getCurrentIndexTotal(source));
 

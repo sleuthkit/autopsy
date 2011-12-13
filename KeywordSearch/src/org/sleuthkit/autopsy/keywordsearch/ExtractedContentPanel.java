@@ -18,19 +18,13 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JViewport;
-import javax.swing.SwingUtilities;
-import org.apache.commons.logging.Log;
 
 /**
  * Panel displays HTML content sent to ExtractedContentViewer, and provides
@@ -55,6 +49,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 }
             }
         });
+        
 
         setSources(Collections.EMPTY_LIST);
     }
@@ -196,7 +191,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     private void setPanelText(String text) {
         extractedTextPane.setText(text);
         extractedTextPane.setCaretPosition(0);
-        logger.log(Level.INFO, extractedTextPane.getText());
     }
 
     private void initControls() {
@@ -204,31 +198,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         hitNextButton.setEnabled(false);
     }
 
-    /**
-     * 
-     * @param offset to scroll to
-     */
-    public void scrollTo(int offset) {
-        //extractedTextPane.setCaretPosition(offset);
-        //
-        JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, extractedTextPane);
-        if (viewport == null) {
-            return;
-        }
-        int height = viewport.getExtentSize().height;
-        try {
-            Rectangle viewRectangle = extractedTextPane.modelToView(offset);
-            if (viewRectangle == null) {
-                return;
-            }
-            int y = viewRectangle.y - height / 2;
-            y = Math.max(0, y);
-            y = Math.min(y, extractedTextPane.getHeight() - height);
-            viewport.setViewPosition(new Point(0, y));
-        } catch (javax.swing.text.BadLocationException ex) {
-            logger.log(Level.WARNING, "Failed scrolling to index " + offset);
-        }
-
+    
+    public void scrollToAnchor(String anchor) {
+        extractedTextPane.scrollToReference(anchor);
     }
 
     /**

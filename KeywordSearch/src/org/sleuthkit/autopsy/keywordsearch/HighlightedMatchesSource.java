@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -35,10 +36,12 @@ class HighlightedMatchesSource implements MarkupSource {
     private static final Logger logger = Logger.getLogger(HighlightedMatchesSource.class.getName());
     private static final String HIGHLIGHT_PRE = "<span style=\"background:yellow\">";
     private static final String HIGHLIGHT_POST = "</span>";
+    private static final String ANCHOR_PREFIX = HighlightedMatchesSource.class.getName() + "_";
     
-    Content content;
-    String solrQuery;
-    Core solrCore;
+    private Content content;
+    private String solrQuery;
+    private Core solrCore;
+    private int numberHits;
 
     HighlightedMatchesSource(Content content, String solrQuery) {
         this(content, solrQuery, KeywordSearch.getServer().getCore());
@@ -68,7 +71,9 @@ class HighlightedMatchesSource implements MarkupSource {
                 return "<span style=\"background:red\">No matches in content.</span>";
             } else {
                 // extracted content (minus highlight tags) is HTML-escaped
-                return "<pre>" + contentHighlights.get(0).trim() + "</pre>";
+                String highlightedContent = contentHighlights.get(0).trim();
+                highlightedContent = insertAnchors(highlightedContent);
+                return "<pre>" + highlightedContent + "</pre>";
             }
         } catch (SolrServerException ex) {
             throw new RuntimeException(ex);
@@ -86,7 +91,35 @@ class HighlightedMatchesSource implements MarkupSource {
     }
     
     @Override
-    public String getSearchToken() {
-        return HIGHLIGHT_PRE;
+    public String getAnchorPrefix() {
+        return ANCHOR_PREFIX;
+    }
+    
+     @Override 
+     public int getNumberHits() {
+        return numberHits;
+     }
+    
+    private String insertAnchors(String searchableContent) {
+        int searchOffset = 0;
+        int index = -1;
+        
+        StringBuilder buf = new StringBuilder(searchableContent);
+        
+        final String searchToken = HIGHLIGHT_PRE;
+        final int indexSearchTokLen = searchToken.length();
+        final String insertPre = "<a name=\"" + ANCHOR_PREFIX;
+        final String insertPost = "\"></a>";
+        int count = 0;
+        while ((index = buf.indexOf(searchToken, searchOffset)) >= 0) {
+            String insertString = insertPre + Integer.toString(count) + insertPost;
+            int insertStringLen = insertString.length();
+            buf.insert(index, insertString);
+            searchOffset = index + indexSearchTokLen + insertStringLen ; //next offset past this anchor
+            ++count;
+        } 
+        
+        this.numberHits = count;
+        return buf.toString();
     }
 }

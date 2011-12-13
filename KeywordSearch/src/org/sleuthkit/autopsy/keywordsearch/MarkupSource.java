@@ -37,11 +37,16 @@ public interface MarkupSource {
     boolean isSearchable();
     
     /**
-     * If searchable markup, returns search token, otherwise return empty string
-     * TODO pull up into SearchableMarkupSource abstract class
+     * If searchable markup, returns prefix of anchor, otherwise return empty string
      * @return 
      */
-    String getSearchToken();
+    String getAnchorPrefix();
+    
+    /**
+     * if searchable markup, returns number of hits found and encoded in the markup
+     * @return 
+     */
+    int getNumberHits();
 
     /**
      * @return title of markup source
