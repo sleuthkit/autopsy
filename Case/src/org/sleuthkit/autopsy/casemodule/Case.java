@@ -231,7 +231,7 @@ public class Case {
      * @param imgId  the ID of the image that being added
      * @param timeZone  the timeZone of the image where it's added
      */
-    void addImage(String[] imgPaths, long imgId, String timeZone) throws Exception {
+    Image addImage(String[] imgPaths, long imgId, String timeZone) throws Exception {
         Log.get(this.getClass()).log(Level.INFO, "Adding image to Case.  imgPaths: {0}  ID: {1} TimeZone: {2}", new Object[]{Arrays.toString(imgPaths), imgId, timeZone});
 
         try {
@@ -239,6 +239,7 @@ public class Case {
             xmlcm.writeFile(); // write any changes to the config file
             Image newImage = db.getImageById(imgId);
             pcs.firePropertyChange(CASE_ADD_IMAGE, null, newImage); // the new value is the instance of the image
+            return newImage;
         } catch (Exception ex) {
             // throw an error here
             throw ex;

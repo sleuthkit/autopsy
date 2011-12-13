@@ -35,11 +35,13 @@ import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.openide.util.ChangeSupport;
 import org.openide.util.HelpCtx;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 
 /**
@@ -65,6 +67,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     static final String IMAGEID_PROP = "imageId";
     // AddImageProcess: the next availble id for a new image
     static final String PROCESS_PROP = "process";
+    // boolean: whether or not to index the image in Solr
+    static final String SOLR_PROP = "indexInSolr";
 
 
     private WizardDescriptor wizardDescriptor;
@@ -103,6 +107,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         wizardDescriptor = new WizardDescriptor(iterator);
         wizardDescriptor.setTitle("Add Image");
         wizardDescriptor.putProperty(NAME, e);
+        wizardDescriptor.putProperty(SOLR_PROP, false);
 
 
         if (dialog != null) {
@@ -140,12 +145,19 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         
         String[] imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
         String timezone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
+        boolean indexImage = (Boolean) settings.getProperty(AddImageAction.SOLR_PROP);
         
         AddImageProcess process = (AddImageProcess) settings.getProperty(PROCESS_PROP);
         
         try {
             long imageId = process.commit();
-            Case.getCurrentCase().addImage(imgPaths, imageId, timezone);
+            Image newImage = Case.getCurrentCase().addImage(imgPaths, imageId, timezone);
+            
+            if (indexImage) {
+                // Must use a Lookup here to prevent a circular dependency
+                // between Case and KeywordSearch...
+                Lookup.getDefault().lookup(IndexImageTask.class).runTask(newImage);
+            }
         } finally {
             // Can't bail and revert image add after commit, so disable image cleanup
             // task
@@ -153,7 +165,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
             cleanupImage.disable();
         }
     }
-
+    
+    
     /**
      * Closes the current dialog and wizard, and opens a new one. Used in the
      * "Add another image" action on the last panel
@@ -173,6 +186,23 @@ public final class AddImageAction extends CallableSystemAction implements Presen
                 actionPerformed(null);
             }
         });
+    }
+    
+    public interface IndexImageTask {
+        void runTask(Image newImage);
+    }
+    
+    
+
+    /**
+     * Closes the current dialog and wizard and indexes the newly added image.
+     * Used in the "Index for keyword search" action on the last panel
+     */
+    public void indexImage() {
+        // Simulate clicking finish for the current dialog
+        wizardDescriptor.setValue(WizardDescriptor.FINISH_OPTION);
+        wizardDescriptor.putProperty(SOLR_PROP, true);
+        dialog.setVisible(false);
     }
 
     /**
