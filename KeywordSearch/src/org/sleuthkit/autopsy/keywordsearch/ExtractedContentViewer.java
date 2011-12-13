@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,8 +45,10 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
     private ExtractedContentPanel panel;
+    private ExtractedContentFind find;
 
     public ExtractedContentViewer() {
+        find = new ExtractedContentFind(this);
     }
 
     @Override
@@ -64,7 +68,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
 
         if (solrHasContent(selectedNode)) {
-            
+
             sources.add(new MarkupSource() {
 
                 @Override
@@ -82,8 +86,18 @@ public class ExtractedContentViewer implements DataContentViewer {
                 public String toString() {
                     return "Extracted Content";
                 }
+
+                @Override
+                public boolean isSearchable() {
+                    return false;
+                }
+
+                @Override
+                public String getSearchToken() {
+                    return "";
+                }
             });
-            
+
         }
 
         // first source will be the default displayed
@@ -104,6 +118,9 @@ public class ExtractedContentViewer implements DataContentViewer {
     public Component getComponent() {
         if (panel == null) {
             panel = new ExtractedContentPanel();
+            panel.addPrevControlListener(new PrevFindActionListener());
+            panel.addNextControlListener(new NextFindActionListener());
+            panel.addSourceComboControlListener(new SourceChangeActionListener());
         }
         return panel;
     }
@@ -123,7 +140,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         return !sources.isEmpty() || solrHasContent(node);
     }
-    
+
     @Override
     public boolean isPreferred(ContentNode node) {
         return isSupported(node);
@@ -176,5 +193,90 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         String content = (String) solrCore.query(q).getResults().get(0).getFieldValue("content");
         return content;
+    }
+
+    class NextFindActionListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            MarkupSource source = panel.getSelectedSource();
+            if (find.hasNext(source)) {
+                long indexVal = find.getNext(source);
+                logger.log(Level.INFO, "INDEX NEXT: " + indexVal);
+                
+                //scroll
+                panel.scrollTo((int)indexVal);
+
+                //update display
+                panel.updateCurrentDisplay(find.getCurrentIndexI(source) + 1);
+                panel.updateTotalDisplay(find.getCurrentIndexTotal(source));
+
+                //update controls if needed
+                if (!find.hasNext(source)) {
+                    panel.enableNextControl(false);
+                }
+                if (find.hasPrevious(source)) {
+                    panel.enablePrevControl(true);
+                }
+            }
+        }
+    }
+
+    class PrevFindActionListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            MarkupSource source = panel.getSelectedSource();
+            if (find.hasPrevious(source)) {
+                long indexVal = find.getPrevious(source);
+                logger.log(Level.INFO, "INDEX PREVIOUS: " + indexVal);
+                //scroll
+                panel.scrollTo((int)indexVal);
+
+                //update display
+                panel.updateCurrentDisplay(find.getCurrentIndexI(source) + 1);
+                panel.updateTotalDisplay(find.getCurrentIndexTotal(source));
+
+                //update controls if needed
+                if (!find.hasPrevious(source)) {
+                    panel.enablePrevControl(false);
+                }
+                if (find.hasNext(source)) {
+                    panel.enableNextControl(true);
+                }
+            }
+        }
+    }
+
+    class SourceChangeActionListener implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            MarkupSource source = panel.getSelectedSource();
+
+            //setup find buttons
+
+            if (source != null && source.isSearchable()) {
+                panel.updateCurrentDisplay(find.getCurrentIndexI(source) + 1);
+                panel.updateTotalDisplay(find.getCurrentIndexTotal(source));
+
+                if (find.hasNext(source)) {
+                    panel.enableNextControl(true);
+                } else {
+                    panel.enableNextControl(false);
+                }
+
+                if (find.hasPrevious(source)) {
+                    panel.enablePrevControl(true);
+                } else {
+                    panel.enablePrevControl(false);
+                }
+            } else {
+                panel.enableNextControl(false);
+                panel.enablePrevControl(false);
+            }
+
+
+        }
     }
 }

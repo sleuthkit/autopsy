@@ -33,6 +33,9 @@ import org.sleuthkit.datamodel.Content;
 class HighlightedMatchesSource implements MarkupSource {
 
     private static final Logger logger = Logger.getLogger(HighlightedMatchesSource.class.getName());
+    private static final String HIGHLIGHT_PRE = "<span style=\"background:yellow\">";
+    private static final String HIGHLIGHT_POST = "</span>";
+    
     Content content;
     String solrQuery;
     Core solrCore;
@@ -54,8 +57,8 @@ class HighlightedMatchesSource implements MarkupSource {
         q.setQuery(solrQuery);
         q.addFilterQuery("id:" + content.getId());
         q.addHighlightField("content");
-        q.setHighlightSimplePre("<span style=\"background:yellow\">");
-        q.setHighlightSimplePost("</span>");
+        q.setHighlightSimplePre(HIGHLIGHT_PRE);
+        q.setHighlightSimplePost(HIGHLIGHT_POST);
         q.setHighlightFragsize(0); // don't fragment the highlight
 
         try {
@@ -75,5 +78,15 @@ class HighlightedMatchesSource implements MarkupSource {
     @Override
     public String toString() {
         return "Search Matches";
+    }
+    
+    @Override
+    public boolean isSearchable() {
+        return true;
+    }
+    
+    @Override
+    public String getSearchToken() {
+        return HIGHLIGHT_PRE;
     }
 }

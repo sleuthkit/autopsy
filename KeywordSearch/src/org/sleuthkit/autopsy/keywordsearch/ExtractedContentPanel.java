@@ -18,10 +18,19 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
+import org.apache.commons.logging.Log;
 
 /**
  * Panel displays HTML content sent to ExtractedContentViewer, and provides
@@ -29,9 +38,12 @@ import java.util.List;
  */
 class ExtractedContentPanel extends javax.swing.JPanel {
 
+    private static Logger logger = Logger.getLogger(ExtractedContentPanel.class.getName());
+
     ExtractedContentPanel() {
         initComponents();
-        
+
+        initControls();
         extractedTextPane.setContentType("text/html");
 
         sourceComboBox.addItemListener(new ItemListener() {
@@ -59,6 +71,13 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         extractedTextPane = new javax.swing.JTextPane();
         sourceComboBox = new javax.swing.JComboBox();
+        hitLabel = new javax.swing.JLabel();
+        hitCountLabel = new javax.swing.JLabel();
+        hitOfLabel = new javax.swing.JLabel();
+        hitTotalLabel = new javax.swing.JLabel();
+        hitButtonsLabel = new javax.swing.JLabel();
+        hitPreviousButton = new javax.swing.JButton();
+        hitNextButton = new javax.swing.JButton();
 
         extractedTextPane.setEditable(false);
         extractedTextPane.setAutoscrolls(false);
@@ -66,12 +85,42 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
+        hitLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitLabel.text")); // NOI18N
+
+        hitCountLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitCountLabel.text")); // NOI18N
+
+        hitOfLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitOfLabel.text")); // NOI18N
+
+        hitTotalLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitTotalLabel.text")); // NOI18N
+
+        hitButtonsLabel.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitButtonsLabel.text")); // NOI18N
+
+        hitPreviousButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/arrow_left.gif"))); // NOI18N
+        hitPreviousButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitPreviousButton.text")); // NOI18N
+
+        hitNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/arrow_right.gif"))); // NOI18N
+        hitNextButton.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.hitNextButton.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(334, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(hitLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(hitCountLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 12, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(hitOfLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(hitTotalLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(41, 41, 41)
+                .addComponent(hitButtonsLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(hitPreviousButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(hitNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 125, Short.MAX_VALUE)
                 .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
@@ -79,18 +128,33 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(hitLabel)
+                        .addComponent(hitButtonsLabel)
+                        .addComponent(hitOfLabel)
+                        .addComponent(hitTotalLabel)
+                        .addComponent(hitCountLabel))
+                    .addComponent(hitPreviousButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(hitNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 274, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 271, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextPane extractedTextPane;
+    private javax.swing.JLabel hitButtonsLabel;
+    private javax.swing.JLabel hitCountLabel;
+    private javax.swing.JLabel hitLabel;
+    private javax.swing.JButton hitNextButton;
+    private javax.swing.JLabel hitOfLabel;
+    private javax.swing.JButton hitPreviousButton;
+    private javax.swing.JLabel hitTotalLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JComboBox sourceComboBox;
     // End of variables declaration//GEN-END:variables
 
-    
     /**
      * Set the available sources (selects the first source in the list by
      * default)
@@ -109,8 +173,105 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * 
+     * @return currently available sources on the panel
+     */
+    public List<MarkupSource> getSources() {
+        ArrayList<MarkupSource> sources = new ArrayList<MarkupSource>();
+        for (int i = 0; i < sourceComboBox.getItemCount(); ++i) {
+            sources.add((MarkupSource) sourceComboBox.getItemAt(i));
+        }
+        return sources;
+    }
+
+    /**
+     * 
+     * @return currently selected Source
+     */
+    public MarkupSource getSelectedSource() {
+        return (MarkupSource) sourceComboBox.getSelectedItem();
+    }
+
     private void setPanelText(String text) {
         extractedTextPane.setText(text);
         extractedTextPane.setCaretPosition(0);
+        logger.log(Level.INFO, extractedTextPane.getText());
+    }
+
+    private void initControls() {
+        hitPreviousButton.setEnabled(false);
+        hitNextButton.setEnabled(false);
+    }
+
+    /**
+     * 
+     * @param offset to scroll to
+     */
+    public void scrollTo(int offset) {
+        //extractedTextPane.setCaretPosition(offset);
+        //
+        JViewport viewport = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, extractedTextPane);
+        if (viewport == null) {
+            return;
+        }
+        int height = viewport.getExtentSize().height;
+        try {
+            Rectangle viewRectangle = extractedTextPane.modelToView(offset);
+            if (viewRectangle == null) {
+                return;
+            }
+            int y = viewRectangle.y - height / 2;
+            y = Math.max(0, y);
+            y = Math.min(y, extractedTextPane.getHeight() - height);
+            viewport.setViewPosition(new Point(0, y));
+        } catch (javax.swing.text.BadLocationException ex) {
+            logger.log(Level.WARNING, "Failed scrolling to index " + offset);
+        }
+
+    }
+
+    /**
+     * 
+     * @param current, current hit to update the display with
+     */
+    public void updateCurrentDisplay(int current) {
+        hitCountLabel.setText(Integer.toString(current));
+    }
+
+    /**
+     * 
+     * @param total total number of hits to update the display with
+     */
+    public void updateTotalDisplay(int total) {
+        hitTotalLabel.setText(Integer.toString(total));
+    }
+
+    /**
+     * enable previous hit control
+     * @param enable whether to enable or disable
+     */
+    public void enablePrevControl(boolean enable) {
+        hitPreviousButton.setEnabled(enable);
+    }
+
+    /**
+     * enable previous hit control
+     * @param enable whether to enable or disable
+     */
+    public void enableNextControl(boolean enable) {
+        hitNextButton.setEnabled(enable);
+    }
+
+    public void addPrevControlListener(ActionListener l) {
+        hitPreviousButton.addActionListener(l);
+    }
+
+    public void addNextControlListener(ActionListener l) {
+        hitNextButton.addActionListener(l);
+    }
+
+    public void addSourceComboControlListener(ActionListener l) {
+        sourceComboBox.addActionListener(l);
     }
 }

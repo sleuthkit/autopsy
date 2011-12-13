@@ -29,6 +29,19 @@ public interface MarkupSource {
      * components can handle in their setText() method.
      */
     String getMarkup();
+    
+    /**
+     * 
+     * @return true if markup is marked to be searchable
+     */
+    boolean isSearchable();
+    
+    /**
+     * If searchable markup, returns search token, otherwise return empty string
+     * TODO pull up into SearchableMarkupSource abstract class
+     * @return 
+     */
+    String getSearchToken();
 
     /**
      * @return title of markup source
