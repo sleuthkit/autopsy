@@ -46,7 +46,6 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeFilterNode.OriginalNode;
 
 /**
  * Top component which displays something.
