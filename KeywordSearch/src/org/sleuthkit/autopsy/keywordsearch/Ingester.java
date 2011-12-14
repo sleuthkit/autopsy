@@ -113,9 +113,9 @@ class Ingester {
      * searches)
      */
     void commit() {
-        uncommitedIngests = false;
         try {
             solrCore.commit();
+            uncommitedIngests = false;
             // if commit doesn't work, something's broken
         } catch (IOException ex) {
             throw new RuntimeException(ex);

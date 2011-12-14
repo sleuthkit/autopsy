@@ -21,6 +21,11 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
+/**
+ * Match tracker / find functionality for a given MarkupSource
+ * Supports keeping track of matches for multiple sources.
+ * What is a match and how to index, is a responsibility of a given MarkupSource
+ */
 public class ExtractedContentFind {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentFind.class.getName());
@@ -33,10 +38,20 @@ public class ExtractedContentFind {
     public static final int INDEX_NOT_FOUND = -2;
     public static final int INDEX_INITIALIZED = -1;
     
+    /**
+     * get total number of matches in the source
+     * @param source
+     * @return number of matches in the source
+     */
     public int getCurrentIndexTotal(MarkupSource source) {
         return source.getNumberHits();
     }
 
+    /**
+     * get current match
+     * @param source
+     * @return current match 
+     */
     public int getCurrentIndexI(MarkupSource source) {
         Integer curI = curIndex.get(source);
         if (curI != null) {
@@ -47,9 +62,9 @@ public class ExtractedContentFind {
     }
 
     /**
-     * 
+     * Check if there is a next match
      * @param source
-     * @return true if the source has next hit
+     * @return true if the source has next match
      */
     public boolean hasNext(MarkupSource source) {
         int total = source.getNumberHits();
@@ -65,9 +80,9 @@ public class ExtractedContentFind {
     }
 
     /**
-     * 
+     * Check if there is a previous match
      * @param source
-     * @return true if the source has previous hit
+     * @return true if the source has previous match
      */
     public boolean hasPrevious(MarkupSource source) {
         int total = source.getNumberHits();
@@ -83,11 +98,10 @@ public class ExtractedContentFind {
     }
 
     /**
-     * get next index
-     * requires call to hasNext() first
-     * or INDEX_NOT_FOUND if no next hit
+     * make step toward next match and return the next index
+     * or INDEX_NOT_FOUND if no next match
      * @param source
-     * @return line number where match occurs
+     * @return index corresponding to next match
      */
     public long getNext(MarkupSource source) {
         int total = source.getNumberHits();
@@ -102,11 +116,10 @@ public class ExtractedContentFind {
     }
 
     /**
-     * get previous index
-     * requires call to hasPrevious() first
-     * or INDEX_NOT_FOUND if no previous hit
+     * make step toward previous match and return the prev. index
+     * or INDEX_NOT_FOUND if no next match
      * @param source
-     * @return line number where match occurs
+     * @return index corresponding to prev. match
      */
     public long getPrevious(MarkupSource source) {
         int total = source.getNumberHits();
@@ -121,7 +134,7 @@ public class ExtractedContentFind {
     }
     
     /**
-     * initialize find functionality with the source
+     * initialize find functionality for the source
      * @param source MarkupSource to initialize find with
      */
     public void init(MarkupSource source) {
