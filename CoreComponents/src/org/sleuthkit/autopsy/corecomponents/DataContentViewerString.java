@@ -301,7 +301,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     }
     
     @Override
-    public boolean isPreferred(ContentNode node) {
+    public boolean isPreferred(ContentNode node, boolean isSupported) {
         return false;
     }
 

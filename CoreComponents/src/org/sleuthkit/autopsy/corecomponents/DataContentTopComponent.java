@@ -97,8 +97,8 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             return this.wrapped.isSupported(node);
         }
         
-        boolean isPreferred(ContentNode node) {
-            return this.wrapped.isPreferred(node);
+        boolean isPreferred(ContentNode node, boolean isSupported) {
+            return this.wrapped.isPreferred(node, isSupported);
         }
     }
 
@@ -297,7 +297,8 @@ public final class DataContentTopComponent extends TopComponent implements DataC
                 dcv.resetComponent();             
 
                 // disable an unsupported tab (ex: picture viewer)
-                if (!dcv.isSupported(selectedNode)) {
+                boolean dcvSupported = dcv.isSupported(selectedNode);
+                if (! dcvSupported) {
                     dataContentTabbedPane.setEnabledAt(i, false);
 
                     // change the tab selection if it's the current selection
@@ -310,7 +311,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
                     }
                 } else {
                     dataContentTabbedPane.setEnabledAt(i, true);
-                    if (dcv.isPreferred(currentNode))
+                    if (dcv.isPreferred(selectedNode, dcvSupported))
                         dataContentTabbedPane.setSelectedIndex(i);
                     
                 }

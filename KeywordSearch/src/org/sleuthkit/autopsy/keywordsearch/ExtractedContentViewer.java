@@ -147,8 +147,8 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     @Override
-    public boolean isPreferred(ContentNode node) {
-        return isSupported(node);
+    public boolean isPreferred(ContentNode node, boolean isSupported) {
+        return isSupported;
     }
 
     /**
