@@ -84,14 +84,17 @@ public class IndexContentFilesAction extends AbstractAction {
 
         // initialize panel
         final IndexProgressPanel panel = new IndexProgressPanel();
-
+        
         final SwingWorker task = new SwingWorker<Integer, String>() {
-
             @Override
             protected Integer doInBackground() throws Exception {
                 Ingester ingester = solrCore.getIngester();
 
-                Collection<FsContent> files = c.accept(new GetIngestableFilesContentVisitor());
+                //TODO should be an option somewhere in GUI which visitor to use (known vs unknown files)
+                //GetFilesContentVisitor v = new GetIngestableFilesContentVisitor();
+                GetFilesContentVisitor v = new GetAllFilesContentVisitor();
+                
+                Collection<FsContent> files = c.accept(v);
 
                 setProgress(0);
 
@@ -112,6 +115,7 @@ public class IndexContentFilesAction extends AbstractAction {
                     } catch (IngesterException ex) {
                         logger.log(Level.INFO, "Ingester had a problem with file '" + f.getName() + "' (id: " + f.getId() + ").", ex);
 
+                        //TODO should be an option somewhere in GUI (known vs unknown files)
                         if (f.getSize() < MAX_STRING_EXTRACT_SIZE) {
                             logger.log(Level.INFO, "Will extract strings and re-ingest, from file '" + f.getName() + "' (id: " + f.getId() + ").");
                             if (!extractAndReingest(ingester, f)) {
