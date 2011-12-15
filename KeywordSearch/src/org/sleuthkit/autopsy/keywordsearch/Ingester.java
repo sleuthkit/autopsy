@@ -57,6 +57,19 @@ class Ingester {
         }
     }
 
+    
+    /**
+     * Sends a file to Solr to have its content extracted and added to the
+     * index. commit() should be called once you're done ingesting files.
+     * 
+     * @param fcs File FsContentStringStream to ingest
+     * @throws IngesterException if there was an error processing a specific
+     * file, but the Solr server is probably fine.
+     */
+    public void ingest(FsContentStringStream fcs) throws IngesterException {
+        ingest(fcs, getFsContentFields(fcs.getFsContent()));
+    }
+    
     /**
      * Sends a file to Solr to have its content extracted and added to the
      * index. commit() should be called once you're done ingesting files.
@@ -65,17 +78,38 @@ class Ingester {
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(FsContent f) throws IngesterException {
+    public void ingest(FsContent f) throws IngesterException {
+        ingest(new FscContentStream(f), getFsContentFields(f));
+    }
+    
+    /**
+     * Creates a field map from FsContent, that is later sent to Solr
+     * @param fsc FsContent to get fields from
+     * @return the map
+     */
+    private Map<String, String> getFsContentFields(FsContent fsc) {
         Map<String, String> fields = new HashMap<String, String>();
-        fields.put("id", Long.toString(f.getId()));
-        fields.put("file_name", f.getName());
-        fields.put("ctime", f.getCtimeAsDate());
-        fields.put("atime", f.getAtimeAsDate());
-        fields.put("mtime", f.getMtimeAsDate());
-        fields.put("crtime", f.getMtimeAsDate());
-
+        fields.put("id", Long.toString(fsc.getId()));
+        fields.put("file_name", fsc.getName());
+        fields.put("ctime", fsc.getCtimeAsDate());
+        fields.put("atime", fsc.getAtimeAsDate());
+        fields.put("mtime", fsc.getMtimeAsDate());
+        fields.put("crtime", fsc.getMtimeAsDate());
+        return fields;
+    }
+    
+    
+    /**
+     * Common delegate method actually doing the work for objects implementing ContentStream
+     * 
+     * @param ContentStream to ingest
+     * @param fields content specific fields
+     * @throws IngesterException if there was an error processing a specific
+     * content, but the Solr server is probably fine.
+     */
+    private void ingest(ContentStream cs, Map<String, String> fields) throws IngesterException {
         ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract");
-        up.addContentStream(new FscContentStream(f));
+        up.addContentStream(cs);
         setFields(up, fields);
         up.setAction(AbstractUpdateRequest.ACTION.COMMIT, true, true);
 

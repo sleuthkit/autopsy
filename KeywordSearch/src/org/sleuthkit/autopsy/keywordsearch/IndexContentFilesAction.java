@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * Action adds all supported files from the given Content object and its
@@ -50,6 +51,8 @@ import org.sleuthkit.datamodel.Image;
 public class IndexContentFilesAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(IndexContentFilesAction.class.getName());
+    private static final int MAX_STRING_EXTRACT_SIZE = 10 * (1 << 10) * (1 << 10);
+    
     private Content c;
     private String name;
     private Server.Core solrCore;
@@ -95,11 +98,11 @@ public class IndexContentFilesAction extends AbstractAction {
                 // track number complete or with errors
                 int fileCount = files.size();
                 int finishedFiles = 0;
-                int problemFiles = 0;
+                int problemFilesCount = 0;
 
                 for (FsContent f : files) {
                     if (isCancelled()) {
-                        return problemFiles;
+                        return problemFilesCount;
                     }
 
                     this.publish("Indexing " + (finishedFiles + 1) + "/" + fileCount + ": " + f.getName());
@@ -108,22 +111,30 @@ public class IndexContentFilesAction extends AbstractAction {
                         ingester.ingest(f);
                     } catch (IngesterException ex) {
                         logger.log(Level.INFO, "Ingester had a problem with file '" + f.getName() + "' (id: " + f.getId() + ").", ex);
-                        problemFiles++;
-                    }
 
+                        if (f.getSize() < MAX_STRING_EXTRACT_SIZE) {
+                            logger.log(Level.INFO, "Will extract strings and re-ingest, from file '" + f.getName() + "' (id: " + f.getId() + ").");
+                            if (!extractAndReingest(ingester, f)) {
+                                problemFilesCount++;
+                            }
+                        } else {
+                            problemFilesCount++;
+                        }
+                    }
                     setProgress(++finishedFiles * 100 / fileCount);
                 }
 
                 ingester.commit();
 
+                //signal a potential change in number of indexed files
                 try {
                     final int numIndexedFiles = KeywordSearch.getServer().getCore().queryNumIndexedFiles();
                     KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
                 } catch (SolrServerException se) {
-                    logger.log(Level.SEVERE, "Error executing Solr query, " + se.getMessage());
+                    logger.log(Level.SEVERE, "Error executing Solr query to check number of indexed files: ", se);
                 }
 
-                return problemFiles;
+                return problemFilesCount;
             }
 
             @Override
@@ -196,6 +207,21 @@ public class IndexContentFilesAction extends AbstractAction {
         task.execute();
         // display the window
         popUpWindow.setVisible(true);
+    }
+
+    private boolean extractAndReingest(Ingester ingester, FsContent f) {
+        boolean success = false;
+        FsContentStringStream fscs = new FsContentStringStream(f, FsContentStringStream.Encoding.ASCII);
+        try {
+            fscs.convert();
+            ingester.ingest(fscs);
+            success = true;
+        } catch (TskException tskEx) {
+            logger.log(Level.INFO, "Problem extracting string from file: '" + f.getName() + "' (id: " + f.getId() + ").", tskEx);
+        } catch (IngesterException ingEx) {
+            logger.log(Level.INFO, "Ingester had a problem with extracted strings from file '" + f.getName() + "' (id: " + f.getId() + ").", ingEx);
+        }
+        return success;
     }
 
     private void displayProblemFilesDialog(int problemFiles) {
