@@ -25,8 +25,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,10 +57,19 @@ public class IndexContentFilesAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(IndexContentFilesAction.class.getName());
     private static final int MAX_STRING_EXTRACT_SIZE = 10 * (1 << 10) * (1 << 10);
-    
     private Content c;
     private String name;
     private Server.Core solrCore;
+
+    public enum IngestStatus {
+
+        NOT_INGESTED, INGESTED, EXTRACTED_INGESTED, SKIPPED_EXTRACTION,};
+    //keep track of ingest status for various types of content
+    //could also be useful for reporting
+    private Map<Long, IngestStatus> ingestStatus;
+    private int problemFilesCount;
+    private int finishedFiles;
+    private int totalFilesCount;
 
     /**
      * New action
@@ -71,6 +85,7 @@ public class IndexContentFilesAction extends AbstractAction {
         this.c = c;
         this.name = name;
         this.solrCore = solrCore;
+        ingestStatus = new HashMap<Long, IngestStatus>();
     }
 
     @Override
@@ -84,49 +99,48 @@ public class IndexContentFilesAction extends AbstractAction {
 
         // initialize panel
         final IndexProgressPanel panel = new IndexProgressPanel();
-        
+
         final SwingWorker task = new SwingWorker<Integer, String>() {
+
             @Override
             protected Integer doInBackground() throws Exception {
                 Ingester ingester = solrCore.getIngester();
 
-                //TODO should be an option somewhere in GUI which visitor to use (known vs unknown files)
-                //GetFilesContentVisitor v = new GetIngestableFilesContentVisitor();
-                GetFilesContentVisitor v = new GetAllFilesContentVisitor();
-                
-                Collection<FsContent> files = c.accept(v);
+                this.publish("Categorizing files to index. ");
+
+                GetFilesContentVisitor ingestableV = new GetIngestableFilesContentVisitor();
+                GetFilesContentVisitor allV = new GetAllFilesContentVisitor();
+
+                Collection<FsContent> ingestableFiles = c.accept(ingestableV);
+                Collection<FsContent> allFiles = c.accept(allV);
+
+                //calculate non ingestable Collection (complement of allFiles / ingestableFiles)
+                Collection<FsContent> nonIngestibleFiles = new TreeSet<FsContent>(new Comparator<FsContent>() {
+
+                    @Override
+                    public int compare(FsContent fsc1, FsContent fsc2) {
+                        return (int) (fsc1.getId() - fsc2.getId());
+
+                    }
+                });
+                nonIngestibleFiles.addAll(allFiles);
+                nonIngestibleFiles.removeAll(ingestableFiles);
 
                 setProgress(0);
 
                 // track number complete or with errors
-                int fileCount = files.size();
-                int finishedFiles = 0;
-                int problemFilesCount = 0;
+                totalFilesCount = allFiles.size();
+                problemFilesCount = 0;
+                finishedFiles = 0;
+                ingestStatus.clear();
 
-                for (FsContent f : files) {
-                    if (isCancelled()) {
-                        return problemFilesCount;
-                    }
+                //work on known files first
+                Collection<FsContent> ingestFailedFiles = processIngestible(ingester, ingestableFiles);
+                nonIngestibleFiles.addAll(ingestFailedFiles);
 
-                    this.publish("Indexing " + (finishedFiles + 1) + "/" + fileCount + ": " + f.getName());
-
-                    try {
-                        ingester.ingest(f);
-                    } catch (IngesterException ex) {
-                        logger.log(Level.INFO, "Ingester had a problem with file '" + f.getName() + "' (id: " + f.getId() + ").", ex);
-
-                        //TODO should be an option somewhere in GUI (known vs unknown files)
-                        if (f.getSize() < MAX_STRING_EXTRACT_SIZE) {
-                            logger.log(Level.INFO, "Will extract strings and re-ingest, from file '" + f.getName() + "' (id: " + f.getId() + ").");
-                            if (!extractAndReingest(ingester, f)) {
-                                problemFilesCount++;
-                            }
-                        } else {
-                            problemFilesCount++;
-                        }
-                    }
-                    setProgress(++finishedFiles * 100 / fileCount);
-                }
+                //work on unknown files
+                //TODO should be an option somewhere in GUI (known vs unknown files)
+                processNonIngestible(ingester, nonIngestibleFiles);
 
                 ingester.commit();
 
@@ -139,6 +153,49 @@ public class IndexContentFilesAction extends AbstractAction {
                 }
 
                 return problemFilesCount;
+            }
+
+            private Collection<FsContent> processIngestible(Ingester ingester, Collection<FsContent> fscc) {
+                Collection<FsContent> ingestFailedCol = new ArrayList<FsContent>();
+                for (FsContent f : fscc) {
+                    if (isCancelled()) {
+                        return ingestFailedCol;
+                    }
+                    this.publish("Indexing " + (finishedFiles + 1) + "/" + totalFilesCount + ": " + f.getName());
+                    try {
+                        ingester.ingest(f);
+                        ingestStatus.put(f.getId(), IngestStatus.INGESTED);
+                        setProgress(++finishedFiles * 100 / totalFilesCount);
+                    } catch (IngesterException ex) {
+                        ingestFailedCol.add(f);
+                        ingestStatus.put(f.getId(), IngestStatus.NOT_INGESTED);
+                        logger.log(Level.INFO, "Ingester failed with file '" + f.getName() + "' (id: " + f.getId() + ").", ex);
+                    }
+                }
+                return ingestFailedCol;
+            }
+
+            private void processNonIngestible(Ingester ingester, Collection<FsContent> fscc) {
+                for (FsContent f : fscc) {
+                    if (isCancelled()) {
+                        return;
+                    }
+                    this.publish("Extracting/Indexing " + (finishedFiles + 1) + "/" + totalFilesCount + ": " + f.getName());
+
+                    if (f.getSize() < MAX_STRING_EXTRACT_SIZE) {
+                        if (!extractAndIngest(ingester, f)) {
+                            ingestStatus.put(f.getId(), IngestStatus.NOT_INGESTED);
+                            problemFilesCount++;
+                            logger.log(Level.INFO, "Failed to extract strings and ingest, file '" + f.getName() + "' (id: " + f.getId() + ").");
+                        } else {
+                            ingestStatus.put(f.getId(), IngestStatus.EXTRACTED_INGESTED);
+                        }
+                    } else {
+                        ingestStatus.put(f.getId(), IngestStatus.SKIPPED_EXTRACTION);
+                    }
+
+                    setProgress(++finishedFiles * 100 / totalFilesCount);
+                }
             }
 
             @Override
@@ -213,7 +270,7 @@ public class IndexContentFilesAction extends AbstractAction {
         popUpWindow.setVisible(true);
     }
 
-    private boolean extractAndReingest(Ingester ingester, FsContent f) {
+    private boolean extractAndIngest(Ingester ingester, FsContent f) {
         boolean success = false;
         FsContentStringStream fscs = new FsContentStringStream(f, FsContentStringStream.Encoding.ASCII);
         try {
