@@ -35,7 +35,7 @@ class ThumbnailViewChildren extends FilterNode.Children {
 
     /** the constructor */
     ThumbnailViewChildren(Node arg) {
-        super((Node) arg);
+        super(arg);
         this.totalChildren = 1;
     }
 

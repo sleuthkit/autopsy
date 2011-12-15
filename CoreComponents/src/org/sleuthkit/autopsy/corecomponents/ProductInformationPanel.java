@@ -170,7 +170,7 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
     } catch (MalformedURLException ex) {
         //ignore
     }
-    url = null;    // TODO add your handling code here:
+    url = null;
 }//GEN-LAST:event_jLabel1MouseClicked
 
     private void activateVerboseLogging(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_activateVerboseLogging

@@ -268,7 +268,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     @Override
     public void setNode(Node selectedNode) {
         if (selectedNode != null) {
-            Content content = ((Node) selectedNode).getLookup().lookup(Content.class);
+            Content content = selectedNode.getLookup().lookup(Content.class);
             if (content != null) {
                 this.setDataView(content, 0, false);
                 return;

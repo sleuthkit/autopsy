@@ -34,12 +34,14 @@ import org.sleuthkit.autopsy.logging.Log;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
+// TODO: clean up external viewer action
+
+
 /**
  *
  * @author jantonius
  */
 public class ExternalViewerAction extends AbstractAction {
-
     private byte[] content;
     private Content contentObject;
     private String fileName;

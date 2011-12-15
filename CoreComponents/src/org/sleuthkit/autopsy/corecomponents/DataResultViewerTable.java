@@ -38,7 +38,6 @@ import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
-// TODO We should not have anything specific to Image in here...
 
 /**
  * DataResult sortable table viewer
@@ -145,13 +144,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
 
             if (selectedNode != null) {
-                hasChildren = ((Node) selectedNode).getChildren().getNodesCount() > 0;
+                hasChildren = selectedNode.getChildren().getNodesCount() > 0;
             }
 
 
             // if there's no selection node, do nothing
             if (hasChildren) {
-                Node root = (Node) selectedNode;
+                Node root = selectedNode;
 
                 if (!(root instanceof TableFilterNode)) {
                     root = new TableFilterNode(root, true);
@@ -161,7 +160,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 OutlineView ov = ((OutlineView) this.tableScrollPanel);
 
-                List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(getChildPropertyHeaders((Node) selectedNode)));
+                List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(getChildPropertyHeaders(selectedNode)));
 
                 tempProps.remove(0);
 

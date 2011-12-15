@@ -84,8 +84,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO: fix log action
-                Log.noteAction(this.getClass());
+                Log.noteAction(ShowDetailActionVisitor.class);
 
                 final JFrame frame = new JFrame(title);
                 final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
@@ -146,9 +145,8 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
             @Override
             public void actionPerformed(ActionEvent e) {
                 Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-
-                // TODO: fix log action
-                Log.noteAction(this.getClass());
+                
+                Log.noteAction(ShowDetailActionVisitor.class);
 
                 final JFrame frame = new JFrame(title);
                 final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
@@ -237,9 +235,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
 
             @Override
             public void actionPerformed(ActionEvent e) {
-
-                // TODO: fix log action
-                Log.noteAction(this.getClass());
+                Log.noteAction(ShowDetailActionVisitor.class);
 
                 final JFrame frame = new JFrame(title);
                 final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal

@@ -191,7 +191,6 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        // TODO add your handling code here:
     }//GEN-LAST:event_cancelButtonActionPerformed
 
 

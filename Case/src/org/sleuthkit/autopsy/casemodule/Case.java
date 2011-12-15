@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
  */
 public class Case {
     // change the CTL_MainWindow_Title in Bundle.properties as well if you change this value
-    private static final String autopsyVer = "3.0.0b2"; // current version of autopsy. Changed it when the version is changed
+    private static final String autopsyVer = "3.0.0b2"; // current version of autopsy. Change it when the version is changed
     private static final String appName = "Autopsy " + autopsyVer;
 
     /**
@@ -150,8 +150,7 @@ public class Case {
             currentCase = newCase;
 
             pcs.firePropertyChange(CASE_CURRENT_CASE, null, currentCase);
-            //TODO: This will fire off a bunch of stuff in CaseListener.propertyChange()
-            // that should probably be migrated into here
+            // TODO: This will fire off a bunch of stuff in CaseListener.propertyChange() that should probably be migrated into here
             
             pcs.firePropertyChange(CASE_NAME, "", currentCase.name);
             RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases

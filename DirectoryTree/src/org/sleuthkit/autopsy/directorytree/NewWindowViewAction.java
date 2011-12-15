@@ -47,7 +47,7 @@ class NewWindowViewAction extends AbstractAction{
     public void actionPerformed(ActionEvent e) {
         Log.noteAction(this.getClass());
         
-        String[] filePaths = ContentUtils.getDisplayPath(((Node) contentNode).getLookup().lookup(Content.class));
+        String[] filePaths = ContentUtils.getDisplayPath((contentNode).getLookup().lookup(Content.class));
         String filePath = DataConversion.getformattedPath(filePaths, 0);
 
         DataContentTopComponent dctc = DataContentTopComponent.createUndocked(filePath, this.contentNode);

@@ -131,9 +131,7 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
     }
 
     @Override
-    public boolean isSupported(Node cNode) {
-        Node node = (Node) cNode;
-
+    public boolean isSupported(Node node) {
         if (node != null) {
             // Note: only supports JPG, GIF, and PNG for now
             return node.getDisplayName().toLowerCase().endsWith(".jpg")
