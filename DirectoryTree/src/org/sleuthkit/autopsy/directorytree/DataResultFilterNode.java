@@ -70,40 +70,10 @@ public class DataResultFilterNode extends FilterNode{
 
         List<Action> actions = new ArrayList<Action>();
         
-        
         actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
 
-        // TODO: ContentNode fix - restore right-click actions
-        // TODO: ContentVisitor instead of instanceof
-        
         Content nodeContent = this.getOriginal().getLookup().lookup(Content.class);
         actions.addAll(nodeContent.accept(getActionsCV));
-        
-
-//        // right click action(s) for image node
-//        if (originalNode instanceof ImageNode) {
-//            actions.add(new NewWindowViewAction("View in New Window", (ImageNode) originalNode));
-//            actions.addAll(ShowDetailActionVisitor.getActions(nodeContent));
-//        } // right click action(s) for volume node
-//        else if (originalNode instanceof VolumeNode) {
-//            actions.add(new NewWindowViewAction("View in New Window", (VolumeNode) originalNode));
-//            //new ShowDetailActionVisitor("Volume Details", this.currentNode.getName(), (VolumeNode) this.currentNode),
-//            actions.addAll(ShowDetailActionVisitor.getActions(nodeContent));
-//            actions.add(new ChangeViewAction("View", 0, this.getOriginal()));
-//        } // right click action(s) for directory node
-//        else if (originalNode instanceof DirectoryNode) {
-//            actions.add(new NewWindowViewAction("View in New Window", (DirectoryNode) originalNode));
-//            actions.add(new ChangeViewAction("View", 0, originalNode));
-//            // TODO: ContentNode fix - reimplement ExtractAction
-//            //actions.add(new ExtractAction("Extract Directory", (DirectoryNode) this.currentNode));
-//        } // right click action(s) for the file node
-//        else if (originalNode instanceof FileNode) {
-//            actions.add(new ExternalViewerAction("Open File in External Viewer", (FileNode) originalNode));
-//            actions.add(new NewWindowViewAction("View in New Window", (FileNode) originalNode));
-//            // TODO: ContentNode fix - reimplement ExtractAction
-//            //actions.add(new ExtractAction("Extract", (FileNode) this.currentNode));
-//            actions.add(new ChangeViewAction("View", 0, originalNode));
-//        }
 
         return actions.toArray(new Action[actions.size()]);
     }
@@ -127,8 +97,7 @@ public class DataResultFilterNode extends FilterNode{
         public List<Action> visit(Directory dir) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new ChangeViewAction("View", 0, getOriginal()));
-            // TODO: ContentNode fix - reimplement ExtractAction
-            //actions.add(new ExtractAction("Extract Directory", (DirectoryNode) this.currentNode));
+            actions.add(new ExtractAction("Extract Directory", getOriginal()));
             return actions;
         }
         
@@ -136,8 +105,7 @@ public class DataResultFilterNode extends FilterNode{
         public List<Action> visit(File f) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new ExternalViewerAction("Open File in External Viewer", getOriginal()));
-            // TODO: ContentNode fix - reimplement ExtractAction
-            //actions.add(new ExtractAction("Extract", (FileNode) this.currentNode));
+            actions.add(new ExtractAction("Extract", getOriginal()));
             return actions;
         }
 
