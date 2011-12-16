@@ -43,8 +43,14 @@ public class ExternalViewerAction extends AbstractAction {
     public ExternalViewerAction(String title, Node fileNode) {
         super(title);
         this.fileObject = fileNode.getLookup().lookup(org.sleuthkit.datamodel.File.class);
+        
         long size = fileObject.getSize();
-        if (!(size > 0)) {
+        String fileName = fileObject.getName();
+        int extPos = fileName.lastIndexOf('.');
+        
+        // no point opening a file if it's empty, and java doesn't know how to
+        // find an application for files without an extension
+        if (!(size > 0) || extPos == -1) {
             this.setEnabled(false);
         }
     }
@@ -52,10 +58,6 @@ public class ExternalViewerAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         Log.noteAction(this.getClass());
-
-
-        // the menu should be disabled if we can't read the content (for example: on zero-sized file).
-        // Therefore, it should never throw the TSKException.
 
         // Get the temp folder path of the case
         String tempPath = Case.getCurrentCase().getTempDirectory();
