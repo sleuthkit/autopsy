@@ -23,6 +23,7 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.directorytree.ChangeViewAction;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -67,6 +68,7 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public Action[] visit(File f) {
             return new Action[]{
+                new ExternalViewerAction("Open in External Viewer", getOriginal()),
                 new ExtractAction("Extract", getOriginal()),
                 new ChangeViewAction("View", 0, getOriginal()),
                 new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath(f))
