@@ -18,16 +18,16 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import org.sleuthkit.autopsy.datamodel.ImageNode;
-import org.sleuthkit.autopsy.datamodel.VolumeNode;
-import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.directorytree.ChangeViewAction;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.File;
 
 /**
  * This class wraps nodes as they are passed to the DataResult viewers.  It 
@@ -35,12 +35,10 @@ import org.sleuthkit.datamodel.Content;
  */
 public class DataResultFilterNode extends FilterNode {
 
-    private Node currentNode;
 
     /** the constructor */
     public DataResultFilterNode(Node arg) {
         super(arg, new DataResultFilterChildren(arg));
-        this.currentNode = arg;
     }
 
     /**
@@ -52,30 +50,35 @@ public class DataResultFilterNode extends FilterNode {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        // right click action(s) for image node
-        if (this.currentNode instanceof ImageNode) {
-            return new Action[]{};
-        } // right click action(s) for volume node
-        else if (this.currentNode instanceof VolumeNode) {
-            return new Action[]{};
-        } // right click action(s) for directory node
-        else if (this.currentNode instanceof DirectoryNode) {
+        
+       Content content = getOriginal().getLookup().lookup(Content.class);
+       return content.accept(new GetActionContentVisitor());
+    }
+    
+    private class GetActionContentVisitor extends ContentVisitor.Default<Action[]> {
+        @Override
+        public Action[] visit(Directory dir) {
             return new Action[]{
-                        new ChangeViewAction("View", 0, currentNode),
-                        new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath(currentNode.getLookup().lookup(Content.class)))
-                    };
-        } // right click action(s) for the file node
-        else if (this.currentNode instanceof FileNode) {
+                new ChangeViewAction("View", 0, getOriginal()),
+                new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath(dir))
+            };
+        }
+        
+        @Override
+        public Action[] visit(File f) {
             return new Action[]{
-                        // TODO: ContentNode fix - reimplement ExtractAction
-                        // new ExtractAction("Extract", (FileNode) this.currentNode),
-                        new ChangeViewAction("View", 0, currentNode),
-                        new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath(currentNode.getLookup().lookup(Content.class)))
-                    };
-        } else {
+                new ExtractAction("Extract", getOriginal()),
+                new ChangeViewAction("View", 0, getOriginal()),
+                new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath(f))
+            };
+        }
+
+        @Override
+        protected Action[] defaultVisit(Content cntnt) {
             return new Action[]{};
         }
     }
+    
 
     /**
      * Double click action for the nodes that we want to pass to the directory
