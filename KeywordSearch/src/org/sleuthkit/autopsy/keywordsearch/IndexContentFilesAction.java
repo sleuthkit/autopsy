@@ -68,8 +68,6 @@ public class IndexContentFilesAction extends AbstractAction {
     //could also be useful for reporting
     private Map<Long, IngestStatus> ingestStatus;
     private int problemFilesCount;
-    private int finishedFiles;
-    private int totalFilesCount;
 
     /**
      * New action
@@ -126,12 +124,8 @@ public class IndexContentFilesAction extends AbstractAction {
                 nonIngestibleFiles.addAll(allFiles);
                 nonIngestibleFiles.removeAll(ingestableFiles);
 
-                setProgress(0);
-
                 // track number complete or with errors
-                totalFilesCount = allFiles.size();
                 problemFilesCount = 0;
-                finishedFiles = 0;
                 ingestStatus.clear();
 
                 //work on known files first
@@ -157,6 +151,10 @@ public class IndexContentFilesAction extends AbstractAction {
 
             private Collection<FsContent> processIngestible(Ingester ingester, Collection<FsContent> fscc) {
                 Collection<FsContent> ingestFailedCol = new ArrayList<FsContent>();
+                
+                setProgress(0);
+                int finishedFiles = 0;
+                final int totalFilesCount = fscc.size();
                 for (FsContent f : fscc) {
                     if (isCancelled()) {
                         return ingestFailedCol;
@@ -165,22 +163,26 @@ public class IndexContentFilesAction extends AbstractAction {
                     try {
                         ingester.ingest(f);
                         ingestStatus.put(f.getId(), IngestStatus.INGESTED);
-                        setProgress(++finishedFiles * 100 / totalFilesCount);
                     } catch (IngesterException ex) {
                         ingestFailedCol.add(f);
                         ingestStatus.put(f.getId(), IngestStatus.NOT_INGESTED);
                         logger.log(Level.INFO, "Ingester failed with file '" + f.getName() + "' (id: " + f.getId() + ").", ex);
                     }
+                    setProgress(++finishedFiles * 100 / totalFilesCount);
                 }
                 return ingestFailedCol;
             }
 
             private void processNonIngestible(Ingester ingester, Collection<FsContent> fscc) {
+                setProgress(0);
+                int finishedFiles = 0;
+                final int totalFilesCount = fscc.size();
+                
                 for (FsContent f : fscc) {
                     if (isCancelled()) {
                         return;
                     }
-                    this.publish("Extracting/Indexing " + (finishedFiles + 1) + "/" + totalFilesCount + ": " + f.getName());
+                    this.publish("String extracting/Indexing " + (finishedFiles + 1) + "/" + totalFilesCount + ": " + f.getName());
 
                     if (f.getSize() < MAX_STRING_EXTRACT_SIZE) {
                         if (!extractAndIngest(ingester, f)) {
