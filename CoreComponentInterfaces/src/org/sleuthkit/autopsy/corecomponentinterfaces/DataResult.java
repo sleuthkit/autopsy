@@ -45,6 +45,13 @@ public interface DataResult {
      * @param title  the given title (String)
      */
     public void setTitle(String title);
+    
+    
+    /**
+     * Sets the descriptive context text at the top of the pane.
+     * @param pathText Descriptive text giving context for the current results
+     */
+    public void setPath(String pathText);
 
     /**
      * Checks if this is the main (uncloseable) instance of DataResult

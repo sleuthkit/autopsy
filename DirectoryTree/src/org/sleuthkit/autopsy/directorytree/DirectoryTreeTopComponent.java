@@ -45,7 +45,10 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Top component which displays something.
@@ -553,6 +556,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             }
                             DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                             DirectoryTreeTopComponent.this.dataResult.setNode(new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em));
+                            
+                            String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(originNode.getLookup().lookup(Content.class)), 0);
+                            DirectoryTreeTopComponent.this.dataResult.setPath(path);
                         }
 
                         // set the directory listing to be active

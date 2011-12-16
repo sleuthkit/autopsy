@@ -42,9 +42,9 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     private Node rootNode;
     private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean isMain;
-    /** path to the icon used by the component and its open action */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
+
     private static String PREFERRED_ID = "NodeTableTopComponent";
+    
     /**
      * Name of property change fired when a file search result is closed
      */
@@ -111,7 +111,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
 
         // set the tree table view
         newDataResult.setNode(givenNode);
-        newDataResult.directoryTablePath.setText(pathText);
+        newDataResult.setPath(pathText);
 
         return newDataResult;
     }
@@ -284,17 +284,13 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     public void setNode(Node selectedNode) {
         this.rootNode = selectedNode;
         if (selectedNode != null) {
-            //path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(selectedNode.getLookup().lookup(Content.class)), 0);
-
             int childrenCount = selectedNode.getChildren().getNodesCount(true);
             this.numberMatchLabel.setText(Integer.toString(childrenCount));
         }
 
         this.numberMatchLabel.setVisible(true);
         this.matchLabel.setVisible(true);
-
-        this.directoryTablePath.setText("TEST"); // set the node path
-
+        
         resetTabs(selectedNode);
 
         // set the display on the current active tab
@@ -308,6 +304,11 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     @Override
     public void setTitle(String title) {
         setName(title);
+    }
+    
+    @Override
+    public void setPath(String pathText) {
+        this.directoryTablePath.setText(pathText);
     }
 
     @Override
