@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.Content;
  */
 class KeywordSearchFilterNode extends ContentFilterNode {
 
-    private static final int SNIPPET_LENGTH = 100;
+    private static final int SNIPPET_LENGTH = 45;
     String solrQuery;
 
     KeywordSearchFilterNode(HighlightedMatchesSource highlights, Node original, String solrQuery) {
