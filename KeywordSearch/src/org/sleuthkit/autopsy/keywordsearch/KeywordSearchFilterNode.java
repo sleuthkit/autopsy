@@ -79,7 +79,7 @@ class KeywordSearchFilterNode extends ContentFilterNode {
     Property<String> getSnippetProperty() {
 
         Property<String> prop = new PropertySupport.ReadOnly("snippet",
-                String.class, "Snippet", "Snippet of matching content.") {
+                String.class, "Context", "Snippet of matching content.") {
 
             @Override
             public Object getValue() {
