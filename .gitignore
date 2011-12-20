@@ -9,3 +9,8 @@
 /DataModel/release/modules/lib/libewf.dll
 /DataModel/release/modules/lib/libtsk_jni.dll
 /DataModel/release/modules/lib/zlib1.dll
+/KeywordSearch/release/modules/ext/
+/KeywordSearch/release/solr/lib/
+/KeywordSearch/release/solr/solr/lib/
+/KeywordSearch/release/solr/start.jar
+/KeywordSearch/release/solr/webapps/solr.war
