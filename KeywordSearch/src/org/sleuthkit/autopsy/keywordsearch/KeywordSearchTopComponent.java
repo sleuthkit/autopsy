@@ -117,6 +117,12 @@ public class KeywordSearchTopComponent extends TopComponent {
     private javax.swing.JButton searchButton;
     // End of variables declaration//GEN-END:variables
 
+    
+    @Override
+    protected void componentOpened() {
+        // clear old search
+        queryTextArea.setText("");
+    }
     void addSearchButtonListener(ActionListener l) {
         searchButton.addActionListener(l);
     }
@@ -145,7 +151,6 @@ public class KeywordSearchTopComponent extends TopComponent {
         }
     }
 
-
     class KeywordSearchServerListener implements PropertyChangeListener {
 
         @Override
@@ -168,10 +173,7 @@ public class KeywordSearchTopComponent extends TopComponent {
                     default:
 
                 }
-
             }
-
-
         }
     }
 }
