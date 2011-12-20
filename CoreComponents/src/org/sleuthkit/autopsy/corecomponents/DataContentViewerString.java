@@ -278,6 +278,11 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     public String getTitle() {
         return "String View";
     }
+    
+    @Override
+    public String getToolTip() {
+        return "Displays ASCII strings extracted from the file.";
+    }
 
     @Override
     public DataContentViewer getInstance() {

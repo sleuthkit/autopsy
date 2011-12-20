@@ -284,6 +284,12 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     public String getTitle() {
         return "Hex View";
     }
+    
+    @Override
+    public String getToolTip() {
+        return "Displays the binary contents of a file as hexidecimal, with "
+                + "bytes that are displayable as ASCII characters on the right.";
+    }
 
     @Override
     public DataContentViewer getInstance() {

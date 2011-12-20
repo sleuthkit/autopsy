@@ -116,6 +116,11 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
     public String getTitle() {
         return "Picture View";
     }
+    
+    @Override
+    public String getToolTip() {
+        return "Displays supported image files.";
+    }
 
     @Override
     public DataContentViewer getInstance() {

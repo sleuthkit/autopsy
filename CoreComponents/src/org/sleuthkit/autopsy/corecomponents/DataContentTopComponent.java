@@ -194,7 +194,8 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             for (DataContentViewer factory : Lookup.getDefault().lookupAll(DataContentViewer.class)) {
                 DataContentViewer dcv = factory.getInstance();
                 this.viewers.add(new UpdateWrapper(dcv));
-                dataContentTabbedPane.addTab(dcv.getTitle(), dcv.getComponent());
+                dataContentTabbedPane.addTab(dcv.getTitle(), null,
+                        dcv.getComponent(), dcv.getToolTip());
             }
         }
 

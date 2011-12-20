@@ -37,6 +37,12 @@ public interface DataContentViewer {
      * Returns the title of this viewer. 
      */
     public String getTitle();
+    
+    /**
+     * Returns a short description of this viewer to use as a tool tip for
+     * its tab. 
+     */
+    public String getToolTip();
 
     /**
      * Get new DataContentViewer instance. (This method is weird. We use the
