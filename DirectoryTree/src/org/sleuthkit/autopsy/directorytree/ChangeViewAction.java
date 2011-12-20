@@ -18,11 +18,11 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import org.openide.nodes.Node;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataContentViewerHex;
@@ -37,10 +37,10 @@ import org.sleuthkit.autopsy.logging.Log;
 public class ChangeViewAction extends AbstractAction implements Presenter.Popup {
 
     private int type; // type 1 = hex view, 2 = string view
-    private ContentNode node;
+    private Node node;
 
     /** the constructor */
-    public ChangeViewAction(String title, int viewType, ContentNode node) {
+    public ChangeViewAction(String title, int viewType, Node node) {
         super(title);
         this.type = viewType;
         this.node = node;

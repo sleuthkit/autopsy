@@ -1,13 +1,6 @@
-/Case/build/
-/CoreComponentInterfaces/build/
-/DirectoryTree/build/
-/CoreComponents/build/
 /dist/
 /build/
-/DataModel/build/
-/MenuActions/build/
-/Logging/build/
-/FileSearch/build/
+/*/build/
 */nbproject/private/*
 /nbproject/private/*
 /DataModel/release/modules/lib/libewf.dll

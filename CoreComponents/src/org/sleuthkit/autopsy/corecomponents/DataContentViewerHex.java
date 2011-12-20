@@ -23,8 +23,8 @@ import java.awt.Cursor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JTextPane;
+import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
@@ -272,12 +272,16 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }
 
     @Override
-    public void setNode(ContentNode selectedNode) {
+    public void setNode(Node selectedNode) {
         if (selectedNode != null) {
-            this.setDataView(selectedNode.getContent(), 0, false);
-        } else {
-            this.setDataView(null, 0, true);
+            Content content = (selectedNode).getLookup().lookup(Content.class);
+            if (content != null) {
+                this.setDataView(content, 0, false);
+                return;
+            }
         }
+
+        this.setDataView(null, 0, true);
     }
 
     @Override
@@ -317,7 +321,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }
 
     @Override
-    public boolean isSupported(ContentNode node) {
+    public boolean isSupported(Node node) {
         return true;
     }
 

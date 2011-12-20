@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.logging.Log;
  */
 @ServiceProvider(service = CaseOpenAction.class)
 public final class CaseOpenAction implements ActionListener {
+    private static final Logger logger = Logger.getLogger(CaseOpenAction.class.getName());
 
     JFileChooser fc = new JFileChooser();
     GeneralFilter autFilter = new GeneralFilter(new String[]{".aut"}, "AUTOPSY File (*.aut)", false);
@@ -73,7 +74,7 @@ public final class CaseOpenAction implements ActionListener {
                     StartupWindow.getInstance().close();
                 } catch (Exception ex) {
                     // no need to show the error message to the user.
-                    // TODO: But maybe put the error message in the log in the future.
+                    logger.log(Level.INFO, "Error closing startup window.", ex);
                 }
                 try {
                     Case.open(path); // open the case

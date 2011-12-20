@@ -26,15 +26,17 @@ import java.util.logging.Logger;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Top component that organizes all of the data content viewers.  Doing a lookup on this class will
@@ -45,7 +47,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
     // reference to the "default" TC that always stays open
     private static DataContentTopComponent defaultInstance;
-    private ContentNode currentNode;
+    private Node currentNode;
     // set to true if this is the TC that always stays open and is the default place to display content
     private boolean isDefault;
     // Different DataContentViewers
@@ -78,7 +80,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             this.outdated = true;
         }
 
-        void setNode(ContentNode selectedNode) {
+        void setNode(Node selectedNode) {
             this.wrapped.setNode(selectedNode);
             this.outdated = false;
         }
@@ -92,7 +94,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             return this.outdated;
         }
 
-        boolean isSupported(ContentNode node) {
+        boolean isSupported(Node node) {
             return this.wrapped.isSupported(node);
         }
     }
@@ -104,7 +106,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
      * @param givenNode node to view content of
      * @return newly undocked instance
      */
-    public static DataContentTopComponent createUndocked(String filePath, ContentNode givenNode) {
+    public static DataContentTopComponent createUndocked(String filePath, Node givenNode) {
 
         DataContentTopComponent dctc = new DataContentTopComponent(false, filePath);
         dctc.componentOpened();
@@ -219,16 +221,24 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     }
 
     @Override
-    public void setNode(ContentNode selectedNode) {
+    public void setNode(Node selectedNode) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
+            
+            
+            String defaultName = NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent");
             // set the file path
             if (selectedNode == null) {
-                setName(NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent"));
+                setName(defaultName);
             } else {
-                String path = DataConversion.getformattedPath(selectedNode.getDisplayPath(), 0);
-                setName(path);
+                Content content = selectedNode.getLookup().lookup(Content.class);
+                if (content != null) {
+                    String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(selectedNode.getLookup().lookup(Content.class)), 0);
+                    setName(path);
+                } else {
+                    setName(defaultName);
+                }
             }
 
             currentNode = selectedNode;
@@ -281,7 +291,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
      *
      * @param selectedNode  the selected content Node
      */
-    public void resetTabs(ContentNode selectedNode) {
+    public void resetTabs(Node selectedNode) {
 
         int totalTabs = dataContentTabbedPane.getTabCount();
 

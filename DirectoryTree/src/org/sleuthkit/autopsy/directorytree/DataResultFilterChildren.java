@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 
@@ -28,19 +29,17 @@ import org.openide.nodes.Node;
  * @author jantonius
  */
 public class DataResultFilterChildren extends FilterNode.Children {
+    
+    ExplorerManager sourceEm;
 
     /** the constructor */
-    public DataResultFilterChildren(Node arg) {
+    public DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
         super(arg);
+        this.sourceEm = sourceEm;
     }
 
     @Override
     protected Node copyNode(Node arg0) {
-        return new DataResultFilterNode(arg0);
-    }
-
-    @Override
-    protected Node[] createNodes(Node arg0) {
-        return new Node[]{this.copyNode(arg0)};
+        return new DataResultFilterNode(arg0, sourceEm);
     }
 }

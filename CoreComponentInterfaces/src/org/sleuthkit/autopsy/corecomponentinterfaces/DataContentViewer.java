@@ -19,19 +19,19 @@
 
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import java.awt.Component;
+import org.openide.nodes.Node;
 
 /**
  * Responsible for a tab in the {@link DataContent} component. Displays the
- * contents of the node passed to {@link setNode(ContentNode)}.
+ * contents of the node passed to {@link setNode(Node)}.
  */
 public interface DataContentViewer {
     /**
      * Sets the node to display in the viewer. When called with null, must
      * clear all references to previous nodes.
      */
-    public void setNode(ContentNode selectedNode);
+    public void setNode(Node selectedNode);
     
     /**
      * Returns the title of this viewer. 
@@ -43,8 +43,7 @@ public interface DataContentViewer {
      * instance returned by the Lookup as a factory for the instances that
      * are actually used.)
      */
-    // TODO: extract the factory method out into a seperate interface that
-    // is used for the Lookup.
+    // TODO: extract the factory method out into a seperate interface that is used for the Lookup.
     public DataContentViewer getInstance();
     
     /**
@@ -62,6 +61,6 @@ public interface DataContentViewer {
      * @param node Node to check for support
      * @return True if supported, else false
      */
-    public boolean isSupported(ContentNode node);
+    public boolean isSupported(Node node);
 
 }

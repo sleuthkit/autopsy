@@ -32,21 +32,19 @@ import org.openide.windows.TopComponent;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
-import org.sleuthkit.autopsy.datamodel.DataConversion;
 
 /**
  * Top component which displays something.
  */
 public final class DataResultTopComponent extends TopComponent implements DataResult, ChangeListener {
 
-    private ContentNode rootNode;
+    private Node rootNode;
     private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean isMain;
-    /** path to the icon used by the component and its open action */
-//    static final String ICON_PATH = "SET/PATH/TO/ICON/HERE";
+
     private static String PREFERRED_ID = "NodeTableTopComponent";
+    
     /**
      * Name of property change fired when a file search result is closed
      */
@@ -75,7 +73,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
             this.outdated = true;
         }
 
-        void setNode(ContentNode selectedNode) {
+        void setNode(Node selectedNode) {
             this.wrapped.setNode(selectedNode);
             this.outdated = false;
         }
@@ -112,8 +110,8 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         newDataResult.open(); // open it first so the component can be initialized
 
         // set the tree table view
-        newDataResult.setNode((ContentNode) givenNode);
-        newDataResult.directoryTablePath.setText(pathText);
+        newDataResult.setNode(givenNode);
+        newDataResult.setPath(pathText);
 
         return newDataResult;
     }
@@ -283,21 +281,16 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     }
 
     @Override
-    public void setNode(ContentNode selectedNode) {
+    public void setNode(Node selectedNode) {
         this.rootNode = selectedNode;
-        String path = "";
         if (selectedNode != null) {
-            path = DataConversion.getformattedPath(selectedNode.getDisplayPath(), 0);
-
-            int childrenCount = ((Node) selectedNode).getChildren().getNodesCount(true);
+            int childrenCount = selectedNode.getChildren().getNodesCount(true);
             this.numberMatchLabel.setText(Integer.toString(childrenCount));
         }
 
         this.numberMatchLabel.setVisible(true);
         this.matchLabel.setVisible(true);
-
-        this.directoryTablePath.setText(path); // set the node path
-
+        
         resetTabs(selectedNode);
 
         // set the display on the current active tab
@@ -311,6 +304,11 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     @Override
     public void setTitle(String title) {
         setName(title);
+    }
+    
+    @Override
+    public void setPath(String pathText) {
+        this.directoryTablePath.setText(pathText);
     }
 
     @Override
@@ -349,7 +347,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
      *
      * @param selectedNode  the selected content Node
      */
-    public void resetTabs(ContentNode selectedNode) {
+    public void resetTabs(Node selectedNode) {
 
         for (UpdateWrapper drv : this.viewers) {
             drv.resetComponent();

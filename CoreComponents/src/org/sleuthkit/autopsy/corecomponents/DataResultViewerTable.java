@@ -22,7 +22,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.FontMetrics;
 import java.io.IOException;
-import java.sql.SQLException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,13 +33,11 @@ import org.openide.explorer.view.OutlineView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
-// TODO We should not have anything specific to Image in here...
-import org.sleuthkit.datamodel.Image;
 
 /**
  * DataResult sortable table viewer
@@ -49,7 +47,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private transient ExplorerManager em = new ExplorerManager();
     private String firstColumnLabel = "Name";
-    private boolean isImageNode;
 
     /** Creates new form DataResultViewerTable */
     public DataResultViewerTable() {
@@ -59,11 +56,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         // only allow one item to be selected at a time
         ov.getOutline().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
+
         // don't show the root node
         ov.getOutline().setRootVisible(false);
 
-        this.isImageNode = false;
         this.em.addPropertyChangeListener(this);
     }
 
@@ -98,13 +94,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }// </editor-fold>//GEN-END:initComponents
 
     private void tableScrollPanelComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_tableScrollPanelComponentResized
-        if (this.tableScrollPanel.getWidth() < 700 && isImageNode) {
-            ((OutlineView) this.tableScrollPanel).getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        } else {
-            if (isImageNode) {
-                ((OutlineView) this.tableScrollPanel).getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-            }
-        }
     }//GEN-LAST:event_tableScrollPanelComponentResized
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane tableScrollPanel;
@@ -116,14 +105,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     @Override
-    public Node getOriginalSelectedNode() {
+    public Node getSelectedNode() {
         Node result = null;
         Node[] selectedNodes = this.getExplorerManager().getSelectedNodes();
         if (selectedNodes.length > 0) {
             result = selectedNodes[0];
-            if (result != null && result instanceof TableFilterNode) {
-                result = ((TableFilterNode) result).getOriginal();
-            }
         }
         return result;
     }
@@ -150,7 +136,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     @Override
-    public void setNode(ContentNode selectedNode) {
+    public void setNode(Node selectedNode) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
@@ -158,17 +144,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
 
             if (selectedNode != null) {
-                hasChildren = ((Node) selectedNode).getChildren().getNodesCount() > 0;
+                hasChildren = selectedNode.getChildren().getNodesCount() > 0;
             }
 
 
             // if there's no selection node, do nothing
             if (hasChildren) {
-                Node root = (Node) selectedNode;
+                Node root = selectedNode;
 
-                if (root instanceof TableFilterNode) {
-                    root = ((TableFilterNode) root).getOriginal();
-                } else {
+                if (!(root instanceof TableFilterNode)) {
                     root = new TableFilterNode(root, true);
                 }
 
@@ -176,7 +160,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 OutlineView ov = ((OutlineView) this.tableScrollPanel);
 
-                List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(getChildPropertyHeaders((Node) selectedNode)));
+                List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(getChildPropertyHeaders(selectedNode)));
 
                 tempProps.remove(0);
 
@@ -211,53 +195,43 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
 
                 // show the horizontal scroll panel and show all the content & header
-                if (!(selectedNode.getContent() instanceof Image)) {
-                    this.isImageNode = false;
-                    int totalColumns = props.length;
 
-                    //int scrollWidth = ttv.getWidth();
-                    int scrollWidth = ov.getWidth();
-                    int minWidth = scrollWidth / totalColumns;
-                    int margin = 4;
-                    int startColumn = 1;
-                    ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+                int totalColumns = props.length;
 
-                    // get the fontmetrics
-                    //FontMetrics metrics = ttv.getGraphics().getFontMetrics();
-                    FontMetrics metrics = ov.getGraphics().getFontMetrics();
+                //int scrollWidth = ttv.getWidth();
+                int scrollWidth = ov.getWidth();
+                int minWidth = scrollWidth / totalColumns;
+                int margin = 4;
+                int startColumn = 1;
+                ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
-                    // get first 100 rows values for the table
-                    Object[][] content = null;
-                    try {
-                        content = selectedNode.getRowValues(100);
-                    } catch (SQLException ex) {
-                        // TODO: potential exception is being ignored (see below), should be handled 
+                // get the fontmetrics
+                //FontMetrics metrics = ttv.getGraphics().getFontMetrics();
+                FontMetrics metrics = ov.getGraphics().getFontMetrics();
+
+                // get first 100 rows values for the table
+                Object[][] content = null;
+                content = getRowValues(selectedNode, 100);
+
+
+                if (content != null) {
+                    // for the "Name" column
+                    int nodeColWidth = getMaxColumnWidth(0, metrics, margin, 40, firstColumnLabel, content); // Note: 40 is the width of the icon + node lines. Change this value if those values change!
+                    ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(nodeColWidth);
+
+                    // get the max for each other column
+                    for (int colIndex = startColumn; colIndex < totalColumns; colIndex++) {
+                        int colWidth = getMaxColumnWidth(colIndex, metrics, margin, 8, props, content);
+                        ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
                     }
+                }
 
-
-                    if (content != null) {
-                        // for the "Name" column
-                        int nodeColWidth = getMaxColumnWidth(0, metrics, margin, 40, firstColumnLabel, content); // Note: 40 is the width of the icon + node lines. Change this value if those values change!
-                        ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(nodeColWidth);
-
-                        // get the max for each other column
-                        for (int colIndex = startColumn; colIndex < totalColumns; colIndex++) {
-                            int colWidth = getMaxColumnWidth(colIndex, metrics, margin, 8, props, content);
-                            ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
-                        }
-                    }
-
-                    // if there's no content just auto resize all columns
-                    if (!(content.length > 0)) {
-                        // turn on the auto resize
-                        ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-                    }
-                } else {
-                    this.isImageNode = true;
-                    // turn on the auto resize for image result
-                    ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(175);
+                // if there's no content just auto resize all columns
+                if (!(content.length > 0)) {
+                    // turn on the auto resize
                     ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
                 }
+
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node
@@ -267,6 +241,32 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         } finally {
             this.setCursor(null);
         }
+    }
+    
+    
+    private static Object[][] getRowValues(Node node, int rows) {
+        // how many rows are we returning
+        int maxRows = Math.min(rows, node.getChildren().getNodesCount());
+        
+        Object[][] objs = new Object[maxRows][];
+
+        for (int i = 0; i < maxRows; i++) {
+            PropertySet[] props = node.getChildren().getNodeAt(i).getPropertySets();
+            Property[] property = props[0].getProperties();
+            objs[i] = new Object[property.length];
+
+
+            for (int j = 0; j < property.length; j++) {
+                try {
+                    objs[i][j] = property[j].getValue();
+                } catch (IllegalAccessException ignore) {
+                    objs[i][j] = "n/a";
+                } catch (InvocationTargetException ignore) {
+                    objs[i][j] = "n/a";
+                }            
+            }
+        }
+        return objs;
     }
 
     @Override

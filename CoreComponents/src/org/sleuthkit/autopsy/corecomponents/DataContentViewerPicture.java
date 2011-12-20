@@ -29,8 +29,8 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -83,14 +83,16 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
     // End of variables declaration//GEN-END:variables
 
     @Override
-    public void setNode(ContentNode selectedNode) {
+    public void setNode(Node selectedNode) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             if (selectedNode != null) {
                 try {
                     // read the byte of the image file
-                    byte[] dataSource = selectedNode.getContent().read(0, selectedNode.getContent().getSize());
+                    
+                    Content content = selectedNode.getLookup().lookup(Content.class);
+                    byte[] dataSource = content.read(0, content.getSize());
 
                     // create the input stream for the content
                     InputStream is = new ByteArrayInputStream(dataSource);
@@ -129,9 +131,7 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
     }
 
     @Override
-    public boolean isSupported(ContentNode cNode) {
-        Node node = (Node) cNode;
-
+    public boolean isSupported(Node node) {
         if (node != null) {
             // Note: only supports JPG, GIF, and PNG for now
             return node.getDisplayName().toLowerCase().endsWith(".jpg")
