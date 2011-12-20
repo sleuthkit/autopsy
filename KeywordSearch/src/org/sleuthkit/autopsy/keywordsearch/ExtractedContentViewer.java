@@ -111,7 +111,12 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public String getTitle() {
-        return "Extracted Content";
+        return "Text View";
+    }
+    
+    @Override
+    public String getToolTip() {
+        return "Displays extracted text and keyword-search results.";
     }
 
     @Override
