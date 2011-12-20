@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.sql.SQLException;
 import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
@@ -50,33 +49,6 @@ public class ImageNode extends AbstractContentNode<Image> {
         String imgName = nameForImage(img);
         this.setDisplayName(imgName);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg");
-    }
-
-    @Override
-    public Object[][] getRowValues(int rows) throws SQLException {
-        // how many rows are we returning
-        int maxRows = rows;
-        if (this.getChildren().getNodesCount() < maxRows) {
-            maxRows = this.getChildren().getNodesCount();
-        }
-        Object[][] objs = new Object[maxRows][];
-
-        for (int i = 0; i < maxRows; i++) {
-            PropertySet[] props = this.getChildren().getNodeAt(i).getPropertySets();
-            Property[] property = props[0].getProperties();
-            objs[i] = new Object[property.length];
-
-
-            // the rest of the properties(not including the location property)
-            for (int j = 0; j < property.length; j++) {
-                try {
-                    objs[i][j] = property[j].getValue();
-                } catch (Exception ex) {
-                    objs[i][j] = "n/a";
-                }
-            }
-        }
-        return objs;
     }
 
     @Override

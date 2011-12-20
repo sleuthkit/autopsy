@@ -6,7 +6,7 @@
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * You may obt ain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -28,15 +28,16 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 
 /**
  * Holds commonalities between all DataResultViewers
  */
-public abstract class AbstractDataResultViewer extends JPanel implements DataResultViewer, Provider, PropertyChangeListener {
+public abstract class AbstractDataResultViewer extends JPanel implements
+        DataResultViewer, Provider, PropertyChangeListener {
 
     /**
-     * Propagates changes in the current select node from the DataResultViewer to the DataContentTopComponent
+     * Propagates changes in the current select node from the DataResultViewer
+     * to the DataContentTopComponent
      *
      * @param evt
      */
@@ -53,14 +54,14 @@ public abstract class AbstractDataResultViewer extends JPanel implements DataRes
             // change the cursor to "waiting cursor" for this operation
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             try {
-                Node originalSelectedNode = this.getOriginalSelectedNode();
+                Node selectedNode = this.getSelectedNode();
 
                 // DataContent is designed to return only the default viewer
                 DataContent dataContent = Lookup.getDefault().lookup(DataContent.class);
 
-                if (originalSelectedNode != null && originalSelectedNode instanceof ContentNode) {
+                if (selectedNode != null) {
                     // there's a new/changed node to display
-                    ContentNode newSelectedNode = (ContentNode) originalSelectedNode; // get the selected Node on the table
+                    Node newSelectedNode = selectedNode; // get the selected Node on the table
                     // push the node to default "DataContent"
                     dataContent.setNode(newSelectedNode);
                 } else {
@@ -74,9 +75,8 @@ public abstract class AbstractDataResultViewer extends JPanel implements DataRes
     }
 
     /**
-     * Gets the current node, stripping off any FilterNode that this class might
-     * have wrapped it in.
+     * Gets the current node selected node
      * @return
      */
-    public abstract Node getOriginalSelectedNode();
+    public abstract Node getSelectedNode();
 }

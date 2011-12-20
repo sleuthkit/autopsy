@@ -20,11 +20,9 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import org.sleuthkit.autopsy.datamodel.ImageNode;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
@@ -32,36 +30,32 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
-import org.sleuthkit.autopsy.datamodel.ContentNodeVisitor;
-import org.sleuthkit.autopsy.keywordsearch.IndexContentFilesAction;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.Volume;
 
 /**
  * This class wraps nodes as they are passed to the DataResult viewers.  It 
  * defines the actions that the node should have. 
  */
-public class DataResultFilterNode extends FilterNode implements ContentNode {
+public class DataResultFilterNode extends FilterNode{
 
-    private Node currentNode;
-    // for error handling
-    private JPanel caller;
-    private String className = this.getClass().toString();
+    private ExplorerManager sourceEm;
+    private final ContentVisitor<List<Action>> getActionsCV;
+
 
     /** the constructor */
-    public DataResultFilterNode(Node arg) {
-        super(arg, new DataResultFilterChildren(arg));
-        this.currentNode = arg;
-    }
-
-    @Override
-    public Node getOriginal() {
-        return super.getOriginal();
+    public DataResultFilterNode(Node arg, ExplorerManager em) {
+        super(arg, new DataResultFilterChildren(arg, em));
+        this.sourceEm = em;
+        getActionsCV = new GetActionsContentVisitor();
     }
 
     /**
@@ -69,41 +63,57 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
      * table and the output view.
      *
      * @param popup
-     * @return actionss
+     * @return actions
      */
     @Override
     public Action[] getActions(boolean popup) {
 
         List<Action> actions = new ArrayList<Action>();
+        
+        actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
 
-        // right click action(s) for image node
-        if (this.currentNode instanceof ImageNode) {
-            actions.add(new NewWindowViewAction("View in New Window", (ImageNode) this.currentNode));
-            actions.addAll(ShowDetailActionVisitor.getActions(((ImageNode) this.currentNode).getContent()));
-            actions.add(new IndexContentFilesAction(((ContentNode) currentNode).getContent(), currentNode.getDisplayName()));
-        } // right click action(s) for volume node
-        else if (this.currentNode instanceof VolumeNode) {
-            actions.add(new NewWindowViewAction("View in New Window", (VolumeNode) this.currentNode));
-            //new ShowDetailActionVisitor("Volume Details", this.currentNode.getName(), (VolumeNode) this.currentNode),
-            actions.addAll(ShowDetailActionVisitor.getActions(((VolumeNode) this.currentNode).getContent()));
-            actions.add(new ChangeViewAction("View", 0, (ContentNode) currentNode));
-            actions.add(new IndexContentFilesAction(((ContentNode) currentNode).getContent(), currentNode.getDisplayName()));
-        } // right click action(s) for directory node
-        else if (this.currentNode instanceof DirectoryNode) {
-            actions.add(new NewWindowViewAction("View in New Window", (DirectoryNode) this.currentNode));
-            actions.add(new ChangeViewAction("View", 0, (ContentNode) currentNode));
-            actions.add(new ExtractAction("Extract Directory", (DirectoryNode) this.currentNode));
-            actions.add(new IndexContentFilesAction(((ContentNode) currentNode).getContent(), currentNode.getDisplayName()));
-        } // right click action(s) for the file node
-        else if (this.currentNode instanceof FileNode) {
-            actions.add(new ExternalViewerAction("Open File in External Viewer", (FileNode) this.currentNode));
-            actions.add(new NewWindowViewAction("View in New Window", (FileNode) this.currentNode));
-            actions.add(new ExtractAction("Extract", (FileNode) this.currentNode));
-            actions.add(new ChangeViewAction("View", 0, (ContentNode) currentNode));
-            actions.add(new IndexContentFilesAction(((ContentNode) currentNode).getContent(), currentNode.getDisplayName()));
-        }
+        Content nodeContent = this.getOriginal().getLookup().lookup(Content.class);
+        actions.addAll(nodeContent.accept(getActionsCV));
 
         return actions.toArray(new Action[actions.size()]);
+    }
+        
+    private class GetActionsContentVisitor extends ContentVisitor.Default<List<Action>> {
+        
+        @Override
+        public List<Action> visit(Image img) {
+            return ShowDetailActionVisitor.getActions(img);
+        }
+        
+        @Override
+        public List<Action> visit(Volume vol) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.addAll(ShowDetailActionVisitor.getActions(vol));
+            actions.add(new ChangeViewAction("View", 0, getOriginal()));
+            return actions;
+        }
+        
+        @Override
+        public List<Action> visit(Directory dir) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.add(new ChangeViewAction("View", 0, getOriginal()));
+            actions.add(new ExtractAction("Extract Directory", getOriginal()));
+            return actions;
+        }
+        
+        @Override
+        public List<Action> visit(File f) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
+            actions.add(new ExtractAction("Extract", getOriginal()));
+            return actions;
+        }
+
+        @Override
+        protected List<Action> defaultVisit(Content cntnt) {
+            return Collections.EMPTY_LIST;
+        }
+        
     }
 
     /**
@@ -115,11 +125,13 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
     @Override
     public Action getPreferredAction() {
         // double click action(s) for volume node or directory node
-        if (this.currentNode instanceof VolumeNode || (this.currentNode instanceof DirectoryNode && !this.currentNode.getDisplayName().equals("."))) {
+        
+        final Node originalNode = this.getOriginal();
+        
+        if (originalNode instanceof VolumeNode || (originalNode instanceof DirectoryNode && !originalNode.getDisplayName().equals("."))) {
 
-            if (this.currentNode instanceof DirectoryNode && this.currentNode.getDisplayName().equals("..")) {
-                ExplorerManager em = DirectoryTreeTopComponent.findInstance().getExplorerManager();
-                Node[] selectedNode = em.getSelectedNodes();
+            if (originalNode instanceof DirectoryNode && originalNode.getDisplayName().equals("..")) {
+                Node[] selectedNode = sourceEm.getSelectedNodes();
                 Node selectedContext = selectedNode[0];
                 final Node parentNode = selectedContext.getParentNode();
 
@@ -128,7 +140,7 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            DirectoryTreeTopComponent.findInstance().getExplorerManager().setSelectedNodes(new Node[]{parentNode});
+                            sourceEm.setSelectedNodes(new Node[]{parentNode});
                         } catch (PropertyVetoException ex) {
                             Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
                             logger.log(Level.WARNING, "Error: can't open the parent directory.", ex);
@@ -136,8 +148,7 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
                     }
                 };
             } else {
-                ExplorerManager em = DirectoryTreeTopComponent.findInstance().getExplorerManager();
-                final Node[] parentNode = em.getSelectedNodes();
+                final Node[] parentNode = sourceEm.getSelectedNodes();
                 final Node parentContext = parentNode[0];
 
                 return new AbstractAction() {
@@ -145,12 +156,11 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         if (parentContext != null) {
-                            ExplorerManager em = DirectoryTreeTopComponent.findInstance().getExplorerManager();
                             for (int i = 0; i < parentContext.getChildren().getNodesCount(); i++) {
                                 Node selectedNode = parentContext.getChildren().getNodeAt(i);
-                                if (selectedNode != null && selectedNode.getName().equals(currentNode.getName())) {
+                                if (selectedNode != null && selectedNode.getName().equals(originalNode.getName())) {
                                     try {
-                                        em.setExploredContextAndSelection(selectedNode, new Node[]{selectedNode});
+                                        sourceEm.setExploredContextAndSelection(selectedNode, new Node[]{selectedNode});
                                     } catch (PropertyVetoException ex) {
                                         // throw an error here
                                         Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
@@ -162,12 +172,7 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
                     }
                 };
             }
-
-        } //        // right click action(s) for the file node
-        //        if(this.currentNode instanceof FileNode){
-        //            // .. put the code here
-        //        }
-        else {
+        } else {
             return null;
         }
     }
@@ -192,41 +197,5 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
         }
 
         return propertySets;
-    }
-
-    @Override
-    public long getID() {
-        return ((ContentNode) currentNode).getID();
-    }
-
-    @Override
-    public Object[][] getRowValues(int rows) throws SQLException {
-        return ((ContentNode) currentNode).getRowValues(rows);
-    }
-
-    @Override
-    public byte[] read(long offset, long len) throws TskException {
-        return ((ContentNode) currentNode).read(offset, len);
-    }
-
-    @Override
-    public Content getContent() {
-        return ((ContentNode) currentNode).getContent();
-    }
-
-    @Override
-    public String[] getDisplayPath() {
-        return ((ContentNode) currentNode).getDisplayPath();
-    }
-
-    @Override
-    public <T> T accept(ContentNodeVisitor<T> v) {
-        // TODO: Figure out how visitors should be delegated
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public String[] getSystemPath() {
-        return ((ContentNode) currentNode).getSystemPath();
     }
 }

@@ -71,8 +71,10 @@ class FilterArea extends JPanel {
 
     private void init() {
 
-        // TODO: this icon (and its twin) should be used in the toggle button
-        // this.dateFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/filesearch/arrow_down.gif"))); // NOI18N
+
+
+        // Commmented-out code is for collapable filter areas
+//        this.dateFiltersButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/filesearch/arrow_down.gif"))); // NOI18N
 
 //        toggleButton = new JButton();
 //        toggleButton.setAlignmentX(Component.CENTER_ALIGNMENT);

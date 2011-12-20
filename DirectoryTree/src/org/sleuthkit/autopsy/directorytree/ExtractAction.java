@@ -18,201 +18,94 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import org.sleuthkit.autopsy.datamodel.FileNode;
-import java.io.*;
 import java.awt.event.ActionEvent;
 import javax.swing.JFileChooser;
 import java.io.File;
 import java.awt.Component;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.AbstractAction;
-import javax.swing.JPanel;
-import javax.swing.filechooser.FileFilter;
+import javax.swing.JOptionPane;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.casemodule.GeneralFilter;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
-import org.sleuthkit.autopsy.datamodel.DirectoryNode;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.autopsy.logging.Log;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.FsContent;
 
 /**
- * This is an action class to extract and save the bytes given as a file.
- *
- * @author jantonius
+ * Exports files and folders
  */
 public final class ExtractAction extends AbstractAction {
 
-    private JFileChooser fc = new JFileChooser();
-    private byte[] source;
-    private ContentNode contentNode;
-    private String fileName;
-    private String extension;
-    // for error handling
-    private JPanel caller;
-    private String className = this.getClass().toString();
+    private static final InitializeContentVisitor initializeCV = new InitializeContentVisitor();
+    private FsContent fsContent;
 
-    /** the constructor */
-    public ExtractAction(String title, ContentNode contentNode) {
+    public ExtractAction(String title, Node contentNode) {
         super(title);
-        
-        String fullFileName = ((Node)contentNode).getDisplayName();
+        Content tempContent = contentNode.getLookup().lookup(Content.class);
 
-        if (fullFileName.equals(".")) {
-            // . folders are not associated with their children in the database,
-            // so get original
-            Node parentNode = ((Node) contentNode).getParentNode();            
-            this.contentNode = (ContentNode) parentNode;
-            fullFileName = parentNode.getDisplayName();
-        } else {
-            this.contentNode = contentNode;
-        }
-        long size = contentNode.getContent().getSize();
-        
-
-
-        /**
-         * Checks first if the the selected it file or directory. If it's a file,
-         * check if the file size is bigger than 0. If it's a directory, check
-         * if it's not referring to the parent directory. Disables the menu otherwise.
-         */
-        if ((contentNode instanceof FileNode && size > 0) || (contentNode instanceof DirectoryNode && !fullFileName.equals(".."))) {
-            if (contentNode instanceof FileNode && fullFileName.contains(".")) {
-                String tempFileName = fullFileName.substring(0, fullFileName.indexOf("."));
-                String tempExtension = fullFileName.substring(fullFileName.indexOf("."));
-                this.fileName = tempFileName;
-                this.extension = tempExtension;
-            } else {
-                this.fileName = fullFileName;
-                this.extension = "";
-            }
-        } else {
-            this.fileName = fullFileName;
-            this.extension = "";
-            this.setEnabled(false); // can't extract zero-sized file or ".." directory
-        }
-
+        this.fsContent = tempContent.accept(initializeCV);
+        this.setEnabled(fsContent != null);
     }
 
     /**
-     * Converts and saves the bytes into the file.
-     *
+     * Returns the FsContent if it is supported, otherwise null
+     */
+    private static class InitializeContentVisitor extends ContentVisitor.Default<FsContent> {
+
+        @Override
+        public FsContent visit(org.sleuthkit.datamodel.File f) {
+            return f;
+        }
+
+        @Override
+        public FsContent visit(Directory dir) {
+            return ContentUtils.isDotDirectory(dir) ? null : dir;
+        }
+
+        @Override
+        protected FsContent defaultVisit(Content cntnt) {
+            return null;
+        }
+    }
+
+    /**
+     * Asks user to choose destination, then extracts file/directory to 
+     * destination (recursing on directories)
      * @param e  the action event
      */
     @Override
     public void actionPerformed(ActionEvent e) {
         Log.noteAction(this.getClass());
 
-        // set the filter for FileNode
-        if (contentNode instanceof FileNode && !extension.equals("")) {
-            //FileFilter filter = new ExtensionFileFilter(extension.substring(1).toUpperCase() + " File (*" + extension + ")", new String[]{extension.substring(1)});
-            String[] fileExt = {extension};
-            FileFilter filter = new GeneralFilter(fileExt, extension.substring(1).toUpperCase() + " File (*" + extension + ")", false);
-            fc.setFileFilter(filter);
-        }
-
-
-        fc.setSelectedFile(new File(this.fileName));
-
+        JFileChooser fc = new JFileChooser();
+        fc.setSelectedFile(new File(this.fsContent.getName()));
         int returnValue = fc.showSaveDialog((Component) e.getSource());
+
         if (returnValue == JFileChooser.APPROVE_OPTION) {
-            String path = fc.getSelectedFile().getPath() + extension;
+            File destination = fc.getSelectedFile();
 
-            try {
-                // file extraction
-                if (contentNode instanceof FileNode) {
-                    extractFile(path, (FileNode) contentNode);
+            // check that it's okay to overwrite existing file
+            if (destination.exists()) {
+                int choice = JOptionPane.showConfirmDialog(
+                        (Component) e.getSource(),
+                        "Destination file already exists, it will be overwritten.",
+                        "Destination already exists!",
+                        JOptionPane.OK_CANCEL_OPTION);
+
+                if (choice != JOptionPane.OK_OPTION) {
+                    return;
                 }
 
-                // directory extraction
-                if (contentNode instanceof DirectoryNode) {
-                    extractDirectory(path, (DirectoryNode) contentNode);
+                if (!destination.delete()) {
+                    JOptionPane.showMessageDialog(
+                            (Component) e.getSource(),
+                            "Couldn't delete existing file.");
                 }
-            } catch (Exception ex) {
-                Logger.getLogger(this.className).log(Level.WARNING, "Error: Couldn't extract file/directory.", ex);
             }
 
+            ExtractFscContentVisitor.extract(fsContent, destination);
         }
-
-    }
-
-    /**
-     * Extracts the content of the given fileNode into the given path.
-     *
-     * @param givenPath  the path to extract the file
-     * @param fileNode   the file node that contain the file
-     */
-    private void extractFile(String givenPath, FileNode fileNode) throws Exception {
-        try {
-            if (fileNode.getContent().getSize() > 0) {
-                try {
-                    this.source = fileNode.getContent().read(0, fileNode.getContent().getSize());
-                } catch (TskException ex) {
-                    throw new Exception("Error: can't read the content of the file.", ex);
-                }
-            } else {
-                this.source = new byte[0];
-            }
-
-            String path = givenPath;
-
-            File file = new File(path);
-            if (file.exists()) {
-                file.delete();
-            }
-            file.createNewFile();
-            // convert char to byte
-            byte[] dataSource = new byte[source.length];
-            for (int i = 0; i < source.length; i++) {
-                dataSource[i] = (byte) source[i];
-            }
-            FileOutputStream fos = new FileOutputStream(file);
-            //fos.write(dataSource);
-            fos.write(dataSource);
-            fos.close();
-        } catch (IOException ex) {
-            throw new Exception("Error while trying to extract the file.", ex);
-        }
-    }
-
-    /**
-     * Extracts the content of the given directoryNode into the given path.
-     *
-     * @param givenPath  the path to extract the directory
-     * @param dirNode    the directory node that contain the directory
-     */
-    private void extractDirectory(String givenPath, DirectoryNode dirNode) throws Exception {
-        String path = givenPath;
-        File dir = new File(path);
-        if (!dir.exists()) {
-            dir.mkdir();
-        }
-
-        int totalChildren = dirNode.getChildren().getNodesCount();
-        for (int i = 0; i < totalChildren; i++) {
-            Node childNode = dirNode.getChildren().getNodeAt(i);
-
-            if (childNode instanceof FileNode) {
-                FileNode fileNode = (FileNode) childNode;
-                String tempPath = path + File.separator + ((Node)fileNode).getDisplayName();
-                try {
-                    extractFile(tempPath, fileNode);
-                } catch (Exception ex) {
-                    throw ex;
-                }
-            }
-
-            if (childNode instanceof DirectoryNode) {
-                DirectoryNode dirNode2 = (DirectoryNode) childNode;
-                String dirNode2Name = ((Node)dirNode2).getDisplayName();
-                
-                if (!dirNode2Name.trim().equals(".") && !dirNode2Name.trim().equals("..")) {
-                    String tempPath = path + File.separator + dirNode2Name;
-                    extractDirectory(tempPath, dirNode2);
-                }
-            }
-        }
-
-
     }
 }

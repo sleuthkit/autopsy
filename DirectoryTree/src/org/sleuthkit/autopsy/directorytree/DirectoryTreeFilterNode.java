@@ -23,29 +23,24 @@ import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.casemodule.Case;
+import org.openide.util.lookup.Lookups;
+import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.Volume;
 
 /**
  * This class sets the actions for the nodes in the directory tree and creates
  * the children filter so that files and such are hidden from the tree. 
  *
  */
-public class DirectoryTreeFilterNode extends FilterNode {
+class DirectoryTreeFilterNode extends FilterNode {
 
     private static final Action collapseAll = new CollapseAction("Collapse All");
 
     /** the constructor */
-    public DirectoryTreeFilterNode(Node arg) {
-        super(arg, DirectoryTreeFilterChildren.createInstance(arg));
-    }
-
-    // TODO This seems bad.  We should have this return the real original and modify code somewhere else to wrap it
-    @Override
-    public Node getOriginal() {
-        return new DataResultFilterNode(super.getOriginal());
+    DirectoryTreeFilterNode(Node arg) {
+        super(arg, DirectoryTreeFilterChildren.createInstance(arg),
+                new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
+                arg.getLookup()));
     }
 
     /**
@@ -58,7 +53,7 @@ public class DirectoryTreeFilterNode extends FilterNode {
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<Action>();
 
-        Content content = super.getOriginal().getLookup().lookup(Content.class);
+        Content content = this.getLookup().lookup(Content.class);
         if (content != null) {
             actions.addAll(DirectoryTreeFilterNode.getActions(content));
             actions.add(collapseAll);
@@ -73,5 +68,18 @@ public class DirectoryTreeFilterNode extends FilterNode {
         actions.addAll(ShowDetailActionVisitor.getActions(c));
 
         return actions;
+    }
+
+    static class OriginalNode {
+
+        private Node original;
+
+        private OriginalNode(Node original) {
+            this.original = original;
+        }
+
+        Node getNode() {
+            return original;
+        }
     }
 }

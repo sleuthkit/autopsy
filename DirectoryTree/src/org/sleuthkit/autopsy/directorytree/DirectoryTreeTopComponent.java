@@ -44,9 +44,11 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Top component which displays something.
@@ -332,23 +334,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             };
                         }
                     };
-                    /*try {
+
                     root = new DirectoryTreeFilterNode(root);
-                    } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(caller, "Error: problem making directory filter node.\n \nDetail: \n" + ex.getMessage() + " (at " + className + ").", "Error", JOptionPane.ERROR_MESSAGE);
-                    }*/
 
-
-                    // TODO It seems that we can get rid of the first condition. root is an abstract node
-                    if (root instanceof DirectoryTreeFilterNode) {
-                        root = ((DirectoryTreeFilterNode) root).getOriginal();
-                    } else {
-//                    try {
-                        root = new DirectoryTreeFilterNode(root);
-//                    } catch (SQLException ex) {
-//                        JOptionPane.showMessageDialog(caller, "Error: problem making directory filter node.\n \nDetail: \n" + ex.getMessage() + " (at " + className + ").", "Error", JOptionPane.ERROR_MESSAGE);
-//                    }
-                    }
 
                     em.setRootContext(root);
                     em.getRootContext().setName(currentCase.getName());
@@ -460,16 +448,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @return node the original selected Node
      */
-    // TODO Rename or get rid of it entirely. 
-    public Node getOriginalSelectedNode() {
+    public Node getSelectedNode() {
         Node result = null;
 
         Node[] selectedNodes = this.getExplorerManager().getSelectedNodes();
         if (selectedNodes.length > 0) {
             result = selectedNodes[0];
-            if (result != null && result instanceof DirectoryTreeFilterNode) {
-                result = ((DirectoryTreeFilterNode) result).getOriginal();
-            }
         }
         return result;
     }
@@ -500,10 +484,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 em.getRootContext().setDisplayName(newCaseName);
             }
         }
-        
+
         // changed current case
         if (changed.equals(Case.CASE_CURRENT_CASE)) {
-            
+
             // case opened
             if (newValue != null) {
                 resetHistoryListAndButtons();
@@ -546,8 +530,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // change in node selection
         if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
 
-
-            // Some lock that prevents certian Node operations is set during the
+            // Some lock that prevents certain Node operations is set during the
             // ExplorerManager selection-change, so we must handle changes after the
             // selection-change event is processed.
             EventQueue.invokeLater(new Runnable() {
@@ -561,18 +544,21 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         // make sure dataResult is open
                         dataResult.open();
 
-                        ContentNode node = (ContentNode) DirectoryTreeTopComponent.this.getOriginalSelectedNode();
-                        if (node != null) {
+                        Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
+                        if (treeNode != null) {
+                            Node originNode = treeNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class).getNode();
 
-                            //pcs.firePropertyChange(DataExplorer.EXPLORER_NODE_SELECTION_CHANGED, "", node);
-                            int count = ((Node) node).getChildren().getNodesCount(true);
+                            int count = originNode.getChildren().getNodesCount(true);
                             if (count > 1000) {
                                 DirectoryTreeTopComponent.this.setCursor(null);
                                 JOptionPane.showMessageDialog(caller, "Note: The selected directory contains " + count + " child files and folders. It may take some time to display them.\n\nAlso note that in the current version of Autopsy this will also make certain functions very slow (thumbnail view in particular, should be fixed in a future version)", "Large Data", JOptionPane.INFORMATION_MESSAGE);
                                 DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                             }
                             DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                            DirectoryTreeTopComponent.this.dataResult.setNode(node);
+                            DirectoryTreeTopComponent.this.dataResult.setNode(new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em));
+                            
+                            String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(originNode.getLookup().lookup(Content.class)), 0);
+                            DirectoryTreeTopComponent.this.dataResult.setPath(path);
                         }
 
                         // set the directory listing to be active

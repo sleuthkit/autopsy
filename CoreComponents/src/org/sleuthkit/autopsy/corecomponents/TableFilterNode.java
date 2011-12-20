@@ -37,11 +37,6 @@ class TableFilterNode extends FilterNode {
         this.createChild = crChild;
     }
 
-    @Override
-    public Node getOriginal() {
-        return super.getOriginal();
-    }
-
     /**
      * Override the display name / header for the first (tree) column on the
      * "TreeTableView".

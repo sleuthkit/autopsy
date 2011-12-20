@@ -46,11 +46,14 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
     @Override
     protected Node[] createNodes(Node arg0) {
+        
+        //TODO: ContentNode fix - replace with ContentVisitor
+        
         // filter out the FileNode and the "." and ".." directories
         if (arg0 != null && (arg0 instanceof ImageNode
                 || arg0 instanceof VolumeNode || (arg0 instanceof DirectoryNode
-                && !((Directory) ((DirectoryNode) arg0).getContent()).getName().equals(".")
-                && !((Directory) ((DirectoryNode) arg0).getContent()).getName().equals("..")))) {
+                && !((DirectoryNode) arg0).getDisplayName().equals("."))
+                && !((DirectoryNode) arg0).getDisplayName().equals(".."))) {
             return new Node[]{this.copyNode(arg0)};
         } else {
             return new Node[]{};

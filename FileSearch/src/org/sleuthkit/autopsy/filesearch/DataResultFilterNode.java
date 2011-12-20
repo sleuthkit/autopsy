@@ -18,38 +18,28 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import org.sleuthkit.autopsy.datamodel.ContentNodeVisitor;
-import org.sleuthkit.autopsy.datamodel.ImageNode;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
-import org.sleuthkit.autopsy.datamodel.VolumeNode;
-import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.datamodel.DirectoryNode;
-import java.sql.SQLException;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.directorytree.ChangeViewAction;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.File;
 
 /**
  * This class wraps nodes as they are passed to the DataResult viewers.  It 
  * defines the actions that the node should have. 
  */
-public class DataResultFilterNode extends FilterNode implements ContentNode {
+public class DataResultFilterNode extends FilterNode {
 
-    private Node currentNode;
 
     /** the constructor */
     public DataResultFilterNode(Node arg) {
         super(arg, new DataResultFilterChildren(arg));
-        this.currentNode = arg;
-    }
-
-    @Override
-    public Node getOriginal() {
-        return super.getOriginal();
     }
 
     /**
@@ -61,29 +51,36 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        // right click action(s) for image node
-        if (this.currentNode instanceof ImageNode) {
-            return new Action[]{};
-        } // right click action(s) for volume node
-        else if (this.currentNode instanceof VolumeNode) {
-            return new Action[]{};
-        } // right click action(s) for directory node
-        else if (this.currentNode instanceof DirectoryNode) {
+        
+       Content content = getOriginal().getLookup().lookup(Content.class);
+       return content.accept(new GetActionContentVisitor());
+    }
+    
+    private class GetActionContentVisitor extends ContentVisitor.Default<Action[]> {
+        @Override
+        public Action[] visit(Directory dir) {
             return new Action[]{
-                        new ChangeViewAction("View", 0, (ContentNode) currentNode),
-                        new OpenParentFolderAction("Open Parent Directory", ((ContentNode) currentNode).getSystemPath())
-                    };
-        } // right click action(s) for the file node
-        else if (this.currentNode instanceof FileNode) {
+                new ChangeViewAction("View", 0, getOriginal()),
+                new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath(dir))
+            };
+        }
+        
+        @Override
+        public Action[] visit(File f) {
             return new Action[]{
-                        new ExtractAction("Extract", (FileNode) this.currentNode),
-                        new ChangeViewAction("View", 0, (ContentNode) currentNode),
-                        new OpenParentFolderAction("Open Parent Directory", ((ContentNode) currentNode).getSystemPath())
-                    };
-        } else {
+                new ExternalViewerAction("Open in External Viewer", getOriginal()),
+                new ExtractAction("Extract", getOriginal()),
+                new ChangeViewAction("View", 0, getOriginal()),
+                new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath(f))
+            };
+        }
+
+        @Override
+        protected Action[] defaultVisit(Content cntnt) {
             return new Action[]{};
         }
     }
+    
 
     /**
      * Double click action for the nodes that we want to pass to the directory
@@ -94,41 +91,5 @@ public class DataResultFilterNode extends FilterNode implements ContentNode {
     @Override
     public Action getPreferredAction() {
         return null;
-    }
-
-    @Override
-    public long getID() {
-        return ((ContentNode) currentNode).getID();
-    }
-
-    @Override
-    public Object[][] getRowValues(int rows) throws SQLException {
-        return ((ContentNode) currentNode).getRowValues(rows);
-    }
-
-    @Override
-    public byte[] read(long offset, long len) throws TskException {
-        return ((ContentNode) currentNode).read(offset, len);
-    }
-
-    @Override
-    public Content getContent() {
-        return ((ContentNode) currentNode).getContent();
-    }
-
-    @Override
-    public String[] getDisplayPath() {
-        return ((ContentNode) currentNode).getDisplayPath();
-    }
-
-    @Override
-    public <T> T accept(ContentNodeVisitor<T> v) {
-        //TODO: figure out how to deal with visitors
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public String[] getSystemPath() {
-        return ((ContentNode) currentNode).getSystemPath();
     }
 }

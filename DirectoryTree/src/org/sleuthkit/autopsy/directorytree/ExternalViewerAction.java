@@ -21,49 +21,37 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.logging.Log;
-import org.sleuthkit.datamodel.TskException;
 
 /**
- *
- * @author jantonius
+ * Extracts a File object to a temporary file in the case directory, and then
+ * tries to open it in the user's system with the default associated
+ * application.
  */
 public class ExternalViewerAction extends AbstractAction {
 
-    private byte[] content;
-    private FileNode fileNode;
-    private String fileName;
-    private String extension;
-    // for error handling
-    private JPanel caller;
-    private String className = this.getClass().toString();
+    private final static Logger logger = Logger.getLogger(ExternalViewerAction.class.getName());
+    private org.sleuthkit.datamodel.File fileObject;
 
-    /** the constructor */
-    public ExternalViewerAction(String title, FileNode fileNode) {
+    public ExternalViewerAction(String title, Node fileNode) {
         super(title);
-        this.fileNode = fileNode;
-
-        long size = fileNode.getContent().getSize();
-        String fullFileName = ((Node)fileNode).getDisplayName();
-        if (fullFileName.contains(".") && size > 0) {
-            String tempFileName = fullFileName.substring(0, fullFileName.indexOf("."));
-            String tempExtension = fullFileName.substring(fullFileName.indexOf("."));
-            this.fileName = tempFileName;
-            this.extension = tempExtension;
-        } else {
-            this.fileName = fullFileName;
-            this.extension = "";
-            this.setEnabled(false); // fix this later (right now only extract a file with extension)
+        this.fileObject = fileNode.getLookup().lookup(org.sleuthkit.datamodel.File.class);
+        
+        long size = fileObject.getSize();
+        String fileName = fileObject.getName();
+        int extPos = fileName.lastIndexOf('.');
+        
+        // no point opening a file if it's empty, and java doesn't know how to
+        // find an application for files without an extension
+        if (!(size > 0) || extPos == -1) {
+            this.setEnabled(false);
         }
     }
 
@@ -71,54 +59,31 @@ public class ExternalViewerAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         Log.noteAction(this.getClass());
 
+        // Get the temp folder path of the case
+        String tempPath = Case.getCurrentCase().getTempDirectory();
+        tempPath = tempPath + File.separator + this.fileObject.getName();
+
+        // create the temporary file
+        File tempFile = new File(tempPath);
+        if (tempFile.exists()) {
+            tempFile.delete();
+        }
         try {
-            // @@@ Thing to do: maybe throw confirmation first???
-
-            // the menu should be disabled if we can't read the content (for example: on zero-sized file).
-            // Therefore, it should never throw the TSKException.
-            try {
-                this.content = fileNode.getContent().read(0, fileNode.getContent().getSize());
-            } catch (TskException ex) {
-                Logger.getLogger(this.className).log(Level.WARNING, "Error: can't read the content of the file.", ex);
-            }
-
-            // Get the temp folder path of the case
-            String tempPath = Case.getCurrentCase().getTempDirectory();
-            tempPath = tempPath + File.separator + this.fileName + this.extension;
-
-            // create the temporary file
-            File file = new File(tempPath);
-            if (file.exists()) {
-                file.delete();
-            }
-
-            file.createNewFile();
-
-            // convert char to byte
-            byte[] dataSource = new byte[content.length];
-            for (int i = 0; i < content.length; i++) {
-                dataSource[i] = (byte) content[i];
-            }
-
-            FileOutputStream fos = new FileOutputStream(file);
-            //fos.write(dataSource);
-            fos.write(dataSource);
-            fos.close();
-
-            try {
-                Desktop.getDesktop().open(file);
-            } catch (IOException ex) {
-                // if can't open the file, throw the error saying: "File type not supported."
-                JOptionPane.showMessageDialog(caller, "Error: File type not supported.\n \nDetail: \n" + ex.getMessage() + " (at " + className + ").", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-
-            // delete the file on exit
-            file.deleteOnExit();
-
+            tempFile.createNewFile();
+            ContentUtils.writeToFile(fileObject, tempFile);
         } catch (IOException ex) {
             // throw an error here
-            Logger.getLogger(this.className).log(Level.WARNING, "Error: can't open the external viewer for this file.", ex);
+            logger.log(Level.WARNING, "Can't save to temporary file.", ex);
         }
 
+        try {
+            Desktop.getDesktop().open(tempFile);
+        } catch (IOException ex) {
+            // if can't open the file, throw the error saying: "File type not supported."
+            logger.log(Level.WARNING, "File type not supported.", ex);
+        }
+
+        // delete the file on exit
+        tempFile.deleteOnExit();
     }
 }

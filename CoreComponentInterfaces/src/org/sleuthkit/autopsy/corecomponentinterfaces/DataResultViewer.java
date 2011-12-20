@@ -20,8 +20,8 @@
 
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import java.awt.Component;
+import org.openide.nodes.Node;
 
 /**
  * Interface for the different viewers that show a set of nodes in the DataResult area. 
@@ -34,7 +34,7 @@ public interface DataResultViewer {
      * Set the root node to display in this viewer. When called with null, must
      * clear all references to previous nodes.
      */
-    public void setNode(ContentNode selectedNode);
+    public void setNode(Node selectedNode);
 
     /**
      * Gets the title of this viewer

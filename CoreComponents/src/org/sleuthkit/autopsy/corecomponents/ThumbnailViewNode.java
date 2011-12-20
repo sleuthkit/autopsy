@@ -30,8 +30,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -40,20 +40,13 @@ import org.sleuthkit.datamodel.TskException;
  */
 class ThumbnailViewNode extends FilterNode {
 
-    private ContentNode currentNode;
-    // for error handling
     private SoftReference<Image> iconCache;
-    private static Image defaultIcon = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage();
+    
+    private static final Image defaultIcon = new ImageIcon("/org/sleuthkit/autopsy/images/file-icon.png").getImage();
 
     /** the constructor */
-    ThumbnailViewNode(ContentNode arg) {
-        super((Node) arg, Children.LEAF);
-        this.currentNode = arg;
-    }
-
-    @Override
-    public Node getOriginal() {
-        return super.getOriginal();
+    ThumbnailViewNode(Node arg) {
+        super(arg, Children.LEAF);
     }
 
     @Override
@@ -63,24 +56,30 @@ class ThumbnailViewNode extends FilterNode {
         if (iconCache != null) {
             icon = iconCache.get();
         }
-
+        
         if (icon == null) {
-            try {
-                System.out.println("generate");
-                icon = generateIcon();
-                iconCache = new SoftReference<Image>(icon);
-            } catch (TskException ex) {
+            Content content = this.getLookup().lookup(Content.class);
+            
+            if (content != null) {
+                try {
+                    System.out.println("generate");
+                    icon = generateIcon(content);
+                } catch (TskException ex) {
+                    icon = ThumbnailViewNode.defaultIcon;
+                }
+            } else {
                 icon = ThumbnailViewNode.defaultIcon;
             }
+            
+            iconCache = new SoftReference<Image>(icon);
         }
 
         return icon;
     }
 
-    private Image generateIcon() throws TskException {
-        ContentNode temp = currentNode;
-        byte[] content = temp.read(0, temp.getContent().getSize());
-        Image result = Toolkit.getDefaultToolkit().createImage(content);
+    static private Image generateIcon(Content content) throws TskException {
+        byte[] data = content.read(0, content.getSize());
+        Image result = Toolkit.getDefaultToolkit().createImage(data);
 
         // scale the image
         MediaTracker mTracker = new MediaTracker(new JFrame());
