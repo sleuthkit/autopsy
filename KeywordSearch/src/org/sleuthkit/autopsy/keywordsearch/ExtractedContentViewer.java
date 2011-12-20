@@ -32,8 +32,8 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Displays marked-up (HTML) content for a Node. The sources are all the 
@@ -52,7 +52,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     @Override
-    public void setNode(final ContentNode selectedNode) {
+    public void setNode(final Node selectedNode) {
 
         // to clear the viewer
         if (selectedNode == null) {
@@ -64,7 +64,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         // markup is fetched from solr
         List<MarkupSource> sources = new ArrayList<MarkupSource>();
 
-        sources.addAll(((Node) selectedNode).getLookup().lookupAll(MarkupSource.class));
+        sources.addAll(selectedNode.getLookup().lookupAll(MarkupSource.class));
 
 
         if (solrHasContent(selectedNode)) {
@@ -141,18 +141,18 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     @Override
-    public boolean isSupported(ContentNode node) {
+    public boolean isSupported(Node node) {
         if (node == null) {
             return false;
         }
 
-        Collection<? extends MarkupSource> sources = ((Node) node).getLookup().lookupAll(MarkupSource.class);
+        Collection<? extends MarkupSource> sources = node.getLookup().lookupAll(MarkupSource.class);
 
         return !sources.isEmpty() || solrHasContent(node);
     }
 
     @Override
-    public boolean isPreferred(ContentNode node, boolean isSupported) {
+    public boolean isPreferred(Node node, boolean isSupported) {
         return isSupported;
     }
 
@@ -172,11 +172,11 @@ public class ExtractedContentViewer implements DataContentViewer {
      * @param node
      * @return true if Solr has content, else false
      */
-    private boolean solrHasContent(ContentNode node) {
+    private boolean solrHasContent(Node node) {
         Server.Core solrCore = KeywordSearch.getServer().getCore();
         SolrQuery q = new SolrQuery();
         q.setQuery("*:*");
-        q.addFilterQuery("id:" + node.getContent().getId());
+        q.addFilterQuery("id:" + node.getLookup().lookup(Content.class).getId());
         q.setFields("id");
 
         try {
@@ -194,11 +194,11 @@ public class ExtractedContentViewer implements DataContentViewer {
      * @return the extracted content
      * @throws SolrServerException if something goes wrong
      */
-    private String getSolrContent(ContentNode cNode) throws SolrServerException {
+    private String getSolrContent(Node node) throws SolrServerException {
         Server.Core solrCore = KeywordSearch.getServer().getCore();
         SolrQuery q = new SolrQuery();
         q.setQuery("*:*");
-        q.addFilterQuery("id:" + cNode.getContent().getId());
+        q.addFilterQuery("id:" + node.getLookup().lookup(Content.class).getId());
         q.setFields("content");
 
         String content = (String) solrCore.query(q).getResults().get(0).getFieldValue("content");

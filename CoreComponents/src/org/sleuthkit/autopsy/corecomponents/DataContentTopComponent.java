@@ -22,7 +22,6 @@ import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
@@ -99,7 +98,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             return this.wrapped.isSupported(node);
         }
         
-        boolean isPreferred(ContentNode node, boolean isSupported) {
+        boolean isPreferred(Node node, boolean isSupported) {
             return this.wrapped.isPreferred(node, isSupported);
         }
     }

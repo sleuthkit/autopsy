@@ -23,13 +23,13 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.nodes.Node.Property;
 import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
-import org.sleuthkit.autopsy.datamodel.ContentFilterNode;
-import org.sleuthkit.autopsy.datamodel.ContentNode;
 import org.sleuthkit.autopsy.keywordsearch.Server.Core;
 import org.sleuthkit.datamodel.Content;
 
@@ -38,20 +38,20 @@ import org.sleuthkit.datamodel.Content;
  * content matching the search that the Node was found with, and to provide
  * the full highlighted content as a MarkupSource
  */
-class KeywordSearchFilterNode extends ContentFilterNode {
+class KeywordSearchFilterNode extends FilterNode {
 
     private static final int SNIPPET_LENGTH = 45;
     String solrQuery;
 
     KeywordSearchFilterNode(HighlightedMatchesSource highlights, Node original, String solrQuery) {
-        super((ContentNode) original, null, new ProxyLookup(Lookups.singleton(highlights), original.getLookup()));
+        super(original, null, new ProxyLookup(Lookups.singleton(highlights), original.getLookup()));
         this.solrQuery = solrQuery;
     }
 
     String getSnippet() {
         Core solrCore = KeywordSearch.getServer().getCore();
 
-        Content content = this.getContent();
+        Content content = this.getOriginal().getLookup().lookup(Content.class);
 
         SolrQuery q = new SolrQuery();
         q.setQuery(solrQuery);
