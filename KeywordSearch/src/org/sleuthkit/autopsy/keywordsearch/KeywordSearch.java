@@ -31,9 +31,12 @@ class KeywordSearch {
     private static final String BASE_URL = "http://localhost:8983/solr/";
     private static final Server SERVER = new Server(BASE_URL);
 
+    public enum QueryType {LUCENE, REGEX};
+    
     public static final String NUM_FILES_CHANGE_EVT = "NUM_FILES_CHANGE_EVT";
     
     static PropertyChangeSupport changeSupport = new PropertyChangeSupport(KeywordSearch.class);
+    
     
     static Server getServer() {
         return SERVER;
