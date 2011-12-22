@@ -37,6 +37,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.response.TermsResponse;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -271,6 +272,11 @@ class Server {
         
         QueryResponse query(SolrQuery sq) throws SolrServerException {
             return solrCore.query(sq);
+        }
+        
+        TermsResponse queryTerms(SolrQuery sq) throws SolrServerException {
+            QueryResponse qres = solrCore.query(sq);
+            return qres.getTermsResponse();
         }
         
         void close() {
