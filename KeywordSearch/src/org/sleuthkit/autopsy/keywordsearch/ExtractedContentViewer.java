@@ -173,10 +173,14 @@ public class ExtractedContentViewer implements DataContentViewer {
      * @return true if Solr has content, else false
      */
     private boolean solrHasContent(Node node) {
+        Content content = node.getLookup().lookup(Content.class);
+        if (content == null)
+            return false;
+        
         Server.Core solrCore = KeywordSearch.getServer().getCore();
         SolrQuery q = new SolrQuery();
         q.setQuery("*:*");
-        q.addFilterQuery("id:" + node.getLookup().lookup(Content.class).getId());
+        q.addFilterQuery("id:" + content.getId());
         q.setFields("id");
 
         try {
