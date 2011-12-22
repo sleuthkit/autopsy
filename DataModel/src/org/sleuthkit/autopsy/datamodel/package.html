@@ -4,7 +4,7 @@
 
 <p>This package, org.sleuthkit.autopsy.datamodel, contains classes that are NetBeans-specific and map to classes in the Sleuth Kit datamodel.  For example org.sleuthkit.autopsy.datamodel.DirectoryNode is the Node class for the org.sleuthkit.datamodel.Directory class.</p>
 
-<p>ContentNode is the interface class for the data type-specific nodes, just like org.sleuthkit.datamodel.Content is the interface class for the TSK datamodel.  ContentNode provides the standard methods that all nodes must provide. AbstractContentNode implements some of those methods. </p>
+<p>The underlying sleuthkit.datamodel Content objects are passed around Autopsy by being included in a Node's lookup.</p>
 
 <h2>Creating Nodes</h2>
 <p>You should only have to create the root node in a hierarchy.  To do so, use the RootContentChildren class and pass in the list of TSK datamodel objects that you need to encapsulate.  After that, the children will automatically be created as nodes when they are requested.  ContentChildren deals with this.</p>
