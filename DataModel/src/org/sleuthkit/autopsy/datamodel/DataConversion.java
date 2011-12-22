@@ -133,13 +133,13 @@ public class DataConversion {
         Charset.forName("UTF-8").newEncoder();
          */
 
-        StringBuilder result = new StringBuilder();
+        final StringBuilder result = new StringBuilder();
         StringBuilder temp = new StringBuilder();
         int counter = 0;
         //char[] converted = new java.lang.System.Text.Encoding.ASCII.GetString(args).ToCharArray();
 
-        char NL = (char) 10; // ASCII char for new line
-
+        final char NL = (char) 10; // ASCII char for new line
+        final String NLS = Character.toString(NL);
         for (int i = 0; i < args.length; i++) {
             char tempChar = (char) args[i];
             int dec = (int) tempChar;
@@ -147,8 +147,8 @@ public class DataConversion {
             // the printable ASCII chars are dec 32-126
             // and we want to include TAB as well (dec 9)
             if (!((dec < 32 || dec > 126) && dec != 9)) {
-                temp.append(Character.toString(tempChar));
-                counter = counter + 1;
+                temp.append(NLS);
+                ++counter;
             } else {
                 if (counter >= parameter) {
                     // add to the result and also add the new line at the end
