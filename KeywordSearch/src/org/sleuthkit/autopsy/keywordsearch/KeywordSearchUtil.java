@@ -1,5 +1,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.datamodel.Directory;
@@ -31,5 +33,17 @@ public class KeywordSearchUtil {
             dirName = dirNameB.toString();
         }
         return dirName;
+    }
+
+    public static String escapeLuceneQuery(String query) {
+        String queryEscaped = null;
+        try {
+            queryEscaped = URLEncoder.encode(query, "UTF-8"); 
+        }
+        catch (UnsupportedEncodingException ex) {
+            logger.log(Level.SEVERE, "Error escaping URL query, should not happen.", ex);
+            queryEscaped = query;
+        }
+        return queryEscaped;
     }
 }

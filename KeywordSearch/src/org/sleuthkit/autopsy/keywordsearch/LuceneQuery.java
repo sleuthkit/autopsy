@@ -64,14 +64,8 @@ public class LuceneQuery implements KeywordSearchQuery {
         Server.Core solrCore = KeywordSearch.getServer().getCore();
 
         SolrQuery q = new SolrQuery();
-        String queryEscaped = null;;
-        try {
-            queryEscaped = URLEncoder.encode(query, "UTF-8"); 
-        }
-        catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Error escaping URL query, should not happen.", ex);
-            queryEscaped = query;
-        }
+        
+        final String queryEscaped = KeywordSearchUtil.escapeLuceneQuery(query);
         q.setQuery(queryEscaped);
         q.setRows(ROWS_PER_FETCH);
         q.setFields("id");
