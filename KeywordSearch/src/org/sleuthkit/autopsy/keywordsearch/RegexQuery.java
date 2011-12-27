@@ -20,10 +20,13 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,12 +47,13 @@ import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.datamodel.FsContent;
 
 public class RegexQuery implements KeywordSearchQuery {
 
     private static final int TERMS_UNLIMITED = -1;
     //corresponds to field in Solr schema, analyzed with white-space tokenizer only
-    private static final String TERMS_SEARCH_FIELD = "text_ws";
+    private static final String TERMS_SEARCH_FIELD = "content_ws";
     private static final String TERMS_HANDLER = "/terms";
     private static final int TERMS_TIMEOUT = 90 * 1000; //in ms
     private String query;
@@ -148,22 +152,49 @@ public class RegexQuery implements KeywordSearchQuery {
             return new KeyValueNode(thing, Children.create(new RegexResultDetailsChildFactory(thing), true));
         }
 
-        
         class RegexResultDetailsChildFactory extends ChildFactory<KeyValueThing> {
-            
+
             private KeyValueThing thing;
+
             RegexResultDetailsChildFactory(KeyValueThing thing) {
                 this.thing = thing;
             }
 
             @Override
             protected boolean createKeys(List<KeyValueThing> toPopulate) {
-                //query 
-                Map<String,Object> map = new LinkedHashMap<String,Object>();
-                map.put("#hits", -1);
-                KeyValueThing t = new KeyValueThing("TEST", map, 1);
-                //return toPopulate.addAll(things);
-                toPopulate.add(t);
+                //use Lucene query to get files with regular expression match result
+                final String keywordQuery = thing.getName();
+                LuceneQuery filesQuery = new LuceneQuery(keywordQuery);
+                List<FsContent> matches = filesQuery.doQuery();
+                
+                //get unique match result files
+                Set<FsContent> uniqueMatches = new TreeSet<FsContent>(new Comparator<FsContent>() {
+
+                    @Override
+                    public int compare(FsContent fsc1, FsContent fsc2) {
+                        return (int) (fsc1.getId() - fsc2.getId());
+
+                    }
+                });
+                uniqueMatches.addAll(matches);
+
+                int resID = 0;
+                for (FsContent f : uniqueMatches) {
+                    Map<String, Object> resMap = new LinkedHashMap<String, Object>();
+                    //final String name = f.getName();
+                    final long id = f.getId();
+                    
+                    //build dir name
+                    String dirName = KeywordSearchUtil.buildDirName(f);
+                    
+                    resMap.put("dir", dirName);
+                    resMap.put("id", Long.toString(id));
+                    final String name = dirName + f.getName();
+                    resMap.put("name", name);
+                    toPopulate.add(new KeyValueThing(name, resMap, ++resID));
+                }
+                //TODO fix showing of child attributes in the GUI (DataResultViewerTable issue?)
+
                 return true;
             }
 
@@ -172,10 +203,10 @@ public class RegexQuery implements KeywordSearchQuery {
                 return new KeyValueNode(thing, Children.LEAF);
 
             }
-            
+
             @Override
             protected Node[] createNodesForKey(KeyValueThing thing) {
-                Node [] nodes = new Node[1];
+                Node[] nodes = new Node[1];
                 nodes[0] = new KeyValueNode(thing, Children.LEAF);
                 return nodes;
 

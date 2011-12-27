@@ -22,6 +22,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -31,19 +33,27 @@ import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 public class LuceneQuery implements KeywordSearchQuery {
 
+    private static final Logger logger = Logger.getLogger(LuceneQuery.class.getName());
+    
     private String query;
 
     public LuceneQuery(String query) {
         this.query = query;
     }
-
-    @Override
-    public void execute() {
+    
+    /**
+     * Just perform the query and return result without updating the GUI
+     * This utility is used in this class, can be potentially reused by other classes
+     * @param query
+     * @return matches List
+     */
+    public List<FsContent> doQuery() throws RuntimeException {
         List<FsContent> matches = new ArrayList<FsContent>();
 
         boolean allMatchesFetched = false;
@@ -80,18 +90,26 @@ public class LuceneQuery implements KeywordSearchQuery {
                 }
 
             } catch (SolrServerException ex) {
+                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
                 throw new RuntimeException(ex);
                 // TODO: handle bad query strings, among other issues
             } catch (SQLException ex) {
-                // TODO: handle error getting files from database
+                logger.log(Level.WARNING, "Error interpreting results from Lucene Solr Query: " + query, ex);
             }
 
         }
+        return matches;
+    }
 
+    @Override
+    public void execute() {
+        List<FsContent> matches = doQuery();
+        
         String pathText = "Lucene query: " + query;
         Node rootNode = new KeywordSearchNode(matches, query);
+        Node filteredRootNode = new TableFilterNode(rootNode, true);
 
-        TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, matches.size());
+        TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, filteredRootNode, matches.size());
         searchResultWin.requestActive(); // make it the active top component
     }
 
