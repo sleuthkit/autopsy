@@ -101,15 +101,14 @@ public class RegexQuery implements KeywordSearchQuery {
         Collection<KeyValueThing> things = new ArrayList<KeyValueThing>();
 
         Iterator<Term> it = terms.iterator();
-        int termID = 1;
+        int termID = 0;
         long totalMatches = 0;
         while (it.hasNext()) {
             Term term = it.next();
             Map<String, Object> kvs = new LinkedHashMap<String, Object>();
-            //kvs.put("RegEx Match", term.getTerm());
             long matches = term.getFrequency();
-            kvs.put("#files", matches);
-            things.add(new KeyValueThing(term.getTerm(), kvs, termID));
+            kvs.put("#hits", matches);
+            things.add(new KeyValueThing(term.getTerm(), kvs, ++termID));
             totalMatches += matches;
         }
 
@@ -145,7 +144,42 @@ public class RegexQuery implements KeywordSearchQuery {
 
         @Override
         protected Node createNodeForKey(KeyValueThing thing) {
-            return new KeyValueNode(thing, Children.LEAF);
+            //return new KeyValueNode(thing, Children.LEAF);
+            return new KeyValueNode(thing, Children.create(new RegexResultDetailsChildFactory(thing), true));
+        }
+
+        
+        class RegexResultDetailsChildFactory extends ChildFactory<KeyValueThing> {
+            
+            private KeyValueThing thing;
+            RegexResultDetailsChildFactory(KeyValueThing thing) {
+                this.thing = thing;
+            }
+
+            @Override
+            protected boolean createKeys(List<KeyValueThing> toPopulate) {
+                //query 
+                Map<String,Object> map = new LinkedHashMap<String,Object>();
+                map.put("#hits", -1);
+                KeyValueThing t = new KeyValueThing("TEST", map, 1);
+                //return toPopulate.addAll(things);
+                toPopulate.add(t);
+                return true;
+            }
+
+            @Override
+            protected Node createNodeForKey(KeyValueThing thing) {
+                return new KeyValueNode(thing, Children.LEAF);
+
+            }
+            
+            @Override
+            protected Node[] createNodesForKey(KeyValueThing thing) {
+                Node [] nodes = new Node[1];
+                nodes[0] = new KeyValueNode(thing, Children.LEAF);
+                return nodes;
+
+            }
         }
     }
 

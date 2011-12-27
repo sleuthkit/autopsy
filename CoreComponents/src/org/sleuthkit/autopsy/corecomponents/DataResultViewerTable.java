@@ -152,9 +152,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             if (hasChildren) {
                 Node root = selectedNode;
 
-                if (!(root instanceof TableFilterNode)) {
-                    root = new TableFilterNode(root, true);
-                }
+                //wrap to filter out children
+                //note: this breaks the tree view mode in this generic viewer,
+                //so wrap nodes earlier if want 1 level view
+                //if (!(root instanceof TableFilterNode)) {
+                ///    root = new TableFilterNode(root, true);
+                //}
 
                 em.setRootContext(root);
 

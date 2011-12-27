@@ -97,7 +97,7 @@ public class KeywordSearchDataExplorer implements DataExplorer {
         if (rq.validate()) {
             rq.execute();
         } else {
-            displayErrorDialog("Invalid RegEx query: " + regexQuery);
+            displayErrorDialog("Invalid RegEx query syntax: " + regexQuery);
         }
 
     }
