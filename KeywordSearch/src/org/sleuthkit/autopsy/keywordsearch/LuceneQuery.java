@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -62,7 +64,15 @@ public class LuceneQuery implements KeywordSearchQuery {
         Server.Core solrCore = KeywordSearch.getServer().getCore();
 
         SolrQuery q = new SolrQuery();
-        q.setQuery(query);
+        String queryEscaped = null;;
+        try {
+            queryEscaped = URLEncoder.encode(query, "UTF-8"); 
+        }
+        catch (UnsupportedEncodingException ex) {
+            logger.log(Level.SEVERE, "Error escaping URL query, should not happen.", ex);
+            queryEscaped = query;
+        }
+        q.setQuery(queryEscaped);
         q.setRows(ROWS_PER_FETCH);
         q.setFields("id");
 
