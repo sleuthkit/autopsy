@@ -209,7 +209,7 @@
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
       </analyzer>
     </fieldType>
-
+	
     <!-- A general text field that has reasonable, generic
          cross-language defaults: it tokenizes with StandardTokenizer,
 	 removes stop words from case-insensitive "stopwords.txt"
@@ -531,7 +531,11 @@
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
         leading wildcard queries. -->
    <field name="text_rev" type="text_general_rev" indexed="true" stored="false" multiValued="true"/>
-
+   
+   <!-- field with white-space tokenized words for TermsComponent regex search (useful for fast search of IP addresses, URLs, certain phone numbers)
+		also be useful for Lucene based queries containing special characters-->
+   <field name="content_ws" type="text_ws" indexed="true" stored="false" multiValued="true"/> 
+	
    <!-- Uncommenting the following will create a "timestamp" field using
         a default value of "NOW" to indicate when each document was indexed.
      -->
@@ -603,6 +607,7 @@
    <copyField source="file_name" dest="text"/>
    <copyField source="meta" dest="text"/>
    <copyField source="strings" dest="text"/>
+   <copyField source="content" dest="content_ws"/>
 	
    <!-- Above, multiple source fields are copied to the [text] field. 
 	  Another way to map multiple source fields to the same 

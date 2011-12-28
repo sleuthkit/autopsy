@@ -30,6 +30,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.SwingWorker;
@@ -47,6 +48,7 @@ import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 
 public class RegexQuery implements KeywordSearchQuery {
@@ -56,18 +58,18 @@ public class RegexQuery implements KeywordSearchQuery {
     private static final String TERMS_SEARCH_FIELD = "content_ws";
     private static final String TERMS_HANDLER = "/terms";
     private static final int TERMS_TIMEOUT = 90 * 1000; //in ms
-    private String query;
+    private String regexQuery;
     private static Logger logger = Logger.getLogger(RegexQuery.class.getName());
 
     public RegexQuery(String query) {
-        this.query = query;
+        this.regexQuery = query;
     }
 
     @Override
     public boolean validate() {
         boolean valid = true;
         try {
-            Pattern.compile(query);
+            Pattern.compile(regexQuery);
         } catch (PatternSyntaxException ex1) {
             valid = false;
         } catch (IllegalArgumentException ex2) {
@@ -83,10 +85,11 @@ public class RegexQuery implements KeywordSearchQuery {
         q.setQueryType(TERMS_HANDLER);
         q.setTerms(true);
         q.setTermsLimit(TERMS_UNLIMITED);
+        q.setTermsRegexFlag("case_insensitive");
         //q.setTermsLimit(200);
         //q.setTermsRegexFlag(regexFlag);
         //q.setTermsRaw(true);
-        q.setTermsRegex(query);
+        q.setTermsRegex(regexQuery);
         q.addTermsField(TERMS_SEARCH_FIELD);
         q.setTimeAllowed(TERMS_TIMEOUT);
 
@@ -111,7 +114,7 @@ public class RegexQuery implements KeywordSearchQuery {
             Term term = it.next();
             Map<String, Object> kvs = new LinkedHashMap<String, Object>();
             long matches = term.getFrequency();
-            kvs.put("#hits", matches);
+            kvs.put("#exact matches", matches);
             things.add(new KeyValueThing(term.getTerm(), kvs, ++termID));
             totalMatches += matches;
         }
@@ -126,13 +129,17 @@ public class RegexQuery implements KeywordSearchQuery {
             rootNode = Node.EMPTY;
         }
 
-        String pathText = "RegEx query: " + query + "    Total file matches: " + Long.toString(totalMatches);
+        String pathText = "RegEx query: " + regexQuery
+        + "    Files with exact matches: " + Long.toString(totalMatches) + " (also listing approximate matches)";
 
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, things.size());
         searchResultWin.requestActive(); // make it the active top component
 
     }
 
+    /**
+     * factory produces top level result nodes showing *exact* regex match result
+     */
     class RegexResultChildFactory extends ChildFactory<KeyValueThing> {
 
         Collection<KeyValueThing> things;
@@ -152,6 +159,12 @@ public class RegexQuery implements KeywordSearchQuery {
             return new KeyValueNode(thing, Children.create(new RegexResultDetailsChildFactory(thing), true));
         }
 
+        /**
+         * factory produces 2nd level child nodes showing files with *approximate* matches
+         * since they rely on underlying Lucene query to get details
+         * To implement exact regex match detail view, we need to extract files content
+         * returned by Lucene and further narrow down by applying a Java regex
+         */
         class RegexResultDetailsChildFactory extends ChildFactory<KeyValueThing> {
 
             private KeyValueThing thing;
@@ -166,7 +179,7 @@ public class RegexQuery implements KeywordSearchQuery {
                 final String keywordQuery = thing.getName();
                 LuceneQuery filesQuery = new LuceneQuery(keywordQuery);
                 List<FsContent> matches = filesQuery.doQuery();
-                
+
                 //get unique match result files
                 Set<FsContent> uniqueMatches = new TreeSet<FsContent>(new Comparator<FsContent>() {
 
@@ -183,33 +196,84 @@ public class RegexQuery implements KeywordSearchQuery {
                     Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                     //final String name = f.getName();
                     final long id = f.getId();
-                    
+
                     //build dir name
                     String dirName = KeywordSearchUtil.buildDirName(f);
-                    
+
                     resMap.put("dir", dirName);
                     resMap.put("id", Long.toString(id));
                     final String name = dirName + f.getName();
                     resMap.put("name", name);
-                    toPopulate.add(new KeyValueThing(name, resMap, ++resID));
+
+                    toPopulate.add(new KeyValueThingContent(name, resMap, ++resID, f, keywordQuery));
                 }
-                //TODO fix showing of child attributes in the GUI (DataResultViewerTable issue?)
+                //TODO fix showing of 2nd level child attributes in the GUI (DataResultViewerTable issue?)
 
                 return true;
             }
 
             @Override
             protected Node createNodeForKey(KeyValueThing thing) {
-                return new KeyValueNode(thing, Children.LEAF);
+                final KeyValueThingContent thingContent = (KeyValueThingContent) thing;
+                final Content content = thingContent.getContent();
+                final String query = thingContent.getQuery();
 
+                final String contentStr = getSolrContent(content);
+
+                //make sure the file contains a match (this gets rid of large number of false positives)
+                //TODO option in GUI to include approximate matches (faster)
+                boolean matchFound = false;
+                if (contentStr != null) {//if not null, some error getting from Solr, handle it by not filtering out
+                    Pattern p = Pattern.compile(regexQuery, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
+                    Matcher m = p.matcher(contentStr);
+                    matchFound = m.find();
+                }
+
+                if (matchFound) {
+                    Node kvNode = new KeyValueNode(thingContent, Children.LEAF);
+                    //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
+                    HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query);
+                    return new KeywordSearchFilterNode(highlights, kvNode, query);
+                } else {
+                    return null;
+                }
             }
 
-            @Override
-            protected Node[] createNodesForKey(KeyValueThing thing) {
-                Node[] nodes = new Node[1];
-                nodes[0] = new KeyValueNode(thing, Children.LEAF);
-                return nodes;
+            private String getSolrContent(final Content content) {
+                final Server.Core solrCore = KeywordSearch.getServer().getCore();
+                final SolrQuery q = new SolrQuery();
+                q.setQuery("*:*");
+                q.addFilterQuery("id:" + content.getId());
+                q.setFields("content");
+                try {
+                    return (String) solrCore.query(q).getResults().get(0).getFieldValue("content");
+                } catch (SolrServerException ex) {
+                    logger.log(Level.WARNING, "Error getting content from Solr and validating regex match", ex);
+                    return null;
+                }
+            }
+        }
 
+        /*
+         * custom KeyValueThing that also stores retrieved Content and query string used
+         */
+        class KeyValueThingContent extends KeyValueThing {
+
+            private Content content;
+            private String query;
+
+            Content getContent() {
+                return content;
+            }
+
+            String getQuery() {
+                return query;
+            }
+
+            public KeyValueThingContent(String name, Map<String, Object> map, int id, Content content, String query) {
+                super(name, map, id);
+                this.content = content;
+                this.query = query;
             }
         }
     }
@@ -237,7 +301,7 @@ public class RegexQuery implements KeywordSearchQuery {
                 TermsResponse tr = solrCore.queryTerms(q);
                 terms = tr.getTerms(TERMS_SEARCH_FIELD);
             } catch (SolrServerException ex) {
-                logger.log(Level.SEVERE, "Error executing the regex terms query: " + query, ex);
+                logger.log(Level.SEVERE, "Error executing the regex terms query: " + regexQuery, ex);
                 return null;  //no need to create result view, just display error dialog
             }
 
@@ -248,7 +312,7 @@ public class RegexQuery implements KeywordSearchQuery {
             for (Term t : terms) {
                 sb.append(t.getTerm() + " : " + t.getFrequency() + "\n");
             }
-            logger.log(Level.INFO, "TermsComponent query result: " + sb.toString());
+            //logger.log(Level.INFO, "TermsComponent query result: " + sb.toString());
             //end debug query
 
             return terms;
