@@ -308,10 +308,10 @@ public class RegexQuery implements KeywordSearchQuery {
             progress.progress("RegEx query completed.");
 
             //debug query
-            StringBuilder sb = new StringBuilder();
-            for (Term t : terms) {
-                sb.append(t.getTerm() + " : " + t.getFrequency() + "\n");
-            }
+            //StringBuilder sb = new StringBuilder();
+            //for (Term t : terms) {
+            //    sb.append(t.getTerm() + " : " + t.getFrequency() + "\n");
+            //}
             //logger.log(Level.INFO, "TermsComponent query result: " + sb.toString());
             //end debug query
 
