@@ -129,8 +129,9 @@ public class RegexQuery implements KeywordSearchQuery {
             rootNode = Node.EMPTY;
         }
 
-        String pathText = "RegEx query: " + regexQuery
-        + "    Files with exact matches: " + Long.toString(totalMatches) + " (also listing approximate matches)";
+        final String pathText = "RegEx query";
+       // String pathText = "RegEx query: " + regexQuery
+        //+ "    Files with exact matches: " + Long.toString(totalMatches) + " (also listing approximate matches)";
 
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, things.size());
         searchResultWin.requestActive(); // make it the active top component
