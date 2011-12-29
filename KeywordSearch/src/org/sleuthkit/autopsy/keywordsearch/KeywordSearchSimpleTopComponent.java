@@ -19,31 +19,22 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.windows.TopComponent;
 
-public class KeywordSearchTopComponent extends TopComponent {
+public class KeywordSearchSimpleTopComponent extends TopComponent implements KeywordSearchTopComponentInterface {
 
-    private Logger logger = Logger.getLogger(KeywordSearchTopComponent.class.getName());
-    private PropertyChangeListener serverChangeListener;
+    private Logger logger = Logger.getLogger(KeywordSearchSimpleTopComponent.class.getName());
 
-    /** Creates new form KeywordSearchTopComponent */
-    public KeywordSearchTopComponent() {
+    /** Creates new form KeywordSearchSimpleTopComponent */
+    public KeywordSearchSimpleTopComponent() {
         initComponents();
-        setName("Keyword Search");
+        setName("Simple");
         buttonGroup1.add(luceneQRadioButton);
         buttonGroup1.add(regexQRadioButton);
         searchButton.setEnabled(false);
 
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
-
-        //register with server Actions
-        serverChangeListener = new KeywordSearchServerListener();
-        KeywordSearch.getServer().addServerActionListener(serverChangeListener);
     }
 
     /** This method is called from within the constructor to
@@ -69,18 +60,18 @@ public class KeywordSearchTopComponent extends TopComponent {
         queryTextArea.setRows(5);
         jScrollPane1.setViewportView(queryTextArea);
 
-        searchButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.searchButton.text")); // NOI18N
+        searchButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.searchButton.text")); // NOI18N
 
-        queryLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.queryLabel.text")); // NOI18N
+        queryLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.queryLabel.text")); // NOI18N
 
-        filesIndexedNameLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.filesIndexedNameLabel.text")); // NOI18N
+        filesIndexedNameLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.filesIndexedNameLabel.text")); // NOI18N
 
-        filesIndexedValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.filesIndexedValLabel.text")); // NOI18N
+        filesIndexedValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.filesIndexedValLabel.text")); // NOI18N
 
         luceneQRadioButton.setSelected(true);
-        luceneQRadioButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.luceneQRadioButton.text")); // NOI18N
+        luceneQRadioButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.luceneQRadioButton.text")); // NOI18N
 
-        regexQRadioButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.regexQRadioButton.text")); // NOI18N
+        regexQRadioButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.regexQRadioButton.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -122,8 +113,8 @@ public class KeywordSearchTopComponent extends TopComponent {
                 .addContainerGap(106, Short.MAX_VALUE))
         );
 
-        filesIndexedNameLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.filesIndexedNameLabel.AccessibleContext.accessibleName")); // NOI18N
-        filesIndexedValLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(KeywordSearchTopComponent.class, "KeywordSearchTopComponent.filesIndexedValLabel.AccessibleContext.accessibleName")); // NOI18N
+        filesIndexedNameLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchTopComponent.filesIndexedNameLabel.AccessibleContext.accessibleName")); // NOI18N
+        filesIndexedValLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchTopComponent.filesIndexedValLabel.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
@@ -143,18 +134,23 @@ public class KeywordSearchTopComponent extends TopComponent {
         // clear old search
         queryTextArea.setText("");
     }
+    
+    @Override
     public void addSearchButtonListener(ActionListener l) {
         searchButton.addActionListener(l);
     }
 
+    @Override
     public String getQueryText() {
         return queryTextArea.getText();
     }
     
+    @Override
     public boolean isLuceneQuerySelected() {
         return luceneQRadioButton.isSelected();
     }
     
+    @Override
     public boolean isRegexQuerySelected() {
         return regexQRadioButton.isSelected();
     }
@@ -170,6 +166,7 @@ public class KeywordSearchTopComponent extends TopComponent {
         return TopComponent.PERSISTENCE_NEVER;
     }
 
+    @Override
     public void setFilesIndexed(int filesIndexed) {
         filesIndexedValLabel.setText(Integer.toString(filesIndexed));
         if (filesIndexed == 0) {
@@ -179,29 +176,4 @@ public class KeywordSearchTopComponent extends TopComponent {
         }
     }
 
-    class KeywordSearchServerListener implements PropertyChangeListener {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            String eventType = evt.getPropertyName();
-
-            if (eventType.equals(Server.CORE_EVT)) {
-                final Server.CORE_EVT_STATES state = (Server.CORE_EVT_STATES) evt.getNewValue();
-                switch (state) {
-                    case STARTED:
-                        try {
-                            final int numIndexedFiles = KeywordSearch.getServer().getCore().queryNumIndexedFiles();
-                            KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
-                        } catch (SolrServerException se) {
-                            logger.log(Level.SEVERE, "Error executing Solr query, " + se.getMessage());
-                        }
-                        break;
-                    case STOPPED:
-                        break;
-                    default:
-
-                }
-            }
-        }
-    }
 }
