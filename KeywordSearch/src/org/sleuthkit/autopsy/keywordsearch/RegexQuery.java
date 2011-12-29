@@ -120,9 +120,9 @@ public class RegexQuery implements KeywordSearchQuery {
         }
 
         Node rootNode = null;
-        if (things.size() > 0) {
+        if (things.size() > 0) {            
             Children childThingNodes =
-                    Children.create(new RegexResultChildFactory(things), true);
+                    Children.create(new RegexResultQueryChildFactory(regexQuery, things), true);
 
             rootNode = new AbstractNode(childThingNodes);
         } else {
@@ -135,6 +135,44 @@ public class RegexQuery implements KeywordSearchQuery {
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, things.size());
         searchResultWin.requestActive(); // make it the active top component
 
+    }
+    
+    /**
+     * factory produces top level result nodes showing query used
+     */
+    class RegexResultQueryChildFactory extends ChildFactory<KeyValueThing> {
+
+        Collection<String> queries;
+        Collection<KeyValueThing> things;
+
+        
+        RegexResultQueryChildFactory(Collection<String>queries, Collection<KeyValueThing> things) {
+            this.queries = queries;
+            this.things = things;
+        }
+        
+        RegexResultQueryChildFactory(String query, Collection<KeyValueThing> things) {
+            queries = new ArrayList<String>();
+            queries.add(query);
+            this.things = things;
+        }
+
+        @Override
+        protected boolean createKeys(List<KeyValueThing> toPopulate) {      
+            int id = 0;
+            for (String query : queries) {
+                LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
+                map.put("Query", query);
+                toPopulate.add(new KeyValueThing(query, map, ++id));
+            }
+            
+            return true;
+        }
+
+        @Override
+        protected Node createNodeForKey(KeyValueThing thing) {
+            return new KeyValueNode(thing, Children.create(new RegexResultChildFactory(things), true));
+        }
     }
 
     /**

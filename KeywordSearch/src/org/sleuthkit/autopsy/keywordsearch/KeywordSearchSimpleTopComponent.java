@@ -159,7 +159,7 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
      * Overwrite when you want to change default persistence type. Default
      * persistence type is PERSISTENCE_ALWAYS
      * 
-     * @return TopComponent.PERSISTENCE_ALWAYS
+     * @return TopComponent.PERSISTENCE_NEVER
      */
     @Override
     public int getPersistenceType() {
