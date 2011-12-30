@@ -133,6 +133,7 @@ public class DataConversion {
         Charset.forName("UTF-8").newEncoder();
          */
 
+
         final StringBuilder result = new StringBuilder();
         StringBuilder temp = new StringBuilder();
         int counter = 0;
@@ -141,27 +142,24 @@ public class DataConversion {
         final char NL = (char) 10; // ASCII char for new line
         final String NLS = Character.toString(NL);
         for (int i = 0; i < args.length; i++) {
-            char tempChar = (char) args[i];
-            int dec = (int) tempChar;
+            char curChar = (char) args[i];
+            int curCharInt = (int) curChar;
 
-            // the printable ASCII chars are dec 32-126
-            // and we want to include TAB as well (dec 9)
-            if (!((dec < 32 || dec > 126) && dec != 9)) {
-                temp.append(NLS);
-                ++counter;
-            } else {
+            // ignore non-printable ASCII chars
+            //  32-126 and TAB ( 9)
+            if (((curCharInt < 32) && (curCharInt != 9)) || (curCharInt > 126)) {
                 if (counter >= parameter) {
                     // add to the result and also add the new line at the end
                     result.append(temp);
                     result.append(Character.toString(NL));
-
-                    // reset the temp and counter
-                    temp = new StringBuilder();
-                    counter = 0;
                 }
                 // reset the temp and counter
                 temp = new StringBuilder();
                 counter = 0;
+            }
+            else {
+                temp.append(curChar);
+                ++counter;
             }
         }
 

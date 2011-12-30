@@ -200,7 +200,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             }
         }
 
-        resetTabs(currentNode);
+        setupTabs(currentNode);
     }
 
     @Override
@@ -248,14 +248,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
             currentNode = selectedNode;
 
-            resetTabs(selectedNode);
-
-            // set the display on the current active tab
-            int currentActiveTab = dataContentTabbedPane.getSelectedIndex();
-            if (currentActiveTab != -1) {
-                UpdateWrapper dcv = viewers.get(currentActiveTab);
-                dcv.setNode(selectedNode);
-            }
+            setupTabs(selectedNode);
         } finally {
             this.setCursor(null);
         }
@@ -296,7 +289,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
      *
      * @param selectedNode  the selected content Node
      */
-    public void resetTabs(Node selectedNode) {
+    public void setupTabs(Node selectedNode) {
 
         int totalTabs = dataContentTabbedPane.getTabCount();
 

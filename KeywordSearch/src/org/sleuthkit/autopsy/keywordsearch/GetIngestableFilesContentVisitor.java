@@ -31,11 +31,12 @@ import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData.FileKnown;
+import org.sleuthkit.datamodel.TskData;
 
 
 /**
  * Visitor for getting all the files to try to index from any Content object.
- * Currently gets all the files with a file extensions that match a list of
+ * Currently gets all the non-zero sized files with a file extensions that match a list of
  * document types that Tika/Solr-Cell supports.
  */
 class GetIngestableFilesContentVisitor extends GetFilesContentVisitor {
@@ -88,7 +89,9 @@ class GetIngestableFilesContentVisitor extends GetFilesContentVisitor {
 
         String query = "SELECT * FROM tsk_files WHERE fs_obj_id = " + fs.getId()
                 + " AND (" + extensionsLikePredicate + ")"
-                + " AND (known != " + FileKnown.KNOWN.toLong() + ")";
+                + " AND (known != " + FileKnown.KNOWN.toLong() + ")" 
+                + " AND (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getMetaType() + ")" 
+                + " AND (size > 0)";
         try {
             ResultSet rs = sc.runQuery(query);
             return sc.resultSetToFsContents(rs);
@@ -97,6 +100,4 @@ class GetIngestableFilesContentVisitor extends GetFilesContentVisitor {
             return Collections.EMPTY_SET;
         }
     }
-
-   
 }

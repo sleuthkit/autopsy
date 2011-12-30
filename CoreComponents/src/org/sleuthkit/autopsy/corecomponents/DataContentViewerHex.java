@@ -223,11 +223,9 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 }
 
                 // set the data on the bottom and show it
-                String text = "";
                 Boolean setVisible = false;
 
                 if (data != null) {
-                    text = DataConversion.getString(data, 4);
                     setVisible = true;
                 }
 
