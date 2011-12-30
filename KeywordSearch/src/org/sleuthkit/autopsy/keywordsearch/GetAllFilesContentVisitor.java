@@ -29,12 +29,12 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
  * Visitor for getting all the files to try to index from any Content object.
- * Currently gets all the files with a file extensions that match a list of
- * document types that Tika/Solr-Cell supports.
+ * Currently gets all non-zero files. 
  */
 class GetAllFilesContentVisitor extends GetFilesContentVisitor {
 
@@ -53,7 +53,8 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
         SleuthkitCase sc = Case.getCurrentCase().getSleuthkitCase();
 
         String query = "SELECT * FROM tsk_files WHERE fs_obj_id = " + fs.getId()
-                + " AND (known != " + FileKnown.KNOWN.toLong() + ")";
+                + " AND (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getMetaType() + 
+                ") AND (known != " + FileKnown.KNOWN.toLong() + ") AND (size > 0)";
         try {
             ResultSet rs = sc.runQuery(query);
             return sc.resultSetToFsContents(rs);

@@ -306,8 +306,7 @@ class Server {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            logger.log(Level.INFO, e.paramString());
-        }
-        
+            logger.log(Level.INFO, e.paramString().trim());
+        }   
     }
 }
