@@ -147,13 +147,13 @@ public class DataConversion {
             // the printable ASCII chars are dec 32-126
             // and we want to include TAB as well (dec 9)
             if (!((dec < 32 || dec > 126) && dec != 9)) {
-                temp.append(NLS);
+                temp.append(tempChar);
                 ++counter;
             } else {
                 if (counter >= parameter) {
                     // add to the result and also add the new line at the end
                     result.append(temp);
-                    result.append(Character.toString(NL));
+                    result.append(NLS);
 
                     // reset the temp and counter
                     temp = new StringBuilder();

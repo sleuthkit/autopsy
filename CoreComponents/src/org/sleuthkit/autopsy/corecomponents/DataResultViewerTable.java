@@ -25,7 +25,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import org.openide.explorer.ExplorerManager;
@@ -135,6 +137,41 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
+    /**
+     * Gets regular Bean property set properties from all first children and, recursively, subchildren of Node.
+     * Note: won't work out the box for lazy load - you need to set all children props for the parent by hand
+     * @param parent Node with at least one child to get properties from
+     * @return Properties,
+     */
+    private Node.Property[] getAllChildPropertyHeaders(Node parent) {
+        Node firstChild = parent.getChildren().getNodeAt(0);
+
+        Property[] properties = null;
+        
+        if (firstChild == null) {
+            throw new IllegalArgumentException("Couldn't get a child Node from the given parent.");
+        } else {
+            Set<Property> allProperties = new LinkedHashSet<Property>();
+            while (firstChild != null) {
+                for (PropertySet ps : firstChild.getPropertySets()) {
+                    //if (ps.getName().equals(Sheet.PROPERTIES)) {
+                        //return ps.getProperties();
+                        final Property [] props = ps.getProperties();
+                        final int propsNum = props.length;
+                        for (int i = 0; i< propsNum; ++i)
+                            allProperties.add(props[i]);
+                    //}
+                }
+                firstChild = firstChild.getChildren().getNodeAt(0);
+            }
+
+             properties = allProperties.toArray(new Property[0]);
+            //throw new IllegalArgumentException("Child Node doesn't have the regular PropertySet.");
+        }
+        return properties;
+       
+    }
+
     @Override
     public void setNode(Node selectedNode) {
         // change the cursor to "waiting cursor" for this operation
@@ -163,7 +200,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 OutlineView ov = ((OutlineView) this.tableScrollPanel);
 
-                List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(getChildPropertyHeaders(selectedNode)));
+                List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(getAllChildPropertyHeaders(selectedNode)));
 
                 tempProps.remove(0);
 
@@ -245,12 +282,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             this.setCursor(null);
         }
     }
-    
-    
+
     private static Object[][] getRowValues(Node node, int rows) {
         // how many rows are we returning
         int maxRows = Math.min(rows, node.getChildren().getNodesCount());
-        
+
         Object[][] objs = new Object[maxRows][];
 
         for (int i = 0; i < maxRows; i++) {
@@ -266,7 +302,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     objs[i][j] = "n/a";
                 } catch (InvocationTargetException ignore) {
                     objs[i][j] = "n/a";
-                }            
+                }
             }
         }
         return objs;
