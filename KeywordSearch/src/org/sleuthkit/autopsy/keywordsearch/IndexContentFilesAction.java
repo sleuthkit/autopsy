@@ -27,11 +27,10 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -112,17 +111,15 @@ public class IndexContentFilesAction extends AbstractAction {
                 Collection<FsContent> ingestableFiles = c.accept(ingestableV);
                 Collection<FsContent> allFiles = c.accept(allV);
 
-                //calculate non ingestable Collection (complement of allFiles / ingestableFiles)
-                Collection<FsContent> nonIngestibleFiles = new TreeSet<FsContent>(new Comparator<FsContent>() {
-
-                    @Override
-                    public int compare(FsContent fsc1, FsContent fsc2) {
-                        return (int) (fsc1.getId() - fsc2.getId());
-
+                //calculate non ingestable Collection (complement of allFiles / ingestableFiles
+                //TODO implement a facility that selects different categories of FsContent
+                Collection<FsContent> nonIngestibleFiles = new LinkedHashSet<FsContent>();
+               
+                for (FsContent fs : allFiles) {
+                    if (! ingestableFiles.contains(fs) ) {
+                        nonIngestibleFiles.add(fs);
                     }
-                });
-                nonIngestibleFiles.addAll(allFiles);
-                nonIngestibleFiles.removeAll(ingestableFiles);
+                }
 
                 // track number complete or with errors
                 problemFilesCount = 0;
