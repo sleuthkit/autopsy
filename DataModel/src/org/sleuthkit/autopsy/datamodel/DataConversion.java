@@ -151,7 +151,7 @@ public class DataConversion {
                 if (counter >= parameter) {
                     // add to the result and also add the new line at the end
                     result.append(temp);
-                    result.append(Character.toString(NL));
+                    result.append(NLS);
                 }
                 // reset the temp and counter
                 temp = new StringBuilder();

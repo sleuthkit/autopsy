@@ -36,13 +36,13 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 public class KeywordSearchDataExplorer implements DataExplorer {
 
     private static KeywordSearchDataExplorer theInstance;
-    private KeywordSearchTopComponent tc;
+    private KeywordSearchTabsTopComponent tc;
 
     public KeywordSearchDataExplorer() {
         this.setTheInstance();
-        this.tc = new KeywordSearchTopComponent();
-        this.tc.addSearchButtonListener(new ActionListener() {
+        this.tc = new KeywordSearchTabsTopComponent();
 
+        this.tc.addSearchButtonListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 tc.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -62,6 +62,8 @@ public class KeywordSearchDataExplorer implements DataExplorer {
 
         KeywordSearch.changeSupport.addPropertyChangeListener(KeywordSearch.NUM_FILES_CHANGE_EVT, new IndexChangeListener());
     }
+    
+    
 
     private synchronized void setTheInstance() {
         if (theInstance == null) {

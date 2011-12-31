@@ -46,9 +46,12 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
+import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.datamodel.KeyValueThing;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 
 public class RegexQuery implements KeywordSearchQuery {
@@ -60,6 +63,30 @@ public class RegexQuery implements KeywordSearchQuery {
     private static final int TERMS_TIMEOUT = 90 * 1000; //in ms
     private String regexQuery;
     private static Logger logger = Logger.getLogger(RegexQuery.class.getName());
+    
+    //common properties (superset of all Node properties) to be displayed as columns
+    //these are merged with FsContentPropertyType defined properties
+    private static enum CommonPropertyTypes {
+        QUERY {
+            @Override
+            public String toString() {
+                return "Query";
+            }
+        }, 
+        MATCH {
+            @Override
+            public String toString() {
+                return "Match";
+            }
+        },  
+       /* MATCH_RANK {
+            @Override
+            public String toString() {
+                return "Match Rank";
+            }
+        },*/ 
+    }
+    
 
     public RegexQuery(String query) {
         this.regexQuery = query;
@@ -109,32 +136,100 @@ public class RegexQuery implements KeywordSearchQuery {
 
         Iterator<Term> it = terms.iterator();
         int termID = 0;
-        long totalMatches = 0;
+        //long totalMatches = 0;
         while (it.hasNext()) {
             Term term = it.next();
             Map<String, Object> kvs = new LinkedHashMap<String, Object>();
             long matches = term.getFrequency();
-            kvs.put("#exact matches", matches);
-            things.add(new KeyValueThing(term.getTerm(), kvs, ++termID));
-            totalMatches += matches;
+            final String match = term.getTerm();
+            setCommonProperty(kvs, CommonPropertyTypes.MATCH, match);
+            //setCommonProperty(kvs, CommonPropertyTypes.MATCH_RANK, Long.toString(matches));
+            things.add(new KeyValueThing(match, kvs, ++termID));
+            //totalMatches += matches;
         }
 
         Node rootNode = null;
-        if (things.size() > 0) {
+        if (things.size() > 0) {            
             Children childThingNodes =
-                    Children.create(new RegexResultChildFactory(things), true);
+                    Children.create(new RegexResultQueryChildFactory(regexQuery, things), true);
 
             rootNode = new AbstractNode(childThingNodes);
         } else {
             rootNode = Node.EMPTY;
         }
 
-        String pathText = "RegEx query: " + regexQuery
-        + "    Files with exact matches: " + Long.toString(totalMatches) + " (also listing approximate matches)";
+        final String pathText = "RegEx query";
+       // String pathText = "RegEx query: " + regexQuery
+        //+ "    Files with exact matches: " + Long.toString(totalMatches) + " (also listing approximate matches)";
 
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, things.size());
         searchResultWin.requestActive(); // make it the active top component
 
+    }
+    
+    /**
+     * call this at least for the parent Node, to make sure all common 
+     * properties are displayed as columns (since we are doing lazy child Node load
+     * we need to preinitialize properties when sending parent Node)
+     * @param toSet property set map for a Node
+     */
+    private static void initCommonProperties(Map<String, Object> toSet) {
+        CommonPropertyTypes [] commonTypes = CommonPropertyTypes.values();
+        final int COMMON_PROPS_LEN = commonTypes.length;
+        for (int i = 0; i< COMMON_PROPS_LEN; ++i) {
+            toSet.put(commonTypes[i].toString(), "");
+        }
+        
+        FsContentPropertyType [] fsTypes = FsContentPropertyType.values();
+        final int FS_PROPS_LEN = fsTypes.length;
+        for (int i = 0; i< FS_PROPS_LEN; ++i) {
+            toSet.put(fsTypes[i].toString(), "");
+        }
+
+    }
+    
+    private static void setCommonProperty(Map<String, Object> toSet, CommonPropertyTypes type, String value) {
+        final String typeStr = type.toString();
+        toSet.put(typeStr, value);
+    }
+    
+    /**
+     * factory produces top level result nodes showing query used
+     */
+    class RegexResultQueryChildFactory extends ChildFactory<KeyValueThing> {
+
+        Collection<String> queries;
+        Collection<KeyValueThing> things;
+
+        
+        RegexResultQueryChildFactory(Collection<String>queries, Collection<KeyValueThing> things) {
+            this.queries = queries;
+            this.things = things;
+        }
+        
+        RegexResultQueryChildFactory(String query, Collection<KeyValueThing> things) {
+            queries = new ArrayList<String>();
+            queries.add(query);
+            this.things = things;
+        }
+
+        @Override
+        protected boolean createKeys(List<KeyValueThing> toPopulate) {      
+            int id = 0;
+            for (String query : queries) {
+                Map<String, Object> map = new LinkedHashMap<String, Object>();
+                initCommonProperties(map);
+                setCommonProperty(map, CommonPropertyTypes.QUERY, query);
+                toPopulate.add(new KeyValueThing(query, map, ++id));
+            }
+            
+            return true;
+        }
+
+        @Override
+        protected Node createNodeForKey(KeyValueThing thing) {
+            return new KeyValueNode(thing, Children.create(new RegexResultChildFactory(things), true));
+        }
     }
 
     /**
@@ -192,25 +287,15 @@ public class RegexQuery implements KeywordSearchQuery {
                 uniqueMatches.addAll(matches);
 
                 int resID = 0;
-                for (FsContent f : uniqueMatches) {
+                for (FsContent f : uniqueMatches) {        
                     Map<String, Object> resMap = new LinkedHashMap<String, Object>();
-                    //final String name = f.getName();
-                    final long id = f.getId();
-
-                    //build dir name
-                    String dirName = KeywordSearchUtil.buildDirName(f);
-
-                    resMap.put("dir", dirName);
-                    resMap.put("id", Long.toString(id));
-                    final String name = dirName + f.getName();
-                    resMap.put("name", name);
-
-                    toPopulate.add(new KeyValueThingContent(name, resMap, ++resID, f, keywordQuery));
+                    AbstractFsContentNode.fillPropertyMap(resMap, (File)f);
+                    toPopulate.add(new KeyValueThingContent(f.getName(), resMap, ++resID, f, keywordQuery));
                 }
-                //TODO fix showing of 2nd level child attributes in the GUI (DataResultViewerTable issue?)
 
                 return true;
             }
+          
 
             @Override
             protected Node createNodeForKey(KeyValueThing thing) {
@@ -308,10 +393,10 @@ public class RegexQuery implements KeywordSearchQuery {
             progress.progress("RegEx query completed.");
 
             //debug query
-            StringBuilder sb = new StringBuilder();
-            for (Term t : terms) {
-                sb.append(t.getTerm() + " : " + t.getFrequency() + "\n");
-            }
+            //StringBuilder sb = new StringBuilder();
+            //for (Term t : terms) {
+            //    sb.append(t.getTerm() + " : " + t.getFrequency() + "\n");
+            //}
             //logger.log(Level.INFO, "TermsComponent query result: " + sb.toString());
             //end debug query
 
