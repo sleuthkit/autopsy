@@ -177,17 +177,11 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 //use Lucene query to get files with regular expression match result
                 final String keywordQuery = thing.getName();
                 LuceneQuery filesQuery = new LuceneQuery(keywordQuery);
+                filesQuery.escape();
                 List<FsContent> matches = filesQuery.performQuery();
 
                 //get unique match result files
-                Set<FsContent> uniqueMatches = new TreeSet<FsContent>(new Comparator<FsContent>() {
-
-                    @Override
-                    public int compare(FsContent fsc1, FsContent fsc2) {
-                        return (int) (fsc1.getId() - fsc2.getId());
-
-                    }
-                });
+                Set<FsContent> uniqueMatches = new TreeSet<FsContent>();
                 uniqueMatches.addAll(matches);
 
                 int resID = 0;
@@ -212,8 +206,14 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 //TODO option in GUI to include approximate matches (faster)
                 boolean matchFound = false;
                 if (contentStr != null) {//if not null, some error getting from Solr, handle it by not filtering out
-                    final String keywordQuery = thing.getName();
-                    Pattern p = Pattern.compile(keywordQuery, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
+                    //perform java regex to validate match from Solr
+                    String origQuery = thingContent.getQuery();
+                    
+                    //escape the regex query because it may contain special characters from the previous match
+                    //since it's a match result, we can assume literal pattern
+                    origQuery = Pattern.quote(origQuery);
+                    Pattern p = Pattern.compile(origQuery, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+                    
                     Matcher m = p.matcher(contentStr);
                     matchFound = m.find();
                 }

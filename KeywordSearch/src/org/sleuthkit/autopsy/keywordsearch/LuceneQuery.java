@@ -66,6 +66,7 @@ public class LuceneQuery implements KeywordSearchQuery {
      * @param query
      * @return matches List
      */
+    @Override
     public List<FsContent> performQuery() throws RuntimeException {
         List<FsContent> matches = new ArrayList<FsContent>();
 

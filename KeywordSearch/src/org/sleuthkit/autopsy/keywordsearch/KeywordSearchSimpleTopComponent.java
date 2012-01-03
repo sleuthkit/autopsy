@@ -30,7 +30,6 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     public KeywordSearchSimpleTopComponent() {
         initComponents();
         setName("Simple");
-        buttonGroup1.add(chRegex);
         searchButton.setEnabled(false);
 
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
@@ -81,16 +80,18 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(queryLabel)
-                        .addGap(62, 62, 62)
-                        .addComponent(chRegex))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 599, Short.MAX_VALUE)
-                    .addComponent(searchButton)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(queryLabel)
+                                .addGap(50, 50, 50)
+                                .addComponent(chRegex))
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 599, Short.MAX_VALUE)
+                            .addComponent(searchButton))
+                        .addContainerGap())
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(filesIndexedNameLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(filesIndexedValLabel)))
-                .addContainerGap())
+                        .addComponent(filesIndexedValLabel))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
