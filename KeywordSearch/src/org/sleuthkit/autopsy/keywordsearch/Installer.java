@@ -40,7 +40,7 @@ public class Installer extends ModuleInstall {
 
         if (server.isRunning()) {
 
-            logger.log(Level.WARNING, "Already a Solr server on out port, maybe leftover from a previous run. Trying to shut it down...");
+            logger.log(Level.WARNING, "Already a Solr server running, maybe leftover from a previous run. Trying to shut it down...");
 
             // Send the stop message in case there's a solr server lingering from
             // a previous run of Autopsy that didn't exit cleanly

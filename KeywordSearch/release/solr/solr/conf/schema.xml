@@ -45,7 +45,7 @@
     that avoids logging every request
 -->
 
-<schema name="Maytag Keyword Search" version="1.4">
+<schema name="Autopsy Keyword Search" version="1.4">
   <!-- attribute "name" is the name of this schema and is only used for display purposes.
        Applications should change this to reflect the nature of the search collection.
        version="1.4" is Solr's version number for the schema syntax and semantics.  It should

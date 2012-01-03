@@ -38,6 +38,7 @@ import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
+import org.apache.commons.httpclient.NoHttpResponseException;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -54,7 +55,7 @@ class Server {
     public static final String CORE_EVT = "CORE_EVT"; 
     public enum CORE_EVT_STATES { STOPPED, STARTED };
 
-    private CommonsHttpSolrServer solr;
+    private CommonsHttpSolrServer solrServer;
     private String instanceDir;
     private File solrFolder;
     private ServerAction serverAction;
@@ -65,7 +66,7 @@ class Server {
      */
     Server(String url) {
         try {
-            this.solr = new CommonsHttpSolrServer(url);
+            this.solrServer = new CommonsHttpSolrServer(url);
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex);
         }
@@ -73,6 +74,12 @@ class Server {
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false);
         instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr";
+    }
+    
+    @Override
+    public void finalize() throws java.lang.Throwable {
+        stop();
+        super.finalize();
     }
  
     public void addServerActionListener(PropertyChangeListener l) {
@@ -82,11 +89,11 @@ class Server {
     /**
      * Helper threads to handle stderr/stdout from Solr process
      */
-    private static class InputStreamPrinter extends Thread {
+    private static class InputStreamPrinterThread extends Thread {
 
         InputStream stream;
 
-        InputStreamPrinter(InputStream stream) {
+        InputStreamPrinterThread(InputStream stream) {
             this.stream = stream;
         }
 
@@ -97,8 +104,7 @@ class Server {
             String line = null;
             try {
                 while ((line = br.readLine()) != null) {
-                    System.out.print("SOLR> ");
-                    System.out.println(line);
+                    logger.log(Level.INFO, "SOLR OUTPUT: " + line.trim());
                 }
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
@@ -118,8 +124,8 @@ class Server {
             Process start = Runtime.getRuntime().exec("java -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar", null, solrFolder);
             
             // Handle output to prevent process from blocking
-            (new InputStreamPrinter(start.getInputStream())).start();
-            (new InputStreamPrinter(start.getErrorStream())).start();
+            (new InputStreamPrinterThread(start.getInputStream())).start();
+            (new InputStreamPrinterThread(start.getErrorStream())).start();
             
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -154,10 +160,10 @@ class Server {
     boolean isRunning() {
 
         try {
-            // making a status request here instead of just doing solr.ping(), because
+            // making a status request here instead of just doing solrServer.ping(), because
             // that doesn't work when there are no cores
 
-            CoreAdminRequest.getStatus(null, solr);
+            CoreAdminRequest.getStatus(null, solrServer);
         } catch (SolrServerException ex) {
             
             Throwable cause = ex.getRootCause();
@@ -165,7 +171,7 @@ class Server {
             // TODO: check if SocketExceptions should actually happen (is
             // probably caused by starting a connection as the server finishes
             // shutting down)
-            if (cause instanceof ConnectException || cause instanceof SocketException) {
+            if (cause instanceof ConnectException || cause instanceof SocketException || cause instanceof NoHttpResponseException) {
                 return false;
             } else {
                 throw new RuntimeException("Error checking if server is running", ex);
@@ -237,7 +243,7 @@ class Server {
             createCore.setInstanceDir(instanceDir);
             createCore.setCoreName(coreName);
 
-            this.solr.request(createCore);
+            this.solrServer.request(createCore);
 
             return new Core(coreName);
 
@@ -260,7 +266,7 @@ class Server {
         private Core(String name) {
             this.name = name;
             try {
-                this.solrCore = new CommonsHttpSolrServer(solr.getBaseURL() + "/" + name);
+                this.solrCore = new CommonsHttpSolrServer(solrServer.getBaseURL() + "/" + name);
             } catch (MalformedURLException ex) {
                 throw new RuntimeException(ex);
             }
@@ -281,7 +287,7 @@ class Server {
         
         void close() {
             try {
-                CoreAdminRequest.unloadCore(this.name, solr);
+                CoreAdminRequest.unloadCore(this.name, solrServer);
             } catch (SolrServerException ex) {
                 throw new RuntimeException(ex);
             } catch (IOException ex) {
