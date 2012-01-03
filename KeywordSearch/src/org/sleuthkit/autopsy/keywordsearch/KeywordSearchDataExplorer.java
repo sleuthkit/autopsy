@@ -28,6 +28,7 @@ import javax.swing.JOptionPane;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 
 /**
  * Provides a data explorer to perform Solr searches with
@@ -48,7 +49,7 @@ public class KeywordSearchDataExplorer implements DataExplorer {
                 tc.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 QueryType queryType = null;
                 if (tc.isLuceneQuerySelected()) {
-                    queryType = QueryType.LUCENE;
+                    queryType = QueryType.WORD;
                 } else {
                     queryType = QueryType.REGEX;
                 }
@@ -78,39 +79,16 @@ public class KeywordSearchDataExplorer implements DataExplorer {
      * @param solrQuery 
      */
     private void search(String query, QueryType queryType) {
+        KeywordSearchQueryManager man = new KeywordSearchQueryManager(query, queryType, Presentation.DETAIL);
 
-        switch (queryType) {
-            case LUCENE:
-                searchLuceneQuery(query);
-                break;
-            case REGEX:
-                searchRegexQuery(query);
-                break;
-            default:
-        }
-    }
-
-    /**
-     * Executes a Lucene query and populates a DataResult tab with the results
-     * @param solrQuery 
-     */
-    private void searchRegexQuery(String regexQuery) {
-        TermComponentQuery rq = new TermComponentQuery(regexQuery);
-        if (rq.validate()) {
-            rq.execute();
+        if (man.validate()) {
+            man.execute();
         } else {
-            displayErrorDialog("Invalid RegEx query syntax: " + regexQuery);
+            displayErrorDialog("Invalid query syntax: " + query);
         }
 
     }
 
-    /**
-     * Executes a Lucene query and populates a DataResult tab with the results
-     * @param solrQuery 
-     */
-    private void searchLuceneQuery(String luceneQuery) {
-        new LuceneQuery(luceneQuery).execute();
-    }
 
     @Override
     public org.openide.windows.TopComponent getTopComponent() {

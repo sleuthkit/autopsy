@@ -47,5 +47,17 @@ public interface KeywordSearchQuery {
      */
     public void escape();
     
+    /**
+     * return original query string
+     * @return the query String supplied originally
+     */
+    public String getQueryString();
+    
+    /**
+     * return escaped query string if escaping was done
+     * @return the escaped query string, or original string if no escaping done
+     */
+    public String getEscapedQueryString();
+    
     
 }

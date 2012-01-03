@@ -42,7 +42,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class LuceneQuery implements KeywordSearchQuery {
 
     private static final Logger logger = Logger.getLogger(LuceneQuery.class.getName());
-    
     private String query; //original unescaped query
     private String queryEscaped;
     private boolean isEscaped;
@@ -58,8 +57,17 @@ public class LuceneQuery implements KeywordSearchQuery {
         queryEscaped = KeywordSearchUtil.escapeLuceneQuery(query);
         isEscaped = true;
     }
-    
-    
+
+    @Override
+    public String getEscapedQueryString() {
+        return this.queryEscaped;
+    }
+
+    @Override
+    public String getQueryString() {
+        return this.query;
+    }
+
     /**
      * Just perform the query and return result without updating the GUI
      * This utility is used in this class, can be potentially reused by other classes
@@ -76,7 +84,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         Server.Core solrCore = KeywordSearch.getServer().getCore();
 
         SolrQuery q = new SolrQuery();
-        
+
         q.setQuery(queryEscaped);
         q.setRows(ROWS_PER_FETCH);
         q.setFields("id");
@@ -120,7 +128,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     public void execute() {
         escape();
         List<FsContent> matches = performQuery();
-        
+
         String pathText = "Lucene query: " + query;
         Node rootNode = new KeywordSearchNode(matches, query);
         Node filteredRootNode = new TableFilterNode(rootNode, true);
@@ -131,6 +139,6 @@ public class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public boolean validate() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return query != null && ! query.equals("");
     }
 }

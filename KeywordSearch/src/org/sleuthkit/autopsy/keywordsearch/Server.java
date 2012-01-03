@@ -42,19 +42,22 @@ import org.apache.commons.httpclient.NoHttpResponseException;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Handles for keeping track of a Solr server and its cores
  */
 class Server {
+
     private static final Logger logger = Logger.getLogger(Server.class.getName());
-    
     private static final String DEFAULT_CORE_NAME = "coreCase";
     // TODO: DEFAULT_CORE_NAME needs to be replaced with unique names to support multiple open cases
-    
-    public static final String CORE_EVT = "CORE_EVT"; 
-    public enum CORE_EVT_STATES { STOPPED, STARTED };
+    public static final String CORE_EVT = "CORE_EVT";
 
+    public enum CORE_EVT_STATES {
+
+        STOPPED, STARTED
+    };
     private CommonsHttpSolrServer solrServer;
     private String instanceDir;
     private File solrFolder;
@@ -70,22 +73,22 @@ class Server {
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex);
         }
-        
+
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false);
         instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr";
     }
-    
+
     @Override
     public void finalize() throws java.lang.Throwable {
         stop();
         super.finalize();
     }
- 
+
     public void addServerActionListener(PropertyChangeListener l) {
         serverAction.addPropertyChangeListener(l);
     }
-    
+
     /**
      * Helper threads to handle stderr/stdout from Solr process
      */
@@ -111,8 +114,7 @@ class Server {
             }
         }
     }
-    
-    
+
     /**
      * Tries to start a Solr instance in a separate process. Returns immediately
      * (probably before the server is ready) and doesn't check whether it was
@@ -122,11 +124,11 @@ class Server {
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
         try {
             Process start = Runtime.getRuntime().exec("java -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar", null, solrFolder);
-            
+
             // Handle output to prevent process from blocking
             (new InputStreamPrinterThread(start.getInputStream())).start();
             (new InputStreamPrinterThread(start.getErrorStream())).start();
-            
+
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -144,15 +146,14 @@ class Server {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
             Process stop = Runtime.getRuntime().exec("java -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar --stop", null, solrFolder);
             return stop.waitFor() == 0;
-            
+
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
-  
-    
+
     /**
      * Tests if there's a Solr server running by sending it a core-status request.
      * @return false if the request failed with a connection error, otherwise true
@@ -165,9 +166,9 @@ class Server {
 
             CoreAdminRequest.getStatus(null, solrServer);
         } catch (SolrServerException ex) {
-            
+
             Throwable cause = ex.getRootCause();
-            
+
             // TODO: check if SocketExceptions should actually happen (is
             // probably caused by starting a connection as the server finishes
             // shutting down)
@@ -182,11 +183,9 @@ class Server {
 
         return true;
     }
-
     /**** Convenience methods for use while we only open one case at a time ****/
-    
     private Core currentCore = null;
-    
+
     void openCore() {
         if (currentCore != null) {
             throw new RuntimeException("Already an open Core!");
@@ -194,7 +193,7 @@ class Server {
         currentCore = openCore(Case.getCurrentCase());
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
     }
-    
+
     void closeCore() {
         if (currentCore == null) {
             throw new RuntimeException("No currently open Core!");
@@ -203,18 +202,15 @@ class Server {
         currentCore = null;
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
     }
-    
+
     Core getCore() {
         if (currentCore == null) {
             throw new RuntimeException("No currently open Core!");
         }
         return currentCore;
     }
-        
-    
-    /**** end single-case specific methods ****/ 
 
-    
+    /**** end single-case specific methods ****/
     /**
      * Open a core for the given case
      * @param c
@@ -258,7 +254,6 @@ class Server {
 
         // handle to the core in Solr
         private String name;
-        
         // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
         private SolrServer solrCore;
@@ -271,20 +266,33 @@ class Server {
                 throw new RuntimeException(ex);
             }
         }
-        
-        Ingester getIngester() {
+
+        public Ingester getIngester() {
             return new Ingester(this.solrCore);
         }
-        
-        QueryResponse query(SolrQuery sq) throws SolrServerException {
+
+        public QueryResponse query(SolrQuery sq) throws SolrServerException {
             return solrCore.query(sq);
         }
-        
-        TermsResponse queryTerms(SolrQuery sq) throws SolrServerException {
+
+        public TermsResponse queryTerms(SolrQuery sq) throws SolrServerException {
             QueryResponse qres = solrCore.query(sq);
             return qres.getTermsResponse();
         }
-        
+
+        public String getSolrContent(final Content content) {
+            final SolrQuery q = new SolrQuery();
+            q.setQuery("*:*");
+            q.addFilterQuery("id:" + content.getId());
+            q.setFields("content");
+            try {
+                return (String) solrCore.query(q).getResults().get(0).getFieldValue("content");
+            } catch (SolrServerException ex) {
+                logger.log(Level.WARNING, "Error getting content from Solr and validating regex match", ex);
+                return null;
+            }
+        }
+
         void close() {
             try {
                 CoreAdminRequest.unloadCore(this.name, solrServer);
@@ -294,7 +302,7 @@ class Server {
                 throw new RuntimeException(ex);
             }
         }
-        
+
         /**
          * Execute query that gets only number of all Solr documents indexed
          * without actually returning the documents
@@ -302,17 +310,17 @@ class Server {
          * @throws SolrServerException 
          */
         public int queryNumIndexedFiles() throws SolrServerException {
-             SolrQuery q = new SolrQuery("*:*");
-             q.setRows(0); 
-             return (int)query(q).getResults().getNumFound();
+            SolrQuery q = new SolrQuery("*:*");
+            q.setRows(0);
+            return (int) query(q).getResults().getNumFound();
+        }
     }
-}
-    
+
     class ServerAction extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
             logger.log(Level.INFO, e.paramString().trim());
-        }   
+        }
     }
 }

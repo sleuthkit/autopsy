@@ -20,18 +20,14 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -39,21 +35,18 @@ import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
  *
- * factory responsible for assembling nodes in the right way
+ * factory produces top level nodes with query
+ * responsible for assembling nodes and columns in the right way
  * and performing lazy queries as needed
  */
 public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
-
-    public enum Presentation {
-
-        COLLAPSE, STRUCTURE
-    };
 
     //common properties (superset of all Node properties) to be displayed as columns
     //these are merged with FsContentPropertyType defined properties
@@ -133,17 +126,66 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
 
     @Override
     protected Node createNodeForKey(KeyValueThing thing) {
-        return new KeyValueNode(thing, Children.create(new RegexResultChildFactory(things), true));
+        ChildFactory<KeyValueThing> childFactory = null;
+        switch (presentation) {
+            case COLLAPSE:
+                childFactory = null;
+                break;
+            case DETAIL:
+                childFactory = new ResulTermsMatchesChildFactory(things);
+                break;
+            default:    
+        }
+        
+         return new KeyValueNode(thing, Children.create(childFactory, true));
+    }
+    
+    /**
+     * factory produces collapsed view of all fscontent matches per query
+     * the node produced is a child node
+     * The factory actually executes query.
+     */
+    class ResulCollapsedChildFactory extends ChildFactory<KeyValueThing> {
+
+        KeyValueThing queryThing;
+
+        ResulCollapsedChildFactory(KeyValueThing queryThing) {
+            this.queryThing = queryThing;
+        }
+
+        @Override
+        protected boolean createKeys(List<KeyValueThing> toPopulate) {
+            String origQuery = queryThing.getName();
+            TermComponentQuery tcq = new TermComponentQuery(origQuery);
+            Map<String,Object> map = new LinkedHashMap<String,Object>();
+            if (tcq.validate()) {
+                map.put("query_valid", true);
+                return true;
+            }
+            else {
+                map.put("query_valid", false);
+                return false;
+            }
+            
+            
+            //return toPopulate.addAll(things);
+        }
+
+        @Override
+        protected Node createNodeForKey(KeyValueThing thing) {
+            return new KeyValueNode(thing, Children.LEAF);
+            //return new KeyValueNode(thing, Children.create(new ResultFilesChildFactory(thing), true));
+        }
     }
 
     /**
      * factory produces top level result nodes showing *exact* regex match result
      */
-    class RegexResultChildFactory extends ChildFactory<KeyValueThing> {
+    class ResulTermsMatchesChildFactory extends ChildFactory<KeyValueThing> {
 
         Collection<KeyValueThing> things;
 
-        RegexResultChildFactory(Collection<KeyValueThing> things) {
+        ResulTermsMatchesChildFactory(Collection<KeyValueThing> things) {
             this.things = things;
         }
 
@@ -155,7 +197,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
         @Override
         protected Node createNodeForKey(KeyValueThing thing) {
             //return new KeyValueNode(thing, Children.LEAF);
-            return new KeyValueNode(thing, Children.create(new RegexResultDetailsChildFactory(thing), true));
+            return new KeyValueNode(thing, Children.create(new ResultFilesChildFactory(thing), true));
         }
 
         /**
@@ -164,11 +206,11 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
          * To implement exact regex match detail view, we need to extract files content
          * returned by Lucene and further narrow down by applying a Java regex
          */
-        class RegexResultDetailsChildFactory extends ChildFactory<KeyValueThing> {
+        class ResultFilesChildFactory extends ChildFactory<KeyValueThing> {
 
             private KeyValueThing thing;
 
-            RegexResultDetailsChildFactory(KeyValueThing thing) {
+            ResultFilesChildFactory(KeyValueThing thing) {
                 this.thing = thing;
             }
 
@@ -200,7 +242,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 final Content content = thingContent.getContent();
                 final String query = thingContent.getQuery();
 
-                final String contentStr = getSolrContent(content);
+                final String contentStr = KeywordSearch.getServer().getCore().getSolrContent(content);
 
                 //make sure the file contains a match (this gets rid of large number of false positives)
                 //TODO option in GUI to include approximate matches (faster)
@@ -228,19 +270,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 }
             }
 
-            private String getSolrContent(final Content content) {
-                final Server.Core solrCore = KeywordSearch.getServer().getCore();
-                final SolrQuery q = new SolrQuery();
-                q.setQuery("*:*");
-                q.addFilterQuery("id:" + content.getId());
-                q.setFields("content");
-                try {
-                    return (String) solrCore.query(q).getResults().get(0).getFieldValue("content");
-                } catch (SolrServerException ex) {
-                    logger.log(Level.WARNING, "Error getting content from Solr and validating regex match", ex);
-                    return null;
-                }
-            }
+            
         }
 
         /*

@@ -24,9 +24,12 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.SwingWorker;
@@ -42,6 +45,7 @@ import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 import org.sleuthkit.datamodel.FsContent;
 
 public class TermComponentQuery implements KeywordSearchQuery {
@@ -51,31 +55,23 @@ public class TermComponentQuery implements KeywordSearchQuery {
     private static final String TERMS_SEARCH_FIELD = "content_ws";
     private static final String TERMS_HANDLER = "/terms";
     private static final int TERMS_TIMEOUT = 90 * 1000; //in ms
- 
     private static Logger logger = Logger.getLogger(TermComponentQuery.class.getName());
-    
-   
-    
     private String termsQuery;
     private String queryEscaped;
     private boolean isEscaped;
-    
 
     public TermComponentQuery(String query) {
         this.termsQuery = query;
         this.queryEscaped = query;
         isEscaped = false;
     }
-    
+
     @Override
     public void escape() {
+        //treat as literal
+        queryEscaped = Pattern.quote(termsQuery);
         isEscaped = true;
-        //will use prefix terms component query instead of regex 
-        //to treat the query as a word
     }
-    
-    
-    
 
     @Override
     public boolean validate() {
@@ -90,8 +86,10 @@ public class TermComponentQuery implements KeywordSearchQuery {
         return valid;
     }
 
-    
-    protected void executeQuery() {
+    /*
+     * helper method to create a Solr terms component query
+     */
+    protected SolrQuery createQuery() {
         final SolrQuery q = new SolrQuery();
         q.setQueryType(TERMS_HANDLER);
         q.setTerms(true);
@@ -104,23 +102,89 @@ public class TermComponentQuery implements KeywordSearchQuery {
         q.addTermsField(TERMS_SEARCH_FIELD);
         q.setTimeAllowed(TERMS_TIMEOUT);
 
+        return q;
+
+    }
+
+    /*
+     * execute query and return terms
+     * helper method, can be called from the same or threaded query context
+     */
+    protected List<Term> executeQuery(SolrQuery q) {
+        Server.Core solrCore = KeywordSearch.getServer().getCore();
+
+        List<Term> terms = null;
+        try {
+            TermsResponse tr = solrCore.queryTerms(q);
+            terms = tr.getTerms(TERMS_SEARCH_FIELD);
+            return terms;
+        } catch (SolrServerException ex) {
+            logger.log(Level.SEVERE, "Error executing the regex terms query: " + termsQuery, ex);
+            return null;  //no need to create result view, just display error dialog
+        }
+    }
+
+    
+     @Override
+    public String getEscapedQueryString() {
+        return this.queryEscaped;
+    }
+
+    @Override
+    public String getQueryString() {
+        return this.termsQuery;
+    }
+    
+    /**
+     * return collapsed matches with all files for the query
+     * without per match breakdown
+     */
+    @Override
+    public List<FsContent> performQuery() {
+        List<FsContent> results = new ArrayList();
+
+        final SolrQuery q = createQuery();
+        List<Term> terms = executeQuery(q);
+        //get unique match result files
+        Set<FsContent> uniqueMatches = new TreeSet<FsContent>();
+
+        for (Term term : terms) {
+            String word = term.getTerm();
+            LuceneQuery filesQuery = new LuceneQuery(word);
+            filesQuery.escape();
+            List<FsContent> matches = filesQuery.performQuery();
+            uniqueMatches.addAll(matches);
+        }
+
+        //filter out non-matching files
+        //escape regex if needed 
+        //(if the original query was not literal, this must be)
+        String literalQuery = null;
+        if (isEscaped) {
+            literalQuery = this.queryEscaped;
+        } else {
+            literalQuery = Pattern.quote(this.termsQuery);
+        }
+        for (FsContent f : uniqueMatches) {
+            Pattern p = Pattern.compile(literalQuery, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+            final String contentStr = KeywordSearch.getServer().getCore().getSolrContent(f);
+            Matcher m = p.matcher(contentStr);
+            if (m.find()) {
+                results.add(f);
+            }
+        }
+
+        return results;
+    }
+
+    @Override
+    public void execute() {
+        SolrQuery q = createQuery();
+
         logger.log(Level.INFO, "Executing TermsComponent query: " + q.toString());
 
         final SwingWorker worker = new TermsQueryWorker(q);
         worker.execute();
-    }
-    
-    @Override
-    public List<FsContent> performQuery() {
-        return null;
-    }
-    
-    
-
-    @Override
-    public void execute() {
-        executeQuery();
-       
     }
 
     /**
@@ -146,9 +210,9 @@ public class TermComponentQuery implements KeywordSearchQuery {
         }
 
         Node rootNode = null;
-        if (things.size() > 0) {            
+        if (things.size() > 0) {
             Children childThingNodes =
-                    Children.create(new KeywordSearchResultFactory(termsQuery, things, KeywordSearchResultFactory.Presentation.COLLAPSE), true);
+                    Children.create(new KeywordSearchResultFactory(termsQuery, things, Presentation.DETAIL), true);
 
             rootNode = new AbstractNode(childThingNodes);
         } else {
@@ -156,17 +220,13 @@ public class TermComponentQuery implements KeywordSearchQuery {
         }
 
         final String pathText = "RegEx query";
-       // String pathText = "RegEx query: " + termsQuery
+        // String pathText = "RegEx query: " + termsQuery
         //+ "    Files with exact matches: " + Long.toString(totalMatches) + " (also listing approximate matches)";
 
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, things.size());
         searchResultWin.requestActive(); // make it the active top component
 
     }
-    
-   
-    
-   
 
     class TermsQueryWorker extends SwingWorker<List<Term>, Void> {
 
@@ -183,17 +243,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
             progress.start();
             progress.progress("Running Terms query.");
 
-            Server.Core solrCore = KeywordSearch.getServer().getCore();
-
-
-            List<Term> terms = null;
-            try {
-                TermsResponse tr = solrCore.queryTerms(q);
-                terms = tr.getTerms(TERMS_SEARCH_FIELD);
-            } catch (SolrServerException ex) {
-                logger.log(Level.SEVERE, "Error executing the regex terms query: " + termsQuery, ex);
-                return null;  //no need to create result view, just display error dialog
-            }
+            List<Term> terms = executeQuery(q);
 
             progress.progress("Terms query completed.");
 
@@ -223,8 +273,6 @@ public class TermComponentQuery implements KeywordSearchQuery {
                     progress.finish();
                 }
             }
-
-
         }
     }
 }
