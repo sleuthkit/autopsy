@@ -43,11 +43,22 @@ public class LuceneQuery implements KeywordSearchQuery {
 
     private static final Logger logger = Logger.getLogger(LuceneQuery.class.getName());
     
-    private String query;
+    private String query; //original unescaped query
+    private String queryEscaped;
+    private boolean isEscaped;
 
     public LuceneQuery(String query) {
         this.query = query;
+        this.queryEscaped = query;
+        isEscaped = false;
     }
+
+    @Override
+    public void escape() {
+        queryEscaped = KeywordSearchUtil.escapeLuceneQuery(query);
+        isEscaped = true;
+    }
+    
     
     /**
      * Just perform the query and return result without updating the GUI
@@ -55,7 +66,7 @@ public class LuceneQuery implements KeywordSearchQuery {
      * @param query
      * @return matches List
      */
-    public List<FsContent> doQuery() throws RuntimeException {
+    public List<FsContent> performQuery() throws RuntimeException {
         List<FsContent> matches = new ArrayList<FsContent>();
 
         boolean allMatchesFetched = false;
@@ -65,7 +76,6 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         SolrQuery q = new SolrQuery();
         
-        final String queryEscaped = KeywordSearchUtil.escapeLuceneQuery(query);
         q.setQuery(queryEscaped);
         q.setRows(ROWS_PER_FETCH);
         q.setFields("id");
@@ -107,7 +117,8 @@ public class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public void execute() {
-        List<FsContent> matches = doQuery();
+        escape();
+        List<FsContent> matches = performQuery();
         
         String pathText = "Lucene query: " + query;
         Node rootNode = new KeywordSearchNode(matches, query);

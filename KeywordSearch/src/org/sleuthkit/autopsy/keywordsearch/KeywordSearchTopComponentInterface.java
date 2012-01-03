@@ -27,6 +27,7 @@ import java.awt.event.ActionListener;
  */
 public interface KeywordSearchTopComponentInterface {
     
+    boolean isMultiwordQuery();
     boolean isLuceneQuerySelected();
     boolean isRegexQuerySelected();
     String getQueryText();

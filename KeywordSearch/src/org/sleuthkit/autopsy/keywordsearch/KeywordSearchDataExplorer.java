@@ -95,7 +95,7 @@ public class KeywordSearchDataExplorer implements DataExplorer {
      * @param solrQuery 
      */
     private void searchRegexQuery(String regexQuery) {
-        RegexQuery rq = new RegexQuery(regexQuery);
+        TermComponentQuery rq = new TermComponentQuery(regexQuery);
         if (rq.validate()) {
             rq.execute();
         } else {

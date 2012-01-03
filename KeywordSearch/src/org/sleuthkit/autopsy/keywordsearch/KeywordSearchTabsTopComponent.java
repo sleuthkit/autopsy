@@ -89,6 +89,7 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
 
     private void initTabs() {
         tabs.addTab("Simple", null, new KeywordSearchSimpleTopComponent(), "Single keyword or regex search");
+        tabs.addTab("List", null, new KeywordSearchListTopComponent(), "Search for or load a saved list of keywords.");
     }
 
     @Override
@@ -97,7 +98,6 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
 
     @Override
     public void componentClosed() {
-        
     }
 
     void writeProperties(java.util.Properties p) {
@@ -110,6 +110,15 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
     void readProperties(java.util.Properties p) {
         String version = p.getProperty("version");
         // read your settings according to their version
+    }
+
+    @Override
+    public boolean isMultiwordQuery() {
+        KeywordSearchTopComponentInterface selected = (KeywordSearchTopComponentInterface) tabs.getSelectedComponent();
+        if (selected == null) {
+            return false;
+        }
+        return selected.isMultiwordQuery();
     }
 
     @Override
@@ -159,6 +168,7 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
     }
 
     class KeywordSearchServerListener implements PropertyChangeListener {
+
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();

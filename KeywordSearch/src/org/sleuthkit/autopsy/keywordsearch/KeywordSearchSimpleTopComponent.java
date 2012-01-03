@@ -30,8 +30,7 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     public KeywordSearchSimpleTopComponent() {
         initComponents();
         setName("Simple");
-        buttonGroup1.add(luceneQRadioButton);
-        buttonGroup1.add(regexQRadioButton);
+        buttonGroup1.add(chRegex);
         searchButton.setEnabled(false);
 
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
@@ -53,8 +52,7 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
         queryLabel = new javax.swing.JLabel();
         filesIndexedNameLabel = new javax.swing.JLabel();
         filesIndexedValLabel = new javax.swing.JLabel();
-        luceneQRadioButton = new javax.swing.JRadioButton();
-        regexQRadioButton = new javax.swing.JRadioButton();
+        chRegex = new javax.swing.JCheckBox();
 
         queryTextArea.setColumns(20);
         queryTextArea.setRows(5);
@@ -68,10 +66,12 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
 
         filesIndexedValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.filesIndexedValLabel.text")); // NOI18N
 
-        luceneQRadioButton.setSelected(true);
-        luceneQRadioButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.luceneQRadioButton.text")); // NOI18N
-
-        regexQRadioButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.regexQRadioButton.text")); // NOI18N
+        chRegex.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.chRegex.text")); // NOI18N
+        chRegex.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chRegexActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -82,10 +82,8 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(queryLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(luceneQRadioButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(regexQRadioButton))
+                        .addGap(62, 62, 62)
+                        .addComponent(chRegex))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 599, Short.MAX_VALUE)
                     .addComponent(searchButton)
                     .addGroup(layout.createSequentialGroup()
@@ -100,8 +98,7 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(queryLabel)
-                    .addComponent(luceneQRadioButton)
-                    .addComponent(regexQRadioButton))
+                    .addComponent(chRegex))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
@@ -116,15 +113,19 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
         filesIndexedNameLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchTopComponent.filesIndexedNameLabel.AccessibleContext.accessibleName")); // NOI18N
         filesIndexedValLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchTopComponent.filesIndexedValLabel.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
+
+    private void chRegexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chRegexActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_chRegexActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.JCheckBox chRegex;
     private javax.swing.JLabel filesIndexedNameLabel;
     private javax.swing.JLabel filesIndexedValLabel;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JRadioButton luceneQRadioButton;
     private javax.swing.JLabel queryLabel;
     private javax.swing.JTextArea queryTextArea;
-    private javax.swing.JRadioButton regexQRadioButton;
     private javax.swing.JButton searchButton;
     // End of variables declaration//GEN-END:variables
 
@@ -133,6 +134,11 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     protected void componentOpened() {
         // clear old search
         queryTextArea.setText("");
+    }
+    
+    @Override
+    public boolean isMultiwordQuery() {
+        return false;
     }
     
     @Override
@@ -147,12 +153,12 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     
     @Override
     public boolean isLuceneQuerySelected() {
-        return luceneQRadioButton.isSelected();
+        return !chRegex.isSelected();
     }
     
     @Override
     public boolean isRegexQuerySelected() {
-        return regexQRadioButton.isSelected();
+        return chRegex.isSelected();
     }
 
     /**

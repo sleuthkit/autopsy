@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.List;
+import org.sleuthkit.datamodel.FsContent;
+
 public interface KeywordSearchQuery {
 
     /**
@@ -26,8 +29,23 @@ public interface KeywordSearchQuery {
      */
     public boolean validate();
 
+    
     /**
-     * execute the query
+     * execute query and return results without publishing them
+     * @return 
+     */
+    public List<FsContent> performQuery();
+    
+    
+    /**
+     * execute the query and publish results
      */
     public void execute();
+    
+    /**
+     * escape the query string and use the escaped string in the query
+     */
+    public void escape();
+    
+    
 }
