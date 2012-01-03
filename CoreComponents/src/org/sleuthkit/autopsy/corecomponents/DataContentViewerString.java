@@ -291,6 +291,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     @Override
     public void resetComponent() {
         // clear / reset the fields
+        currentOffset = 0;
+        currentPage = 1;
         this.dataSource = null;
         currentPageLabel.setText("");
         totalPageLabel.setText("");
