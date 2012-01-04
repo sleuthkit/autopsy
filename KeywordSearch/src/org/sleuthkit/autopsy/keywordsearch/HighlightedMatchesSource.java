@@ -18,10 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.List;
-import java.util.logging.Level;
+import java.util.Map;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
@@ -40,7 +38,6 @@ class HighlightedMatchesSource implements MarkupSource {
     private static final String HIGHLIGHT_PRE = "<span style=\"background:yellow\">";
     private static final String HIGHLIGHT_POST = "</span>";
     private static final String ANCHOR_PREFIX = HighlightedMatchesSource.class.getName() + "_";
-    
     private Content content;
     private String solrQuery;
     private Core solrCore;
@@ -61,7 +58,7 @@ class HighlightedMatchesSource implements MarkupSource {
 
         SolrQuery q = new SolrQuery();
         final String queryEscaped = KeywordSearchUtil.escapeLuceneQuery(solrQuery);
-        
+
         q.setQuery(queryEscaped);
         q.addFilterQuery("id:" + content.getId());
         q.addHighlightField("content");
@@ -71,9 +68,16 @@ class HighlightedMatchesSource implements MarkupSource {
 
         try {
             QueryResponse response = solrCore.query(q, METHOD.POST);
-            List<String> contentHighlights = response.getHighlighting().get(Long.toString(content.getId())).get("content");
+            Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
+            long contentID = content.getId();
+            Map<String, List<String>> responseHighlightID = responseHighlight.get(Long.toString(contentID));
+            final String NO_MATCHES = "<span style=\"background:red\">No matches in content.</span>";
+            if (responseHighlightID == null) {
+                return NO_MATCHES;
+            }
+            List<String> contentHighlights = responseHighlightID.get("content");
             if (contentHighlights == null) {
-                return "<span style=\"background:red\">No matches in content.</span>";
+                return NO_MATCHES;
             } else {
                 // extracted content (minus highlight tags) is HTML-escaped
                 String highlightedContent = contentHighlights.get(0).trim();
@@ -89,28 +93,28 @@ class HighlightedMatchesSource implements MarkupSource {
     public String toString() {
         return "Search Matches";
     }
-    
+
     @Override
     public boolean isSearchable() {
         return true;
     }
-    
+
     @Override
     public String getAnchorPrefix() {
         return ANCHOR_PREFIX;
     }
-    
-     @Override 
-     public int getNumberHits() {
+
+    @Override
+    public int getNumberHits() {
         return numberHits;
-     }
-    
+    }
+
     private String insertAnchors(String searchableContent) {
         int searchOffset = 0;
         int index = -1;
-        
+
         StringBuilder buf = new StringBuilder(searchableContent);
-        
+
         final String searchToken = HIGHLIGHT_PRE;
         final int indexSearchTokLen = searchToken.length();
         final String insertPre = "<a name=\"" + ANCHOR_PREFIX;
@@ -120,10 +124,10 @@ class HighlightedMatchesSource implements MarkupSource {
             String insertString = insertPre + Integer.toString(count) + insertPost;
             int insertStringLen = insertString.length();
             buf.insert(index, insertString);
-            searchOffset = index + indexSearchTokLen + insertStringLen ; //next offset past this anchor
+            searchOffset = index + indexSearchTokLen + insertStringLen; //next offset past this anchor
             ++count;
-        } 
-        
+        }
+
         this.numberHits = count;
         return buf.toString();
     }

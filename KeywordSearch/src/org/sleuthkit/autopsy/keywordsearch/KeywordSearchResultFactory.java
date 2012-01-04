@@ -189,6 +189,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 highlightQuery.append(termS);
                 highlightQuery.append(" ");
             }
+            //String highlightQueryEscaped = KeywordSearchUtil.escapeLuceneQuery(highlightQuery.toString());
+            String highlightQueryEscaped = highlightQuery.toString();
 
             int resID = 0;
             for (FsContent f : fsContents) {
@@ -196,7 +198,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                 AbstractFsContentNode.fillPropertyMap(resMap, f);
                 setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
-                toPopulate.add(new KeyValueThingContent(f.getName(), resMap, ++resID, f, highlightQuery.toString()));
+                toPopulate.add(new KeyValueThingContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped));
             }
 
             return true;

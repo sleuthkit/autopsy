@@ -166,6 +166,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
         //requires http POST query method due to potentially large query size
         StringBuilder filesQueryB = new StringBuilder();
         for (Term term : terms) {
+            //final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
             final String termS = term.getTerm();
             filesQueryB.append(termS);
             filesQueryB.append(" ");
@@ -173,7 +174,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
         List<FsContent> uniqueMatches = new ArrayList<FsContent>();
         
         LuceneQuery filesQuery = new LuceneQuery(filesQueryB.toString());
-        filesQuery.escape();
+        filesQuery.escape(); //TODO escaping invididual terms above instead could make a difference to Solr
         try {
             uniqueMatches = filesQuery.performQuery();
         }
