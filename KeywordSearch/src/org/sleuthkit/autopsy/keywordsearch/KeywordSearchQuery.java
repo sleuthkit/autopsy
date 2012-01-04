@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.Collection;
 import java.util.List;
+import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.datamodel.FsContent;
 
 public interface KeywordSearchQuery {
@@ -58,6 +60,12 @@ public interface KeywordSearchQuery {
      * @return the escaped query string, or original string if no escaping done
      */
     public String getEscapedQueryString();
+    
+    /**
+     * get terms associated with the query if any
+     * @return collection of terms associated with the query
+     */
+    public Collection<Term>getTerms();
     
     
 }

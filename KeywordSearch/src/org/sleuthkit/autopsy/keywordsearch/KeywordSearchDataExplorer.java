@@ -79,12 +79,18 @@ public class KeywordSearchDataExplorer implements DataExplorer {
      * @param solrQuery 
      */
     private void search(String query, QueryType queryType) {
-        KeywordSearchQueryManager man = new KeywordSearchQueryManager(query, queryType, Presentation.DETAIL);
+        //TODO populate map with queries for keyword list search here
+        
+        //Map<String, Boolean>qmap = new LinkedHashMap<String, Boolean>();
+        //qmap.put(query, Boolean.FALSE);
+        //KeywordSearchQueryManager man = new KeywordSearchQueryManager(query, queryType, Presentation.COLLAPSE);
+        
+        KeywordSearchQueryManager man = new KeywordSearchQueryManager(query, queryType, Presentation.COLLAPSE);
 
         if (man.validate()) {
             man.execute();
         } else {
-            displayErrorDialog("Invalid query syntax: " + query);
+            displayErrorDialog("Invalid query syntax." );
         }
 
     }

@@ -19,11 +19,19 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.solr.client.solrj.response.TermsResponse.Term;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
+import org.openide.nodes.Node;
+import org.openide.windows.TopComponent;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.datamodel.KeyValueThing;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 import org.sleuthkit.datamodel.FsContent;
 
@@ -81,29 +89,45 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
                 default:
                     ;
             }
-
-            escape();
             queryDelegates.add(del);
+
         }
+        escape();
 
     }
 
     @Override
     public void execute() {
-
+        //execute and present the query
+        //delegate query to query objects and presentation child factories
         if (queryType == QueryType.WORD || presentation == Presentation.DETAIL) {
             for (KeywordSearchQuery q : queryDelegates) {
                 q.execute();
             }
         } else {
+            //Collapsed view
+            Collection<KeyValueThing> things = new ArrayList<KeyValueThing>();
+            int queryID = 0;
             for (KeywordSearchQuery q : queryDelegates) {
-                List<FsContent> fsContents = q.performQuery();
-                //TODO create view, send to proper factory
+                Map<String, Object> kvs = new LinkedHashMap<String, Object>();
+                final String queryStr = q.getQueryString();
+                things.add(new KeyValueThingQuery(queryStr, kvs, ++queryID, q));
             }
-            
+
+            Node rootNode = null;
+            if (things.size() > 0) {
+                Children childThingNodes =
+                        Children.create(new KeywordSearchResultFactory(queries.keySet(), things, Presentation.COLLAPSE), true);
+
+                rootNode = new AbstractNode(childThingNodes);
+            } else {
+                rootNode = Node.EMPTY;
+            }
+
+            final String pathText = "Keyword query";
+            TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, things.size());
+            searchResultWin.requestActive();
         }
-
-
     }
 
     @Override
@@ -121,6 +145,19 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
     public List<FsContent> performQuery() {
         //not done here
         return null;
+    }
+
+    @Override
+    public boolean validate() {
+        boolean allValid = true;
+        for (KeywordSearchQuery tcq : queryDelegates) {
+            if (!tcq.validate()) {
+                logger.log(Level.WARNING, "Query has invalid syntax: " + tcq.getQueryString());
+                allValid = false;
+                break;
+            }
+        }
+        return allValid;
     }
 
     @Override
@@ -144,15 +181,24 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
     }
 
     @Override
-    public boolean validate() {
-        boolean allValid = true;
-        for (KeywordSearchQuery tcq : queryDelegates) {
-            if (!tcq.validate()) {
-                logger.log(Level.WARNING, "Query has invalid syntax: " + tcq.getQueryString());
-                allValid = false;
-                break;
-            }
-        }
-        return allValid;
+    public Collection<Term> getTerms() {
+        return null;
+    }
+}
+
+/*
+ * custom KeyValueThing that also stores query object  to execute
+ */
+class KeyValueThingQuery extends KeyValueThing {
+
+    private KeywordSearchQuery query;
+
+    KeywordSearchQuery getQuery() {
+        return query;
+    }
+
+    public KeyValueThingQuery(String name, Map<String, Object> map, int id, KeywordSearchQuery query) {
+        super(name, map, id);
+        this.query = query;
     }
 }

@@ -18,17 +18,17 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.openide.nodes.Node;
@@ -66,6 +66,11 @@ public class LuceneQuery implements KeywordSearchQuery {
     @Override
     public String getQueryString() {
         return this.query;
+    }
+    
+    @Override
+    public Collection<Term>getTerms() {
+        return null;
     }
 
     /**
@@ -129,10 +134,11 @@ public class LuceneQuery implements KeywordSearchQuery {
         escape();
         List<FsContent> matches = performQuery();
 
-        String pathText = "Lucene query: " + query;
+        String pathText = "Keyword query: " + query;
+        
         Node rootNode = new KeywordSearchNode(matches, query);
         Node filteredRootNode = new TableFilterNode(rootNode, true);
-
+        
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, filteredRootNode, matches.size());
         searchResultWin.requestActive(); // make it the active top component
     }

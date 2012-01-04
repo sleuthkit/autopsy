@@ -20,12 +20,12 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -59,25 +59,34 @@ public class TermComponentQuery implements KeywordSearchQuery {
     private String termsQuery;
     private String queryEscaped;
     private boolean isEscaped;
+    private List<Term> terms;
 
     public TermComponentQuery(String query) {
         this.termsQuery = query;
         this.queryEscaped = query;
         isEscaped = false;
+        terms = null;
     }
 
     @Override
     public void escape() {
         //treat as literal
+        //TODO for actual literal query to work in Java/Solr
+        //might need to either: use terms prefix (not regex) query with the literal
+        //or append .* to the literal regex
         queryEscaped = Pattern.quote(termsQuery);
         isEscaped = true;
     }
 
     @Override
     public boolean validate() {
+        if (queryEscaped.equals("")) {
+            return false;
+        }
+
         boolean valid = true;
         try {
-            Pattern.compile(termsQuery);
+            Pattern.compile(queryEscaped);
         } catch (PatternSyntaxException ex1) {
             valid = false;
         } catch (IllegalArgumentException ex2) {
@@ -98,7 +107,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
         //q.setTermsLimit(200);
         //q.setTermsRegexFlag(regexFlag);
         //q.setTermsRaw(true);
-        q.setTermsRegex(termsQuery);
+        q.setTermsRegex(queryEscaped);
         q.addTermsField(TERMS_SEARCH_FIELD);
         q.setTimeAllowed(TERMS_TIMEOUT);
 
@@ -107,25 +116,23 @@ public class TermComponentQuery implements KeywordSearchQuery {
     }
 
     /*
-     * execute query and return terms
-     * helper method, can be called from the same or threaded query context
+     * execute query and return terms, helper method
      */
     protected List<Term> executeQuery(SolrQuery q) {
         Server.Core solrCore = KeywordSearch.getServer().getCore();
 
-        List<Term> terms = null;
+        List<Term> termsCol = null;
         try {
             TermsResponse tr = solrCore.queryTerms(q);
-            terms = tr.getTerms(TERMS_SEARCH_FIELD);
-            return terms;
+            termsCol = tr.getTerms(TERMS_SEARCH_FIELD);
+            return termsCol;
         } catch (SolrServerException ex) {
             logger.log(Level.SEVERE, "Error executing the regex terms query: " + termsQuery, ex);
             return null;  //no need to create result view, just display error dialog
         }
     }
 
-    
-     @Override
+    @Override
     public String getEscapedQueryString() {
         return this.queryEscaped;
     }
@@ -134,7 +141,12 @@ public class TermComponentQuery implements KeywordSearchQuery {
     public String getQueryString() {
         return this.termsQuery;
     }
-    
+
+    @Override
+    public Collection<Term> getTerms() {
+        return terms;
+    }
+
     /**
      * return collapsed matches with all files for the query
      * without per match breakdown
@@ -144,35 +156,47 @@ public class TermComponentQuery implements KeywordSearchQuery {
         List<FsContent> results = new ArrayList();
 
         final SolrQuery q = createQuery();
-        List<Term> terms = executeQuery(q);
+        terms = executeQuery(q);
+        
         //get unique match result files
-        Set<FsContent> uniqueMatches = new TreeSet<FsContent>();
-
+   
+        //execute per term Solr query to get files
+        //more costly
+        /*
+        Set<FsContent> uniqueMatches = new HashSet<FsContent>();
         for (Term term : terms) {
-            String word = term.getTerm();
-            LuceneQuery filesQuery = new LuceneQuery(word);
-            filesQuery.escape();
-            List<FsContent> matches = filesQuery.performQuery();
-            uniqueMatches.addAll(matches);
-        }
+        String word = term.getTerm();
+        LuceneQuery filesQuery = new LuceneQuery(word);
+        filesQuery.escape();
+        List<FsContent> matches = filesQuery.performQuery();
+        uniqueMatches.addAll(matches);
+        }*/
 
-        //filter out non-matching files
-        //escape regex if needed 
-        //(if the original query was not literal, this must be)
-        String literalQuery = null;
-        if (isEscaped) {
-            literalQuery = this.queryEscaped;
-        } else {
-            literalQuery = Pattern.quote(this.termsQuery);
+        
+        //combine the terms into single Solr query to get files
+        //TODO limited by GET length limit, try POST ?
+        StringBuilder filesQueryB = new StringBuilder();
+        for (Term term : terms) {
+            final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
+            filesQueryB.append(termS);
+            filesQueryB.append(" ");
         }
+        LuceneQuery filesQuery = new LuceneQuery(filesQueryB.toString());
+        filesQuery.escape();
+        List<FsContent> uniqueMatches = filesQuery.performQuery();
+
+        
+        //filter out non-matching files using the original query (whether literal or not)
+        //TODO this could be costly, for now just testing how it performs
         for (FsContent f : uniqueMatches) {
-            Pattern p = Pattern.compile(literalQuery, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+            Pattern p = Pattern.compile(queryEscaped, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
             final String contentStr = KeywordSearch.getServer().getCore().getSolrContent(f);
             Matcher m = p.matcher(contentStr);
             if (m.find()) {
                 results.add(f);
             }
         }
+
 
         return results;
     }
@@ -219,7 +243,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
             rootNode = Node.EMPTY;
         }
 
-        final String pathText = "RegEx query";
+        final String pathText = "Term query";
         // String pathText = "RegEx query: " + termsQuery
         //+ "    Files with exact matches: " + Long.toString(totalMatches) + " (also listing approximate matches)";
 
@@ -243,17 +267,9 @@ public class TermComponentQuery implements KeywordSearchQuery {
             progress.start();
             progress.progress("Running Terms query.");
 
-            List<Term> terms = executeQuery(q);
+            terms = executeQuery(q);
 
             progress.progress("Terms query completed.");
-
-            //debug query
-            //StringBuilder sb = new StringBuilder();
-            //for (Term t : terms) {
-            //    sb.append(t.getTerm() + " : " + t.getFrequency() + "\n");
-            //}
-            //logger.log(Level.INFO, "TermsComponent query result: " + sb.toString());
-            //end debug query
 
             return terms;
         }

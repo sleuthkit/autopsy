@@ -21,13 +21,14 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -114,11 +115,23 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
     @Override
     protected boolean createKeys(List<KeyValueThing> toPopulate) {
         int id = 0;
-        for (String query : queries) {
-            Map<String, Object> map = new LinkedHashMap<String, Object>();
-            initCommonProperties(map);
-            setCommonProperty(map, CommonPropertyTypes.QUERY, query);
-            toPopulate.add(new KeyValueThing(query, map, ++id));
+        if (presentation == Presentation.DETAIL) {
+            for (String query : queries) {
+                Map<String, Object> map = new LinkedHashMap<String, Object>();
+                initCommonProperties(map);
+                setCommonProperty(map, CommonPropertyTypes.QUERY, query);
+                toPopulate.add(new KeyValueThing(query, map, ++id));
+            }
+        } else {
+            for (KeyValueThing thing : things) {
+                //Map<String, Object> map = new LinkedHashMap<String, Object>();
+                Map<String, Object> map = thing.getMap();
+                initCommonProperties(map);
+                final String query = thing.getName();
+                setCommonProperty(map, CommonPropertyTypes.QUERY, query);
+                //toPopulate.add(new KeyValueThing(query, map, ++id));
+                toPopulate.add(thing);
+            }
         }
 
         return true;
@@ -129,52 +142,79 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
         ChildFactory<KeyValueThing> childFactory = null;
         switch (presentation) {
             case COLLAPSE:
-                childFactory = null;
+                childFactory = new ResultCollapsedChildFactory(thing);
                 break;
             case DETAIL:
                 childFactory = new ResulTermsMatchesChildFactory(things);
                 break;
-            default:    
+            default:
         }
-        
-         return new KeyValueNode(thing, Children.create(childFactory, true));
+
+        return new KeyValueNode(thing, Children.create(childFactory, true));
     }
-    
+
     /**
      * factory produces collapsed view of all fscontent matches per query
      * the node produced is a child node
      * The factory actually executes query.
      */
-    class ResulCollapsedChildFactory extends ChildFactory<KeyValueThing> {
+    class ResultCollapsedChildFactory extends ChildFactory<KeyValueThing> {
 
         KeyValueThing queryThing;
 
-        ResulCollapsedChildFactory(KeyValueThing queryThing) {
+        ResultCollapsedChildFactory(KeyValueThing queryThing) {
             this.queryThing = queryThing;
         }
 
         @Override
         protected boolean createKeys(List<KeyValueThing> toPopulate) {
-            String origQuery = queryThing.getName();
-            TermComponentQuery tcq = new TermComponentQuery(origQuery);
-            Map<String,Object> map = new LinkedHashMap<String,Object>();
-            if (tcq.validate()) {
-                map.put("query_valid", true);
-                return true;
-            }
-            else {
-                map.put("query_valid", false);
+            final String origQuery = queryThing.getName();
+            final KeyValueThingQuery queryThingQuery = (KeyValueThingQuery) queryThing;
+            final KeywordSearchQuery tcq = queryThingQuery.getQuery();
+
+            if (!tcq.validate()) {
+                //TODO mark the particular query node RED
                 return false;
             }
-            
-            
-            //return toPopulate.addAll(things);
+
+            //execute the query and get fscontents matching
+            List<FsContent> fsContents = tcq.performQuery();
+
+            //construct a Solr query using aggregated terms to get highlighting
+            //the query is executed later on demand
+            StringBuilder highlightQuery = new StringBuilder();
+            Collection<Term> terms = tcq.getTerms();
+            for (Term term : terms) {
+                final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
+                highlightQuery.append(termS);
+                highlightQuery.append(" ");
+            }
+
+            int resID = 0;
+            for (FsContent f : fsContents) {
+                //get unique match result files
+                Map<String, Object> resMap = new LinkedHashMap<String, Object>();
+                AbstractFsContentNode.fillPropertyMap(resMap, f);
+                setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
+                toPopulate.add(new KeyValueThingContent(f.getName(), resMap, ++resID, f, highlightQuery.toString()));
+            }
+
+            return true;
         }
 
         @Override
         protected Node createNodeForKey(KeyValueThing thing) {
-            return new KeyValueNode(thing, Children.LEAF);
+            //return new KeyValueNode(thing, Children.LEAF);
             //return new KeyValueNode(thing, Children.create(new ResultFilesChildFactory(thing), true));
+            final KeyValueThingContent thingContent = (KeyValueThingContent) thing;
+            final Content content = thingContent.getContent();
+            final String query = thingContent.getQuery();
+
+            Node kvNode = new KeyValueNode(thingContent, Children.LEAF);
+            //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
+            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query);
+            return new KeywordSearchFilterNode(highlights, kvNode, query);
+
         }
     }
 
@@ -223,7 +263,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 List<FsContent> matches = filesQuery.performQuery();
 
                 //get unique match result files
-                Set<FsContent> uniqueMatches = new TreeSet<FsContent>();
+                Set<FsContent> uniqueMatches = new LinkedHashSet<FsContent>();
                 uniqueMatches.addAll(matches);
 
                 int resID = 0;
@@ -250,12 +290,12 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 if (contentStr != null) {//if not null, some error getting from Solr, handle it by not filtering out
                     //perform java regex to validate match from Solr
                     String origQuery = thingContent.getQuery();
-                    
+
                     //escape the regex query because it may contain special characters from the previous match
                     //since it's a match result, we can assume literal pattern
                     origQuery = Pattern.quote(origQuery);
                     Pattern p = Pattern.compile(origQuery, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-                    
+
                     Matcher m = p.matcher(contentStr);
                     matchFound = m.find();
                 }
@@ -269,31 +309,29 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                     return null;
                 }
             }
+        }
+    }
 
-            
+    /*
+     * custom KeyValueThing that also stores retrieved Content and query string used
+     */
+    class KeyValueThingContent extends KeyValueThing {
+
+        private Content content;
+        private String query;
+
+        Content getContent() {
+            return content;
         }
 
-        /*
-         * custom KeyValueThing that also stores retrieved Content and query string used
-         */
-        class KeyValueThingContent extends KeyValueThing {
+        String getQuery() {
+            return query;
+        }
 
-            private Content content;
-            private String query;
-
-            Content getContent() {
-                return content;
-            }
-
-            String getQuery() {
-                return query;
-            }
-
-            public KeyValueThingContent(String name, Map<String, Object> map, int id, Content content, String query) {
-                super(name, map, id);
-                this.content = content;
-                this.query = query;
-            }
+        public KeyValueThingContent(String name, Map<String, Object> map, int id, Content content, String query) {
+            super(name, map, id);
+            this.content = content;
+            this.query = query;
         }
     }
 }
