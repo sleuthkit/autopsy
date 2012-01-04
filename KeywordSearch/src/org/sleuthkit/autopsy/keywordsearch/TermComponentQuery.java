@@ -160,25 +160,13 @@ public class TermComponentQuery implements KeywordSearchQuery {
         
         //get unique match result files
    
-        //execute per term Solr query to get files
-        //more costly
-        /*
-        Set<FsContent> uniqueMatches = new HashSet<FsContent>();
-        for (Term term : terms) {
-        String word = term.getTerm();
-        LuceneQuery filesQuery = new LuceneQuery(word);
-        filesQuery.escape();
-        List<FsContent> matches = filesQuery.performQuery();
-        uniqueMatches.addAll(matches);
-        }*/
-
         
         //combine the terms into single Solr query to get files
-        //it's much more efficient and should yield the same file IDs as separate queries
-        //TODO limited by GET length limit, try POST ?
+        //it's much more efficient and should yield the same file IDs as per match queries
+        //requires http POST query method due to potentially large query size
         StringBuilder filesQueryB = new StringBuilder();
         for (Term term : terms) {
-            final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
+            final String termS = term.getTerm();
             filesQueryB.append(termS);
             filesQueryB.append(" ");
         }
