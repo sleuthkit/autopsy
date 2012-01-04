@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -64,7 +65,12 @@ class KeywordSearchFilterNode extends FilterNode {
 
         try {
             QueryResponse response = solrCore.query(q);
-            List<String> contentHighlights = response.getHighlighting().get(Long.toString(content.getId())).get("content");
+            Map<String,Map<String,List<String>>>responseHighlight = response.getHighlighting();
+            long contentID = content.getId();
+            Map<String,List<String>>responseHighlightID = responseHighlight.get(Long.toString(contentID));
+            if (responseHighlightID == null)
+                return "";
+            List<String> contentHighlights = responseHighlightID.get("content");
             if (contentHighlights == null) {
                 return "";
             } else {
