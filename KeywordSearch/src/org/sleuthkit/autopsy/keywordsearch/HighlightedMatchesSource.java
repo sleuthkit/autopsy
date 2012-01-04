@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.sleuthkit.autopsy.keywordsearch.Server.Core;
@@ -69,7 +70,7 @@ class HighlightedMatchesSource implements MarkupSource {
         q.setHighlightFragsize(0); // don't fragment the highlight
 
         try {
-            QueryResponse response = solrCore.query(q);
+            QueryResponse response = solrCore.query(q, METHOD.POST);
             List<String> contentHighlights = response.getHighlighting().get(Long.toString(content.getId())).get("content");
             if (contentHighlights == null) {
                 return "<span style=\"background:red\">No matches in content.</span>";

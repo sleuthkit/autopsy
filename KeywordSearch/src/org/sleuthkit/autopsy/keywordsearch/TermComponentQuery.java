@@ -174,6 +174,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         
         //combine the terms into single Solr query to get files
+        //it's much more efficient and should yield the same file IDs as separate queries
         //TODO limited by GET length limit, try POST ?
         StringBuilder filesQueryB = new StringBuilder();
         for (Term term : terms) {
@@ -181,9 +182,16 @@ public class TermComponentQuery implements KeywordSearchQuery {
             filesQueryB.append(termS);
             filesQueryB.append(" ");
         }
+        List<FsContent> uniqueMatches = new ArrayList<FsContent>();
+        
         LuceneQuery filesQuery = new LuceneQuery(filesQueryB.toString());
         filesQuery.escape();
-        List<FsContent> uniqueMatches = filesQuery.performQuery();
+        try {
+            uniqueMatches = filesQuery.performQuery();
+        }
+        catch (RuntimeException e) {
+            logger.log(Level.SEVERE, "Error executing Solr query,", e);
+        }
 
         
         //filter out non-matching files using the original query (whether literal or not)

@@ -26,7 +26,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.request.QueryRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
@@ -99,7 +101,7 @@ public class LuceneQuery implements KeywordSearchQuery {
             q.setStart(start);
 
             try {
-                QueryResponse response = solrCore.query(q);
+                QueryResponse response = solrCore.query(q, METHOD.POST);
                 SolrDocumentList resultList = response.getResults();
                 long results = resultList.getNumFound();
 
@@ -118,7 +120,7 @@ public class LuceneQuery implements KeywordSearchQuery {
                 }
 
             } catch (SolrServerException ex) {
-                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
+                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query.substring(0,Math.min(query.length()-1, 200)), ex);
                 throw new RuntimeException(ex);
                 // TODO: handle bad query strings, among other issues
             } catch (SQLException ex) {
