@@ -165,6 +165,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteAllWordsButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.deleteAllWordsButton.text")); // NOI18N
+        deleteAllWordsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteAllWordsButtonActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(saveListButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.saveListButton.text")); // NOI18N
         saveListButton.addActionListener(new java.awt.event.ActionListener() {
@@ -302,8 +307,13 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     }//GEN-LAST:event_chLiteralWordActionPerformed
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
-        // TODO add your handling code here:
+        tableModel.deleteSelected();
     }//GEN-LAST:event_deleteWordButtonActionPerformed
+
+    private void deleteAllWordsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAllWordsButtonActionPerformed
+        tableModel.deleteAll();
+    }//GEN-LAST:event_deleteAllWordsButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addWordButton;
     private javax.swing.JTextField addWordField;
@@ -466,7 +476,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         List<String> getSelectedKeywords() {
             List<String> ret = new ArrayList<String>();
             for (TableEntry e : keywordData) {
-                if (e.isActive) {
+                if (e.isActive && !e.keyword.equals("")) {
                     ret.add(e.keyword);
                 }
             }
@@ -483,11 +493,30 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             this.fireTableRowsInserted(keywordData.size() - 1, keywordData.size());
         }
         
+        void deleteAll() {
+            keywordData.clear();
+            initEmpty();
+        }
+        
+        void deleteSelected() {
+            List<TableEntry> toDel = new ArrayList<TableEntry>();
+            int i = 0;
+            for (TableEntry e: keywordData) {
+                if (e.isActive && !e.keyword.equals(""))
+                    toDel.add(e);
+            }
+            for (TableEntry del : toDel) {
+                keywordData.remove(del);
+            }
+            fireTableDataChanged();
+            
+        }
+        
         void initEmpty() {
             for (int i = 0; i<20; ++i) {
                 keywordData.add(0, new TableEntry("", false));
             }
-            this.fireTableDataChanged();
+            fireTableDataChanged();
         }
 
         class TableEntry {
@@ -502,7 +531,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
             TableEntry(String keyword) {
                 this.keyword = keyword;
-                this.isActive = true;
+                this.isActive = false;
             }
         }
     }
