@@ -19,16 +19,20 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.Component;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskException;
 
 public class KeywordSearchUtil {
 
+    public enum DIALOG_MESSAGE_TYPE {ERROR, WARN, INFO};
+    
     private static final Logger logger = Logger.getLogger(KeywordSearchUtil.class.getName());
 
     public static String buildDirName(FsContent f) {
@@ -64,5 +68,21 @@ public class KeywordSearchUtil {
             queryEscaped = query;
         }
         return queryEscaped;
+    }
+    
+    public static void displayDialog(final String title, final String message, final DIALOG_MESSAGE_TYPE type) {
+        int messageType;
+        if (type == DIALOG_MESSAGE_TYPE.ERROR)
+            messageType = JOptionPane.ERROR_MESSAGE;
+        else if (type == DIALOG_MESSAGE_TYPE.WARN)
+            messageType = JOptionPane.WARNING_MESSAGE;
+        else messageType = JOptionPane.INFORMATION_MESSAGE;
+        
+        final Component parentComponent = null; // Use default window frame.
+        JOptionPane.showMessageDialog(
+                parentComponent,
+                message,
+                title,
+                messageType);
     }
 }

@@ -16,11 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.netbeans.api.settings.ConvertAsProperties;
@@ -43,25 +51,57 @@ preferredID = "KeywordSearchListTopComponent")
 public final class KeywordSearchListTopComponent extends TopComponent implements KeywordSearchTopComponentInterface {
 
     private Logger logger = Logger.getLogger(KeywordSearchListTopComponent.class.getName());
-    
+    private KeywordTableModel tableModel;
+
     public KeywordSearchListTopComponent() {
+        tableModel = new KeywordTableModel();
         initComponents();
         customizeComponents();
         setName(NbBundle.getMessage(KeywordSearchListTopComponent.class, "CTL_KeywordSearchListTopComponent"));
         setToolTipText(NbBundle.getMessage(KeywordSearchListTopComponent.class, "HINT_KeywordSearchListTopComponent"));
 
     }
-    
+
     private void customizeComponents() {
-        chLiteralWord.setToolTipText("Literal word (auto-escape special regex characters)");
+        chLiteralWord.setToolTipText("Literal word (auto-escape special characters)");
         addWordButton.setToolTipText(("Add a new word to the keyword search list"));
         addWordField.setToolTipText("Enter a new word or regex to search");
-        
+
         loadListButton.setToolTipText("Load a new keyword list from file");
         saveListButton.setToolTipText("Save the current keyword list to a file");
         searchButton.setToolTipText("Execute the keyword list search using the current list");
-        deleteWordButton.setToolTipText("Delete selected word(s) from the list");
-        deleteAllWordsButton.setToolTipText("Delete all words from the list (clear it)");
+        deleteWordButton.setToolTipText("Delete selected keyword(s) from the list");
+        deleteAllWordsButton.setToolTipText("Delete all keywords from the list (clear it)");
+
+        keywordTable.setAutoscrolls(true);
+        keywordTable.setTableHeader(null);
+        keywordTable.setShowHorizontalLines(false);
+        keywordTable.setShowVerticalLines(false);
+        keywordTable.setShowGrid(false);
+        //TODO removing dotted line of selected cell might require custom renderer
+        final int width = keywordTable.getSize().width;
+        TableColumn column = null;
+        for (int i = 0; i < 2; i++) {
+            column = keywordTable.getColumnModel().getColumn(i);
+            if (i == 1) {
+                column.setPreferredWidth(((int) (width * 0.2)));
+                //column.setCellEditor(new DefaultCellEditor(new JCheckBox()));
+
+            } else {
+                column.setPreferredWidth(((int) (width * 0.7)));
+            }
+        }
+        keywordTable.setCellSelectionEnabled(false);
+       //keywordTable.setBorder(BorderFactory.createEmptyBorder());
+
+        //create some empty rows        
+        tableModel.initEmpty();
+        
+
+        //test
+        tableModel.addKeyword("\\d\\d\\d-\\d\\d\\d-\\d\\d\\d\\d");
+        tableModel.addKeyword("\\d\\d\\.\\d\\d\\d\\.*");
+        tableModel.addKeyword("text");
         
     }
 
@@ -76,8 +116,6 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         searchButton = new javax.swing.JButton();
         filesIndexedNameLabel = new javax.swing.JLabel();
         filesIndexedValLabel = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList();
         titleLabel = new javax.swing.JLabel();
         listLabel = new javax.swing.JLabel();
         addWordField = new javax.swing.JTextField();
@@ -88,6 +126,8 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         deleteAllWordsButton = new javax.swing.JButton();
         saveListButton = new javax.swing.JButton();
         chLiteralWord = new javax.swing.JCheckBox();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        keywordTable = new javax.swing.JTable();
 
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.searchButton.text")); // NOI18N
         searchButton.addActionListener(new java.awt.event.ActionListener() {
@@ -99,8 +139,6 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         org.openide.awt.Mnemonics.setLocalizedText(filesIndexedNameLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.filesIndexedNameLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(filesIndexedValLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.filesIndexedValLabel.text")); // NOI18N
-
-        jScrollPane1.setViewportView(jList1);
 
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.titleLabel.text")); // NOI18N
 
@@ -120,6 +158,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         org.openide.awt.Mnemonics.setLocalizedText(loadListButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.loadListButton.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteWordButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.deleteWordButton.text")); // NOI18N
+        deleteWordButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteWordButtonActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteAllWordsButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.deleteAllWordsButton.text")); // NOI18N
 
@@ -137,77 +180,72 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             }
         });
 
+        keywordTable.setModel(tableModel);
+        keywordTable.setShowHorizontalLines(false);
+        keywordTable.setShowVerticalLines(false);
+        jScrollPane1.setViewportView(keywordTable);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(chLiteralWord)
+                    .addComponent(titleLabel)
+                    .addComponent(loadListButton)
+                    .addComponent(addWordLabel)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(filesIndexedNameLabel)
+                        .addComponent(deleteWordButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(filesIndexedValLabel))
+                        .addComponent(deleteAllWordsButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(saveListButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(31, 31, 31)
+                        .addComponent(addWordButton))
+                    .addComponent(listLabel)
                     .addComponent(searchButton)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(titleLabel)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(loadListButton)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(saveListButton))
-                                    .addComponent(chLiteralWord)
-                                    .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(addWordButton)))
-                        .addGap(66, 66, 66))
-                    .addComponent(listLabel)
-                    .addComponent(addWordLabel)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                            .addComponent(deleteWordButton)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(deleteAllWordsButton))
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 217, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(filesIndexedNameLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(filesIndexedValLabel))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(15, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(titleLabel)
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(loadListButton)
-                    .addComponent(saveListButton))
+                .addComponent(loadListButton)
                 .addGap(19, 19, 19)
                 .addComponent(addWordLabel)
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(addWordButton)
-                            .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(27, 27, 27))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(chLiteralWord)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
-                .addGap(12, 12, 12)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(addWordButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(chLiteralWord)
+                .addGap(9, 9, 9)
                 .addComponent(listLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(28, 28, 28)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(deleteWordButton)
-                    .addComponent(deleteAllWordsButton))
-                .addGap(30, 30, 30)
+                    .addComponent(deleteAllWordsButton)
+                    .addComponent(saveListButton))
+                .addGap(29, 29, 29)
                 .addComponent(searchButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(38, 38, 38)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filesIndexedNameLabel)
                     .addComponent(filesIndexedValLabel))
-                .addGap(42, 42, 42))
+                .addGap(46, 46, 46))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -216,7 +254,43 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     }//GEN-LAST:event_searchButtonActionPerformed
 
     private void addWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addWordButtonActionPerformed
-        // TODO add your handling code here:
+
+        String newWord = addWordField.getText();
+        String newWordEscaped = Pattern.quote(newWord);
+
+        if (newWord.trim().equals("")) {
+            return;
+        } else if (keywordExists(newWord) || keywordExists(newWordEscaped)) {
+            KeywordSearchUtil.displayDialog("New Keyword Entry", "Keyword already exists in the list.", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+            return;
+        }
+
+        String toAdd = null;
+        if (chLiteralWord.isSelected()) {
+            toAdd = newWordEscaped;
+        } else {
+            toAdd = newWord;
+        }
+
+        //check if valid
+        boolean valid = true;
+        try {
+            Pattern.compile(toAdd);
+        } catch (PatternSyntaxException ex1) {
+            valid = false;
+        } catch (IllegalArgumentException ex2) {
+            valid = false;
+        }
+        if (!valid) {
+            KeywordSearchUtil.displayDialog("New Keyword Entry", "Invalid keyword pattern.  Use words or a correct regex pattern.", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+            return;
+        }
+
+        //add & reset checkbox
+        chLiteralWord.setSelected(false);
+        tableModel.addKeyword(toAdd);
+        addWordField.setText("");
+
     }//GEN-LAST:event_addWordButtonActionPerformed
 
     private void saveListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveListButtonActionPerformed
@@ -227,6 +301,9 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         // TODO add your handling code here:
     }//GEN-LAST:event_chLiteralWordActionPerformed
 
+    private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_deleteWordButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addWordButton;
     private javax.swing.JTextField addWordField;
@@ -236,14 +313,15 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     private javax.swing.JButton deleteWordButton;
     private javax.swing.JLabel filesIndexedNameLabel;
     private javax.swing.JLabel filesIndexedValLabel;
-    private javax.swing.JList jList1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable keywordTable;
     private javax.swing.JLabel listLabel;
     private javax.swing.JButton loadListButton;
     private javax.swing.JButton saveListButton;
     private javax.swing.JButton searchButton;
     private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables
+
     @Override
     public void componentOpened() {
         // TODO add custom code on component opening
@@ -265,7 +343,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         String version = p.getProperty("version");
         // TODO read your settings according to their version
     }
-    
+
     @Override
     public boolean isMultiwordQuery() {
         return true;
@@ -282,6 +360,20 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     }
 
     @Override
+    public Map<String,Boolean> getQueryList() {
+        List<String> selected = getSelectedKeywords();
+        //filter out blank just in case
+        Map<String,Boolean> ret = new LinkedHashMap<String,Boolean>();
+        for (String s : selected) {
+            if (!s.trim().equals(""))
+                ret.put(s, false);
+        }
+        return ret;
+    }
+    
+    
+
+    @Override
     public boolean isLuceneQuerySelected() {
         return false;
     }
@@ -294,12 +386,124 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     @Override
     public void setFilesIndexed(int filesIndexed) {
         filesIndexedValLabel.setText(Integer.toString(filesIndexed));
-         if (filesIndexed == 0) {
+        if (filesIndexed == 0) {
             searchButton.setEnabled(false);
         } else {
             searchButton.setEnabled(true);
         }
     }
-    
-    
+
+    public List<String> getAllKeywords() {
+        return tableModel.getAllKeywords();
+    }
+
+    public List<String> getSelectedKeywords() {
+        return tableModel.getSelectedKeywords();
+    }
+
+    private boolean keywordExists(String keyword) {
+
+        return tableModel.keywordExists(keyword);
+    }
+
+    class KeywordTableModel extends AbstractTableModel {
+
+        //data
+        private List<TableEntry> keywordData = new ArrayList<TableEntry>();
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Override
+        public int getRowCount() {
+            return keywordData.size();
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Object ret = null;
+            switch (columnIndex) {
+                case 0:
+                    ret = (Object) keywordData.get(rowIndex).keyword;
+                    break;
+                case 1:
+                    ret = (Object) keywordData.get(rowIndex).isActive;
+                    break;
+                default:
+                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
+                    break;
+            }
+            return ret;
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return columnIndex == 1 ? true : false;
+        }
+
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            if (columnIndex == 1) {
+                keywordData.get(rowIndex).isActive = (Boolean) aValue;
+            }
+        }
+
+        @Override
+        public Class getColumnClass(int c) {
+            return getValueAt(0, c).getClass();
+        }
+
+        List<String> getAllKeywords() {
+            List<String> ret = new ArrayList<String>();
+            for (TableEntry e : keywordData) {
+                ret.add(e.keyword);
+            }
+            return ret;
+        }
+
+        List<String> getSelectedKeywords() {
+            List<String> ret = new ArrayList<String>();
+            for (TableEntry e : keywordData) {
+                if (e.isActive) {
+                    ret.add(e.keyword);
+                }
+            }
+            return ret;
+        }
+
+        boolean keywordExists(String keyword) {
+            List<String> all = getAllKeywords();
+            return all.contains(keyword);
+        }
+
+        void addKeyword(String keyword) {
+            keywordData.add(0, new TableEntry(keyword));
+            this.fireTableRowsInserted(keywordData.size() - 1, keywordData.size());
+        }
+        
+        void initEmpty() {
+            for (int i = 0; i<20; ++i) {
+                keywordData.add(0, new TableEntry("", false));
+            }
+            this.fireTableDataChanged();
+        }
+
+        class TableEntry {
+
+            String keyword;
+            Boolean isActive;
+
+            TableEntry(String keyword, Boolean isActive) {
+                this.keyword = keyword;
+                this.isActive = isActive;
+            }
+
+            TableEntry(String keyword) {
+                this.keyword = keyword;
+                this.isActive = true;
+            }
+        }
+    }
 }

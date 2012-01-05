@@ -153,7 +153,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
      */
     @Override
     public List<FsContent> performQuery() {
-        List<FsContent> results = new ArrayList();
+        List<FsContent> results = new ArrayList<FsContent>();
 
         final SolrQuery q = createQuery();
         terms = executeQuery(q);

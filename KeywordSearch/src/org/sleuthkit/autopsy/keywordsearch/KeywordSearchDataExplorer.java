@@ -44,17 +44,13 @@ public class KeywordSearchDataExplorer implements DataExplorer {
         this.tc = new KeywordSearchTabsTopComponent();
 
         this.tc.addSearchButtonListener(new ActionListener() {
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 tc.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                QueryType queryType = null;
-                if (tc.isLuceneQuerySelected()) {
-                    queryType = QueryType.WORD;
-                } else {
-                    queryType = QueryType.REGEX;
-                }
+
                 try {
-                    search(tc.getQueryText(), queryType);
+                    search();
                 } finally {
                     tc.setCursor(null);
                 }
@@ -63,8 +59,6 @@ public class KeywordSearchDataExplorer implements DataExplorer {
 
         KeywordSearch.changeSupport.addPropertyChangeListener(KeywordSearch.NUM_FILES_CHANGE_EVT, new IndexChangeListener());
     }
-    
-    
 
     private synchronized void setTheInstance() {
         if (theInstance == null) {
@@ -78,23 +72,27 @@ public class KeywordSearchDataExplorer implements DataExplorer {
      * Executes a query and populates a DataResult tab with the results
      * @param solrQuery 
      */
-    private void search(String query, QueryType queryType) {
-        //TODO populate map with queries for keyword list search here
-        
-        //Map<String, Boolean>qmap = new LinkedHashMap<String, Boolean>();
-        //qmap.put(query, Boolean.FALSE);
-        //KeywordSearchQueryManager man = new KeywordSearchQueryManager(query, queryType, Presentation.COLLAPSE);
-        
-        KeywordSearchQueryManager man = new KeywordSearchQueryManager(query, queryType, Presentation.COLLAPSE);
+    private void search() {
+        KeywordSearchQueryManager man = null;
+        if (tc.isMultiwordQuery()) {
+            man = new KeywordSearchQueryManager(tc.getQueryList(), Presentation.COLLAPSE);
+        } else {
+            QueryType queryType = null;
+            if (tc.isLuceneQuerySelected()) {
+                queryType = QueryType.WORD;
+            } else {
+                queryType = QueryType.REGEX;
+            }
+            man = new KeywordSearchQueryManager(tc.getQueryText(), queryType, Presentation.COLLAPSE);
+        }
 
         if (man.validate()) {
             man.execute();
         } else {
-            displayErrorDialog("Invalid query syntax." );
+            KeywordSearchUtil.displayDialog("Keyword Search Error", "Invalid query syntax.", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
         }
 
     }
-
 
     @Override
     public org.openide.windows.TopComponent getTopComponent() {
@@ -103,17 +101,6 @@ public class KeywordSearchDataExplorer implements DataExplorer {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-    }
-
-    private void displayErrorDialog(final String message) {
-        final Component parentComponent = null; // Use default window frame.
-        final String title = "Keyword Search Error";
-        final int messageType = JOptionPane.ERROR_MESSAGE;
-        JOptionPane.showMessageDialog(
-                parentComponent,
-                message,
-                title,
-                messageType);
     }
 
     class IndexChangeListener implements PropertyChangeListener {

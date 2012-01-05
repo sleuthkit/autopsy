@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionListener;
+import java.util.Map;
 
 
 /**
@@ -31,6 +32,7 @@ public interface KeywordSearchTopComponentInterface {
     boolean isLuceneQuerySelected();
     boolean isRegexQuerySelected();
     String getQueryText();
+    Map<String, Boolean> getQueryList();
     void setFilesIndexed(int filesIndexed);
     void addSearchButtonListener(ActionListener l);
     

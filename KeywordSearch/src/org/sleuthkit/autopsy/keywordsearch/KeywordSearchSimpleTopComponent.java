@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionListener;
+import java.util.Map;
 import java.util.logging.Logger;
 import org.openide.windows.TopComponent;
 
@@ -150,6 +151,11 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     @Override
     public String getQueryText() {
         return queryTextArea.getText();
+    }
+    
+    @Override
+    public Map<String,Boolean> getQueryList() {
+        return null;
     }
     
     @Override

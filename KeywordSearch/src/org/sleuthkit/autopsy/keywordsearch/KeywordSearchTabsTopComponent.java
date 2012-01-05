@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -138,6 +139,17 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
         }
         return selected.getQueryText();
     }
+
+    @Override
+    public Map<String, Boolean> getQueryList() {
+        KeywordSearchTopComponentInterface selected = (KeywordSearchTopComponentInterface) tabs.getSelectedComponent();
+        if (selected == null) {
+            return null;
+        }
+        return selected.getQueryList();
+    }
+    
+    
 
     @Override
     public boolean isLuceneQuerySelected() {
