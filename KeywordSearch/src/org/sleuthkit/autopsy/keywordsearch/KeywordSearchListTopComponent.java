@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -104,13 +102,17 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
         keywordTable.setCellSelectionEnabled(false);
 
-        //create some empty rows        
-        //tableModel.initEmpty();
-
-        //test
-        tableModel.addKeyword("\\d\\d\\d-\\d\\d\\d-\\d\\d\\d\\d");
-        tableModel.addKeyword("\\d\\d\\.\\d\\d\\d\\.*");
-        tableModel.addKeyword("text");
+        //some hardcoded test keywords
+        //phone number
+        tableModel.addKeyword("\\d\\d\\d[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d");
+        tableModel.addKeyword("\\d{8,10}");
+        tableModel.addKeyword("phone|fax");
+        //IP address
+        tableModel.addKeyword("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])");
+        //URL
+        //some literal query to test
+        tableModel.addKeyword("\\Q\\d\\d\\d\\E");
+        tableModel.addKeyword("ftp|sftp|ssh|http|https");
 
     }
 
@@ -343,12 +345,12 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
     @Override
     public void componentOpened() {
-        // TODO add custom code on component opening
+       
     }
 
     @Override
     public void componentClosed() {
-        // TODO add custom code on component closing
+       
     }
 
     void writeProperties(java.util.Properties p) {
@@ -385,6 +387,10 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         Map<String, Boolean> ret = new LinkedHashMap<String, Boolean>();
         for (String s : selected) {
             if (!s.trim().equals("")) {
+                //use false for isLiteral because we are currently escaping
+                //the keyword earlier as it is stored
+                //might need to change and pass isLiteral if the query object
+                //needs to treat it specially
                 ret.put(s, false);
             }
         }
