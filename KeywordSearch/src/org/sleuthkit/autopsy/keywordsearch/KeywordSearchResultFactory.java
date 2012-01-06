@@ -184,10 +184,15 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             //the query is executed later on demand
             StringBuilder highlightQuery = new StringBuilder();
             Collection<Term> terms = tcq.getTerms();
+            final int lastTerm = terms.size() -1;
+            int curTerm = 0;
             for (Term term : terms) {
                 final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true);
-                highlightQuery.append(termS);
-                highlightQuery.append(" ");
+                if (! termS.contains("*")) {
+                    highlightQuery.append(termS);
+                    if (lastTerm != curTerm)
+                        highlightQuery.append(" ");
+                }
             }
             //String highlightQueryEscaped = KeywordSearchUtil.escapeLuceneQuery(highlightQuery.toString());
             String highlightQueryEscaped = highlightQuery.toString();

@@ -165,21 +165,23 @@ public class TermComponentQuery implements KeywordSearchQuery {
         //it's much more efficient and should yield the same file IDs as per match queries
         //requires http POST query method due to potentially large query size
         StringBuilder filesQueryB = new StringBuilder();
-        final int lastTerm = terms.size() -1;
+        final int lastTerm = terms.size() - 1;
         int curTerm = 0;
         for (Term term : terms) {
-            //final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true);
             final String termS = term.getTerm();
-            filesQueryB.append(termS);
-            if (curTerm != lastTerm)
-                filesQueryB.append(" ");
+            if (!termS.contains("*")) {
+                filesQueryB.append(termS);
+                if (curTerm != lastTerm) {
+                    filesQueryB.append(" ");
+                }
+            }
             ++curTerm;
         }
         List<FsContent> uniqueMatches = new ArrayList<FsContent>();
 
-        if (! terms.isEmpty()) {
+        if (!terms.isEmpty()) {
             LuceneQuery filesQuery = new LuceneQuery(filesQueryB.toString());
-            filesQuery.escape(); //TODO escaping invididual terms above instead could make a difference to Solr
+            filesQuery.escape();
             try {
                 uniqueMatches = filesQuery.performQuery();
             } catch (RuntimeException e) {
@@ -198,7 +200,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
                 results.add(f);
             }
         }
-    
+
 
 
         return results;
