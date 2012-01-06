@@ -165,11 +165,15 @@ public class TermComponentQuery implements KeywordSearchQuery {
         //it's much more efficient and should yield the same file IDs as per match queries
         //requires http POST query method due to potentially large query size
         StringBuilder filesQueryB = new StringBuilder();
+        final int lastTerm = terms.size() -1;
+        int curTerm = 0;
         for (Term term : terms) {
-            //final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
+            //final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true);
             final String termS = term.getTerm();
             filesQueryB.append(termS);
-            filesQueryB.append(" ");
+            if (curTerm != lastTerm)
+                filesQueryB.append(" ");
+            ++curTerm;
         }
         List<FsContent> uniqueMatches = new ArrayList<FsContent>();
 
@@ -194,6 +198,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
                 results.add(f);
             }
         }
+    
 
 
         return results;

@@ -185,7 +185,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             StringBuilder highlightQuery = new StringBuilder();
             Collection<Term> terms = tcq.getTerms();
             for (Term term : terms) {
-                final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
+                final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true);
                 highlightQuery.append(termS);
                 highlightQuery.append(" ");
             }

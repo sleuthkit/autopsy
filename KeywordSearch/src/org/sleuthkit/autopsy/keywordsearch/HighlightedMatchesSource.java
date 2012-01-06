@@ -57,7 +57,7 @@ class HighlightedMatchesSource implements MarkupSource {
     public String getMarkup() {
 
         SolrQuery q = new SolrQuery();
-        final String queryEscaped = KeywordSearchUtil.escapeLuceneQuery(solrQuery);
+        final String queryEscaped = KeywordSearchUtil.escapeLuceneQuery(solrQuery, true);
 
         q.setQuery(queryEscaped);
         q.addFilterQuery("id:" + content.getId());
