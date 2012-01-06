@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 
 /**
  * Loads and stores Hash Database settings from/to a property file
@@ -109,6 +110,15 @@ public class HashDbSettings {
      */
     HashDb getNSRLDatabase() {
         return this.NSRLDatabase;
+    }
+    
+    /**
+     * Get the hash database settings as read from the property file.
+     * @return A new hash database settings object.
+     * @throws IOException if the property file can't be found
+     */
+    public static HashDbSettings getHashDbSettings() throws IOException {
+        return new HashDbSettings(AutopsyPropFile.getPropertyFile());
     }
 
     /**

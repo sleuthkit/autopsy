@@ -32,7 +32,7 @@ import org.openide.NotifyDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
  * The action to delete the current Case. This class should be disabled on

@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.io.File;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskException;
 

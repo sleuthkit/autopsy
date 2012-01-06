@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package org.sleuthkit.autopsy.logging;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.awt.Component;
 import java.util.logging.Filter;

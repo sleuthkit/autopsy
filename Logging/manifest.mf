@@ -1,7 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: org.sleuthkit.autopsy.logging/0
-OpenIDE-Module-Implementation-Version: 2
-OpenIDE-Module-Install: org/sleuthkit/autopsy/logging/Installer.class
-OpenIDE-Module-Layer: org/sleuthkit/autopsy/logging/layer.xml
-OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/logging/Bundle.properties
-

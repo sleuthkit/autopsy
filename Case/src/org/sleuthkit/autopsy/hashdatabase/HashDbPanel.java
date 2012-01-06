@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.TskException;
 
 /**

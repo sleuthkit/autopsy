@@ -40,7 +40,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 

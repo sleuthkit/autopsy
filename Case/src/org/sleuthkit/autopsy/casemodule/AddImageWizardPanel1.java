@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -29,6 +30,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 
 /**
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
@@ -42,6 +44,7 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
      */
     private AddImageVisualPanel1 component;
     private boolean isNextEnable = false;
+    private static final String PROP_LASTIMAGE = "LBL_LastImage_PATH";
 
     /**
      * Get the visual component for the panel. In this template, the component
@@ -158,6 +161,9 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
+        AddImageVisualPanel1 component = getComponent();
+        String lastImageDirectory = AutopsyPropFile.getInstance().getProperty(PROP_LASTIMAGE);
+        component.getImagePathTextField().setText(lastImageDirectory);
     }
 
     /**
@@ -173,6 +179,9 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
     public void storeSettings(WizardDescriptor settings) {
         settings.putProperty(AddImageAction.IMGPATHS_PROP, getComponent().getImagePaths());
         settings.putProperty(AddImageAction.TIMEZONE_PROP, getComponent().getSelectedTimezone()); // store the timezone
+        String firstImage = getComponent().getImagePaths()[0];
+        String firstImagePath = firstImage.substring(0, firstImage.lastIndexOf(File.separator)+1);
+        AutopsyPropFile.getInstance().setProperty(PROP_LASTIMAGE, firstImagePath);
     }
 
 

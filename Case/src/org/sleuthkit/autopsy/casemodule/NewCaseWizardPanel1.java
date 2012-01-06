@@ -33,6 +33,7 @@ import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
 import org.openide.util.HelpCtx;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 
 /**
  * The "New Case" wizard panel with a component on it. This class represents 
@@ -49,6 +50,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
      */
     private NewCaseVisualPanel1 component;
     private Boolean isFinish = false;
+    private static final String PROP_BASECASE = "LBL_BaseCase_PATH";
 
     /**
      * Get the visual component for the panel. In this template, the component
@@ -162,6 +164,9 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
+        NewCaseVisualPanel1 component = getComponent();
+        String lastBaseDirectory = AutopsyPropFile.getInstance().getProperty(PROP_BASECASE);
+        component.getCaseParentDirTextField().setText(lastBaseDirectory);
     }
 
     /**
@@ -177,6 +182,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     public void storeSettings(WizardDescriptor settings) {
         settings.putProperty("caseName", getComponent().getCaseName());
         settings.putProperty("caseParentDir", getComponent().getCaseParentDir());
+        AutopsyPropFile.getInstance().setProperty(PROP_BASECASE, getComponent().getCaseParentDir());
     }
 
     @Override

@@ -27,6 +27,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentListener;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
@@ -101,6 +102,10 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
         } else {
             return new String[0];
         }
+    }
+    
+    public JTextField getImagePathTextField() {
+        return this.imgPathTextField;
     }
 
     /**

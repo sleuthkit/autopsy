@@ -36,8 +36,9 @@ import javax.swing.JMenuItem;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 import org.openide.filesystems.FileUtil;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 
 /**
  * The action in this class is to clear the list of "Recent Cases".
@@ -51,7 +52,7 @@ public final class RecentCases extends CallableSystemAction implements Presenter
     static final String PATH_PROP_KEY = "LBL_RecentCase_Path";
     static final RecentCase BLANK_RECENTCASE = new RecentCase("", "");
     // get the path of the case.properties file in the user directory
-    private final static String propFilePath = System.getProperty("netbeans.user") + File.separator + "autopsy.properties";
+    private final static String propFilePath = AutopsyPropFile.getPropertiesFilePath();
 
     private final static RecentCases INSTANCE = new RecentCases();
 
@@ -86,6 +87,7 @@ public final class RecentCases extends CallableSystemAction implements Presenter
             // try to load all the recent cases from the properties file in the home directory
             InputStream inputStream = new FileInputStream(propFilePath);
             properties.load(inputStream);
+            inputStream.close();
         } catch (Exception ignore) {
             // if cannot load it, we create a new properties file without any data inside it
             try {
@@ -99,6 +101,7 @@ public final class RecentCases extends CallableSystemAction implements Presenter
                     output.createNewFile();
                     FileOutputStream fos = new FileOutputStream(output);
                     properties.store(fos, "");
+                    fos.close();
                 } else {
                     // if the property file already exist, throw an error that says cannot load that file
                     Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not load the property file.", new Exception("The properties file already exist and can't load that file."));

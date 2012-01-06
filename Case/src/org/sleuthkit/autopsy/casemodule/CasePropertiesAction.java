@@ -31,7 +31,7 @@ import javax.swing.JFrame;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
  * The action to pop up the Case Properties Form window. By using this form,

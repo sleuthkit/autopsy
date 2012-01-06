@@ -28,7 +28,7 @@ import javax.swing.AbstractAction;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
  * Extracts a File object to a temporary file in the case directory, and then

@@ -30,8 +30,8 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.casemodule.Autopsy;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
  * The HashDbMgmtAction opens the HashDbMgmtPanel in a dialog, and saves the
@@ -48,7 +48,7 @@ class HashDbMgmtAction extends CallableSystemAction {
 
         try {
             // Load settings from the property file
-            HashDbSettings hashDatabaseSettings = new HashDbSettings(Autopsy.getPropertyFile());
+            HashDbSettings hashDatabaseSettings = new HashDbSettings(AutopsyPropFile.getPropertyFile());
 
             // create the popUp window for it
             final JFrame frame = new JFrame(ACTION_NAME);

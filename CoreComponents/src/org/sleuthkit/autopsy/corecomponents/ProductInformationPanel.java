@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Cursor;
 import java.awt.Window;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
@@ -33,7 +34,7 @@ import javax.swing.event.HyperlinkListener;
 import org.netbeans.core.actions.HTMLViewAction;
 import org.openide.awt.HtmlBrowser;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Autopsy;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 
 /**
@@ -43,6 +44,7 @@ class ProductInformationPanel extends JPanel implements HyperlinkListener {
 
     private URL url = null;
     private Icon about;
+    private boolean verboseLogging;
 
     ProductInformationPanel() {
         about = new ImageIcon(org.netbeans.core.startup.Splash.loadContent(true));
@@ -54,7 +56,7 @@ class ProductInformationPanel extends JPanel implements HyperlinkListener {
         description.addHyperlinkListener(this);
         copyright.addHyperlinkListener(this);
         copyright.setBackground(getBackground());
-        if (Autopsy.verboseLoggingIsSet()) {
+        if (verboseLoggingIsSet()) {
             disableVerboseLoggingButton();
         }
 
@@ -174,7 +176,7 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
 }//GEN-LAST:event_jLabel1MouseClicked
 
     private void activateVerboseLogging(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_activateVerboseLogging
-        Autopsy.startVerboseLogging();
+        startVerboseLogging();
         disableVerboseLoggingButton();
     }//GEN-LAST:event_activateVerboseLogging
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -252,5 +254,23 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
         } else if (HyperlinkEvent.EventType.EXITED == event.getEventType()) {
             url = null;
         }
+    }
+    
+    /**
+     * Activate verbose logging for Sleuth Kit
+     */
+    public void startVerboseLogging() {
+        verboseLogging = true;
+        String logPath = AutopsyPropFile.getUserDirPath() + File.separator + "sleuthkit.txt";
+        
+        SleuthkitJNI.startVerboseLogging(logPath);
+    }
+    
+    /**
+     * Checks if verbose logging has been enabled.
+     * @return true if verbose logging has been enabled.
+     */
+    public boolean verboseLoggingIsSet() {
+        return verboseLogging;
     }
 }

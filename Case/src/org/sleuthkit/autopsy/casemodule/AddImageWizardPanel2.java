@@ -37,8 +37,8 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.autopsy.hashdatabase.HashDbSettings;
-import org.sleuthkit.autopsy.logging.Log;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 import org.sleuthkit.datamodel.TskException;
@@ -230,7 +230,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         this.knownBadPath = null;
         
         try {
-            HashDbSettings hashDbs = Autopsy.getHashDbSettings();
+            HashDbSettings hashDbs = HashDbSettings.getHashDbSettings();
             this.NSRLPath = hashDbs.getNSRLDatabasePath();
             this.knownBadPath = hashDbs.getKnownBadDatabasePath();
         } catch (IOException ex) {

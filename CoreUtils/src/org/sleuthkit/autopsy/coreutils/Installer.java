@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package org.sleuthkit.autopsy.logging;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.io.IOException;
 import java.util.logging.FileHandler;

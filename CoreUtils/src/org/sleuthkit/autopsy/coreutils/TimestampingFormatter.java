@@ -18,7 +18,7 @@
  */
 
 
-package org.sleuthkit.autopsy.logging;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.text.DateFormat;
 import java.util.Date;

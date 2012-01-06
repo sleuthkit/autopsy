@@ -31,7 +31,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.NodeOp;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 
 
 /**

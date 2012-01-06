@@ -301,6 +301,8 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     @Override
     public void resetComponent() {
         // clear / reset the fields
+        currentPage = 1;
+        currentOffset = 0;
         this.dataSource = null;
         currentPageLabel.setText("");
         totalPageLabel.setText("");
