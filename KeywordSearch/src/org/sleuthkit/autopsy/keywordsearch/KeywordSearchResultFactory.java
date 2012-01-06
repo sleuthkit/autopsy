@@ -28,10 +28,14 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.swing.SwingUtilities;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
@@ -140,17 +144,25 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
     @Override
     protected Node createNodeForKey(KeyValueThing thing) {
         ChildFactory<KeyValueThing> childFactory = null;
-        switch (presentation) {
-            case COLLAPSE:
-                childFactory = new ResultCollapsedChildFactory(thing);
-                break;
-            case DETAIL:
-                childFactory = new ResulTermsMatchesChildFactory(things);
-                break;
-            default:
-        }
 
-        return new KeyValueNode(thing, Children.create(childFactory, true));
+        if (presentation == Presentation.COLLAPSE) {
+            childFactory = new ResultCollapsedChildFactory(thing);
+            final Node ret = new KeyValueNode(thing, Children.create(childFactory, true));
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    //DataResultViewerTable view = Utilities.actionsGlobalContext().lookup(DataResultViewerTable.class);
+                    for (DataResultViewer view : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
+                        view.expandNode(ret);
+                    }
+                }
+            });
+            return ret;
+        } else {
+
+            childFactory = new ResulTermsMatchesChildFactory(things);
+            return new KeyValueNode(thing, Children.create(childFactory, true));
+        }
     }
 
     /**
@@ -184,14 +196,15 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             //the query is executed later on demand
             StringBuilder highlightQuery = new StringBuilder();
             Collection<Term> terms = tcq.getTerms();
-            final int lastTerm = terms.size() -1;
+            final int lastTerm = terms.size() - 1;
             int curTerm = 0;
             for (Term term : terms) {
                 final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true);
-                if (! termS.contains("*")) {
+                if (!termS.contains("*")) {
                     highlightQuery.append(termS);
-                    if (lastTerm != curTerm)
+                    if (lastTerm != curTerm) {
                         highlightQuery.append(" ");
+                    }
                 }
             }
             //String highlightQueryEscaped = KeywordSearchUtil.escapeLuceneQuery(highlightQuery.toString());

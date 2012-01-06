@@ -38,6 +38,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Sheet;
+import org.openide.util.lookup.AbstractLookup;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
@@ -63,6 +64,18 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.getOutline().setRootVisible(false);
 
         this.em.addPropertyChangeListener(this);
+    }
+    
+    /**
+     * Expand node
+     * @param n Node to expand
+     */
+    @Override
+    public void expandNode(Node n) {
+        if ( this.tableScrollPanel != null) {
+            OutlineView ov = ((OutlineView) this.tableScrollPanel);
+            ov.expandNode(n);
+        }
     }
 
     /** This method is called from within the constructor to
