@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -28,11 +30,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
@@ -77,32 +77,35 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         searchButton.setToolTipText("Execute the keyword list search using the current list");
         deleteWordButton.setToolTipText("Delete selected keyword(s) from the list");
         deleteAllWordsButton.setToolTipText("Delete all keywords from the list (clear it)");
+        
+        loadListButton.setEnabled(false);
+        saveListButton.setEnabled(false);
 
         keywordTable.setAutoscrolls(true);
         keywordTable.setTableHeader(null);
-        keywordTable.setShowHorizontalLines(true);
-        keywordTable.setShowVerticalLines(true);
-        //keywordTable.setShowGrid(false)
-        //TODO removing dotted line of selected cell might require code in custom renderer
+        keywordTable.setShowHorizontalLines(false);
+        keywordTable.setShowVerticalLines(false);
+
+        keywordTable.getParent().setBackground(keywordTable.getBackground());
+        
+        //customize column witdhs
+        keywordTable.setSize(260,200);
         final int width = keywordTable.getSize().width;
         TableColumn column = null;
         for (int i = 0; i < 2; i++) {
             column = keywordTable.getColumnModel().getColumn(i);
             if (i == 1) {
-                column.setPreferredWidth(((int) (width * 0.2)));
-                //column.setCellEditor(new DefaultCellEditor(new JCheckBox()));
-
+                column.setPreferredWidth(((int) (width *0.2)));
+                //column.setCellRenderer(new CellTooltipRenderer());
             } else {
                 column.setCellRenderer(new CellTooltipRenderer());
-                column.setPreferredWidth(((int) (width * 0.7)));
+                column.setPreferredWidth(((int) (width * 0.75)));
             }
         }
         keywordTable.setCellSelectionEnabled(false);
-        //keywordTable.setBorder(BorderFactory.createEmptyBorder());
 
         //create some empty rows        
-        tableModel.initEmpty();
-
+        //tableModel.initEmpty();
 
         //test
         tableModel.addKeyword("\\d\\d\\d-\\d\\d\\d-\\d\\d\\d\\d");
@@ -192,6 +195,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         });
 
         keywordTable.setModel(tableModel);
+        keywordTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         keywordTable.setShowHorizontalLines(false);
         keywordTable.setShowVerticalLines(false);
         jScrollPane1.setViewportView(keywordTable);
@@ -519,7 +523,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
 
         void initEmpty() {
-            for (int i = 0; i < 20; ++i) {
+            for (int i = 0; i < 10; ++i) {
                 keywordData.add(0, new TableEntry("", false));
             }
             fireTableDataChanged();
@@ -545,25 +549,21 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     /**
      * tooltips that show entire query string
      */
-    public static class CellTooltipRenderer extends JLabel
-            implements TableCellRenderer {
+    public static class CellTooltipRenderer extends DefaultTableCellRenderer {
 
-       
         @Override
         public Component getTableCellRendererComponent(
-                JTable table, Object color,
+                JTable table, Object value,
                 boolean isSelected, boolean hasFocus,
                 int row, int column) {
 
             if (column == 0) {
-                String val = (String)table.getModel().getValueAt(row, column);
+                String val = (String) table.getModel().getValueAt(row, column);
                 setToolTipText(val);
                 setText(val);
             }
+
             return this;
         }
-        
     }
-    
-    
 }
