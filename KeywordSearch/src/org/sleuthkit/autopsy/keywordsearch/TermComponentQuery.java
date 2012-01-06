@@ -157,10 +157,10 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         final SolrQuery q = createQuery();
         terms = executeQuery(q);
-        
+
         //get unique match result files
-   
-        
+
+
         //combine the terms into single Solr query to get files
         //it's much more efficient and should yield the same file IDs as per match queries
         //requires http POST query method due to potentially large query size
@@ -172,17 +172,18 @@ public class TermComponentQuery implements KeywordSearchQuery {
             filesQueryB.append(" ");
         }
         List<FsContent> uniqueMatches = new ArrayList<FsContent>();
-        
-        LuceneQuery filesQuery = new LuceneQuery(filesQueryB.toString());
-        filesQuery.escape(); //TODO escaping invididual terms above instead could make a difference to Solr
-        try {
-            uniqueMatches = filesQuery.performQuery();
-        }
-        catch (RuntimeException e) {
-            logger.log(Level.SEVERE, "Error executing Solr query,", e);
+
+        if (! terms.isEmpty()) {
+            LuceneQuery filesQuery = new LuceneQuery(filesQueryB.toString());
+            filesQuery.escape(); //TODO escaping invididual terms above instead could make a difference to Solr
+            try {
+                uniqueMatches = filesQuery.performQuery();
+            } catch (RuntimeException e) {
+                logger.log(Level.SEVERE, "Error executing Solr query,", e);
+            }
         }
 
-        
+
         //filter out non-matching files using the original query (whether literal or not)
         //TODO this could be costly, for now just testing how it performs
         for (FsContent f : uniqueMatches) {

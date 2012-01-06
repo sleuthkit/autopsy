@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -27,7 +28,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import javax.swing.JLabel;
+import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
@@ -50,7 +55,7 @@ persistenceType = TopComponent.PERSISTENCE_NEVER)
 preferredID = "KeywordSearchListTopComponent")
 public final class KeywordSearchListTopComponent extends TopComponent implements KeywordSearchTopComponentInterface {
 
-    private Logger logger = Logger.getLogger(KeywordSearchListTopComponent.class.getName());
+    private static Logger logger = Logger.getLogger(KeywordSearchListTopComponent.class.getName());
     private KeywordTableModel tableModel;
 
     public KeywordSearchListTopComponent() {
@@ -75,10 +80,10 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         keywordTable.setAutoscrolls(true);
         keywordTable.setTableHeader(null);
-        keywordTable.setShowHorizontalLines(false);
-        keywordTable.setShowVerticalLines(false);
-        keywordTable.setShowGrid(false);
-        //TODO removing dotted line of selected cell might require custom renderer
+        keywordTable.setShowHorizontalLines(true);
+        keywordTable.setShowVerticalLines(true);
+        //keywordTable.setShowGrid(false)
+        //TODO removing dotted line of selected cell might require code in custom renderer
         final int width = keywordTable.getSize().width;
         TableColumn column = null;
         for (int i = 0; i < 2; i++) {
@@ -88,21 +93,22 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                 //column.setCellEditor(new DefaultCellEditor(new JCheckBox()));
 
             } else {
+                column.setCellRenderer(new CellTooltipRenderer());
                 column.setPreferredWidth(((int) (width * 0.7)));
             }
         }
         keywordTable.setCellSelectionEnabled(false);
-       //keywordTable.setBorder(BorderFactory.createEmptyBorder());
+        //keywordTable.setBorder(BorderFactory.createEmptyBorder());
 
         //create some empty rows        
         tableModel.initEmpty();
-        
+
 
         //test
         tableModel.addKeyword("\\d\\d\\d-\\d\\d\\d-\\d\\d\\d\\d");
         tableModel.addKeyword("\\d\\d\\.\\d\\d\\d\\.*");
         tableModel.addKeyword("text");
-        
+
     }
 
     /** This method is called from within the constructor to
@@ -313,7 +319,6 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     private void deleteAllWordsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAllWordsButtonActionPerformed
         tableModel.deleteAll();
     }//GEN-LAST:event_deleteAllWordsButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addWordButton;
     private javax.swing.JTextField addWordField;
@@ -370,18 +375,17 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     }
 
     @Override
-    public Map<String,Boolean> getQueryList() {
+    public Map<String, Boolean> getQueryList() {
         List<String> selected = getSelectedKeywords();
         //filter out blank just in case
-        Map<String,Boolean> ret = new LinkedHashMap<String,Boolean>();
+        Map<String, Boolean> ret = new LinkedHashMap<String, Boolean>();
         for (String s : selected) {
-            if (!s.trim().equals(""))
+            if (!s.trim().equals("")) {
                 ret.put(s, false);
+            }
         }
         return ret;
     }
-    
-    
 
     @Override
     public boolean isLuceneQuerySelected() {
@@ -416,8 +420,9 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         return tableModel.keywordExists(keyword);
     }
 
-    class KeywordTableModel extends AbstractTableModel {
+    static class KeywordTableModel extends AbstractTableModel {
 
+        private static Logger logger = Logger.getLogger(KeywordTableModel.class.getName());
         //data
         private List<TableEntry> keywordData = new ArrayList<TableEntry>();
 
@@ -492,28 +497,29 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             keywordData.add(0, new TableEntry(keyword));
             this.fireTableRowsInserted(keywordData.size() - 1, keywordData.size());
         }
-        
+
         void deleteAll() {
             keywordData.clear();
             initEmpty();
         }
-        
+
         void deleteSelected() {
             List<TableEntry> toDel = new ArrayList<TableEntry>();
             int i = 0;
-            for (TableEntry e: keywordData) {
-                if (e.isActive && !e.keyword.equals(""))
+            for (TableEntry e : keywordData) {
+                if (e.isActive && !e.keyword.equals("")) {
                     toDel.add(e);
+                }
             }
             for (TableEntry del : toDel) {
                 keywordData.remove(del);
             }
             fireTableDataChanged();
-            
+
         }
-        
+
         void initEmpty() {
-            for (int i = 0; i<20; ++i) {
+            for (int i = 0; i < 20; ++i) {
                 keywordData.add(0, new TableEntry("", false));
             }
             fireTableDataChanged();
@@ -535,4 +541,29 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             }
         }
     }
+
+    /**
+     * tooltips that show entire query string
+     */
+    public static class CellTooltipRenderer extends JLabel
+            implements TableCellRenderer {
+
+       
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable table, Object color,
+                boolean isSelected, boolean hasFocus,
+                int row, int column) {
+
+            if (column == 0) {
+                String val = (String)table.getModel().getValueAt(row, column);
+                setToolTipText(val);
+                setText(val);
+            }
+            return this;
+        }
+        
+    }
+    
+    
 }
