@@ -58,10 +58,32 @@ public class KeywordSearchUtil {
         return dirName;
     }
 
-    public static String escapeLuceneQuery(String query) {
+    /**
+     * Perform standard escaping / encoding into UTF-8 before sending over net
+     * @param query to be encoded
+     * @param escapeLuceneChars if true perform first escaping of Lucene specific special chars
+     * such as /+-&|!(){}[]^"~*?:\ and treat the whole query as literal word
+     * @return encoded query
+     */
+    public static String escapeLuceneQuery(String query, boolean escapeLuceneChars) {
         String queryEscaped = null;
+        String inputString = query;
+        
+        if (escapeLuceneChars == true) {
+            final String ESCAPE_CHARS = "/+-&|!(){}[]^\"~*?:\\";
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i< inputString.length(); ++i) {
+                char c = inputString.charAt(i);
+                if (ESCAPE_CHARS.contains(Character.toString(c)) )  {
+                    sb.append("\\");
+                }
+                sb.append(c);
+            }
+            inputString = sb.toString();
+        }
+        
         try {
-            queryEscaped = URLEncoder.encode(query, "UTF-8"); 
+            queryEscaped = URLEncoder.encode(inputString, "UTF-8"); 
         }
         catch (UnsupportedEncodingException ex) {
             logger.log(Level.SEVERE, "Error escaping URL query, should not happen.", ex);
@@ -69,6 +91,7 @@ public class KeywordSearchUtil {
         }
         return queryEscaped;
     }
+    
     
     public static void displayDialog(final String title, final String message, final DIALOG_MESSAGE_TYPE type) {
         int messageType;

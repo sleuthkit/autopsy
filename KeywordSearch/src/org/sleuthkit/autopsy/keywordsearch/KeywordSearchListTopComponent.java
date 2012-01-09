@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -104,14 +102,25 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
         keywordTable.setCellSelectionEnabled(false);
 
-        //create some empty rows        
-        //tableModel.initEmpty();
-
-        //test
-        tableModel.addKeyword("\\d\\d\\d-\\d\\d\\d-\\d\\d\\d\\d");
-        tableModel.addKeyword("\\d\\d\\.\\d\\d\\d\\.*");
-        tableModel.addKeyword("text");
-
+        loadDefaultKeywords();
+    }
+    
+    private void loadDefaultKeywords() {
+        //some hardcoded keywords for testing
+        
+        //phone number
+        tableModel.addKeyword("\\d\\d\\d[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d");
+        tableModel.addKeyword("\\d{8,10}");
+        tableModel.addKeyword("phone|fax");
+        //IP address
+        tableModel.addKeyword("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])");
+        //email
+        tableModel.addKeyword("[e\\-]{0,2}mail");
+        tableModel.addKeyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}");
+        //URL
+        tableModel.addKeyword("ftp|sftp|ssh|http|https|www");
+        //escaped literal word \d\d\d
+        tableModel.addKeyword("\\Q\\d\\d\\d\\E");
     }
 
     /** This method is called from within the constructor to
@@ -309,11 +318,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     }//GEN-LAST:event_addWordButtonActionPerformed
 
     private void saveListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveListButtonActionPerformed
-        // TODO add your handling code here:
+     
     }//GEN-LAST:event_saveListButtonActionPerformed
 
     private void chLiteralWordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chLiteralWordActionPerformed
-        // TODO add your handling code here:
+       
     }//GEN-LAST:event_chLiteralWordActionPerformed
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
@@ -343,12 +352,12 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
     @Override
     public void componentOpened() {
-        // TODO add custom code on component opening
+       
     }
 
     @Override
     public void componentClosed() {
-        // TODO add custom code on component closing
+       
     }
 
     void writeProperties(java.util.Properties p) {
@@ -385,6 +394,10 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         Map<String, Boolean> ret = new LinkedHashMap<String, Boolean>();
         for (String s : selected) {
             if (!s.trim().equals("")) {
+                //use false for isLiteral because we are currently escaping
+                //the keyword earlier as it is stored
+                //might need to change and pass isLiteral if the query object
+                //needs to treat it specially
                 ret.put(s, false);
             }
         }
