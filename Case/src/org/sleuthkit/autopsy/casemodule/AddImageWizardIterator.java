@@ -151,6 +151,8 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         if (!hasPrevious()) {
             throw new NoSuchElementException();
         }
+        if(index == 2)
+            index--;
         index--;
     }
 

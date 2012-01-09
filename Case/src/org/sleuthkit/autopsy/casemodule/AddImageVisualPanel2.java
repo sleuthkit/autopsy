@@ -48,20 +48,12 @@ final class AddImageVisualPanel2 extends JPanel {
         return "Create Database";
     }
 
-    public JButton getCrDbButton() {
-        return this.crDbButton;
-    }
-
     public JProgressBar getCrDbProgressBar() {
         return this.crDbProgressBar;
     }
 
     public JLabel getProgressLabel() {
         return this.progressLabel;
-    }
-    
-    public JCheckBox getLookupFilesCheckbox() {
-        return this.lookupFilesCheckBox;
     }
 
     /**
@@ -89,27 +81,16 @@ final class AddImageVisualPanel2 extends JPanel {
         jLabel5 = new javax.swing.JLabel();
         crDbLabel = new javax.swing.JLabel();
         progressLabel = new javax.swing.JLabel();
-        crDbButton = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        lookupFilesCheckBox = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.jLabel5.text")); // NOI18N
 
-        crDbLabel.setFont(new java.awt.Font("Tahoma", 1, 14));
+        crDbLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(crDbLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.crDbLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(progressLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.progressLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(crDbButton, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.crDbButton.text")); // NOI18N
-        crDbButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                crDbButtonActionPerformed(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.jLabel1.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(lookupFilesCheckBox, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.lookupFilesCheckBox.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -121,20 +102,12 @@ final class AddImageVisualPanel2 extends JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(crDbLabel)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(crDbButton)
-                                        .addGap(189, 189, 189))
-                                    .addComponent(jLabel5)
-                                    .addComponent(crDbProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, 292, Short.MAX_VALUE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 272, Short.MAX_VALUE))
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 552, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lookupFilesCheckBox)
-                        .addContainerGap(407, Short.MAX_VALUE))))
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 552, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel5))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(crDbProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, 568, Short.MAX_VALUE)
+                    .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 568, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -143,39 +116,21 @@ final class AddImageVisualPanel2 extends JPanel {
                 .addComponent(crDbLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lookupFilesCheckBox)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(80, 80, 80)
-                        .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 12, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(crDbButton)
-                        .addGap(30, 30, 30)
-                        .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(crDbProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(18, 18, 18)
+                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(crDbProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 12, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * When the "Create Database" button is press. It starts the database
-     * creation process, disables the "Create Database" and "Back" button, and
-     * sets the progress bar text.
-     *
-     * @param evt  the action event
-     */
-    private void crDbButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_crDbButtonActionPerformed
-    }//GEN-LAST:event_crDbButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton crDbButton;
     private javax.swing.JLabel crDbLabel;
     private javax.swing.JProgressBar crDbProgressBar;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel5;
-    private javax.swing.JCheckBox lookupFilesCheckBox;
     private javax.swing.JLabel progressLabel;
     // End of variables declaration//GEN-END:variables
 }
