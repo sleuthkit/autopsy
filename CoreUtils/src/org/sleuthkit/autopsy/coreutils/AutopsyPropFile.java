@@ -109,7 +109,7 @@ public class AutopsyPropFile {
     }
     
     public void removeProperty(String key){
-        properties.setProperty(key, "");
+        properties.setProperty(key, null);
         try {
             storeProperties();
         } catch (Exception ex) {

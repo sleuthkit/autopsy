@@ -109,7 +109,7 @@ public class DataResultFilterNode extends FilterNode{
         public List<Action> visit(File f) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
-            actions.add(new ExtractAction("Extract", getOriginal()));
+            actions.add(new ExtractAction("Extract File", getOriginal()));
             return actions;
         }
 
