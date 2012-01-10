@@ -106,6 +106,11 @@ public final class ExtractAction extends AbstractAction {
             }
 
             ExtractFscContentVisitor.extract(fsContent, destination);
+            if(fsContent.isDir())
+                JOptionPane.showMessageDialog((Component) e.getSource(), "Directory extracted.");
+            else if(fsContent.isFile()){
+                JOptionPane.showMessageDialog((Component) e.getSource(), "File extracted.");
+            }
         }
     }
 }
