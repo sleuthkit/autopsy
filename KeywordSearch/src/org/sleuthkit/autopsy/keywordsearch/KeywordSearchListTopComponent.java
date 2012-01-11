@@ -21,9 +21,12 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -75,9 +78,6 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         searchButton.setToolTipText("Execute the keyword list search using the current list");
         deleteWordButton.setToolTipText("Delete selected keyword(s) from the list");
         deleteAllWordsButton.setToolTipText("Delete all keywords from the list (clear it)");
-        
-        loadListButton.setEnabled(false);
-        saveListButton.setEnabled(false);
 
         keywordTable.setAutoscrolls(true);
         keywordTable.setTableHeader(null);
@@ -85,15 +85,15 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         keywordTable.setShowVerticalLines(false);
 
         keywordTable.getParent().setBackground(keywordTable.getBackground());
-        
+
         //customize column witdhs
-        keywordTable.setSize(260,200);
+        keywordTable.setSize(260, 200);
         final int width = keywordTable.getSize().width;
         TableColumn column = null;
         for (int i = 0; i < 2; i++) {
             column = keywordTable.getColumnModel().getColumn(i);
             if (i == 1) {
-                column.setPreferredWidth(((int) (width *0.2)));
+                column.setPreferredWidth(((int) (width * 0.2)));
                 //column.setCellRenderer(new CellTooltipRenderer());
             } else {
                 column.setCellRenderer(new CellTooltipRenderer());
@@ -104,10 +104,10 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         loadDefaultKeywords();
     }
-    
+
     private void loadDefaultKeywords() {
         //some hardcoded keywords for testing
-        
+
         //phone number
         tableModel.addKeyword("\\d\\d\\d[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d");
         tableModel.addKeyword("\\d{8,10}");
@@ -174,6 +174,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(loadListButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.loadListButton.text")); // NOI18N
+        loadListButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loadListButtonActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteWordButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.deleteWordButton.text")); // NOI18N
         deleteWordButton.addActionListener(new java.awt.event.ActionListener() {
@@ -274,7 +279,6 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        // TODO add your handling code here:
     }//GEN-LAST:event_searchButtonActionPerformed
 
     private void addWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addWordButtonActionPerformed
@@ -318,11 +322,39 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     }//GEN-LAST:event_addWordButtonActionPerformed
 
     private void saveListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveListButtonActionPerformed
-     
+        KeywordSearchListsXML writer = KeywordSearchListsXML.getInstance();
+
+        //TODO popup with name / check if overwrite, then save
+
+        String listName = "initial";
+
+        List<String> keywords = tableModel.getAllKeywords();
+
+        boolean shouldWrite = false;
+        boolean written = false;
+        if (writer.listExists(listName)) {
+            boolean replace = KeywordSearchUtil.displayConfirmDialog("Save Keyword List", "Keyword List <" + listName + "> already exists, do you want to replace it?",
+                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+            if (replace) {
+                shouldWrite = true;
+            }
+
+        } else {
+            shouldWrite = true;
+        }
+
+        if (shouldWrite) {
+            writer.addList(listName, keywords);
+            written = writer.save();
+        }
+
+        if (written) {
+            KeywordSearchUtil.displayDialog("Save Keyword List", "Keyword List <" + listName + "> saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+        }
+
     }//GEN-LAST:event_saveListButtonActionPerformed
 
     private void chLiteralWordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chLiteralWordActionPerformed
-       
     }//GEN-LAST:event_chLiteralWordActionPerformed
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
@@ -332,6 +364,24 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     private void deleteAllWordsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAllWordsButtonActionPerformed
         tableModel.deleteAll();
     }//GEN-LAST:event_deleteAllWordsButtonActionPerformed
+
+    private void loadListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadListButtonActionPerformed
+        KeywordSearchListsXML loader = KeywordSearchListsXML.getInstance();
+
+        //TODO popup widget with all lists in a a table, user picks name, then load into the model
+        String listName = "initial";
+
+        KeywordSearchList list = loader.getList(listName);
+        if (list != null) {
+            List<String> keywords = list.getKeywords();
+
+            //TODO clear/append option ?
+            tableModel.deleteAll();
+            tableModel.addKeywords(keywords);
+            KeywordSearchUtil.displayDialog("Save Keyword List", "Keyword List <" + listName + "> loaded", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+        } 
+
+    }//GEN-LAST:event_loadListButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addWordButton;
     private javax.swing.JTextField addWordField;
@@ -352,12 +402,10 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
     @Override
     public void componentOpened() {
-       
     }
 
     @Override
     public void componentClosed() {
-       
     }
 
     void writeProperties(java.util.Properties p) {
@@ -441,7 +489,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         private static Logger logger = Logger.getLogger(KeywordTableModel.class.getName());
         //data
-        private List<TableEntry> keywordData = new ArrayList<TableEntry>();
+        private Set<TableEntry> keywordData = new TreeSet<TableEntry>();
 
         @Override
         public int getColumnCount() {
@@ -456,12 +504,18 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
+            TableEntry entry = null;
+            //iterate until row
+            Iterator<TableEntry> it = keywordData.iterator();
+            for (int i = 0; i <= rowIndex; ++i) {
+                entry = it.next();
+            }
             switch (columnIndex) {
                 case 0:
-                    ret = (Object) keywordData.get(rowIndex).keyword;
+                    ret = (Object) entry.keyword;
                     break;
                 case 1:
-                    ret = (Object) keywordData.get(rowIndex).isActive;
+                    ret = (Object) entry.isActive;
                     break;
                 default:
                     logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
@@ -478,7 +532,13 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if (columnIndex == 1) {
-                keywordData.get(rowIndex).isActive = (Boolean) aValue;
+                TableEntry entry = null;
+                //iterate until row
+                Iterator<TableEntry> it = keywordData.iterator();
+                for (int i = 0; i <= rowIndex; ++i) {
+                    entry = it.next();
+                }
+                entry.isActive = (Boolean) aValue;
             }
         }
 
@@ -511,13 +571,24 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
 
         void addKeyword(String keyword) {
-            keywordData.add(0, new TableEntry(keyword));
-            this.fireTableRowsInserted(keywordData.size() - 1, keywordData.size());
+            if (!keywordExists(keyword)) {
+                keywordData.add(new TableEntry(keyword));
+            }
+            fireTableDataChanged();
+        }
+
+        void addKeywords(List<String> keywords) {
+            for (String keyword : keywords) {
+                if (!keywordExists(keyword)) {
+                    keywordData.add(new TableEntry(keyword));
+                }
+            }
+            fireTableDataChanged();
         }
 
         void deleteAll() {
             keywordData.clear();
-            initEmpty();
+            fireTableDataChanged();
         }
 
         void deleteSelected() {
@@ -535,14 +606,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         }
 
-        void initEmpty() {
-            for (int i = 0; i < 10; ++i) {
-                keywordData.add(0, new TableEntry("", false));
-            }
-            fireTableDataChanged();
-        }
-
-        class TableEntry {
+        class TableEntry implements Comparable {
 
             String keyword;
             Boolean isActive;
@@ -555,6 +619,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             TableEntry(String keyword) {
                 this.keyword = keyword;
                 this.isActive = false;
+            }
+
+            @Override
+            public int compareTo(Object o) {
+                return this.keyword.compareTo(((TableEntry) o).keyword);
             }
         }
     }

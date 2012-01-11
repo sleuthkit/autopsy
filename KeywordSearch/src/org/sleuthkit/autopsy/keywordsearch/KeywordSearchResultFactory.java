@@ -70,8 +70,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             public String toString() {
                 return "Match";
             }
-        },
-    }
+        },}
     private Presentation presentation;
     private Collection<String> queries;
     private Collection<KeyValueThing> things;
@@ -149,6 +148,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             childFactory = new ResultCollapsedChildFactory(thing);
             final Node ret = new KeyValueNode(thing, Children.create(childFactory, true));
             SwingUtilities.invokeLater(new Runnable() {
+
                 @Override
                 public void run() {
                     //DataResultViewerTable view = Utilities.actionsGlobalContext().lookup(DataResultViewerTable.class);
@@ -199,11 +199,11 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             final int lastTerm = terms.size() - 1;
             int curTerm = 0;
             for (Term term : terms) {
-                final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true);
+                final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
                 if (!termS.contains("*")) {
                     highlightQuery.append(termS);
                     if (lastTerm != curTerm) {
-                        highlightQuery.append(" ");
+                        highlightQuery.append(" "); //acts as OR ||
                     }
                 }
             }
@@ -304,25 +304,27 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
 
                 final String contentStr = KeywordSearch.getServer().getCore().getSolrContent(content);
 
-                //make sure the file contains a match (this gets rid of large number of false positives)
-                //TODO option in GUI to include approximate matches (faster)
-                boolean matchFound = false;
-                if (contentStr != null) {//if not null, some error getting from Solr, handle it by not filtering out
-                    //perform java regex to validate match from Solr
-                    String origQuery = thingContent.getQuery();
+                //postprocess
+                //make sure Solr result contains a match (this gets rid of large number of false positives)
+                boolean postprocess = true;
+                boolean matchFound = true;
+                if (postprocess) {
+                    if (contentStr != null) {//if not null, some error getting from Solr, handle it by not filtering out
+                        //perform java regex to validate match from Solr
+                        String origQuery = thingContent.getQuery();
+                        
+                        //since query is a match result, we can assume literal pattern
+                        origQuery = Pattern.quote(origQuery);
+                        Pattern p = Pattern.compile(origQuery, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
-                    //escape the regex query because it may contain special characters from the previous match
-                    //since it's a match result, we can assume literal pattern
-                    origQuery = Pattern.quote(origQuery);
-                    Pattern p = Pattern.compile(origQuery, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-
-                    Matcher m = p.matcher(contentStr);
-                    matchFound = m.find();
+                        Matcher m = p.matcher(contentStr);
+                        matchFound = m.find();
+                    }
                 }
 
                 if (matchFound) {
                     Node kvNode = new KeyValueNode(thingContent, Children.LEAF);
-                    //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
+                    //wrap in KeywordSearchFilterNode for the markup content
                     HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query);
                     return new KeywordSearchFilterNode(highlights, kvNode, query);
                 } else {

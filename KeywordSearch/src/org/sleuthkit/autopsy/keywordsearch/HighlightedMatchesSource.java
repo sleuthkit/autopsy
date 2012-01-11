@@ -57,11 +57,11 @@ class HighlightedMatchesSource implements MarkupSource {
     public String getMarkup() {
 
         SolrQuery q = new SolrQuery();
-        final String queryEscaped = KeywordSearchUtil.escapeLuceneQuery(solrQuery, true);
+        final String queryEscaped = KeywordSearchUtil.escapeLuceneQuery(solrQuery, true, false);
 
         q.setQuery(queryEscaped);
         q.addFilterQuery("id:" + content.getId());
-        q.addHighlightField("content");
+        q.addHighlightField("content"); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
         q.setHighlightSimplePre(HIGHLIGHT_PRE);
         q.setHighlightSimplePost(HIGHLIGHT_POST);
         q.setHighlightFragsize(0); // don't fragment the highlight

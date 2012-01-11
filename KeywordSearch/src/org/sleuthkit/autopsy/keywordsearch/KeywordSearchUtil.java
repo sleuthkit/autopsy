@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
@@ -31,8 +30,10 @@ import org.sleuthkit.datamodel.TskException;
 
 public class KeywordSearchUtil {
 
-    public enum DIALOG_MESSAGE_TYPE {ERROR, WARN, INFO};
-    
+    public enum DIALOG_MESSAGE_TYPE {
+
+        ERROR, WARN, INFO
+    };
     private static final Logger logger = Logger.getLogger(KeywordSearchUtil.class.getName());
 
     public static String buildDirName(FsContent f) {
@@ -65,47 +66,65 @@ public class KeywordSearchUtil {
      * such as /+-&|!(){}[]^"~*?:\ and treat the whole query as literal word
      * @return encoded query
      */
-    public static String escapeLuceneQuery(String query, boolean escapeLuceneChars) {
+    public static String escapeLuceneQuery(String query, boolean escapeLuceneChars, boolean encode) {
         String queryEscaped = null;
         String inputString = query;
-        
+
         if (escapeLuceneChars == true) {
             final String ESCAPE_CHARS = "/+-&|!(){}[]^\"~*?:\\";
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i< inputString.length(); ++i) {
+            for (int i = 0; i < inputString.length(); ++i) {
                 char c = inputString.charAt(i);
-                if (ESCAPE_CHARS.contains(Character.toString(c)) )  {
+                if (ESCAPE_CHARS.contains(Character.toString(c))) {
                     sb.append("\\");
                 }
                 sb.append(c);
             }
-            inputString = sb.toString();
+            queryEscaped = inputString = sb.toString();
         }
-        
-        try {
-            queryEscaped = URLEncoder.encode(inputString, "UTF-8"); 
-        }
-        catch (UnsupportedEncodingException ex) {
-            logger.log(Level.SEVERE, "Error escaping URL query, should not happen.", ex);
-            queryEscaped = query;
+
+        if (encode) {
+            try {
+                queryEscaped = URLEncoder.encode(inputString, "UTF-8");
+            } catch (UnsupportedEncodingException ex) {
+                logger.log(Level.SEVERE, "Error escaping URL query, should not happen.", ex);
+                queryEscaped = query;
+            }
         }
         return queryEscaped;
     }
-    
-    
+
     public static void displayDialog(final String title, final String message, final DIALOG_MESSAGE_TYPE type) {
         int messageType;
-        if (type == DIALOG_MESSAGE_TYPE.ERROR)
+        if (type == DIALOG_MESSAGE_TYPE.ERROR) {
             messageType = JOptionPane.ERROR_MESSAGE;
-        else if (type == DIALOG_MESSAGE_TYPE.WARN)
+        } else if (type == DIALOG_MESSAGE_TYPE.WARN) {
             messageType = JOptionPane.WARNING_MESSAGE;
-        else messageType = JOptionPane.INFORMATION_MESSAGE;
-        
+        } else {
+            messageType = JOptionPane.INFORMATION_MESSAGE;
+        }
+
         final Component parentComponent = null; // Use default window frame.
         JOptionPane.showMessageDialog(
                 parentComponent,
                 message,
                 title,
                 messageType);
+    }
+
+    public static boolean displayConfirmDialog(final String title, final String message, final DIALOG_MESSAGE_TYPE type) {
+        int messageType;
+        if (type == DIALOG_MESSAGE_TYPE.ERROR) {
+            messageType = JOptionPane.ERROR_MESSAGE;
+        } else if (type == DIALOG_MESSAGE_TYPE.WARN) {
+            messageType = JOptionPane.WARNING_MESSAGE;
+        } else {
+            messageType = JOptionPane.INFORMATION_MESSAGE;
+        }
+        if (JOptionPane.showConfirmDialog(null, message, title, JOptionPane.YES_NO_OPTION, messageType) == JOptionPane.YES_OPTION) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
