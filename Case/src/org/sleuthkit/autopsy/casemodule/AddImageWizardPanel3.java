@@ -171,8 +171,6 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        // Cancel all cleanup tasks
-        settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, null);
     }
     
     

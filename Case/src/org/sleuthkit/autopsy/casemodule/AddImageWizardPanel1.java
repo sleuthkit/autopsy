@@ -200,7 +200,7 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
                 Logger logger = Logger.getLogger(AddImageWizardPanel1.class.getName());
                 logger.log(Level.WARNING, "Error cleaning up image task", ex);
             }finally{
-                settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, null);
+                cleanupTask.disable();
             }
         }
         
