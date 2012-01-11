@@ -165,6 +165,22 @@ public class KeywordSearchListsXML {
         }
         return replaced;
     }
+    
+    /**
+     * delete list if exists and save new list
+     * @param name of list to delete
+     * @return true if deleted
+     */
+    boolean deleteList(String name) {
+        boolean deleted = false;
+        KeywordSearchList delList = getList(name);
+        if (delList != null) {
+            theLists.remove(name);
+            deleted = save();
+        }
+        return deleted;
+        
+    }
 
     /**
      * writes out current list replacing the last lists file

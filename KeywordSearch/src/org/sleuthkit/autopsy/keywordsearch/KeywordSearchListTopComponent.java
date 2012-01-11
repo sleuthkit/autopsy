@@ -19,7 +19,10 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -31,7 +34,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -75,7 +83,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         addWordButton.setToolTipText(("Add a new word to the keyword search list"));
         addWordField.setToolTipText("Enter a new word or regex to search");
 
-        loadListButton.setToolTipText("Load a new keyword list from file");
+        loadListButton.setToolTipText("Load a new keyword list from file or delete an existing list");
         saveListButton.setToolTipText("Save the current keyword list to a file");
         searchButton.setToolTipText("Execute the keyword list search using the current list");
         deleteWordButton.setToolTipText("Delete selected keyword(s) from the list");
@@ -389,18 +397,12 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         KeywordSearchListsXML loader = KeywordSearchListsXML.getInstance();
 
-        String listName = (String) JOptionPane.showInputDialog(
-                null,
-                "Keyword list to load:",
-                FEATURE_NAME,
-                JOptionPane.PLAIN_MESSAGE,
-                null,
-                loader.getListNames().toArray(),
-                currentKeywordList);
+        final String listName = showLoadDeleteListDialog(FEATURE_NAME, loader.getListNames().toArray(), currentKeywordList, true);
 
-        if(listName == null || listName.equals(""))
+        if (listName == null || listName.equals("")) {
             return;
-        
+        }
+
         KeywordSearchList list = loader.getList(listName);
         if (list != null) {
             List<String> keywords = list.getKeywords();
@@ -431,6 +433,121 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables
 
+    private String showLoadDeleteListDialog(final String title, Object[] choices, Object initialChoice, boolean deleteOption) {
+        if (deleteOption) {
+            //custom JOptionPane with right click to delete list
+            //TODO custom component might be better, than customizing a prefab component
+            final JOptionPane loadPane = new JOptionPane("Keyword list to load (right-click to delete):", JOptionPane.PLAIN_MESSAGE,
+                    JOptionPane.OK_CANCEL_OPTION, null,
+                    null, null);
+
+            loadPane.setWantsInput(true);
+            loadPane.setSelectionValues(choices);
+            loadPane.setInitialSelectionValue(initialChoice);
+            //loadPane.setValue(initialChoice);
+
+            final JDialog loadDialog = loadPane.createDialog(null, title);
+            final JPopupMenu rightClickMenu = new JPopupMenu();
+            JMenuItem delItem = new JMenuItem("Delete List");
+
+            delItem.addActionListener(new ActionListener() {
+                JComboBox combo;
+                //find the combo component
+                private JComboBox getDialogComponent(Component component) {
+                    if (component instanceof JComboBox) {
+                        combo = (JComboBox)component;
+                    } else if (component instanceof JPanel) {
+                        for (Component c : ((JPanel) component).getComponents()) {
+                            getDialogComponent(c);
+                        }
+                    } else if (component instanceof JOptionPane) {
+                        for (Component c : ((JOptionPane) component).getComponents()) {
+                            getDialogComponent(c);
+                        }
+
+                    }
+                    return combo;
+                }
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    //there is no JOptionPane API to get current from combobox before OK is pressed
+                    //workaround traversing the widgets
+                    String selList = null;
+                    combo = getDialogComponent(loadPane);
+                    if (combo != null) {
+                        selList = (String) combo.getSelectedItem();
+                    }
+
+
+                    if (selList != null && selList != JOptionPane.UNINITIALIZED_VALUE) {
+                        KeywordSearchListsXML loader = KeywordSearchListsXML.getInstance();
+                        boolean deleted = loader.deleteList(selList);
+                        if (deleted) {
+                            Object[] choices = loader.getListNames().toArray();
+                            loadPane.setSelectionValues(choices);
+                            if (choices.length > 0) {
+                                loadPane.setInitialSelectionValue(choices[0]);
+                            }
+                            loadPane.selectInitialValue();
+                            KeywordSearchUtil.displayDialog(title, "Keyword List <" + selList + "> deleted", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                        }
+
+                    }
+
+                    rightClickMenu.setVisible(false);
+                }
+            });
+
+            rightClickMenu.add(delItem);
+
+            loadPane.addMouseListener(new MouseListener() {
+
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getButton() == MouseEvent.BUTTON3) {
+                        rightClickMenu.show(loadPane, e.getX(), e.getY());
+                    }
+                }
+
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                }
+
+                @Override
+                public void mousePressed(MouseEvent e) {
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    rightClickMenu.setVisible(false);
+                }
+            });
+
+
+
+            loadPane.selectInitialValue();
+            loadDialog.show();
+            loadDialog.dispose();
+
+            return (String) loadPane.getInputValue();
+        } else {
+            return (String) JOptionPane.showInputDialog(
+                    null,
+                    "Keyword list to load:",
+                    title,
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    choices,
+                    initialChoice);
+
+        }
+    }
+
     @Override
     public void componentOpened() {
     }
@@ -439,11 +556,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     public void componentClosed() {
     }
 
-    void writeProperties(java.util.Properties p) {   
+    void writeProperties(java.util.Properties p) {
         p.setProperty("version", "1.0");
     }
 
-    void readProperties(java.util.Properties p) {   
+    void readProperties(java.util.Properties p) {
     }
 
     @Override
