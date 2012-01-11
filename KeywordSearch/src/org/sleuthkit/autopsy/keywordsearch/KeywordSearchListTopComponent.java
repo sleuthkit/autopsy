@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -58,6 +59,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
     private static Logger logger = Logger.getLogger(KeywordSearchListTopComponent.class.getName());
     private KeywordTableModel tableModel;
+    private String currentKeywordList;
 
     public KeywordSearchListTopComponent() {
         tableModel = new KeywordTableModel();
@@ -103,6 +105,10 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         keywordTable.setCellSelectionEnabled(false);
 
         loadDefaultKeywords();
+
+        if (KeywordSearchListsXML.getInstance().getNumberLists() == 0) {
+            loadListButton.setEnabled(false);
+        }
     }
 
     private void loadDefaultKeywords() {
@@ -322,18 +328,26 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     }//GEN-LAST:event_addWordButtonActionPerformed
 
     private void saveListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveListButtonActionPerformed
+        final String FEATURE_NAME = "Save Keyword List";
         KeywordSearchListsXML writer = KeywordSearchListsXML.getInstance();
 
-        //TODO popup with name / check if overwrite, then save
-
-        String listName = "initial";
+        String listName = (String) JOptionPane.showInputDialog(
+                null,
+                "New keyword list name:",
+                FEATURE_NAME,
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                null,
+                currentKeywordList != null ? currentKeywordList : "");
+        if (listName == null || listName.equals("")) {
+            return;
+        }
 
         List<String> keywords = tableModel.getAllKeywords();
-
         boolean shouldWrite = false;
         boolean written = false;
         if (writer.listExists(listName)) {
-            boolean replace = KeywordSearchUtil.displayConfirmDialog("Save Keyword List", "Keyword List <" + listName + "> already exists, do you want to replace it?",
+            boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, "Keyword List <" + listName + "> already exists, do you want to replace it?",
                     KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
             if (replace) {
                 shouldWrite = true;
@@ -349,9 +363,13 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
 
         if (written) {
-            KeywordSearchUtil.displayDialog("Save Keyword List", "Keyword List <" + listName + "> saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+            currentKeywordList = listName;
+            KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+            //enable load button if it was previously disabled, as lists now exist
+            if (loadListButton.isEnabled() == false) {
+                loadListButton.setEnabled(true);
+            }
         }
-
     }//GEN-LAST:event_saveListButtonActionPerformed
 
     private void chLiteralWordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chLiteralWordActionPerformed
@@ -366,11 +384,23 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     }//GEN-LAST:event_deleteAllWordsButtonActionPerformed
 
     private void loadListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadListButtonActionPerformed
+
+        final String FEATURE_NAME = "Load Keyword List";
+
         KeywordSearchListsXML loader = KeywordSearchListsXML.getInstance();
 
-        //TODO popup widget with all lists in a a table, user picks name, then load into the model
-        String listName = "initial";
+        String listName = (String) JOptionPane.showInputDialog(
+                null,
+                "Keyword list to load:",
+                FEATURE_NAME,
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                loader.getListNames().toArray(),
+                currentKeywordList);
 
+        if(listName == null || listName.equals(""))
+            return;
+        
         KeywordSearchList list = loader.getList(listName);
         if (list != null) {
             List<String> keywords = list.getKeywords();
@@ -378,8 +408,9 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             //TODO clear/append option ?
             tableModel.deleteAll();
             tableModel.addKeywords(keywords);
-            KeywordSearchUtil.displayDialog("Save Keyword List", "Keyword List <" + listName + "> loaded", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-        } 
+            currentKeywordList = listName;
+            KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> loaded", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+        }
 
     }//GEN-LAST:event_loadListButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables

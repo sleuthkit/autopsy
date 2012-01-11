@@ -110,6 +110,22 @@ public class KeywordSearchListsXML {
     Map<String, KeywordSearchList> getLists() {
         return theLists;
     }
+    
+    /**
+     * get list of all loaded keyword list names
+     * @return List of keyword list names
+     */
+    List<String>getListNames() {
+        return new ArrayList(theLists.keySet());
+    }
+    
+    /**
+     * get number of lists currently stored
+     * @return number of lists currently stored
+     */
+    int getNumberLists() {
+        return theLists.size();
+    }
 
     /**
      * get list by name or null
