@@ -439,16 +439,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     public void componentClosed() {
     }
 
-    void writeProperties(java.util.Properties p) {
-        // better to version settings since initial version as advocated at
-        // http://wiki.apidesign.org/wiki/PropertyFiles
+    void writeProperties(java.util.Properties p) {   
         p.setProperty("version", "1.0");
-        // TODO store your settings
     }
 
-    void readProperties(java.util.Properties p) {
-        String version = p.getProperty("version");
-        // TODO read your settings according to their version
+    void readProperties(java.util.Properties p) {   
     }
 
     @Override
@@ -475,8 +470,8 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             if (!s.trim().equals("")) {
                 //use false for isLiteral because we are currently escaping
                 //the keyword earlier as it is stored
-                //might need to change and pass isLiteral if the query object
-                //needs to treat it specially
+                //might need to change and pass isLiteral 
+                //if the query object needs to treat it specially
                 ret.put(s, false);
             }
         }
