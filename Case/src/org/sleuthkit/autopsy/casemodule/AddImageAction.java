@@ -35,11 +35,13 @@ import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.openide.util.ChangeSupport;
 import org.openide.util.HelpCtx;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 
 /**
@@ -57,7 +59,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     // <TYPE>: <DESCRIPTION>
     // String: time zone that the image is from
     static final String TIMEZONE_PROP = "timeZone";
-    // String[]: task to clean up the database file if wizard errors/is cancelled after it is created
+    // String[]: array of paths to each image selected
     static final String IMGPATHS_PROP = "imgPaths";
     // CleanupTask: task to clean up the database file if wizard errors/is cancelled after it is created
     static final String IMAGECLEANUPTASK_PROP = "finalFileCleanup";
@@ -65,6 +67,10 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     static final String IMAGEID_PROP = "imageId";
     // AddImageProcess: the next availble id for a new image
     static final String PROCESS_PROP = "process";
+    // boolean: whether or not to index the image in Solr
+    static final String SOLR_PROP = "indexInSolr";
+    // boolean: whether or not to lookup files in the hashDB
+    static final String LOOKUPFILES_PROP = "lookupFiles";
 
 
     private WizardDescriptor wizardDescriptor;
@@ -103,6 +109,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         wizardDescriptor = new WizardDescriptor(iterator);
         wizardDescriptor.setTitle("Add Image");
         wizardDescriptor.putProperty(NAME, e);
+        wizardDescriptor.putProperty(SOLR_PROP, false);
 
 
         if (dialog != null) {
@@ -111,49 +118,13 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
         dialog.setVisible(true);
         dialog.toFront();
-
-        boolean cancelled = wizardDescriptor.getValue() != WizardDescriptor.FINISH_OPTION;
-        // @@@ Why don't we commit and revert in the same general area????
-        if (!cancelled) {
-            // commit anything
-            try {
-                commitImage(wizardDescriptor);
-            } catch (Exception ex) {
-                // Log error/display warning
-                Logger logger = Logger.getLogger(AddImageAction.class.getName());
-                logger.log(Level.SEVERE, "Error adding image to case.", ex);
-            }
-        }
         
+    
         // Do any cleanup that needs to happen (potentially: stopping the
         //add-image process, reverting an image)
         runCleanupTasks();
-    }
-
-    /**
-     * Commit the finished AddImageProcess, and cancel the CleanupTask that
-     * would have reverted it.
-     * @param settings property set to get AddImageProcess and CleanupTask from
-     * @throws Exception if commit or adding the image to the case failed
-     */
-    private void commitImage(WizardDescriptor settings) throws Exception {
-        
-        String[] imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
-        String timezone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
-        
-        AddImageProcess process = (AddImageProcess) settings.getProperty(PROCESS_PROP);
-        
-        try {
-            long imageId = process.commit();
-            Case.getCurrentCase().addImage(imgPaths, imageId, timezone);
-        } finally {
-            // Can't bail and revert image add after commit, so disable image cleanup
-            // task
-            CleanupTask cleanupImage = (CleanupTask) settings.getProperty(IMAGECLEANUPTASK_PROP);
-            cleanupImage.disable();
-        }
-    }
-
+    }    
+    
     /**
      * Closes the current dialog and wizard, and opens a new one. Used in the
      * "Add another image" action on the last panel
@@ -173,6 +144,10 @@ public final class AddImageAction extends CallableSystemAction implements Presen
                 actionPerformed(null);
             }
         });
+    }
+    
+    public interface IndexImageTask {
+        void runTask(Image newImage);
     }
 
     /**

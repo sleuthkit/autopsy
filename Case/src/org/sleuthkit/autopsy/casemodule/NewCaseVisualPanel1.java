@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.io.File;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -70,6 +71,10 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener{
      */
     public String getCaseParentDir(){
         return this.caseParentDirTextField.getText();
+    }
+    
+    public JTextField getCaseParentDirTextField(){
+        return this.caseParentDirTextField;
     }
 
     /** This method is called from within the constructor to initialize the form.
@@ -168,7 +173,7 @@ final class NewCaseVisualPanel1 extends JPanel implements DocumentListener{
         // show the directory chooser where the case directory will be created
         fc.setDragEnabled(false);
         if(!caseParentDirTextField.getText().trim().equals("")){
-            fc.setSelectedFile(new File(caseParentDirTextField.getText()));
+            fc.setCurrentDirectory(new File(caseParentDirTextField.getText()));
         }
         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         //fc.setSelectedFile(new File("C:\\Program Files\\"));

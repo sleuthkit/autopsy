@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+OpenIDE-Module: org.sleuthkit.autopsy.coreutils/0
+OpenIDE-Module-Implementation-Version: 2
+OpenIDE-Module-Install: org/sleuthkit/autopsy/coreutils/Installer.class
+OpenIDE-Module-Layer: org/sleuthkit/autopsy/coreutils/layer.xml
+OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/coreutils/Bundle.properties

@@ -31,7 +31,7 @@ public class DataConversion {
             return "";
         } else {
             String base = new String(array);
-            
+
             StringBuilder buff = new StringBuilder();
             int count = 0;
             int extra = base.length() % 16;
@@ -133,40 +133,38 @@ public class DataConversion {
         Charset.forName("UTF-8").newEncoder();
          */
 
-        String result = "";
-        String temp = "";
+
+        final StringBuilder result = new StringBuilder();
+        StringBuilder temp = new StringBuilder();
         int counter = 0;
         //char[] converted = new java.lang.System.Text.Encoding.ASCII.GetString(args).ToCharArray();
 
-        char NL = (char) 10; // ASCII char for new line
-
+        final char NL = (char) 10; // ASCII char for new line
+        final String NLS = Character.toString(NL);
         for (int i = 0; i < args.length; i++) {
-            char tempChar = (char) args[i];
-            int dec = (int) tempChar;
+            char curChar = (char) args[i];
+            int curCharInt = (int) curChar;
 
-            // the printable ASCII chars are dec 32-126
-            // and we want to include TAB as well (dec 9)
-            if (!((dec < 32 || dec > 126) && dec != 9)) {
-                temp = temp + Character.toString(tempChar);
-                counter = counter + 1;
-            } else {
+            // ignore non-printable ASCII chars
+            //  32-126 and TAB ( 9)
+            if (((curCharInt < 32) && (curCharInt != 9)) || (curCharInt > 126)) {
                 if (counter >= parameter) {
                     // add to the result and also add the new line at the end
-                    result = result + temp + Character.toString(NL);
-
-                    // reset the temp and counter
-                    temp = "";
-                    counter = 0;
+                    result.append(temp);
+                    result.append(NLS);
                 }
                 // reset the temp and counter
-                temp = "";
+                temp = new StringBuilder();
                 counter = 0;
+            }
+            else {
+                temp.append(curChar);
+                ++counter;
             }
         }
 
-        result = result + temp;
-
-        return result;
+        result.append(temp);
+        return result.toString();
     }
 
     /**

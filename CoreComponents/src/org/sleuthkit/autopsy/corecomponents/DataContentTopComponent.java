@@ -97,6 +97,10 @@ public final class DataContentTopComponent extends TopComponent implements DataC
         boolean isSupported(Node node) {
             return this.wrapped.isSupported(node);
         }
+        
+        boolean isPreferred(Node node, boolean isSupported) {
+            return this.wrapped.isPreferred(node, isSupported);
+        }
     }
 
     /**
@@ -191,11 +195,12 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             for (DataContentViewer factory : Lookup.getDefault().lookupAll(DataContentViewer.class)) {
                 DataContentViewer dcv = factory.getInstance();
                 this.viewers.add(new UpdateWrapper(dcv));
-                dataContentTabbedPane.addTab(dcv.getTitle(), dcv.getComponent());
+                dataContentTabbedPane.addTab(dcv.getTitle(), null,
+                        dcv.getComponent(), dcv.getToolTip());
             }
         }
 
-        resetTabs(currentNode);
+        setupTabs(currentNode);
     }
 
     @Override
@@ -243,14 +248,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
             currentNode = selectedNode;
 
-            resetTabs(selectedNode);
-
-            // set the display on the current active tab
-            int currentActiveTab = dataContentTabbedPane.getSelectedIndex();
-            if (currentActiveTab != -1) {
-                UpdateWrapper dcv = viewers.get(currentActiveTab);
-                dcv.setNode(selectedNode);
-            }
+            setupTabs(selectedNode);
         } finally {
             this.setCursor(null);
         }
@@ -291,7 +289,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
      *
      * @param selectedNode  the selected content Node
      */
-    public void resetTabs(Node selectedNode) {
+    public void setupTabs(Node selectedNode) {
 
         int totalTabs = dataContentTabbedPane.getTabCount();
 
@@ -299,10 +297,11 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             int tempIndex = dataContentTabbedPane.getSelectedIndex();
             for (int i = 0; i < totalTabs; i++) {
                 UpdateWrapper dcv = viewers.get(i);
-                dcv.resetComponent();
+                dcv.resetComponent();             
 
                 // disable an unsupported tab (ex: picture viewer)
-                if (!dcv.isSupported(selectedNode)) {
+                boolean dcvSupported = dcv.isSupported(selectedNode);
+                if (! dcvSupported) {
                     dataContentTabbedPane.setEnabledAt(i, false);
 
                     // change the tab selection if it's the current selection
@@ -315,6 +314,9 @@ public final class DataContentTopComponent extends TopComponent implements DataC
                     }
                 } else {
                     dataContentTabbedPane.setEnabledAt(i, true);
+                    if (dcv.isPreferred(selectedNode, dcvSupported))
+                        dataContentTabbedPane.setSelectedIndex(i);
+                    
                 }
             }
             int newIndex = dataContentTabbedPane.getSelectedIndex();

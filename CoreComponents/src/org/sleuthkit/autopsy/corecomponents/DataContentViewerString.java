@@ -282,6 +282,11 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     public String getTitle() {
         return "String View";
     }
+    
+    @Override
+    public String getToolTip() {
+        return "Displays ASCII strings extracted from the file.";
+    }
 
     @Override
     public DataContentViewer getInstance() {
@@ -291,8 +296,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     @Override
     public void resetComponent() {
         // clear / reset the fields
-        currentOffset = 0;
         currentPage = 1;
+        currentOffset = 0;
         this.dataSource = null;
         currentPageLabel.setText("");
         totalPageLabel.setText("");
@@ -304,6 +309,11 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     @Override
     public boolean isSupported(Node node) {
         return true;
+    }
+    
+    @Override
+    public boolean isPreferred(Node node, boolean isSupported) {
+        return false;
     }
 
     @Override

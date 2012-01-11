@@ -28,7 +28,8 @@ import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
  * The action to open a existing case. This class is always enabled.
@@ -38,6 +39,8 @@ import org.sleuthkit.autopsy.logging.Log;
 @ServiceProvider(service = CaseOpenAction.class)
 public final class CaseOpenAction implements ActionListener {
     private static final Logger logger = Logger.getLogger(CaseOpenAction.class.getName());
+    private static final String PROP_BASECASE = "LBL_BaseCase_PATH";
+    AutopsyPropFile AutopsyProperties = AutopsyPropFile.getInstance();
 
     JFileChooser fc = new JFileChooser();
     GeneralFilter autFilter = new GeneralFilter(new String[]{".aut"}, "AUTOPSY File (*.aut)", false);
@@ -48,6 +51,8 @@ public final class CaseOpenAction implements ActionListener {
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
         fc.addChoosableFileFilter(autFilter);
+        if(AutopsyProperties.getProperty(PROP_BASECASE) != null)
+            fc.setCurrentDirectory(new File(AutopsyProperties.getProperty(PROP_BASECASE)));
     }
 
     /**
@@ -63,7 +68,8 @@ public final class CaseOpenAction implements ActionListener {
         int retval = fc.showOpenDialog((Component) e.getSource());
         if (retval == JFileChooser.APPROVE_OPTION) {
             String path = fc.getSelectedFile().getPath();
-
+            String dirPath = fc.getSelectedFile().getParent();
+            AutopsyProperties.setProperty(PROP_BASECASE, dirPath.substring(0, dirPath.lastIndexOf(File.separator)));
             // check if the file exists
             if (!new File(path).exists()) {
                 JOptionPane.showMessageDialog(null, "Error: File doesn't exist.", "Error", JOptionPane.ERROR_MESSAGE);

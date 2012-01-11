@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Lookup;
@@ -45,7 +46,7 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 
@@ -230,7 +231,7 @@ public class Case {
      * @param imgId  the ID of the image that being added
      * @param timeZone  the timeZone of the image where it's added
      */
-    void addImage(String[] imgPaths, long imgId, String timeZone) throws Exception {
+    Image addImage(String[] imgPaths, long imgId, String timeZone) throws Exception {
         Log.get(this.getClass()).log(Level.INFO, "Adding image to Case.  imgPaths: {0}  ID: {1} TimeZone: {2}", new Object[]{Arrays.toString(imgPaths), imgId, timeZone});
 
         try {
@@ -238,6 +239,7 @@ public class Case {
             xmlcm.writeFile(); // write any changes to the config file
             Image newImage = db.getImageById(imgId);
             pcs.firePropertyChange(CASE_ADD_IMAGE, null, newImage); // the new value is the instance of the image
+            return newImage;
         } catch (Exception ex) {
             // throw an error here
             throw ex;
@@ -714,7 +716,7 @@ public class Case {
      * Call if there are no images in the case. Displays
      * a dialog offering to add one.
      */
-    private void noRootObjectsNotification() throws TskException {
+    private static void noRootObjectsNotification() {
         NotifyDescriptor nd = new NotifyDescriptor(
                 "This case contains no images. Would you like to add one?",
                 "No images in case", NotifyDescriptor.YES_NO_OPTION,
@@ -775,48 +777,47 @@ public class Case {
             Object oldValue = evt.getOldValue();
             Object newValue = evt.getNewValue();
 
-
             if (changed.equals(Case.CASE_CURRENT_CASE)) {
-                try {
-                    if (newValue != null) { // new case is open
-                        Case newCase = (Case) newValue;
+                if (newValue != null) { // new case is open
+                    Case newCase = (Case) newValue;
 
-                        // clear the temp folder when the case is created / opened
-                        Case.clearTempFolder();
+                    // clear the temp folder when the case is created / opened
+                    Case.clearTempFolder();
 
-                        // enable these menus
-                        CallableSystemAction.get(AddImageAction.class).setEnabled(true);
-                        CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                        CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
-                        CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+                    // enable these menus
+                    CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
 
-                        if (newCase.getRootObjectsCount() > 0) {
-                            // open all top components
-                            CoreComponentControl.openCoreWindows();
-                        } else {
-                            // close all top components
-                            CoreComponentControl.closeCoreWindows();
-                            // notify user
-                            newCase.noRootObjectsNotification();
-                        }
-                    } else { // case is closed
-                        // disable these menus
-                        CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
-                        CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
-                        CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
-                        CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
-
+                    if (newCase.getRootObjectsCount() > 0) {
+                        // open all top components
+                        CoreComponentControl.openCoreWindows();
+                    } else {
                         // close all top components
                         CoreComponentControl.closeCoreWindows();
-
-                        Frame f = WindowManager.getDefault().getMainWindow();
-                        f.setTitle(Case.getAppName()); // set the window name to just application name
+                        // prompt user to add an image
+                        SwingUtilities.invokeLater(new Runnable() {
+                            public void run() {
+                                Case.noRootObjectsNotification();
+                            }
+                        });
                     }
-                } catch (TskException ex) {
-                    Log.get(CaseListener.class).log(Level.WARNING, "Error handling change in current case.", ex);
-                }
-            }
+                } else { // case is closed
+                    // disable these menus
+                    CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
+                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
+                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
+                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
 
+                    // close all top components
+                    CoreComponentControl.closeCoreWindows();
+
+                    Frame f = WindowManager.getDefault().getMainWindow();
+                    f.setTitle(Case.getAppName()); // set the window name to just application name
+                }
+
+            }
 
             // changed in the case name
             if (changed.equals(Case.CASE_NAME)) {

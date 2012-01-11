@@ -107,7 +107,7 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
-                    <code-name-base>org.sleuthkit.autopsy.datamodel</code-name-base>
+                    <code-name-base>org.sleuthkit.autopsy.coreutils</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
@@ -116,7 +116,7 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
-                    <code-name-base>org.sleuthkit.autopsy.logging</code-name-base>
+                    <code-name-base>org.sleuthkit.autopsy.datamodel</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>

@@ -37,6 +37,12 @@ public interface DataContentViewer {
      * Returns the title of this viewer. 
      */
     public String getTitle();
+    
+    /**
+     * Returns a short description of this viewer to use as a tool tip for
+     * its tab. 
+     */
+    public String getToolTip();
 
     /**
      * Get new DataContentViewer instance. (This method is weird. We use the
@@ -62,5 +68,14 @@ public interface DataContentViewer {
      * @return True if supported, else false
      */
     public boolean isSupported(Node node);
+    
+     /**
+     * Checks whether the given viewer is preferred for the Node
+     * @param node Node to check for preference
+     * @param isSupported, true if the viewer is supported by the node
+     * as determined by a previous check
+     * @return True if viewer preferred, else false
+     */
+    public boolean isPreferred(Node node, boolean isSupported);
 
 }

@@ -118,6 +118,11 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
     public String getTitle() {
         return "Picture View";
     }
+    
+    @Override
+    public String getToolTip() {
+        return "Displays supported image files.";
+    }
 
     @Override
     public DataContentViewer getInstance() {
@@ -147,6 +152,11 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
         } else {
             return false;
         }
+    }
+    
+    @Override
+    public boolean isPreferred(Node node, boolean isSupported) {
+        return isSupported;
     }
 
     @Override

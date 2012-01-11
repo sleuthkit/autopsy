@@ -23,7 +23,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import org.openide.util.actions.SystemAction;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
  * The action to create a new case. This action class is always enabled.

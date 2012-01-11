@@ -37,8 +37,8 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.autopsy.hashdatabase.HashDbSettings;
-import org.sleuthkit.autopsy.logging.Log;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 import org.sleuthkit.datamodel.TskException;
@@ -56,7 +56,9 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     
     // paths to any set hash lookup databases (can be null)
     private String NSRLPath, knownBadPath;
-
+    
+    private boolean lookupFilesCheckboxChecked;
+    
     // task that will clean up the created database file if the wizard is cancelled before it finishes
     private AddImageAction.CleanupTask cleanupImage; // initialized to null in readSettings()
 
@@ -89,7 +91,6 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     public AddImageVisualPanel2 getComponent() {
         if (component == null) {
             component = new AddImageVisualPanel2();
-            component.getCrDbButton().addActionListener(new CrDbButtonListener());
         }
         return component;
     }
@@ -122,20 +123,11 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         return imgAdded;
     }
 
-    class CrDbButtonListener implements ActionListener {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            startAddImage();
-        }
-    }
-
     /**
      * Creates the database and adds the image to the XML configuration file.
      *
      */
     private void startAddImage() {
-        component.getCrDbButton().setEnabled(false);
         component.getCrDbProgressBar().setIndeterminate(true);
         component.changeProgressBarTextAndColor("*Adding the image may take some time for large images.", 0, Color.black);
 
@@ -207,38 +199,11 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         imgAdded = false;
         imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
         timeZone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
-
-        // If the user went back after the image was processed, it will be replaced so its cleanup task should be executed & removed
-        AddImageAction.CleanupTask oldImageCleanup = (AddImageAction.CleanupTask) settings.getProperty(AddImageAction.IMAGECLEANUPTASK_PROP);
-        if (oldImageCleanup != null) {
-            try {
-                oldImageCleanup.cleanup();
-            } catch (Exception ex) {
-                Logger logger = Logger.getLogger(AddImageWizardPanel2.class.getName());
-                logger.log(Level.WARNING, "Error removing previously added image", ex);
-            } finally {
-                oldImageCleanup.disable();
-            }
-        }
+        lookupFilesCheckboxChecked = (Boolean) settings.getProperty(AddImageAction.LOOKUPFILES_PROP);
 
         component.changeProgressBarTextAndColor("", 0, Color.black);
-        component.getCrDbButton().setEnabled(true);
         
-        
-        // Load hash database settings
-        this.NSRLPath = null;
-        this.knownBadPath = null;
-        
-        try {
-            HashDbSettings hashDbs = Autopsy.getHashDbSettings();
-            this.NSRLPath = hashDbs.getNSRLDatabasePath();
-            this.knownBadPath = hashDbs.getKnownBadDatabasePath();
-        } catch (IOException ex) {
-            Log.get(AddImageWizardPanel2.class).log(Level.WARNING, "Couldn't get hash database settings.", ex);
-        }
-        JCheckBox lookupFilesCheckbox = component.getLookupFilesCheckbox();
-        lookupFilesCheckbox.setSelected(false);
-        lookupFilesCheckbox.setEnabled(this.NSRLPath != null || this.knownBadPath != null);
+        startAddImage();
     }
 
     /**
@@ -262,7 +227,6 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     private class AddImgTask extends SwingWorker<Integer, Integer> {
         private JProgressBar progressBar;
-        private JCheckBox lookupFilesCheckbox;
         private Case currentCase;
 
         // true if the process was requested to stop
@@ -270,7 +234,6 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
         protected AddImgTask() {
             this.progressBar = getComponent().getCrDbProgressBar();
-            this.lookupFilesCheckbox = getComponent().getLookupFilesCheckbox();
             currentCase = Case.getCurrentCase();
         }
 
@@ -296,7 +259,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
             SleuthkitCase skCase = currentCase.getSleuthkitCase();
             skCase.clearLookupDatabases();
             
-            if (lookupFilesCheckbox.isSelected()) {
+            if (lookupFilesCheckboxChecked) {
                 if (NSRLPath != null) {
                     skCase.setNSRLDatabase(NSRLPath);
                 }

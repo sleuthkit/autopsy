@@ -223,11 +223,9 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 }
 
                 // set the data on the bottom and show it
-                String text = "";
                 Boolean setVisible = false;
 
                 if (data != null) {
-                    text = DataConversion.getString(data, 4);
                     setVisible = true;
                 }
 
@@ -288,6 +286,12 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     public String getTitle() {
         return "Hex View";
     }
+    
+    @Override
+    public String getToolTip() {
+        return "Displays the binary contents of a file as hexidecimal, with "
+                + "bytes that are displayable as ASCII characters on the right.";
+    }
 
     @Override
     public DataContentViewer getInstance() {
@@ -297,8 +301,8 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     @Override
     public void resetComponent() {
         // clear / reset the fields
-        currentOffset = 0;
         currentPage = 1;
+        currentOffset = 0;
         this.dataSource = null;
         currentPageLabel.setText("");
         totalPageLabel.setText("");
@@ -325,6 +329,11 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     @Override
     public boolean isSupported(Node node) {
         return true;
+    }
+    
+    @Override
+    public boolean isPreferred(Node node, boolean isSupported) {
+        return false;
     }
 
     @Override

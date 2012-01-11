@@ -27,7 +27,7 @@ import org.openide.nodes.Node;
  *
  * @author jantonius
  */
-class TableFilterNode extends FilterNode {
+public class TableFilterNode extends FilterNode {
 
     private boolean createChild;
 

@@ -20,9 +20,14 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.openide.util.Lookup;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SleuthkitJNI;
 
 /**
  * The "Add Image" wizard panel3. No major functionality, just presents the
@@ -140,6 +145,19 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
+        if ((SleuthkitJNI.CaseDbHandle.AddImageProcess) settings.getProperty(AddImageAction.PROCESS_PROP) != null) {
+            // commit anything
+            try {
+                commitImage(settings);
+            } catch (Exception ex) {
+                // Log error/display warning
+                Logger logger = Logger.getLogger(AddImageAction.class.getName());
+                logger.log(Level.SEVERE, "Error adding image to case.", ex);
+            }
+        }else{
+            Logger logger = Logger.getLogger(AddImageAction.class.getName());
+            logger.log(Level.SEVERE, "Missing image process object");
+        }
     }
 
     /**
@@ -153,5 +171,38 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
+    }
+    
+    
+
+    /**
+     * Commit the finished AddImageProcess, and cancel the CleanupTask that
+     * would have reverted it.
+     * @param settings property set to get AddImageProcess and CleanupTask from
+     * @throws Exception if commit or adding the image to the case failed
+     */
+    private void commitImage(WizardDescriptor settings) throws Exception {
+        
+        String[] imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
+        String timezone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
+        boolean indexImage = (Boolean) settings.getProperty(AddImageAction.SOLR_PROP);
+        
+        SleuthkitJNI.CaseDbHandle.AddImageProcess process = (SleuthkitJNI.CaseDbHandle.AddImageProcess) settings.getProperty(AddImageAction.PROCESS_PROP);
+        
+        try {
+            long imageId = process.commit();
+            Image newImage = Case.getCurrentCase().addImage(imgPaths, imageId, timezone);
+            
+            if (indexImage) {
+                // Must use a Lookup here to prevent a circular dependency
+                // between Case and KeywordSearch...
+                Lookup.getDefault().lookup(AddImageAction.IndexImageTask.class).runTask(newImage);
+            }
+        } finally {
+            // Can't bail and revert image add after commit, so disable image cleanup
+            // task
+            AddImageAction.CleanupTask cleanupImage = (AddImageAction.CleanupTask) settings.getProperty(AddImageAction.IMAGECLEANUPTASK_PROP);
+            cleanupImage.disable();
+        }
     }
 }
