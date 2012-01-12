@@ -531,7 +531,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
 
             loadPane.selectInitialValue();
-            loadDialog.show();
+            loadDialog.setVisible(true);
             loadDialog.dispose();
 
             return (String) loadPane.getInputValue();

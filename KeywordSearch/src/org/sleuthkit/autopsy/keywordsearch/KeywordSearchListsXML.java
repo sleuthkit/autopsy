@@ -116,7 +116,7 @@ public class KeywordSearchListsXML {
      * @return List of keyword list names
      */
     List<String>getListNames() {
-        return new ArrayList(theLists.keySet());
+        return new ArrayList<String>(theLists.keySet());
     }
     
     /**
