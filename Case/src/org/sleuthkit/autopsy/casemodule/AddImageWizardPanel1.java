@@ -37,8 +37,6 @@ import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.autopsy.hashdatabase.HashDbSettings;
-import org.sleuthkit.datamodel.SleuthkitJNI;
-import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 
 /**
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
