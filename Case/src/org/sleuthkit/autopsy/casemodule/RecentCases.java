@@ -20,16 +20,11 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JMenuItem;
@@ -73,8 +68,10 @@ public final class RecentCases extends CallableSystemAction implements Presenter
     private RecentCases() {
         
         for (int i = 0; i < LENGTH; i++) {
-            apf.setProperty(nameKey(i), "");
-            apf.setProperty(pathKey(i), "");
+            if(apf.getProperty(nameKey(i)) == null)
+                apf.setProperty(nameKey(i), "");
+            if(apf.getProperty(pathKey(i)) == null)
+                apf.setProperty(pathKey(i), "");
         }
         
         // Load recentCases from properties
