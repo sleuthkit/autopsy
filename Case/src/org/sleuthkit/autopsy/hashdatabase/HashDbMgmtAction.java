@@ -48,7 +48,7 @@ class HashDbMgmtAction extends CallableSystemAction {
 
         try {
             // Load settings from the property file
-            HashDbSettings hashDatabaseSettings = new HashDbSettings(AutopsyPropFile.getPropertyFile());
+            HashDbSettings hashDatabaseSettings = HashDbSettings.getHashDbSettings();
 
             // create the popUp window for it
             final JFrame frame = new JFrame(ACTION_NAME);

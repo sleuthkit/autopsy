@@ -24,16 +24,12 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -46,6 +42,7 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
@@ -89,8 +86,7 @@ public class Case {
      * Name for the property that determines whether to show the dialog at
      * startup
      */
-    static final String propStartup = "LBL_StartupDialog";
-    private static Properties properties = new Properties();
+    public static final String propStartup = "LBL_StartupDialog";
 
     // pcs is initialized in CaseListener constructor
     private static PropertyChangeSupport pcs;
@@ -647,64 +643,14 @@ public class Case {
      */
     static public void invokeStartupDialog() {
         boolean showDialog = true;
-        String propFilePath = RecentCases.getPropertiesFilePath();
-
-        // before showing the startup dialog, check if it has been disabled or not by the user
-        try {
-            // try to load the property from the properties file in the home directory
-            InputStream inputStream = new FileInputStream(propFilePath);
-            //InputStream inputStream = getClass().getResourceAsStream("Case.properties"); // old variable (can be deleted if no longer needed)
-            properties.load(inputStream);
-
-            String temp = properties.getProperty(propStartup);
-            if (temp != null) {
-                showDialog = !temp.equals("false");
-            } else {
-                // if it's null, we have to write the properties
-
-                // update the properties
-                properties.setProperty(propStartup, "true");
-
-                // write the properties file
-                try {
-                    properties.store(new FileOutputStream(new File(RecentCases.getPropertiesFilePath())), "");
-                } catch (Exception ex) {
-                    Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex);
-                }
-            }
-        } catch (Exception ex) {
-            // if cannot load it, we create a new properties file without any data inside it
-            properties.setProperty(propStartup, "true");
-
-            try {
-                // create the directory and property file to store it
-                File output = new File(propFilePath);
-
-                // if the properties file doesn't exist, we create a new one.
-                if (!output.exists()) {
-                    File parent = new File(output.getParent());
-                    if (!parent.exists()) {
-                        parent.mkdirs(); // create the parent directory if it doesn't exist
-                    }
-                    output.createNewFile(); // create the properties file
-                    FileOutputStream fos = new FileOutputStream(output);
-                    properties.store(fos, "");
-                } // if the output exist, we just add the properties
-                else {
-                    properties.setProperty(propStartup, "true");
-
-                    // write the properties file
-                    try {
-                        properties.store(new FileOutputStream(new File(RecentCases.getPropertiesFilePath())), "");
-                    } catch (Exception ex3) {
-                        Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex3);
-                    }
-                }
-            } catch (Exception ex2) {
-                Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error: Could not create the property file.", ex2);
-            }
+        AutopsyPropFile apf = AutopsyPropFile.getInstance();
+        String temp = apf.getProperty(propStartup);
+        if (temp != null) {
+            showDialog = !temp.equals("false");
+        } else {
+          apf.setProperty(propStartup, "true");
         }
-
+        
         if (showDialog) {
             StartupWindow.getInstance().display();
         }
@@ -728,14 +674,6 @@ public class Case {
         }
     }
 
-    /**
-     * Get the properties.
-     *
-     * @return properties
-     */
-    public Properties getProperties() {
-        return properties;
-    }
 
     /**
      * Checks if a String is a valid case name

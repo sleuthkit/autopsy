@@ -32,6 +32,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 
 /**
  *
@@ -280,20 +281,8 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
         if(this.startupCheckBox.isSelected()){
-            
-            Case current = Case.getCurrentCase();
-            Properties properties = current.getProperties();
-
             // update the properties
-            properties.setProperty(current.propStartup, "false");
-
-            // write the properties file
-            try{
-                properties.store(new FileOutputStream(new File(RecentCases.getPropertiesFilePath())), "");
-            }
-            catch(Exception ex){
-                Logger.getLogger(this.className).log(Level.WARNING, "Error: Could not update the properties file.", ex);
-            }
+            AutopsyPropFile.getInstance().setProperty(Case.propStartup, "false");
         }
     }//GEN-LAST:event_closeButtonActionPerformed
 

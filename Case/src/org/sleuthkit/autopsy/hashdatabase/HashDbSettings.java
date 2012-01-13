@@ -18,15 +18,11 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Properties;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
  * Loads and stores Hash Database settings from/to a property file
@@ -34,10 +30,10 @@ import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
  */
 public class HashDbSettings {
 
-    private static final String PROP_PREFIX = "HASHDB";
+    private static final String PROP_PREFIX = "LBL_HashDB";
     private static final String NSRL_PROP = "NSRL";
     private static final String KNOWN_BAD_PROP = "KNOWN_BAD";
-    private File propertyFile;
+    private static final AutopsyPropFile apf = AutopsyPropFile.getInstance();
     private HashDb NSRLDatabase, knownBadDatabase;
 
     /**
@@ -45,22 +41,15 @@ public class HashDbSettings {
      * @throws IOException if there's an error loading the property file
      * @throws FileNotFoundException if the property file can't be found
      */
-    public HashDbSettings(File propertyFile) throws IOException, FileNotFoundException {
-        this.propertyFile = propertyFile;
+    public HashDbSettings() throws IOException, FileNotFoundException {
+        String NSRL = getNSRL();
+        String knownBad = getKnownBad();
 
-        Properties temp = new Properties();
-        InputStream loadStream = new FileInputStream(propertyFile);
-        temp.load(loadStream);
-        loadStream.close();
-
-        String NSRL = getNSRL(temp);
-        String knownBad = getKnownBad(temp);
-
-        if (!NSRL.equals("")) {
+        if (NSRL != null && !NSRL.equals("")) {
             this.NSRLDatabase = new HashDb(NSRL);
         }
 
-        if (!knownBad.equals("")) {
+        if (knownBad != null && !knownBad.equals("")) {
             this.knownBadDatabase = new HashDb(knownBad);
         }
     }
@@ -72,18 +61,8 @@ public class HashDbSettings {
      * @throws FileNotFoundException if the property file can't be found
      */
     void save() throws IOException, FileNotFoundException {
-        Properties temp = new Properties();
-        InputStream loadStream = new FileInputStream(propertyFile);
-        temp.load(loadStream);
-        loadStream.close();
-
-        setNSRL(temp, this.NSRLDatabase != null ? this.NSRLDatabase.databasePath : "");
-        setKnownBad(temp, this.knownBadDatabase != null ? this.knownBadDatabase.databasePath : "");
-
-        String comments = "";
-        OutputStream storeStream = new FileOutputStream(propertyFile);
-        temp.store(storeStream, comments);
-        storeStream.close();
+        setNSRL(this.NSRLDatabase != null ? this.NSRLDatabase.databasePath : "");
+        setKnownBad(this.knownBadDatabase != null ? this.knownBadDatabase.databasePath : "");
     }
 
     /**
@@ -118,7 +97,7 @@ public class HashDbSettings {
      * @throws IOException if the property file can't be found
      */
     public static HashDbSettings getHashDbSettings() throws IOException {
-        return new HashDbSettings(AutopsyPropFile.getPropertyFile());
+        return new HashDbSettings();
     }
 
     /**
@@ -146,28 +125,20 @@ public class HashDbSettings {
     }
 
     // helper functions:
-    private static void setNSRL(Properties props, String databasePath) {
-        setProp(props, NSRL_PROP, databasePath);
+    private static void setNSRL(String databasePath) {
+        apf.setProperty(fullProp(NSRL_PROP), databasePath);
     }
 
-    private static void setKnownBad(Properties props, String databasePath) {
-        setProp(props, KNOWN_BAD_PROP, databasePath);
+    private static void setKnownBad(String databasePath) {
+        apf.setProperty(fullProp(KNOWN_BAD_PROP), databasePath);
     }
 
-    private static String getNSRL(Properties props) {
-        return getProp(props, NSRL_PROP);
+    private static String getNSRL() {
+        return apf.getProperty(fullProp(NSRL_PROP));
     }
 
-    private static String getKnownBad(Properties props) {
-        return getProp(props, KNOWN_BAD_PROP);
-    }
-
-    private static void setProp(Properties props, String propName, String propValue) {
-        props.setProperty(fullProp(propName), propValue);
-    }
-
-    private static String getProp(Properties props, String propName) {
-        return props.getProperty(fullProp(propName), "");
+    private static String getKnownBad() {
+        return apf.getProperty(fullProp(KNOWN_BAD_PROP));
     }
 
     private static String fullProp(String propName) {

@@ -35,8 +35,10 @@ import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.autopsy.hashdatabase.HashDbSettings;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -200,6 +202,16 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
         timeZone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
         lookupFilesCheckboxChecked = (Boolean) settings.getProperty(AddImageAction.LOOKUPFILES_PROP);
+        if(lookupFilesCheckboxChecked){
+            try {
+                HashDbSettings hashDbSettings;
+                hashDbSettings = HashDbSettings.getHashDbSettings();
+                NSRLPath = hashDbSettings.getNSRLDatabasePath();
+                knownBadPath = hashDbSettings.getKnownBadDatabasePath();
+            } catch (IOException ex) {
+                Log.get(AddImageWizardPanel2.class).log(Level.WARNING, "Couldn't get hash db settings", ex);
+            }
+        }
 
         component.changeProgressBarTextAndColor("", 0, Color.black);
         
