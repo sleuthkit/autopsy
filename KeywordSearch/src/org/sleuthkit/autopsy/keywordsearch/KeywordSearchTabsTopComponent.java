@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -48,6 +49,8 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
 
     private Logger logger = Logger.getLogger(KeywordSearchTabsTopComponent.class.getName());
     private PropertyChangeListener serverChangeListener;
+    
+    public enum TABS{Simple, List, Lists};
 
     public KeywordSearchTabsTopComponent() {
         initComponents();
@@ -89,8 +92,9 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
     // End of variables declaration//GEN-END:variables
 
     private void initTabs() {
-        tabs.addTab("Simple", null, new KeywordSearchSimpleTopComponent(), "Single keyword or regex search");
-        tabs.addTab("List", null, new KeywordSearchListTopComponent(), "Search for or load a saved list of keywords.");
+        tabs.addTab(TABS.Simple.name(), null, new KeywordSearchSimpleTopComponent(), "Single keyword or regex search");
+        tabs.addTab(TABS.List.name(), null, new KeywordSearchListTopComponent(), "Search for or load a saved list of keywords.");
+        tabs.addTab(TABS.Lists.name(), null, new KeywordSearchListImportExportTopComponent(), "Manage (import, export, delete) lists of keywords.");
     }
 
     @Override
@@ -100,7 +104,7 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
     @Override
     public void componentClosed() {
     }
-
+    
     void writeProperties(java.util.Properties p) {
         // better to version settings since initial version as advocated at
         // http://wiki.apidesign.org/wiki/PropertyFiles

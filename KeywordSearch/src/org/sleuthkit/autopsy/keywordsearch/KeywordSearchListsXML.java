@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -54,6 +56,7 @@ import org.xml.sax.SAXException;
 
 /**
  * Manages reading and writing of keyword lists to user settings XML file keywords.xml
+ * or to any file provided in constructor
  */
 public class KeywordSearchListsXML {
 
@@ -63,25 +66,49 @@ public class KeywordSearchListsXML {
     private static final String LIST_CREATE_ATTR = "created";
     private static final String LIST_MOD_ATTR = "modified";
     private static final String KEYWORD_EL = "keyword";
-    private static final String LISTS_FILE_NAME = "keywords.xml";
+    private static final String CUR_LISTS_FILE_NAME = "keywords.xml";
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private static final String ENCODING = "UTF-8";
-    private String LISTS_FILE = AutopsyPropFile.getUserDirPath() + File.separator + LISTS_FILE_NAME;
+    private static String CUR_LISTS_FILE = AutopsyPropFile.getUserDirPath() + File.separator + CUR_LISTS_FILE_NAME;
     private static final Logger logger = Logger.getLogger(KeywordSearchListsXML.class.getName());
-    
     Map<String, KeywordSearchList> theLists; //the keyword data
- 
-    static KeywordSearchListsXML theInstance = null;
+    static KeywordSearchListsXML currentInstance = null;
+    private String xmlFile;
+    private DateFormat dateFormatter;
 
-    private KeywordSearchListsXML() {
+    //property support
+    public enum ListsEvt {
+
+        LIST_ADDED, LIST_DELETED, LIST_UPDATED
+    };
+    private PropertyChangeSupport changeSupport;
+
+    /**
+     * Constructor to obtain handle on other that the current keyword list
+     * (such as for import or export)
+     * @param xmlFile xmlFile to obtain KeywordSearchListsXML handle on
+     */
+    KeywordSearchListsXML(String xmlFile) {
+        theLists = new LinkedHashMap<String, KeywordSearchList>();
+        this.xmlFile = xmlFile;
+        changeSupport = new PropertyChangeSupport(this);
+
+        dateFormatter = new SimpleDateFormat(DATE_FORMAT);
     }
 
-    static KeywordSearchListsXML getInstance() {
-        if (theInstance == null) {
-            theInstance = new KeywordSearchListsXML();
-            theInstance.reload();
+    /**
+     * get instance for managing the current keyword list of the application
+     */
+    static KeywordSearchListsXML getCurrent() {
+        if (currentInstance == null) {
+            currentInstance = new KeywordSearchListsXML(CUR_LISTS_FILE);
+            currentInstance.reload();
         }
-        return theInstance;
+        return currentInstance;
+    }
+
+    void addPropertyChangeListener(PropertyChangeListener l) {
+        changeSupport.addPropertyChangeListener(l);
     }
 
     /**
@@ -89,36 +116,39 @@ public class KeywordSearchListsXML {
      */
     public void reload() {
         boolean created = false;
-        theLists = new LinkedHashMap<String, KeywordSearchList>();
+
+        theLists.clear();
         if (!this.listFileExists()) {
             //create new if it doesn't exist
             save();
             created = true;
         }
 
+        //load, if fails to laod create new
         if (!load() && !created) {
             //create new if failed to load
             save();
         }
 
+
     }
 
-    /**
-     * get all loaded keyword lists
-     * @return List of keyword list objects
-     */
-    Map<String, KeywordSearchList> getLists() {
-        return theLists;
+    List<KeywordSearchList> getListsL() {
+        List<KeywordSearchList> ret = new ArrayList<KeywordSearchList>();
+        for (KeywordSearchList list : theLists.values()) {
+            ret.add(list);
+        }
+        return ret;
     }
-    
+
     /**
      * get list of all loaded keyword list names
      * @return List of keyword list names
      */
-    List<String>getListNames() {
+    List<String> getListNames() {
         return new ArrayList<String>(theLists.keySet());
     }
-    
+
     /**
      * get number of lists currently stored
      * @return number of lists currently stored
@@ -148,7 +178,6 @@ public class KeywordSearchListsXML {
     /**
      * adds the new word list using name id
      * replacing old one if exists with the same name
-     * requires following call to save() to make permanent changes
      * @param name the name of the new list or list to replace
      * @param newList list of keywords
      * @return true if old list was replaced
@@ -157,15 +186,47 @@ public class KeywordSearchListsXML {
         boolean replaced = false;
         KeywordSearchList curList = getList(name);
         final Date now = new Date();
+        final int oldSize = this.getNumberLists();
         if (curList == null) {
             theLists.put(name, new KeywordSearchList(name, now, now, newList));
+            save();
+            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), oldSize, this.getNumberLists());
         } else {
             theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, newList));
+            save();
             replaced = true;
+            changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
         }
+
         return replaced;
     }
     
+
+    /**
+     * write out multiple lists
+     * @param lists
+     * @return 
+     */
+    boolean writeLists(List<KeywordSearchList> lists) {
+        int oldSize = this.getNumberLists();
+        
+        List<KeywordSearchList> overwritten = new ArrayList<KeywordSearchList>();
+        
+        for (KeywordSearchList list : lists) {
+            if (this.listExists(list.getName()))
+                overwritten.add(list);
+            theLists.put(list.getName(), list);
+        }
+        boolean saved = save();
+        if (saved) {
+            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), oldSize, this.getNumberLists());
+            for (KeywordSearchList over : overwritten) {
+                changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
+            }
+        }
+        return saved;
+    }
+
     /**
      * delete list if exists and save new list
      * @param name of list to delete
@@ -173,21 +234,23 @@ public class KeywordSearchListsXML {
      */
     boolean deleteList(String name) {
         boolean deleted = false;
+        final int oldSize = this.getNumberLists();
         KeywordSearchList delList = getList(name);
         if (delList != null) {
             theLists.remove(name);
             deleted = save();
         }
+        changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), oldSize, this.getNumberLists());
         return deleted;
-        
+
     }
 
     /**
      * writes out current list replacing the last lists file
      */
-    boolean save() {
+    private boolean save() {
         boolean success = false;
-        DateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
+
         DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
 
         try {
@@ -223,18 +286,14 @@ public class KeywordSearchListsXML {
         return success;
     }
 
-   
-
     /**
      * load and parse XML, then dispose
      */
-    private boolean load() {
+    public boolean load() {
         final Document doc = loadDoc();
         if (doc == null) {
             return false;
         }
-        DateFormat dateFormatter = new SimpleDateFormat(DATE_FORMAT);
-
 
         Element root = doc.getDocumentElement();
         if (root == null) {
@@ -273,7 +332,7 @@ public class KeywordSearchListsXML {
     }
 
     private boolean listFileExists() {
-        File f = new File(LISTS_FILE);
+        File f = new File(xmlFile);
         return f.exists() && f.canRead() && f.canWrite();
     }
 
@@ -287,7 +346,7 @@ public class KeywordSearchListsXML {
         try {
             DocumentBuilder builder = builderFactory.newDocumentBuilder();
             ret = builder.parse(
-                    new FileInputStream(LISTS_FILE));
+                    new FileInputStream(xmlFile));
         } catch (ParserConfigurationException e) {
             logger.log(Level.SEVERE, "Error loading keyword list: can't initialize parser.", e);
 
@@ -314,9 +373,14 @@ public class KeywordSearchListsXML {
             xformer.setOutputProperty(OutputKeys.ENCODING, ENCODING);
             xformer.setOutputProperty(OutputKeys.STANDALONE, "yes");
             xformer.setOutputProperty(OutputKeys.VERSION, "1.0");
-            Result out = new StreamResult(new OutputStreamWriter(new FileOutputStream(new File(LISTS_FILE)), ENCODING));
+            File file = new File(xmlFile);
+            FileOutputStream stream = new FileOutputStream(file);
+            Result out = new StreamResult(new OutputStreamWriter(stream, ENCODING));
             xformer.transform(new DOMSource(doc), out);
+            stream.flush();
+            stream.close();
             success = true;
+
         } catch (UnsupportedEncodingException e) {
             logger.log(Level.SEVERE, "Should not happen", e);
         } catch (TransformerConfigurationException e) {
@@ -324,7 +388,9 @@ public class KeywordSearchListsXML {
         } catch (TransformerException e) {
             logger.log(Level.SEVERE, "Error writing keyword lists XML", e);
         } catch (FileNotFoundException e) {
-            logger.log(Level.SEVERE, "Error writing keyword lists XML: cannot write to file: " + LISTS_FILE, e);
+            logger.log(Level.SEVERE, "Error writing keyword lists XML: cannot write to file: " + xmlFile, e);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Error writing keyword lists XML: cannot write to file: " + xmlFile, e);
         }
         return success;
     }
@@ -346,6 +412,27 @@ class KeywordSearchList {
         this.created = created;
         this.modified = modified;
         this.keywords = keywords;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final KeywordSearchList other = (KeywordSearchList) obj;
+        if ((this.name == null) ? (other.name != null) : !this.name.equals(other.name)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        return hash;
     }
 
     String getName() {
