@@ -203,6 +203,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
             // task
             AddImageAction.CleanupTask cleanupImage = (AddImageAction.CleanupTask) settings.getProperty(AddImageAction.IMAGECLEANUPTASK_PROP);
             cleanupImage.disable();
+            settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, null);
         }
     }
 }
