@@ -50,7 +50,7 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
     private Logger logger = Logger.getLogger(KeywordSearchTabsTopComponent.class.getName());
     private PropertyChangeListener serverChangeListener;
     
-    public enum TABS{Simple, List, Lists};
+    public enum TABS{Simple, List, Lists, History};
 
     public KeywordSearchTabsTopComponent() {
         initComponents();
@@ -95,6 +95,7 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
         tabs.addTab(TABS.Simple.name(), null, new KeywordSearchSimpleTopComponent(), "Single keyword or regex search");
         tabs.addTab(TABS.List.name(), null, new KeywordSearchListTopComponent(), "Search for or load a saved list of keywords.");
         tabs.addTab(TABS.Lists.name(), null, new KeywordSearchListImportExportTopComponent(), "Manage (import, export, delete) lists of keywords.");
+        //tabs.addTab(TABS.History.name(), null, new KeywordSearchHistoryTopComponent(), "Review keyword search history and saved search results."); //TODO
     }
 
     @Override
