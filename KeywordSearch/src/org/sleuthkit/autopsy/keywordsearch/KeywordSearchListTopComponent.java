@@ -169,52 +169,57 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        searchButton = new javax.swing.JButton();
         filesIndexedNameLabel = new javax.swing.JLabel();
         filesIndexedValLabel = new javax.swing.JLabel();
         titleLabel = new javax.swing.JLabel();
-        addWordField = new javax.swing.JTextField();
-        addWordButton = new javax.swing.JButton();
         loadListButton = new javax.swing.JButton();
-        deleteWordButton = new javax.swing.JButton();
-        deleteAllWordsButton = new javax.swing.JButton();
-        saveListButton = new javax.swing.JButton();
-        chRegex = new javax.swing.JCheckBox();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        keywordTable = new javax.swing.JTable();
         curListNameLabel = new javax.swing.JLabel();
         curListValLabel = new javax.swing.JLabel();
         importButton = new javax.swing.JButton();
-        curListLabel = new javax.swing.JLabel();
-        jSeparator1 = new javax.swing.JSeparator();
-        jSeparator2 = new javax.swing.JSeparator();
+        jPanel1 = new javax.swing.JPanel();
+        saveListButton = new javax.swing.JButton();
+        deleteWordButton = new javax.swing.JButton();
+        deleteAllWordsButton = new javax.swing.JButton();
+        chRegex = new javax.swing.JCheckBox();
+        addWordButton = new javax.swing.JButton();
+        addWordField = new javax.swing.JTextField();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        keywordTable = new javax.swing.JTable();
+        searchButton = new javax.swing.JButton();
 
-        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.searchButton.text")); // NOI18N
-        searchButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                searchButtonActionPerformed(evt);
-            }
-        });
+        setPreferredSize(new java.awt.Dimension(400, 612));
 
         org.openide.awt.Mnemonics.setLocalizedText(filesIndexedNameLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.filesIndexedNameLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(filesIndexedValLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.filesIndexedValLabel.text")); // NOI18N
 
+        titleLabel.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.titleLabel.text")); // NOI18N
-
-        addWordField.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.addWordField.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(addWordButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.addWordButton.text")); // NOI18N
-        addWordButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addWordButtonActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(loadListButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.loadListButton.text")); // NOI18N
         loadListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 loadListButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(curListNameLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.curListNameLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(curListValLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.curListValLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(importButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.importButton.text")); // NOI18N
+        importButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                importButtonActionPerformed(evt);
+            }
+        });
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+
+        org.openide.awt.Mnemonics.setLocalizedText(saveListButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.saveListButton.text")); // NOI18N
+        saveListButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveListButtonActionPerformed(evt);
             }
         });
 
@@ -232,13 +237,6 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(saveListButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.saveListButton.text")); // NOI18N
-        saveListButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveListButtonActionPerformed(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(chRegex, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.chRegex.text")); // NOI18N
         chRegex.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -246,24 +244,80 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(addWordButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.addWordButton.text")); // NOI18N
+        addWordButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addWordButtonActionPerformed(evt);
+            }
+        });
+
+        addWordField.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.addWordField.text")); // NOI18N
+
         keywordTable.setModel(tableModel);
         keywordTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         keywordTable.setShowHorizontalLines(false);
         keywordTable.setShowVerticalLines(false);
         jScrollPane1.setViewportView(keywordTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(curListNameLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.curListNameLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(curListValLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.curListValLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(importButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.importButton.text")); // NOI18N
-        importButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.searchButton.text")); // NOI18N
+        searchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                importButtonActionPerformed(evt);
+                searchButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(curListLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.curListLabel.text")); // NOI18N
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(deleteWordButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(deleteAllWordsButton)
+                        .addGap(18, 18, 18)
+                        .addComponent(saveListButton))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(35, 35, 35)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(10, 10, 10)
+                                .addComponent(chRegex)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(addWordButton))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(searchButton))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(addWordButton)
+                            .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(34, 34, 34))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap(31, Short.MAX_VALUE)
+                        .addComponent(chRegex)
+                        .addGap(14, 14, 14)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(deleteWordButton)
+                        .addComponent(deleteAllWordsButton))
+                    .addComponent(saveListButton))
+                .addGap(18, 18, 18)
+                .addComponent(searchButton)
+                .addContainerGap())
+        );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -271,52 +325,27 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(curListLabel)
-                .addContainerGap(263, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(9, 9, 9)
-                .addComponent(curListNameLabel)
-                .addGap(18, 18, 18)
-                .addComponent(curListValLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 84, Short.MAX_VALUE)
-                .addGap(163, 163, 163))
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(deleteWordButton)
-                .addGap(18, 18, 18)
-                .addComponent(deleteAllWordsButton)
-                .addGap(18, 18, 18)
-                .addComponent(saveListButton)
-                .addContainerGap(52, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(filesIndexedNameLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(filesIndexedValLabel)
-                .addContainerGap(243, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(searchButton)
-                .addContainerGap(254, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(chRegex)
-                .addContainerGap(206, Short.MAX_VALUE))
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(titleLabel, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(titleLabel)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(58, 58, 58)
+                                .addComponent(loadListButton)
+                                .addGap(27, 27, 27)
+                                .addComponent(importButton))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(11, 11, 11)
+                                .addComponent(curListNameLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(curListValLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE)))
+                        .addGap(22, 22, 22))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(filesIndexedNameLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(addWordButton))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addComponent(loadListButton)
-                        .addGap(18, 18, 18)
-                        .addComponent(importButton))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(47, Short.MAX_VALUE))
-            .addComponent(jSeparator1, javax.swing.GroupLayout.DEFAULT_SIZE, 329, Short.MAX_VALUE)
-            .addComponent(jSeparator2, javax.swing.GroupLayout.DEFAULT_SIZE, 329, Short.MAX_VALUE)
+                        .addComponent(filesIndexedValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -324,39 +353,20 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                 .addContainerGap()
                 .addComponent(titleLabel)
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(loadListButton)
-                    .addComponent(importButton))
-                .addGap(8, 8, 8)
-                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(curListLabel)
-                .addGap(14, 14, 14)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(addWordButton))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(importButton)
+                    .addComponent(loadListButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(chRegex)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(deleteAllWordsButton)
-                    .addComponent(deleteWordButton)
-                    .addComponent(saveListButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(4, 4, 4)
-                .addComponent(searchButton)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(curListNameLabel)
                     .addComponent(curListValLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filesIndexedNameLabel)
                     .addComponent(filesIndexedValLabel))
-                .addGap(71, 71, 71))
+                .addGap(40, 40, 40))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -488,7 +498,6 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     private javax.swing.JButton addWordButton;
     private javax.swing.JTextField addWordField;
     private javax.swing.JCheckBox chRegex;
-    private javax.swing.JLabel curListLabel;
     private javax.swing.JLabel curListNameLabel;
     private javax.swing.JLabel curListValLabel;
     private javax.swing.JButton deleteAllWordsButton;
@@ -496,9 +505,8 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     private javax.swing.JLabel filesIndexedNameLabel;
     private javax.swing.JLabel filesIndexedValLabel;
     private javax.swing.JButton importButton;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JTable keywordTable;
     private javax.swing.JButton loadListButton;
     private javax.swing.JButton saveListButton;

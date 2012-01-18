@@ -56,26 +56,24 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        searchButton = new javax.swing.JButton();
         filesIndexedNameLabel = new javax.swing.JLabel();
         filesIndexedValLabel = new javax.swing.JLabel();
-        chRegex = new javax.swing.JCheckBox();
+        jLabel1 = new javax.swing.JLabel();
+        jPanel1 = new javax.swing.JPanel();
         queryTextField = new javax.swing.JTextField();
+        chRegex = new javax.swing.JCheckBox();
+        searchButton = new javax.swing.JButton();
 
         setAutoscrolls(true);
-
-        searchButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.searchButton.text")); // NOI18N
 
         filesIndexedNameLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.filesIndexedNameLabel.text")); // NOI18N
 
         filesIndexedValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.filesIndexedValLabel.text")); // NOI18N
 
-        chRegex.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.chRegex.text")); // NOI18N
-        chRegex.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chRegexActionPerformed(evt);
-            }
-        });
+        jLabel1.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabel1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.jLabel1.text")); // NOI18N
+
+        jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
         queryTextField.setHorizontalAlignment(javax.swing.JTextField.LEFT);
         queryTextField.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.queryTextField.text")); // NOI18N
@@ -85,36 +83,70 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
             }
         });
 
+        chRegex.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.chRegex.text")); // NOI18N
+        chRegex.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chRegexActionPerformed(evt);
+            }
+        });
+
+        searchButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.searchButton.text")); // NOI18N
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(chRegex)
+                    .addComponent(queryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(searchButton))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(queryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chRegex)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(searchButton)
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(chRegex)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(filesIndexedNameLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(filesIndexedValLabel))
-                    .addComponent(searchButton)
-                    .addComponent(queryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(125, Short.MAX_VALUE))
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(filesIndexedNameLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(filesIndexedValLabel))
+                            .addComponent(jLabel1)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(20, 20, 20)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(93, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(32, 32, 32)
-                .addComponent(queryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(chRegex)
+                .addGap(12, 12, 12)
+                .addComponent(jLabel1)
                 .addGap(18, 18, 18)
-                .addComponent(searchButton)
-                .addGap(49, 49, 49)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(23, 23, 23)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filesIndexedNameLabel)
                     .addComponent(filesIndexedValLabel))
-                .addContainerGap(87, Short.MAX_VALUE))
+                .addContainerGap(92, Short.MAX_VALUE))
         );
 
         filesIndexedNameLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchTopComponent.filesIndexedNameLabel.AccessibleContext.accessibleName")); // NOI18N
@@ -133,6 +165,8 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     private javax.swing.JCheckBox chRegex;
     private javax.swing.JLabel filesIndexedNameLabel;
     private javax.swing.JLabel filesIndexedValLabel;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JTextField queryTextField;
     private javax.swing.JButton searchButton;
     // End of variables declaration//GEN-END:variables
