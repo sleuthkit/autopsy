@@ -30,10 +30,20 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     /** Creates new form KeywordSearchSimpleTopComponent */
     public KeywordSearchSimpleTopComponent() {
         initComponents();
+        customizeComponents();
         setName("Simple");
         searchButton.setEnabled(false);
 
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
+    }
+
+    private void customizeComponents() {
+        searchButton.setToolTipText("Execute a keyword search using the query specified.");
+        chRegex.setToolTipText("Select if query is a regular expression");
+        queryTextArea.setToolTipText("<html>For non-regex search enter one or more keywords separated by white-space.<br />"
+                + "For a regex search, enter a Java-supported regular expression.<br />"
+                + "Examples of regex (in double-quotes): \"\\d\\d\\d-\\d\\d\\d\" \\d{8,10} \"phone\" \"ftp|sftp|ssh|http|https|www\".<br />"
+                + "Note: a word can be also searched using a regex search.<br />Regex containing whitespace [ \\s] matches are currently not supported.</html>");
     }
 
     /** This method is called from within the constructor to
@@ -119,7 +129,6 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     private void chRegexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chRegexActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_chRegexActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JCheckBox chRegex;
@@ -131,18 +140,17 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     private javax.swing.JButton searchButton;
     // End of variables declaration//GEN-END:variables
 
-    
     @Override
     protected void componentOpened() {
         // clear old search
         queryTextArea.setText("");
     }
-    
+
     @Override
     public boolean isMultiwordQuery() {
         return false;
     }
-    
+
     @Override
     public void addSearchButtonListener(ActionListener l) {
         searchButton.addActionListener(l);
@@ -152,17 +160,17 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     public String getQueryText() {
         return queryTextArea.getText();
     }
-    
+
     @Override
-    public Map<String,Boolean> getQueryList() {
+    public Map<String, Boolean> getQueryList() {
         return null;
     }
-    
+
     @Override
     public boolean isLuceneQuerySelected() {
         return !chRegex.isSelected();
     }
-    
+
     @Override
     public boolean isRegexQuerySelected() {
         return chRegex.isSelected();
@@ -188,5 +196,4 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
             searchButton.setEnabled(true);
         }
     }
-
 }

@@ -23,6 +23,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -40,6 +42,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -49,6 +52,7 @@ import org.openide.windows.TopComponent;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchTabsTopComponent.TABS;
 
 /**
  * Top component which displays something.
@@ -58,7 +62,7 @@ autostore = false)
 @TopComponent.Description(preferredID = "KeywordSearchListTopComponent",
 //iconBase="SET/PATH/TO/ICON/HERE", 
 persistenceType = TopComponent.PERSISTENCE_NEVER)
-@TopComponent.Registration(mode = "output", openAtStartup = false)
+@TopComponent.Registration(mode = "explorer", openAtStartup = false)
 @ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchListTopComponent")
 @ActionReference(path = "Menu/Window" /*, position = 333 */)
 @TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchListAction",
@@ -84,6 +88,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         addWordField.setToolTipText("Enter a new word or regex to search");
 
         loadListButton.setToolTipText("Load a new keyword list from file or delete an existing list");
+        importButton.setToolTipText("Import list(s) of keywords from an external file.");
         saveListButton.setToolTipText("Save the current keyword list to a file");
         searchButton.setToolTipText("Execute the keyword list search using the current list");
         deleteWordButton.setToolTipText("Delete selected keyword(s) from the list");
@@ -114,7 +119,26 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         loadDefaultKeywords();
 
-        if (KeywordSearchListsXML.getInstance().getNumberLists() == 0) {
+        KeywordSearchListsXML.getCurrent().addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_DELETED.toString())) {
+                    //still keep keywords from deleted list in widgetm just disassociate the name
+                    currentKeywordList = null;
+                    curListValLabel.setText("-");
+                    if (Integer.valueOf((Integer) evt.getNewValue()) == 0) {
+                        loadListButton.setEnabled(false);
+                    }
+                } else if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_ADDED.toString())) {
+                    if (Integer.valueOf((Integer) evt.getOldValue()) == 0) {
+                        loadListButton.setEnabled(true);
+                    }
+                }
+            }
+        });
+
+        if (KeywordSearchListsXML.getCurrent().getNumberLists() == 0) {
             loadListButton.setEnabled(false);
         }
     }
@@ -160,6 +184,9 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         chLiteralWord = new javax.swing.JCheckBox();
         jScrollPane1 = new javax.swing.JScrollPane();
         keywordTable = new javax.swing.JTable();
+        curListNameLabel = new javax.swing.JLabel();
+        curListValLabel = new javax.swing.JLabel();
+        importButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.searchButton.text")); // NOI18N
         searchButton.addActionListener(new java.awt.event.ActionListener() {
@@ -228,6 +255,17 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         keywordTable.setShowVerticalLines(false);
         jScrollPane1.setViewportView(keywordTable);
 
+        org.openide.awt.Mnemonics.setLocalizedText(curListNameLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.curListNameLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(curListValLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.curListValLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(importButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.importButton.text")); // NOI18N
+        importButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                importButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -237,14 +275,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(chLiteralWord)
                     .addComponent(titleLabel)
-                    .addComponent(loadListButton)
-                    .addComponent(addWordLabel)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(deleteWordButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deleteAllWordsButton)
+                        .addComponent(loadListButton)
                         .addGap(18, 18, 18)
-                        .addComponent(saveListButton))
+                        .addComponent(importButton))
+                    .addComponent(addWordLabel)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(31, 31, 31)
@@ -255,7 +290,18 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                         .addComponent(filesIndexedNameLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(filesIndexedValLabel))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                            .addComponent(curListNameLabel)
+                            .addGap(18, 18, 18)
+                            .addComponent(curListValLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                            .addComponent(deleteWordButton)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(deleteAllWordsButton)
+                            .addGap(18, 18, 18)
+                            .addComponent(saveListButton))))
                 .addContainerGap(15, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -264,7 +310,9 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                 .addContainerGap()
                 .addComponent(titleLabel)
                 .addGap(18, 18, 18)
-                .addComponent(loadListButton)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(loadListButton)
+                    .addComponent(importButton))
                 .addGap(19, 19, 19)
                 .addComponent(addWordLabel)
                 .addGap(18, 18, 18)
@@ -284,7 +332,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                     .addComponent(saveListButton))
                 .addGap(29, 29, 29)
                 .addComponent(searchButton)
-                .addGap(38, 38, 38)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(curListNameLabel)
+                    .addComponent(curListValLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filesIndexedNameLabel)
                     .addComponent(filesIndexedValLabel))
@@ -337,7 +389,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
     private void saveListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveListButtonActionPerformed
         final String FEATURE_NAME = "Save Keyword List";
-        KeywordSearchListsXML writer = KeywordSearchListsXML.getInstance();
+        KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
 
         String listName = (String) JOptionPane.showInputDialog(
                 null,
@@ -352,32 +404,27 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
 
         List<String> keywords = tableModel.getAllKeywords();
-        boolean shouldWrite = false;
-        boolean written = false;
+        boolean shouldAdd = false;
         if (writer.listExists(listName)) {
             boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, "Keyword List <" + listName + "> already exists, do you want to replace it?",
                     KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
             if (replace) {
-                shouldWrite = true;
+                shouldAdd = true;
             }
 
         } else {
-            shouldWrite = true;
+            shouldAdd = true;
         }
 
-        if (shouldWrite) {
+        if (shouldAdd) {
             writer.addList(listName, keywords);
-            written = writer.save();
         }
 
-        if (written) {
-            currentKeywordList = listName;
-            KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-            //enable load button if it was previously disabled, as lists now exist
-            if (loadListButton.isEnabled() == false) {
-                loadListButton.setEnabled(true);
-            }
-        }
+        currentKeywordList = listName;
+        curListValLabel.setText(listName);
+        KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+
+
     }//GEN-LAST:event_saveListButtonActionPerformed
 
     private void chLiteralWordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chLiteralWordActionPerformed
@@ -395,35 +442,44 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         final String FEATURE_NAME = "Load Keyword List";
 
-        KeywordSearchListsXML loader = KeywordSearchListsXML.getInstance();
+        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
 
         final String listName = showLoadDeleteListDialog(FEATURE_NAME, loader.getListNames().toArray(), currentKeywordList, true);
 
         if (listName == null || listName.equals("")) {
             return;
         }
+        currentKeywordList = listName;
+        tableModel.resync(currentKeywordList);
+        curListValLabel.setText(listName);
 
-        KeywordSearchList list = loader.getList(listName);
-        if (list != null) {
-            List<String> keywords = list.getKeywords();
+        KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> loaded", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
 
-            //TODO clear/append option ?
-            tableModel.deleteAll();
-            tableModel.addKeywords(keywords);
-            currentKeywordList = listName;
-            KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> loaded", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-        }
 
     }//GEN-LAST:event_loadListButtonActionPerformed
+
+    private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
+        //delegate to lists component
+        JTabbedPane tabs = (JTabbedPane) this.getParent();
+        KeywordSearchListImportExportTopComponent lists = (KeywordSearchListImportExportTopComponent) tabs.getComponentAt(TABS.Lists.ordinal());
+        if (lists != null) {
+            lists.importButtonAction(evt);
+        }
+        
+    }//GEN-LAST:event_importButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addWordButton;
     private javax.swing.JTextField addWordField;
     private javax.swing.JLabel addWordLabel;
     private javax.swing.JCheckBox chLiteralWord;
+    private javax.swing.JLabel curListNameLabel;
+    private javax.swing.JLabel curListValLabel;
     private javax.swing.JButton deleteAllWordsButton;
     private javax.swing.JButton deleteWordButton;
     private javax.swing.JLabel filesIndexedNameLabel;
     private javax.swing.JLabel filesIndexedValLabel;
+    private javax.swing.JButton importButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable keywordTable;
     private javax.swing.JLabel listLabel;
@@ -432,6 +488,23 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     private javax.swing.JButton searchButton;
     private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables
+    private JComboBox loadListCombo;
+
+    private JComboBox findDialogComponent(Component component) {
+        if (component instanceof JComboBox) {
+            loadListCombo = (JComboBox) component;
+        } else if (component instanceof JPanel) {
+            for (Component c : ((JPanel) component).getComponents()) {
+                findDialogComponent(c);
+            }
+        } else if (component instanceof JOptionPane) {
+            for (Component c : ((JOptionPane) component).getComponents()) {
+                findDialogComponent(c);
+            }
+
+        }
+        return loadListCombo;
+    }
 
     private String showLoadDeleteListDialog(final String title, Object[] choices, Object initialChoice, boolean deleteOption) {
         if (deleteOption) {
@@ -444,64 +517,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             loadPane.setWantsInput(true);
             loadPane.setSelectionValues(choices);
             loadPane.setInitialSelectionValue(initialChoice);
-            //loadPane.setValue(initialChoice);
 
             final JDialog loadDialog = loadPane.createDialog(null, title);
             final JPopupMenu rightClickMenu = new JPopupMenu();
-            JMenuItem delItem = new JMenuItem("Delete List");
 
-            delItem.addActionListener(new ActionListener() {
-                JComboBox combo;
-                //find the combo component
-                private JComboBox getDialogComponent(Component component) {
-                    if (component instanceof JComboBox) {
-                        combo = (JComboBox)component;
-                    } else if (component instanceof JPanel) {
-                        for (Component c : ((JPanel) component).getComponents()) {
-                            getDialogComponent(c);
-                        }
-                    } else if (component instanceof JOptionPane) {
-                        for (Component c : ((JOptionPane) component).getComponents()) {
-                            getDialogComponent(c);
-                        }
-
-                    }
-                    return combo;
-                }
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    //there is no JOptionPane API to get current from combobox before OK is pressed
-                    //workaround traversing the widgets
-                    String selList = null;
-                    combo = getDialogComponent(loadPane);
-                    if (combo != null) {
-                        selList = (String) combo.getSelectedItem();
-                    }
-
-
-                    if (selList != null && selList != JOptionPane.UNINITIALIZED_VALUE) {
-                        KeywordSearchListsXML loader = KeywordSearchListsXML.getInstance();
-                        boolean deleted = loader.deleteList(selList);
-                        if (deleted) {
-                            Object[] choices = loader.getListNames().toArray();
-                            loadPane.setSelectionValues(choices);
-                            if (choices.length > 0) {
-                                loadPane.setInitialSelectionValue(choices[0]);
-                            }
-                            loadPane.selectInitialValue();
-                            KeywordSearchUtil.displayDialog(title, "Keyword List <" + selList + "> deleted", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-                        }
-
-                    }
-
-                    rightClickMenu.setVisible(false);
-                }
-            });
-
-            rightClickMenu.add(delItem);
-
-            loadPane.addMouseListener(new MouseListener() {
+            final MouseListener rightClickListener = new MouseListener() {
 
                 @Override
                 public void mouseClicked(MouseEvent e) {
@@ -526,15 +546,59 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                 public void mouseReleased(MouseEvent e) {
                     rightClickMenu.setVisible(false);
                 }
+            };
+            JMenuItem delItem = new JMenuItem("Delete List");
+
+            delItem.addActionListener(new ActionListener() {
+
+                JComboBox combo;
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                    String selList = null;
+                    //there is no JOptionPane API to get current from combobox before OK is pressed
+                    //workaround traversing the widgets
+                    combo = findDialogComponent(loadPane);
+
+                    if (combo != null) {
+                        selList = (String) combo.getSelectedItem();
+                    }
+
+                    if (selList != null && selList != JOptionPane.UNINITIALIZED_VALUE) {
+                        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
+                        boolean deleted = loader.deleteList(selList);
+                        if (deleted) {
+                            Object[] choices = loader.getListNames().toArray();
+                            loadPane.setSelectionValues(choices);
+                            if (choices.length > 0) {
+                                loadPane.setInitialSelectionValue(choices[0]);
+                            }
+                            loadPane.selectInitialValue();
+                            combo = findDialogComponent(loadPane);
+                            combo.addMouseListener(rightClickListener);
+                            KeywordSearchUtil.displayDialog(title, "Keyword List <" + selList + "> deleted", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                        }
+                    }
+                    rightClickMenu.setVisible(false);
+                }
             });
 
+            rightClickMenu.add(delItem);
 
+            JComboBox combo = findDialogComponent(loadPane);
+            combo.addMouseListener(rightClickListener);
 
             loadPane.selectInitialValue();
             loadDialog.setVisible(true);
             loadDialog.dispose();
+            String retString = (String) loadPane.getInputValue();
+            if (retString == JOptionPane.UNINITIALIZED_VALUE) //no choice was made
+            {
+                retString = null;
+            }
 
-            return (String) loadPane.getInputValue();
+            return retString;
         } else {
             return (String) JOptionPane.showInputDialog(
                     null,
@@ -629,9 +693,8 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     }
 
     static class KeywordTableModel extends AbstractTableModel {
-
-        private static Logger logger = Logger.getLogger(KeywordTableModel.class.getName());
         //data
+
         private Set<TableEntry> keywordData = new TreeSet<TableEntry>();
 
         @Override
@@ -729,6 +792,15 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             fireTableDataChanged();
         }
 
+        void resync(String listName) {
+            KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
+            KeywordSearchList list = loader.getList(listName);
+            List<String> keywords = list.getKeywords();
+
+            deleteAll();
+            addKeywords(keywords);
+        }
+
         void deleteAll() {
             keywordData.clear();
             fireTableDataChanged();
@@ -736,7 +808,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         void deleteSelected() {
             List<TableEntry> toDel = new ArrayList<TableEntry>();
-            int i = 0;
+
             for (TableEntry e : keywordData) {
                 if (e.isActive && !e.keyword.equals("")) {
                     toDel.add(e);
@@ -774,7 +846,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     /**
      * tooltips that show entire query string
      */
-    public static class CellTooltipRenderer extends DefaultTableCellRenderer {
+    private static class CellTooltipRenderer extends DefaultTableCellRenderer {
 
         @Override
         public Component getTableCellRendererComponent(
