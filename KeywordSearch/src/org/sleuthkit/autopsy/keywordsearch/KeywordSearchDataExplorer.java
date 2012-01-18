@@ -23,6 +23,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Map;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
@@ -73,13 +74,23 @@ public class KeywordSearchDataExplorer implements DataExplorer {
     private void search() {
         KeywordSearchQueryManager man = null;
         if (tc.isMultiwordQuery()) {
-            man = new KeywordSearchQueryManager(tc.getQueryList(), Presentation.COLLAPSE);
+            final Map<String, Boolean> keywords = tc.getQueryList();
+            if (keywords.isEmpty()) {
+                KeywordSearchUtil.displayDialog("Keyword Search Error", "Keyword list is empty, please add at least one keyword to the list", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                return;
+            }
+            man = new KeywordSearchQueryManager(keywords, Presentation.COLLAPSE);
         } else {
             QueryType queryType = null;
             if (tc.isLuceneQuerySelected()) {
                 queryType = QueryType.WORD;
             } else {
                 queryType = QueryType.REGEX;
+            }
+            final String queryText = tc.getQueryText();
+            if (queryText == null || queryText.trim().equals("")) {
+                KeywordSearchUtil.displayDialog("Keyword Search Error", "Please enter a keyword to search for", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                return; 
             }
             man = new KeywordSearchQueryManager(tc.getQueryText(), queryType, Presentation.COLLAPSE);
         }

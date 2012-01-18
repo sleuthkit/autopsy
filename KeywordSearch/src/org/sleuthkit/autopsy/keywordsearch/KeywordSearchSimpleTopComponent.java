@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionListener;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.windows.TopComponent;
 
@@ -39,10 +40,10 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
 
     private void customizeComponents() {
         searchButton.setToolTipText("Execute a keyword search using the query specified.");
-        chRegex.setToolTipText("Select if query is a regular expression");
-        queryTextArea.setToolTipText("<html>For non-regex search enter one or more keywords separated by white-space.<br />"
-                + "For a regex search, enter a Java-supported regular expression.<br />"
-                + "Examples of regex (in double-quotes): \"\\d\\d\\d-\\d\\d\\d\" \\d{8,10} \"phone\" \"ftp|sftp|ssh|http|https|www\".<br />"
+        chRegex.setToolTipText("Select if keyword is a regular expression");
+        queryTextField.setToolTipText("<html>For non-regex search enter one or more keywords separated by white-space.<br />"
+                + "For a regular expression search, enter a valid regular expression.<br />"
+                + "Examples (in double-quotes): \"\\d\\d\\d-\\d\\d\\d\" \\d{8,10} \"phone\" \"ftp|sftp|ssh|http|https|www\".<br />"
                 + "Note: a word can be also searched using a regex search.<br />Regex containing whitespace [ \\s] matches are currently not supported.</html>");
     }
 
@@ -55,22 +56,15 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        buttonGroup1 = new javax.swing.ButtonGroup();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        queryTextArea = new javax.swing.JTextArea();
         searchButton = new javax.swing.JButton();
-        queryLabel = new javax.swing.JLabel();
         filesIndexedNameLabel = new javax.swing.JLabel();
         filesIndexedValLabel = new javax.swing.JLabel();
         chRegex = new javax.swing.JCheckBox();
+        queryTextField = new javax.swing.JTextField();
 
-        queryTextArea.setColumns(20);
-        queryTextArea.setRows(5);
-        jScrollPane1.setViewportView(queryTextArea);
+        setAutoscrolls(true);
 
         searchButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.searchButton.text")); // NOI18N
-
-        queryLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.queryLabel.text")); // NOI18N
 
         filesIndexedNameLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.filesIndexedNameLabel.text")); // NOI18N
 
@@ -83,6 +77,14 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
             }
         });
 
+        queryTextField.setHorizontalAlignment(javax.swing.JTextField.LEFT);
+        queryTextField.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.queryTextField.text")); // NOI18N
+        queryTextField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                queryTextFieldActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -90,36 +92,29 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(queryLabel)
-                                .addGap(50, 50, 50)
-                                .addComponent(chRegex))
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 599, Short.MAX_VALUE)
-                            .addComponent(searchButton))
-                        .addContainerGap())
+                    .addComponent(chRegex)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(filesIndexedNameLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(filesIndexedValLabel))))
+                        .addComponent(filesIndexedValLabel))
+                    .addComponent(searchButton)
+                    .addComponent(queryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(125, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(queryLabel)
-                    .addComponent(chRegex))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(32, 32, 32)
+                .addComponent(queryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(chRegex)
                 .addGap(18, 18, 18)
                 .addComponent(searchButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(49, 49, 49)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filesIndexedNameLabel)
                     .addComponent(filesIndexedValLabel))
-                .addContainerGap(106, Short.MAX_VALUE))
+                .addContainerGap(87, Short.MAX_VALUE))
         );
 
         filesIndexedNameLabel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchTopComponent.filesIndexedNameLabel.AccessibleContext.accessibleName")); // NOI18N
@@ -127,23 +122,25 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     }// </editor-fold>//GEN-END:initComponents
 
     private void chRegexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chRegexActionPerformed
-        // TODO add your handling code here:
+
     }//GEN-LAST:event_chRegexActionPerformed
+
+    private void queryTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queryTextFieldActionPerformed
+
+    }//GEN-LAST:event_queryTextFieldActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JCheckBox chRegex;
     private javax.swing.JLabel filesIndexedNameLabel;
     private javax.swing.JLabel filesIndexedValLabel;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel queryLabel;
-    private javax.swing.JTextArea queryTextArea;
+    private javax.swing.JTextField queryTextField;
     private javax.swing.JButton searchButton;
     // End of variables declaration//GEN-END:variables
 
     @Override
     protected void componentOpened() {
         // clear old search
-        queryTextArea.setText("");
+        queryTextField.setText("");
     }
 
     @Override
@@ -154,11 +151,12 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     @Override
     public void addSearchButtonListener(ActionListener l) {
         searchButton.addActionListener(l);
+        queryTextField.addActionListener(l);
     }
 
     @Override
     public String getQueryText() {
-        return queryTextArea.getText();
+        return queryTextField.getText().trim();
     }
 
     @Override
