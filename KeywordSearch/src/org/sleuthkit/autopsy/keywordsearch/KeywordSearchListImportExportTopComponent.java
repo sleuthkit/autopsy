@@ -127,16 +127,29 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
 
                     if (Integer.valueOf((Integer) evt.getNewValue()) == 0) {
                         exportButton.setEnabled(false);
-                    } else if (Integer.valueOf((Integer) evt.getOldValue()) == 0) {
-                        exportButton.setEnabled(true);
-                    }
+                        deleteButton.setEnabled(false);
+                    } 
+                    //else if (Integer.valueOf((Integer) evt.getOldValue()) == 0) {
+                      //  exportButton.setEnabled(true);
+                    //}
                 } else if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_UPDATED.toString())) {
                     tableModel.resync((String) evt.getNewValue()); //changed list name
                 }
             }
         });
 
+        initButtons();
 
+    }
+
+    private void initButtons() {
+        if (tableModel.getSelectedLists().isEmpty()) {
+            deleteButton.setEnabled(false);
+            exportButton.setEnabled(false);
+        } else {
+            deleteButton.setEnabled(true);
+            exportButton.setEnabled(true);
+        }
     }
 
     /** This method is called from within the constructor to
@@ -239,7 +252,7 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
     public void importButtonAction(java.awt.event.ActionEvent evt) {
         importButtonActionPerformed(evt);
     }
-    
+
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
         final String FEATURE_NAME = "Keyword List Import";
 
@@ -270,7 +283,7 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
             List<KeywordSearchList> toImportConfirmed = new ArrayList<KeywordSearchList>();
 
             final KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
-        
+
             for (KeywordSearchList list : toImport) {
                 //check name collisions
                 if (writer.listExists(list.getName())) {
@@ -286,7 +299,7 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
                             options,
                             options[0]);
                     if (choice == JOptionPane.OK_OPTION) {
-                    toImportConfirmed.add(list);
+                        toImportConfirmed.add(list);
                     } else if (choice == JOptionPane.CANCEL_OPTION) {
                         break;
                     }
@@ -297,14 +310,16 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
                 }
 
             }
-            
-            if (toImportConfirmed.isEmpty())
+
+            if (toImportConfirmed.isEmpty()) {
                 return;
+            }
 
             if (writer.writeLists(toImportConfirmed)) {
                 KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword list imported", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             }
 
+            initButtons();
         }
     }//GEN-LAST:event_importButtonActionPerformed
 
@@ -365,6 +380,7 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
         tableModel.deleteSelected();
+        initButtons();
     }//GEN-LAST:event_deleteButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel curKeywordsLabel;
@@ -429,7 +445,7 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
         filesIndexedValLabel.setText(Integer.toString(filesIndexed));
     }
 
-    static class KeywordListTableModel extends AbstractTableModel {
+    private class KeywordListTableModel extends AbstractTableModel {
         //data
 
         private KeywordSearchListsXML listsHandle = KeywordSearchListsXML.getCurrent();
@@ -511,6 +527,8 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
                     entry = it.next();
                 }
                 entry.isActive = (Boolean) aValue;
+               
+                initButtons();
             }
         }
 

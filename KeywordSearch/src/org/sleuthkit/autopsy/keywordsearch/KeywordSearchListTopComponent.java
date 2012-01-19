@@ -141,6 +141,25 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         if (KeywordSearchListsXML.getCurrent().getNumberLists() == 0) {
             loadListButton.setEnabled(false);
         }
+
+        initButtons();
+    }
+
+    private void initButtons() {
+        //initialize remove buttons
+        if (getSelectedKeywords().isEmpty()) {
+            deleteWordButton.setEnabled(false);
+        } else {
+            deleteWordButton.setEnabled(true);
+        }
+
+        if (getAllKeywords().isEmpty()) {
+            deleteAllWordsButton.setEnabled(false);
+            saveListButton.setEnabled(false);
+        } else {
+            deleteAllWordsButton.setEnabled(true);
+            saveListButton.setEnabled(true);
+        }
     }
 
     private void loadDefaultKeywords() {
@@ -386,7 +405,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
 
         String toAdd = null;
-        if (! chRegex.isSelected()) {
+        if (!chRegex.isSelected()) {
             toAdd = newWordEscaped;
         } else {
             toAdd = newWord;
@@ -411,6 +430,18 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         tableModel.addKeyword(toAdd);
         addWordField.setText("");
 
+        if (deleteWordButton.isEnabled() == false) {
+            if (!getSelectedKeywords().isEmpty()) {
+                deleteWordButton.setEnabled(true);
+            }
+        }
+
+        if (!getAllKeywords().isEmpty()) {
+            deleteAllWordsButton.setEnabled(true);
+            saveListButton.setEnabled(true);
+        }
+
+
     }//GEN-LAST:event_addWordButtonActionPerformed
 
     private void saveListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveListButtonActionPerformed
@@ -422,7 +453,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List is empty and cannot be saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             return;
         }
-        
+
         String listName = (String) JOptionPane.showInputDialog(
                 null,
                 "New keyword list name:",
@@ -434,7 +465,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         if (listName == null || listName.trim().equals("")) {
             return;
         }
- 
+
         boolean shouldAdd = false;
         if (writer.listExists(listName)) {
             boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, "Keyword List <" + listName + "> already exists, do you want to replace it?",
@@ -463,10 +494,24 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
         tableModel.deleteSelected();
+
+        if (getSelectedKeywords().isEmpty()) {
+            deleteWordButton.setEnabled(false);
+        }
+
+        if (getAllKeywords().isEmpty()) {
+            deleteAllWordsButton.setEnabled(false);
+            saveListButton.setEnabled(false);
+        }
+
     }//GEN-LAST:event_deleteWordButtonActionPerformed
 
     private void deleteAllWordsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteAllWordsButtonActionPerformed
         tableModel.deleteAll();
+
+        deleteWordButton.setEnabled(false);
+        deleteAllWordsButton.setEnabled(false);
+        saveListButton.setEnabled(false);
     }//GEN-LAST:event_deleteAllWordsButtonActionPerformed
 
     private void loadListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadListButtonActionPerformed
@@ -483,7 +528,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         currentKeywordList = listName;
         tableModel.resync(currentKeywordList);
         curListValLabel.setText(listName);
-
+        initButtons();
         KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> loaded", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
 
 
@@ -496,9 +541,8 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         if (lists != null) {
             lists.importButtonAction(evt);
         }
-        
-    }//GEN-LAST:event_importButtonActionPerformed
 
+    }//GEN-LAST:event_importButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addWordButton;
     private javax.swing.JTextField addWordField;
@@ -722,7 +766,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         return tableModel.keywordExists(keyword);
     }
 
-    static class KeywordTableModel extends AbstractTableModel {
+    private class KeywordTableModel extends AbstractTableModel {
         //data
 
         private Set<TableEntry> keywordData = new TreeSet<TableEntry>();
@@ -775,6 +819,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                     entry = it.next();
                 }
                 entry.isActive = (Boolean) aValue;
+                if (getSelectedKeywords().isEmpty()) {
+                    deleteWordButton.setEnabled(false);
+                } else {
+                    deleteWordButton.setEnabled(true);
+                }
             }
         }
 
