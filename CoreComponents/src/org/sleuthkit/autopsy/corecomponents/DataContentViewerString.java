@@ -57,6 +57,9 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        rightClickMenu = new javax.swing.JPopupMenu();
+        copyMenuItem = new javax.swing.JMenuItem();
+        selectAllMenuItem = new javax.swing.JMenuItem();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         outputViewPane = new javax.swing.JTextPane();
@@ -68,9 +71,45 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         pageLabel2 = new javax.swing.JLabel();
         prevPageButton = new javax.swing.JButton();
 
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.copyMenuItem.text")); // NOI18N
+        copyMenuItem.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                copyMenuItemMouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                copyMenuItemMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                copyMenuItemMouseExited(evt);
+            }
+        });
+        rightClickMenu.add(copyMenuItem);
+
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.selectAllMenuItem.text")); // NOI18N
+        selectAllMenuItem.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                selectAllMenuItemMouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                selectAllMenuItemMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                selectAllMenuItemMouseExited(evt);
+            }
+        });
+        rightClickMenu.add(selectAllMenuItem);
+
         outputViewPane.setEditable(false);
         outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
         outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
+        outputViewPane.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                outputViewPaneMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                outputViewPaneMouseReleased(evt);
+            }
+        });
         jScrollPane1.setViewportView(outputViewPane);
 
         totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.totalPageLabel.text_1")); // NOI18N
@@ -173,7 +212,43 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         currentPageLabel.setText(Integer.toString(currentPage));
         setDataView(dataSource, currentOffset, false);
     }//GEN-LAST:event_nextPageButtonActionPerformed
+
+    private void outputViewPaneMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_outputViewPaneMousePressed
+        maybeShowPopup(evt);
+    }//GEN-LAST:event_outputViewPaneMousePressed
+
+    private void outputViewPaneMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_outputViewPaneMouseReleased
+        maybeShowPopup(evt);
+    }//GEN-LAST:event_outputViewPaneMouseReleased
+
+    private void copyMenuItemMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_copyMenuItemMouseEntered
+        copyMenuItem.setArmed(true);
+    }//GEN-LAST:event_copyMenuItemMouseEntered
+
+    private void copyMenuItemMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_copyMenuItemMouseExited
+        copyMenuItem.setArmed(false);
+    }//GEN-LAST:event_copyMenuItemMouseExited
+
+    private void copyMenuItemMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_copyMenuItemMouseClicked
+        outputViewPane.copy();
+        rightClickMenu.setVisible(false);
+    }//GEN-LAST:event_copyMenuItemMouseClicked
+
+    private void selectAllMenuItemMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_selectAllMenuItemMouseClicked
+        outputViewPane.selectAll();
+        rightClickMenu.setVisible(false);
+    }//GEN-LAST:event_selectAllMenuItemMouseClicked
+
+    private void selectAllMenuItemMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_selectAllMenuItemMouseEntered
+        selectAllMenuItem.setArmed(true);
+    }//GEN-LAST:event_selectAllMenuItemMouseEntered
+
+    private void selectAllMenuItemMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_selectAllMenuItemMouseExited
+        selectAllMenuItem.setArmed(false);
+    }//GEN-LAST:event_selectAllMenuItemMouseExited
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
@@ -183,6 +258,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private javax.swing.JLabel pageLabel;
     private javax.swing.JLabel pageLabel2;
     private javax.swing.JButton prevPageButton;
+    private javax.swing.JPopupMenu rightClickMenu;
+    private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
 
@@ -328,5 +405,13 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     @Override
     public Component getComponent() {
         return this;
+    }
+    
+    private void maybeShowPopup(java.awt.event.MouseEvent evt){
+        if(evt.isPopupTrigger()){
+            rightClickMenu.setLocation(evt.getLocationOnScreen());
+            rightClickMenu.setVisible(true);
+        }else
+            rightClickMenu.setVisible(false);
     }
 }

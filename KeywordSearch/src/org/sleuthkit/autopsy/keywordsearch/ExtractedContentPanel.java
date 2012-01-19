@@ -63,6 +63,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        rightClickMenu = new javax.swing.JPopupMenu();
+        copyMenuItem = new javax.swing.JMenuItem();
+        selectAllMenuItem = new javax.swing.JMenuItem();
         jScrollPane1 = new javax.swing.JScrollPane();
         extractedTextPane = new javax.swing.JTextPane();
         sourceComboBox = new javax.swing.JComboBox();
@@ -74,8 +77,44 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         hitPreviousButton = new javax.swing.JButton();
         hitNextButton = new javax.swing.JButton();
 
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.copyMenuItem.text")); // NOI18N
+        copyMenuItem.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                copyMenuItemMouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                copyMenuItemMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                copyMenuItemMouseExited(evt);
+            }
+        });
+        rightClickMenu.add(copyMenuItem);
+
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.selectAllMenuItem.text")); // NOI18N
+        selectAllMenuItem.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                selectAllMenuItemMouseClicked(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                selectAllMenuItemMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                selectAllMenuItemMouseExited(evt);
+            }
+        });
+        rightClickMenu.add(selectAllMenuItem);
+
         extractedTextPane.setEditable(false);
         extractedTextPane.setAutoscrolls(false);
+        extractedTextPane.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                extractedTextPaneMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                extractedTextPaneMouseReleased(evt);
+            }
+        });
         jScrollPane1.setViewportView(extractedTextPane);
 
         sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -144,7 +183,43 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 293, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void extractedTextPaneMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_extractedTextPaneMousePressed
+        maybeShowPopup(evt);
+    }//GEN-LAST:event_extractedTextPaneMousePressed
+
+    private void extractedTextPaneMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_extractedTextPaneMouseReleased
+        maybeShowPopup(evt);
+    }//GEN-LAST:event_extractedTextPaneMouseReleased
+
+    private void copyMenuItemMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_copyMenuItemMouseEntered
+        copyMenuItem.setArmed(true);
+    }//GEN-LAST:event_copyMenuItemMouseEntered
+
+    private void copyMenuItemMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_copyMenuItemMouseClicked
+        extractedTextPane.copy();
+        rightClickMenu.setVisible(false);
+    }//GEN-LAST:event_copyMenuItemMouseClicked
+
+    private void copyMenuItemMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_copyMenuItemMouseExited
+        copyMenuItem.setArmed(false);
+    }//GEN-LAST:event_copyMenuItemMouseExited
+
+    private void selectAllMenuItemMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_selectAllMenuItemMouseClicked
+        extractedTextPane.selectAll();
+        rightClickMenu.setVisible(false);
+    }//GEN-LAST:event_selectAllMenuItemMouseClicked
+
+    private void selectAllMenuItemMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_selectAllMenuItemMouseEntered
+        selectAllMenuItem.setArmed(true);
+    }//GEN-LAST:event_selectAllMenuItemMouseEntered
+
+    private void selectAllMenuItemMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_selectAllMenuItemMouseExited
+        selectAllMenuItem.setArmed(false);
+    }//GEN-LAST:event_selectAllMenuItemMouseExited
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JTextPane extractedTextPane;
     private javax.swing.JLabel hitButtonsLabel;
     private javax.swing.JLabel hitCountLabel;
@@ -154,6 +229,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     private javax.swing.JButton hitPreviousButton;
     private javax.swing.JLabel hitTotalLabel;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPopupMenu rightClickMenu;
+    private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JComboBox sourceComboBox;
     // End of variables declaration//GEN-END:variables
 
@@ -260,5 +337,13 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
     public void addSourceComboControlListener(ActionListener l) {
         sourceComboBox.addActionListener(l);
+    }
+    
+    private void maybeShowPopup(java.awt.event.MouseEvent evt){
+        if(evt.isPopupTrigger()){
+            rightClickMenu.setLocation(evt.getLocationOnScreen());
+            rightClickMenu.setVisible(true);
+        }else
+            rightClickMenu.setVisible(false);
     }
 }
