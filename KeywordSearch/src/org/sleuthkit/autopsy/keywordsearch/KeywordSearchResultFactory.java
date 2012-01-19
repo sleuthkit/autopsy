@@ -34,6 +34,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
@@ -230,7 +231,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             final Content content = thingContent.getContent();
             final String query = thingContent.getQuery();
 
-            Node kvNode = new KeyValueNode(thingContent, Children.LEAF);
+            Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
             HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query);
             return new KeywordSearchFilterNode(highlights, kvNode, query);
@@ -306,7 +307,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
 
                 //postprocess
                 //make sure Solr result contains a match (this gets rid of large number of false positives)
-                boolean postprocess = true;
+                final boolean postprocess = false;
                 boolean matchFound = true;
                 if (postprocess) {
                     if (contentStr != null) {//if not null, some error getting from Solr, handle it by not filtering out
@@ -323,7 +324,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 }
 
                 if (matchFound) {
-                    Node kvNode = new KeyValueNode(thingContent, Children.LEAF);
+                    Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
                     //wrap in KeywordSearchFilterNode for the markup content
                     HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query);
                     return new KeywordSearchFilterNode(highlights, kvNode, query);

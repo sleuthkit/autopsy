@@ -23,6 +23,7 @@ import java.util.Map;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.Lookup;
 
 public class KeyValueNode extends AbstractNode {
     
@@ -33,6 +34,12 @@ public class KeyValueNode extends AbstractNode {
         this.setName(thing.getName());
         this.thing = thing;
     }
+    
+    public KeyValueNode(KeyValueThing thing, Children children, Lookup lookup) {
+         super(children, lookup);
+         this.setName(thing.getName());
+         this.thing = thing;
+     }
     
     @Override
     protected Sheet createSheet() {

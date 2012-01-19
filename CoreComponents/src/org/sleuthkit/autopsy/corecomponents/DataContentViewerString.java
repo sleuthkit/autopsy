@@ -23,6 +23,7 @@ import java.awt.Cursor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.Node;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
@@ -268,7 +269,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     @Override
     public void setNode(Node selectedNode) {
         if (selectedNode != null) {
-            Content content = selectedNode.getLookup().lookup(Content.class);
+            Lookup lookup = selectedNode.getLookup();
+            Content content = lookup.lookup(Content.class);
             if (content != null) {
                 this.setDataView(content, 0, false);
                 return;
