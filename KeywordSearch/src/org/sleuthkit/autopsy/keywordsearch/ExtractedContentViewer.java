@@ -138,6 +138,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     @Override
     public void resetComponent() {
         setPanel(Collections.EMPTY_LIST);
+        panel.resetHitDisplay();
     }
 
     @Override

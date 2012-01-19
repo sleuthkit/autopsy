@@ -135,8 +135,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                         .addComponent(hitCountLabel))
                     .addComponent(hitPreviousButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(hitNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 287, Short.MAX_VALUE))
+                .addGap(0, 0, 0)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 293, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -219,6 +219,14 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      */
     public void updateTotalDisplay(int total) {
         hitTotalLabel.setText(Integer.toString(total));
+    }
+    
+    /**
+     * reset the current/total display
+     */
+    public void resetHitDisplay() {
+        hitTotalLabel.setText("-");
+        hitCountLabel.setText("-");
     }
 
     /**
