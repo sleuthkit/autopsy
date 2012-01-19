@@ -167,19 +167,19 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         //some hardcoded keywords for testing
 
         //phone number
-        tableModel.addKeyword("\\d\\d\\d[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d", false);
-        tableModel.addKeyword("\\d{8,10}", false);
-        tableModel.addKeyword("phone|fax", false);
+        tableModel.addKeyword(new Keyword("\\d\\d\\d[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d", false));
+        tableModel.addKeyword(new Keyword("\\d{8,10}", false));
+        tableModel.addKeyword(new Keyword("phone|fax", false));
         //IP address
-        tableModel.addKeyword("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])", false);
+        tableModel.addKeyword(new Keyword("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])", false));
         //email
-        tableModel.addKeyword("[e\\-]{0,2}mail", false);
-        tableModel.addKeyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", false);
+        tableModel.addKeyword(new Keyword("[e\\-]{0,2}mail", false));
+        tableModel.addKeyword(new Keyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", false));
         //URL
-        tableModel.addKeyword("ftp|sftp|ssh|http|https|www", false);
+        tableModel.addKeyword(new Keyword("ftp|sftp|ssh|http|https|www", false));
         //escaped literal word \d\d\d
-        tableModel.addKeyword("\\Q\\d\\d\\d\\E", false);
-        tableModel.addKeyword("\\d\\d\\d\\d", true);
+        tableModel.addKeyword(new Keyword("\\Q\\d\\d\\d\\E", false));
+        tableModel.addKeyword(new Keyword("\\d\\d\\d\\d", true));
     }
 
     /** This method is called from within the constructor to
@@ -399,10 +399,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         String newWord = addWordField.getText().trim();
         boolean isLiteral = !chRegex.isSelected();
+        final Keyword keyword = new Keyword(newWord, isLiteral);
      
         if (newWord.equals("")) {
             return;
-        } else if (keywordExists(newWord, isLiteral)) {
+        } else if (keywordExists(keyword)) {
             KeywordSearchUtil.displayDialog("New Keyword Entry", "Keyword already exists in the list.", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             return;
         }
@@ -423,7 +424,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
 
         //add & reset checkbox
-        tableModel.addKeyword(newWord, isLiteral);
+        tableModel.addKeyword(keyword);
         chRegex.setSelected(false);
         addWordField.setText("");
 
@@ -445,7 +446,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         final String FEATURE_NAME = "Save Keyword List";
         KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
 
-        Map<String,Boolean> keywords = tableModel.getAllKeywords();
+        List<Keyword> keywords = tableModel.getAllKeywords();
         if (keywords.isEmpty()) {
             KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List is empty and cannot be saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             return;
@@ -714,7 +715,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     }
 
     @Override
-    public Map<String, Boolean> getQueryList() {
+    public List<Keyword> getQueryList() {
         return getAllKeywords();
     }
 
@@ -738,16 +739,16 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
     }
 
-    public Map<String,Boolean> getAllKeywords() {
+    List<Keyword> getAllKeywords() {
         return tableModel.getAllKeywords();
     }
 
-    public Map<String,Boolean> getSelectedKeywords() {
+    List<Keyword> getSelectedKeywords() {
         return tableModel.getSelectedKeywords();
     }
 
-    private boolean keywordExists(String keyword, boolean isLiteral) {
-        return tableModel.keywordExists(keyword, isLiteral);
+    private boolean keywordExists(Keyword keyword) {
+        return tableModel.keywordExists(keyword);
     }
 
     private class KeywordTableModel extends AbstractTableModel {
@@ -842,41 +843,40 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             return getValueAt(0, c).getClass();
         }
 
-        Map<String,Boolean> getAllKeywords() {
-            Map<String,Boolean> ret = new LinkedHashMap<String,Boolean>();
+        List<Keyword> getAllKeywords() {
+            List<Keyword> ret = new ArrayList<Keyword>();
             for (TableEntry e : keywordData) {
-                ret.put(e.keyword, e.isLiteral);
+                ret.add(new Keyword(e.keyword, e.isLiteral));
             }
             return ret;
         }
 
-        Map<String,Boolean> getSelectedKeywords() {
-            Map<String,Boolean> ret = new LinkedHashMap<String,Boolean>();
+        List<Keyword> getSelectedKeywords() {
+            List<Keyword> ret = new ArrayList<Keyword>();
             for (TableEntry e : keywordData) {
                 if (e.isActive && !e.keyword.equals("")) {
-                    ret.put(e.keyword, e.isLiteral);
+                    ret.add(new Keyword(e.keyword, e.isLiteral));
                 }
             }
             return ret;
         }
 
-        boolean keywordExists(String keyword, boolean isLiteral) {
-            Map<String,Boolean> all = getAllKeywords();
-            return all.containsKey(keyword) && all.get(keyword) == isLiteral;
+        boolean keywordExists(Keyword keyword) {
+            List<Keyword> all = getAllKeywords();
+            return all.contains(keyword);
         }
 
-        void addKeyword(String keyword, boolean isLiteral) {
-            if (!keywordExists(keyword, isLiteral)) {
-                keywordData.add(new TableEntry(keyword, isLiteral));
+        void addKeyword(Keyword keyword) {
+            if (!keywordExists(keyword)) {
+                keywordData.add(new TableEntry(keyword));
             }
             fireTableDataChanged();
         }
 
-        void addKeywords(Map<String,Boolean> keywords) {
-            for (String keyword : keywords.keySet()) {
-                boolean isLiteral = keywords.get(keyword);
-                if (!keywordExists(keyword, isLiteral)) {
-                    keywordData.add(new TableEntry(keyword, isLiteral));
+        void addKeywords(List<Keyword> keywords) {
+            for (Keyword keyword : keywords) {
+                if (!keywordExists(keyword)) {
+                    keywordData.add(new TableEntry(keyword));
                 }
             }
             fireTableDataChanged();
@@ -885,7 +885,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         void resync(String listName) {
             KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
             KeywordSearchList list = loader.getList(listName);
-            Map<String,Boolean> keywords = list.getKeywords();
+            List<Keyword> keywords = list.getKeywords();
 
             deleteAll();
             addKeywords(keywords);
@@ -917,12 +917,18 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             Boolean isLiteral;
             Boolean isActive;
 
-            TableEntry(String keyword, Boolean isLiteral, Boolean isActive) {
-                this.keyword = keyword;
-                this.isLiteral = isLiteral;
+            TableEntry(Keyword keyword, Boolean isActive) {
+                this.keyword = keyword.getQuery();
+                this.isLiteral = keyword.isLiteral();
                 this.isActive = isActive;
             }
 
+            TableEntry(Keyword keyword) {
+                this.keyword = keyword.getQuery();
+                this.isLiteral = keyword.isLiteral();
+                this.isActive = false;
+            }
+            
             TableEntry(String keyword, Boolean isLiteral) {
                 this.keyword = keyword;
                 this.isLiteral = isLiteral;

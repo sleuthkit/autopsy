@@ -19,8 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionListener;
-import java.util.Map;
-import java.util.logging.Level;
+import java.util.List;
 import java.util.logging.Logger;
 import org.openide.windows.TopComponent;
 
@@ -194,7 +193,7 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     }
 
     @Override
-    public Map<String, Boolean> getQueryList() {
+    public List<Keyword> getQueryList() {
         return null;
     }
 

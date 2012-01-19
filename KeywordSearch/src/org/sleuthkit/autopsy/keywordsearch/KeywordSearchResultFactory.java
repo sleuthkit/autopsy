@@ -58,11 +58,17 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
     //these are merged with FsContentPropertyType defined properties
     public static enum CommonPropertyTypes {
 
-        QUERY {
+        KEYWORD {
 
             @Override
             public String toString() {
-                return "Query";
+                return "Keyword";
+            }
+        },
+        REGEX {
+            @Override
+            public String toString() {
+                return "Regex";
             }
         },
         MATCH {
@@ -73,19 +79,19 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             }
         },}
     private Presentation presentation;
-    private Collection<String> queries;
+    private List<Keyword> queries;
     private Collection<KeyValueThing> things;
     private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
-    KeywordSearchResultFactory(Collection<String> queries, Collection<KeyValueThing> things, Presentation presentation) {
+    KeywordSearchResultFactory(List<Keyword> queries, Collection<KeyValueThing> things, Presentation presentation) {
         this.queries = queries;
         this.things = things;
         this.presentation = presentation;
     }
 
     KeywordSearchResultFactory(String query, Collection<KeyValueThing> things, Presentation presentation) {
-        queries = new ArrayList<String>();
-        queries.add(query);
+        queries = new ArrayList<Keyword>();
+        queries.add(new Keyword(query, false));
         this.presentation = presentation;
         this.things = things;
     }
@@ -115,15 +121,21 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
         final String typeStr = type.toString();
         toSet.put(typeStr, value);
     }
+     public static void setCommonProperty(Map<String, Object> toSet, CommonPropertyTypes type, Boolean value) {
+        final String typeStr = type.toString();
+        toSet.put(typeStr, value);
+    }
 
     @Override
     protected boolean createKeys(List<KeyValueThing> toPopulate) {
         int id = 0;
         if (presentation == Presentation.DETAIL) {
-            for (String query : queries) {
+            for (Keyword keyword : queries) {
                 Map<String, Object> map = new LinkedHashMap<String, Object>();
+                final String query = keyword.getQuery();
                 initCommonProperties(map);
-                setCommonProperty(map, CommonPropertyTypes.QUERY, query);
+                setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
+                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!keyword.isLiteral()));
                 toPopulate.add(new KeyValueThing(query, map, ++id));
             }
         } else {
@@ -132,7 +144,9 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 Map<String, Object> map = thing.getMap();
                 initCommonProperties(map);
                 final String query = thing.getName();
-                setCommonProperty(map, CommonPropertyTypes.QUERY, query);
+                setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
+                KeyValueThingQuery thingQuery = (KeyValueThingQuery) thing;
+                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thingQuery.getQuery().isEscaped()));
                 //toPopulate.add(new KeyValueThing(query, map, ++id));
                 toPopulate.add(thing);
             }

@@ -18,11 +18,10 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Map;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -146,7 +145,7 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
     }
 
     @Override
-    public Map<String, Boolean> getQueryList() {
+    public List<Keyword> getQueryList() {
         KeywordSearchTopComponentInterface selected = (KeywordSearchTopComponentInterface) tabs.getSelectedComponent();
         if (selected == null) {
             return null;

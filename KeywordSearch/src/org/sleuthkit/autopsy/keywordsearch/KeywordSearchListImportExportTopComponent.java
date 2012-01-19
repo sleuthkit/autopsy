@@ -416,7 +416,7 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
     }
 
     @Override
-    public Map<String, Boolean> getQueryList() {
+    public List<Keyword> getQueryList() {
         return null;
     }
 

@@ -50,6 +50,12 @@ public interface KeywordSearchQuery {
     public void escape();
     
     /**
+     * 
+     * @return true if query was escaped
+     */
+    public boolean isEscaped();
+    
+    /**
      * return original query string
      * @return the query String supplied originally
      */

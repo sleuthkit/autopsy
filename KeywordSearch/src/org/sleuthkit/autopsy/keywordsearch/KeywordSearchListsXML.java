@@ -183,7 +183,7 @@ public class KeywordSearchListsXML {
      * @param newList list of keywords
      * @return true if old list was replaced
      */
-    boolean addList(String name, Map<String,Boolean> newList) {
+    boolean addList(String name, List<Keyword> newList) {
         boolean replaced = false;
         KeywordSearchList curList = getList(name);
         final Date now = new Date();
@@ -265,18 +265,18 @@ public class KeywordSearchListsXML {
                 KeywordSearchList list = theLists.get(listName);
                 String created = dateFormatter.format(list.getDateCreated());
                 String modified = dateFormatter.format(list.getDateModified());
-                Map<String,Boolean> keywords = list.getKeywords();
+                List<Keyword> keywords = list.getKeywords();
 
                 Element listEl = doc.createElement(LIST_EL);
                 listEl.setAttribute(LIST_NAME_ATTR, listName);
                 listEl.setAttribute(LIST_CREATE_ATTR, created);
                 listEl.setAttribute(LIST_MOD_ATTR, modified);
 
-                for (String keyword : keywords.keySet()) {
+                for (Keyword keyword : keywords) {
                     Element keywordEl = doc.createElement(KEYWORD_EL);
-                    String regex = keywords.get(keyword)==true?"true":"false";
+                    String regex = keyword.isLiteral()==false?"true":"false";
                     keywordEl.setAttribute(KEYWORD_LITERAL_ATTR, regex);
-                    keywordEl.setTextContent(keyword);
+                    keywordEl.setTextContent(keyword.getQuery());
                     listEl.appendChild(keywordEl);
                 }
                 rootEl.appendChild(listEl);
@@ -313,7 +313,7 @@ public class KeywordSearchListsXML {
                 final String modified = listEl.getAttribute(LIST_MOD_ATTR);
                 Date createdDate = dateFormatter.parse(created);
                 Date modDate = dateFormatter.parse(modified);
-                Map<String,Boolean> words = new LinkedHashMap<String,Boolean>();
+                List<Keyword> words = new ArrayList<Keyword>();
                 KeywordSearchList list = new KeywordSearchList(name, createdDate, modDate, words);
 
                 //parse all words
@@ -323,7 +323,7 @@ public class KeywordSearchListsXML {
                     Element wordEl = (Element) wordsNList.item(j);
                     String regex = wordEl.getAttribute(KEYWORD_LITERAL_ATTR);
                     boolean isRegex = regex.equals("true");
-                    words.put(wordEl.getTextContent(), isRegex);
+                    words.add(new Keyword(wordEl.getTextContent(), isRegex));
 
                 }
                 theLists.put(name, list);
@@ -410,9 +410,9 @@ class KeywordSearchList {
     private String name;
     private Date created;
     private Date modified;
-    private Map<String,Boolean> keywords;
+    private List<Keyword> keywords;
 
-    KeywordSearchList(String name, Date created, Date modified, Map<String,Boolean> keywords) {
+    KeywordSearchList(String name, Date created, Date modified, List<Keyword> keywords) {
         this.name = name;
         this.created = created;
         this.modified = modified;
@@ -452,7 +452,7 @@ class KeywordSearchList {
         return modified;
     }
 
-    Map<String,Boolean> getKeywords() {
+    List<Keyword> getKeywords() {
         return keywords;
     }
 }

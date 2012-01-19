@@ -23,7 +23,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Map;
+import java.util.List;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
@@ -74,7 +74,7 @@ public class KeywordSearchDataExplorer implements DataExplorer {
     private void search() {
         KeywordSearchQueryManager man = null;
         if (tc.isMultiwordQuery()) {
-            final Map<String, Boolean> keywords = tc.getQueryList();
+            final List<Keyword> keywords = tc.getQueryList();
             if (keywords.isEmpty()) {
                 KeywordSearchUtil.displayDialog("Keyword Search Error", "Keyword list is empty, please add at least one keyword to the list", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
