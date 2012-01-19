@@ -79,8 +79,14 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         ofLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.ofLabel.text_1")); // NOI18N
 
         currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.currentPageLabel.text_1")); // NOI18N
+        currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 14));
+        currentPageLabel.setMinimumSize(new java.awt.Dimension(18, 14));
+        currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 14));
 
         pageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.pageLabel.text_1")); // NOI18N
+        pageLabel.setMaximumSize(new java.awt.Dimension(33, 14));
+        pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
+        pageLabel.setPreferredSize(new java.awt.Dimension(33, 14));
 
         nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/arrow_right.gif"))); // NOI18N
         nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.nextPageButton.text")); // NOI18N
@@ -91,6 +97,9 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         });
 
         pageLabel2.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.pageLabel2.text")); // NOI18N
+        pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
+        pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
+        pageLabel2.setPreferredSize(new java.awt.Dimension(29, 14));
 
         prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/arrow_left.gif"))); // NOI18N
         prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.prevPageButton.text")); // NOI18N
@@ -106,20 +115,20 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(pageLabel)
+                .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(currentPageLabel)
+                .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(ofLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(totalPageLabel)
                 .addGap(50, 50, 50)
-                .addComponent(pageLabel2)
+                .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(375, Short.MAX_VALUE))
+                .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(360, Short.MAX_VALUE))
             .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 622, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
@@ -127,11 +136,11 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(pageLabel)
-                        .addComponent(currentPageLabel)
+                        .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(ofLabel)
                         .addComponent(totalPageLabel))
-                    .addComponent(pageLabel2)
+                    .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(0, 0, 0)
