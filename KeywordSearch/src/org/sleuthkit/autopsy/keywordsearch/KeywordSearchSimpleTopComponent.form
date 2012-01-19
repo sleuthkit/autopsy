@@ -27,14 +27,14 @@
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="filesIndexedNameLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="filesIndexedValLabel" min="-2" max="-2" attributes="0"/>
+                              <Component id="filesIndexedValLabel" min="-2" pref="59" max="-2" attributes="0"/>
                           </Group>
                           <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
-                      <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
+                      <Component id="jPanel1" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace pref="93" max="32767" attributes="0"/>
@@ -109,7 +109,7 @@
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="chRegex" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="queryTextField" alignment="0" min="-2" pref="261" max="-2" attributes="0"/>
+                      <Component id="queryTextField" alignment="0" pref="261" max="32767" attributes="0"/>
                       <Component id="searchButton" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
