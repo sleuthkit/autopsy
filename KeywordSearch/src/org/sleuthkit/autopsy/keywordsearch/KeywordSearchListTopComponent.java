@@ -91,8 +91,8 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         importButton.setToolTipText("Import list(s) of keywords from an external file.");
         saveListButton.setToolTipText("Save the current keyword list to a file");
         searchButton.setToolTipText("Execute the keyword list search using the current list");
-        deleteWordButton.setToolTipText("Delete selected keyword(s) from the list");
-        deleteAllWordsButton.setToolTipText("Delete all keywords from the list (clear it)");
+        deleteWordButton.setToolTipText("Remove selected keyword(s) from the list");
+        deleteAllWordsButton.setToolTipText("Remove all keywords from the list (clear it)");
 
         keywordTable.setAutoscrolls(true);
         keywordTable.setTableHeader(null);
@@ -417,6 +417,12 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         final String FEATURE_NAME = "Save Keyword List";
         KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
 
+        List<String> keywords = tableModel.getAllKeywords();
+        if (keywords.isEmpty()) {
+            KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List is empty and cannot be saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+            return;
+        }
+        
         String listName = (String) JOptionPane.showInputDialog(
                 null,
                 "New keyword list name:",
@@ -425,11 +431,10 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                 null,
                 null,
                 currentKeywordList != null ? currentKeywordList : "");
-        if (listName == null || listName.equals("")) {
+        if (listName == null || listName.trim().equals("")) {
             return;
         }
-
-        List<String> keywords = tableModel.getAllKeywords();
+ 
         boolean shouldAdd = false;
         if (writer.listExists(listName)) {
             boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, "Keyword List <" + listName + "> already exists, do you want to replace it?",
@@ -669,7 +674,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
     @Override
     public Map<String, Boolean> getQueryList() {
-        List<String> selected = getSelectedKeywords();
+        List<String> selected = getAllKeywords();
         //filter out blank just in case
         Map<String, Boolean> ret = new LinkedHashMap<String, Boolean>();
         for (String s : selected) {
