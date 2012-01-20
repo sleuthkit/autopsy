@@ -169,10 +169,11 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
         deleteButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         listsTable = new javax.swing.JTable();
-        curKeywordsLabel = new javax.swing.JLabel();
         topLabel = new javax.swing.JLabel();
 
-        mainScrollPane.setPreferredSize(new java.awt.Dimension(320, 493));
+        mainScrollPane.setPreferredSize(new java.awt.Dimension(349, 433));
+
+        mainPanel.setPreferredSize(new java.awt.Dimension(349, 433));
 
         org.openide.awt.Mnemonics.setLocalizedText(filesIndexedNameLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.filesIndexedNameLabel.text")); // NOI18N
 
@@ -205,8 +206,7 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
         listsTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(listsTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(curKeywordsLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.curKeywordsLabel.text")); // NOI18N
-
+        topLabel.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(topLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.topLabel.text")); // NOI18N
 
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
@@ -216,31 +216,31 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
             .addGroup(mainPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(topLabel)
-                    .addComponent(curKeywordsLabel)
-                    .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, mainPanelLayout.createSequentialGroup()
-                            .addComponent(importButton)
-                            .addGap(33, 33, 33)
-                            .addComponent(exportButton)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(deleteButton))
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 266, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addComponent(filesIndexedNameLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(filesIndexedValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(44, Short.MAX_VALUE))
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 266, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(topLabel)
+                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addComponent(importButton)
+                                .addGap(33, 33, 33)
+                                .addComponent(exportButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
+                                .addComponent(deleteButton))
+                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addComponent(filesIndexedNameLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(filesIndexedValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(84, Short.MAX_VALUE))))
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(topLabel)
-                .addGap(26, 26, 26)
-                .addComponent(curKeywordsLabel)
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(34, 34, 34)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 251, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(importButton)
@@ -250,7 +250,7 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filesIndexedNameLabel)
                     .addComponent(filesIndexedValLabel))
-                .addContainerGap(122, Short.MAX_VALUE))
+                .addContainerGap(64, Short.MAX_VALUE))
         );
 
         mainScrollPane.setViewportView(mainPanel);
@@ -259,11 +259,11 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 322, Short.MAX_VALUE)
+            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 368, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 512, Short.MAX_VALUE)
+            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 455, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -401,7 +401,6 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
         initButtons();
     }//GEN-LAST:event_deleteButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel curKeywordsLabel;
     private javax.swing.JButton deleteButton;
     private javax.swing.JButton exportButton;
     private javax.swing.JLabel filesIndexedNameLabel;
