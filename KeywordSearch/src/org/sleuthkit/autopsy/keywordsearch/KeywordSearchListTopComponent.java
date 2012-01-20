@@ -555,8 +555,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
         //delegate to lists component
-        JTabbedPane tabs = (JTabbedPane) this.getParent();
-        KeywordSearchListImportExportTopComponent lists = (KeywordSearchListImportExportTopComponent) tabs.getComponentAt(TABS.Lists.ordinal());
+        KeywordSearchListImportExportTopComponent lists = new KeywordSearchListImportExportTopComponent();
         if (lists != null) {
             lists.importButtonAction(evt);
         }
