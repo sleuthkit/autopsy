@@ -273,6 +273,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         });
 
         addWordField.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.addWordField.text")); // NOI18N
+        addWordField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addWordFieldActionPerformed(evt);
+            }
+        });
 
         keywordTable.setModel(tableModel);
         keywordTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
@@ -541,6 +546,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
 
     }//GEN-LAST:event_importButtonActionPerformed
+
+    private void addWordFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addWordFieldActionPerformed
+        addWordButtonActionPerformed(evt);
+    }//GEN-LAST:event_addWordFieldActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addWordButton;
     private javax.swing.JTextField addWordField;
