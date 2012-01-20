@@ -21,12 +21,12 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="mainScrollPane" alignment="0" pref="386" max="32767" attributes="0"/>
+          <Component id="mainScrollPane" alignment="0" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="mainScrollPane" alignment="0" pref="568" max="32767" attributes="0"/>
+          <Component id="mainScrollPane" alignment="0" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -65,7 +65,7 @@
                                   <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
                                   <Component id="curListNameLabel" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="curListValLabel" pref="242" max="32767" attributes="0"/>
+                                  <Component id="curListValLabel" pref="233" max="32767" attributes="0"/>
                               </Group>
                               <Component id="tablePanel" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
@@ -73,7 +73,7 @@
                               <Component id="filesIndexedNameLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="filesIndexedValLabel" min="-2" pref="204" max="-2" attributes="0"/>
-                              <EmptySpace pref="38" max="-2" attributes="0"/>
+                              <EmptySpace pref="29" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace min="-2" pref="54" max="-2" attributes="0"/>
@@ -102,7 +102,7 @@
                           <Component id="filesIndexedNameLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="filesIndexedValLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="60" max="32767" attributes="0"/>
+                      <EmptySpace pref="28" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>

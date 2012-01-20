@@ -23,6 +23,10 @@ import java.util.List;
 import java.util.logging.Logger;
 import org.openide.windows.TopComponent;
 
+/**
+ * Top component for Simple keyword search
+ * 
+ */
 public class KeywordSearchSimpleTopComponent extends TopComponent implements KeywordSearchTopComponentInterface {
 
     private Logger logger = Logger.getLogger(KeywordSearchSimpleTopComponent.class.getName());

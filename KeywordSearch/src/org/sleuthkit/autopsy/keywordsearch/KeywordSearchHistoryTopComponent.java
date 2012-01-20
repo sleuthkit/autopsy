@@ -28,8 +28,6 @@ import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.netbeans.api.settings.ConvertAsProperties;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
 
 /**
  * Top component with saved searches viewer
@@ -40,10 +38,10 @@ autostore = false)
 //iconBase="SET/PATH/TO/ICON/HERE", 
 persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "explorer", openAtStartup = false)
-@ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchHistoryTopComponent")
-@ActionReference(path = "Menu/Window" /*, position = 333 */)
-@TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchHistoryAction",
-preferredID = "KeywordSearchHistoryTopComponent")
+//@ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchHistoryTopComponent")
+//@ActionReference(path = "Menu/Window" /*, position = 333 */)
+//@TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchHistoryAction",
+//preferredID = "KeywordSearchHistoryTopComponent")
 public final class KeywordSearchHistoryTopComponent extends TopComponent implements KeywordSearchTopComponentInterface {
 
     private Logger logger = Logger.getLogger(KeywordSearchHistoryTopComponent.class.getName());

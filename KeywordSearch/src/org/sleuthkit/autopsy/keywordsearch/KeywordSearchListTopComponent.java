@@ -27,9 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -50,12 +48,10 @@ import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.netbeans.api.settings.ConvertAsProperties;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchTabsTopComponent.TABS;
 
 /**
- * Top component which displays something.
+ * Top component for Keyword List search
  */
 @ConvertAsProperties(dtd = "-//org.sleuthkit.autopsy.keywordsearch//KeywordSearchList//EN",
 autostore = false)
@@ -63,10 +59,10 @@ autostore = false)
 //iconBase="SET/PATH/TO/ICON/HERE", 
 persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "explorer", openAtStartup = false)
-@ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchListTopComponent")
-@ActionReference(path = "Menu/Window" /*, position = 333 */)
-@TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchListAction",
-preferredID = "KeywordSearchListTopComponent")
+//@ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchListTopComponent")
+//@ActionReference(path = "Menu/Window" /*, position = 333 */)
+//@TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchListAction",
+//preferredID = "KeywordSearchListTopComponent")
 public final class KeywordSearchListTopComponent extends TopComponent implements KeywordSearchTopComponentInterface {
 
     private static Logger logger = Logger.getLogger(KeywordSearchListTopComponent.class.getName());
@@ -93,6 +89,8 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         searchButton.setToolTipText("Execute the keyword list search using the current list");
         deleteWordButton.setToolTipText("Remove selected keyword(s) from the list");
         deleteAllWordsButton.setToolTipText("Remove all keywords from the list (clear it)");
+        
+        searchButton.setEnabled(false);
 
         //keywordTable.setAutoscrolls(true);
         //keywordTable.setTableHeader(null);
