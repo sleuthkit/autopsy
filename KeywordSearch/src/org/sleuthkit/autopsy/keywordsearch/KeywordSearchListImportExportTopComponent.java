@@ -160,25 +160,23 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        listsTable = new javax.swing.JTable();
-        topLabel = new javax.swing.JLabel();
-        curKeywordsLabel = new javax.swing.JLabel();
+        mainScrollPane = new javax.swing.JScrollPane();
+        mainPanel = new javax.swing.JPanel();
+        filesIndexedNameLabel = new javax.swing.JLabel();
+        filesIndexedValLabel = new javax.swing.JLabel();
         importButton = new javax.swing.JButton();
         exportButton = new javax.swing.JButton();
         deleteButton = new javax.swing.JButton();
-        filesIndexedNameLabel = new javax.swing.JLabel();
-        filesIndexedValLabel = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        listsTable = new javax.swing.JTable();
+        curKeywordsLabel = new javax.swing.JLabel();
+        topLabel = new javax.swing.JLabel();
 
-        listsTable.setModel(tableModel);
-        listsTable.setShowHorizontalLines(false);
-        listsTable.setShowVerticalLines(false);
-        listsTable.getTableHeader().setReorderingAllowed(false);
-        jScrollPane1.setViewportView(listsTable);
+        mainScrollPane.setPreferredSize(new java.awt.Dimension(320, 493));
 
-        org.openide.awt.Mnemonics.setLocalizedText(topLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.topLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(filesIndexedNameLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.filesIndexedNameLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(curKeywordsLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.curKeywordsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(filesIndexedValLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.filesIndexedValLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(importButton, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.importButton.text")); // NOI18N
         importButton.addActionListener(new java.awt.event.ActionListener() {
@@ -201,51 +199,71 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(filesIndexedNameLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.filesIndexedNameLabel.text")); // NOI18N
+        listsTable.setModel(tableModel);
+        listsTable.setShowHorizontalLines(false);
+        listsTable.setShowVerticalLines(false);
+        listsTable.getTableHeader().setReorderingAllowed(false);
+        jScrollPane1.setViewportView(listsTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(filesIndexedValLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.filesIndexedValLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(curKeywordsLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.curKeywordsLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(topLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.topLabel.text")); // NOI18N
+
+        javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
+        mainPanel.setLayout(mainPanelLayout);
+        mainPanelLayout.setHorizontalGroup(
+            mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(mainPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(topLabel)
+                    .addComponent(curKeywordsLabel)
+                    .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, mainPanelLayout.createSequentialGroup()
+                            .addComponent(importButton)
+                            .addGap(33, 33, 33)
+                            .addComponent(exportButton)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(deleteButton))
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 266, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addComponent(filesIndexedNameLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(filesIndexedValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(44, Short.MAX_VALUE))
+        );
+        mainPanelLayout.setVerticalGroup(
+            mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(mainPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(topLabel)
+                .addGap(26, 26, 26)
+                .addComponent(curKeywordsLabel)
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(importButton)
+                    .addComponent(deleteButton)
+                    .addComponent(exportButton))
+                .addGap(35, 35, 35)
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(filesIndexedNameLabel)
+                    .addComponent(filesIndexedValLabel))
+                .addContainerGap(122, Short.MAX_VALUE))
+        );
+
+        mainScrollPane.setViewportView(mainPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 266, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(topLabel)
-                    .addComponent(curKeywordsLabel)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(importButton)
-                        .addGap(22, 22, 22)
-                        .addComponent(exportButton)
-                        .addGap(18, 18, 18)
-                        .addComponent(deleteButton))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(filesIndexedNameLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(filesIndexedValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(20, Short.MAX_VALUE))
+            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 322, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(topLabel)
-                .addGap(35, 35, 35)
-                .addComponent(curKeywordsLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 227, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(29, 29, 29)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(importButton)
-                    .addComponent(deleteButton)
-                    .addComponent(exportButton))
-                .addGap(37, 37, 37)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(filesIndexedNameLabel)
-                    .addComponent(filesIndexedValLabel))
-                .addContainerGap(62, Short.MAX_VALUE))
+            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 512, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -391,6 +409,8 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
     private javax.swing.JButton importButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable listsTable;
+    private javax.swing.JPanel mainPanel;
+    private javax.swing.JScrollPane mainScrollPane;
     private javax.swing.JLabel topLabel;
     // End of variables declaration//GEN-END:variables
 
