@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -28,7 +27,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -58,7 +56,7 @@ persistenceType = TopComponent.PERSISTENCE_NEVER)
 @ActionReference(path = "Menu/Window" /*, position = 333 */)
 @TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchListImportExportAction",
 preferredID = "KeywordSearchListImportExportTopComponent")
-public final class KeywordSearchListImportExportTopComponent extends TopComponent implements KeywordSearchTopComponentInterface {
+public final class KeywordSearchListImportExportTopComponent extends TopComponent {
 
     private Logger logger = Logger.getLogger(KeywordSearchListImportExportTopComponent.class.getName());
     private KeywordListTableModel tableModel;
@@ -162,8 +160,6 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
 
         mainScrollPane = new javax.swing.JScrollPane();
         mainPanel = new javax.swing.JPanel();
-        filesIndexedNameLabel = new javax.swing.JLabel();
-        filesIndexedValLabel = new javax.swing.JLabel();
         importButton = new javax.swing.JButton();
         exportButton = new javax.swing.JButton();
         deleteButton = new javax.swing.JButton();
@@ -174,10 +170,6 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
         mainScrollPane.setPreferredSize(new java.awt.Dimension(349, 433));
 
         mainPanel.setPreferredSize(new java.awt.Dimension(349, 433));
-
-        org.openide.awt.Mnemonics.setLocalizedText(filesIndexedNameLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.filesIndexedNameLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(filesIndexedValLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.filesIndexedValLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(importButton, org.openide.util.NbBundle.getMessage(KeywordSearchListImportExportTopComponent.class, "KeywordSearchListImportExportTopComponent.importButton.text")); // NOI18N
         importButton.addActionListener(new java.awt.event.ActionListener() {
@@ -217,10 +209,6 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
                 .addContainerGap()
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(topLabel)
-                    .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addComponent(filesIndexedNameLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(filesIndexedValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 62, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                         .addGroup(javax.swing.GroupLayout.Alignment.LEADING, mainPanelLayout.createSequentialGroup()
                             .addComponent(importButton)
@@ -243,11 +231,7 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
                     .addComponent(importButton)
                     .addComponent(exportButton)
                     .addComponent(deleteButton))
-                .addGap(35, 35, 35)
-                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(filesIndexedNameLabel)
-                    .addComponent(filesIndexedValLabel))
-                .addContainerGap(64, Short.MAX_VALUE))
+                .addContainerGap(113, Short.MAX_VALUE))
         );
 
         mainScrollPane.setViewportView(mainPanel);
@@ -400,8 +384,6 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton deleteButton;
     private javax.swing.JButton exportButton;
-    private javax.swing.JLabel filesIndexedNameLabel;
-    private javax.swing.JLabel filesIndexedValLabel;
     private javax.swing.JButton importButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable listsTable;
@@ -427,39 +409,6 @@ public final class KeywordSearchListImportExportTopComponent extends TopComponen
     void readProperties(java.util.Properties p) {
     }
 
-    @Override
-    public void addSearchButtonListener(ActionListener l) {
-    }
-
-    @Override
-    public List<Keyword> getQueryList() {
-        return null;
-    }
-
-    @Override
-    public String getQueryText() {
-        return null;
-    }
-
-    @Override
-    public boolean isLuceneQuerySelected() {
-        return false;
-    }
-
-    @Override
-    public boolean isMultiwordQuery() {
-        return false;
-    }
-
-    @Override
-    public boolean isRegexQuerySelected() {
-        return false;
-    }
-
-    @Override
-    public void setFilesIndexed(int filesIndexed) {
-        filesIndexedValLabel.setText(Integer.toString(filesIndexed));
-    }
 
     private class KeywordListTableModel extends AbstractTableModel {
         //data
