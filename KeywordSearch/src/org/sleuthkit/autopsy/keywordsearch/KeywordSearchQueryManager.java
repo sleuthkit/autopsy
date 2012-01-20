@@ -45,14 +45,14 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
 
         COLLAPSE, DETAIL
     };
-    //map query->boolean (true if literal, false otherwise)
-    private Map<String, Boolean> queries;
+
+    private List<Keyword> queries;
     private Presentation presentation;
     private List<KeywordSearchQuery> queryDelegates;
     private QueryType queryType;
     private static Logger logger = Logger.getLogger(KeywordSearchQueryManager.class.getName());
 
-    public KeywordSearchQueryManager(Map<String, Boolean> queries, Presentation presentation) {
+    public KeywordSearchQueryManager(List<Keyword> queries, Presentation presentation) {
         this.queries = queries;
         this.presentation = presentation;
         queryType = QueryType.REGEX;
@@ -60,16 +60,16 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
     }
 
     public KeywordSearchQueryManager(String query, QueryType qt, Presentation presentation) {
-        queries = new LinkedHashMap<String, Boolean>();
-        queries.put(query, false);
+        queries = new ArrayList<Keyword>();
+        queries.add(new Keyword(query, false));
         this.presentation = presentation;
         queryType = qt;
         init();
     }
 
     public KeywordSearchQueryManager(String query, boolean isLiteral, Presentation presentation) {
-        queries = new LinkedHashMap<String, Boolean>();
-        queries.put(query, isLiteral);
+        queries = new ArrayList<Keyword>();
+        queries.add(new Keyword(query, isLiteral));
         this.presentation = presentation;
         queryType = QueryType.REGEX;
         init();
@@ -77,22 +77,24 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
 
     private void init() {
         queryDelegates = new ArrayList<KeywordSearchQuery>();
-        for (String query : queries.keySet()) {
+        for (Keyword query : queries) {
             KeywordSearchQuery del = null;
             switch (queryType) {
                 case WORD:
-                    del = new LuceneQuery(query);
+                    del = new LuceneQuery(query.getQuery());
                     break;
                 case REGEX:
-                    del = new TermComponentQuery(query);
+                    del = new TermComponentQuery(query.getQuery());
                     break;
                 default:
                     ;
             }
+            if (query.isLiteral())
+                del.escape();
             queryDelegates.add(del);
 
         }
-        escape();
+        //escape();
 
     }
 
@@ -115,16 +117,17 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
             }
 
             Node rootNode = null;
+           
             if (things.size() > 0) {
                 Children childThingNodes =
-                        Children.create(new KeywordSearchResultFactory(queries.keySet(), things, Presentation.COLLAPSE), true);
+                        Children.create(new KeywordSearchResultFactory(queries, things, Presentation.COLLAPSE), true);
 
                 rootNode = new AbstractNode(childThingNodes);
             } else {
                 rootNode = Node.EMPTY;
             }
 
-            final String pathText = "Keyword query";
+            final String pathText = "Keyword search";
             TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, things.size());
             searchResultWin.requestActive();
         }
@@ -132,13 +135,7 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
 
     @Override
     public void escape() {
-        for (KeywordSearchQuery q : queryDelegates) {
-            boolean shouldEscape = queries.get(q.getQueryString());
-            if (shouldEscape) {
-                q.escape();
-            }
-        }
-
+        
     }
 
     @Override
@@ -169,6 +166,11 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
         }
         return sb.toString();
     }
+    
+    @Override
+    public boolean isEscaped() {
+        return false;
+    }
 
     @Override
     public String getQueryString() {
@@ -186,7 +188,7 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
     }
 }
 
-/*
+/**
  * custom KeyValueThing that also stores query object  to execute
  */
 class KeyValueThingQuery extends KeyValueThing {
@@ -202,3 +204,47 @@ class KeyValueThingQuery extends KeyValueThing {
         this.query = query;
     }
 }
+
+/**
+ * representation of Keyword input from user
+ */
+class Keyword {
+
+    private String query;
+    private boolean isLiteral;
+
+    Keyword(String query, boolean isLiteral) {
+        this.query = query;
+        this.isLiteral = isLiteral;
+    }
+    String getQuery() {return query;}
+    boolean isLiteral() {return isLiteral;}
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Keyword other = (Keyword) obj;
+        if ((this.query == null) ? (other.query != null) : !this.query.equals(other.query)) {
+            return false;
+        }
+        if (this.isLiteral != other.isLiteral) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 17 * hash + (this.query != null ? this.query.hashCode() : 0);
+        hash = 17 * hash + (this.isLiteral ? 1 : 0);
+        return hash;
+    }
+    
+}
+

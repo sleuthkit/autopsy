@@ -19,20 +19,20 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionListener;
-import java.util.Map;
+import java.util.List;
 
 
 /**
  * common methods for the KeywordSearch TCs / tabs
  * 
  */
-public interface KeywordSearchTopComponentInterface {
+interface KeywordSearchTopComponentInterface {
     
     boolean isMultiwordQuery();
     boolean isLuceneQuerySelected();
     boolean isRegexQuerySelected();
     String getQueryText();
-    Map<String, Boolean> getQueryList();
+    List<Keyword> getQueryList();
     void setFilesIndexed(int filesIndexed);
     void addSearchButtonListener(ActionListener l);
     

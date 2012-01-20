@@ -94,8 +94,8 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         deleteWordButton.setToolTipText("Remove selected keyword(s) from the list");
         deleteAllWordsButton.setToolTipText("Remove all keywords from the list (clear it)");
 
-        keywordTable.setAutoscrolls(true);
-        keywordTable.setTableHeader(null);
+        //keywordTable.setAutoscrolls(true);
+        //keywordTable.setTableHeader(null);
         keywordTable.setShowHorizontalLines(false);
         keywordTable.setShowVerticalLines(false);
 
@@ -105,14 +105,15 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         keywordTable.setSize(260, 200);
         final int width = keywordTable.getSize().width;
         TableColumn column = null;
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 3; i++) {
             column = keywordTable.getColumnModel().getColumn(i);
-            if (i == 1) {
-                column.setPreferredWidth(((int) (width * 0.2)));
+            if (i > 0) {
+                column.setPreferredWidth(((int) (width * 0.15)));
                 //column.setCellRenderer(new CellTooltipRenderer());
-            } else {
+            }
+            else {
                 column.setCellRenderer(new CellTooltipRenderer());
-                column.setPreferredWidth(((int) (width * 0.75)));
+                column.setPreferredWidth(((int) (width * 0.68)));
             }
         }
         keywordTable.setCellSelectionEnabled(false);
@@ -166,18 +167,19 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         //some hardcoded keywords for testing
 
         //phone number
-        tableModel.addKeyword("\\d\\d\\d[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d");
-        tableModel.addKeyword("\\d{8,10}");
-        tableModel.addKeyword("phone|fax");
+        tableModel.addKeyword(new Keyword("\\d\\d\\d[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d", false));
+        tableModel.addKeyword(new Keyword("\\d{8,10}", false));
+        tableModel.addKeyword(new Keyword("phone|fax", false));
         //IP address
-        tableModel.addKeyword("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])");
+        tableModel.addKeyword(new Keyword("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])", false));
         //email
-        tableModel.addKeyword("[e\\-]{0,2}mail");
-        tableModel.addKeyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}");
+        tableModel.addKeyword(new Keyword("[e\\-]{0,2}mail", false));
+        tableModel.addKeyword(new Keyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", false));
         //URL
-        tableModel.addKeyword("ftp|sftp|ssh|http|https|www");
+        tableModel.addKeyword(new Keyword("ftp|sftp|ssh|http|https|www", false));
         //escaped literal word \d\d\d
-        tableModel.addKeyword("\\Q\\d\\d\\d\\E");
+        tableModel.addKeyword(new Keyword("\\Q\\d\\d\\d\\E", false));
+        tableModel.addKeyword(new Keyword("\\d\\d\\d\\d", true));
     }
 
     /** This method is called from within the constructor to
@@ -212,7 +214,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         org.openide.awt.Mnemonics.setLocalizedText(filesIndexedValLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.filesIndexedValLabel.text")); // NOI18N
 
-        titleLabel.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        titleLabel.setFont(new java.awt.Font("Tahoma", 0, 12));
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.titleLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(loadListButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.loadListButton.text")); // NOI18N
@@ -276,6 +278,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         keywordTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         keywordTable.setShowHorizontalLines(false);
         keywordTable.setShowVerticalLines(false);
+        keywordTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(keywordTable);
 
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.searchButton.text")); // NOI18N
@@ -358,7 +361,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                                 .addGap(11, 11, 11)
                                 .addComponent(curListNameLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(curListValLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE)))
+                                .addComponent(curListValLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 296, Short.MAX_VALUE)))
                         .addGap(22, 22, 22))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(filesIndexedNameLabel)
@@ -395,26 +398,21 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     private void addWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addWordButtonActionPerformed
 
         String newWord = addWordField.getText().trim();
-        String newWordEscaped = Pattern.quote(newWord);
-
+        boolean isLiteral = !chRegex.isSelected();
+        final Keyword keyword = new Keyword(newWord, isLiteral);
+     
         if (newWord.equals("")) {
             return;
-        } else if (keywordExists(newWord) || keywordExists(newWordEscaped)) {
+        } else if (keywordExists(keyword)) {
             KeywordSearchUtil.displayDialog("New Keyword Entry", "Keyword already exists in the list.", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             return;
         }
 
-        String toAdd = null;
-        if (!chRegex.isSelected()) {
-            toAdd = newWordEscaped;
-        } else {
-            toAdd = newWord;
-        }
 
         //check if valid
         boolean valid = true;
         try {
-            Pattern.compile(toAdd);
+            Pattern.compile(newWord);
         } catch (PatternSyntaxException ex1) {
             valid = false;
         } catch (IllegalArgumentException ex2) {
@@ -426,8 +424,8 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
 
         //add & reset checkbox
+        tableModel.addKeyword(keyword);
         chRegex.setSelected(false);
-        tableModel.addKeyword(toAdd);
         addWordField.setText("");
 
         if (deleteWordButton.isEnabled() == false) {
@@ -448,7 +446,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         final String FEATURE_NAME = "Save Keyword List";
         KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
 
-        List<String> keywords = tableModel.getAllKeywords();
+        List<Keyword> keywords = tableModel.getAllKeywords();
         if (keywords.isEmpty()) {
             KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List is empty and cannot be saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             return;
@@ -717,20 +715,8 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     }
 
     @Override
-    public Map<String, Boolean> getQueryList() {
-        List<String> selected = getAllKeywords();
-        //filter out blank just in case
-        Map<String, Boolean> ret = new LinkedHashMap<String, Boolean>();
-        for (String s : selected) {
-            if (!s.trim().equals("")) {
-                //use false for isLiteral because we are currently escaping
-                //the keyword earlier as it is stored
-                //might need to change and pass isLiteral 
-                //if the query object needs to treat it specially
-                ret.put(s, false);
-            }
-        }
-        return ret;
+    public List<Keyword> getQueryList() {
+        return getAllKeywords();
     }
 
     @Override
@@ -753,16 +739,15 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
     }
 
-    public List<String> getAllKeywords() {
+    List<Keyword> getAllKeywords() {
         return tableModel.getAllKeywords();
     }
 
-    public List<String> getSelectedKeywords() {
+    List<Keyword> getSelectedKeywords() {
         return tableModel.getSelectedKeywords();
     }
 
-    private boolean keywordExists(String keyword) {
-
+    private boolean keywordExists(Keyword keyword) {
         return tableModel.keywordExists(keyword);
     }
 
@@ -773,13 +758,36 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         @Override
         public int getColumnCount() {
-            return 2;
+            return 3;
         }
 
         @Override
         public int getRowCount() {
             return keywordData.size();
         }
+
+        @Override
+        public String getColumnName(int column) {
+            String colName = null;
+            
+            switch (column) {
+                case 0:
+                    colName = "Keyword";
+                    break;
+                case 1:
+                    colName = "RegEx.";
+                    break;
+                case 2:
+                    colName = "Sel.";
+                    break;
+                default:
+                    ;
+                           
+            }
+            return colName;
+        }
+        
+        
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
@@ -795,6 +803,9 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                     ret = (Object) entry.keyword;
                     break;
                 case 1:
+                    ret = (Object) !entry.isLiteral;
+                    break;
+                case 2:
                     ret = (Object) entry.isActive;
                     break;
                 default:
@@ -806,12 +817,12 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return columnIndex == 1 ? true : false;
+            return columnIndex == 2 ? true : false;
         }
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            if (columnIndex == 1) {
+            if (columnIndex == 2) {
                 TableEntry entry = null;
                 //iterate until row
                 Iterator<TableEntry> it = keywordData.iterator();
@@ -832,38 +843,38 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             return getValueAt(0, c).getClass();
         }
 
-        List<String> getAllKeywords() {
-            List<String> ret = new ArrayList<String>();
+        List<Keyword> getAllKeywords() {
+            List<Keyword> ret = new ArrayList<Keyword>();
             for (TableEntry e : keywordData) {
-                ret.add(e.keyword);
+                ret.add(new Keyword(e.keyword, e.isLiteral));
             }
             return ret;
         }
 
-        List<String> getSelectedKeywords() {
-            List<String> ret = new ArrayList<String>();
+        List<Keyword> getSelectedKeywords() {
+            List<Keyword> ret = new ArrayList<Keyword>();
             for (TableEntry e : keywordData) {
                 if (e.isActive && !e.keyword.equals("")) {
-                    ret.add(e.keyword);
+                    ret.add(new Keyword(e.keyword, e.isLiteral));
                 }
             }
             return ret;
         }
 
-        boolean keywordExists(String keyword) {
-            List<String> all = getAllKeywords();
+        boolean keywordExists(Keyword keyword) {
+            List<Keyword> all = getAllKeywords();
             return all.contains(keyword);
         }
 
-        void addKeyword(String keyword) {
+        void addKeyword(Keyword keyword) {
             if (!keywordExists(keyword)) {
                 keywordData.add(new TableEntry(keyword));
             }
             fireTableDataChanged();
         }
 
-        void addKeywords(List<String> keywords) {
-            for (String keyword : keywords) {
+        void addKeywords(List<Keyword> keywords) {
+            for (Keyword keyword : keywords) {
                 if (!keywordExists(keyword)) {
                     keywordData.add(new TableEntry(keyword));
                 }
@@ -874,7 +885,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         void resync(String listName) {
             KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
             KeywordSearchList list = loader.getList(listName);
-            List<String> keywords = list.getKeywords();
+            List<Keyword> keywords = list.getKeywords();
 
             deleteAll();
             addKeywords(keywords);
@@ -903,22 +914,37 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         class TableEntry implements Comparable {
 
             String keyword;
+            Boolean isLiteral;
             Boolean isActive;
 
-            TableEntry(String keyword, Boolean isActive) {
-                this.keyword = keyword;
+            TableEntry(Keyword keyword, Boolean isActive) {
+                this.keyword = keyword.getQuery();
+                this.isLiteral = keyword.isLiteral();
                 this.isActive = isActive;
             }
 
-            TableEntry(String keyword) {
+            TableEntry(Keyword keyword) {
+                this.keyword = keyword.getQuery();
+                this.isLiteral = keyword.isLiteral();
+                this.isActive = false;
+            }
+            
+            TableEntry(String keyword, Boolean isLiteral) {
                 this.keyword = keyword;
+                this.isLiteral = isLiteral;
                 this.isActive = false;
             }
 
-            @Override
+           
+
+             @Override
             public int compareTo(Object o) {
-                return this.keyword.compareTo(((TableEntry) o).keyword);
+                int keywords =  this.keyword.compareTo(((TableEntry) o).keyword);
+                if (keywords != 0) 
+                    return keywords;
+                else return this.isLiteral.compareTo(((TableEntry) o).isLiteral);
             }
+         
         }
     }
 

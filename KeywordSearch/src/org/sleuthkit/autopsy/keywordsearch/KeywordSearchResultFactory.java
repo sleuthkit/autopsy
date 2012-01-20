@@ -34,6 +34,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
@@ -57,11 +58,17 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
     //these are merged with FsContentPropertyType defined properties
     public static enum CommonPropertyTypes {
 
-        QUERY {
+        KEYWORD {
 
             @Override
             public String toString() {
-                return "Query";
+                return "Keyword";
+            }
+        },
+        REGEX {
+            @Override
+            public String toString() {
+                return "Regex";
             }
         },
         MATCH {
@@ -72,19 +79,19 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             }
         },}
     private Presentation presentation;
-    private Collection<String> queries;
+    private List<Keyword> queries;
     private Collection<KeyValueThing> things;
     private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
-    KeywordSearchResultFactory(Collection<String> queries, Collection<KeyValueThing> things, Presentation presentation) {
+    KeywordSearchResultFactory(List<Keyword> queries, Collection<KeyValueThing> things, Presentation presentation) {
         this.queries = queries;
         this.things = things;
         this.presentation = presentation;
     }
 
     KeywordSearchResultFactory(String query, Collection<KeyValueThing> things, Presentation presentation) {
-        queries = new ArrayList<String>();
-        queries.add(query);
+        queries = new ArrayList<Keyword>();
+        queries.add(new Keyword(query, false));
         this.presentation = presentation;
         this.things = things;
     }
@@ -114,15 +121,21 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
         final String typeStr = type.toString();
         toSet.put(typeStr, value);
     }
+     public static void setCommonProperty(Map<String, Object> toSet, CommonPropertyTypes type, Boolean value) {
+        final String typeStr = type.toString();
+        toSet.put(typeStr, value);
+    }
 
     @Override
     protected boolean createKeys(List<KeyValueThing> toPopulate) {
         int id = 0;
         if (presentation == Presentation.DETAIL) {
-            for (String query : queries) {
+            for (Keyword keyword : queries) {
                 Map<String, Object> map = new LinkedHashMap<String, Object>();
+                final String query = keyword.getQuery();
                 initCommonProperties(map);
-                setCommonProperty(map, CommonPropertyTypes.QUERY, query);
+                setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
+                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!keyword.isLiteral()));
                 toPopulate.add(new KeyValueThing(query, map, ++id));
             }
         } else {
@@ -131,7 +144,9 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 Map<String, Object> map = thing.getMap();
                 initCommonProperties(map);
                 final String query = thing.getName();
-                setCommonProperty(map, CommonPropertyTypes.QUERY, query);
+                setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
+                KeyValueThingQuery thingQuery = (KeyValueThingQuery) thing;
+                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thingQuery.getQuery().isEscaped()));
                 //toPopulate.add(new KeyValueThing(query, map, ++id));
                 toPopulate.add(thing);
             }
@@ -230,7 +245,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             final Content content = thingContent.getContent();
             final String query = thingContent.getQuery();
 
-            Node kvNode = new KeyValueNode(thingContent, Children.LEAF);
+            Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
             HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query);
             return new KeywordSearchFilterNode(highlights, kvNode, query);
@@ -306,7 +321,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
 
                 //postprocess
                 //make sure Solr result contains a match (this gets rid of large number of false positives)
-                boolean postprocess = true;
+                final boolean postprocess = false;
                 boolean matchFound = true;
                 if (postprocess) {
                     if (contentStr != null) {//if not null, some error getting from Solr, handle it by not filtering out
@@ -323,7 +338,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 }
 
                 if (matchFound) {
-                    Node kvNode = new KeyValueNode(thingContent, Children.LEAF);
+                    Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
                     //wrap in KeywordSearchFilterNode for the markup content
                     HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query);
                     return new KeywordSearchFilterNode(highlights, kvNode, query);

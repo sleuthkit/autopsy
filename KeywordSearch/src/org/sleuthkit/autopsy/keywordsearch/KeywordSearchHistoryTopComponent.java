@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
 import java.awt.event.ActionListener;
-import java.util.Map;
+import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -264,7 +264,7 @@ public final class KeywordSearchHistoryTopComponent extends TopComponent impleme
     }
 
     @Override
-    public Map<String, Boolean> getQueryList() {
+    public List<Keyword> getQueryList() {
         return null;
     }
 
