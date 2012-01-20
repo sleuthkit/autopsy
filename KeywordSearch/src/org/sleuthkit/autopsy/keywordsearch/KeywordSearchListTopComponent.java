@@ -836,10 +836,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                 TableEntry entry = null;
                 //iterate until row
                 Iterator<TableEntry> it = keywordData.iterator();
-                for (int i = 0; i <= rowIndex; ++i) {
+                for (int i = 0; i <= rowIndex && it.hasNext(); ++i) {
                     entry = it.next();
                 }
-                entry.isActive = (Boolean) aValue;
+                if (entry != null)
+                    entry.isActive = (Boolean) aValue;
                 if (getSelectedKeywords().isEmpty()) {
                     deleteWordButton.setEnabled(false);
                 } else {
