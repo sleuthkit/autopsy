@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
@@ -144,6 +146,26 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
 
         initButtons();
+        
+        addWordField.setComponentPopupMenu(rightClickMenu);
+        ActionListener actList = new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                JMenuItem jmi = (JMenuItem) e.getSource();
+                if(jmi.equals(cutMenuItem))
+                    addWordField.cut();
+                else if(jmi.equals(copyMenuItem))
+                    addWordField.copy();
+                else if(jmi.equals(pasteMenuItem))
+                    addWordField.paste();
+                else if(jmi.equals(selectAllMenuItem))
+                    addWordField.selectAll();
+            }
+        };
+        cutMenuItem.addActionListener(actList);
+        copyMenuItem.addActionListener(actList);
+        pasteMenuItem.addActionListener(actList);
+        selectAllMenuItem.addActionListener(actList);
     }
 
     private void initButtons() {
@@ -190,6 +212,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        rightClickMenu = new javax.swing.JPopupMenu();
+        cutMenuItem = new javax.swing.JMenuItem();
+        copyMenuItem = new javax.swing.JMenuItem();
+        pasteMenuItem = new javax.swing.JMenuItem();
+        selectAllMenuItem = new javax.swing.JMenuItem();
         filesIndexedNameLabel = new javax.swing.JLabel();
         filesIndexedValLabel = new javax.swing.JLabel();
         titleLabel = new javax.swing.JLabel();
@@ -207,6 +234,18 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         jScrollPane1 = new javax.swing.JScrollPane();
         keywordTable = new javax.swing.JTable();
         searchButton = new javax.swing.JButton();
+
+        org.openide.awt.Mnemonics.setLocalizedText(cutMenuItem, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.cutMenuItem.text")); // NOI18N
+        rightClickMenu.add(cutMenuItem);
+
+        org.openide.awt.Mnemonics.setLocalizedText(copyMenuItem, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.copyMenuItem.text")); // NOI18N
+        rightClickMenu.add(copyMenuItem);
+
+        org.openide.awt.Mnemonics.setLocalizedText(pasteMenuItem, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.pasteMenuItem.text")); // NOI18N
+        rightClickMenu.add(pasteMenuItem);
+
+        org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.selectAllMenuItem.text")); // NOI18N
+        rightClickMenu.add(selectAllMenuItem);
 
         setPreferredSize(new java.awt.Dimension(400, 612));
 
@@ -541,12 +580,15 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         }
 
     }//GEN-LAST:event_importButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addWordButton;
     private javax.swing.JTextField addWordField;
     private javax.swing.JCheckBox chRegex;
+    private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JLabel curListNameLabel;
     private javax.swing.JLabel curListValLabel;
+    private javax.swing.JMenuItem cutMenuItem;
     private javax.swing.JButton deleteAllWordsButton;
     private javax.swing.JButton deleteWordButton;
     private javax.swing.JLabel filesIndexedNameLabel;
@@ -556,12 +598,15 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable keywordTable;
     private javax.swing.JButton loadListButton;
+    private javax.swing.JMenuItem pasteMenuItem;
+    private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JButton saveListButton;
     private javax.swing.JButton searchButton;
+    private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables
     private JComboBox loadListCombo;
-
+    
     private JComboBox findDialogComponent(Component component) {
         if (component instanceof JComboBox) {
             loadListCombo = (JComboBox) component;

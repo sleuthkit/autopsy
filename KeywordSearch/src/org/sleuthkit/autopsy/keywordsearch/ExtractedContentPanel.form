@@ -14,11 +14,6 @@
               <ResourceString bundle="org/sleuthkit/autopsy/keywordsearch/Bundle.properties" key="ExtractedContentPanel.copyMenuItem.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
-          <Events>
-            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="copyMenuItemMouseClicked"/>
-            <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="copyMenuItemMouseEntered"/>
-            <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="copyMenuItemMouseExited"/>
-          </Events>
         </MenuItem>
         <MenuItem class="javax.swing.JMenuItem" name="selectAllMenuItem">
           <Properties>
@@ -26,11 +21,6 @@
               <ResourceString bundle="org/sleuthkit/autopsy/keywordsearch/Bundle.properties" key="ExtractedContentPanel.selectAllMenuItem.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
-          <Events>
-            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="selectAllMenuItemMouseClicked"/>
-            <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="selectAllMenuItemMouseEntered"/>
-            <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="selectAllMenuItemMouseExited"/>
-          </Events>
         </MenuItem>
       </SubComponents>
     </Container>
@@ -105,10 +95,6 @@
             <Property name="editable" type="boolean" value="false"/>
             <Property name="autoscrolls" type="boolean" value="false"/>
           </Properties>
-          <Events>
-            <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="extractedTextPaneMousePressed"/>
-            <EventHandler event="mouseReleased" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="extractedTextPaneMouseReleased"/>
-          </Events>
         </Component>
       </SubComponents>
     </Container>

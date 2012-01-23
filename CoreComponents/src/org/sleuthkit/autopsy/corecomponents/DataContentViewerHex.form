@@ -14,11 +14,6 @@
               <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerHex.copyMenuItem.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
-          <Events>
-            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="copyMenuItemMouseClicked"/>
-            <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="copyMenuItemMouseEntered"/>
-            <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="copyMenuItemMouseExited"/>
-          </Events>
         </MenuItem>
         <MenuItem class="javax.swing.JMenuItem" name="selectAllMenuItem">
           <Properties>
@@ -26,11 +21,6 @@
               <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerHex.selectAllMenuItem.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
-          <Events>
-            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="selectAllMenuItemMouseClicked"/>
-            <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="selectAllMenuItemMouseEntered"/>
-            <EventHandler event="mouseExited" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="selectAllMenuItemMouseExited"/>
-          </Events>
         </MenuItem>
       </SubComponents>
     </Container>
@@ -142,10 +132,6 @@
                   <Dimension value="[700, 400]"/>
                 </Property>
               </Properties>
-              <Events>
-                <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="outputViewPaneMousePressed"/>
-                <EventHandler event="mouseReleased" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="outputViewPaneMouseReleased"/>
-              </Events>
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTextPane(){&#xd;&#xa;    public boolean getScrollableTracksViewportWidth() {&#xd;&#xa;    return (getSize().width &lt; 700);&#xd;&#xa;}};"/>
                 <AuxValue name="JavaCodeGenerator_CreateCodePost" type="java.lang.String" value="this.outputViewPane.setBackground(new java.awt.Color(255, 255, 255)); // to make sure the background color is white"/>

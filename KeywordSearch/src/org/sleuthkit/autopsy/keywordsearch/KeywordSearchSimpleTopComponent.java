@@ -18,9 +18,11 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.logging.Logger;
+import javax.swing.JMenuItem;
 import org.openide.windows.TopComponent;
 
 public class KeywordSearchSimpleTopComponent extends TopComponent implements KeywordSearchTopComponentInterface {
@@ -44,6 +46,26 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
                 + "For a regular expression search, enter a valid regular expression.<br />"
                 + "Examples (in double-quotes): \"\\d\\d\\d-\\d\\d\\d\" \\d{8,10} \"phone\" \"ftp|sftp|ssh|http|https|www\".<br />"
                 + "Note: a word can be also searched using a regex search.<br />Regex containing whitespace [ \\s] matches are currently not supported.</html>");
+        
+        queryTextField.setComponentPopupMenu(rightClickMenu);
+        ActionListener actList = new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                JMenuItem jmi = (JMenuItem) e.getSource();
+                if(jmi.equals(cutMenuItem))
+                    queryTextField.cut();
+                else if(jmi.equals(copyMenuItem))
+                    queryTextField.copy();
+                else if(jmi.equals(pasteMenuItem))
+                    queryTextField.paste();
+                else if(jmi.equals(selectAllMenuItem))
+                    queryTextField.selectAll();
+            }
+        };
+        cutMenuItem.addActionListener(actList);
+        copyMenuItem.addActionListener(actList);
+        pasteMenuItem.addActionListener(actList);
+        selectAllMenuItem.addActionListener(actList);
     }
 
     /** This method is called from within the constructor to
@@ -55,6 +77,11 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        rightClickMenu = new javax.swing.JPopupMenu();
+        cutMenuItem = new javax.swing.JMenuItem();
+        copyMenuItem = new javax.swing.JMenuItem();
+        pasteMenuItem = new javax.swing.JMenuItem();
+        selectAllMenuItem = new javax.swing.JMenuItem();
         filesIndexedNameLabel = new javax.swing.JLabel();
         filesIndexedValLabel = new javax.swing.JLabel();
         titleLabel = new javax.swing.JLabel();
@@ -62,6 +89,18 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
         queryTextField = new javax.swing.JTextField();
         chRegex = new javax.swing.JCheckBox();
         searchButton = new javax.swing.JButton();
+
+        cutMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.cutMenuItem.text")); // NOI18N
+        rightClickMenu.add(cutMenuItem);
+
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.copyMenuItem.text")); // NOI18N
+        rightClickMenu.add(copyMenuItem);
+
+        pasteMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.pasteMenuItem.text")); // NOI18N
+        rightClickMenu.add(pasteMenuItem);
+
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchSimpleTopComponent.class, "KeywordSearchSimpleTopComponent.selectAllMenuItem.text")); // NOI18N
+        rightClickMenu.add(selectAllMenuItem);
 
         setAutoscrolls(true);
 
@@ -162,11 +201,16 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chRegex;
+    private javax.swing.JMenuItem copyMenuItem;
+    private javax.swing.JMenuItem cutMenuItem;
     private javax.swing.JLabel filesIndexedNameLabel;
     private javax.swing.JLabel filesIndexedValLabel;
+    private javax.swing.JMenuItem pasteMenuItem;
     private javax.swing.JTextField queryTextField;
+    private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JButton searchButton;
     private javax.swing.JPanel searchPanel;
+    private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables
 

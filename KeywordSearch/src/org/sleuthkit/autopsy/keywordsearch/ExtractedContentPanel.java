@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+import javax.swing.JMenuItem;
 
 /**
  * Panel displays HTML content sent to ExtractedContentViewer, and provides
@@ -38,6 +40,12 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         initComponents();
 
         initControls();
+        
+        customizeComponents();
+        
+    }
+    
+    private void customizeComponents(){
         extractedTextPane.setContentType("text/html");
 
         sourceComboBox.addItemListener(new ItemListener() {
@@ -52,6 +60,20 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         
 
         setSources(Collections.EMPTY_LIST);
+        
+        extractedTextPane.setComponentPopupMenu(rightClickMenu);
+        ActionListener actList = new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                JMenuItem jmi = (JMenuItem) e.getSource();
+                if(jmi.equals(copyMenuItem))
+                    extractedTextPane.copy();
+                else if(jmi.equals(selectAllMenuItem))
+                    extractedTextPane.selectAll();
+            }
+        };
+        copyMenuItem.addActionListener(actList);
+        selectAllMenuItem.addActionListener(actList);
     }
 
     /** This method is called from within the constructor to
@@ -78,43 +100,13 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         hitNextButton = new javax.swing.JButton();
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.copyMenuItem.text")); // NOI18N
-        copyMenuItem.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                copyMenuItemMouseClicked(evt);
-            }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                copyMenuItemMouseEntered(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                copyMenuItemMouseExited(evt);
-            }
-        });
         rightClickMenu.add(copyMenuItem);
 
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.selectAllMenuItem.text")); // NOI18N
-        selectAllMenuItem.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                selectAllMenuItemMouseClicked(evt);
-            }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                selectAllMenuItemMouseEntered(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                selectAllMenuItemMouseExited(evt);
-            }
-        });
         rightClickMenu.add(selectAllMenuItem);
 
         extractedTextPane.setEditable(false);
         extractedTextPane.setAutoscrolls(false);
-        extractedTextPane.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                extractedTextPaneMousePressed(evt);
-            }
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                extractedTextPaneMouseReleased(evt);
-            }
-        });
         jScrollPane1.setViewportView(extractedTextPane);
 
         sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -183,40 +175,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 293, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void extractedTextPaneMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_extractedTextPaneMousePressed
-        maybeShowPopup(evt);
-    }//GEN-LAST:event_extractedTextPaneMousePressed
-
-    private void extractedTextPaneMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_extractedTextPaneMouseReleased
-        maybeShowPopup(evt);
-    }//GEN-LAST:event_extractedTextPaneMouseReleased
-
-    private void copyMenuItemMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_copyMenuItemMouseEntered
-        copyMenuItem.setArmed(true);
-    }//GEN-LAST:event_copyMenuItemMouseEntered
-
-    private void copyMenuItemMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_copyMenuItemMouseClicked
-        extractedTextPane.copy();
-        rightClickMenu.setVisible(false);
-    }//GEN-LAST:event_copyMenuItemMouseClicked
-
-    private void copyMenuItemMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_copyMenuItemMouseExited
-        copyMenuItem.setArmed(false);
-    }//GEN-LAST:event_copyMenuItemMouseExited
-
-    private void selectAllMenuItemMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_selectAllMenuItemMouseClicked
-        extractedTextPane.selectAll();
-        rightClickMenu.setVisible(false);
-    }//GEN-LAST:event_selectAllMenuItemMouseClicked
-
-    private void selectAllMenuItemMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_selectAllMenuItemMouseEntered
-        selectAllMenuItem.setArmed(true);
-    }//GEN-LAST:event_selectAllMenuItemMouseEntered
-
-    private void selectAllMenuItemMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_selectAllMenuItemMouseExited
-        selectAllMenuItem.setArmed(false);
-    }//GEN-LAST:event_selectAllMenuItemMouseExited
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
@@ -337,13 +295,5 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
     public void addSourceComboControlListener(ActionListener l) {
         sourceComboBox.addActionListener(l);
-    }
-    
-    private void maybeShowPopup(java.awt.event.MouseEvent evt){
-        if(evt.isPopupTrigger()){
-            rightClickMenu.setLocation(evt.getLocationOnScreen());
-            rightClickMenu.setVisible(true);
-        }else
-            rightClickMenu.setVisible(false);
     }
 }
