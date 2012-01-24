@@ -21,10 +21,14 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.SocketException;
@@ -97,19 +101,41 @@ class Server {
     private static class InputStreamPrinterThread extends Thread {
 
         InputStream stream;
+        OutputStream out;
 
-        InputStreamPrinterThread(InputStream stream) {
+        InputStreamPrinterThread(InputStream stream, String type) {
             this.stream = stream;
+            try{ 
+                String log = System.getProperty("netbeans.user") + "/var/log/solr.log." + type;
+                File outputFile = new File(log.concat(".0"));
+                File first = new File(log.concat(".1"));
+                File second = new File(log.concat(".2"));
+                if(second.exists())
+                    second.delete();
+                if(first.exists())
+                    first.renameTo(second);
+                if(outputFile.exists())
+                    outputFile.renameTo(first);
+                else
+                    outputFile.createNewFile();
+                out = new FileOutputStream(outputFile);
+                
+            } catch(Exception ex){
+                logger.log(Level.WARNING, "Failed to create solr log file", ex);
+            }
         }
 
         @Override
         public void run() {
             InputStreamReader isr = new InputStreamReader(stream);
             BufferedReader br = new BufferedReader(isr);
-            String line = null;
-            try {
+            try{
+                OutputStreamWriter osw = new OutputStreamWriter(out);
+                BufferedWriter bw = new BufferedWriter(osw);
+                String line = null;
                 while ((line = br.readLine()) != null) {
-                    logger.log(Level.INFO, "SOLR OUTPUT: " + line.trim());
+                    bw.write(line);
+                    bw.newLine();
                 }
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
@@ -128,8 +154,8 @@ class Server {
             Process start = Runtime.getRuntime().exec("java -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar", null, solrFolder);
 
             // Handle output to prevent process from blocking
-            (new InputStreamPrinterThread(start.getInputStream())).start();
-            (new InputStreamPrinterThread(start.getErrorStream())).start();
+            (new InputStreamPrinterThread(start.getInputStream(), "input")).start();
+            (new InputStreamPrinterThread(start.getErrorStream(), "error")).start();
 
         } catch (IOException ex) {
             throw new RuntimeException(ex);
