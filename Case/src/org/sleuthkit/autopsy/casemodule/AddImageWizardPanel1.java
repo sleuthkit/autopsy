@@ -36,7 +36,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 import org.sleuthkit.autopsy.coreutils.Log;
-import org.sleuthkit.autopsy.hashdatabase.HashDbSettings;
 
 /**
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
@@ -178,13 +177,6 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
         // Load hash database settings, enable or disable the checkbox
         this.NSRLPath = null;
         this.knownBadPath = null;
-        try {
-            HashDbSettings hashDbs = HashDbSettings.getHashDbSettings();
-            this.NSRLPath = hashDbs.getNSRLDatabasePath();
-            this.knownBadPath = hashDbs.getKnownBadDatabasePath();
-        } catch (IOException ex) {
-            Log.get(AddImageWizardPanel1.class).log(Level.WARNING, "Couldn't get hash database settings.", ex);
-        }
         JCheckBox lookupFilesCheckbox = component.getLookupFilesCheckbox();
         lookupFilesCheckbox.setSelected(false);
         lookupFilesCheckbox.setEnabled(this.NSRLPath != null || this.knownBadPath != null);
