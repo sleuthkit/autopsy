@@ -29,9 +29,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -52,12 +50,10 @@ import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.netbeans.api.settings.ConvertAsProperties;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchTabsTopComponent.TABS;
 
 /**
- * Top component which displays something.
+ * Top component for Keyword List search
  */
 @ConvertAsProperties(dtd = "-//org.sleuthkit.autopsy.keywordsearch//KeywordSearchList//EN",
 autostore = false)
@@ -65,10 +61,10 @@ autostore = false)
 //iconBase="SET/PATH/TO/ICON/HERE", 
 persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "explorer", openAtStartup = false)
-@ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchListTopComponent")
-@ActionReference(path = "Menu/Window" /*, position = 333 */)
-@TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchListAction",
-preferredID = "KeywordSearchListTopComponent")
+//@ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchListTopComponent")
+//@ActionReference(path = "Menu/Window" /*, position = 333 */)
+//@TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchListAction",
+//preferredID = "KeywordSearchListTopComponent")
 public final class KeywordSearchListTopComponent extends TopComponent implements KeywordSearchTopComponentInterface {
 
     private static Logger logger = Logger.getLogger(KeywordSearchListTopComponent.class.getName());
@@ -95,6 +91,8 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         searchButton.setToolTipText("Execute the keyword list search using the current list");
         deleteWordButton.setToolTipText("Remove selected keyword(s) from the list");
         deleteAllWordsButton.setToolTipText("Remove all keywords from the list (clear it)");
+        
+        searchButton.setEnabled(false);
 
         //keywordTable.setAutoscrolls(true);
         //keywordTable.setTableHeader(null);
@@ -212,6 +210,8 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        mainScrollPane = new javax.swing.JScrollPane();
+        mainPanel = new javax.swing.JPanel();
         rightClickMenu = new javax.swing.JPopupMenu();
         cutMenuItem = new javax.swing.JMenuItem();
         copyMenuItem = new javax.swing.JMenuItem();
@@ -220,11 +220,9 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         filesIndexedNameLabel = new javax.swing.JLabel();
         filesIndexedValLabel = new javax.swing.JLabel();
         titleLabel = new javax.swing.JLabel();
-        loadListButton = new javax.swing.JButton();
         curListNameLabel = new javax.swing.JLabel();
-        curListValLabel = new javax.swing.JLabel();
-        importButton = new javax.swing.JButton();
-        jPanel1 = new javax.swing.JPanel();
+        loadListButton = new javax.swing.JButton();
+        tablePanel = new javax.swing.JPanel();
         saveListButton = new javax.swing.JButton();
         deleteWordButton = new javax.swing.JButton();
         deleteAllWordsButton = new javax.swing.JButton();
@@ -234,7 +232,10 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         jScrollPane1 = new javax.swing.JScrollPane();
         keywordTable = new javax.swing.JTable();
         searchButton = new javax.swing.JButton();
+        curListValLabel = new javax.swing.JLabel();
+        importButton = new javax.swing.JButton();
 
+        setPreferredSize(new java.awt.Dimension(345, 534));
         org.openide.awt.Mnemonics.setLocalizedText(cutMenuItem, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.cutMenuItem.text")); // NOI18N
         rightClickMenu.add(cutMenuItem);
 
@@ -249,12 +250,18 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
         setPreferredSize(new java.awt.Dimension(400, 612));
 
+        mainScrollPane.setPreferredSize(new java.awt.Dimension(345, 534));
+
+        mainPanel.setPreferredSize(new java.awt.Dimension(345, 534));
+
         org.openide.awt.Mnemonics.setLocalizedText(filesIndexedNameLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.filesIndexedNameLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(filesIndexedValLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.filesIndexedValLabel.text")); // NOI18N
 
         titleLabel.setFont(new java.awt.Font("Tahoma", 0, 12));
         org.openide.awt.Mnemonics.setLocalizedText(titleLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.titleLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(curListNameLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.curListNameLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(loadListButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.loadListButton.text")); // NOI18N
         loadListButton.addActionListener(new java.awt.event.ActionListener() {
@@ -263,18 +270,7 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(curListNameLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.curListNameLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(curListValLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.curListValLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(importButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.importButton.text")); // NOI18N
-        importButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                importButtonActionPerformed(evt);
-            }
-        });
-
-        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        tablePanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
         org.openide.awt.Mnemonics.setLocalizedText(saveListButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.saveListButton.text")); // NOI18N
         saveListButton.addActionListener(new java.awt.event.ActionListener() {
@@ -312,6 +308,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
         });
 
         addWordField.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.addWordField.text")); // NOI18N
+        addWordField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addWordFieldActionPerformed(evt);
+            }
+        });
 
         keywordTable.setModel(tableModel);
         keywordTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
@@ -327,51 +328,51 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
             }
         });
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        javax.swing.GroupLayout tablePanelLayout = new javax.swing.GroupLayout(tablePanel);
+        tablePanel.setLayout(tablePanelLayout);
+        tablePanelLayout.setHorizontalGroup(
+            tablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(tablePanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(tablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(tablePanelLayout.createSequentialGroup()
                         .addComponent(deleteWordButton)
                         .addGap(18, 18, 18)
                         .addComponent(deleteAllWordsButton)
                         .addGap(18, 18, 18)
                         .addComponent(saveListButton))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGroup(tablePanelLayout.createSequentialGroup()
                         .addGap(35, 35, 35)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(tablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addGroup(tablePanelLayout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addComponent(chRegex)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(addWordButton))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 272, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(searchButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(21, Short.MAX_VALUE))
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
+        tablePanelLayout.setVerticalGroup(
+            tablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(tablePanelLayout.createSequentialGroup()
+                .addGroup(tablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(tablePanelLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(tablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(addWordButton)
                             .addComponent(addWordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(34, 34, 34))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGroup(tablePanelLayout.createSequentialGroup()
                         .addContainerGap(31, Short.MAX_VALUE)
                         .addComponent(chRegex)
                         .addGap(14, 14, 14)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(tablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(tablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(deleteWordButton)
                         .addComponent(deleteAllWordsButton))
                     .addComponent(saveListButton))
@@ -380,54 +381,75 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                 .addContainerGap())
         );
 
+        org.openide.awt.Mnemonics.setLocalizedText(curListValLabel, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.curListValLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(importButton, org.openide.util.NbBundle.getMessage(KeywordSearchListTopComponent.class, "KeywordSearchListTopComponent.importButton.text")); // NOI18N
+        importButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                importButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
+        mainPanel.setLayout(mainPanelLayout);
+        mainPanelLayout.setHorizontalGroup(
+            mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(mainPanelLayout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(titleLabel)
+                        .addGroup(mainPanelLayout.createSequentialGroup()
+                            .addGap(58, 58, 58)
+                            .addComponent(loadListButton)
+                            .addGap(27, 27, 27)
+                            .addComponent(importButton))
+                        .addGroup(mainPanelLayout.createSequentialGroup()
+                            .addGap(11, 11, 11)
+                            .addComponent(curListNameLabel)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(curListValLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 242, Short.MAX_VALUE))
+                        .addComponent(tablePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addComponent(filesIndexedNameLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(filesIndexedValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 38, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(54, 54, 54))
+        );
+        mainPanelLayout.setVerticalGroup(
+            mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(mainPanelLayout.createSequentialGroup()
+                .addGap(21, 21, 21)
+                .addComponent(titleLabel)
+                .addGap(18, 18, 18)
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(importButton)
+                    .addComponent(loadListButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tablePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(curListNameLabel)
+                    .addComponent(curListValLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(filesIndexedNameLabel)
+                    .addComponent(filesIndexedValLabel))
+                .addContainerGap(60, Short.MAX_VALUE))
+        );
+
+        mainScrollPane.setViewportView(mainPanel);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(titleLabel)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(58, 58, 58)
-                                .addComponent(loadListButton)
-                                .addGap(27, 27, 27)
-                                .addComponent(importButton))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(11, 11, 11)
-                                .addComponent(curListNameLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(curListValLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 296, Short.MAX_VALUE)))
-                        .addGap(22, 22, 22))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(filesIndexedNameLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(filesIndexedValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())))
+            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 386, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(titleLabel)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(importButton)
-                    .addComponent(loadListButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(curListNameLabel)
-                    .addComponent(curListValLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(filesIndexedNameLabel)
-                    .addComponent(filesIndexedValLabel))
-                .addGap(40, 40, 40))
+            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 568, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -573,13 +595,16 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
 
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
         //delegate to lists component
-        JTabbedPane tabs = (JTabbedPane) this.getParent();
-        KeywordSearchListImportExportTopComponent lists = (KeywordSearchListImportExportTopComponent) tabs.getComponentAt(TABS.Lists.ordinal());
+        KeywordSearchListImportExportTopComponent lists = new KeywordSearchListImportExportTopComponent();
         if (lists != null) {
             lists.importButtonAction(evt);
         }
 
     }//GEN-LAST:event_importButtonActionPerformed
+
+    private void addWordFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addWordFieldActionPerformed
+        addWordButtonActionPerformed(evt);
+    }//GEN-LAST:event_addWordFieldActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addWordButton;
@@ -594,15 +619,17 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
     private javax.swing.JLabel filesIndexedNameLabel;
     private javax.swing.JLabel filesIndexedValLabel;
     private javax.swing.JButton importButton;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable keywordTable;
     private javax.swing.JButton loadListButton;
+    private javax.swing.JPanel mainPanel;
+    private javax.swing.JScrollPane mainScrollPane;
     private javax.swing.JMenuItem pasteMenuItem;
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JButton saveListButton;
     private javax.swing.JButton searchButton;
     private javax.swing.JMenuItem selectAllMenuItem;
+    private javax.swing.JPanel tablePanel;
     private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables
     private JComboBox loadListCombo;
@@ -871,10 +898,11 @@ public final class KeywordSearchListTopComponent extends TopComponent implements
                 TableEntry entry = null;
                 //iterate until row
                 Iterator<TableEntry> it = keywordData.iterator();
-                for (int i = 0; i <= rowIndex; ++i) {
+                for (int i = 0; i <= rowIndex && it.hasNext(); ++i) {
                     entry = it.next();
                 }
-                entry.isActive = (Boolean) aValue;
+                if (entry != null)
+                    entry.isActive = (Boolean) aValue;
                 if (getSelectedKeywords().isEmpty()) {
                     deleteWordButton.setEnabled(false);
                 } else {

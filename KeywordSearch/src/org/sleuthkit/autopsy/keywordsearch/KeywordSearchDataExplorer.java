@@ -37,15 +37,20 @@ public class KeywordSearchDataExplorer implements DataExplorer {
 
     private static KeywordSearchDataExplorer theInstance;
     private KeywordSearchTabsTopComponent tc;
+    private int filesIndexed;
 
     public KeywordSearchDataExplorer() {
         this.setTheInstance();
+        this.filesIndexed = 0;
         this.tc = new KeywordSearchTabsTopComponent();
 
         this.tc.addSearchButtonListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (filesIndexed == 0)
+                    return;
+                
                 tc.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
                 try {
@@ -124,6 +129,7 @@ public class KeywordSearchDataExplorer implements DataExplorer {
             if (newValue != null) {
                 if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
                     int newFilesIndexed = ((Integer) newValue).intValue();
+                    filesIndexed = newFilesIndexed;
                     tc.setFilesIndexed(newFilesIndexed);
 
                 } else {

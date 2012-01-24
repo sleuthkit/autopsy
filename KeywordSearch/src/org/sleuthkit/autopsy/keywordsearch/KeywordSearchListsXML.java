@@ -274,8 +274,8 @@ public class KeywordSearchListsXML {
 
                 for (Keyword keyword : keywords) {
                     Element keywordEl = doc.createElement(KEYWORD_EL);
-                    String regex = keyword.isLiteral()==false?"true":"false";
-                    keywordEl.setAttribute(KEYWORD_LITERAL_ATTR, regex);
+                    String literal = keyword.isLiteral()?"true":"false";
+                    keywordEl.setAttribute(KEYWORD_LITERAL_ATTR, literal);
                     keywordEl.setTextContent(keyword.getQuery());
                     listEl.appendChild(keywordEl);
                 }
@@ -321,9 +321,9 @@ public class KeywordSearchListsXML {
                 final int numKeywords = wordsNList.getLength();
                 for (int j = 0; j < numKeywords; ++j) {
                     Element wordEl = (Element) wordsNList.item(j);
-                    String regex = wordEl.getAttribute(KEYWORD_LITERAL_ATTR);
-                    boolean isRegex = regex.equals("true");
-                    words.add(new Keyword(wordEl.getTextContent(), isRegex));
+                    String literal = wordEl.getAttribute(KEYWORD_LITERAL_ATTR);
+                    boolean isLiteral = literal.equals("true");
+                    words.add(new Keyword(wordEl.getTextContent(), isLiteral));
 
                 }
                 theLists.put(name, list);
