@@ -32,15 +32,13 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentatio
 /**
  * Provides a data explorer to perform Solr searches with
  */
-@ServiceProvider(service = DataExplorer.class, position = 300)
 public class KeywordSearchDataExplorer implements DataExplorer {
 
-    private static KeywordSearchDataExplorer theInstance;
+    private static KeywordSearchDataExplorer theInstance = null;
     private KeywordSearchTabsTopComponent tc;
     private int filesIndexed;
 
-    public KeywordSearchDataExplorer() {
-        this.setTheInstance();
+    private KeywordSearchDataExplorer() {
         this.filesIndexed = 0;
         this.tc = new KeywordSearchTabsTopComponent();
 
@@ -64,12 +62,11 @@ public class KeywordSearchDataExplorer implements DataExplorer {
         KeywordSearch.changeSupport.addPropertyChangeListener(KeywordSearch.NUM_FILES_CHANGE_EVT, new IndexChangeListener());
     }
 
-    private synchronized void setTheInstance() {
+    public static synchronized KeywordSearchDataExplorer getDefault() {
         if (theInstance == null) {
-            theInstance = this;
-        } else {
-            throw new RuntimeException("Tried to instantiate mulitple instances of KeywordSearchTopComponent.");
-        }
+            theInstance = new KeywordSearchDataExplorer();
+        } 
+        return theInstance;
     }
 
     /**
