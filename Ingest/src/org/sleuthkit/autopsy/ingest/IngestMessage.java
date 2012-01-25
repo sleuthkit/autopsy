@@ -72,10 +72,10 @@ public class IngestMessage {
         StringBuilder sb = new StringBuilder();
         sb.append(Long.toString(ID)).append(": ");
         sb.append("type: ").append(messageType.name());
-        sb.append("source: ").append(source.getName());
-        sb.append("text: ").append(text);
+        sb.append(" source: ").append(source.getName());
+        sb.append(" text: ").append(text);
         if (data != null)
-            sb.append("data: ").append(data.toString());
+            sb.append(" data: ").append(data.toString()).append(' ');
         return sb.toString();
     }
 

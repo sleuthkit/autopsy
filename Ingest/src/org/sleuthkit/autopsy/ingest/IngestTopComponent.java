@@ -22,6 +22,7 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,7 +36,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * Top component explorer for the Ingest module.
@@ -57,7 +62,6 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     };
 
     private IngestTopComponent() {
-        manager = new IngestManager(this);
         services = new ArrayList<IngestServiceAbstract>();
         serviceStates = new HashMap<String, Boolean>();
         initComponents();
@@ -139,14 +143,10 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         freqSlider = new javax.swing.JSlider();
         startButton = new javax.swing.JButton();
         refreshFreqLabel = new javax.swing.JLabel();
-        imageProgressBar = new javax.swing.JProgressBar();
-        imageProgressLabel = new javax.swing.JLabel();
-        jProgressBar1 = new javax.swing.JProgressBar();
-        fileProgressLabel = new javax.swing.JLabel();
 
         mainScrollPane.setPreferredSize(new java.awt.Dimension(289, 509));
 
-        topLable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        topLable.setFont(new java.awt.Font("Tahoma", 0, 12));
         org.openide.awt.Mnemonics.setLocalizedText(topLable, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.topLable.text")); // NOI18N
 
         servicesPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
@@ -185,43 +185,26 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
 
         org.openide.awt.Mnemonics.setLocalizedText(refreshFreqLabel, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.refreshFreqLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(imageProgressLabel, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.imageProgressLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(fileProgressLabel, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.fileProgressLabel.text")); // NOI18N
-
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
         mainPanelLayout.setHorizontalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
-                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, mainPanelLayout.createSequentialGroup()
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(mainPanelLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(topLable))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, mainPanelLayout.createSequentialGroup()
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(topLable, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addComponent(servicesPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(freqSlider, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                    .addGroup(mainPanelLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(jProgressBar1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(imageProgressBar, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(servicesPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(freqSlider, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addGap(173, 173, 173))
-            .addGroup(mainPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(startButton)
-                .addContainerGap(316, Short.MAX_VALUE))
-            .addGroup(mainPanelLayout.createSequentialGroup()
-                .addGap(81, 81, 81)
-                .addComponent(imageProgressLabel)
-                .addContainerGap(227, Short.MAX_VALUE))
-            .addGroup(mainPanelLayout.createSequentialGroup()
-                .addGap(74, 74, 74)
-                .addComponent(refreshFreqLabel)
-                .addContainerGap(219, Short.MAX_VALUE))
-            .addGroup(mainPanelLayout.createSequentialGroup()
-                .addGap(84, 84, 84)
-                .addComponent(fileProgressLabel)
-                .addContainerGap(238, Short.MAX_VALUE))
+                        .addComponent(startButton))
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addGap(74, 74, 74)
+                        .addComponent(refreshFreqLabel)))
+                .addContainerGap(173, Short.MAX_VALUE))
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -236,15 +219,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
                 .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(refreshFreqLabel)
-                .addGap(28, 28, 28)
-                .addComponent(imageProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(imageProgressLabel)
-                .addGap(27, 27, 27)
-                .addComponent(jProgressBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(fileProgressLabel)
-                .addContainerGap(75, Short.MAX_VALUE))
+                .addContainerGap(198, Short.MAX_VALUE))
         );
 
         mainScrollPane.setViewportView(mainPanel);
@@ -262,18 +237,39 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     }// </editor-fold>//GEN-END:initComponents
 
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
+        
+        if (manager == null)
+            return;
+        
         //pick the services
-        List<IngestServiceAbstract>servicesToStart = new ArrayList<IngestServiceAbstract>();
+        List<IngestServiceAbstract> servicesToStart = new ArrayList<IngestServiceAbstract>();
         for (IngestServiceAbstract service : services) {
             boolean serviceEnabled = serviceStates.get(service.getName());
-            if (serviceEnabled)
+            if (serviceEnabled) {
                 servicesToStart.add(service);
+            }
+        }
+
+        //pick the image
+        //TODO which image ? 
+        //for now enqueue all, and manager will skip already enqueued image
+        //if image has been processed, it will be enqueued again
+        int[] imageIds = Case.getCurrentCase().getImageIDs();
+        SleuthkitCase sc = Case.getCurrentCase().getSleuthkitCase();
+        List<Image> images = new ArrayList<Image>();
+        for (int imageId : imageIds) {
+            try {
+                final Image image = sc.getImageById(imageId);
+                images.add(image);
+            } catch (TskException e) {
+                logger.log(Level.SEVERE, "Error ingesting image, can't retrieve image id: " + Integer.toString(imageId), e);
+
+            } catch (SQLException e) {
+                logger.log(Level.SEVERE, "Error ingesting image, can't retrieve image id: " + Integer.toString(imageId), e);
+            }
         }
         
-        //pick the image
-        //TODO which image ? just enqueue all, and manager will skip already processed image
-        
-        manager.execute(services, null);
+        manager.execute(servicesToStart, images);
     }//GEN-LAST:event_startButtonActionPerformed
 
     private void freqSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_freqSliderStateChanged
@@ -285,11 +281,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         }
     }//GEN-LAST:event_freqSliderStateChanged
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel fileProgressLabel;
     private javax.swing.JSlider freqSlider;
-    private javax.swing.JProgressBar imageProgressBar;
-    private javax.swing.JLabel imageProgressLabel;
-    private javax.swing.JProgressBar jProgressBar1;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JScrollPane mainScrollPane;
     private javax.swing.JLabel refreshFreqLabel;
@@ -301,6 +293,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     @Override
     public void componentOpened() {
         logger.log(Level.INFO, "IngestTopComponent opened()");
+        manager = new IngestManager(this);
     }
 
     @Override

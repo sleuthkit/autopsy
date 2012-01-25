@@ -20,12 +20,19 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
@@ -38,13 +45,18 @@ import org.sleuthkit.datamodel.Image;
  * 
  */
 public class IngestManager {
-    
+
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private IngestTopComponent tc;
     private IngestManagerStats stats;
     private int updateFrequency;
-    
-    
+    //queues
+    private final Object queueLock = new Object();
+    private final ImageQueue imageQueue = new ImageQueue();
+    private final FsContentQueue fsContentQueue = new FsContentQueue();
+    private IngestThread ingester;
+    final Collection<IngestServiceImage> imageServices = enumerateImageServices();
+    final Collection<IngestServiceFsContent> fsContentServices = enumerateFsContentServices();
 
     /**
      * 
@@ -52,7 +64,14 @@ public class IngestManager {
      */
     IngestManager(IngestTopComponent tc) {
         this.tc = tc;
-        stats = new IngestManagerStats();
+
+        //one time initialization of services
+        for (IngestServiceImage s : imageServices) {
+            s.init(this);
+        }
+        for (IngestServiceFsContent s : fsContentServices) {
+            s.init(this);
+        }
     }
 
     /**
@@ -61,9 +80,46 @@ public class IngestManager {
      * Notifies services when work is complete or should be interrupted using complete() and stop() calls.
      * Does not block and can be called multiple times to enqueue more work to already running background process.
      */
-    void execute(Collection<IngestServiceAbstract> services, Image image) {
+    void execute(Collection<IngestServiceAbstract> services, final Collection<Image> images) {
+
+        for (Image image : images) {
+            for (IngestServiceAbstract service : services) {
+                switch (service.getType()) {
+                    case Image:
+                        addImage((IngestServiceImage) service, image);
+                        break;
+                    case FsContent:
+                        addFsContent((IngestServiceFsContent) service, image);
+                        break;
+                    default:
+                        logger.log(Level.SEVERE, "Unexpected service type: " + service.getType().name());
+                }
+            }
+        }
+
+        logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + fsContentQueue.toString());
+        
+        boolean start = false;
+        if (ingester == null) {
+            start = true;
+
+        } //if worker had completed, restart it in case data is still enqueued
+        else if (ingester.isDone()
+                && (hasNextFsContent() || hasNextImage())) {
+            logger.log(Level.INFO, "Restarting ingester thread.");
+            start = true;
+        } else {
+            logger.log(Level.INFO, "Ingester is still running");
+        }
+
+        if (start) {
+            logger.log(Level.INFO, "Starting new ingester.");
+            ingester = new IngestThread();
+            stats = new IngestManagerStats();
+            ingester.execute();
+        }
     }
-    
+
     /**
      * returns the current minimal update frequency setting
      * Services should call this between processing iterations to get current setting
@@ -72,7 +128,7 @@ public class IngestManager {
     public synchronized int getUpdateFrequency() {
         return updateFrequency;
     }
-    
+
     /**
      * set new minimal update frequency services should use
      * @param frequency 
@@ -96,9 +152,9 @@ public class IngestManager {
      * Viewer will attempt to identify duplicate messages and filter them out (slower)
      */
     public synchronized void postMessage(final IngestMessage message) {
-        
+
         SwingUtilities.invokeLater(new Runnable() {
-            
+
             @Override
             public void run() {
                 tc.displayMessage(message);
@@ -120,17 +176,47 @@ public class IngestManager {
         return (Collection<IngestServiceFsContent>) Lookup.getDefault().lookupAll(IngestServiceFsContent.class);
     }
 
+    private void addImage(IngestServiceImage service, Image image) {
+
+        synchronized (queueLock) {
+            imageQueue.enqueue(image, service);
+            //queueLock.notifyAll();
+        }
+
+
+    }
+
+    private void addFsContent(IngestServiceFsContent service, Image image) {
+        Collection<FsContent> fsContents = new GetAllFilesContentVisitor().visit(image);
+        synchronized (queueLock) {
+            for (FsContent fsContent : fsContents) {
+                fsContentQueue.enqueue(fsContent, service);
+            }
+            //queueLock.notifyAll();
+        }
+        //logger.log(Level.INFO, fsContentQueue.toString());
+    }
+
     /**
      * get next file/dir to process
      * the queue of FsContent to process is maintained internally 
      * and could be dynamically sorted as data comes in
      */
-    private synchronized FsContent getNextFsContent() {
-        return null;
+    private QueueUnit<FsContent, IngestServiceFsContent> getNextFsContent() {
+        QueueUnit<FsContent, IngestServiceFsContent> ret = null;
+        synchronized (queueLock) {
+            ret = fsContentQueue.dequeue();
+
+        }
+        return ret;
     }
-    
-    private synchronized boolean hasNextFsContent() {
-        return true;
+
+    private boolean hasNextFsContent() {
+        boolean ret = false;
+        synchronized (queueLock) {
+            ret = fsContentQueue.hasNext();
+        }
+        return ret;
     }
 
     /**
@@ -138,12 +224,176 @@ public class IngestManager {
      * the queue of Images to process is maintained internally 
      * and could be dynamically sorted as data comes in
      */
-    private synchronized Image getNextImage() {
-        return null;
+    private QueueUnit<Image, IngestServiceImage> getNextImage() {
+        QueueUnit<Image, IngestServiceImage> ret = null;
+        synchronized (queueLock) {
+            ret = imageQueue.dequeue();
+        }
+        return ret;
     }
-    
-    private synchronized boolean hasNextImage() {
-        return true;
+
+    private boolean hasNextImage() {
+        boolean ret = false;
+        synchronized (queueLock) {
+            ret = imageQueue.hasNext();
+        }
+        return ret;
+    }
+
+    //manages queue of pending FsContent and IngestServiceFsContent to use on that content
+    //TODO in future content sort will be maintained based on priorities
+    private class FsContentQueue {
+
+        List<QueueUnit<FsContent, IngestServiceFsContent>> fsContentUnits = new ArrayList<QueueUnit<FsContent, IngestServiceFsContent>>();
+
+        void enqueue(FsContent fsContent, IngestServiceFsContent service) {
+            QueueUnit<FsContent, IngestServiceFsContent> found = findFsContent(fsContent);
+
+            if (found != null) {
+                //FsContent already enqueued
+                //merge services to use with already enqueued image
+                found.add(service);
+            } else {
+                //enqueue brand new FsContent with the services
+                found = new QueueUnit<FsContent, IngestServiceFsContent>(fsContent, service);
+                fsContentUnits.add(found);
+            }
+        }
+
+        void enqueue(FsContent fsContent, Collection<IngestServiceFsContent> services) {
+            QueueUnit<FsContent, IngestServiceFsContent> found = findFsContent(fsContent);
+
+            if (found != null) {
+                //FsContent already enqueued
+                //merge services to use with already enqueued FsContent
+                found.addAll(services);
+            } else {
+                //enqueue brand new FsContent with the services
+                found = new QueueUnit<FsContent, IngestServiceFsContent>(fsContent, services);
+                fsContentUnits.add(found);
+            }
+        }
+
+        boolean hasNext() {
+            return !fsContentUnits.isEmpty();
+        }
+
+        QueueUnit<FsContent, IngestServiceFsContent> dequeue() {
+            if (!hasNext()) {
+                throw new UnsupportedOperationException("FsContent processing queue is empty");
+            }
+
+            return fsContentUnits.remove(0);
+        }
+
+        private QueueUnit<FsContent, IngestServiceFsContent> findFsContent(FsContent fsContent) {
+            QueueUnit<FsContent, IngestServiceFsContent> found = null;
+            for (QueueUnit<FsContent, IngestServiceFsContent> unit : fsContentUnits) {
+                if (unit.content.equals(fsContent)) {
+                    found = unit;
+                    break;
+                }
+            }
+            return found;
+        }
+
+        @Override
+        public String toString() {
+            return "FsContentQueue, size: " + Integer.toString(fsContentUnits.size());
+        }
+    }
+
+    //manages queue of pending Images and IngestServiceImage to use on that image
+    private class ImageQueue {
+
+        List<QueueUnit<Image, IngestServiceImage>> imageUnits = new ArrayList<QueueUnit<Image, IngestServiceImage>>();
+
+        void enqueue(Image image, IngestServiceImage service) {
+            QueueUnit<Image, IngestServiceImage> found = findImage(image);
+
+            if (found != null) {
+                //image already enqueued
+                //merge services to use with already enqueued image
+                found.add(service);
+            } else {
+                //enqueue brand new image with the services
+                found = new QueueUnit<Image, IngestServiceImage>(image, service);
+                imageUnits.add(found);
+            }
+        }
+
+        void enqueue(Image image, Collection<IngestServiceImage> services) {
+            QueueUnit<Image, IngestServiceImage> found = findImage(image);
+
+            if (found != null) {
+                //image already enqueued
+                //merge services to use with already enqueued image
+                found.addAll(services);
+            } else {
+                //enqueue brand new image with the services
+                found = new QueueUnit<Image, IngestServiceImage>(image, services);
+                imageUnits.add(found);
+            }
+        }
+
+        boolean hasNext() {
+            return !imageUnits.isEmpty();
+        }
+
+        QueueUnit<Image, IngestServiceImage> dequeue() {
+            if (!hasNext()) {
+                throw new UnsupportedOperationException("Image processing queue is empty");
+            }
+
+            return imageUnits.remove(0);
+        }
+
+        private QueueUnit<Image, IngestServiceImage> findImage(Image image) {
+            QueueUnit<Image, IngestServiceImage> found = null;
+            for (QueueUnit<Image, IngestServiceImage> unit : imageUnits) {
+                if (unit.content.equals(image)) {
+                    found = unit;
+                    break;
+                }
+            }
+            return found;
+        }
+
+        @Override
+        public String toString() {
+            return "ImageQueue, size: " + Integer.toString(imageUnits.size());
+        }
+    }
+
+    /**
+     * generic representation of queued content (Image or FsContent) and its services
+     */
+    private class QueueUnit<T, S> {
+
+        T content;
+        Set<S> services;
+
+        QueueUnit(T content, S service) {
+            this.content = content;
+            this.services = new HashSet<S>();
+            add(service);
+        }
+
+        QueueUnit(T content, Collection<S> services) {
+            this.content = content;
+            this.services = new HashSet<S>();
+            addAll(services);
+        }
+
+        //merge services with the current collection of services per image
+        //this assumes that there is one singleton instance of each type of service
+        final void addAll(Collection<S> services) {
+            this.services.addAll(services);
+        }
+
+        final void add(S service) {
+            this.services.add(service);
+        }
     }
 
     /**
@@ -156,32 +406,32 @@ public class IngestManager {
         int errorsTotal;
         Map<IngestServiceAbstract, Integer> errors;
         private static DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        
+
         IngestManagerStats() {
             errors = new HashMap<IngestServiceAbstract, Integer>();
         }
-        
+
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
             if (startTime != null) {
-                sb.append("Start time: ").append(dateFormatter.format(startTime));
+                sb.append("Start time: ").append(dateFormatter.format(startTime)).append("\n");
             }
             if (endTime != null) {
-                sb.append("End time: ").append(dateFormatter.format(endTime));
+                sb.append("End time: ").append(dateFormatter.format(endTime)).append("\n");
             }
-            sb.append("Total ingest time: ").append(getTotalTime());
-            sb.append("Total errors: ").append(errorsTotal);
+            sb.append("Total ingest time: ").append(getTotalTime()).append("\n");
+            sb.append("Total errors: ").append(errorsTotal).append("\n");
             if (errorsTotal > 0) {
                 sb.append("Errors per service:");
                 for (IngestServiceAbstract service : errors.keySet()) {
                     final int errorsService = errors.get(service);
-                    sb.append("\t").append(service.getName()).append(": ").append(errorsService);
+                    sb.append("\t").append(service.getName()).append(": ").append(errorsService).append("\n");
                 }
             }
             return sb.toString();
         }
-        
+
         void start() {
             startTime = new Date();
         }
@@ -189,18 +439,106 @@ public class IngestManager {
         void end() {
             endTime = new Date();
         }
-        
+
         long getTotalTime() {
             if (startTime == null || endTime == null) {
                 return 0;
             }
             return endTime.getTime() - startTime.getTime();
         }
-        
+
         void addError(IngestServiceAbstract source) {
             ++errorsTotal;
             int curServiceError = errors.get(source);
             errors.put(source, curServiceError + 1);
+        }
+    }
+
+    //ingester worker doing work in background
+    //in current design, worker runs until queues are consumed
+    //and if needed, it is restarted when data arrives
+    private class IngestThread extends SwingWorker {
+
+        private Logger logger = Logger.getLogger(IngestThread.class.getName());
+
+        @Override
+        protected Object doInBackground() throws Exception {
+
+            logger.log(Level.INFO, "Starting background processing");
+            stats.start();
+
+            //process image queue
+            while (hasNextImage()) {
+                QueueUnit<Image, IngestServiceImage> unit = getNextImage();
+                for (IngestServiceImage service : unit.services) {
+                    if (isCancelled()) {
+                        for (IngestServiceImage s : imageServices) {
+                            s.stop();
+                        }
+                        return null;
+                    }
+
+                    try {
+                        service.process(unit.content);
+                    } catch (Exception e) {
+                        logger.log(Level.INFO, "Exception from service: " + service.getName(), e);
+                        stats.addError(service);
+                    }
+                }
+            }
+
+            //process fscontents queue
+            while (hasNextFsContent()) {
+                QueueUnit<FsContent, IngestServiceFsContent> unit = getNextFsContent();
+                for (IngestServiceFsContent service : unit.services) {
+                    if (isCancelled()) {
+                        for (IngestServiceFsContent s : fsContentServices) {
+                            s.stop();
+                        }
+                        return null;
+                    }
+                    try {
+                        service.process(unit.content);
+                    } catch (Exception e) {
+                        logger.log(Level.INFO, "Exception from service: " + service.getName(), e);
+                        stats.addError(service);
+                    }
+                }
+            }
+
+            stats.end();
+            logger.log(Level.INFO, "Done background processing");
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                super.get(); //block and get all exceptions thrown while doInBackground()
+
+                logger.log(Level.INFO, "STATS: " + stats.toString());
+
+                //notify services of completion
+                for (IngestServiceImage s : imageServices) {
+                    s.complete();
+                }
+
+                for (IngestServiceFsContent s : fsContentServices) {
+                    s.complete();
+                }
+
+            } catch (InterruptedException ex) {
+            } catch (ExecutionException ex) {
+                logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
+
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
+            }
+        }
+
+        @Override
+        protected void process(List chunks) {
+            super.process(chunks);
         }
     }
 }

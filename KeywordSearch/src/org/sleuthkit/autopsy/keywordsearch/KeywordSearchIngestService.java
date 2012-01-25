@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
 import org.sleuthkit.datamodel.FsContent;
 
@@ -29,6 +31,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestService.class.getName());
     private static KeywordSearchIngestService instance = null;
+    
+    private IngestManager manager;
+    
 
     public static synchronized KeywordSearchIngestService getDefault() {
         if (instance == null) {
@@ -39,12 +44,19 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     @Override
     public void process(FsContent fsContent) {
-        logger.log(Level.INFO, "Processing fsContent: " + fsContent.getName());
+        //logger.log(Level.INFO, "Processing fsContent: " + fsContent.getName());
+        try {
+            Thread.sleep(300);
+        }
+        catch (InterruptedException e) {}
+        manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "Processing " + fsContent.getName()));
+       
     }
 
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete()");
+        manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "COMPLETE"));
     }
 
     @Override
@@ -55,6 +67,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     @Override
     public void init(IngestManager manager) {
         logger.log(Level.INFO, "init()");
+        this.manager = manager;
+        
+        manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "INIT"));
     }
 
     @Override
