@@ -97,7 +97,8 @@ public class HashDbIngestService implements IngestServiceFsContent {
     public void process(FsContent fsContent){
         logger.log(Level.INFO, "Processing fsContent: " + fsContent.getName());
         try{
-            long status = skCase.analyzeFileMd5(fsContent);
+            long status = 0;
+            //long status = skCase.analyzeFileMd5(fsContent);
             if(status == 1){
                 manager.postMessage(IngestMessage.createDataMessage(123, this, "Found known file", null));
             }else if(status == 2){
