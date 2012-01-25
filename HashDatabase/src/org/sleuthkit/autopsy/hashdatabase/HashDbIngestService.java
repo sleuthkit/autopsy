@@ -96,9 +96,8 @@ public class HashDbIngestService implements IngestServiceFsContent {
     @Override
     public void process(FsContent fsContent){
         logger.log(Level.INFO, "Processing fsContent: " + fsContent.getName());
-        try{
-            long status = 0;
-            //long status = skCase.analyzeFileMd5(fsContent);
+        /*try{
+            long status = skCase.analyzeFileMd5(fsContent);
             if(status == 1){
                 manager.postMessage(IngestMessage.createDataMessage(123, this, "Found known file", null));
             }else if(status == 2){
@@ -106,7 +105,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
             }
         } catch (TskException e){
             logger.log(Level.SEVERE, "Couldn't analyze file - see sleuthkit log for details");
-        }
+        }*/
     }
     
 }
