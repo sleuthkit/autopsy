@@ -92,6 +92,11 @@ public class HashDbIngestService implements IngestServiceFsContent {
     public String getName(){
         return NAME;
     }
+    
+    @Override
+    public ServiceType getType() {
+        return ServiceType.FsContent;
+    }
 
     @Override
     public void process(FsContent fsContent){

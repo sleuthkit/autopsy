@@ -61,4 +61,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public void stop() {
         logger.log(Level.INFO, "stop()");
     }
+
+    @Override
+    public ServiceType getType() {
+        return ServiceType.FsContent;
+    }
 }

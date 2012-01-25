@@ -103,18 +103,24 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
 
         Collection<IngestServiceImage> imageServices = IngestManager.enumerateImageServices();
         for (IngestServiceImage service : imageServices) {
+            final String serviceName = service.getName();
             services.add(service);
-            JCheckBox checkbox = new JCheckBox(service.getName(), true);
+            JCheckBox checkbox = new JCheckBox(serviceName, true);
+            checkbox.setName(serviceName);
             checkbox.addActionListener(serviceSelListener);
             servicesPanel.add(checkbox);
+            serviceStates.put(serviceName, true);
         }
 
         Collection<IngestServiceFsContent> fsServices = IngestManager.enumerateFsContentServices();
         for (IngestServiceFsContent service : fsServices) {
+            final String serviceName = service.getName();
             services.add(service);
-            JCheckBox checkbox = new JCheckBox(service.getName(), true);
+            JCheckBox checkbox = new JCheckBox(serviceName, true);
+            checkbox.setName(serviceName);
             checkbox.addActionListener(serviceSelListener);
             servicesPanel.add(checkbox);
+            serviceStates.put(serviceName, true);
         }
     }
 

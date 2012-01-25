@@ -23,6 +23,8 @@ package org.sleuthkit.autopsy.ingest;
  * Base interface for ingest services
  */
 public interface IngestServiceAbstract {
+    
+    public enum ServiceType {Image, FsContent};
 
     /**
      * notification from manager that brand new processing should be initiated.
@@ -48,4 +50,10 @@ public interface IngestServiceAbstract {
      * should be unique across services, a user-friendly name of the service shown in GUI
      */
     public String getName();
+    
+    /**
+     * 
+     * @return specialization of the service
+     */
+    public ServiceType getType();
 }
