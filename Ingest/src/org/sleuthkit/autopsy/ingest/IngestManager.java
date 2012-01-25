@@ -33,6 +33,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
@@ -98,7 +100,7 @@ public class IngestManager {
         }
 
         logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + fsContentQueue.toString());
-        
+
         boolean start = false;
         if (ingester == null) {
             start = true;
@@ -218,6 +220,14 @@ public class IngestManager {
         }
         return ret;
     }
+    
+    private int getNumFsContents() {
+        int ret = 0;
+        synchronized (queueLock) {
+            ret = fsContentQueue.getCount();
+        }
+        return ret;
+    }
 
     /**
      * get next Image to process
@@ -236,6 +246,14 @@ public class IngestManager {
         boolean ret = false;
         synchronized (queueLock) {
             ret = imageQueue.hasNext();
+        }
+        return ret;
+    }
+    
+    private int getNumImages() {
+        int ret = 0;
+        synchronized (queueLock) {
+            ret = imageQueue.getCount();
         }
         return ret;
     }
@@ -276,6 +294,10 @@ public class IngestManager {
 
         boolean hasNext() {
             return !fsContentUnits.isEmpty();
+        }
+        
+        int getCount() {
+            return fsContentUnits.size();
         }
 
         QueueUnit<FsContent, IngestServiceFsContent> dequeue() {
@@ -338,6 +360,10 @@ public class IngestManager {
 
         boolean hasNext() {
             return !imageUnits.isEmpty();
+        }
+        
+        int getCount() {
+            return imageUnits.size();
         }
 
         QueueUnit<Image, IngestServiceImage> dequeue() {
@@ -460,6 +486,7 @@ public class IngestManager {
     private class IngestThread extends SwingWorker {
 
         private Logger logger = Logger.getLogger(IngestThread.class.getName());
+        private ProgressHandle progress;
 
         @Override
         protected Object doInBackground() throws Exception {
@@ -467,6 +494,13 @@ public class IngestManager {
             logger.log(Level.INFO, "Starting background processing");
             stats.start();
 
+            progress = ProgressHandleFactory.createHandle("Ingesting");
+
+            progress.start();
+            progress.switchToIndeterminate();
+            int numImages = getNumImages();
+            progress.switchToDeterminate(numImages);
+            int processedImages = 0;
             //process image queue
             while (hasNextImage()) {
                 QueueUnit<Image, IngestServiceImage> unit = getNextImage();
@@ -480,14 +514,30 @@ public class IngestManager {
 
                     try {
                         service.process(unit.content);
+                        //check if new files enqueued
+                        int newImages = getNumImages();
+                        if (newImages > numImages) {
+                            numImages = newImages;
+                            processedImages = 0;
+                            progress.switchToIndeterminate();
+                            progress.switchToDeterminate(numImages);
+                            
+                        }
+                        progress.progress("Images (" + service.getName() + ")", ++processedImages);
+                        --numImages;
                     } catch (Exception e) {
                         logger.log(Level.INFO, "Exception from service: " + service.getName(), e);
                         stats.addError(service);
                     }
                 }
             }
-
+            
+            progress.switchToIndeterminate();
+            int numFsContents = getNumFsContents();
+            progress.switchToDeterminate(numFsContents);
+            int processedFiles = 0;
             //process fscontents queue
+            progress.progress("Running file ingest services.");
             while (hasNextFsContent()) {
                 QueueUnit<FsContent, IngestServiceFsContent> unit = getNextFsContent();
                 for (IngestServiceFsContent service : unit.services) {
@@ -499,6 +549,17 @@ public class IngestManager {
                     }
                     try {
                         service.process(unit.content);
+                        int newFsContents = getNumFsContents();
+                        if (newFsContents > numFsContents) {
+                            //update progress bar if new enqueued
+                            numFsContents = newFsContents;
+                            processedFiles = 0;
+                            progress.switchToIndeterminate();
+                            progress.switchToDeterminate(numFsContents);
+                            
+                        }
+                        progress.progress("Files (" + service.getName() + ")", ++processedFiles);
+                        --numFsContents;
                     } catch (Exception e) {
                         logger.log(Level.INFO, "Exception from service: " + service.getName(), e);
                         stats.addError(service);
@@ -533,7 +594,10 @@ public class IngestManager {
 
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
+            } finally {
+                progress.finish();
             }
+
         }
 
         @Override
