@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -36,6 +37,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
@@ -230,6 +232,18 @@ public class IngestManager {
         return ret;
     }
 
+    private void emptyFsContents() {
+        synchronized (queueLock) {
+            fsContentQueue.empty();
+        }
+    }
+
+    private void emptyImages() {
+        synchronized (queueLock) {
+            imageQueue.empty();
+        }
+    }
+
     /**
      * get next Image to process
      * the queue of Images to process is maintained internally 
@@ -301,6 +315,10 @@ public class IngestManager {
             return fsContentUnits.size();
         }
 
+        void empty() {
+            fsContentUnits.clear();
+        }
+
         QueueUnit<FsContent, IngestServiceFsContent> dequeue() {
             if (!hasNext()) {
                 throw new UnsupportedOperationException("FsContent processing queue is empty");
@@ -365,6 +383,10 @@ public class IngestManager {
 
         int getCount() {
             return imageUnits.size();
+        }
+
+        void empty() {
+            imageUnits.clear();
         }
 
         QueueUnit<Image, IngestServiceImage> dequeue() {
@@ -482,8 +504,7 @@ public class IngestManager {
             ms -= TimeUnit.MINUTES.toMillis(minutes);
             long seconds = TimeUnit.MILLISECONDS.toSeconds(ms);
             final StringBuilder sb = new StringBuilder();
-            sb.append(hours<10?"0":"").append(hours).append(':').append(minutes<10?"0":"")
-                    .append(minutes).append(':').append(seconds<10?"0":"").append(seconds);
+            sb.append(hours < 10 ? "0" : "").append(hours).append(':').append(minutes < 10 ? "0" : "").append(minutes).append(':').append(seconds < 10 ? "0" : "").append(seconds);
             return sb.toString();
         }
 
@@ -508,7 +529,13 @@ public class IngestManager {
             logger.log(Level.INFO, "Starting background processing");
             stats.start();
 
-            progress = ProgressHandleFactory.createHandle("Ingesting");
+            progress = ProgressHandleFactory.createHandle("Ingesting", new Cancellable() {
+
+                @Override
+                public boolean cancel() {
+                    return IngestThread.this.cancel(true);
+                }
+            });
 
             progress.start();
             progress.switchToIndeterminate();
@@ -520,9 +547,6 @@ public class IngestManager {
                 QueueUnit<Image, IngestServiceImage> unit = getNextImage();
                 for (IngestServiceImage service : unit.services) {
                     if (isCancelled()) {
-                        for (IngestServiceImage s : imageServices) {
-                            s.stop();
-                        }
                         return null;
                     }
 
@@ -555,9 +579,6 @@ public class IngestManager {
                 QueueUnit<FsContent, IngestServiceFsContent> unit = getNextFsContent();
                 for (IngestServiceFsContent service : unit.services) {
                     if (isCancelled()) {
-                        for (IngestServiceFsContent s : fsContentServices) {
-                            s.stop();
-                        }
                         return null;
                     }
                     try {
@@ -578,8 +599,6 @@ public class IngestManager {
                     }
                 }
             }
-
-            stats.end();
             logger.log(Level.INFO, "Done background processing");
             return null;
         }
@@ -588,26 +607,36 @@ public class IngestManager {
         protected void done() {
             try {
                 super.get(); //block and get all exceptions thrown while doInBackground()
-
-                logger.log(Level.INFO, "STATS: " + stats.toString());
-
                 //notify services of completion
-                for (IngestServiceImage s : imageServices) {
-                    s.complete();
+                if (!this.isCancelled()) {
+                    for (IngestServiceImage s : imageServices) {
+                        s.complete();
+                    }
+
+                    for (IngestServiceFsContent s : fsContentServices) {
+                        s.complete();
+                    }
                 }
 
-                for (IngestServiceFsContent s : fsContentServices) {
-                    s.complete();
-                }
+            } catch (CancellationException e) {
+                //task was cancelled
+                handleInterruption();
 
             } catch (InterruptedException ex) {
+                handleInterruption();
             } catch (ExecutionException ex) {
+                handleInterruption();
                 logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
 
             } catch (Exception ex) {
+                handleInterruption();
                 logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
             } finally {
+                stats.end();
                 progress.finish();
+
+                //TODO display report
+                logger.log(Level.INFO, "STATS: " + stats.toString());
             }
 
         }
@@ -615,6 +644,19 @@ public class IngestManager {
         @Override
         protected void process(List chunks) {
             super.process(chunks);
+        }
+
+        private void handleInterruption() {
+            for (IngestServiceImage s : imageServices) {
+                s.stop();
+            }
+
+            for (IngestServiceFsContent s : fsContentServices) {
+                s.stop();
+            }
+            //empty queues
+            emptyFsContents();
+            emptyImages();
         }
     }
 }
