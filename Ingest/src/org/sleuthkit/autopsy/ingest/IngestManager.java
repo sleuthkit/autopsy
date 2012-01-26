@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
@@ -220,7 +221,7 @@ public class IngestManager {
         }
         return ret;
     }
-    
+
     private int getNumFsContents() {
         int ret = 0;
         synchronized (queueLock) {
@@ -249,7 +250,7 @@ public class IngestManager {
         }
         return ret;
     }
-    
+
     private int getNumImages() {
         int ret = 0;
         synchronized (queueLock) {
@@ -295,7 +296,7 @@ public class IngestManager {
         boolean hasNext() {
             return !fsContentUnits.isEmpty();
         }
-        
+
         int getCount() {
             return fsContentUnits.size();
         }
@@ -361,7 +362,7 @@ public class IngestManager {
         boolean hasNext() {
             return !imageUnits.isEmpty();
         }
-        
+
         int getCount() {
             return imageUnits.size();
         }
@@ -446,7 +447,7 @@ public class IngestManager {
             if (endTime != null) {
                 sb.append("End time: ").append(dateFormatter.format(endTime)).append("\n");
             }
-            sb.append("Total ingest time: ").append(getTotalTime()).append("\n");
+            sb.append("Total ingest time: ").append(getTotalTimeString()).append("\n");
             sb.append("Total errors: ").append(errorsTotal).append("\n");
             if (errorsTotal > 0) {
                 sb.append("Errors per service:");
@@ -471,6 +472,19 @@ public class IngestManager {
                 return 0;
             }
             return endTime.getTime() - startTime.getTime();
+        }
+
+        String getTotalTimeString() {
+            long ms = getTotalTime();
+            long hours = TimeUnit.MILLISECONDS.toHours(ms);
+            ms -= TimeUnit.HOURS.toMillis(hours);
+            long minutes = TimeUnit.MILLISECONDS.toMinutes(ms);
+            ms -= TimeUnit.MINUTES.toMillis(minutes);
+            long seconds = TimeUnit.MILLISECONDS.toSeconds(ms);
+            final StringBuilder sb = new StringBuilder();
+            sb.append(hours<10?"0":"").append(hours).append(':').append(minutes<10?"0":"")
+                    .append(minutes).append(':').append(seconds<10?"0":"").append(seconds);
+            return sb.toString();
         }
 
         void addError(IngestServiceAbstract source) {
@@ -517,11 +531,10 @@ public class IngestManager {
                         //check if new files enqueued
                         int newImages = getNumImages();
                         if (newImages > numImages) {
-                            numImages = newImages;
-                            processedImages = 0;
+                            numImages = newImages + processedImages + 1;
                             progress.switchToIndeterminate();
                             progress.switchToDeterminate(numImages);
-                            
+
                         }
                         progress.progress("Images (" + service.getName() + ")", ++processedImages);
                         --numImages;
@@ -531,7 +544,7 @@ public class IngestManager {
                     }
                 }
             }
-            
+
             progress.switchToIndeterminate();
             int numFsContents = getNumFsContents();
             progress.switchToDeterminate(numFsContents);
@@ -552,11 +565,10 @@ public class IngestManager {
                         int newFsContents = getNumFsContents();
                         if (newFsContents > numFsContents) {
                             //update progress bar if new enqueued
-                            numFsContents = newFsContents;
-                            processedFiles = 0;
+                            numFsContents = newFsContents + processedFiles + 1;
                             progress.switchToIndeterminate();
                             progress.switchToDeterminate(numFsContents);
-                            
+
                         }
                         progress.progress("Files (" + service.getName() + ")", ++processedFiles);
                         --numFsContents;

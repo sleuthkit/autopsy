@@ -46,7 +46,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public void process(FsContent fsContent) {
         //logger.log(Level.INFO, "Processing fsContent: " + fsContent.getName());
         try {
-            Thread.sleep(300);
+            Thread.sleep(100);
         }
         catch (InterruptedException e) {}
         manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "Processing " + fsContent.getName()));
