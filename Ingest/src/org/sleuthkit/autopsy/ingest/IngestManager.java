@@ -33,12 +33,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
 
@@ -152,6 +154,13 @@ public class IngestManager {
      * Viewer will attempt to identify duplicate messages and filter them out (slower)
      */
     public synchronized void postMessage(final IngestMessage message) {
+
+        if (stats != null) {
+            //record the error for stats, if stats are running
+            if (message.getMessageType() == MessageType.ERROR) {
+                stats.addError(message.getSource());
+            }
+        }
 
         SwingUtilities.invokeLater(new Runnable() {
 
@@ -476,6 +485,28 @@ public class IngestManager {
             return sb.toString();
         }
 
+        public String toHtmlString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("<html>");
+            if (startTime != null) {
+                sb.append("Start time: ").append(dateFormatter.format(startTime)).append("<br />");
+            }
+            if (endTime != null) {
+                sb.append("End time: ").append(dateFormatter.format(endTime)).append("<br />");
+            }
+            sb.append("Total ingest time: ").append(getTotalTimeString()).append("<br />");
+            sb.append("Total errors: ").append(errorsTotal).append("<br />");
+            if (errorsTotal > 0) {
+                sb.append("Errors per service:");
+                for (IngestServiceAbstract service : errors.keySet()) {
+                    final int errorsService = errors.get(service);
+                    sb.append("\t").append(service.getName()).append(": ").append(errorsService).append("<br />");
+                }
+            }
+            sb.append("</html>");
+            return sb.toString();
+        }
+
         void start() {
             startTime = new Date();
         }
@@ -491,6 +522,14 @@ public class IngestManager {
             return endTime.getTime() - startTime.getTime();
         }
 
+        String getStartTimeString() {
+            return dateFormatter.format(startTime);
+        }
+
+        String getEndTimeString() {
+            return dateFormatter.format(endTime);
+        }
+
         String getTotalTimeString() {
             long ms = getTotalTime();
             long hours = TimeUnit.MILLISECONDS.toHours(ms);
@@ -503,7 +542,7 @@ public class IngestManager {
             return sb.toString();
         }
 
-        void addError(IngestServiceAbstract source) {
+        synchronized void addError(IngestServiceAbstract source) {
             ++errorsTotal;
             int curServiceError = errors.get(source);
             errors.put(source, curServiceError + 1);
@@ -630,8 +669,13 @@ public class IngestManager {
                 stats.end();
                 progress.finish();
 
-                //TODO display report
-                logger.log(Level.INFO, "STATS: " + stats.toString());
+                logger.log(Level.INFO, "Summary Report: " + stats.toString());
+                //postMessage(IngestMessage.createManagerMessage(stats.toHtmlString()));
+                JOptionPane.showMessageDialog(
+                        tc,
+                        stats.toHtmlString(),
+                        "Ingest Summary",
+                        JOptionPane.INFORMATION_MESSAGE);
             }
 
         }

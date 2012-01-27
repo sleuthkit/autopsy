@@ -52,7 +52,6 @@
             </Property>
             <Property name="autoResizeMode" type="int" value="3"/>
             <Property name="autoscrolls" type="boolean" value="false"/>
-            <Property name="columnSelectionAllowed" type="boolean" value="false"/>
             <Property name="gridColor" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="cc" green="cc" red="cc" type="rgb"/>
             </Property>

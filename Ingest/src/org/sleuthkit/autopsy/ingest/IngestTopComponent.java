@@ -32,7 +32,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
-import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import org.openide.util.NbBundle;
@@ -403,8 +402,6 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
      * Display IngestMessage from service (forwarded by IngestManager)
      */
     void displayMessage(IngestMessage ingestMessage) {
-        //TODO widget
-        logger.log(Level.INFO, "INGEST MESSAGE: " + ingestMessage.toString());
         messagePanel.addMessage(ingestMessage);
     }
 }

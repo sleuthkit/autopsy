@@ -182,7 +182,13 @@ public class IngestMessagePanel extends javax.swing.JPanel {
 
             switch (columnIndex) {
                 case 0:
-                    ret = (Object) entry.message.getSource().getName();
+                    Object service = entry.message.getSource();
+                    if (service == null) {
+                        ret = "";
+                    }
+                    else {
+                        ret = (Object) entry.message.getSource().getName();
+                    }
                     break;
                 case 1:
                     ret = (Object) entry.message.getText();
