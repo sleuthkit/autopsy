@@ -342,6 +342,10 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     public void componentClosed() {
         logger.log(Level.INFO, "IngestTopComponent closed()");
     }
+    
+    void enableStartButton(boolean enable) {
+        startButton.setEnabled(enable);
+    }
 
     void writeProperties(java.util.Properties p) {
         // better to version settings since initial version as advocated at

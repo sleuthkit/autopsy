@@ -69,7 +69,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         logger.log(Level.INFO, "init()");
         this.manager = manager;
         
-        manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "INIT"));
+        manager.postMessage(IngestMessage.createMessage(1, MessageType.WARNING, this, "INIT"));
     }
 
     @Override

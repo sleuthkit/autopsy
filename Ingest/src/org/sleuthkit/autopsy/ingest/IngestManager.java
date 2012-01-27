@@ -87,6 +87,9 @@ public class IngestManager {
      */
     void execute(Collection<IngestServiceAbstract> services, final Collection<Image> images) {
 
+        //queuing start
+        tc.enableStartButton(false);
+        //TODO run this in a worker because takes time for larger ones
         for (Image image : images) {
             for (IngestServiceAbstract service : services) {
                 switch (service.getType()) {
@@ -123,6 +126,9 @@ public class IngestManager {
             stats = new IngestManagerStats();
             ingester.execute();
         }
+        
+        //queing end
+        tc.enableStartButton(true);
     }
 
     /**
