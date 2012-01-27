@@ -547,20 +547,20 @@ public class IngestManager {
 
                     try {
                         service.process(unit.content);
-                        //check if new files enqueued
-                        int newImages = getNumImages();
-                        if (newImages > numImages) {
-                            numImages = newImages + processedImages + 1;
-                            progress.switchToIndeterminate();
-                            progress.switchToDeterminate(numImages);
-
-                        }
-                        progress.progress("Images (" + service.getName() + ")", ++processedImages);
-                        --numImages;
                     } catch (Exception e) {
                         logger.log(Level.INFO, "Exception from service: " + service.getName(), e);
                         stats.addError(service);
                     }
+                    //check if new files enqueued
+                    int newImages = getNumImages();
+                    if (newImages > numImages) {
+                        numImages = newImages + processedImages + 1;
+                        progress.switchToIndeterminate();
+                        progress.switchToDeterminate(numImages);
+
+                    }
+                    progress.progress("Images (" + service.getName() + ")", ++processedImages);
+                    --numImages;
                 }
             }
 
@@ -578,21 +578,21 @@ public class IngestManager {
                     }
                     try {
                         service.process(unit.content);
-                        int newFsContents = getNumFsContents();
-                        if (newFsContents > numFsContents) {
-                            //update progress bar if new enqueued
-                            numFsContents = newFsContents + processedFiles + 1;
-                            progress.switchToIndeterminate();
-                            progress.switchToDeterminate(numFsContents);
-
-                        }
-                        progress.progress("Files (" + service.getName() + ")", ++processedFiles);
-                        --numFsContents;
                     } catch (Exception e) {
                         logger.log(Level.INFO, "Exception from service: " + service.getName(), e);
                         stats.addError(service);
                     }
                 }
+                int newFsContents = getNumFsContents();
+                if (newFsContents > numFsContents) {
+                    //update progress bar if new enqueued
+                    numFsContents = newFsContents + processedFiles + 1;
+                    progress.switchToIndeterminate();
+                    progress.switchToDeterminate(numFsContents);
+
+                }
+                progress.progress("Files", ++processedFiles);
+                --numFsContents;
             }
             logger.log(Level.INFO, "Done background processing");
             return null;
