@@ -85,25 +85,19 @@ public class IngestManager {
      * Notifies services when work is complete or should be interrupted using complete() and stop() calls.
      * Does not block and can be called multiple times to enqueue more work to already running background process.
      */
-    void execute(Collection<IngestServiceAbstract> services, final Collection<Image> images) {
+    void execute(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
 
-        for (Image image : images) {
-            for (IngestServiceAbstract service : services) {
-                switch (service.getType()) {
-                    case Image:
-                        addImage((IngestServiceImage) service, image);
-                        break;
-                    case FsContent:
-                        addFsContent((IngestServiceFsContent) service, image);
-                        break;
-                    default:
-                        logger.log(Level.SEVERE, "Unexpected service type: " + service.getType().name());
-                }
-            }
-        }
+        //queuing start
+        tc.enableStartButton(false);
+        SwingWorker queueWorker = new EnqueueWorker(services, images);
+        queueWorker.execute();
 
         logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + fsContentQueue.toString());
 
+
+    }
+
+    private void startAll() {
         boolean start = false;
         if (ingester == null) {
             start = true;
@@ -123,6 +117,7 @@ public class IngestManager {
             stats = new IngestManagerStats();
             ingester.execute();
         }
+
     }
 
     /**
@@ -654,6 +649,94 @@ public class IngestManager {
             for (IngestServiceFsContent s : fsContentServices) {
                 s.stop();
             }
+            //empty queues
+            emptyFsContents();
+            emptyImages();
+        }
+    }
+
+    private class EnqueueWorker extends SwingWorker {
+
+        Collection<IngestServiceAbstract> services;
+        final Collection<Image> images;
+        int total;
+
+        EnqueueWorker(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
+            this.services = services;
+            this.images = images;
+        }
+        private ProgressHandle progress;
+
+        @Override
+        protected Object doInBackground() throws Exception {
+            progress = ProgressHandleFactory.createHandle("Queueing Ingest", new Cancellable() {
+
+                @Override
+                public boolean cancel() {
+                    return EnqueueWorker.this.cancel(true);
+                }
+            });
+
+            total = services.size() * images.size();
+            progress.start(total);
+            //progress.switchToIndeterminate();
+            queueAll(services, images);
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            try {
+                super.get(); //block and get all exceptions thrown while doInBackground()      
+            } catch (CancellationException e) {
+                //task was cancelled
+                handleInterruption();
+
+            } catch (InterruptedException ex) {
+                handleInterruption();
+            } catch (ExecutionException ex) {
+                handleInterruption();
+
+
+            } catch (Exception ex) {
+                handleInterruption();
+
+            } finally {
+                //queing end
+                if (this.isCancelled()) {
+                    //empty queues
+                    emptyFsContents();
+                    emptyImages();
+                } else {
+                    //start ingest workers
+                    startAll();
+                }
+
+                progress.finish();
+                tc.enableStartButton(true);
+            }
+        }
+
+        private void queueAll(Collection<IngestServiceAbstract> services, final Collection<Image> images) {
+            int processed = 0;
+            for (Image image : images) {
+                for (IngestServiceAbstract service : services) {
+                    progress.progress(service.getName() + " " + image.getName(), ++processed);
+                    switch (service.getType()) {
+                        case Image:
+                            addImage((IngestServiceImage) service, image);
+                            break;
+                        case FsContent:
+                            addFsContent((IngestServiceFsContent) service, image);
+                            break;
+                        default:
+                            logger.log(Level.SEVERE, "Unexpected service type: " + service.getType().name());
+                    }
+                }
+            }
+        }
+
+        private void handleInterruption() {
             //empty queues
             emptyFsContents();
             emptyImages();
