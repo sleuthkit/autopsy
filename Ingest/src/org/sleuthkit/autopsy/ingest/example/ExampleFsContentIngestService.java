@@ -16,65 +16,74 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.ingest.example;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
+import org.sleuthkit.autopsy.ingest.IngestServiceAbstract.ServiceType;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
 import org.sleuthkit.datamodel.FsContent;
 
-//service provider registered in layer.xml
-public final class KeywordSearchIngestService implements IngestServiceFsContent {
+/**
+ * Example implementation of a fscontent image ingest service 
+ * 
+ */
+public class ExampleFsContentIngestService implements IngestServiceFsContent {
 
-    private static final Logger logger = Logger.getLogger(KeywordSearchIngestService.class.getName());
-    private static KeywordSearchIngestService instance = null;
-    
+    private static final Logger logger = Logger.getLogger(ExampleFsContentIngestService.class.getName());
+    private static ExampleFsContentIngestService instance = null;
     private IngestManager manager;
-    
+    private static int messageId = 0;
 
-    public static synchronized KeywordSearchIngestService getDefault() {
+    public static synchronized ExampleFsContentIngestService getDefault() {
         if (instance == null) {
-            instance = new KeywordSearchIngestService();
+            instance = new ExampleFsContentIngestService();
         }
         return instance;
     }
 
     @Override
     public void process(FsContent fsContent) {
-        //logger.log(Level.INFO, "Processing fsContent: " + fsContent.getName());
+        manager.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
+
+        //service specific FsContent processing code here
         try {
             Thread.sleep(100);
+        } catch (InterruptedException e) {
         }
-        catch (InterruptedException e) {}
-        manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "Processing " + fsContent.getName()));
-       
+
+
     }
 
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete()");
-        manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "COMPLETE"));
+        manager.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
+        
+         //service specific cleanup due completion here
     }
 
     @Override
     public String getName() {
-        return "Keyword Search";
+        return "Example FsContent Service";
     }
 
     @Override
     public void init(IngestManager manager) {
         logger.log(Level.INFO, "init()");
         this.manager = manager;
-        
-        manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "INIT"));
+
+        //service specific initialization here
     }
 
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
+        
+        //service specific cleanup due interruption here
     }
 
     @Override

@@ -7,5 +7,18 @@
         <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.IngestTopComponent.getDefault"/>
         <attr name="position" intvalue="300"/>
     </file>
+    <!-- example services -->
+    <!--
+        <file name="org-sleuthkit-autopsy-ingest-example-ExampleImageIngestService.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceImage"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.example.ExampleImageIngestService.getDefault"/>
+            <attr name="position" intvalue="1000"/>
+        </file>
+        <file name="org-sleuthkit-autopsy-ingest-example-ExampleFsContentIngestService.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceFsContent"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.example.ExampleFsContentIngestService.getDefault"/>
+            <attr name="position" intvalue="1100"/>
+        </file>
+        -->
     </folder>
 </filesystem>
