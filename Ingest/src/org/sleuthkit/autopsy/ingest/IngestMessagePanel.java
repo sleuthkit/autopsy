@@ -63,7 +63,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         messageTable = new javax.swing.JTable();
 
-        setBorder(javax.swing.BorderFactory.createMatteBorder(2, 2, 2, 2, new java.awt.Color(153, 153, 255)));
+        setOpaque(false);
 
         jScrollPane1.setOpaque(false);
 
@@ -71,6 +71,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
+        messageTable.setAutoscrolls(false);
         messageTable.setColumnSelectionAllowed(false);
         messageTable.setGridColor(new java.awt.Color(204, 204, 204));
         messageTable.setOpaque(false);
@@ -85,11 +86,11 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 302, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables

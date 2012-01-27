@@ -2,13 +2,7 @@
 
 <Form version="1.6" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <Properties>
-    <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-      <Border info="org.netbeans.modules.form.compat2.border.MatteColorBorderInfo">
-        <MatteColorBorder bottom="2" left="2" right="2" top="2">
-          <Color PropertyName="color" blue="ff" green="99" red="99" type="rgb"/>
-        </MatteColorBorder>
-      </Border>
-    </Property>
+    <Property name="opaque" type="boolean" value="false"/>
   </Properties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="1"/>
@@ -25,12 +19,12 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane1" alignment="0" pref="302" max="32767" attributes="0"/>
+          <Component id="jScrollPane1" alignment="0" pref="306" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane1" alignment="0" pref="213" max="32767" attributes="0"/>
+          <Component id="jScrollPane1" alignment="0" pref="217" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -57,6 +51,7 @@
               <Connection code="tableModel" type="code"/>
             </Property>
             <Property name="autoResizeMode" type="int" value="3"/>
+            <Property name="autoscrolls" type="boolean" value="false"/>
             <Property name="columnSelectionAllowed" type="boolean" value="false"/>
             <Property name="gridColor" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="cc" green="cc" red="cc" type="rgb"/>

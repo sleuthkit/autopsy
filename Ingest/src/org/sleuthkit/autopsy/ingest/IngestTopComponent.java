@@ -115,6 +115,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         messagePanel.setOpaque(false);
         messageFrame.setOpaque(false);
         //this.setComponentZOrder(messageFrame, 0);
+        this.setComponentZOrder(controlPanel, 2);
         messageFrame.setContentPane(messagePanel);
         messageFrame.pack();
         messageFrame.setVisible(true);
@@ -155,16 +156,38 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
 
         mainScrollPane = new javax.swing.JScrollPane();
         mainPanel = new javax.swing.JPanel();
+        messageFrame = new javax.swing.JInternalFrame();
+        controlPanel = new javax.swing.JPanel();
         topLable = new javax.swing.JLabel();
         servicesPanel = new javax.swing.JPanel();
         freqSlider = new javax.swing.JSlider();
-        startButton = new javax.swing.JButton();
         refreshFreqLabel = new javax.swing.JLabel();
-        messageFrame = new javax.swing.JInternalFrame();
+        startButton = new javax.swing.JButton();
 
-        mainScrollPane.setPreferredSize(new java.awt.Dimension(289, 509));
+        mainScrollPane.setPreferredSize(new java.awt.Dimension(322, 732));
 
-        topLable.setFont(new java.awt.Font("Tahoma", 0, 12));
+        mainPanel.setPreferredSize(new java.awt.Dimension(322, 732));
+
+        messageFrame.setBorder(javax.swing.BorderFactory.createMatteBorder(2, 2, 2, 2, new java.awt.Color(204, 204, 255)));
+        messageFrame.setMaximizable(true);
+        messageFrame.setResizable(true);
+        messageFrame.setTitle(org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.messageFrame.title")); // NOI18N
+        messageFrame.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        messageFrame.setFrameIcon(null);
+        messageFrame.setVisible(true);
+
+        javax.swing.GroupLayout messageFrameLayout = new javax.swing.GroupLayout(messageFrame.getContentPane());
+        messageFrame.getContentPane().setLayout(messageFrameLayout);
+        messageFrameLayout.setHorizontalGroup(
+            messageFrameLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 237, Short.MAX_VALUE)
+        );
+        messageFrameLayout.setVerticalGroup(
+            messageFrameLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 227, Short.MAX_VALUE)
+        );
+
+        topLable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(topLable, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.topLable.text")); // NOI18N
 
         servicesPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
@@ -194,6 +217,8 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(refreshFreqLabel, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.refreshFreqLabel.text")); // NOI18N
+
         org.openide.awt.Mnemonics.setLocalizedText(startButton, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.startButton.text")); // NOI18N
         startButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -201,24 +226,48 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(refreshFreqLabel, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.refreshFreqLabel.text")); // NOI18N
-
-        messageFrame.setBorder(null);
-        messageFrame.setResizable(true);
-        messageFrame.setTitle(org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.messageFrame.title")); // NOI18N
-        messageFrame.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        messageFrame.setFrameIcon(null);
-        messageFrame.setVisible(true);
-
-        javax.swing.GroupLayout messageFrameLayout = new javax.swing.GroupLayout(messageFrame.getContentPane());
-        messageFrame.getContentPane().setLayout(messageFrameLayout);
-        messageFrameLayout.setHorizontalGroup(
-            messageFrameLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 237, Short.MAX_VALUE)
+        javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
+        controlPanel.setLayout(controlPanelLayout);
+        controlPanelLayout.setHorizontalGroup(
+            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(controlPanelLayout.createSequentialGroup()
+                        .addComponent(topLable)
+                        .addContainerGap(114, Short.MAX_VALUE))
+                    .addGroup(controlPanelLayout.createSequentialGroup()
+                        .addComponent(servicesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(31, 31, 31))
+                    .addGroup(controlPanelLayout.createSequentialGroup()
+                        .addComponent(startButton)
+                        .addContainerGap(174, Short.MAX_VALUE))
+                    .addGroup(controlPanelLayout.createSequentialGroup()
+                        .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(31, Short.MAX_VALUE))))
+            .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(controlPanelLayout.createSequentialGroup()
+                    .addGap(74, 74, 74)
+                    .addComponent(refreshFreqLabel)
+                    .addContainerGap(77, Short.MAX_VALUE)))
         );
-        messageFrameLayout.setVerticalGroup(
-            messageFrameLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 229, Short.MAX_VALUE)
+        controlPanelLayout.setVerticalGroup(
+            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelLayout.createSequentialGroup()
+                .addGap(20, 20, 20)
+                .addComponent(topLable)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(servicesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(startButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(288, Short.MAX_VALUE))
+            .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(controlPanelLayout.createSequentialGroup()
+                    .addGap(555, 555, 555)
+                    .addComponent(refreshFreqLabel)
+                    .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
 
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
@@ -226,41 +275,23 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         mainPanelLayout.setHorizontalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(topLable, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addComponent(servicesPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(freqSlider, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(71, Short.MAX_VALUE))
                     .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(startButton))
-                    .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addGap(74, 74, 74)
-                        .addComponent(refreshFreqLabel))
-                    .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(messageFrame)))
-                .addContainerGap())
+                        .addComponent(messageFrame, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
+                        .addGap(71, 71, 71))))
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
-                .addGap(24, 24, 24)
-                .addComponent(topLable)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(servicesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(startButton)
-                .addGap(18, 18, 18)
-                .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(refreshFreqLabel)
-                .addGap(18, 18, 18)
+                .addContainerGap()
+                .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(40, 40, 40)
                 .addComponent(messageFrame)
-                .addContainerGap(86, Short.MAX_VALUE))
+                .addGap(129, 129, 129))
         );
 
         mainScrollPane.setViewportView(mainPanel);
@@ -269,11 +300,11 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
+            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 322, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 664, Short.MAX_VALUE)
+            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 732, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -322,6 +353,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         }
     }//GEN-LAST:event_freqSliderStateChanged
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel controlPanel;
     private javax.swing.JSlider freqSlider;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JScrollPane mainScrollPane;
