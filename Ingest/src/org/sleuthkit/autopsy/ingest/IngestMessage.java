@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import javax.swing.text.DateFormatter;
 import org.sleuthkit.autopsy.datamodel.KeyValueThing;
 
 /**
@@ -38,12 +41,15 @@ public class IngestMessage {
     private IngestServiceAbstract source;
     private String text;
     private KeyValueThing data;
+    private Date datePosted;
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private IngestMessage(long ID, MessageType messageType, IngestServiceAbstract source, String text) {
         this.ID = ID;
         this.source = source;
         this.messageType = messageType;
         this.text = text;
+        datePosted = new Date();
     }
 
     //getters
@@ -67,12 +73,17 @@ public class IngestMessage {
         return messageType;
     }
     
+    public Date getDatePosted() {
+        return datePosted;
+    }
+    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(Long.toString(ID)).append(": ");
         sb.append("type: ").append(messageType.name());
         sb.append(" source: ").append(source.getName());
+        sb.append(" date: ").append(dateFormat.format(datePosted));
         sb.append(" text: ").append(text);
         if (data != null)
             sb.append(" data: ").append(data.toString()).append(' ');
@@ -97,21 +108,23 @@ public class IngestMessage {
         if (this.source != other.source && (this.source == null || !this.source.equals(other.source))) {
             return false;
         }
+        if (this.datePosted != other.datePosted && (this.datePosted == null || !this.datePosted.equals(other.datePosted))) {
+            return false;
+        }
         return true;
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 83 * hash + (int) (this.ID ^ (this.ID >>> 32));
-        hash = 83 * hash + (this.messageType != null ? this.messageType.hashCode() : 0);
-        hash = 83 * hash + (this.source != null ? this.source.hashCode() : 0);
-        hash = 83 * hash + (this.text != null ? this.text.hashCode() : 0);
+        hash = 29 * hash + (int) (this.ID ^ (this.ID >>> 32));
+        hash = 29 * hash + (this.messageType != null ? this.messageType.hashCode() : 0);
+        hash = 29 * hash + (this.source != null ? this.source.hashCode() : 0);
+        hash = 29 * hash + (this.text != null ? this.text.hashCode() : 0);
+        hash = 29 * hash + (this.datePosted != null ? this.datePosted.hashCode() : 0);
         return hash;
     }
 
-   
-    
 
     //factory methods
     public static IngestMessage createMessage(long ID, MessageType messageType, IngestServiceAbstract source, String message) {

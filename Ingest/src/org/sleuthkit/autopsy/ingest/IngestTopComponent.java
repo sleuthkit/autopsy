@@ -32,6 +32,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
+import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import org.openide.util.NbBundle;
@@ -52,6 +53,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     private IngestManager manager = null;
     private Collection<IngestServiceAbstract> services;
     private Map<String, Boolean> serviceStates;
+    private IngestMessagePanel messagePanel;
     private ActionListener serviceSelListener = new ActionListener() {
 
         @Override
@@ -105,6 +107,20 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
 
         servicesPanel.setLayout(new BoxLayout(servicesPanel, BoxLayout.Y_AXIS));
 
+        
+        freqSlider.setEnabled(false);
+        
+        messagePanel = new IngestMessagePanel();
+        
+        messagePanel.setOpaque(false);
+        messageFrame.setOpaque(false);
+        //this.setComponentZOrder(messageFrame, 0);
+        messageFrame.setContentPane(messagePanel);
+        messageFrame.pack();
+        messageFrame.setVisible(true);
+        
+       
+        
         Collection<IngestServiceImage> imageServices = IngestManager.enumerateImageServices();
         for (IngestServiceImage service : imageServices) {
             final String serviceName = service.getName();
@@ -126,6 +142,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
             servicesPanel.add(checkbox);
             serviceStates.put(serviceName, true);
         }
+        
     }
 
     /** This method is called from within the constructor to
@@ -143,6 +160,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         freqSlider = new javax.swing.JSlider();
         startButton = new javax.swing.JButton();
         refreshFreqLabel = new javax.swing.JLabel();
+        messageFrame = new javax.swing.JInternalFrame();
 
         mainScrollPane.setPreferredSize(new java.awt.Dimension(289, 509));
 
@@ -185,6 +203,24 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
 
         org.openide.awt.Mnemonics.setLocalizedText(refreshFreqLabel, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.refreshFreqLabel.text")); // NOI18N
 
+        messageFrame.setBorder(null);
+        messageFrame.setResizable(true);
+        messageFrame.setTitle(org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.messageFrame.title")); // NOI18N
+        messageFrame.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        messageFrame.setFrameIcon(null);
+        messageFrame.setVisible(true);
+
+        javax.swing.GroupLayout messageFrameLayout = new javax.swing.GroupLayout(messageFrame.getContentPane());
+        messageFrame.getContentPane().setLayout(messageFrameLayout);
+        messageFrameLayout.setHorizontalGroup(
+            messageFrameLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 237, Short.MAX_VALUE)
+        );
+        messageFrameLayout.setVerticalGroup(
+            messageFrameLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 229, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
         mainPanelLayout.setHorizontalGroup(
@@ -203,8 +239,11 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
                         .addComponent(startButton))
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addGap(74, 74, 74)
-                        .addComponent(refreshFreqLabel)))
-                .addContainerGap(173, Short.MAX_VALUE))
+                        .addComponent(refreshFreqLabel))
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(messageFrame)))
+                .addContainerGap())
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -219,7 +258,9 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
                 .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(refreshFreqLabel)
-                .addContainerGap(198, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(messageFrame)
+                .addContainerGap(86, Short.MAX_VALUE))
         );
 
         mainScrollPane.setViewportView(mainPanel);
@@ -232,7 +273,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 509, Short.MAX_VALUE)
+            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 664, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -284,6 +325,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     private javax.swing.JSlider freqSlider;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JScrollPane mainScrollPane;
+    private javax.swing.JInternalFrame messageFrame;
     private javax.swing.JLabel refreshFreqLabel;
     private javax.swing.JPanel servicesPanel;
     private javax.swing.JButton startButton;
@@ -327,5 +369,6 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     void displayMessage(IngestMessage ingestMessage) {
         //TODO widget
         logger.log(Level.INFO, "INGEST MESSAGE: " + ingestMessage.toString());
+        messagePanel.addMessage(ingestMessage);
     }
 }
