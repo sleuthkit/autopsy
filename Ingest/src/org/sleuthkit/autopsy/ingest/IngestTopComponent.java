@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.ingest;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -113,7 +115,20 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         
         messagePanel.setOpaque(false);
         messageFrame.setOpaque(false);
-        //this.setComponentZOrder(messageFrame, 0);
+        messageFrame.addComponentListener(new ComponentAdapter() {
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+                
+                super.componentResized(e);
+               messageFrame.setPreferredSize(messageFrame.getSize());
+            }
+
+            
+          
+        });
+ 
+        //make messageframe on top
         this.setComponentZOrder(controlPanel, 2);
         messageFrame.setContentPane(messagePanel);
         messageFrame.pack();
@@ -162,31 +177,36 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         freqSlider = new javax.swing.JSlider();
         refreshFreqLabel = new javax.swing.JLabel();
         startButton = new javax.swing.JButton();
+        refreshFrequencyLabel = new javax.swing.JLabel();
+        mainProgressBar = new javax.swing.JProgressBar();
+        ingestProgressLabel = new javax.swing.JLabel();
 
-        mainScrollPane.setPreferredSize(new java.awt.Dimension(322, 732));
+        mainScrollPane.setPreferredSize(new java.awt.Dimension(322, 749));
 
-        mainPanel.setPreferredSize(new java.awt.Dimension(322, 732));
+        mainPanel.setPreferredSize(new java.awt.Dimension(322, 749));
 
-        messageFrame.setBorder(javax.swing.BorderFactory.createMatteBorder(2, 2, 2, 2, new java.awt.Color(204, 204, 255)));
+        messageFrame.setBorder(new javax.swing.border.LineBorder(javax.swing.UIManager.getDefaults().getColor("InternalFrame.inactiveTitleBackground"), 3, true));
         messageFrame.setMaximizable(true);
         messageFrame.setResizable(true);
         messageFrame.setTitle(org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.messageFrame.title")); // NOI18N
         messageFrame.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         messageFrame.setFrameIcon(null);
+        messageFrame.setOpaque(true);
+        messageFrame.setPreferredSize(new java.awt.Dimension(280, 260));
         messageFrame.setVisible(true);
 
         javax.swing.GroupLayout messageFrameLayout = new javax.swing.GroupLayout(messageFrame.getContentPane());
         messageFrame.getContentPane().setLayout(messageFrameLayout);
         messageFrameLayout.setHorizontalGroup(
             messageFrameLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 237, Short.MAX_VALUE)
+            .addGap(0, 274, Short.MAX_VALUE)
         );
         messageFrameLayout.setVerticalGroup(
             messageFrameLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 227, Short.MAX_VALUE)
+            .addGap(0, 231, Short.MAX_VALUE)
         );
 
-        topLable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        topLable.setFont(new java.awt.Font("Tahoma", 0, 12));
         org.openide.awt.Mnemonics.setLocalizedText(topLable, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.topLable.text")); // NOI18N
 
         servicesPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
@@ -225,6 +245,10 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(refreshFrequencyLabel, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.refreshFrequencyLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(ingestProgressLabel, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.ingestProgressLabel.text")); // NOI18N
+
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
         controlPanel.setLayout(controlPanelLayout);
         controlPanelLayout.setHorizontalGroup(
@@ -234,21 +258,31 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(controlPanelLayout.createSequentialGroup()
                         .addComponent(topLable)
-                        .addContainerGap(114, Short.MAX_VALUE))
+                        .addContainerGap(153, Short.MAX_VALUE))
                     .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addComponent(servicesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(31, 31, 31))
+                        .addComponent(servicesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(70, 70, 70))
                     .addGroup(controlPanelLayout.createSequentialGroup()
                         .addComponent(startButton)
-                        .addContainerGap(174, Short.MAX_VALUE))
+                        .addContainerGap(213, Short.MAX_VALUE))
                     .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(31, Short.MAX_VALUE))))
+                        .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(mainProgressBar, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(freqSlider, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addContainerGap(70, Short.MAX_VALUE))))
+            .addGroup(controlPanelLayout.createSequentialGroup()
+                .addGap(59, 59, 59)
+                .addComponent(refreshFrequencyLabel)
+                .addContainerGap(129, Short.MAX_VALUE))
+            .addGroup(controlPanelLayout.createSequentialGroup()
+                .addGap(69, 69, 69)
+                .addComponent(ingestProgressLabel)
+                .addContainerGap(135, Short.MAX_VALUE))
             .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(controlPanelLayout.createSequentialGroup()
                     .addGap(74, 74, 74)
                     .addComponent(refreshFreqLabel)
-                    .addContainerGap(77, Short.MAX_VALUE)))
+                    .addContainerGap(116, Short.MAX_VALUE)))
         );
         controlPanelLayout.setVerticalGroup(
             controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -261,7 +295,13 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
                 .addComponent(startButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(288, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(refreshFrequencyLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(mainProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(ingestProgressLabel)
+                .addContainerGap(228, Short.MAX_VALUE))
             .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(controlPanelLayout.createSequentialGroup()
                     .addGap(555, 555, 555)
@@ -276,21 +316,21 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
             .addGroup(mainPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, mainPanelLayout.createSequentialGroup()
+                        .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(71, 71, 71))
                     .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(71, Short.MAX_VALUE))
-                    .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addComponent(messageFrame, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
-                        .addGap(71, 71, 71))))
+                        .addComponent(messageFrame, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(48, 48, 48))))
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(40, 40, 40)
-                .addComponent(messageFrame)
-                .addGap(129, 129, 129))
+                .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 357, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(30, 30, 30)
+                .addComponent(messageFrame, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(127, 127, 127))
         );
 
         mainScrollPane.setViewportView(mainPanel);
@@ -299,11 +339,11 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 322, Short.MAX_VALUE)
+            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 340, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 732, Short.MAX_VALUE)
+            .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 771, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -354,10 +394,13 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel controlPanel;
     private javax.swing.JSlider freqSlider;
+    private javax.swing.JLabel ingestProgressLabel;
     private javax.swing.JPanel mainPanel;
+    private javax.swing.JProgressBar mainProgressBar;
     private javax.swing.JScrollPane mainScrollPane;
     private javax.swing.JInternalFrame messageFrame;
     private javax.swing.JLabel refreshFreqLabel;
+    private javax.swing.JLabel refreshFrequencyLabel;
     private javax.swing.JPanel servicesPanel;
     private javax.swing.JButton startButton;
     private javax.swing.JLabel topLable;
