@@ -720,8 +720,10 @@ public class IngestManager {
         private void queueAll(Collection<IngestServiceAbstract> services, final Collection<Image> images) {
             int processed = 0;
             for (Image image : images) {
+                final String imageName = image.getName();
                 for (IngestServiceAbstract service : services) {
-                    progress.progress(service.getName() + " " + image.getName(), ++processed);
+                    final String serviceName = service.getName();
+                    progress.progress(serviceName + " " + imageName, processed);
                     switch (service.getType()) {
                         case Image:
                             addImage((IngestServiceImage) service, image);
@@ -732,6 +734,7 @@ public class IngestManager {
                         default:
                             logger.log(Level.SEVERE, "Unexpected service type: " + service.getType().name());
                     }
+                    progress.progress(serviceName + " " + imageName, ++processed);
                 }
             }
         }
