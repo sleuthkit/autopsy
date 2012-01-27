@@ -24,6 +24,7 @@ package org.sleuthkit.autopsy.hashdatabase;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
@@ -65,6 +66,17 @@ public class HashDbIngestService implements IngestServiceFsContent {
         logger.log(Level.INFO, "init()");
         this.manager = manager;
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
+        try {
+            HashDbSettings hashDbSettings = HashDbSettings.getHashDbSettings();
+            String nsrlDbPath;
+            if((nsrlDbPath = hashDbSettings.getNSRLDatabasePath()) != null && !nsrlDbPath.equals(""))
+                skCase.setNSRLDatabase(nsrlDbPath);
+            String knownBadDbPath;
+            if((knownBadDbPath = hashDbSettings.getKnownBadDatabasePath()) != null && !knownBadDbPath.equals(""))
+                skCase.setKnownBadDatabase(knownBadDbPath);
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Setting NSRL and Known database failed", ex);
+        }
     }
      
      /**
@@ -74,6 +86,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
     @Override
     public void complete(){
         logger.log(Level.INFO, "complete()");
+        DirectoryTreeTopComponent.findInstance().componentOpened();
     }
     
     /**
@@ -92,25 +105,24 @@ public class HashDbIngestService implements IngestServiceFsContent {
     public String getName(){
         return NAME;
     }
-    
-    @Override
-    public ServiceType getType() {
-        return ServiceType.FsContent;
-    }
 
     @Override
     public void process(FsContent fsContent){
-        logger.log(Level.INFO, "Processing fsContent: " + fsContent.getName());
-        /*try{
-            long status = skCase.analyzeFileMd5(fsContent);
-            if(status == 1){
-                manager.postMessage(IngestMessage.createDataMessage(123, this, "Found known file", null));
-            }else if(status == 2){
-                manager.postMessage(IngestMessage.createDataMessage(123, this, "Found known bad file", null));
+        String name = fsContent.getName();
+        long id = fsContent.getId();
+        try{
+            String status = skCase.analyzeFileMd5(fsContent);
+            if(status.equals("known") || status.equals("known bad")){
+                manager.postMessage(IngestMessage.createDataMessage(id, this, name + " is a " + status + " file", null));
             }
-        } catch (TskException e){
-            logger.log(Level.SEVERE, "Couldn't analyze file - see sleuthkit log for details");
-        }*/
+        } catch (TskException ex){
+            logger.log(Level.SEVERE, "Couldn't analyze file " + name + " with ID " + id + " - see sleuthkit log for details", ex);
+        }
+    }
+
+    @Override
+    public ServiceType getType() {
+        return ServiceType.FsContent;
     }
     
 }

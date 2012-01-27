@@ -30,7 +30,7 @@
         <file name="org-sleuthkit-autopsy-hashdatabase-HashDbIngestService.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceFsContent"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.hashdatabase.HashDbIngestService.getDefault"/>
-            <attr name="position" intvalue="300"/>
+            <attr name="position" intvalue="500"/>
         </file>
     </folder>
 </filesystem>
