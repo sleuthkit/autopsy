@@ -276,6 +276,27 @@ public class IngestManager {
         }
         return ret;
     }
+    
+    private void initMainProgress(final int maximum) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                tc.initProgress(maximum);
+            }
+        });
+         
+        
+    }
+    
+    private void updateMainProgress(final int progress) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                tc.updateProgress(progress);
+            }
+        });
+        
+    }
 
     //manages queue of pending FsContent and IngestServiceFsContent to use on that content
     //TODO in future content sort will be maintained based on priorities
@@ -607,8 +628,8 @@ public class IngestManager {
             int numFsContents = getNumFsContents();
             progress.switchToDeterminate(numFsContents);
             int processedFiles = 0;
+            initMainProgress(numFsContents);
             //process fscontents queue
-            progress.progress("Running file ingest services.");
             while (hasNextFsContent()) {
                 QueueUnit<FsContent, IngestServiceFsContent> unit = getNextFsContent();
                 for (IngestServiceFsContent service : unit.services) {
@@ -628,9 +649,11 @@ public class IngestManager {
                     numFsContents = newFsContents + processedFiles + 1;
                     progress.switchToIndeterminate();
                     progress.switchToDeterminate(numFsContents);
+                    initMainProgress(numFsContents);
 
                 }
                 progress.progress("Files", ++processedFiles);
+                updateMainProgress(processedFiles);
                 --numFsContents;
             }
             logger.log(Level.INFO, "Done background processing");
@@ -672,7 +695,7 @@ public class IngestManager {
                 logger.log(Level.INFO, "Summary Report: " + stats.toString());
                 //postMessage(IngestMessage.createManagerMessage(stats.toHtmlString()));
                 JOptionPane.showMessageDialog(
-                        tc,
+                        null,
                         stats.toHtmlString(),
                         "Ingest Summary",
                         JOptionPane.INFORMATION_MESSAGE);
