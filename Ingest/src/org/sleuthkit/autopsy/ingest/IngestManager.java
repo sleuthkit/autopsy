@@ -57,7 +57,6 @@ public class IngestManager {
     private IngestManagerStats stats;
     private int updateFrequency;
     //queues
-    private final Object queueLock = new Object();
     private final ImageQueue imageQueue = new ImageQueue();
     private final FsContentQueue fsContentQueue = new FsContentQueue();
     private IngestThread ingester;
@@ -92,7 +91,7 @@ public class IngestManager {
 
         //logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + fsContentQueue.toString());
     }
-    
+
     /**
      * IngestManager entry point, enqueues image to be processed.
      * Spawns background thread which enumerates all sorted files and executes chosen services per file in a pre-determined order.
@@ -102,9 +101,9 @@ public class IngestManager {
      * @param image image to execute services on
      */
     void execute(final Collection<IngestServiceAbstract> services, final Image image) {
-       Collection<Image> images = new ArrayList<Image>();
-       images.add(image);
-       execute(services, images);
+        Collection<Image> images = new ArrayList<Image>();
+        images.add(image);
+        execute(services, images);
     }
 
     private void startAll() {
@@ -194,24 +193,15 @@ public class IngestManager {
     }
 
     private void addImage(IngestServiceImage service, Image image) {
-
-        synchronized (queueLock) {
-            imageQueue.enqueue(image, service);
-            //queueLock.notifyAll();
-        }
-
-
+        imageQueue.enqueue(image, service);
     }
 
     private void addFsContent(IngestServiceFsContent service, Image image) {
         Collection<FsContent> fsContents = new GetAllFilesContentVisitor().visit(image);
-        synchronized (queueLock) {
-            for (FsContent fsContent : fsContents) {
-                fsContentQueue.enqueue(fsContent, service);
-            }
-            //queueLock.notifyAll();
+
+        for (FsContent fsContent : fsContents) {
+            fsContentQueue.enqueue(fsContent, service);
         }
-        //logger.log(Level.INFO, fsContentQueue.toString());
     }
 
     /**
@@ -221,39 +211,28 @@ public class IngestManager {
      */
     private QueueUnit<FsContent, IngestServiceFsContent> getNextFsContent() {
         QueueUnit<FsContent, IngestServiceFsContent> ret = null;
-        synchronized (queueLock) {
-            ret = fsContentQueue.dequeue();
-
-        }
+        ret = fsContentQueue.dequeue();
         return ret;
     }
 
     private boolean hasNextFsContent() {
         boolean ret = false;
-        synchronized (queueLock) {
-            ret = fsContentQueue.hasNext();
-        }
+        ret = fsContentQueue.hasNext();
         return ret;
     }
 
     private int getNumFsContents() {
         int ret = 0;
-        synchronized (queueLock) {
-            ret = fsContentQueue.getCount();
-        }
+        ret = fsContentQueue.getCount();
         return ret;
     }
 
     private void emptyFsContents() {
-        synchronized (queueLock) {
-            fsContentQueue.empty();
-        }
+        fsContentQueue.empty();
     }
 
     private void emptyImages() {
-        synchronized (queueLock) {
-            imageQueue.empty();
-        }
+        imageQueue.empty();
     }
 
     /**
@@ -263,28 +242,22 @@ public class IngestManager {
      */
     private QueueUnit<Image, IngestServiceImage> getNextImage() {
         QueueUnit<Image, IngestServiceImage> ret = null;
-        synchronized (queueLock) {
-            ret = imageQueue.dequeue();
-        }
+        ret = imageQueue.dequeue();
         return ret;
     }
 
     private boolean hasNextImage() {
         boolean ret = false;
-        synchronized (queueLock) {
-            ret = imageQueue.hasNext();
-        }
+        ret = imageQueue.hasNext();
         return ret;
     }
 
     private int getNumImages() {
         int ret = 0;
-        synchronized (queueLock) {
-            ret = imageQueue.getCount();
-        }
+        ret = imageQueue.getCount();
         return ret;
     }
-    
+
     private void initMainProgress(final int maximum) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -292,10 +265,8 @@ public class IngestManager {
                 tc.initProgress(maximum);
             }
         });
-         
-        
     }
-    
+
     private void updateMainProgress(final int progress) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -303,7 +274,6 @@ public class IngestManager {
                 tc.updateProgress(progress);
             }
         });
-        
     }
 
     //manages queue of pending FsContent and IngestServiceFsContent to use on that content
@@ -312,7 +282,7 @@ public class IngestManager {
 
         List<QueueUnit<FsContent, IngestServiceFsContent>> fsContentUnits = new ArrayList<QueueUnit<FsContent, IngestServiceFsContent>>();
 
-        void enqueue(FsContent fsContent, IngestServiceFsContent service) {
+        synchronized void enqueue(FsContent fsContent, IngestServiceFsContent service) {
             QueueUnit<FsContent, IngestServiceFsContent> found = findFsContent(fsContent);
 
             if (found != null) {
@@ -326,7 +296,7 @@ public class IngestManager {
             }
         }
 
-        void enqueue(FsContent fsContent, Collection<IngestServiceFsContent> services) {
+        synchronized void enqueue(FsContent fsContent, Collection<IngestServiceFsContent> services) {
             QueueUnit<FsContent, IngestServiceFsContent> found = findFsContent(fsContent);
 
             if (found != null) {
@@ -340,19 +310,19 @@ public class IngestManager {
             }
         }
 
-        boolean hasNext() {
+        synchronized boolean hasNext() {
             return !fsContentUnits.isEmpty();
         }
 
-        int getCount() {
+        synchronized int getCount() {
             return fsContentUnits.size();
         }
 
-        void empty() {
+        synchronized void empty() {
             fsContentUnits.clear();
         }
 
-        QueueUnit<FsContent, IngestServiceFsContent> dequeue() {
+        synchronized QueueUnit<FsContent, IngestServiceFsContent> dequeue() {
             if (!hasNext()) {
                 throw new UnsupportedOperationException("FsContent processing queue is empty");
             }
@@ -372,7 +342,7 @@ public class IngestManager {
         }
 
         @Override
-        public String toString() {
+        synchronized public String toString() {
             return "FsContentQueue, size: " + Integer.toString(fsContentUnits.size());
         }
     }
@@ -382,7 +352,7 @@ public class IngestManager {
 
         List<QueueUnit<Image, IngestServiceImage>> imageUnits = new ArrayList<QueueUnit<Image, IngestServiceImage>>();
 
-        void enqueue(Image image, IngestServiceImage service) {
+        synchronized void enqueue(Image image, IngestServiceImage service) {
             QueueUnit<Image, IngestServiceImage> found = findImage(image);
 
             if (found != null) {
@@ -396,7 +366,7 @@ public class IngestManager {
             }
         }
 
-        void enqueue(Image image, Collection<IngestServiceImage> services) {
+        synchronized void enqueue(Image image, Collection<IngestServiceImage> services) {
             QueueUnit<Image, IngestServiceImage> found = findImage(image);
 
             if (found != null) {
@@ -410,19 +380,19 @@ public class IngestManager {
             }
         }
 
-        boolean hasNext() {
+        synchronized boolean hasNext() {
             return !imageUnits.isEmpty();
         }
 
-        int getCount() {
+        synchronized int getCount() {
             return imageUnits.size();
         }
 
-        void empty() {
+        synchronized void empty() {
             imageUnits.clear();
         }
 
-        QueueUnit<Image, IngestServiceImage> dequeue() {
+        synchronized QueueUnit<Image, IngestServiceImage> dequeue() {
             if (!hasNext()) {
                 throw new UnsupportedOperationException("Image processing queue is empty");
             }
@@ -430,7 +400,7 @@ public class IngestManager {
             return imageUnits.remove(0);
         }
 
-        private QueueUnit<Image, IngestServiceImage> findImage(Image image) {
+        private synchronized QueueUnit<Image, IngestServiceImage> findImage(Image image) {
             QueueUnit<Image, IngestServiceImage> found = null;
             for (QueueUnit<Image, IngestServiceImage> unit : imageUnits) {
                 if (unit.content.equals(image)) {
@@ -442,7 +412,7 @@ public class IngestManager {
         }
 
         @Override
-        public String toString() {
+        public synchronized String toString() {
             return "ImageQueue, size: " + Integer.toString(imageUnits.size());
         }
     }
@@ -495,20 +465,21 @@ public class IngestManager {
 
         @Override
         public String toString() {
+            final String EOL = System.getProperty("line.separator");
             StringBuilder sb = new StringBuilder();
             if (startTime != null) {
-                sb.append("Start time: ").append(dateFormatter.format(startTime)).append("\n");
+                sb.append("Start time: ").append(dateFormatter.format(startTime)).append(EOL);
             }
             if (endTime != null) {
-                sb.append("End time: ").append(dateFormatter.format(endTime)).append("\n");
+                sb.append("End time: ").append(dateFormatter.format(endTime)).append(EOL);
             }
-            sb.append("Total ingest time: ").append(getTotalTimeString()).append("\n");
-            sb.append("Total errors: ").append(errorsTotal).append("\n");
+            sb.append("Total ingest time: ").append(getTotalTimeString()).append(EOL);
+            sb.append("Total errors: ").append(errorsTotal).append(EOL);
             if (errorsTotal > 0) {
                 sb.append("Errors per service:");
                 for (IngestServiceAbstract service : errors.keySet()) {
                     final int errorsService = errors.get(service);
-                    sb.append("\t").append(service.getName()).append(": ").append(errorsService).append("\n");
+                    sb.append("\t").append(service.getName()).append(": ").append(errorsService).append(EOL);
                 }
             }
             return sb.toString();
@@ -700,7 +671,7 @@ public class IngestManager {
                 stats.end();
                 progress.finish();
 
-                if (! this.isCancelled()) {
+                if (!this.isCancelled()) {
                     logger.log(Level.INFO, "Summary Report: " + stats.toString());
                     tc.displayReport(stats.toHtmlString());
                 }
@@ -724,7 +695,7 @@ public class IngestManager {
             //empty queues
             emptyFsContents();
             emptyImages();
-            
+
             //reset main progress bar
             initMainProgress(0);
         }
