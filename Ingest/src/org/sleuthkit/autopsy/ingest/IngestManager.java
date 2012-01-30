@@ -39,7 +39,6 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
 
@@ -86,19 +85,25 @@ public class IngestManager {
      * Notifies services when work is complete or should be interrupted using complete() and stop() calls.
      * Does not block and can be called multiple times to enqueue more work to already running background process.
      */
-    void execute(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
+    void execute(Collection<IngestServiceAbstract> services, final Collection<Image> images) {
 
-        //queuing start
-        tc.enableStartButton(false);
-        SwingWorker queueWorker = new EnqueueWorker(services, images);
-        queueWorker.execute();
+        for (Image image : images) {
+            for (IngestServiceAbstract service : services) {
+                switch (service.getType()) {
+                    case Image:
+                        addImage((IngestServiceImage) service, image);
+                        break;
+                    case FsContent:
+                        addFsContent((IngestServiceFsContent) service, image);
+                        break;
+                    default:
+                        logger.log(Level.SEVERE, "Unexpected service type: " + service.getType().name());
+                }
+            }
+        }
 
         logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + fsContentQueue.toString());
 
-
-    }
-
-    private void startAll() {
         boolean start = false;
         if (ingester == null) {
             start = true;
@@ -118,7 +123,6 @@ public class IngestManager {
             stats = new IngestManagerStats();
             ingester.execute();
         }
-
     }
 
     /**
@@ -153,13 +157,6 @@ public class IngestManager {
      * Viewer will attempt to identify duplicate messages and filter them out (slower)
      */
     public synchronized void postMessage(final IngestMessage message) {
-
-        if (stats != null) {
-            //record the error for stats, if stats are running
-            if (message.getMessageType() == MessageType.ERROR) {
-                stats.addError(message.getSource());
-            }
-        }
 
         SwingUtilities.invokeLater(new Runnable() {
 
@@ -274,27 +271,6 @@ public class IngestManager {
             ret = imageQueue.getCount();
         }
         return ret;
-    }
-    
-    private void initMainProgress(final int maximum) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                tc.initProgress(maximum);
-            }
-        });
-         
-        
-    }
-    
-    private void updateMainProgress(final int progress) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                tc.updateProgress(progress);
-            }
-        });
-        
     }
 
     //manages queue of pending FsContent and IngestServiceFsContent to use on that content
@@ -505,28 +481,6 @@ public class IngestManager {
             return sb.toString();
         }
 
-        public String toHtmlString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("<html>");
-            if (startTime != null) {
-                sb.append("Start time: ").append(dateFormatter.format(startTime)).append("<br />");
-            }
-            if (endTime != null) {
-                sb.append("End time: ").append(dateFormatter.format(endTime)).append("<br />");
-            }
-            sb.append("Total ingest time: ").append(getTotalTimeString()).append("<br />");
-            sb.append("Total errors: ").append(errorsTotal).append("<br />");
-            if (errorsTotal > 0) {
-                sb.append("Errors per service:");
-                for (IngestServiceAbstract service : errors.keySet()) {
-                    final int errorsService = errors.get(service);
-                    sb.append("\t").append(service.getName()).append(": ").append(errorsService).append("<br />");
-                }
-            }
-            sb.append("</html>");
-            return sb.toString();
-        }
-
         void start() {
             startTime = new Date();
         }
@@ -542,14 +496,6 @@ public class IngestManager {
             return endTime.getTime() - startTime.getTime();
         }
 
-        String getStartTimeString() {
-            return dateFormatter.format(startTime);
-        }
-
-        String getEndTimeString() {
-            return dateFormatter.format(endTime);
-        }
-
         String getTotalTimeString() {
             long ms = getTotalTime();
             long hours = TimeUnit.MILLISECONDS.toHours(ms);
@@ -562,7 +508,7 @@ public class IngestManager {
             return sb.toString();
         }
 
-        synchronized void addError(IngestServiceAbstract source) {
+        void addError(IngestServiceAbstract source) {
             ++errorsTotal;
             int curServiceError = errors.get(source);
             errors.put(source, curServiceError + 1);
@@ -606,20 +552,20 @@ public class IngestManager {
 
                     try {
                         service.process(unit.content);
+                        //check if new files enqueued
+                        int newImages = getNumImages();
+                        if (newImages > numImages) {
+                            numImages = newImages + processedImages + 1;
+                            progress.switchToIndeterminate();
+                            progress.switchToDeterminate(numImages);
+
+                        }
+                        progress.progress("Images (" + service.getName() + ")", ++processedImages);
+                        --numImages;
                     } catch (Exception e) {
                         logger.log(Level.INFO, "Exception from service: " + service.getName(), e);
                         stats.addError(service);
                     }
-                    //check if new files enqueued
-                    int newImages = getNumImages();
-                    if (newImages > numImages) {
-                        numImages = newImages + processedImages + 1;
-                        progress.switchToIndeterminate();
-                        progress.switchToDeterminate(numImages);
-
-                    }
-                    progress.progress("Images (" + service.getName() + ")", ++processedImages);
-                    --numImages;
                 }
             }
 
@@ -627,8 +573,8 @@ public class IngestManager {
             int numFsContents = getNumFsContents();
             progress.switchToDeterminate(numFsContents);
             int processedFiles = 0;
-            initMainProgress(numFsContents);
             //process fscontents queue
+            progress.progress("Running file ingest services.");
             while (hasNextFsContent()) {
                 QueueUnit<FsContent, IngestServiceFsContent> unit = getNextFsContent();
                 for (IngestServiceFsContent service : unit.services) {
@@ -637,23 +583,21 @@ public class IngestManager {
                     }
                     try {
                         service.process(unit.content);
+                        int newFsContents = getNumFsContents();
+                        if (newFsContents > numFsContents) {
+                            //update progress bar if new enqueued
+                            numFsContents = newFsContents + processedFiles + 1;
+                            progress.switchToIndeterminate();
+                            progress.switchToDeterminate(numFsContents);
+
+                        }
+                        progress.progress("Files (" + service.getName() + ")", ++processedFiles);
+                        --numFsContents;
                     } catch (Exception e) {
                         logger.log(Level.INFO, "Exception from service: " + service.getName(), e);
                         stats.addError(service);
                     }
                 }
-                int newFsContents = getNumFsContents();
-                if (newFsContents > numFsContents) {
-                    //update progress bar if new enqueued
-                    numFsContents = newFsContents + processedFiles + 1;
-                    progress.switchToIndeterminate();
-                    progress.switchToDeterminate(numFsContents);
-                    initMainProgress(numFsContents);
-
-                }
-                progress.progress("Files", ++processedFiles);
-                updateMainProgress(processedFiles);
-                --numFsContents;
             }
             logger.log(Level.INFO, "Done background processing");
             return null;
@@ -691,10 +635,8 @@ public class IngestManager {
                 stats.end();
                 progress.finish();
 
-                if (! this.isCancelled()) {
-                    logger.log(Level.INFO, "Summary Report: " + stats.toString());
-                    tc.displayReport(stats.toHtmlString());
-                }
+                //TODO display report
+                logger.log(Level.INFO, "STATS: " + stats.toString());
             }
 
         }
@@ -712,100 +654,6 @@ public class IngestManager {
             for (IngestServiceFsContent s : fsContentServices) {
                 s.stop();
             }
-            //empty queues
-            emptyFsContents();
-            emptyImages();
-            
-            //reset main progress bar
-            initMainProgress(0);
-        }
-    }
-
-    private class EnqueueWorker extends SwingWorker {
-
-        Collection<IngestServiceAbstract> services;
-        final Collection<Image> images;
-        int total;
-
-        EnqueueWorker(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
-            this.services = services;
-            this.images = images;
-        }
-        private ProgressHandle progress;
-
-        @Override
-        protected Object doInBackground() throws Exception {
-            progress = ProgressHandleFactory.createHandle("Queueing Ingest", new Cancellable() {
-
-                @Override
-                public boolean cancel() {
-                    return EnqueueWorker.this.cancel(true);
-                }
-            });
-
-            total = services.size() * images.size();
-            progress.start(total);
-            //progress.switchToIndeterminate();
-            queueAll(services, images);
-            return null;
-        }
-
-        @Override
-        protected void done() {
-            try {
-                super.get(); //block and get all exceptions thrown while doInBackground()      
-            } catch (CancellationException e) {
-                //task was cancelled
-                handleInterruption();
-
-            } catch (InterruptedException ex) {
-                handleInterruption();
-            } catch (ExecutionException ex) {
-                handleInterruption();
-
-
-            } catch (Exception ex) {
-                handleInterruption();
-
-            } finally {
-                //queing end
-                if (this.isCancelled()) {
-                    //empty queues
-                    emptyFsContents();
-                    emptyImages();
-                } else {
-                    //start ingest workers
-                    startAll();
-                }
-
-                progress.finish();
-                tc.enableStartButton(true);
-            }
-        }
-
-        private void queueAll(Collection<IngestServiceAbstract> services, final Collection<Image> images) {
-            int processed = 0;
-            for (Image image : images) {
-                final String imageName = image.getName();
-                for (IngestServiceAbstract service : services) {
-                    final String serviceName = service.getName();
-                    progress.progress(serviceName + " " + imageName, processed);
-                    switch (service.getType()) {
-                        case Image:
-                            addImage((IngestServiceImage) service, image);
-                            break;
-                        case FsContent:
-                            addFsContent((IngestServiceFsContent) service, image);
-                            break;
-                        default:
-                            logger.log(Level.SEVERE, "Unexpected service type: " + service.getType().name());
-                    }
-                    progress.progress(serviceName + " " + imageName, ++processed);
-                }
-            }
-        }
-
-        private void handleInterruption() {
             //empty queues
             emptyFsContents();
             emptyImages();

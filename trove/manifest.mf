@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+OpenIDE-Module: org.gnu.trove
+OpenIDE-Module-Localizing-Bundle: org/gnu/trove/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+

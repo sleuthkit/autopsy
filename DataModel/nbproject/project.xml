@@ -59,15 +59,14 @@
             <public-packages>
                 <package>org.sleuthkit.autopsy.datamodel</package>
                 <package>org.sleuthkit.datamodel</package>
-                <package>org.sqlite</package>
             </public-packages>
-            <class-path-extension>
-                <runtime-relative-path>ext/sqlite-jdbc-3.6.20.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlite-jdbc-3.6.20.jar</binary-origin>
-            </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/Tsk_DataModel.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/Tsk_DataModel.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sqlite-jdbc-3.7.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sqlite-jdbc-3.7.2.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>
