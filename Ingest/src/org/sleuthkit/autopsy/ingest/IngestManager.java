@@ -77,12 +77,12 @@ public class IngestManager {
         imageIngesters = new ArrayList<IngestImageThread>();
 
         //one time initialization of services
-        
+
         //image services are now initialized per instance
         //for (IngestServiceImage s : imageServices) {
         //    s.init(this);
         //}
-        
+
         for (IngestServiceFsContent s : fsContentServices) {
             s.init(this);
         }
@@ -131,27 +131,32 @@ public class IngestManager {
                     this.getNextImage();
             //check if such (service,image) already running
 
-            for (IngestServiceImage quService : qu.services) {
-                boolean alreadyRunning = false;
-                for (IngestImageThread worker : imageIngesters) {
-                    if (!worker.getImage().equals(qu.content)) {
-                        continue; //check next worker
+
+            synchronized (this) {
+                for (IngestServiceImage quService : qu.services) {
+                    boolean alreadyRunning = false;
+                    for (IngestImageThread worker : imageIngesters) {
+                        if (!worker.getImage().equals(qu.content)) {
+                            continue; //check next worker
+                        }
+                        //same image, check service (by name, not id, since different instances)
+                        if (worker.getService().getName().equals(quService.getName())) {
+                            alreadyRunning = true;
+                            logger.log(Level.INFO, "Image Ingester <" + qu.content + ", " + quService.getName() + "> is already running");
+                            break;
+                        }
                     }
-                    //same image, check service (by name, not id, since different instances)
-                    if (worker.getService().getName().equals(quService.getName())) {
-                        alreadyRunning = true;
-                        logger.log(Level.INFO, "Image Ingester <" + qu.content + ", " + quService.getName() + "> is already running");
-                        break;
+                    //checked all workers
+                    if (alreadyRunning == false) {
+                        logger.log(Level.INFO, "Starting new image Ingester <" + qu.content + ", " + quService.getName() + ">");
+                        IngestImageThread newImageWorker = new IngestImageThread(this, qu.content, quService);
+
+                        imageIngesters.add(newImageWorker);
+
+                        //image services are now initialized per instance
+                        quService.init(this);
+                        newImageWorker.execute();
                     }
-                }
-                //checked all workers
-                if (alreadyRunning == false) {
-                    logger.log(Level.INFO, "Starting new image Ingester <" + qu.content + ", " + quService.getName() + ">");
-                    IngestImageThread newImageWorker = new IngestImageThread(this, qu.content, quService);
-                    imageIngesters.add(newImageWorker);
-                    //image services are now initialized per instance
-                    quService.init(this);
-                    newImageWorker.execute();
                 }
             }
         }
@@ -181,8 +186,7 @@ public class IngestManager {
             fsContentIngester.execute();
         }
     }
-    
-    
+
     /**
      * stop currently running threads if any (e.g. when changing a case)
      */
@@ -190,17 +194,30 @@ public class IngestManager {
         //empty queues
         emptyFsContents();
         emptyImages();
-        
+
         //stop workers
+
         if (fsContentIngester != null) {
-            fsContentIngester.cancel(true);
-            fsContentIngester = null;
+            boolean cancelled = fsContentIngester.cancel(true);
+            if (!cancelled) {
+                logger.log(Level.WARNING, "Unable to cancel file ingest worker");
+            } else {
+                fsContentIngester = null;
+            }
         }
-        
-        for (IngestImageThread imageWorker : imageIngesters) {
-            imageWorker.cancel(true);    
-            removeImageIngestWorker(imageWorker);
+
+        List<IngestImageThread> toStop = new ArrayList<IngestImageThread>();
+        synchronized (this) {
+            toStop.addAll(imageIngesters);
         }
+
+        for (IngestImageThread imageWorker : toStop) {
+            boolean cancelled = imageWorker.cancel(true);
+            if (!cancelled) {
+                logger.log(Level.WARNING, "Unable to cancel image ingest worker " + imageWorker.getService().getName() + " img: " + imageWorker.getImage());
+            } 
+        }
+
     }
 
     /**
@@ -354,6 +371,7 @@ public class IngestManager {
 
     private void initMainProgress(final int maximum) {
         SwingUtilities.invokeLater(new Runnable() {
+
             @Override
             public void run() {
                 tc.initProgress(maximum);
@@ -363,6 +381,7 @@ public class IngestManager {
 
     private void updateMainProgress(final int progress) {
         SwingUtilities.invokeLater(new Runnable() {
+
             @Override
             public void run() {
                 tc.updateProgress(progress);
@@ -371,9 +390,11 @@ public class IngestManager {
     }
 
     //image worker to remove itself when complete or interrupted
-    synchronized void removeImageIngestWorker(IngestImageThread worker) {
+    void removeImageIngestWorker(IngestImageThread worker) {
         //remove worker
-        imageIngesters.remove(worker);
+        synchronized (this) {
+            imageIngesters.remove(worker);
+        }
     }
 
     //manages queue of pending FsContent and IngestServiceFsContent to use on that content
