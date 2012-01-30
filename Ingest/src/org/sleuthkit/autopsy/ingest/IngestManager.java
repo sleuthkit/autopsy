@@ -59,7 +59,11 @@ public class IngestManager {
     //queues
     private final ImageQueue imageQueue = new ImageQueue();
     private final FsContentQueue fsContentQueue = new FsContentQueue();
-    private IngestThread ingester;
+    private final Object queuesLock = new Object();
+    //workers
+    private IngestFsContentThread fsContentIngester;
+    private List<IngestImageThread> imageIngesters;
+    //services
     final Collection<IngestServiceImage> imageServices = enumerateImageServices();
     final Collection<IngestServiceFsContent> fsContentServices = enumerateFsContentServices();
 
@@ -70,10 +74,15 @@ public class IngestManager {
     IngestManager(IngestTopComponent tc) {
         this.tc = tc;
 
+        imageIngesters = new ArrayList<IngestImageThread>();
+
         //one time initialization of services
-        for (IngestServiceImage s : imageServices) {
-            s.init(this);
-        }
+        
+        //image services are now initialized per instance
+        //for (IngestServiceImage s : imageServices) {
+        //    s.init(this);
+        //}
+        
         for (IngestServiceFsContent s : fsContentServices) {
             s.init(this);
         }
@@ -106,27 +115,92 @@ public class IngestManager {
         execute(services, images);
     }
 
+    /**
+     * manage current workers
+     * if fsContent service is still running, do nothing and allow it to consume queue
+     * otherwise start /restart fsContent worker
+     * 
+     * image workers run per (service,image).  Check if one for the (service,image) is already running
+     * otherwise start/restart the worker
+     */
     private void startAll() {
-        boolean start = false;
-        if (ingester == null) {
-            start = true;
+        //image ingesters
+        while (hasNextImage()) {
+            //dequeue
+            final QueueUnit<Image, IngestServiceImage> qu =
+                    this.getNextImage();
+            //check if such (service,image) already running
 
-        } //if worker had completed, restart it in case data is still enqueued
-        else if (ingester.isDone()
-                && (hasNextFsContent() || hasNextImage())) {
-            logger.log(Level.INFO, "Restarting ingester thread.");
-            start = true;
+            for (IngestServiceImage quService : qu.services) {
+                boolean alreadyRunning = false;
+                for (IngestImageThread worker : imageIngesters) {
+                    if (!worker.getImage().equals(qu.content)) {
+                        continue; //check next worker
+                    }
+                    //same image, check service (by name, not id, since different instances)
+                    if (worker.getService().getName().equals(quService.getName())) {
+                        alreadyRunning = true;
+                        logger.log(Level.INFO, "Image Ingester <" + qu.content + ", " + quService.getName() + "> is already running");
+                        break;
+                    }
+                }
+                //checked all workers
+                if (alreadyRunning == false) {
+                    logger.log(Level.INFO, "Starting new image Ingester <" + qu.content + ", " + quService.getName() + ">");
+                    IngestImageThread newImageWorker = new IngestImageThread(this, qu.content, quService);
+                    imageIngesters.add(newImageWorker);
+                    //image services are now initialized per instance
+                    quService.init(this);
+                    newImageWorker.execute();
+                }
+            }
+        }
+
+        //merge with queue (will not add if already exists)
+
+        //fsContent ingester
+        boolean startFsContentIngester = false;
+        if (hasNextFsContent()) {
+            if (fsContentIngester
+                    == null) {
+                startFsContentIngester = true;
+                logger.log(Level.INFO, "Satrting initial FsContent Ingester");
+            } //if worker had completed, restart it in case data is still enqueued
+            else if (fsContentIngester.isDone()) {
+                startFsContentIngester = true;
+                logger.log(Level.INFO, "Restarting fsContent ingester thread.");
+            }
         } else {
-            logger.log(Level.INFO, "Ingester is still running");
+            logger.log(Level.INFO, "no new FsContent enqueued, no ingester needed");
         }
 
-        if (start) {
-            logger.log(Level.INFO, "Starting new ingester.");
-            ingester = new IngestThread();
+
+        if (startFsContentIngester) {
+            fsContentIngester = new IngestFsContentThread();
             stats = new IngestManagerStats();
-            ingester.execute();
+            fsContentIngester.execute();
         }
-
+    }
+    
+    
+    /**
+     * stop currently running threads if any (e.g. when changing a case)
+     */
+    void stopAll() {
+        //empty queues
+        emptyFsContents();
+        emptyImages();
+        
+        //stop workers
+        if (fsContentIngester != null) {
+            fsContentIngester.cancel(true);
+            fsContentIngester = null;
+        }
+        
+        for (IngestImageThread imageWorker : imageIngesters) {
+            imageWorker.cancel(true);    
+            removeImageIngestWorker(imageWorker);
+        }
     }
 
     /**
@@ -193,14 +267,18 @@ public class IngestManager {
     }
 
     private void addImage(IngestServiceImage service, Image image) {
-        imageQueue.enqueue(image, service);
+        synchronized (queuesLock) {
+            imageQueue.enqueue(image, service);
+        }
     }
 
     private void addFsContent(IngestServiceFsContent service, Image image) {
         Collection<FsContent> fsContents = new GetAllFilesContentVisitor().visit(image);
 
-        for (FsContent fsContent : fsContents) {
-            fsContentQueue.enqueue(fsContent, service);
+        synchronized (queuesLock) {
+            for (FsContent fsContent : fsContents) {
+                fsContentQueue.enqueue(fsContent, service);
+            }
         }
     }
 
@@ -211,28 +289,38 @@ public class IngestManager {
      */
     private QueueUnit<FsContent, IngestServiceFsContent> getNextFsContent() {
         QueueUnit<FsContent, IngestServiceFsContent> ret = null;
-        ret = fsContentQueue.dequeue();
+        synchronized (queuesLock) {
+            ret = fsContentQueue.dequeue();
+        }
         return ret;
     }
 
     private boolean hasNextFsContent() {
         boolean ret = false;
-        ret = fsContentQueue.hasNext();
+        synchronized (queuesLock) {
+            ret = fsContentQueue.hasNext();
+        }
         return ret;
     }
 
     private int getNumFsContents() {
         int ret = 0;
-        ret = fsContentQueue.getCount();
+        synchronized (queuesLock) {
+            ret = fsContentQueue.getCount();
+        }
         return ret;
     }
 
     private void emptyFsContents() {
-        fsContentQueue.empty();
+        synchronized (queuesLock) {
+            fsContentQueue.empty();
+        }
     }
 
     private void emptyImages() {
-        imageQueue.empty();
+        synchronized (queuesLock) {
+            imageQueue.empty();
+        }
     }
 
     /**
@@ -242,19 +330,25 @@ public class IngestManager {
      */
     private QueueUnit<Image, IngestServiceImage> getNextImage() {
         QueueUnit<Image, IngestServiceImage> ret = null;
-        ret = imageQueue.dequeue();
+        synchronized (queuesLock) {
+            ret = imageQueue.dequeue();
+        }
         return ret;
     }
 
     private boolean hasNextImage() {
         boolean ret = false;
-        ret = imageQueue.hasNext();
+        synchronized (queuesLock) {
+            ret = imageQueue.hasNext();
+        }
         return ret;
     }
 
     private int getNumImages() {
         int ret = 0;
-        ret = imageQueue.getCount();
+        synchronized (queuesLock) {
+            ret = imageQueue.getCount();
+        }
         return ret;
     }
 
@@ -276,13 +370,19 @@ public class IngestManager {
         });
     }
 
+    //image worker to remove itself when complete or interrupted
+    synchronized void removeImageIngestWorker(IngestImageThread worker) {
+        //remove worker
+        imageIngesters.remove(worker);
+    }
+
     //manages queue of pending FsContent and IngestServiceFsContent to use on that content
     //TODO in future content sort will be maintained based on priorities
     private class FsContentQueue {
 
         List<QueueUnit<FsContent, IngestServiceFsContent>> fsContentUnits = new ArrayList<QueueUnit<FsContent, IngestServiceFsContent>>();
 
-        synchronized void enqueue(FsContent fsContent, IngestServiceFsContent service) {
+        void enqueue(FsContent fsContent, IngestServiceFsContent service) {
             QueueUnit<FsContent, IngestServiceFsContent> found = findFsContent(fsContent);
 
             if (found != null) {
@@ -296,7 +396,7 @@ public class IngestManager {
             }
         }
 
-        synchronized void enqueue(FsContent fsContent, Collection<IngestServiceFsContent> services) {
+        void enqueue(FsContent fsContent, Collection<IngestServiceFsContent> services) {
             QueueUnit<FsContent, IngestServiceFsContent> found = findFsContent(fsContent);
 
             if (found != null) {
@@ -310,19 +410,19 @@ public class IngestManager {
             }
         }
 
-        synchronized boolean hasNext() {
+        boolean hasNext() {
             return !fsContentUnits.isEmpty();
         }
 
-        synchronized int getCount() {
+        int getCount() {
             return fsContentUnits.size();
         }
 
-        synchronized void empty() {
+        void empty() {
             fsContentUnits.clear();
         }
 
-        synchronized QueueUnit<FsContent, IngestServiceFsContent> dequeue() {
+        QueueUnit<FsContent, IngestServiceFsContent> dequeue() {
             if (!hasNext()) {
                 throw new UnsupportedOperationException("FsContent processing queue is empty");
             }
@@ -342,17 +442,17 @@ public class IngestManager {
         }
 
         @Override
-        synchronized public String toString() {
+        public synchronized String toString() {
             return "FsContentQueue, size: " + Integer.toString(fsContentUnits.size());
         }
     }
 
-    //manages queue of pending Images and IngestServiceImage to use on that image
+//manages queue of pending Images and IngestServiceImage to use on that image
     private class ImageQueue {
 
         List<QueueUnit<Image, IngestServiceImage>> imageUnits = new ArrayList<QueueUnit<Image, IngestServiceImage>>();
 
-        synchronized void enqueue(Image image, IngestServiceImage service) {
+        void enqueue(Image image, IngestServiceImage service) {
             QueueUnit<Image, IngestServiceImage> found = findImage(image);
 
             if (found != null) {
@@ -366,7 +466,7 @@ public class IngestManager {
             }
         }
 
-        synchronized void enqueue(Image image, Collection<IngestServiceImage> services) {
+        void enqueue(Image image, Collection<IngestServiceImage> services) {
             QueueUnit<Image, IngestServiceImage> found = findImage(image);
 
             if (found != null) {
@@ -380,19 +480,19 @@ public class IngestManager {
             }
         }
 
-        synchronized boolean hasNext() {
+        boolean hasNext() {
             return !imageUnits.isEmpty();
         }
 
-        synchronized int getCount() {
+        int getCount() {
             return imageUnits.size();
         }
 
-        synchronized void empty() {
+        void empty() {
             imageUnits.clear();
         }
 
-        synchronized QueueUnit<Image, IngestServiceImage> dequeue() {
+        QueueUnit<Image, IngestServiceImage> dequeue() {
             if (!hasNext()) {
                 throw new UnsupportedOperationException("Image processing queue is empty");
             }
@@ -400,7 +500,7 @@ public class IngestManager {
             return imageUnits.remove(0);
         }
 
-        private synchronized QueueUnit<Image, IngestServiceImage> findImage(Image image) {
+        private QueueUnit<Image, IngestServiceImage> findImage(Image image) {
             QueueUnit<Image, IngestServiceImage> found = null;
             for (QueueUnit<Image, IngestServiceImage> unit : imageUnits) {
                 if (unit.content.equals(image)) {
@@ -438,11 +538,14 @@ public class IngestManager {
         }
 
         //merge services with the current collection of services per image
-        //this assumes that there is one singleton instance of each type of service
+        //this assumes singleton instances of every service type for correct merge
+        //in case of multiple instances, they need to be handled correctly after dequeue()
         final void addAll(Collection<S> services) {
             this.services.addAll(services);
         }
 
+        //this assumes singleton instances of every service type for correct merge
+        //in case of multiple instances, they need to be handled correctly after dequeue()
         final void add(S service) {
             this.services.add(service);
         }
@@ -549,12 +652,12 @@ public class IngestManager {
         }
     }
 
-    //ingester worker doing work in background
-    //in current design, worker runs until queues are consumed
-    //and if needed, it is restarted when data arrives
-    private class IngestThread extends SwingWorker {
+//ingester worker for fsContent queue
+//worker runs until fsContent queue is consumed
+//and if needed, new instance is created and started when data arrives
+    private class IngestFsContentThread extends SwingWorker {
 
-        private Logger logger = Logger.getLogger(IngestThread.class.getName());
+        private Logger logger = Logger.getLogger(IngestFsContentThread.class.getName());
         private ProgressHandle progress;
 
         @Override
@@ -563,46 +666,15 @@ public class IngestManager {
             logger.log(Level.INFO, "Starting background processing");
             stats.start();
 
-            progress = ProgressHandleFactory.createHandle("Ingesting", new Cancellable() {
+            progress = ProgressHandleFactory.createHandle("File Ingest", new Cancellable() {
 
                 @Override
                 public boolean cancel() {
-                    return IngestThread.this.cancel(true);
+                    return IngestFsContentThread.this.cancel(true);
                 }
             });
 
             progress.start();
-            progress.switchToIndeterminate();
-            int numImages = getNumImages();
-            progress.switchToDeterminate(numImages);
-            int processedImages = 0;
-            //process image queue
-            while (hasNextImage()) {
-                QueueUnit<Image, IngestServiceImage> unit = getNextImage();
-                for (IngestServiceImage service : unit.services) {
-                    if (isCancelled()) {
-                        return null;
-                    }
-
-                    try {
-                        service.process(unit.content);
-                    } catch (Exception e) {
-                        logger.log(Level.INFO, "Exception from service: " + service.getName(), e);
-                        stats.addError(service);
-                    }
-                    //check if new files enqueued
-                    int newImages = getNumImages();
-                    if (newImages > numImages) {
-                        numImages = newImages + processedImages + 1;
-                        progress.switchToIndeterminate();
-                        progress.switchToDeterminate(numImages);
-
-                    }
-                    progress.progress("Images (" + service.getName() + ")", ++processedImages);
-                    --numImages;
-                }
-            }
-
             progress.switchToIndeterminate();
             int numFsContents = getNumFsContents();
             progress.switchToDeterminate(numFsContents);
@@ -679,22 +751,12 @@ public class IngestManager {
 
         }
 
-        @Override
-        protected void process(List chunks) {
-            super.process(chunks);
-        }
-
         private void handleInterruption() {
-            for (IngestServiceImage s : imageServices) {
-                s.stop();
-            }
-
             for (IngestServiceFsContent s : fsContentServices) {
                 s.stop();
             }
             //empty queues
             emptyFsContents();
-            emptyImages();
 
             //reset main progress bar
             initMainProgress(0);
@@ -737,7 +799,6 @@ public class IngestManager {
             } catch (CancellationException e) {
                 //task was cancelled
                 handleInterruption();
-
             } catch (InterruptedException ex) {
                 handleInterruption();
             } catch (ExecutionException ex) {
@@ -751,13 +812,11 @@ public class IngestManager {
                 //queing end
                 if (this.isCancelled()) {
                     //empty queues
-                    emptyFsContents();
-                    emptyImages();
+                    handleInterruption();
                 } else {
                     //start ingest workers
                     startAll();
                 }
-
                 progress.finish();
                 tc.enableStartButton(true);
             }
@@ -768,13 +827,29 @@ public class IngestManager {
             for (Image image : images) {
                 final String imageName = image.getName();
                 for (IngestServiceAbstract service : services) {
+                    if (isCancelled()) {
+                        return;
+                    }
                     final String serviceName = service.getName();
                     progress.progress(serviceName + " " + imageName, processed);
                     switch (service.getType()) {
                         case Image:
-                            addImage((IngestServiceImage) service, image);
+                            //enqueue a new instance of image service
+                            //Class serviceClass = service.getClass();
+                            //serviceClass.
+                            try {
+                                final IngestServiceImage newServiceInstance = (IngestServiceImage) (service.getClass()).newInstance();
+                                addImage(newServiceInstance, image);
+                            } catch (InstantiationException e) {
+                                logger.log(Level.SEVERE, "Cannot instantiate service: " + service.getName(), e);
+                            } catch (IllegalAccessException e) {
+                                logger.log(Level.SEVERE, "Cannot instantiate service: " + service.getName(), e);
+                            }
+
+                            //addImage((IngestServiceImage) service, image);
                             break;
                         case FsContent:
+                            //enqueue the same singleton fscontent service
                             addFsContent((IngestServiceFsContent) service, image);
                             break;
                         default:

@@ -24,6 +24,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -132,6 +133,24 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         messageFrame.pack();
         messageFrame.setVisible(true);
         
+        //handle case change
+        Case.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)) {
+                    Case oldCase = (Case) evt.getOldValue();
+                    if (oldCase == null)
+                        //nothing to do, not case had been opened
+                        return;
+                    //clear inbox
+                    messagePanel.clearMessages();
+                    //stop workers if running
+                    if (manager != null)
+                        manager.stopAll();
+                }
+            }
+            
+        });
         
         
         Collection<IngestServiceImage> imageServices = IngestManager.enumerateImageServices();
@@ -379,7 +398,8 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
             }
         }
         
-        manager.execute(servicesToStart, images);
+        if (! services.isEmpty() && ! images.isEmpty())
+            manager.execute(servicesToStart, images);
     }//GEN-LAST:event_startButtonActionPerformed
     
     private void freqSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_freqSliderStateChanged
