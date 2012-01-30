@@ -119,38 +119,29 @@
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
-                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="topLable" min="-2" max="-2" attributes="1"/>
-                                  <EmptySpace pref="198" max="32767" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="servicesPanel" min="-2" max="-2" attributes="1"/>
-                                  <EmptySpace min="-2" pref="115" max="-2" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="startButton" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="258" max="32767" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                                      <Component id="mainProgressBar" alignment="0" max="32767" attributes="1"/>
-                                      <Component id="freqSlider" alignment="0" max="32767" attributes="1"/>
+                              <Group type="102" attributes="0">
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="topLable" alignment="0" min="-2" max="-2" attributes="1"/>
+                                      <Component id="servicesPanel" alignment="0" min="-2" max="-2" attributes="1"/>
+                                      <Component id="startButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                                          <Component id="mainProgressBar" alignment="0" max="32767" attributes="1"/>
+                                          <Component id="freqSlider" alignment="0" max="32767" attributes="1"/>
+                                      </Group>
                                   </Group>
-                                  <EmptySpace pref="115" max="32767" attributes="0"/>
+                              </Group>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <EmptySpace min="-2" pref="59" max="-2" attributes="0"/>
+                                  <Component id="refreshFrequencyLabel" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" alignment="0" attributes="0">
+                                  <EmptySpace min="-2" pref="59" max="-2" attributes="0"/>
+                                  <Component id="ingestProgressLabel" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
-                      </Group>
-                      <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace min="-2" pref="59" max="-2" attributes="0"/>
-                          <Component id="refreshFrequencyLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="174" max="32767" attributes="0"/>
-                      </Group>
-                      <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace min="-2" pref="59" max="-2" attributes="0"/>
-                          <Component id="ingestProgressLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="171" max="32767" attributes="0"/>
+                          <EmptySpace pref="115" max="32767" attributes="0"/>
                       </Group>
                       <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">

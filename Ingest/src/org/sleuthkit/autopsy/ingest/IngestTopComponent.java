@@ -34,6 +34,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import org.openide.util.NbBundle;
@@ -435,8 +436,11 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
      * Display ingest summary report in some dialog
      */
     void displayReport(String ingestReport) {
-        //TODO widget
-        logger.log(Level.INFO, "INGEST REPORT: " + ingestReport);
+        JOptionPane.showMessageDialog(
+                        null,
+                        ingestReport,
+                        "Ingest Summary",
+                        JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**

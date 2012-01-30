@@ -33,7 +33,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
@@ -692,13 +691,10 @@ public class IngestManager {
                 stats.end();
                 progress.finish();
 
-                logger.log(Level.INFO, "Summary Report: " + stats.toString());
-                //postMessage(IngestMessage.createManagerMessage(stats.toHtmlString()));
-                JOptionPane.showMessageDialog(
-                        null,
-                        stats.toHtmlString(),
-                        "Ingest Summary",
-                        JOptionPane.INFORMATION_MESSAGE);
+                if (! this.isCancelled()) {
+                    logger.log(Level.INFO, "Summary Report: " + stats.toString());
+                    tc.displayReport(stats.toHtmlString());
+                }
             }
 
         }
@@ -719,6 +715,9 @@ public class IngestManager {
             //empty queues
             emptyFsContents();
             emptyImages();
+            
+            //reset main progress bar
+            initMainProgress(0);
         }
     }
 

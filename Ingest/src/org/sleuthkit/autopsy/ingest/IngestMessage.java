@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import javax.swing.text.DateFormatter;
 import org.sleuthkit.autopsy.datamodel.KeyValueThing;
 
 /**
