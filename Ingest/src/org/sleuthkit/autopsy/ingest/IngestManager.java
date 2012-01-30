@@ -81,21 +81,30 @@ public class IngestManager {
     }
 
     /**
-     * IngestManager entry point, enqueues image to be processed.
-     * Spawns background thread which enumerates all sorted files and executes chosen services per file in a pre-determined order.
-     * Notifies services when work is complete or should be interrupted using complete() and stop() calls.
-     * Does not block and can be called multiple times to enqueue more work to already running background process.
+     * Multiple image version of execute, enqueues multiple images and associated services at once
+     * @param services services to execute on every image
+     * @param images images to execute services on
      */
     void execute(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
-
-        //queuing start
         tc.enableStartButton(false);
         SwingWorker queueWorker = new EnqueueWorker(services, images);
         queueWorker.execute();
 
-        logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + fsContentQueue.toString());
-
-
+        //logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + fsContentQueue.toString());
+    }
+    
+    /**
+     * IngestManager entry point, enqueues image to be processed.
+     * Spawns background thread which enumerates all sorted files and executes chosen services per file in a pre-determined order.
+     * Notifies services when work is complete or should be interrupted using complete() and stop() calls.
+     * Does not block and can be called multiple times to enqueue more work to already running background process.
+     * @param services services to execute on the image
+     * @param image image to execute services on
+     */
+    void execute(final Collection<IngestServiceAbstract> services, final Image image) {
+       Collection<Image> images = new ArrayList<Image>();
+       images.add(image);
+       execute(services, images);
     }
 
     private void startAll() {
