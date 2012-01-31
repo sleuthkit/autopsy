@@ -78,6 +78,8 @@ public class IngestManager {
     public final static String SERVICE_STARTED_EVT = IngestManagerEvents.SERVICE_STARTED.name();
     public final static String SERVICE_COMPLETED_EVT = IngestManagerEvents.SERVICE_COMPLETED.name();
     public final static String SERVICE_STOPPED_EVT = IngestManagerEvents.SERVICE_STOPPED.name();
+    //initialization
+    private boolean initialized = false;
 
     /**
      * 
@@ -85,30 +87,19 @@ public class IngestManager {
      */
     IngestManager(IngestTopComponent tc) {
         this.tc = tc;
-
         imageIngesters = new ArrayList<IngestImageThread>();
-
-        //one time initialization of services
-
-        //image services are now initialized per instance
-        //for (IngestServiceImage s : imageServices) {
-        //    s.init(this);
-        //}
-
-        for (IngestServiceFsContent s : fsContentServices) {
-            s.init(this);
-        }
     }
 
     /**
      * Add property change listener to listen to ingest events
      * @param l PropertyChangeListener to add
      */
-    public static void addPropertyChangeListener(final PropertyChangeListener l) {
+    public static synchronized void addPropertyChangeListener(final PropertyChangeListener l) {
         pcs.addPropertyChangeListener(l);
     }
-    static void firePropertyChange(String property, Object oldV, Object newV) {
-        pcs.firePropertyChange(property, oldV, newV);
+
+    static synchronized void firePropertyChange(String property, String serviceName) {
+        pcs.firePropertyChange(property, serviceName, null);
     }
 
     /**
@@ -117,6 +108,20 @@ public class IngestManager {
      * @param images images to execute services on
      */
     void execute(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
+        if (!initialized) {
+            //one time initialization of services
+
+            //image services are now initialized per instance
+            //for (IngestServiceImage s : imageServices) {
+            //    s.init(this);
+            //}
+
+            for (IngestServiceFsContent s : fsContentServices) {
+                s.init(this);
+            }
+            initialized = true;
+        }
+
         tc.enableStartButton(false);
         SwingWorker queueWorker = new EnqueueWorker(services, images);
         queueWorker.execute();
@@ -179,7 +184,7 @@ public class IngestManager {
                         //image services are now initialized per instance
                         quService.init(this);
                         newImageWorker.execute();
-                        firePropertyChange(SERVICE_STARTED_EVT, quService.getName(), "");
+                        IngestManager.firePropertyChange(SERVICE_STARTED_EVT, quService.getName());
                     }
                 }
             }
@@ -238,6 +243,13 @@ public class IngestManager {
             if (!cancelled) {
                 logger.log(Level.WARNING, "Unable to cancel image ingest worker for service: " + imageWorker.getService().getName() + " img: " + imageWorker.getImage().getName());
             }
+        }
+
+        //workaround for jdbc call to complete
+        //TODO synchronize this if possible
+        try {
+            Thread.sleep(300);
+        } catch (InterruptedException e) {
         }
 
     }
@@ -711,10 +723,11 @@ public class IngestManager {
 
             //notify main thread services started
             SwingUtilities.invokeLater(new Runnable() {
+
                 @Override
                 public void run() {
                     for (IngestServiceFsContent s : fsContentServices) {
-                        firePropertyChange(SERVICE_STARTED_EVT, s.getName(), "");
+                        IngestManager.firePropertyChange(SERVICE_STARTED_EVT, s.getName());
                     }
                 }
             });
@@ -772,7 +785,7 @@ public class IngestManager {
                 if (!this.isCancelled()) {
                     for (IngestServiceFsContent s : fsContentServices) {
                         s.complete();
-                        firePropertyChange(SERVICE_COMPLETED_EVT, s.getName(), "");
+                        IngestManager.firePropertyChange(SERVICE_COMPLETED_EVT, s.getName());
                     }
                 }
 
@@ -804,7 +817,7 @@ public class IngestManager {
         private void handleInterruption() {
             for (IngestServiceFsContent s : fsContentServices) {
                 s.stop();
-                firePropertyChange(SERVICE_STOPPED_EVT, s.getName(), "");
+                IngestManager.firePropertyChange(SERVICE_STOPPED_EVT, s.getName());
             }
             //empty queues
             emptyFsContents();
@@ -886,8 +899,6 @@ public class IngestManager {
                     switch (service.getType()) {
                         case Image:
                             //enqueue a new instance of image service
-                            //Class serviceClass = service.getClass();
-                            //serviceClass.
                             try {
                                 final IngestServiceImage newServiceInstance = (IngestServiceImage) (service.getClass()).newInstance();
                                 addImage(newServiceInstance, image);
