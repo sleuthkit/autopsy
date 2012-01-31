@@ -6,8 +6,9 @@ package org.sleuthkit.autopsy.recentactivity;
 import java.io.File;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.FsContent;
@@ -27,6 +28,12 @@ public static boolean pathexists(String path){
     File file=new File(path);
     boolean exists = file.exists();
     return exists;
+}
+
+public static String utcConvert(String utc){
+                SimpleDateFormat formatter = new SimpleDateFormat("MM-dd-yyyy HH:mm");
+               String tempconvert = formatter.format(new Date(Long.parseLong(utc)));
+               return tempconvert;
 }
 
 public static boolean imgpathexists(String path){

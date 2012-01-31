@@ -5,7 +5,6 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.beans.PropertyChangeEvent;
-import java.lang.reflect.Array;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -17,6 +16,11 @@ import org.sleuthkit.autopsy.datamodel.KeyValueThing;
 import java.util.Random.*;
 import java.util.*;
 import java.util.logging.Logger;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.*;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+
 
 
 @ServiceProvider(service = DataExplorer.class)
@@ -64,11 +68,9 @@ void makeNodes()
         ffre.getffdb();    
         Chrome chre = new Chrome();
         chre.getchdb();
-        ExtractIE eere = new ExtractIE();
+       ExtractIE eere = new ExtractIE();
         eere.parsePascoResults();
-        
-        
-        
+       
         ArrayList<HashMap<String,Object>> IEresults = eere.PASCO_RESULTS_LIST;
         int cookiescount = 0;
         int bookmarkscount = 0;
@@ -77,12 +79,12 @@ void makeNodes()
         cookiescount = ffre.cookies.size() + chre.cookies.size();
         int ffcount = ffre.als.size();
         int chcount = chre.als.size();
-        ExtractRegistry regob = new ExtractRegistry();
-        regob.getregistryfiles();
+     //   ExtractRegistry regob = new ExtractRegistry();
+      //  regob.getregistryfiles();
         
           
         for(Map<String,Object> FFmap : ffre.als){
-           things.add(new KeyValueThing("FireFox", FFmap, NUMBER_THING_ID));  
+           things.add(new KeyValueThing("FireFox", FFmap, NUMBER_THING_ID));
         }
         
          for(HashMap<String,Object> IEmap : IEresults){

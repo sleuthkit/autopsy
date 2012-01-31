@@ -24,6 +24,9 @@ import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -86,6 +89,7 @@ public class ExtractIE { // implements BrowserActivity {
              temps = currentCase.getTempDirectory() + "\\" + indexFileName;
              File datFile = new File(temps);
              ContentUtils.writeToFile(fsc, datFile);
+             
              boolean bPascProcSuccess = executePasco(temps, index);
 
              //At this point pasco2 proccessed the index files.
@@ -171,6 +175,7 @@ public class ExtractIE { // implements BrowserActivity {
                       while (fileScanner.hasNext())
                       {
                          String line = fileScanner.nextLine();
+                        
                          //Need to change this pattern a bit because there might
                          //be instances were "V" might not apply.
                          String pattern = "(?)URL(\\s)(V|\\:)";
@@ -184,7 +189,6 @@ public class ExtractIE { // implements BrowserActivity {
                             PASCO_RESULTS_LUT.put("Title", lineBuff[2]);
                             PASCO_RESULTS_LUT.put("Count", lineBuff[0]);
                             PASCO_RESULTS_LUT.put("Last Accessed", lineBuff[3]);
-                           
                             PASCO_RESULTS_LUT.put("Reference", "None");
                             //KeyValueThing
                             //This will be redundant in terms IE.name() because of

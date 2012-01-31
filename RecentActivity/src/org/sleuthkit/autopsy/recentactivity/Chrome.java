@@ -10,10 +10,12 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import java.sql.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.lang.*;
 import java.util.*;
 import java.io.File;
 import java.io.IOException;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 /**
  *
  * @author Alex
@@ -24,9 +26,9 @@ public class Chrome {
 
    
    public static final String chquery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
-           + "urls.last_visit_time, urls.hidden, visits.visit_time, visits.from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
-   public static final String chcookiequery = "select name, value, host, expires_utc, last_access_utc, creation_utc from cookies";
-   public static final String chbookmarkquery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count, urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
+           + "datetime(urls.last_visit_time/1000000-11644473600,'unixepoch','localtime') as last_visit_time, urls.hidden, visits.visit_time, visits.from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
+   public static final String chcookiequery = "select name, value, host, expires_utc, datetime(last_access_utc/1000000-11644473600,'unixepoch','localtime') as last_access_utc, creation_utc from cookies";
+   public static final String chbookmarkquery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count, datetime(urls.last_visit_time/1000000-11644473600,'unixepoch','localtime') as urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
    public List<Map> als = new ArrayList();
    public ArrayList<HashMap> cookies = new ArrayList<HashMap>();
     public ArrayList<HashMap> bookmarks = new ArrayList<HashMap>();
@@ -60,17 +62,21 @@ public class Chrome {
                 {
                    dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connectionString);
                    ResultSet temprs = tempdbconnect.executeQry(chquery);
-                   
-                   
-                   
+                  
                    while(temprs.next()) 
                    {
-                      kvs.clear();       
+                      kvs.clear();        
                       kvs.put("Url", temprs.getString("url"));
                       kvs.put("Title", ((temprs.getString("title") != null) ? temprs.getString("title") : "No Title"));
                       kvs.put("Count", temprs.getString("visit_count"));
                       kvs.put("Last Accessed", temprs.getString("visit_date"));
                       kvs.put("Reference", temprs.getString("from_visit"));
+                      BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_URL, temprs.getString("url"), "RecentActivity","Chrome");
+                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, temprs.getString("visit_date"), "RecentActivity","Chrome");
+                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_REFERRER, temprs.getString("from_visit"), "RecentActivity","Chrome");
+                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_NAME, ((temprs.getString("title") != null) ? temprs.getString("title") : "No Title"), "RecentActivity","Chrome");
+                      
                       als.add(kvs);
                      
                    } 
@@ -127,6 +133,12 @@ public class Chrome {
                       kvs.put("Reference", temprs.getString("creation_utc"));
                       cookies.add(kvs);
                       
+                      BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
+                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_URL, temprs.getString("host"), "RecentActivity","Chrome");
+                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, Util.utcConvert(temprs.getString("access_utc")), "RecentActivity","Chrome");
+                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_TEXT, temprs.getString("value"), "RecentActivity","Chrome");
+                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_NAME, ((temprs.getString("name") != null) ? temprs.getString("name") : "No Title"), "RecentActivity","Chrome");
+                      
                    } 
                    tempdbconnect.closeConnection();
                    temprs.close();
@@ -173,13 +185,19 @@ public class Chrome {
                    ResultSet temprs = tempdbconnect.executeQry(chbookmarkquery);  
                    while(temprs.next()) 
                    {
+                      BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
                       HashMap<String, Object> kvs = new HashMap<String, Object>();
                       kvs.put("Url", temprs.getString("urls.url"));
                       kvs.put("Title", ((temprs.getString("starred.title") != null) ? temprs.getString("starred.title") : "No name"));
                       kvs.put("Count", temprs.getString("urls.typed_count"));
                       kvs.put("Last Accessed", temprs.getString("urls._last_visit_time"));
                       kvs.put("Reference", temprs.getString("starred.date_added"));
+                       bbart.addAttribute(ATTRIBUTE_TYPE.TSK_URL, temprs.getString("urls.url"), "RecentActivity", "Chrome");
+                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, temprs.getString("urls._last_visit_time"), "RecentActivity", "Chrome");
+                      
+                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_NAME, ((temprs.getString("starred.title") != null) ? temprs.getString("starred.title") : "No name"), "RecentActivity","Chrome");
                       bookmarks.add(kvs);
+                     
                       
                    } 
                    tempdbconnect.closeConnection();

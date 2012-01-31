@@ -4,7 +4,6 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import com.sun.corba.se.spi.activation.Server;
 import java.io.File;
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -81,8 +80,7 @@ public void getregistryfiles(){
     {
        boolean success = true;
        String type = "";
-       File rrFolder = InstalledFileLocator.getDefault().locate("rr", Server.class.getPackage().getName(), false);
-      // String instanceDir = rrFolder.getAbsolutePath() + File.separator + "rr";
+   
 
        try
        {
@@ -110,9 +108,13 @@ public void getregistryfiles(){
                 {
                     type = "security";
                 }
-           String command = "rip -r " + regFilePath +" -f " + type + " >> " + regFilePath + type + Integer.toString(fileIndex) + ".txt";
+                
+                String rrpath = System.getProperty("user.dir");
+                rrpath = rrpath.substring(0, rrpath.length()-14);
+                rrpath = rrpath + "thirdparty\\rr\\";
+                String command = rrpath + "rip.exe -r " + regFilePath +" -f " + type + " >> " + regFilePath + Integer.toString(fileIndex) + ".txt";
 
-            JavaSystemCaller.Exec.execute(command);
+                JavaSystemCaller.Exec.execute(command);
 
        }
        catch(Exception e)
