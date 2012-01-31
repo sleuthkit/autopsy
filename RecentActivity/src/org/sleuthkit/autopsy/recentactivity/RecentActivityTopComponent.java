@@ -28,7 +28,7 @@ public class RecentActivityTopComponent extends TopComponent {
     public RecentActivityTopComponent(RecentActivityDataExplorer edx) {
         this.edx = edx;
         initComponents();
-    }
+   }
     
     JFormattedTextField getDateFromTextField() {
         return dateFromTextField;
@@ -69,6 +69,8 @@ public class RecentActivityTopComponent extends TopComponent {
         dateToButtonCalendar = new org.sourceforge.jcalendarbutton.JCalendarButton();
         dateToTextField = new JFormattedTextField(this.dateFormat);
         activityProgressBar = new javax.swing.JProgressBar(0, 100);
+
+        setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
         makeNodesButton.setText(org.openide.util.NbBundle.getMessage(RecentActivityTopComponent.class, "RecentActivityTopComponent.makeNodesButton.text")); // NOI18N
         makeNodesButton.addActionListener(new java.awt.event.ActionListener() {

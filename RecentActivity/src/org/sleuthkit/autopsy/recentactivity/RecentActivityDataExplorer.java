@@ -16,10 +16,6 @@ import org.sleuthkit.autopsy.datamodel.KeyValueThing;
 import java.util.Random.*;
 import java.util.*;
 import java.util.logging.Logger;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.*;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 
 
 
@@ -34,14 +30,14 @@ public class RecentActivityDataExplorer implements DataExplorer {
     
     //Empty Constructor
     public RecentActivityDataExplorer() {
-        tc = new RecentActivityTopComponent(this);
-        tc.setName("Recent Activity");
-        tc.edx.tc.setbrowsercheckboxes(0,0,0,0,0);
+       tc = new RecentActivityTopComponent(this);
+       tc.setName("Recent Activity");
+       tc.edx.tc.setbrowsercheckboxes(0,0,0,0,0);
     }
 
     @Override
     public org.openide.windows.TopComponent getTopComponent() {
-        return tc;
+        return tc;    
     }
 
     @Override

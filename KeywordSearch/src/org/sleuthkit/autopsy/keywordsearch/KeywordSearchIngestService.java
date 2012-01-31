@@ -49,14 +49,14 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             Thread.sleep(100);
         }
         catch (InterruptedException e) {}
-        manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "Processing " + fsContent.getName()));
+        //manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "Processing " + fsContent.getName()));
        
     }
 
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete()");
-        manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "COMPLETE"));
+        //manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "COMPLETE"));
     }
 
     @Override
@@ -69,7 +69,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         logger.log(Level.INFO, "init()");
         this.manager = manager;
         
-        manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "INIT"));
+        //manager.postMessage(IngestMessage.createMessage(1, MessageType.WARNING, this, "INIT"));
     }
 
     @Override
