@@ -722,7 +722,7 @@ public class IngestManager {
                     initMainProgress(numFsContents);
 
                 }
-                progress.progress("Files", ++processedFiles);
+                progress.progress(unit.content.getName(), ++processedFiles);
                 updateMainProgress(processedFiles);
                 --numFsContents;
             }
