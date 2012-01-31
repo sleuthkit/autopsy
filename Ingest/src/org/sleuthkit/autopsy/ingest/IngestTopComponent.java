@@ -140,7 +140,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)) {
                     Case oldCase = (Case) evt.getOldValue();
-                    if (oldCase == null) //nothing to do, not case had been opened
+                    if (oldCase == null) //nothing to do, new case had been opened
                     {
                         return;
                     }
