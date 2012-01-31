@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -66,6 +68,16 @@ public class IngestManager {
     //services
     final Collection<IngestServiceImage> imageServices = enumerateImageServices();
     final Collection<IngestServiceFsContent> fsContentServices = enumerateFsContentServices();
+    //notifications
+    private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
+
+    private enum IngestManagerEvents {
+
+        SERVICE_STARTED, SERVICE_COMPLETED, SERVICE_STOPPED
+    };
+    public final static String SERVICE_STARTED_EVT = IngestManagerEvents.SERVICE_STARTED.name();
+    public final static String SERVICE_COMPLETED_EVT = IngestManagerEvents.SERVICE_COMPLETED.name();
+    public final static String SERVICE_STOPPED_EVT = IngestManagerEvents.SERVICE_STOPPED.name();
 
     /**
      * 
@@ -86,6 +98,17 @@ public class IngestManager {
         for (IngestServiceFsContent s : fsContentServices) {
             s.init(this);
         }
+    }
+
+    /**
+     * Add property change listener to listen to ingest events
+     * @param l PropertyChangeListener to add
+     */
+    public static void addPropertyChangeListener(final PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);
+    }
+    static void firePropertyChange(String property, Object oldV, Object newV) {
+        pcs.firePropertyChange(property, oldV, newV);
     }
 
     /**
@@ -156,12 +179,13 @@ public class IngestManager {
                         //image services are now initialized per instance
                         quService.init(this);
                         newImageWorker.execute();
+                        firePropertyChange(SERVICE_STARTED_EVT, quService.getName(), "");
                     }
                 }
             }
         }
 
-        
+
         //fsContent ingester
         boolean startFsContentIngester = false;
         if (hasNextFsContent()) {
@@ -213,7 +237,7 @@ public class IngestManager {
             boolean cancelled = imageWorker.cancel(true);
             if (!cancelled) {
                 logger.log(Level.WARNING, "Unable to cancel image ingest worker for service: " + imageWorker.getService().getName() + " img: " + imageWorker.getImage().getName());
-            } 
+            }
         }
 
     }
@@ -685,6 +709,16 @@ public class IngestManager {
             logger.log(Level.INFO, "Starting background processing");
             stats.start();
 
+            //notify main thread services started
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    for (IngestServiceFsContent s : fsContentServices) {
+                        firePropertyChange(SERVICE_STARTED_EVT, s.getName(), "");
+                    }
+                }
+            });
+
             progress = ProgressHandleFactory.createHandle("File Ingest", new Cancellable() {
 
                 @Override
@@ -738,6 +772,7 @@ public class IngestManager {
                 if (!this.isCancelled()) {
                     for (IngestServiceFsContent s : fsContentServices) {
                         s.complete();
+                        firePropertyChange(SERVICE_COMPLETED_EVT, s.getName(), "");
                     }
                 }
 
@@ -769,6 +804,7 @@ public class IngestManager {
         private void handleInterruption() {
             for (IngestServiceFsContent s : fsContentServices) {
                 s.stop();
+                firePropertyChange(SERVICE_STOPPED_EVT, s.getName(), "");
             }
             //empty queues
             emptyFsContents();

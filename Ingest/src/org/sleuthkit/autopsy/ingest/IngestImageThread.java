@@ -94,18 +94,18 @@ public class IngestImageThread extends SwingWorker {
             //notify services of completion
             if (!this.isCancelled()) {
                 service.complete();
+                IngestManager.firePropertyChange(IngestManager.SERVICE_COMPLETED_EVT, service.getName(), "");
             }
         } catch (CancellationException e) {
             //task was cancelled
-            service.stop();
-
+            handleInterruption();
         } catch (InterruptedException ex) {
-            service.stop();
+            handleInterruption();
         } catch (ExecutionException ex) {
-            service.stop();
+            handleInterruption();
             logger.log(Level.SEVERE, "Fatal error during image ingest from sevice: " + service.getName() + " image: " + image.getName(), ex);
         } catch (Exception ex) {
-            service.stop();
+            handleInterruption();
             logger.log(Level.SEVERE, "Fatal error during image ingest in service: " + service.getName() + " image: " + image.getName(), ex);
         } finally {
             progress.finish();
@@ -113,5 +113,10 @@ public class IngestImageThread extends SwingWorker {
             //cleanup queues (worker and image/service)
             manager.removeImageIngestWorker(this);
         }
+    }
+    
+    private void handleInterruption() {
+        service.stop();
+        IngestManager.firePropertyChange(IngestManager.SERVICE_STOPPED_EVT, service.getName(), "");
     }
 }
