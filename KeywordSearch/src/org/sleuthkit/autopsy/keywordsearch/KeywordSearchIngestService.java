@@ -56,7 +56,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete()");
-        manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "COMPLETE"));
+        //manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "COMPLETE"));
     }
 
     @Override
@@ -69,7 +69,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         logger.log(Level.INFO, "init()");
         this.manager = manager;
         
-        manager.postMessage(IngestMessage.createMessage(1, MessageType.WARNING, this, "INIT"));
+        //manager.postMessage(IngestMessage.createMessage(1, MessageType.WARNING, this, "INIT"));
     }
 
     @Override
