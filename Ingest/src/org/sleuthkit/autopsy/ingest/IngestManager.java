@@ -94,12 +94,12 @@ public class IngestManager {
      * Add property change listener to listen to ingest events
      * @param l PropertyChangeListener to add
      */
-    public static void addPropertyChangeListener(final PropertyChangeListener l) {
+    public static synchronized void addPropertyChangeListener(final PropertyChangeListener l) {
         pcs.addPropertyChangeListener(l);
     }
 
-    static void firePropertyChange(String property, Object oldV, Object newV) {
-        pcs.firePropertyChange(property, oldV, newV);
+    static synchronized void firePropertyChange(String property, String serviceName) {
+        pcs.firePropertyChange(property, serviceName, null);
     }
 
     /**
@@ -184,7 +184,7 @@ public class IngestManager {
                         //image services are now initialized per instance
                         quService.init(this);
                         newImageWorker.execute();
-                        firePropertyChange(SERVICE_STARTED_EVT, quService.getName(), "");
+                        IngestManager.firePropertyChange(SERVICE_STARTED_EVT, quService.getName());
                     }
                 }
             }
@@ -727,7 +727,7 @@ public class IngestManager {
                 @Override
                 public void run() {
                     for (IngestServiceFsContent s : fsContentServices) {
-                        firePropertyChange(SERVICE_STARTED_EVT, s.getName(), "");
+                        IngestManager.firePropertyChange(SERVICE_STARTED_EVT, s.getName());
                     }
                 }
             });
@@ -785,7 +785,7 @@ public class IngestManager {
                 if (!this.isCancelled()) {
                     for (IngestServiceFsContent s : fsContentServices) {
                         s.complete();
-                        firePropertyChange(SERVICE_COMPLETED_EVT, s.getName(), "");
+                        IngestManager.firePropertyChange(SERVICE_COMPLETED_EVT, s.getName());
                     }
                 }
 
@@ -817,7 +817,7 @@ public class IngestManager {
         private void handleInterruption() {
             for (IngestServiceFsContent s : fsContentServices) {
                 s.stop();
-                firePropertyChange(SERVICE_STOPPED_EVT, s.getName(), "");
+                IngestManager.firePropertyChange(SERVICE_STOPPED_EVT, s.getName());
             }
             //empty queues
             emptyFsContents();
