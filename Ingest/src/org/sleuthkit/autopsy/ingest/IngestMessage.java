@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import javax.swing.text.DateFormatter;
 import org.sleuthkit.autopsy.datamodel.KeyValueThing;
 
 /**
@@ -82,13 +81,15 @@ public class IngestMessage {
         StringBuilder sb = new StringBuilder();
         sb.append(Long.toString(ID)).append(": ");
         sb.append("type: ").append(messageType.name());
-        sb.append(" source: ").append(source.getName());
+        if (source != null) //can be null for manager messages
+            sb.append(" source: ").append(source.getName());
         sb.append(" date: ").append(dateFormat.format(datePosted));
         sb.append(" text: ").append(text);
         if (data != null)
             sb.append(" data: ").append(data.toString()).append(' ');
         return sb.toString();
     }
+    
 
     @Override
     public boolean equals(Object obj) {
@@ -149,6 +150,11 @@ public class IngestMessage {
         }
         IngestMessage im = new IngestMessage(ID, MessageType.DATA, source, message);
         im.data = data;
+        return im;
+    }
+    
+    static IngestMessage createManagerMessage(String message) {
+        IngestMessage im = new IngestMessage(0, MessageType.INFO, null, message);
         return im;
     }
     

@@ -30,6 +30,9 @@ public interface IngestServiceImage extends IngestServiceAbstract {
      * notification from manager to process image
      * The service notifies viewers via IngestManager.postMessage()
      * and may also write results to the black-board as it is processing.
+     * 
+     * @param image image to process
+     * @param controller controller to the worker, to update progress (if determinate) and check if cancelled
      */
-    public void process(Image image);
+    public void process(Image image, IngestImageWorkerController controller);
 }

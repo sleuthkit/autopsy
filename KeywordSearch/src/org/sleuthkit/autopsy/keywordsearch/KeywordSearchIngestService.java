@@ -49,7 +49,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             Thread.sleep(100);
         }
         catch (InterruptedException e) {}
-        manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "Processing " + fsContent.getName()));
+        //manager.postMessage(IngestMessage.createMessage(1, MessageType.INFO, this, "Processing " + fsContent.getName()));
        
     }
 

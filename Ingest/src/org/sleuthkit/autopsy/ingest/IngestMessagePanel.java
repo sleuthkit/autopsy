@@ -135,6 +135,10 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         //autoscroll
         messageTable.scrollRectToVisible(messageTable.getCellRect(messageTable.getRowCount() - 1, messageTable.getColumnCount(), true));
     }
+    
+    public void clearMessages() {
+        tableModel.clearMessages();
+    }
 
     private void setVisited(int rowNumber) {
         tableModel.setVisited(rowNumber);
@@ -182,7 +186,13 @@ public class IngestMessagePanel extends javax.swing.JPanel {
 
             switch (columnIndex) {
                 case 0:
-                    ret = (Object) entry.message.getSource().getName();
+                    Object service = entry.message.getSource();
+                    if (service == null) {
+                        ret = "";
+                    }
+                    else {
+                        ret = (Object) entry.message.getSource().getName();
+                    }
                     break;
                 case 1:
                     ret = (Object) entry.message.getText();
@@ -207,7 +217,12 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         public void addMessage(IngestMessage m) {
             messageData.add(new TableEntry(m));
             int size = messageData.size();
-            this.fireTableRowsInserted(size - 1, size); //TODO check
+            this.fireTableRowsInserted(size - 1, size); 
+        }
+        
+        public void clearMessages() {
+            messageData.clear();
+            fireTableDataChanged();
         }
 
         public void setVisited(int rowNumber) {
