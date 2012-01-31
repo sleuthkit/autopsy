@@ -142,11 +142,11 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
                     if (oldCase == null)
                         //nothing to do, not case had been opened
                         return;
-                    //clear inbox
-                    messagePanel.clearMessages();
                     //stop workers if running
                     if (manager != null)
                         manager.stopAll();
+                    //clear inbox
+                    messagePanel.clearMessages();
                 }
             }
             
@@ -459,7 +459,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         JOptionPane.showMessageDialog(
                         null,
                         ingestReport,
-                        "Ingest Summary",
+                        "File Ingest Summary",
                         JOptionPane.INFORMATION_MESSAGE);
     }
 

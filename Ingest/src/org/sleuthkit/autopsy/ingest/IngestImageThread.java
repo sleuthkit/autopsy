@@ -61,7 +61,7 @@ public class IngestImageThread extends SwingWorker {
 
         logger.log(Level.INFO, "Starting background processing");
 
-        progress = ProgressHandleFactory.createHandle(service.getName() + " img:" + image.getId(), new Cancellable() {
+        progress = ProgressHandleFactory.createHandle(service.getName() + " image id:" + image.getId(), new Cancellable() {
 
             @Override
             public boolean cancel() {
@@ -80,7 +80,7 @@ public class IngestImageThread extends SwingWorker {
         try {
             service.process(image, controller);
         } catch (Exception e) {
-            logger.log(Level.INFO, "Exception from service: " + service.getName(), e);
+            logger.log(Level.INFO, "Exception in service: " + service.getName() + " image: " + image.getName(), e);
         }
         logger.log(Level.INFO,
                 "Done background processing");
@@ -103,10 +103,10 @@ public class IngestImageThread extends SwingWorker {
             service.stop();
         } catch (ExecutionException ex) {
             service.stop();
-            logger.log(Level.SEVERE, "Fatal error during image ingest.", ex);
+            logger.log(Level.SEVERE, "Fatal error during image ingest from sevice: " + service.getName() + " image: " + image.getName(), ex);
         } catch (Exception ex) {
             service.stop();
-            logger.log(Level.SEVERE, "Fatal error during image ingest.", ex);
+            logger.log(Level.SEVERE, "Fatal error during image ingest in service: " + service.getName() + " image: " + image.getName(), ex);
         } finally {
             progress.finish();
 

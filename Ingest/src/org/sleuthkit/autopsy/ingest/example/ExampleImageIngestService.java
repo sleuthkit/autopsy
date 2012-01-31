@@ -90,7 +90,8 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     public void complete() {
         logger.log(Level.INFO, "complete() " + this.toString());
 
-        manager.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "completed image processing"));
+        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "completed image processing");
+        manager.postMessage(msg);
 
         //service specific cleanup due to completion here
     }

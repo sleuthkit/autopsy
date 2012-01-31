@@ -161,24 +161,22 @@ public class IngestManager {
             }
         }
 
-        //merge with queue (will not add if already exists)
-
+        
         //fsContent ingester
         boolean startFsContentIngester = false;
         if (hasNextFsContent()) {
             if (fsContentIngester
                     == null) {
                 startFsContentIngester = true;
-                logger.log(Level.INFO, "Satrting initial FsContent Ingester");
+                logger.log(Level.INFO, "Starting initial FsContent ingester");
             } //if worker had completed, restart it in case data is still enqueued
             else if (fsContentIngester.isDone()) {
                 startFsContentIngester = true;
-                logger.log(Level.INFO, "Restarting fsContent ingester thread.");
+                logger.log(Level.INFO, "Restarting fsContent ingester");
             }
         } else {
             logger.log(Level.INFO, "no new FsContent enqueued, no ingester needed");
         }
-
 
         if (startFsContentIngester) {
             fsContentIngester = new IngestFsContentThread();
@@ -214,7 +212,7 @@ public class IngestManager {
         for (IngestImageThread imageWorker : toStop) {
             boolean cancelled = imageWorker.cancel(true);
             if (!cancelled) {
-                logger.log(Level.WARNING, "Unable to cancel image ingest worker " + imageWorker.getService().getName() + " img: " + imageWorker.getImage());
+                logger.log(Level.WARNING, "Unable to cancel image ingest worker for service: " + imageWorker.getService().getName() + " img: " + imageWorker.getImage().getName());
             } 
         }
 
@@ -738,10 +736,6 @@ public class IngestManager {
                 super.get(); //block and get all exceptions thrown while doInBackground()
                 //notify services of completion
                 if (!this.isCancelled()) {
-                    for (IngestServiceImage s : imageServices) {
-                        s.complete();
-                    }
-
                     for (IngestServiceFsContent s : fsContentServices) {
                         s.complete();
                     }
