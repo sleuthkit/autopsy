@@ -1,0 +1,8 @@
+History File: C:\Users\Alex\Documents\projects\Autopsy2\testFolder\bentest\Temp\index0.dat Version: 5.2
+
+TYPE	URL	MODIFIED TIME	ACCESS TIME	FILENAME	DIRECTORY	HTTP HEADERS
+LEAK entries: 0
+REDR entries: 0
+URL entries: 0
+ent entries: 0
+unknown entries: 0
