@@ -32,7 +32,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
-import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
+import org.sleuthkit.autopsy.ingest.IngestMessage.*;
 
 /**
  * Notification window showing messages from services to user
@@ -251,7 +251,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
 
             @Override
             public int compareTo(Object o) {
-                return this.message.getDatePosted().compareTo(((TableEntry) o).message.getDatePosted());
+               return this.message.getDatePosted().compareTo(((TableEntry) o).message.getDatePosted());
             }
         }
     }

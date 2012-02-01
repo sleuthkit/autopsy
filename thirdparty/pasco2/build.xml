@@ -1,0 +1,94 @@
+<project name="pasco2" default="jar" basedir=".">
+
+	<!-- paths -->
+	<property file="${basedir}/build.properties"/>
+  	<property name="src.dir" location="${basedir}/src"/>
+  	<property name="java.src.dir" location="${basedir}/src"/>
+  	<property name="java.test.dir" location="${basedir}/src/test"/>
+  	<property name="doc.dir" location="${basedir}/doc"/>
+
+  	<property name="bin.dir" location="${basedir}/bin"/>
+  	<property name="dist.dir"  location="${basedir}/dist"/>
+    <property name="lib.dir"  value="${basedir}/lib"/>
+    <property name="build.dir"  location="${basedir}/build"/>
+    <property name="build.lib.dir"  location="${basedir}/lib/build"/>
+
+
+	<!-- build / compile properties -->
+    <property name="debug" value="off"/>
+    <property name="optimize" value="on"/>
+    <property name="deprecation" value="off"/>
+    <property name="compress.jars" value="true"/>
+	<property name="link" value="static"/>
+
+
+    <path id="project.class.path">
+        <pathelement path="${java.class.path}" />
+        <fileset dir="${lib.dir}">
+            <include name="*.jar" />
+        </fileset>
+    </path>
+
+    <path id="build.class.path">
+        <pathelement path="${java.class.path}" />
+        <fileset dir="${lib.dir}">
+            <include name="*.jar" />
+        </fileset>
+   </path>	
+
+	<target name="init">
+	    <tstamp/>
+	    <mkdir dir="${build.dir}"/>
+	    <mkdir dir="${dist.dir}"/>
+	</target>
+	
+  <target name="compile" depends="init"
+        description="compile the source " >
+        <javac srcdir="${java.src.dir}"
+            destdir="${build.dir}"
+            debug="${debug}"
+            optimize="${optimize}"
+            deprecation="${deprecation}"
+            target="1.5"
+        	source="1.5"
+        	includeantruntime="false">
+                <classpath refid="project.class.path" />
+            <compilerarg value="-Xlint:unchecked,-options"/>
+ 		</javac>
+  </target>
+  
+ 
+	
+	<target name="jar" depends="compile">
+		<jar jarfile="${dist.dir}/pasco2.jar" 
+				basedir="${build.dir}" 
+				includes="**/*.class,**/*.properties,**/*.bmp,**/*.gif,${lib.dir}/*.jar">  
+			<manifest>
+		      <attribute name="Main-Class"
+		            value="isi.pasco2.Main"/>
+		    </manifest>
+		</jar>
+	</target>
+
+	<target name="dist" depends="jar">
+		<zip destfile="${dist.dir}/pasco2-0.1.zip">
+			<zipfileset prefix="lib" dir="${lib.dir}" />
+			<zipfileset prefix="src" dir="${src.dir}" />
+			<zipfileset dir="${dist.dir}">
+				<include name="*.jar"/>
+			</zipfileset>
+			<zipfileset file="LICENSE.txt" />
+			<zipfileset file="LICENSE-jawin.txt" />
+			<zipfileset file="README.txt" />
+			<zipfileset file="build.xml" />
+		</zip>
+	</target>	
+
+		
+  <target name="clean"
+        description="clean up" >
+    <delete dir="${build.dir}"/>
+    <delete dir="${dist.dir}"/>
+  </target>
+
+</project>

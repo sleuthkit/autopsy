@@ -1,22 +1,3 @@
-/*
- * Autopsy Forensic Browser
- *
- * Copyright 2011 Basis Technology Corp.
- * Contact: carrier <at> sleuthkit <dot> org
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Map;
@@ -27,7 +8,7 @@ public class KeyValueThing {
     String name;
 
     /**
-     * 
+     *
      * @param map must iterate it keys and values in a consistent order
      * (use of LinkedHashMap is recommended)
      * @param id an arbitrary id representing the type of the thing
@@ -35,6 +16,12 @@ public class KeyValueThing {
     public KeyValueThing(String name, Map<String, Object> map, int id) {
         this.name = name;
         this.map = map;
+        this.id = id;
+    }
+
+    public KeyValueThing(String name,  int id) {
+        this.name = name;
+        this.map = null;
         this.id = id;
     }
 
@@ -48,5 +35,10 @@ public class KeyValueThing {
 
     public String getName() {
         return name;
+    }
+
+    public void addMap(Map<String,Object> inMap)
+    {
+       this.map = inMap;
     }
 }
