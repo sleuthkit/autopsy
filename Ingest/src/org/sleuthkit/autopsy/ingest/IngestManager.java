@@ -80,7 +80,7 @@ public class IngestManager {
     public final static String SERVICE_COMPLETED_EVT = IngestManagerEvents.SERVICE_COMPLETED.name();
     public final static String SERVICE_STOPPED_EVT = IngestManagerEvents.SERVICE_STOPPED.name();
     //initialization
-    private boolean initialized = false;
+    //private boolean initialized = false;
 
     /**
      * 
@@ -109,7 +109,7 @@ public class IngestManager {
      * @param images images to execute services on
      */
     void execute(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
-        if (!initialized) {
+        /*if (!initialized) {
             //one time initialization of services
 
             //image services are now initialized per instance
@@ -121,7 +121,7 @@ public class IngestManager {
                 s.init(this);
             }
             initialized = true;
-        }
+        }*/
 
         tc.enableStartButton(false);
         queueWorker = new EnqueueWorker(services, images);
@@ -210,6 +210,10 @@ public class IngestManager {
 
         if (startFsContentIngester) {
             fsContentIngester = new IngestFsContentThread();
+            //init all fs services, everytime new worker starts
+            for (IngestServiceFsContent s : fsContentServices) {
+                s.init(this);
+            }
             stats = new IngestManagerStats();
             fsContentIngester.execute();
         }
@@ -252,13 +256,13 @@ public class IngestManager {
         }
 
         //workaround for jdbc call to complete
-        //TODO synchronize this if possible
+        //TODO synchronize this if possible   
         try {
             Thread.sleep(300);
         } catch (InterruptedException e) {
         }
 
-        logger.log(Level.INFO, "stopped all");
+        logger.log(Level.INFO, "stopped all"); 
     }
 
     /**
