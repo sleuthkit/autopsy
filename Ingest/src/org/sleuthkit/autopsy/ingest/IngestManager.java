@@ -209,12 +209,12 @@ public class IngestManager {
         }
 
         if (startFsContentIngester) {
+            stats = new IngestManagerStats();
             fsContentIngester = new IngestFsContentThread();
             //init all fs services, everytime new worker starts
             for (IngestServiceFsContent s : fsContentServices) {
                 s.init(this);
             }
-            stats = new IngestManagerStats();
             fsContentIngester.execute();
         }
     }
