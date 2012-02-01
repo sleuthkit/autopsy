@@ -58,7 +58,6 @@ public class IngestManager {
     private IngestTopComponent tc;
     private IngestManagerStats stats;
     private int updateFrequency;
-    private IngestDialog id;
     //queues
     private final ImageQueue imageQueue = new ImageQueue();
     private final FsContentQueue fsContentQueue = new FsContentQueue();
@@ -89,7 +88,6 @@ public class IngestManager {
      */
     IngestManager(IngestTopComponent tc) {
         this.tc = tc;
-        id = IngestDialog.getInstance();
         imageIngesters = new ArrayList<IngestImageThread>();
     }
 
