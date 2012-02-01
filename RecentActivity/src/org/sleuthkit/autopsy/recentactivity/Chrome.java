@@ -82,7 +82,7 @@ public class Chrome {
                        BlackboardAttribute bbattref = new BlackboardAttribute(32,"RecentActivity","Chrome",temprs.getString("from_visit"));
                       bbart.addAttribute(bbattref);
                        BlackboardAttribute bbatttitle = new BlackboardAttribute(3,"RecentActivity","Chrome",((temprs.getString("title") != null) ? temprs.getString("title") : "No Title"));
-                      bbart.addAttribute(bbatturl);
+                      bbart.addAttribute(bbatttitle);
                       
                       als.add(kvs);
                      
@@ -141,13 +141,13 @@ public class Chrome {
                       cookies.add(kvs);
                       
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
-                     BlackboardAttribute bbatturl = new BlackboardAttribute(1, temprs.getString("host"), "RecentActivity", "Chrome");
+                     BlackboardAttribute bbatturl = new BlackboardAttribute(1, "RecentActivity", "Chrome", temprs.getString("host"));
                      bbart.addAttribute(bbatturl);
-                     BlackboardAttribute bbattdate = new BlackboardAttribute(2, temprs.getString("access_utc"), "RecentActivity", "Chrome");
+                     BlackboardAttribute bbattdate = new BlackboardAttribute(2,"RecentActivity", "Chrome",temprs.getString("access_utc"));
                      bbart.addAttribute(bbattdate);
-                     BlackboardAttribute bbattvalue = new BlackboardAttribute(26, temprs.getString("value"), "RecentActivity", "Chrome");
+                     BlackboardAttribute bbattvalue = new BlackboardAttribute(26,"RecentActivity", "Chrome",temprs.getString("value"));
                      bbart.addAttribute(bbattvalue);
-                     BlackboardAttribute bbatttitle = new BlackboardAttribute(3, ((temprs.getString("name") != null) ? temprs.getString("name") : "No name"), "RecentActivity","Chrome");
+                     BlackboardAttribute bbatttitle = new BlackboardAttribute(3, "RecentActivity","Chrome",((temprs.getString("name") != null) ? temprs.getString("name") : "No name"));
                      bbart.addAttribute(bbatttitle);
 
                       
@@ -206,9 +206,9 @@ public class Chrome {
                       kvs.put("Reference", temprs.getString("starred.date_added"));
                       BlackboardAttribute bbattdate = new BlackboardAttribute(31,"RecentActivity","Chrome",temprs.getString("last_visit_time"));
                       bbart.addAttribute(bbattdate);
-                      BlackboardAttribute bbatturl = new BlackboardAttribute(5, ((temprs.getString("url") != null) ? temprs.getString("url") : "No URL"), "RecentActivity","Chrome");
+                      BlackboardAttribute bbatturl = new BlackboardAttribute(5, "RecentActivity","Chrome",((temprs.getString("url") != null) ? temprs.getString("url") : "No URL"));
                       bbart.addAttribute(bbatturl);
-                      BlackboardAttribute bbatttitle = new BlackboardAttribute(3, ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "No Title"), "RecentActivity","Chrome");
+                      BlackboardAttribute bbatttitle = new BlackboardAttribute(3, "RecentActivity","Chrome", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "No Title"));
                       bbart.addAttribute(bbatttitle);
                       bookmarks.add(kvs);
                      

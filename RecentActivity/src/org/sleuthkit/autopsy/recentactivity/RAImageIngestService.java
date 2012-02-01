@@ -59,10 +59,11 @@ public final class RAImageIngestService implements IngestServiceImage {
 
         //service specific Image processing code here
         //example:
+         controller.switchToDeterminate(2);
         ExtractAll ext = new ExtractAll();
-        int count = ext.getExtractCount();
+       // int count = ext.getExtractCount();
         //if we know amount of work units, we can switch to determinate and update progress bar
-        int filesToProcess = count;
+        int filesToProcess = 1;
         controller.switchToDeterminate(filesToProcess);
         int processedFiles = 0;
 
@@ -83,8 +84,22 @@ public final class RAImageIngestService implements IngestServiceImage {
             } 
             catch (Error e) {
             }
+             if (controller.isCancelled()) {
+            return;
         }
+        controller.progress(1);
 
+        try {
+            //do the work
+            ext.extractToBlackboard();
+            controller.progress(2);
+
+        } catch (Error e) {
+            manager.postMessage(IngestMessage.createErrorMessage(++messageId,
+this, "Error writing recent activity data"));
+
+        }
+        }
 
     }
 

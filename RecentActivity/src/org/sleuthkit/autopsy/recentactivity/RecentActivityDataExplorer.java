@@ -58,10 +58,8 @@ public class RecentActivityDataExplorer implements DataExplorer {
 void makeNodes() 
     {
         things.clear();
-        ExtractRegistry eree = new ExtractRegistry();
-        eree.getregistryfiles();
-        Firefox ffre = new Firefox();
-        ffre.getffdb();    
+       Firefox ffre = new Firefox();
+       ffre.getffdb();    
         Chrome chre = new Chrome();
         chre.getchdb();
        ExtractIE eere = new ExtractIE();

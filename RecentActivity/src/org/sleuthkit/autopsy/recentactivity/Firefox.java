@@ -82,7 +82,7 @@ public class Firefox {
                        BlackboardAttribute bbattref = new BlackboardAttribute(32,"RecentActivity","FireFox",temprs.getString("from_visit"));
                       bbart.addAttribute(bbattref);
                        BlackboardAttribute bbatttitle = new BlackboardAttribute(3,"RecentActivity","FireFox",((temprs.getString("title") != null) ? temprs.getString("title") : "No Title"));
-                      bbart.addAttribute(bbatturl);
+                      bbart.addAttribute(bbatttitle);
                       //bbart.addAttribute(ATTRIBUTE_TYPE.TSK_URL, temprs.getString("url"), "RecentActivity","FireFox");
                       //bbart.addAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, temprs.getString("visit_date"), "RecentActivity","FireFox");
                       //bbart.addAttribute(ATTRIBUTE_TYPE.TSK_REFERRER, temprs.getString("from_visit"), "RecentActivity","FireFox");
@@ -101,9 +101,9 @@ public class Firefox {
                       kvs.put("Count", "");
                       kvs.put("Last Accessed", "");
                       kvs.put("Reference", "");   
-                      BlackboardAttribute bbatturl = new BlackboardAttribute(5, ((temprs.getString("url") != null) ? temprs.getString("url") : "No URL"), "RecentActivity","FireFox");
+                      BlackboardAttribute bbatturl = new BlackboardAttribute(5,"RecentActivity","FireFox",((temprs.getString("url") != null) ? temprs.getString("url") : "No URL"));
                       bbart.addAttribute(bbatturl);
-                      BlackboardAttribute bbatttitle = new BlackboardAttribute(3, ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "No Title"), "RecentActivity","FireFox");
+                      BlackboardAttribute bbatttitle = new BlackboardAttribute(3, "RecentActivity","FireFox", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "No Title"));
                       bbart.addAttribute(bbatttitle);
                      
                       bookmarks.add(kvs);
@@ -163,13 +163,13 @@ public class Firefox {
                       kvs.put("Count", temprs.getString("value"));
                       kvs.put("Last Accessed", temprs.getString("lastAccessed"));
                       kvs.put("Reference", temprs.getString("creationTime"));
-                     BlackboardAttribute bbatturl = new BlackboardAttribute(1, temprs.getString("host"), "RecentActivity", "FireFox");
+                     BlackboardAttribute bbatturl = new BlackboardAttribute(1, "RecentActivity", "FireFox", temprs.getString("host"));
                      bbart.addAttribute(bbatturl);
-                     BlackboardAttribute bbattdate = new BlackboardAttribute(2, temprs.getString("lastAccessed"), "RecentActivity", "FireFox");
+                     BlackboardAttribute bbattdate = new BlackboardAttribute(2, "RecentActivity", "FireFox", temprs.getString("lastAccessed"));
                      bbart.addAttribute(bbattdate);
-                     BlackboardAttribute bbattvalue = new BlackboardAttribute(26, temprs.getString("value"), "RecentActivity", "FireFox");
+                     BlackboardAttribute bbattvalue = new BlackboardAttribute(26, "RecentActivity", "FireFox", temprs.getString("value"));
                      bbart.addAttribute(bbattvalue);
-                     BlackboardAttribute bbatttitle = new BlackboardAttribute(3, ((temprs.getString("name") != null) ? temprs.getString("name") : "No name"), "RecentActivity","FireFox");
+                     BlackboardAttribute bbatttitle = new BlackboardAttribute(3, "RecentActivity","FireFox",((temprs.getString("name") != null) ? temprs.getString("name") : "No name"));
                      bbart.addAttribute(bbatttitle);
 
                       

@@ -4,10 +4,8 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.FsContent;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  *
@@ -30,10 +28,10 @@ public class ExtractAll {
                 Chrome chre = new Chrome();
                 chre.getchdb();
                 
-               // ExtractIE eere = new ExtractIE();
-               // eere.parsePascoResults();
+                ExtractIE eere = new ExtractIE();
+                eere.parsePascoResults();
                 //Find a way to put these results into BB
-              //  ArrayList<HashMap<String,Object>> IEresults = eere.PASCO_RESULTS_LIST; 
+               
                 return true;
            }
            catch(Error e){
