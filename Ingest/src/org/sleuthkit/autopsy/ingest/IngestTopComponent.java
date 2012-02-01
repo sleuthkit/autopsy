@@ -477,4 +477,8 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     void updateProgress(int progress) {
         this.mainProgressBar.setValue(progress);
     }
+    
+    IngestManager getManager(){
+        return this.manager;
+    }
 }

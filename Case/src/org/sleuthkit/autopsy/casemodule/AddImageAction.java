@@ -23,6 +23,8 @@ import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
@@ -42,7 +44,7 @@ import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * The action to add an image to the current Case. This action should be disabled
@@ -71,6 +73,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     static final String SOLR_PROP = "indexInSolr";
     // boolean: whether or not to lookup files in the hashDB
     static final String LOOKUPFILES_PROP = "lookupFiles";
+    // String: for property change notification
+    public static final String WIZARD_COMPLETE = "wizardComplete";
 
 
     private WizardDescriptor wizardDescriptor;
@@ -118,6 +122,18 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
         dialog.setVisible(true);
         dialog.toFront();
+        
+        boolean cancelled = wizardDescriptor.getValue() != WizardDescriptor.FINISH_OPTION;
+        if(!cancelled){
+            Logger logger = Logger.getLogger(AddImageAction.class.getName());
+            try {
+                Long imageId = (Long) wizardDescriptor.getProperty(IMAGEID_PROP);
+                Image imageById = Case.getCurrentCase().getSleuthkitCase().getImageById(imageId);
+                Case.getPropertyChangeSupport().firePropertyChange(AddImageAction.WIZARD_COMPLETE, null, imageById);
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Couldn't get recently added image", ex);
+            }
+        }
         
     
         // Do any cleanup that needs to happen (potentially: stopping the
