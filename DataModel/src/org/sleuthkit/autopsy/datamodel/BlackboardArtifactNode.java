@@ -67,10 +67,12 @@ class BlackboardArtifactNode extends AbstractNode {
         
         ATTRIBUTE_TYPE[] attributeTypes = ATTRIBUTE_TYPE.values();
         for(Map.Entry<Integer, Object> entry : map.entrySet()){
+            if(attributeTypes.length > entry.getKey()){
                 ss.put(new NodeProperty(attributeTypes[entry.getKey()-1].getLabel(),
                         attributeTypes[entry.getKey()-1].getLabel(),
                         NO_DESCR,
                         entry.getValue()));
+            }
         }
         return s;
     }
