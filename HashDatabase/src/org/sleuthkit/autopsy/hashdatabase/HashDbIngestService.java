@@ -24,7 +24,6 @@ package org.sleuthkit.autopsy.hashdatabase;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
@@ -35,17 +34,12 @@ import org.sleuthkit.datamodel.TskException;
 public class HashDbIngestService implements IngestServiceFsContent {
     
     private static HashDbIngestService instance = null;
-    
+    private final static String NAME = "Hash Ingest Service";
     private static final Logger logger = Logger.getLogger(HashDbIngestService.class.getName());
-    
     private IngestManager manager;
-    
     private SleuthkitCase skCase;
+    private static int messageId = 0;
     
-    private HashDbIngestService() {
-        
-    }
-     
     public static synchronized HashDbIngestService getDefault() {
         if (instance == null) {
             instance = new HashDbIngestService();
@@ -53,8 +47,6 @@ public class HashDbIngestService implements IngestServiceFsContent {
         return instance;
     }
     
-    
-    private final static String NAME = "Hash Ingest Service";
     /**
      * notification from manager that brand new processing should be initiated.
      * Service loads its configuration and performs initialization
@@ -64,16 +56,23 @@ public class HashDbIngestService implements IngestServiceFsContent {
     @Override
     public void init(IngestManager manager){
         this.manager = manager;
-        manager.postMessage(IngestMessage.createDataMessage(1, this, "INIT", null));
+        manager.postMessage(IngestMessage.createMessage(1, IngestMessage.MessageType.INFO, this, "INIT"));
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
             HashDbSettings hashDbSettings = HashDbSettings.getHashDbSettings();
+            
             String nsrlDbPath;
             if((nsrlDbPath = hashDbSettings.getNSRLDatabasePath()) != null && !nsrlDbPath.equals(""))
                 skCase.setNSRLDatabase(nsrlDbPath);
+            else
+                manager.postMessage(IngestMessage.createErrorMessage(++messageId, this, "No NSRL database set"));
+            
             String knownBadDbPath;
             if((knownBadDbPath = hashDbSettings.getKnownBadDatabasePath()) != null && !knownBadDbPath.equals(""))
                 skCase.setKnownBadDatabase(knownBadDbPath);
+            else
+                manager.postMessage(IngestMessage.createErrorMessage(++messageId, this, "No known bad database set"));
+            
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Setting NSRL and Known database failed", ex);
         }
@@ -85,7 +84,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void complete(){
-        manager.postMessage(IngestMessage.createDataMessage(1, this, "COMPLETE", null));
+        manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "COMPLETE"));
     }
     
     /**
@@ -93,29 +92,34 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void stop(){
-        manager.postMessage(IngestMessage.createDataMessage(1, this, "STOP", null));
+        manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "STOP"));
     }
     
     /**
      * get specific name of the service
      * should be unique across services, a user-friendly name of the service shown in GUI
+     * @return  The name of this Ingest Service
      */
     @Override
     public String getName(){
         return NAME;
     }
 
+    /**
+     * Process the given FsContent object
+     * 
+     * @param fsContent the object to be processed
+     */
     @Override
     public void process(FsContent fsContent){
         String name = fsContent.getName();
-        long id = fsContent.getId();
         try{
             String status = skCase.lookupFileMd5(fsContent);
             if(status.equals("known") || status.equals("known bad")){
-                manager.postMessage(IngestMessage.createDataMessage(id, this, name + " is a " + status + " file", null));
+                manager.postMessage(IngestMessage.createDataMessage(++messageId, this, name + " is a " + status + " file", null));
             }
         } catch (TskException ex){
-            logger.log(Level.SEVERE, "Couldn't analyze file " + name + " with ID " + id + " - see sleuthkit log for details", ex);
+            logger.log(Level.SEVERE, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
         }
     }
 
