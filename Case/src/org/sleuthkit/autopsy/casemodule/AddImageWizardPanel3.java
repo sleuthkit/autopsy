@@ -186,7 +186,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         String[] imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
         String timezone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
         boolean indexImage = (Boolean) settings.getProperty(AddImageAction.SOLR_PROP);
-        
+        settings.putProperty(AddImageAction.IMAGEID_PROP, "");
         SleuthkitJNI.CaseDbHandle.AddImageProcess process = (SleuthkitJNI.CaseDbHandle.AddImageProcess) settings.getProperty(AddImageAction.PROCESS_PROP);
         
         try {
@@ -198,6 +198,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 // between Case and KeywordSearch...
                 Lookup.getDefault().lookup(AddImageAction.IndexImageTask.class).runTask(newImage);
             }
+            settings.putProperty(AddImageAction.IMAGEID_PROP, imageId);
         } finally {
             // Can't bail and revert image add after commit, so disable image cleanup
             // task
