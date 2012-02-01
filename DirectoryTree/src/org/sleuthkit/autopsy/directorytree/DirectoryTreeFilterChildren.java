@@ -24,6 +24,8 @@ import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
+import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.datamodel.Directory;
 
 /**
@@ -51,6 +53,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         
         // filter out the FileNode and the "." and ".." directories
         if (arg0 != null && (arg0 instanceof ImageNode
+                || arg0 instanceof ExtractedContentNode
+                || arg0 instanceof ArtifactTypeNode
                 || arg0 instanceof VolumeNode || (arg0 instanceof DirectoryNode
                 && !((DirectoryNode) arg0).getDisplayName().equals("."))
                 && !((DirectoryNode) arg0).getDisplayName().equals(".."))) {

@@ -34,7 +34,7 @@ class KeywordSearchNode extends AbstractNode {
         super(new RootContentChildren(keys) {
 
             @Override
-            protected Node[] createNodes(Content key) {
+            protected Node[] createNodes(Object key) {
                 Node[] originalNodes = super.createNodes(key);
                 Node[] filterNodes = new Node[originalNodes.length];
 
@@ -42,7 +42,7 @@ class KeywordSearchNode extends AbstractNode {
                 // to the lookup
                 int i = 0;
                 for (Node original : originalNodes) {
-                    HighlightedMatchesSource markup = new HighlightedMatchesSource(key, solrQuery);
+                    HighlightedMatchesSource markup = new HighlightedMatchesSource((Content)key, solrQuery);
                     filterNodes[i++] = new KeywordSearchFilterNode(markup, original, solrQuery);
                 }
 

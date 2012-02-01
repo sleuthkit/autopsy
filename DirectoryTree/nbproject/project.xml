@@ -124,6 +124,15 @@
                         <specification-version>0.0</specification-version>
                     </run-dependency>
                 </dependency>
+                <dependency>
+                    <code-name-base>org.sleuthkit.autopsy.ingest</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>0-1</release-version>
+                        <specification-version>1.0</specification-version>
+                    </run-dependency>
+                </dependency>
             </module-dependencies>
             <public-packages>
                 <package>org.sleuthkit.autopsy.directorytree</package>

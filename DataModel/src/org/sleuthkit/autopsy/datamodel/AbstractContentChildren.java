@@ -21,12 +21,13 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -34,8 +35,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
  * Abstract subclass for ContentChildren and RootContentChildren implementations
  * that handles creating Nodes from Content objects.
 */
-abstract class AbstractContentChildren extends Keys<Content> {
-    private static CreateNodeVisitor createNode = new CreateNodeVisitor();
+abstract class AbstractContentChildren extends Keys<Object> {
 
     /**
      * Uses lazy Content.Keys 
@@ -45,8 +45,23 @@ abstract class AbstractContentChildren extends Keys<Content> {
     }
 
     @Override
-    protected Node[] createNodes(Content key) {
-        return new Node[]{key.accept(createNode)};
+    protected Node[] createNodes(Object key) {
+        if(key instanceof Directory)
+            return new Node[]{new DirectoryNode((Directory)key)};
+        else if(key instanceof File)
+            return new Node[]{new FileNode((File)key)};
+        else if(key instanceof FileSystem)
+            throw new UnsupportedOperationException("No Node defined for FileSystems.");
+        else if(key instanceof Image)
+            return new Node[]{new ImageNode((Image)key)};
+        else if(key instanceof Volume)
+            return new Node[]{new VolumeNode((Volume)key)};
+        else if(key instanceof VolumeSystem)
+            throw new UnsupportedOperationException("No Node defined for VolumeSystems.");
+        else if(key instanceof SleuthkitCase)
+            return new Node[]{new ExtractedContentNode((SleuthkitCase) key)};
+        else
+            throw new IllegalArgumentException("Unrecognized key type");
     }
     
     @Override
