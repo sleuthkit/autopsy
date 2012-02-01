@@ -213,9 +213,11 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
         settings.putProperty(AddImageAction.SOLR_PROP, getComponent().getIndexImageCheckboxChecked());
         
         // Store the path to the first image selected into the properties file
-        String firstImage = getComponent().getImagePaths()[0];
-        String firstImagePath = firstImage.substring(0, firstImage.lastIndexOf(File.separator)+1);
-        AutopsyPropFile.getInstance().setProperty(PROP_LASTIMAGE, firstImagePath);
+        if(getComponent().getImagePaths().length > 0){
+            String firstImage = getComponent().getImagePaths()[0];
+            String firstImagePath = firstImage.substring(0, firstImage.lastIndexOf(File.separator)+1);
+            AutopsyPropFile.getInstance().setProperty(PROP_LASTIMAGE, firstImagePath);
+        }
     }
 
 
