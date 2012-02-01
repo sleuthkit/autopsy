@@ -65,6 +65,7 @@ public class IngestManager {
     //workers
     private IngestFsContentThread fsContentIngester;
     private List<IngestImageThread> imageIngesters;
+    private SwingWorker queueWorker;
     //services
     final Collection<IngestServiceImage> imageServices = enumerateImageServices();
     final Collection<IngestServiceFsContent> fsContentServices = enumerateFsContentServices();
@@ -123,7 +124,7 @@ public class IngestManager {
         }
 
         tc.enableStartButton(false);
-        SwingWorker queueWorker = new EnqueueWorker(services, images);
+        queueWorker = new EnqueueWorker(services, images);
         queueWorker.execute();
 
         //logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + fsContentQueue.toString());
@@ -218,12 +219,17 @@ public class IngestManager {
      * stop currently running threads if any (e.g. when changing a case)
      */
     void stopAll() {
+        //stop queue worker
+        if (queueWorker != null) {
+            queueWorker.cancel(true);
+            queueWorker = null;
+        }
+
         //empty queues
         emptyFsContents();
         emptyImages();
 
-        //stop workers
-
+        //stop service workers
         if (fsContentIngester != null) {
             boolean cancelled = fsContentIngester.cancel(true);
             if (!cancelled) {
@@ -252,6 +258,7 @@ public class IngestManager {
         } catch (InterruptedException e) {
         }
 
+        logger.log(Level.INFO, "stopped all");
     }
 
     /**
