@@ -21,6 +21,7 @@
 
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -73,8 +74,10 @@ public class HashDbIngestService implements IngestServiceFsContent {
             else
                 manager.postMessage(IngestMessage.createErrorMessage(++messageId, this, "No known bad database set"));
             
-        } catch (Exception ex) {
+        } catch (TskException ex) {
             logger.log(Level.SEVERE, "Setting NSRL and Known database failed", ex);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error getting Hash DB settings", ex);
         }
     }
      
