@@ -63,8 +63,8 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void init(IngestManager manager){
-        logger.log(Level.INFO, "init()");
         this.manager = manager;
+        manager.postMessage(IngestMessage.createDataMessage(1, this, "INIT", null));
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
             HashDbSettings hashDbSettings = HashDbSettings.getHashDbSettings();
@@ -85,8 +85,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void complete(){
-        logger.log(Level.INFO, "complete()");
-        DirectoryTreeTopComponent.findInstance().componentOpened();
+        manager.postMessage(IngestMessage.createDataMessage(1, this, "COMPLETE", null));
     }
     
     /**
@@ -94,7 +93,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void stop(){
-        logger.log(Level.INFO, "stop()");
+        manager.postMessage(IngestMessage.createDataMessage(1, this, "STOP", null));
     }
     
     /**
@@ -111,7 +110,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
         String name = fsContent.getName();
         long id = fsContent.getId();
         try{
-            String status = skCase.analyzeFileMd5(fsContent);
+            String status = skCase.lookupFileMd5(fsContent);
             if(status.equals("known") || status.equals("known bad")){
                 manager.postMessage(IngestMessage.createDataMessage(id, this, name + " is a " + status + " file", null));
             }
