@@ -29,6 +29,7 @@ public interface IngestServiceAbstract {
     /**
      * notification from manager that brand new processing should be initiated.
      * Service loads its configuration and performs initialization
+     * called once per new worker thread
      * 
      * @param IngestManager handle to the manager to postMessage() to
      */
