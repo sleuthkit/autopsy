@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 /**
  *
@@ -33,6 +34,7 @@ public class Chrome {
    public ArrayList<HashMap> cookies = new ArrayList<HashMap>();
     public ArrayList<HashMap> bookmarks = new ArrayList<HashMap>();
    private final Logger logger = Logger.getLogger(this.getClass().getName());
+   public int ChromeCount = 0;
     
     public Chrome(){
  
@@ -49,9 +51,10 @@ public class Chrome {
             
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' AND parent_path LIKE '%Chrome%'");
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
+            ChromeCount = FFSqlitedb.size();
+    
             
             int j = 0;
-     
             while (j < FFSqlitedb.size())
             {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
@@ -72,10 +75,14 @@ public class Chrome {
                       kvs.put("Last Accessed", temprs.getString("visit_date"));
                       kvs.put("Reference", temprs.getString("from_visit"));
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_URL, temprs.getString("url"), "RecentActivity","Chrome");
-                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, temprs.getString("visit_date"), "RecentActivity","Chrome");
-                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_REFERRER, temprs.getString("from_visit"), "RecentActivity","Chrome");
-                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_NAME, ((temprs.getString("title") != null) ? temprs.getString("title") : "No Title"), "RecentActivity","Chrome");
+                      BlackboardAttribute bbatturl = new BlackboardAttribute(1,"RecentActivity","Chrome",temprs.getString("url"));
+                      bbart.addAttribute(bbatturl);
+                       BlackboardAttribute bbattdate = new BlackboardAttribute(31,"RecentActivity","Chrome",temprs.getString("last_visit_time"));
+                      bbart.addAttribute(bbattdate);
+                       BlackboardAttribute bbattref = new BlackboardAttribute(32,"RecentActivity","Chrome",temprs.getString("from_visit"));
+                      bbart.addAttribute(bbattref);
+                       BlackboardAttribute bbatttitle = new BlackboardAttribute(3,"RecentActivity","Chrome",((temprs.getString("title") != null) ? temprs.getString("title") : "No Title"));
+                      bbart.addAttribute(bbatturl);
                       
                       als.add(kvs);
                      
@@ -94,7 +101,7 @@ public class Chrome {
         }
         catch (SQLException ex) 
         {
-           logger.log(Level.WARNING, "Error while trying to get Firefox SQLite db.", ex);
+           logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
         }
         catch(IOException ioex)
         {   
@@ -134,10 +141,15 @@ public class Chrome {
                       cookies.add(kvs);
                       
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
-                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_URL, temprs.getString("host"), "RecentActivity","Chrome");
-                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, Util.utcConvert(temprs.getString("access_utc")), "RecentActivity","Chrome");
-                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_TEXT, temprs.getString("value"), "RecentActivity","Chrome");
-                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_NAME, ((temprs.getString("name") != null) ? temprs.getString("name") : "No Title"), "RecentActivity","Chrome");
+                     BlackboardAttribute bbatturl = new BlackboardAttribute(1, temprs.getString("host"), "RecentActivity", "Chrome");
+                     bbart.addAttribute(bbatturl);
+                     BlackboardAttribute bbattdate = new BlackboardAttribute(2, temprs.getString("access_utc"), "RecentActivity", "Chrome");
+                     bbart.addAttribute(bbattdate);
+                     BlackboardAttribute bbattvalue = new BlackboardAttribute(26, temprs.getString("value"), "RecentActivity", "Chrome");
+                     bbart.addAttribute(bbattvalue);
+                     BlackboardAttribute bbatttitle = new BlackboardAttribute(3, ((temprs.getString("name") != null) ? temprs.getString("name") : "No name"), "RecentActivity","Chrome");
+                     bbart.addAttribute(bbatttitle);
+
                       
                    } 
                    tempdbconnect.closeConnection();
@@ -154,7 +166,7 @@ public class Chrome {
         }
         catch (SQLException ex) 
         {
-           logger.log(Level.WARNING, "Error while trying to get Firefox SQLite db.", ex);
+           logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
         }
         catch(IOException ioex)
         {   
@@ -192,10 +204,12 @@ public class Chrome {
                       kvs.put("Count", temprs.getString("urls.typed_count"));
                       kvs.put("Last Accessed", temprs.getString("urls._last_visit_time"));
                       kvs.put("Reference", temprs.getString("starred.date_added"));
-                       bbart.addAttribute(ATTRIBUTE_TYPE.TSK_URL, temprs.getString("urls.url"), "RecentActivity", "Chrome");
-                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, temprs.getString("urls._last_visit_time"), "RecentActivity", "Chrome");
-                      
-                      bbart.addAttribute(ATTRIBUTE_TYPE.TSK_NAME, ((temprs.getString("starred.title") != null) ? temprs.getString("starred.title") : "No name"), "RecentActivity","Chrome");
+                      BlackboardAttribute bbattdate = new BlackboardAttribute(31,"RecentActivity","Chrome",temprs.getString("last_visit_time"));
+                      bbart.addAttribute(bbattdate);
+                      BlackboardAttribute bbatturl = new BlackboardAttribute(5, ((temprs.getString("url") != null) ? temprs.getString("url") : "No URL"), "RecentActivity","Chrome");
+                      bbart.addAttribute(bbatturl);
+                      BlackboardAttribute bbatttitle = new BlackboardAttribute(3, ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "No Title"), "RecentActivity","Chrome");
+                      bbart.addAttribute(bbatttitle);
                       bookmarks.add(kvs);
                      
                       
@@ -214,7 +228,7 @@ public class Chrome {
         }
         catch (SQLException ex) 
         {
-           logger.log(Level.WARNING, "Error while trying to get Firefox SQLite db.", ex);
+           logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
         }
         catch(IOException ioex)
         {   

@@ -1,20 +1,4 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package org.sleuthkit.autopsy.recentactivity;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestServiceImage;
-import org.sleuthkit.datamodel.Image;
-/**
- *
- * @author Alex
- */
-/*
  * Autopsy Forensic Browser
  *
  * Copyright 2011 Basis Technology Corp.
@@ -32,6 +16,17 @@ import org.sleuthkit.datamodel.Image;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.sleuthkit.autopsy.recentactivity;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
+import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
+import org.sleuthkit.autopsy.ingest.IngestServiceImage;
+import org.sleuthkit.datamodel.Image;
+
 /**
  * Example implementation of an image ingest service 
  * 
@@ -39,29 +34,55 @@ import org.sleuthkit.datamodel.Image;
 public final class RAImageIngestService implements IngestServiceImage {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestService.class.getName());
-    private static RAImageIngestService instance = null;
+    private static RAImageIngestService defaultInstance = null;
     private IngestManager manager;
-    
     private static int messageId = 0;
 
+    //public constructor is required
+    //as multiple instances are created for processing multiple images simultenously
+    public RAImageIngestService() {
+    }
+
+    //default instance used for service registration
     public static synchronized RAImageIngestService getDefault() {
-        if (instance == null) {
-            instance = new RAImageIngestService();
+        if (defaultInstance == null) {
+            defaultInstance = new RAImageIngestService();
         }
-        return instance;
+        return defaultInstance;
     }
 
     @Override
-    public void process(Image image) {
+    public void process(Image image, IngestImageWorkerController controller) {
+        logger.log(Level.INFO, "process() " + this.toString());
+
         manager.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + image.getName()));
 
         //service specific Image processing code here
-        try {
-           // Thread.sleep(5000);
-         ExtractAll eAll = new ExtractAll(); 
-         eAll.extractToBlackboard();
-        } 
-        catch (Error e) {
+        //example:
+        ExtractAll ext = new ExtractAll();
+        int count = ext.getExtractCount();
+        //if we know amount of work units, we can switch to determinate and update progress bar
+        int filesToProcess = count;
+        controller.switchToDeterminate(filesToProcess);
+        int processedFiles = 0;
+
+        while (filesToProcess-- > 0) {
+
+            //check if should terminate on every loop iteration
+            if (controller.isCancelled()) {
+                return;
+            }
+            try {
+                //do the work
+                ext.extractToBlackboard();
+                //post message to user if found something interesting
+                manager.postMessage(IngestMessage.createMessage(processedFiles, MessageType.INFO, this, "Processed " + image.getName() + ": " + Integer.toString(processedFiles)));
+
+                //update progress
+                controller.progress(++processedFiles);
+            } 
+            catch (Error e) {
+            }
         }
 
 
@@ -69,10 +90,12 @@ public final class RAImageIngestService implements IngestServiceImage {
 
     @Override
     public void complete() {
-        logger.log(Level.INFO, "complete()");
-        manager.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
-        
-        //service specific cleanup due completion here
+        logger.log(Level.INFO, "complete() " + this.toString());
+
+        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "completed image processing");
+        manager.postMessage(msg);
+
+        //service specific cleanup due to completion here
     }
 
     @Override
@@ -82,18 +105,18 @@ public final class RAImageIngestService implements IngestServiceImage {
 
     @Override
     public void init(IngestManager manager) {
-        logger.log(Level.INFO, "init()");
+        logger.log(Level.INFO, "init() " + this.toString());
         this.manager = manager;
 
         //service specific initialization here
-        
+
     }
 
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
-        
-        //service specific cleanup due interruption here
+
+        //service specific cleanup due to interruption here
     }
 
     @Override

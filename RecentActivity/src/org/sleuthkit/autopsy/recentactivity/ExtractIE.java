@@ -161,7 +161,6 @@ public class ExtractIE { // implements BrowserActivity {
              {
                 for (File file : pascoFiles)
                 {
-
                    // Make sure the file the is not empty or the Scanner will
                    // throw a "No Line found" Exception
                    if (file != null && file.length() > 0 )
@@ -190,6 +189,9 @@ public class ExtractIE { // implements BrowserActivity {
                             PASCO_RESULTS_LUT.put("Count", lineBuff[0]);
                             PASCO_RESULTS_LUT.put("Last Accessed", lineBuff[3]);
                             PASCO_RESULTS_LUT.put("Reference", "None");
+                            
+                            
+                            
                             //KeyValueThing
                             //This will be redundant in terms IE.name() because of
                             //the way they implemented KeyValueThing

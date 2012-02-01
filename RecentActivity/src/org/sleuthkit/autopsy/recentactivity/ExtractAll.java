@@ -4,8 +4,10 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.FsContent;
 
 /**
  *
@@ -20,12 +22,14 @@ public class ExtractAll {
        public boolean extractToBlackboard(){
            
            try{
+               // Will make registry entries later, comment out for DEMO ONLY
                // ExtractRegistry eree = new ExtractRegistry();
                 //eree.getregistryfiles();
                 Firefox ffre = new Firefox();
                 ffre.getffdb();    
                 Chrome chre = new Chrome();
                 chre.getchdb();
+                
                // ExtractIE eere = new ExtractIE();
                // eere.parsePascoResults();
                 //Find a way to put these results into BB
@@ -34,6 +38,31 @@ public class ExtractAll {
            }
            catch(Error e){
                return false;
+           }
+          
+       }
+        public int getExtractCount(){
+           int count = 0;
+           try{
+               // Will make registry entries later, comment out for DEMO ONLY
+               // ExtractRegistry eree = new ExtractRegistry();
+                //eree.getregistryfiles();
+                Firefox ffre = new Firefox();
+                ffre.getffdb();
+                count = count + ffre.FireFoxCount;
+                Chrome chre = new Chrome();
+                chre.getchdb();
+                count = count + chre.ChromeCount;
+                
+               ExtractIE eere = new ExtractIE();
+               eere.parsePascoResults();
+               count = count + eere.PASCO_RESULTS_LIST.size();
+                //Find a way to put these results into BB
+              //  ArrayList<HashMap<String,Object>> IEresults = eere.PASCO_RESULTS_LIST; 
+                return count;
+           }
+           catch(Error e){
+               return 0;
            }
           
        }
