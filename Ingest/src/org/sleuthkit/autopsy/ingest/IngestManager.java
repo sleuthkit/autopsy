@@ -713,8 +713,13 @@ public class IngestManager {
 
         synchronized void addError(IngestServiceAbstract source) {
             ++errorsTotal;
-            int curServiceError = errors.get(source);
-            errors.put(source, curServiceError + 1);
+            Integer curServiceErrorI = errors.get(source);
+            if (curServiceErrorI == null) {
+                errors.put(source, 1);
+            }
+            else {
+                errors.put(source, curServiceErrorI + 1);
+            }
         }
     }
 
