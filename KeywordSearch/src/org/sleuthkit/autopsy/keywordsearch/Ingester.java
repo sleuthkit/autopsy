@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
-import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
@@ -58,7 +57,6 @@ class Ingester {
         }
     }
 
-    
     /**
      * Sends a file to Solr to have its content extracted and added to the
      * index. commit() should be called once you're done ingesting files.
@@ -70,7 +68,7 @@ class Ingester {
     public void ingest(FsContentStringStream fcs) throws IngesterException {
         ingest(fcs, getFsContentFields(fcs.getFsContent()));
     }
-    
+
     /**
      * Sends a file to Solr to have its content extracted and added to the
      * index. commit() should be called once you're done ingesting files.
@@ -82,7 +80,7 @@ class Ingester {
     public void ingest(FsContent f) throws IngesterException {
         ingest(new FscContentStream(f), getFsContentFields(f));
     }
-    
+
     /**
      * Creates a field map from FsContent, that is later sent to Solr
      * @param fsc FsContent to get fields from
@@ -98,8 +96,7 @@ class Ingester {
         fields.put("crtime", fsc.getMtimeAsDate());
         return fields;
     }
-    
-    
+
     /**
      * Common delegate method actually doing the work for objects implementing ContentStream
      * 
@@ -114,7 +111,7 @@ class Ingester {
         setFields(up, fields);
         up.setAction(AbstractUpdateRequest.ACTION.COMMIT, true, true);
 
-        logger.log(Level.INFO, "Ingesting " + fields.get("file_name"));
+        //logger.log(Level.INFO, "Ingesting " + fields.get("file_name"));
         up.setParam("commit", "false");
 
         try {
@@ -123,10 +120,13 @@ class Ingester {
         } catch (IOException ex) {
             // It's possible that we will have IO errors 
             throw new IngesterException("Problem reading file.", ex);
+        } catch (IllegalStateException ex) {
+            // problems with content
+            throw new IngesterException("Problem reading file.", ex);
         } catch (SolrServerException ex) {
             // If there's a problem talking to Solr, something is fundamentally
             // wrong with ingest
-            throw new RuntimeException(ex);
+            throw new IngesterException("Problem with Solr", ex);
         } catch (SolrException ex) {
             // Tika problems result in an unchecked SolrException
             ErrorCode ec = ErrorCode.getErrorCode(ex.code());
@@ -140,10 +140,10 @@ class Ingester {
                 throw ex;
             }
         }
-        
+
         uncommitedIngests = true;
     }
-    
+
     /**
      * Tells Solr to commit (necessary before ingested files will appear in
      * searches)
