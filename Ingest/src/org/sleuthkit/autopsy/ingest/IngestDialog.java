@@ -36,28 +36,33 @@ import org.sleuthkit.datamodel.Image;
 public class IngestDialog extends JDialog implements PropertyChangeListener{
     
     private static IngestDialog instance;
-    private static final String TITLE = "Welcome";
+    private static final String TITLE = "Ingest Modules";
     private static Dimension DIMENSIONS = new Dimension(300, 300);
     private Image image;
 
-    private IngestDialog(JFrame frame, String title) {
-        super(frame, title, true);
+    public IngestDialog(JFrame frame, String title, boolean modal) {
+        super(frame, title, modal);
+        Case.addPropertyChangeListener(this);
+    }
+    
+    public IngestDialog(){
+        this(new JFrame(TITLE), TITLE, true);
     }
 
     /**
-     * Get the startup window
+     * Get the Ingest dialog
      * @return the startup window singleton
      */
     public static synchronized IngestDialog getInstance() {
         if (IngestDialog.instance == null) {
             JFrame frame = new JFrame(TITLE);
-            IngestDialog.instance = new IngestDialog(frame, TITLE);
+            IngestDialog.instance = new IngestDialog(frame, TITLE, true);
         }
         return instance;
     }
 
     /**
-     * Shows the startup window.
+     * Shows the Ingest dialog.
      */
     public void display() {
 
@@ -73,7 +78,7 @@ public class IngestDialog extends JDialog implements PropertyChangeListener{
 
         IngestDialogPanel panel = new IngestDialogPanel(image);
 
-        // add the command to close the window to the button on the Volume Detail Panel
+        // add the command to close the window to both buttons
         panel.setCloseButtonActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -95,23 +100,18 @@ public class IngestDialog extends JDialog implements PropertyChangeListener{
     }
 
     /**
-     * Closes the startup window.
+     * Closes the Ingest dialog
      */
     public void close() {
         this.dispose();
-    }
-    
-    IngestDialog(){
-        Case.addPropertyChangeListener(this);
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         String changed = evt.getPropertyName();
-        Object oldValue = evt.getOldValue();
         Object newValue = evt.getNewValue();
         
-        if(changed.equals(AddImageAction.WIZARD_COMPLETE)){
+        if(changed.equals(Case.CASE_ADD_IMAGE)){
             this.image = (Image) newValue;
             display();
         }

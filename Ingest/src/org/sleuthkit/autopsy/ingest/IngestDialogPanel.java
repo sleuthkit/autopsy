@@ -204,4 +204,9 @@ public class IngestDialogPanel extends javax.swing.JPanel {
     public void setStartButtonActionListener(ActionListener actionListener) {
         startButton.addActionListener(actionListener);
     }
+    
+    public void setBothButtonActionListener(ActionListener actionListener) {
+        startButton.addActionListener(actionListener);
+        closeButton.addActionListener(actionListener);
+    }
 }

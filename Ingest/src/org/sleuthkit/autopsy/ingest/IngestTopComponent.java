@@ -57,6 +57,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     private Collection<IngestServiceAbstract> services;
     private Map<String, Boolean> serviceStates;
     private IngestMessagePanel messagePanel;
+    private IngestDialog iD;
     private ActionListener serviceSelListener = new ActionListener() {
 
         @Override
@@ -69,6 +70,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     private IngestTopComponent() {
         services = new ArrayList<IngestServiceAbstract>();
         serviceStates = new HashMap<String, Boolean>();
+        iD = new IngestDialog();
         initComponents();
         customizeComponents();
         setName(NbBundle.getMessage(IngestTopComponent.class, "CTL_IngestTopComponent"));
