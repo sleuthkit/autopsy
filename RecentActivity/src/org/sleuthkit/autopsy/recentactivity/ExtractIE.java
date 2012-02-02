@@ -169,7 +169,7 @@ public class ExtractIE { // implements BrowserActivity {
             command.add(" isi.pasco2.Main");
             command.add(" -T history");
             command.add("\"" + indexFilePath + "\"");
-            command.add(" > " + PASCO_RESULTS_PATH + "\\pasco2Result" + Integer.toString(fileIndex) + ".txt");
+            command.add(" > \"" + PASCO_RESULTS_PATH + "\\pasco2Result" + Integer.toString(fileIndex) + ".txt\"");
            // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String[] cmd = command.toArray(new String[0]);
 
