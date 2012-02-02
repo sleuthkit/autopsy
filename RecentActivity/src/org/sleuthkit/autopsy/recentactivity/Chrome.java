@@ -83,6 +83,8 @@ public class Chrome {
                       bbart.addAttribute(bbattref);
                        BlackboardAttribute bbatttitle = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),"RecentActivity","Chrome",((temprs.getString("title") != null) ? temprs.getString("title") : "No Title"));
                       bbart.addAttribute(bbatttitle);
+                      BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","Chrome","Chrome");
+                                        bbart.addAttribute(bbattprog);
                       
                       als.add(kvs);
                      
@@ -149,7 +151,8 @@ public class Chrome {
                      bbart.addAttribute(bbattvalue);
                      BlackboardAttribute bbatttitle = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","Chrome",((temprs.getString("name") != null) ? temprs.getString("name") : "No name"));
                      bbart.addAttribute(bbatttitle);
-
+                    BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","Chrome","Chrome");
+                     bbart.addAttribute(bbattprog);
                       
                    } 
                    tempdbconnect.closeConnection();
@@ -210,6 +213,8 @@ public class Chrome {
                       bbart.addAttribute(bbatturl);
                       BlackboardAttribute bbatttitle = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","Chrome", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "No Title"));
                       bbart.addAttribute(bbatttitle);
+                       BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","Chrome","Chrome");
+                      bbart.addAttribute(bbattprog);
                       bookmarks.add(kvs);
                      
                       
