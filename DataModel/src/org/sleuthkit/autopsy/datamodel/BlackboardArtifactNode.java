@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -40,11 +41,12 @@ class BlackboardArtifactNode extends AbstractNode {
     BlackboardArtifact artifact;
 
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
-        super(Children.LEAF);
+        super(Children.LEAF, Lookups.singleton(new ArtifactStringContent(artifact)));
         this.artifact = artifact;
         this.setName(artifact.getArtifactTypeName());
         this.setDisplayName(artifact.getDisplayName());
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/artifact-icon.png");
+        
     }
     
     @Override

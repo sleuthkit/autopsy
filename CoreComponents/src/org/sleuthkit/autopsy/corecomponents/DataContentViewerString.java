@@ -322,6 +322,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 StringContent scontent = selectedNode.getLookup().lookup(StringContent.class);
                 if(scontent != null){
                     this.setDataView(scontent);
+                    return;
                 }
             }
         }
@@ -364,6 +365,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     
     @Override
     public boolean isPreferred(Node node, boolean isSupported) {
+        if(node != null && isSupported){
+            StringContent scontent = node.getLookup().lookup(StringContent.class);
+            if(scontent != null){
+                return true;
+            }
+        }
         return false;
     }
 
