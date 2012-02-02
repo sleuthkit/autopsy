@@ -122,7 +122,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
                 manager.postMessage(IngestMessage.createDataMessage(++messageId, this, name + " is a " + status + " file", null));
             }
         } catch (TskException ex){
-            logger.log(Level.WARNING, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
+            logger.log(Level.INFO, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
         }
     }
 
