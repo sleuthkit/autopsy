@@ -40,6 +40,8 @@ public class HashDbIngestService implements IngestServiceFsContent {
     private IngestManager manager;
     private SleuthkitCase skCase;
     private static int messageId = 0;
+    // Whether or not to do hash lookups (only set to true if there are dbs set)
+    private boolean process;
     
     public static synchronized HashDbIngestService getDefault() {
         if (instance == null) {
@@ -56,22 +58,25 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void init(IngestManager manager){
+        this.process = false;
         this.manager = manager;
-        manager.postMessage(IngestMessage.createMessage(1, IngestMessage.MessageType.INFO, this, "INIT"));
+        manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "INIT"));
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
             HashDbSettings hashDbSettings = HashDbSettings.getHashDbSettings();
             
             String nsrlDbPath;
-            if((nsrlDbPath = hashDbSettings.getNSRLDatabasePath()) != null && !nsrlDbPath.equals(""))
+            if((nsrlDbPath = hashDbSettings.getNSRLDatabasePath()) != null && !nsrlDbPath.equals("")){
                 skCase.setNSRLDatabase(nsrlDbPath);
-            else
+                this.process = true;
+            }else
                 manager.postMessage(IngestMessage.createErrorMessage(++messageId, this, "No NSRL database set"));
             
             String knownBadDbPath;
-            if((knownBadDbPath = hashDbSettings.getKnownBadDatabasePath()) != null && !knownBadDbPath.equals(""))
+            if((knownBadDbPath = hashDbSettings.getKnownBadDatabasePath()) != null && !knownBadDbPath.equals("")){
                 skCase.setKnownBadDatabase(knownBadDbPath);
-            else
+                this.process = true;
+            }else
                 manager.postMessage(IngestMessage.createErrorMessage(++messageId, this, "No known bad database set"));
             
         } catch (TskException ex) {
@@ -115,15 +120,17 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void process(FsContent fsContent){
-        String name = fsContent.getName();
-        try{
-            String status = skCase.lookupFileMd5(fsContent);
-            if(status.equals("known bad")){
-                manager.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, null));
+        if(process){
+            String name = fsContent.getName();
+            try{
+                String status = skCase.lookupFileMd5(fsContent);
+                if(status.equals("known bad")){
+                    manager.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, null));
+                }
+            } catch (TskException ex){
+                // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
+                logger.log(Level.INFO, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
             }
-        } catch (TskException ex){
-            // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
-            logger.log(Level.INFO, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
         }
     }
 
