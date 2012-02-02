@@ -50,11 +50,11 @@ public void getregistryfiles(){
                
                  boolean regSuccess = executeRegRip(temps, j);
 
-             //At this point pasco2 proccessed the index files.
+           
              //Now fetch the results, parse them and the delete the files.
              if(regSuccess)
              {
-                //Delete index<n>.dat file since it was succcessfully by Pasco
+                
                 regFile.delete();
              }
                 j++;
@@ -94,7 +94,7 @@ public void getregistryfiles(){
                 }
                 if(regFilePath.toLowerCase().contains("ntuser"))
                 {
-                    type = "ntuser";
+                    type = "autrecent.pl";
                 }
                 if(regFilePath.toLowerCase().contains("default"))
                 {
