@@ -14,3 +14,5 @@
 /KeywordSearch/release/solr/solr/lib/
 /KeywordSearch/release/solr/start.jar
 /KeywordSearch/release/solr/webapps/solr.war
+
+/DataModel/release/modules/ext/sqlite-jdbc-3.7.2.jar
