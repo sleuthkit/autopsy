@@ -227,7 +227,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
             .addGap(0, 231, Short.MAX_VALUE)
         );
 
-        topLable.setFont(new java.awt.Font("Tahoma", 0, 12));
+        topLable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(topLable, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.topLable.text")); // NOI18N
 
         servicesPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));

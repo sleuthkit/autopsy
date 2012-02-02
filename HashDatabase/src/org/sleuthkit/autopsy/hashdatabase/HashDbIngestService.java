@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.TskException;
 public class HashDbIngestService implements IngestServiceFsContent {
     
     private static HashDbIngestService instance = null;
-    private final static String NAME = "Hash Ingest Service";
+    private final static String NAME = "Hash Lookup";
     private static final Logger logger = Logger.getLogger(HashDbIngestService.class.getName());
     private IngestManager manager;
     private SleuthkitCase skCase;
