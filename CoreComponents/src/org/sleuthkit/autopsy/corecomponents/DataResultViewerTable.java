@@ -269,12 +269,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 if (content != null) {
                     // for the "Name" column
-                    int nodeColWidth = getMaxColumnWidth(0, metrics, margin, 40, firstColumnLabel, content); // Note: 40 is the width of the icon + node lines. Change this value if those values change!
+                    int nodeColWidth = Math.min(getMaxColumnWidth(0, metrics, margin, 40, firstColumnLabel, content), 250); // Note: 40 is the width of the icon + node lines. Change this value if those values change!
                     ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(nodeColWidth);
 
                     // get the max for each other column
-                    for (int colIndex = startColumn; colIndex < totalColumns; colIndex++) {
-                        int colWidth = getMaxColumnWidth(colIndex, metrics, margin, 8, props, content);
+                    for (int colIndex = startColumn; colIndex <= totalColumns; colIndex++) {
+                        int colWidth = Math.min(getMaxColumnWidth(colIndex, metrics, margin, 8, props, content), 350);
                         ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
                     }
                 }
