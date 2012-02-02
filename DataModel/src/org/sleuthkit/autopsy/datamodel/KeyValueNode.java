@@ -24,13 +24,20 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
+import org.openide.util.lookup.Lookups;
 
+/**
+ * Node that contains a KeyValue object. The node also has that KeyValue object
+ * set to its lookup so that when the node is passed to the content viewers its
+ * string will be displayed.
+ * @author alawrence
+ */
 public class KeyValueNode extends AbstractNode {
     
     KeyValue thing;
     
     public KeyValueNode(KeyValue thing, Children children) {
-        super(children);
+        super(children, Lookups.singleton(thing));
         this.setName(thing.getName());
         this.thing = thing;
     }

@@ -44,7 +44,7 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -69,7 +69,7 @@ public class ExtractIE { // implements BrowserActivity {
     public ArrayList<HashMap<String, Object>> PASCO_RESULTS_LIST = new ArrayList<HashMap<String, Object>>();
     //Look Up Table  that holds Pasco2 results
     private HashMap<String, Object> PASCO_RESULTS_LUT;
-    private KeyValueThing IE_PASCO_LUT = new KeyValueThing(BrowserType.IE.name(), BrowserType.IE.getType());
+    private KeyValue IE_PASCO_LUT = new KeyValue(BrowserType.IE.name(), BrowserType.IE.getType());
     public LinkedHashMap<String, Object> IE_OBJ;
 
     
@@ -80,7 +80,7 @@ public class ExtractIE { // implements BrowserActivity {
     }
 
     //@Override
-    public KeyValueThing getRecentActivity() {
+    public KeyValue getRecentActivity() {
         return IE_PASCO_LUT;
     }
 
