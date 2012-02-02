@@ -109,6 +109,7 @@ public class IngestManager {
      * @param images images to execute services on
      */
     void execute(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
+        logger.log(Level.INFO, "Will enqueue number of images: " + images.size() );
         /*if (!initialized) {
             //one time initialization of services
 
@@ -124,6 +125,7 @@ public class IngestManager {
         }*/
 
         tc.enableStartButton(false);
+        logger.log(Level.INFO, "Starting enqueue worker");
         queueWorker = new EnqueueWorker(services, images);
         queueWorker.execute();
 
@@ -141,6 +143,7 @@ public class IngestManager {
     void execute(final Collection<IngestServiceAbstract> services, final Image image) {
         Collection<Image> images = new ArrayList<Image>();
         images.add(image);
+        logger.log(Level.INFO, "Will enqueue image: " + image.getName() );
         execute(services, images);
     }
 
@@ -152,7 +155,10 @@ public class IngestManager {
      * image workers run per (service,image).  Check if one for the (service,image) is already running
      * otherwise start/restart the worker
      */
-    private void startAll() {
+    private synchronized void startAll() {
+        logger.log(Level.INFO, "Image queue: " + this.imageQueue.toString());
+        logger.log(Level.INFO, "File queue: " + this.fsContentQueue.toString());
+        
         //image ingesters
         while (hasNextImage()) {
             //dequeue
@@ -161,7 +167,7 @@ public class IngestManager {
             //check if such (service,image) already running
 
 
-            synchronized (this) {
+            //synchronized (this) {
                 for (IngestServiceImage quService : qu.services) {
                     boolean alreadyRunning = false;
                     for (IngestImageThread worker : imageIngesters) {
@@ -189,7 +195,7 @@ public class IngestManager {
                     }
                 }
             }
-        }
+        //}
 
 
         //fsContent ingester
