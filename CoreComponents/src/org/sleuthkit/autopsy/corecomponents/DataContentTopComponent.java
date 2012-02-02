@@ -292,6 +292,15 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     public void setupTabs(Node selectedNode) {
 
         int totalTabs = dataContentTabbedPane.getTabCount();
+        
+        List<DataContentViewer> dcvs = new ArrayList<DataContentViewer>();
+        dcvs.addAll(Lookup.getDefault().lookupAll(DataContentViewer.class));
+        for (int i = 0; i<dcvs.size(); i++){
+            DataContentViewer dcv = dcvs.get(i);
+            if(dcv.getTitle().equals("String View") && dataContentTabbedPane.getTabCount() > i){
+                dataContentTabbedPane.setSelectedIndex(i);
+            }
+        }
 
         if (totalTabs > 0) { // make sure there are tabs to reset
             int tempIndex = dataContentTabbedPane.getSelectedIndex();

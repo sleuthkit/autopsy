@@ -28,7 +28,12 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.Hash;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
@@ -42,6 +47,8 @@ public class HashDbIngestService implements IngestServiceFsContent {
     private static int messageId = 0;
     // Whether or not to do hash lookups (only set to true if there are dbs set)
     private boolean process;
+    String nsrlDbPath;
+    String knownBadDbPath;
     
     public static synchronized HashDbIngestService getDefault() {
         if (instance == null) {
@@ -65,14 +72,12 @@ public class HashDbIngestService implements IngestServiceFsContent {
         try {
             HashDbSettings hashDbSettings = HashDbSettings.getHashDbSettings();
             
-            String nsrlDbPath;
             if((nsrlDbPath = hashDbSettings.getNSRLDatabasePath()) != null && !nsrlDbPath.equals("")){
                 skCase.setNSRLDatabase(nsrlDbPath);
                 this.process = true;
             }else
                 manager.postMessage(IngestMessage.createErrorMessage(++messageId, this, "No NSRL database set"));
             
-            String knownBadDbPath;
             if((knownBadDbPath = hashDbSettings.getKnownBadDatabasePath()) != null && !knownBadDbPath.equals("")){
                 skCase.setKnownBadDatabase(knownBadDbPath);
                 this.process = true;
@@ -125,6 +130,14 @@ public class HashDbIngestService implements IngestServiceFsContent {
             try{
                 String status = skCase.lookupFileMd5(fsContent);
                 if(status.equals("known bad")){
+                    BlackboardArtifact badFile = fsContent.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
+                    BlackboardAttribute att1 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), NAME, "Known Bad", fsContent.getName());
+                    badFile.addAttribute(att1);
+                    BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID(), NAME, "Known Bad", knownBadDbPath);
+                    badFile.addAttribute(att2);
+                    //TODO: Shouldn't be calculating the hash twice.
+                    BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), NAME, "Known Bad", Hash.calculateMd5(fsContent));
+                    badFile.addAttribute(att3);
                     manager.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, null));
                 }
             } catch (TskException ex){
