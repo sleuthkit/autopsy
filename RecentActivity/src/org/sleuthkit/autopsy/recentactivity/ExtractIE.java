@@ -126,14 +126,14 @@ public class ExtractIE { // implements BrowserActivity {
                 // just create these files with the following notation:
                 // index<Number>.dat (i.e. index0.dat, index1.dat,..., indexN.dat)
                 // Write each index.dat file to a temp directory.
-                BlackboardArtifact bbart = fsc.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                //indexFileName = "index" + Integer.toString(index) + ".dat";
-                indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
+                //BlackboardArtifact bbart = fsc.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+                indexFileName = "index" + Integer.toString(index) + ".dat";
+                //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
                 temps = currentCase.getTempDirectory() + File.separator + indexFileName;
                 File datFile = new File(temps);
                 ContentUtils.writeToFile(fsc, datFile);
 
-                boolean bPascProcSuccess = executePasco(temps, index, bbart.getArtifactID());
+                boolean bPascProcSuccess = executePasco(temps, index, index);
 
                 //At this point pasco2 proccessed the index files.
                 //Now fetch the results, parse them and the delete the files.
@@ -199,7 +199,6 @@ public class ExtractIE { // implements BrowserActivity {
                     for (File file : pascoFiles) {
                         String bbartname = file.getName();
                         //bbartname = bbartname.substring(0, 4);
-                        long bbartId = Long.parseLong(bbartname);
 
                         // Make sure the file the is not empty or the Scanner will
                         // throw a "No Line found" Exception
@@ -209,9 +208,10 @@ public class ExtractIE { // implements BrowserActivity {
                             fileScanner.nextLine();
                             fileScanner.nextLine();
                             fileScanner.nextLine();
+                            long inIndexId = 0;
 
                             while (fileScanner.hasNext()) {
-
+                                long bbartId = Long.parseLong(bbartname + inIndexId++);
 
                                 String line = fileScanner.nextLine();
 
@@ -230,7 +230,9 @@ public class ExtractIE { // implements BrowserActivity {
                                         PASCO_RESULTS_LUT.put("Last Accessed", lineBuff[3]);
                                         PASCO_RESULTS_LUT.put("Reference", "None");
 
-                                        BlackboardArtifact bbart = tempDb.getBlackboardArtifact(bbartId);
+
+                                        // TODO: Need to fix this so we have the right obj_id
+                                        BlackboardArtifact bbart = tempDb.getRootObjects().get(0).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                                         BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[1]);
                                         bbart.addAttribute(bbatturl);
                                         BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[3]);
