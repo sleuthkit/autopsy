@@ -273,7 +273,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(nodeColWidth);
 
                     // get the max for each other column
-                    for (int colIndex = startColumn; colIndex < totalColumns; colIndex++) {
+                    for (int colIndex = startColumn; colIndex <= totalColumns; colIndex++) {
                         int colWidth = Math.min(getMaxColumnWidth(colIndex, metrics, margin, 8, props, content), 350);
                         ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
                     }
