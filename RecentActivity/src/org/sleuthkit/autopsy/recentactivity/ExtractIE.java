@@ -246,6 +246,8 @@ public class ExtractIE { // implements BrowserActivity {
                                         bbart.addAttribute(bbattref);
                                         BlackboardAttribute bbatttitle = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[2]);
                                         bbart.addAttribute(bbatttitle);
+                                        BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","Internet Explorer","Internet Explorer");
+                                          bbart.addAttribute(bbattprog);
 
                                         //KeyValueThing
                                         //This will be redundant in terms IE.name() because of
