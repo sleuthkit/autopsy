@@ -21,7 +21,7 @@ public class ExtractAll {
            try{
                // Will make registry entries later, comment out for DEMO ONLY
                // ExtractRegistry eree = new ExtractRegistry();
-                //eree.getregistryfiles();
+              //  eree.getregistryfiles();
                controller.switchToDeterminate(3);
                
                 Firefox ffre = new Firefox();

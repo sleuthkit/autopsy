@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 //IO imports
-import com.sun.corba.se.spi.activation.Server;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -28,6 +27,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 
 //Util Imports
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +48,6 @@ import org.sleuthkit.autopsy.datamodel.KeyValueThing;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
@@ -126,27 +125,25 @@ public class ExtractIE { // implements BrowserActivity {
                 // just create these files with the following notation:
                 // index<Number>.dat (i.e. index0.dat, index1.dat,..., indexN.dat)
                 // Write each index.dat file to a temp directory.
-                //BlackboardArtifact bbart = fsc.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                indexFileName = "index" + Integer.toString(index) + ".dat";
-                //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
-                temps = currentCase.getTempDirectory() + File.separator + indexFileName;
-                File datFile = new File(temps);
-                try {
+
+                   // BlackboardArtifact bbart = fsc.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+
+                    indexFileName = "index" + Integer.toString(index) + ".dat";
+                    //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
+                    temps = currentCase.getTempDirectory() + File.separator + indexFileName;
+                    File datFile = new File(temps);
                     ContentUtils.writeToFile(fsc, datFile);
-                }
-                catch (IOException e) {
-                    logger.log(Level.INFO, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
-                }
 
-                boolean bPascProcSuccess = executePasco(temps, index, index);
+                    boolean bPascProcSuccess = executePasco(temps, index);
 
-                //At this point pasco2 proccessed the index files.
-                //Now fetch the results, parse them and the delete the files.
-                if (bPascProcSuccess) {
+                    //At this point pasco2 proccessed the index files.
+                    //Now fetch the results, parse them and the delete the files.
+                    if (bPascProcSuccess) {
 
                     //Delete index<n>.dat file since it was succcessfully by Pasco
                     datFile.delete();
-                }
+                    }
+                   
                 ++index;
             }
         } catch (Exception ioex) {
@@ -157,7 +154,7 @@ public class ExtractIE { // implements BrowserActivity {
     //Simple wrapper to JavaSystemCaller.Exec() to execute pasco2 jar
     // TODO: Hardcoded command args/path needs to be removed. Maybe set some constants and set env variables for classpath
     // I'm not happy with this code. Can't stand making a system call, is not an acceptable solution but is a hack for now.
-    private boolean executePasco(String indexFilePath, int fileIndex, long bbId) {
+    private boolean executePasco(String indexFilePath, int fileIndex) {
         if (pascoFound == false)
             return false;
         boolean success = true;
@@ -166,12 +163,12 @@ public class ExtractIE { // implements BrowserActivity {
             List<String> command = new ArrayList<String>();
 
             command.add("-cp");
-            command.add("\"" + PASCO_LIB_PATH + "\"");
+            command.add(PASCO_LIB_PATH);
             command.add(" isi.pasco2.Main");
             command.add(" -T history");
-            command.add("\"" + indexFilePath + "\"");
-            //command.add(" > " + PASCO_RESULTS_PATH + "\\pasco2Result" + Integer.toString(fileIndex) + ".txt");
-            command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
+            command.add(indexFilePath);
+            command.add(" > " + PASCO_RESULTS_PATH + "\\pasco2Result" + Integer.toString(fileIndex) + ".txt");
+            //command.add(" > " + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId));
             String[] cmd = command.toArray(new String[0]);
 
             JavaSystemCaller.Exec.execute("java", cmd);
@@ -202,9 +199,6 @@ public class ExtractIE { // implements BrowserActivity {
             if (pascoFiles.length > 0) {
                 try {
                     for (File file : pascoFiles) {
-                        String bbartname = file.getName();
-                        //bbartname = bbartname.substring(0, 4);
-
                         // Make sure the file the is not empty or the Scanner will
                         // throw a "No Line found" Exception
                         if (file != null && file.length() > 0) {
@@ -213,10 +207,9 @@ public class ExtractIE { // implements BrowserActivity {
                             fileScanner.nextLine();
                             fileScanner.nextLine();
                             fileScanner.nextLine();
-                            long inIndexId = 0;
 
                             while (fileScanner.hasNext()) {
-                                long bbartId = Long.parseLong(bbartname + inIndexId++);
+
 
                                 String line = fileScanner.nextLine();
 
@@ -234,19 +227,20 @@ public class ExtractIE { // implements BrowserActivity {
                                         PASCO_RESULTS_LUT.put("Count", lineBuff[0]);
                                         PASCO_RESULTS_LUT.put("Last Accessed", lineBuff[3]);
                                         PASCO_RESULTS_LUT.put("Reference", "None");
-
-
-                                        // TODO: Need to fix this so we have the right obj_id
-                                        BlackboardArtifact bbart = tempDb.getRootObjects().get(0).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                                        BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[1]);
+                                        List<FsContent> FFSqlitedb;  
+                                        ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'explorer.exe'");
+                                        FFSqlitedb = tempDb.resultSetToFsContents(rs);
+                                        BlackboardArtifact bbart = FFSqlitedb.get(0).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+                                        BlackboardAttribute bbatturl = new BlackboardAttribute(1, "RecentActivity", "Internet Explorer", lineBuff[1]);
                                         bbart.addAttribute(bbatturl);
-                                        BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[3]);
+                                        BlackboardAttribute bbattdate = new BlackboardAttribute(31, "RecentActivity", "Internet Explorer", lineBuff[3]);
                                         bbart.addAttribute(bbattdate);
-                                        BlackboardAttribute bbattref = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", "Internet Explorer", "No Ref");
+                                        BlackboardAttribute bbattref = new BlackboardAttribute(32, "RecentActivity", "Internet Explorer", "No Ref");
                                         bbart.addAttribute(bbattref);
-                                        BlackboardAttribute bbatttitle = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[2]);
+                                        BlackboardAttribute bbatttitle = new BlackboardAttribute(3, "RecentActivity", "Internet Explorer", lineBuff[2]);
                                         bbart.addAttribute(bbatttitle);
-
+                                        BlackboardAttribute bbattprog = new BlackboardAttribute(4,"RecentActivity","Internet Explorer","Internet Explorer");
+                                        bbart.addAttribute(bbattprog);
                                         //KeyValueThing
                                         //This will be redundant in terms IE.name() because of
                                         //the way they implemented KeyValueThing
@@ -257,6 +251,10 @@ public class ExtractIE { // implements BrowserActivity {
                                         PASCO_RESULTS_LIST.add(PASCO_RESULTS_LUT);
                                     } catch (TskException ex) {
                                         Exceptions.printStackTrace(ex);
+                                    }
+                                    catch (SQLException ex)
+                                    {
+                                    
                                     }
                                 }
 
