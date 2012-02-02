@@ -118,10 +118,11 @@ public class HashDbIngestService implements IngestServiceFsContent {
         String name = fsContent.getName();
         try{
             String status = skCase.lookupFileMd5(fsContent);
-            if(status.equals("known") || status.equals("known bad")){
-                manager.postMessage(IngestMessage.createDataMessage(++messageId, this, name + " is a " + status + " file", null));
+            if(status.equals("known bad")){
+                manager.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, null));
             }
         } catch (TskException ex){
+            // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
             logger.log(Level.INFO, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
         }
     }
