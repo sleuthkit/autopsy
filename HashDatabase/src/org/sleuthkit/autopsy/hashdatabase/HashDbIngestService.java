@@ -92,7 +92,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void complete(){
-        manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Completed"));
+        manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Complete"));
     }
     
     /**

@@ -108,22 +108,7 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
     public JTextField getImagePathTextField() {
         return this.imgPathTextField;
     }
-    
-    public JCheckBox getLookupFilesCheckbox() {
-        return this.lookupFilesCheckBox;
-    }
-    
-    public Boolean getLookupFilesCheckboxChecked() {
-        return this.lookupFilesCheckBox.isSelected();
-    }
-    
-    public JCheckBox getIndexImageCheckbox() {
-        return this.indexImageCheckbox;
-    }
-    
-    public Boolean getIndexImageCheckboxChecked() {
-        return this.indexImageCheckbox.isSelected();
-    }
+   
 
     /**
      * Gets the type of the image that's selected.
@@ -218,9 +203,7 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
         jLabel1 = new javax.swing.JLabel();
         timeZoneComboBox = new javax.swing.JComboBox();
         timeZoneLabel = new javax.swing.JLabel();
-        lookupFilesCheckBox = new javax.swing.JCheckBox();
         jLabel2 = new javax.swing.JLabel();
-        indexImageCheckbox = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(rawSingle, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.rawSingle.text")); // NOI18N
         rawSingle.setRequestFocusEnabled(false);
@@ -261,7 +244,7 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
             }
         });
 
-        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14));
         org.openide.awt.Mnemonics.setLocalizedText(imgInfoLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.imgInfoLabel.text")); // NOI18N
 
         jLabel1.setForeground(new java.awt.Color(255, 0, 51));
@@ -271,11 +254,7 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
 
         org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.timeZoneLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lookupFilesCheckBox, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.lookupFilesCheckBox.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.jLabel2.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(indexImageCheckbox, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.indexImageCheckbox.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -287,12 +266,11 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(imgPathLabel)
                         .addGap(18, 18, 18)
-                        .addComponent(imgPathTextField)
+                        .addComponent(imgPathTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(imgPathBrowserButton))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lookupFilesCheckBox)
                             .addComponent(imgTypeLabel)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
@@ -306,12 +284,9 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(timeZoneLabel)
                                 .addGap(10, 10, 10)
-                                .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 315, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(indexImageCheckbox))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 315, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 102, Short.MAX_VALUE))
+                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -338,13 +313,9 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(timeZoneLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lookupFilesCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(indexImageCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 43, Short.MAX_VALUE)
                 .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(21, 21, 21)
                 .addComponent(jLabel1)
                 .addContainerGap())
         );
@@ -439,10 +410,8 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
     private javax.swing.JLabel imgPathLabel;
     private static javax.swing.JTextField imgPathTextField;
     private javax.swing.JLabel imgTypeLabel;
-    private javax.swing.JCheckBox indexImageCheckbox;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JCheckBox lookupFilesCheckBox;
     private javax.swing.JLabel multipleSelectLabel;
     private static javax.swing.JRadioButton rawSingle;
     private javax.swing.JRadioButton rawSplit;
