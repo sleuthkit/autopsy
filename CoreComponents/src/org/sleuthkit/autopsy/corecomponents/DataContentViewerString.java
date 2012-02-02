@@ -26,6 +26,7 @@ import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.autopsy.datamodel.StringContent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
@@ -273,6 +274,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 this.setDataView(content, 0, false);
                 return;
             }
+            else{
+                StringContent scontent = selectedNode.getLookup().lookup(StringContent.class);
+                if(scontent != null){
+                    this.setDataView(scontent);
+                }
+            }
         }
 
         this.setDataView(null, 0, true);
@@ -307,5 +314,29 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     @Override
     public Component getComponent() {
         return this;
+    }
+
+    private void setDataView(StringContent dataSource) {
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+                this.dataSource = null;
+
+                // set the data on the bottom and show it
+                String text = dataSource.getString();
+
+                nextPageButton.setEnabled(false);
+
+                prevPageButton.setEnabled(false);
+                currentPage = 1;
+
+                int totalPage = 1;
+                totalPageLabel.setText(Integer.toString(totalPage));
+                currentPageLabel.setText(Integer.toString(currentPage));
+                outputViewPane.setText(text); // set the output view
+                setComponentsVisibility(true); // shows the components that not needed
+                outputViewPane.moveCaretPosition(0);
+        } finally {
+            this.setCursor(null);
+        }
     }
 }

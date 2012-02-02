@@ -8,9 +8,9 @@ import org.openide.nodes.Sheet;
 
 public class KeyValueNode extends AbstractNode {
     
-    KeyValueThing thing;
+    KeyValue thing;
     
-    public KeyValueNode(KeyValueThing thing, Children children) {
+    public KeyValueNode(KeyValue thing, Children children) {
         super(children);
         this.setName(thing.getName());
         this.thing = thing;
