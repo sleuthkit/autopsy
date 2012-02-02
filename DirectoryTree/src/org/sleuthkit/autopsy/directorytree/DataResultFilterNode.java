@@ -34,6 +34,7 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
+import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
@@ -132,7 +133,9 @@ public class DataResultFilterNode extends FilterNode{
         
         final Node originalNode = this.getOriginal();
         
-        if (originalNode instanceof VolumeNode || (originalNode instanceof DirectoryNode && !originalNode.getDisplayName().equals("."))) {
+        if (originalNode instanceof VolumeNode ||
+            originalNode instanceof ArtifactTypeNode ||
+            (originalNode instanceof DirectoryNode && !originalNode.getDisplayName().equals("."))) {
 
             if (originalNode instanceof DirectoryNode && originalNode.getDisplayName().equals("..")) {
                 Node[] selectedNode = sourceEm.getSelectedNodes();

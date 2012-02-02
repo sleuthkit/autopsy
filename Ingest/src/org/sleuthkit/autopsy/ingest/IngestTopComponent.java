@@ -104,16 +104,15 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
 
     private void customizeComponents() {
         //custom GUI setup not done by builder
-        freqSlider.setToolTipText("Lower update frequency can optimize performance of certain ingest services, but also reduce real time status feedback");
+        //freqSlider.setToolTipText("Lower update frequency can optimize performance of certain ingest services, but also reduce real time status feedback");
 
-        JScrollPane scrollPane = new JScrollPane(servicesPanel);
+        /* JScrollPane scrollPane = new JScrollPane(servicesPanel);
         scrollPane.setPreferredSize(this.getSize());
         this.add(scrollPane, BorderLayout.CENTER);
+        servicesPanel.setLayout(new BoxLayout(servicesPanel, BoxLayout.Y_AXIS)); */
 
-        servicesPanel.setLayout(new BoxLayout(servicesPanel, BoxLayout.Y_AXIS));
 
-
-        freqSlider.setEnabled(false);
+        //freqSlider.setEnabled(false);
 
         messagePanel = new IngestMessagePanel();
 
@@ -130,7 +129,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         });
 
         //make messageframe on top
-        this.setComponentZOrder(controlPanel, 2);
+        this.setComponentZOrder(controlPanel, 1);
         messageFrame.setContentPane(messagePanel);
         messageFrame.pack();
         messageFrame.setVisible(true);
@@ -157,7 +156,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         });
 
 
-        Collection<IngestServiceImage> imageServices = IngestManager.enumerateImageServices();
+        /* Collection<IngestServiceImage> imageServices = IngestManager.enumerateImageServices();
         for (IngestServiceImage service : imageServices) {
             final String serviceName = service.getName();
             services.add(service);
@@ -176,8 +175,8 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
             checkbox.setName(serviceName);
             checkbox.addActionListener(serviceSelListener);
             servicesPanel.add(checkbox);
-            serviceStates.put(serviceName, true);
-        }
+            serviceStates.put(serviceName, true); 
+        }*/
 
     }
 
@@ -193,12 +192,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         mainPanel = new javax.swing.JPanel();
         messageFrame = new javax.swing.JInternalFrame();
         controlPanel = new javax.swing.JPanel();
-        topLable = new javax.swing.JLabel();
-        servicesPanel = new javax.swing.JPanel();
-        freqSlider = new javax.swing.JSlider();
         refreshFreqLabel = new javax.swing.JLabel();
-        startButton = new javax.swing.JButton();
-        refreshFrequencyLabel = new javax.swing.JLabel();
         mainProgressBar = new javax.swing.JProgressBar();
         ingestProgressLabel = new javax.swing.JLabel();
 
@@ -227,46 +221,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
             .addGap(0, 231, Short.MAX_VALUE)
         );
 
-        topLable.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(topLable, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.topLable.text")); // NOI18N
-
-        servicesPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
-        servicesPanel.setMinimumSize(new java.awt.Dimension(200, 150));
-        servicesPanel.setPreferredSize(new java.awt.Dimension(200, 150));
-
-        javax.swing.GroupLayout servicesPanelLayout = new javax.swing.GroupLayout(servicesPanel);
-        servicesPanel.setLayout(servicesPanelLayout);
-        servicesPanelLayout.setHorizontalGroup(
-            servicesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 198, Short.MAX_VALUE)
-        );
-        servicesPanelLayout.setVerticalGroup(
-            servicesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 148, Short.MAX_VALUE)
-        );
-
-        freqSlider.setMajorTickSpacing(1);
-        freqSlider.setMaximum(10);
-        freqSlider.setMinimum(1);
-        freqSlider.setPaintLabels(true);
-        freqSlider.setPaintTicks(true);
-        freqSlider.setSnapToTicks(true);
-        freqSlider.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                freqSliderStateChanged(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(refreshFreqLabel, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.refreshFreqLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(startButton, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.startButton.text")); // NOI18N
-        startButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                startButtonActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(refreshFrequencyLabel, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.refreshFrequencyLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(ingestProgressLabel, org.openide.util.NbBundle.getMessage(IngestTopComponent.class, "IngestTopComponent.ingestProgressLabel.text")); // NOI18N
 
@@ -278,44 +233,25 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
                 .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(controlPanelLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(topLable)
-                            .addComponent(servicesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(startButton)
-                            .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addComponent(mainProgressBar, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(freqSlider, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addComponent(mainProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 248, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addGap(59, 59, 59)
-                        .addComponent(refreshFrequencyLabel))
-                    .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addGap(59, 59, 59)
+                        .addGap(90, 90, 90)
                         .addComponent(ingestProgressLabel)))
-                .addContainerGap(47, Short.MAX_VALUE))
+                .addContainerGap(22, Short.MAX_VALUE))
             .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(controlPanelLayout.createSequentialGroup()
                     .addGap(74, 74, 74)
                     .addComponent(refreshFreqLabel)
-                    .addContainerGap(93, Short.MAX_VALUE)))
+                    .addContainerGap(116, Short.MAX_VALUE)))
         );
         controlPanelLayout.setVerticalGroup(
             controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(controlPanelLayout.createSequentialGroup()
-                .addGap(20, 20, 20)
-                .addComponent(topLable)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(servicesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(startButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(refreshFrequencyLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addContainerGap()
                 .addComponent(mainProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(ingestProgressLabel)
-                .addContainerGap(228, Short.MAX_VALUE))
+                .addContainerGap(524, Short.MAX_VALUE))
             .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(controlPanelLayout.createSequentialGroup()
                     .addGap(555, 555, 555)
@@ -328,9 +264,9 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         mainPanelLayout.setHorizontalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(10, 10, 10)
                 .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(71, 71, 71))
+                .addContainerGap(48, Short.MAX_VALUE))
             .addGroup(mainPanelLayout.createSequentialGroup()
                 .addComponent(messageFrame, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(58, Short.MAX_VALUE))
@@ -339,10 +275,10 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 357, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(27, 27, 27)
                 .addComponent(messageFrame, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(123, 123, 123))
+                .addGap(415, 415, 415))
         );
 
         mainScrollPane.setViewportView(mainPanel);
@@ -359,66 +295,14 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
-
-        if (manager == null) {
-            return;
-        }
-
-        //pick the services
-        List<IngestServiceAbstract> servicesToStart = new ArrayList<IngestServiceAbstract>();
-        for (IngestServiceAbstract service : services) {
-            boolean serviceEnabled = serviceStates.get(service.getName());
-            if (serviceEnabled) {
-                servicesToStart.add(service);
-            }
-        }
-
-        //pick the image
-        //TODO which image ? 
-        //for now enqueue all, and manager will skip already enqueued image
-        //if image has been processed, it will be enqueued again
-        int[] imageIds = Case.getCurrentCase().getImageIDs();
-        SleuthkitCase sc = Case.getCurrentCase().getSleuthkitCase();
-        List<Image> images = new ArrayList<Image>();
-        for (int imageId : imageIds) {
-            try {
-                final Image image = sc.getImageById(imageId);
-                images.add(image);
-            } catch (TskException e) {
-                logger.log(Level.SEVERE, "Error ingesting image, can't retrieve image id: " + Integer.toString(imageId), e);
-
-            } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Error ingesting image, can't retrieve image id: " + Integer.toString(imageId), e);
-            }
-        }
-
-        if (!services.isEmpty() && !images.isEmpty()) {
-            manager.execute(servicesToStart, images);
-        }
-    }//GEN-LAST:event_startButtonActionPerformed
-
-    private void freqSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_freqSliderStateChanged
-        JSlider source = (JSlider) evt.getSource();
-        if (!source.getValueIsAdjusting()) {
-            final int refresh = (int) source.getValue();
-            manager.setUpdateFrequency(refresh);
-
-        }
-    }//GEN-LAST:event_freqSliderStateChanged
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel controlPanel;
-    private javax.swing.JSlider freqSlider;
     private javax.swing.JLabel ingestProgressLabel;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JProgressBar mainProgressBar;
     private javax.swing.JScrollPane mainScrollPane;
     private javax.swing.JInternalFrame messageFrame;
     private javax.swing.JLabel refreshFreqLabel;
-    private javax.swing.JLabel refreshFrequencyLabel;
-    private javax.swing.JPanel servicesPanel;
-    private javax.swing.JButton startButton;
-    private javax.swing.JLabel topLable;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -439,7 +323,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     }
 
     void enableStartButton(boolean enable) {
-        startButton.setEnabled(enable);
+        //startButton.setEnabled(enable);
     }
 
     void writeProperties(java.util.Properties p) {

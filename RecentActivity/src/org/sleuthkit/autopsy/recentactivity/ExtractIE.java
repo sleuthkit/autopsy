@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 //IO imports
-import com.sun.corba.se.spi.activation.Server;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -138,7 +137,7 @@ public class ExtractIE { // implements BrowserActivity {
                     logger.log(Level.INFO, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
                 }
 
-                boolean bPascProcSuccess = executePasco(temps, index, index);
+                boolean bPascProcSuccess = executePasco(temps, index);
 
                 //At this point pasco2 proccessed the index files.
                 //Now fetch the results, parse them and the delete the files.
@@ -157,7 +156,7 @@ public class ExtractIE { // implements BrowserActivity {
     //Simple wrapper to JavaSystemCaller.Exec() to execute pasco2 jar
     // TODO: Hardcoded command args/path needs to be removed. Maybe set some constants and set env variables for classpath
     // I'm not happy with this code. Can't stand making a system call, is not an acceptable solution but is a hack for now.
-    private boolean executePasco(String indexFilePath, int fileIndex, long bbId) {
+    private boolean executePasco(String indexFilePath, int fileIndex) {
         if (pascoFound == false)
             return false;
         boolean success = true;
@@ -170,8 +169,8 @@ public class ExtractIE { // implements BrowserActivity {
             command.add(" isi.pasco2.Main");
             command.add(" -T history");
             command.add("\"" + indexFilePath + "\"");
-            //command.add(" > " + PASCO_RESULTS_PATH + "\\pasco2Result" + Integer.toString(fileIndex) + ".txt");
-            command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
+            command.add(" > \"" + PASCO_RESULTS_PATH + "\\pasco2Result" + Integer.toString(fileIndex) + ".txt\"");
+           // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String[] cmd = command.toArray(new String[0]);
 
             JavaSystemCaller.Exec.execute("java", cmd);
@@ -202,7 +201,7 @@ public class ExtractIE { // implements BrowserActivity {
             if (pascoFiles.length > 0) {
                 try {
                     for (File file : pascoFiles) {
-                        String bbartname = file.getName();
+                       // String bbartname = file.getName();
                         //bbartname = bbartname.substring(0, 4);
 
                         // Make sure the file the is not empty or the Scanner will
@@ -213,10 +212,10 @@ public class ExtractIE { // implements BrowserActivity {
                             fileScanner.nextLine();
                             fileScanner.nextLine();
                             fileScanner.nextLine();
-                            long inIndexId = 0;
+                          //  long inIndexId = 0;
 
                             while (fileScanner.hasNext()) {
-                                long bbartId = Long.parseLong(bbartname + inIndexId++);
+                                //long bbartId = Long.parseLong(bbartname + inIndexId++);
 
                                 String line = fileScanner.nextLine();
 

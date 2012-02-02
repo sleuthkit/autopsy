@@ -177,9 +177,9 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
         // Load hash database settings, enable or disable the checkbox
         this.NSRLPath = null;
         this.knownBadPath = null;
-        JCheckBox lookupFilesCheckbox = component.getLookupFilesCheckbox();
-        lookupFilesCheckbox.setSelected(false);
-        lookupFilesCheckbox.setEnabled(this.NSRLPath != null || this.knownBadPath != null);
+        //JCheckBox lookupFilesCheckbox = component.getLookupFilesCheckbox();
+        //lookupFilesCheckbox.setSelected(false);
+        //lookupFilesCheckbox.setEnabled(this.NSRLPath != null || this.knownBadPath != null);
         
         // If there is a process object in the settings, revert it and remove it from the settings
         AddImageAction.CleanupTask cleanupTask = (AddImageAction.CleanupTask) settings.getProperty(AddImageAction.IMAGECLEANUPTASK_PROP);
@@ -209,8 +209,8 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
     public void storeSettings(WizardDescriptor settings) {
         settings.putProperty(AddImageAction.IMGPATHS_PROP, getComponent().getImagePaths());
         settings.putProperty(AddImageAction.TIMEZONE_PROP, getComponent().getSelectedTimezone()); // store the timezone
-        settings.putProperty(AddImageAction.LOOKUPFILES_PROP, getComponent().getLookupFilesCheckboxChecked());
-        settings.putProperty(AddImageAction.SOLR_PROP, getComponent().getIndexImageCheckboxChecked());
+        //settings.putProperty(AddImageAction.LOOKUPFILES_PROP, getComponent().getLookupFilesCheckboxChecked());
+        //settings.putProperty(AddImageAction.SOLR_PROP, getComponent().getIndexImageCheckboxChecked());
         
         // Store the path to the first image selected into the properties file
         if(getComponent().getImagePaths().length > 0){
