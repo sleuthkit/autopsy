@@ -1,0 +1,50 @@
+# List of plugins for the Registry Ripper
+
+#-------------------------------------
+# NTUSER.DAT
+logonusername
+autoendtasks
+autorun
+acmru
+adoberdr
+aim
+applets
+comdlg32
+compdesc
+# The controlpanel plugin is intended for Vista systems only
+# User hives from systems prior to Vista will show 'not found'
+controlpanel
+listsoft  
+logon_xp_run
+load
+mmc
+mndmru 
+mp2
+mpmru 
+mspaper  
+officedocs
+oisc
+recentdocs
+realplayer6
+runmru
+tsclient
+ie_main
+ie_settings
+typedurls
+muicache
+#userassist
+userassist2
+user_run
+userlocsvc
+vncviewer
+winzip
+user_win
+winrar
+winlogon_u
+policies_u
+wallpaper
+vista_bitbucket
+shellfolders
+arpcache
+clampitm
+unreadmail
