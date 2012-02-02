@@ -62,7 +62,7 @@ public final class RAImageIngestService implements IngestServiceImage {
             //do the work
             ext.extractToBlackboard(controller);
 
-        } catch (Error e) {
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "Error extracting recent activity", e);
             manager.postMessage(IngestMessage.createErrorMessage(++messageId, this, "Error extracting recent activity data"));
         }
@@ -81,7 +81,7 @@ public final class RAImageIngestService implements IngestServiceImage {
 
     @Override
     public String getName() {
-        return "Recent Activity Service";
+        return "Recent Activity";
     }
 
     @Override
