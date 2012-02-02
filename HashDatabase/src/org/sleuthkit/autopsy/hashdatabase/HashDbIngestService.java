@@ -60,7 +60,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
     public void init(IngestManager manager){
         this.process = false;
         this.manager = manager;
-        manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "INIT"));
+        manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
             HashDbSettings hashDbSettings = HashDbSettings.getHashDbSettings();
@@ -92,7 +92,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void complete(){
-        manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "COMPLETE"));
+        manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Completed"));
     }
     
     /**
@@ -100,7 +100,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void stop(){
-        manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "STOP"));
+        //manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "STOP"));
     }
     
     /**
