@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+    <folder name="Services">
+    <file name="org-sleuthkit-autopsy-ingest-IngestTopComponent.instance">
+        <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer"/>
+        <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.IngestTopComponent.getDefault"/>
+        <attr name="position" intvalue="300"/>
+    </file>
+    <!-- example services -->
+    <!--
+        <file name="org-sleuthkit-autopsy-ingest-example-ExampleImageIngestService.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceImage"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.example.ExampleImageIngestService.getDefault"/>
+            <attr name="position" intvalue="1000"/>
+        </file>
+        
+        <file name="org-sleuthkit-autopsy-ingest-example-ExampleFsContentIngestService.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceFsContent"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.example.ExampleFsContentIngestService.getDefault"/>
+            <attr name="position" intvalue="1100"/>
+        </file>
+        -->
+    </folder>
+</filesystem>

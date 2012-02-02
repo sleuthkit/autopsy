@@ -27,7 +27,7 @@ import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataContentViewerHex;
 import org.sleuthkit.autopsy.corecomponents.DataContentViewerString;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
  * The actions to change between the "Hex View" and "String View".

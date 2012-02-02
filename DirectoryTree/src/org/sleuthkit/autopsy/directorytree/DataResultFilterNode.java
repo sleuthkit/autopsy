@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
-import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,12 +33,14 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Volume;
+
 
 /**
  * This class wraps nodes as they are passed to the DataResult viewers.  It 
@@ -52,11 +53,12 @@ public class DataResultFilterNode extends FilterNode{
 
 
     /** the constructor */
-    public DataResultFilterNode(Node arg, ExplorerManager em) {
-        super(arg, new DataResultFilterChildren(arg, em));
+    public DataResultFilterNode(Node node, ExplorerManager em) {
+        super(node, new DataResultFilterChildren(node, em));
         this.sourceEm = em;
         getActionsCV = new GetActionsContentVisitor();
     }
+    
 
     /**
      * Right click action for the nodes that we want to pass to the directory
@@ -74,6 +76,8 @@ public class DataResultFilterNode extends FilterNode{
 
         Content nodeContent = this.getOriginal().getLookup().lookup(Content.class);
         actions.addAll(nodeContent.accept(getActionsCV));
+        
+        //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
 
         return actions.toArray(new Action[actions.size()]);
     }
@@ -105,7 +109,7 @@ public class DataResultFilterNode extends FilterNode{
         public List<Action> visit(File f) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
-            actions.add(new ExtractAction("Extract", getOriginal()));
+            actions.add(new ExtractAction("Extract File", getOriginal()));
             return actions;
         }
 
@@ -191,7 +195,7 @@ public class DataResultFilterNode extends FilterNode{
                 newPs.setShortDescription(ps.getShortDescription());
 
                 newPs.put(ps.getProperties());
-                newPs.remove(FileNode.PROPERTY_LOCATION);
+                newPs.remove(FsContentPropertyType.LOCATION.toString() );
                 propertySets[i] = newPs;
             }
         }

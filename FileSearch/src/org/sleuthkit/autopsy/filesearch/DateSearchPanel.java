@@ -19,6 +19,8 @@
 
 package org.sleuthkit.autopsy.filesearch;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -26,6 +28,8 @@ import java.util.List;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 
 /**
  * Subpanel with controls for file data filtering.
@@ -40,6 +44,34 @@ class DateSearchPanel extends javax.swing.JPanel {
         this.timeZones = timeZones;
 
         initComponents();
+        customizeComponents();
+    }
+    
+    private void customizeComponents(){
+        
+        dateFromTextField.setComponentPopupMenu(rightClickMenu);
+        dateToTextField.setComponentPopupMenu(rightClickMenu);
+        ActionListener actList = new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                JMenuItem jmi = (JMenuItem) e.getSource();
+                /* Because there are two text fields, we have to determine which invoked the popupmenu */
+                JFormattedTextField jftf = (JFormattedTextField) ((JPopupMenu) jmi.getParent()).getInvoker();
+                if(jmi.equals(cutMenuItem))
+                    jftf.cut();
+                else if(jmi.equals(copyMenuItem))
+                    jftf.copy();
+                else if(jmi.equals(pasteMenuItem))
+                    jftf.paste();
+                else if(jmi.equals(selectAllMenuItem))
+                    jftf.selectAll();
+            }
+        };
+        cutMenuItem.addActionListener(actList);
+        copyMenuItem.addActionListener(actList);
+        pasteMenuItem.addActionListener(actList);
+        selectAllMenuItem.addActionListener(actList);
+
     }
 
     JCheckBox getAccessedCheckBox() {
@@ -91,6 +123,11 @@ class DateSearchPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        rightClickMenu = new javax.swing.JPopupMenu();
+        cutMenuItem = new javax.swing.JMenuItem();
+        copyMenuItem = new javax.swing.JMenuItem();
+        pasteMenuItem = new javax.swing.JMenuItem();
+        selectAllMenuItem = new javax.swing.JMenuItem();
         dateToTextField = new JFormattedTextField(this.dateFormat);
         jLabel1 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -106,6 +143,18 @@ class DateSearchPanel extends javax.swing.JPanel {
         accessedCheckBox = new javax.swing.JCheckBox();
         createdCheckBox = new javax.swing.JCheckBox();
         dateToButtonCalendar = new org.sourceforge.jcalendarbutton.JCalendarButton();
+
+        cutMenuItem.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.cutMenuItem.text")); // NOI18N
+        rightClickMenu.add(cutMenuItem);
+
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.copyMenuItem.text")); // NOI18N
+        rightClickMenu.add(copyMenuItem);
+
+        pasteMenuItem.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.pasteMenuItem.text")); // NOI18N
+        rightClickMenu.add(pasteMenuItem);
+
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.selectAllMenuItem.text")); // NOI18N
+        rightClickMenu.add(selectAllMenuItem);
 
         dateToTextField.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.dateToTextField.text")); // NOI18N
         dateToTextField.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -296,7 +345,9 @@ class DateSearchPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox accessedCheckBox;
     private javax.swing.JCheckBox changedCheckBox;
+    private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JCheckBox createdCheckBox;
+    private javax.swing.JMenuItem cutMenuItem;
     private javax.swing.JCheckBox dateCheckBox;
     private org.sourceforge.jcalendarbutton.JCalendarButton dateFromButtonCalendar;
     private javax.swing.JFormattedTextField dateFromTextField;
@@ -307,6 +358,9 @@ class DateSearchPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JCheckBox modifiedCheckBox;
+    private javax.swing.JMenuItem pasteMenuItem;
+    private javax.swing.JPopupMenu rightClickMenu;
+    private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JComboBox timeZoneComboBox;
     // End of variables declaration//GEN-END:variables
 }

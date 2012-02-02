@@ -27,7 +27,7 @@ import javax.swing.JOptionPane;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
@@ -106,6 +106,11 @@ public final class ExtractAction extends AbstractAction {
             }
 
             ExtractFscContentVisitor.extract(fsContent, destination);
+            if(fsContent.isDir())
+                JOptionPane.showMessageDialog((Component) e.getSource(), "Directory extracted.");
+            else if(fsContent.isFile()){
+                JOptionPane.showMessageDialog((Component) e.getSource(), "File extracted.");
+            }
         }
     }
 }

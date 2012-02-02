@@ -20,8 +20,11 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JMenuItem;
 import javax.swing.JTextPane;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
@@ -46,7 +49,24 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     /** Creates new form DataContentViewerHex */
     public DataContentViewerHex() {
         initComponents();
+        customizeComponents();
         this.resetComponent();
+    }
+    
+    private void customizeComponents(){
+        outputViewPane.setComponentPopupMenu(rightClickMenu);
+        ActionListener actList = new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                JMenuItem jmi = (JMenuItem) e.getSource();
+                if(jmi.equals(copyMenuItem))
+                    outputViewPane.copy();
+                else if(jmi.equals(selectAllMenuItem))
+                    outputViewPane.selectAll();
+            }
+        };
+        copyMenuItem.addActionListener(actList);
+        selectAllMenuItem.addActionListener(actList);
     }
 
     /** This method is called from within the constructor to
@@ -58,6 +78,9 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        rightClickMenu = new javax.swing.JPopupMenu();
+        copyMenuItem = new javax.swing.JMenuItem();
+        selectAllMenuItem = new javax.swing.JMenuItem();
         hexViewerPanel = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         outputViewPane = new JTextPane(){
@@ -73,10 +96,16 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             nextPageButton = new javax.swing.JButton();
             pageLabel2 = new javax.swing.JLabel();
 
+            copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.copyMenuItem.text")); // NOI18N
+            rightClickMenu.add(copyMenuItem);
+
+            selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.selectAllMenuItem.text")); // NOI18N
+            rightClickMenu.add(selectAllMenuItem);
+
             jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
 
             outputViewPane.setEditable(false);
-            outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+            outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11));
             outputViewPane.setMinimumSize(new java.awt.Dimension(700, 20));
             outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
             jScrollPane1.setViewportView(outputViewPane);
@@ -86,8 +115,14 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             ofLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.ofLabel.text_1")); // NOI18N
 
             currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.currentPageLabel.text_1")); // NOI18N
+            currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 14));
+            currentPageLabel.setMinimumSize(new java.awt.Dimension(18, 14));
+            currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 14));
 
             pageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.pageLabel.text_1")); // NOI18N
+            pageLabel.setMaximumSize(new java.awt.Dimension(33, 14));
+            pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
+            pageLabel.setPreferredSize(new java.awt.Dimension(33, 14));
 
             prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/arrow_left.gif"))); // NOI18N
             prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.prevPageButton.text")); // NOI18N
@@ -106,6 +141,9 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             });
 
             pageLabel2.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.pageLabel2.text")); // NOI18N
+            pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
+            pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
+            pageLabel2.setPreferredSize(new java.awt.Dimension(29, 14));
 
             javax.swing.GroupLayout hexViewerPanelLayout = new javax.swing.GroupLayout(hexViewerPanel);
             hexViewerPanel.setLayout(hexViewerPanelLayout);
@@ -113,32 +151,32 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(hexViewerPanelLayout.createSequentialGroup()
                     .addContainerGap()
-                    .addComponent(pageLabel)
+                    .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGap(18, 18, 18)
-                    .addComponent(currentPageLabel)
+                    .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                     .addComponent(ofLabel)
                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                     .addComponent(totalPageLabel)
-                    .addGap(51, 51, 51)
-                    .addComponent(pageLabel2)
+                    .addGap(50, 50, 50)
+                    .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(374, Short.MAX_VALUE))
+                    .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(360, Short.MAX_VALUE))
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 622, Short.MAX_VALUE)
             );
             hexViewerPanelLayout.setVerticalGroup(
                 hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(hexViewerPanelLayout.createSequentialGroup()
                     .addGroup(hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(pageLabel)
+                        .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGroup(hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(currentPageLabel)
+                            .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(ofLabel)
                             .addComponent(totalPageLabel))
-                        .addComponent(pageLabel2)
+                        .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGap(0, 0, 0)
@@ -182,7 +220,9 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         currentPageLabel.setText(Integer.toString(currentPage));
         setDataView(dataSource, currentOffset, false);
     }//GEN-LAST:event_nextPageButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JPanel hexViewerPanel;
     private javax.swing.JScrollPane jScrollPane1;
@@ -192,6 +232,8 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     private javax.swing.JLabel pageLabel;
     private javax.swing.JLabel pageLabel2;
     private javax.swing.JButton prevPageButton;
+    private javax.swing.JPopupMenu rightClickMenu;
+    private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JLabel totalPageLabel;
     // End of variables declaration//GEN-END:variables
 
@@ -223,11 +265,9 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 }
 
                 // set the data on the bottom and show it
-                String text = "";
                 Boolean setVisible = false;
 
                 if (data != null) {
-                    text = DataConversion.getString(data, 4);
                     setVisible = true;
                 }
 
@@ -288,6 +328,12 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     public String getTitle() {
         return "Hex View";
     }
+    
+    @Override
+    public String getToolTip() {
+        return "Displays the binary contents of a file as hexidecimal, with "
+                + "bytes that are displayable as ASCII characters on the right.";
+    }
 
     @Override
     public DataContentViewer getInstance() {
@@ -297,6 +343,8 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     @Override
     public void resetComponent() {
         // clear / reset the fields
+        currentPage = 1;
+        currentOffset = 0;
         this.dataSource = null;
         currentPageLabel.setText("");
         totalPageLabel.setText("");
@@ -324,9 +372,24 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     public boolean isSupported(Node node) {
         return true;
     }
+    
+    @Override
+    public boolean isPreferred(Node node, boolean isSupported) {
+        return false;
+    }
 
     @Override
     public Component getComponent() {
         return this;
+    }
+    
+    /* Show the right click menu only if evt is the correct mouse event */
+    private void maybeShowPopup(java.awt.event.MouseEvent evt){
+        if(evt.isPopupTrigger()){
+            rightClickMenu.setLocation(evt.getLocationOnScreen());
+            rightClickMenu.setVisible(true);
+            copyMenuItem.setEnabled(outputViewPane.getSelectedText() != null);
+        }else
+            rightClickMenu.setVisible(false);
     }
 }

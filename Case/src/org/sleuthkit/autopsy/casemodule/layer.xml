@@ -56,8 +56,6 @@
         </folder>
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-filebrowser-FileBrowserAction.instance"></file>
-            <file name="org-sleuthkit-autopsy-hashdatabase-HashDbMgmtAction.instance">
-            </file>
         </folder>
         <folder name="View">
             <file name="org-netbeans-core-windows-actions-ToolbarsListAction.instance">
@@ -146,22 +144,7 @@
         <folder name="Help">
             <file name="org-netbeans-modules-autoupdate-ui-actions-CheckForUpdatesAction.shadow_hidden"/>
         </folder>
-        <folder name="Tools">
-            <file name="org-sleuthkit-autopsy-hashdatabase-HashDatabaseSettingsAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-hashdatabase-HashDbMgmtAction.instance"/>
-                <attr name="position" intvalue="1000"/>
-            </file>
-            <file name="SeparatorAfterHashDatabaseSettings.instance">
-	        <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-	        <attr name="position" intvalue="1001"/>
-            </file>
-            <file name="Separator1.instance_hidden"/>
-            <file name="Separator3.instance_hidden"/>
-            <file name="org-netbeans-modules-autoupdate-ui-actions-PluginManagerAction.shadow_hidden"/>
-            <file name="org-netbeans-modules-favorites-templates-TemplatesAction.shadow_hidden"/>
-            <file name="org-netbeans-modules-options-OptionsWindowAction.shadow_hidden"/>
-            <file name="org-openide-actions-ToolsAction.shadow_hidden"/>
-        </folder>
+        
         <folder name="View">
             <file name="org-netbeans-core-actions-HTMLViewAction.shadow_hidden"/>
             <file name="org-netbeans-core-actions-LogAction.shadow_hidden"/>

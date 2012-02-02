@@ -24,20 +24,17 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.Lookup;
@@ -45,7 +42,8 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 
@@ -88,8 +86,7 @@ public class Case {
      * Name for the property that determines whether to show the dialog at
      * startup
      */
-    static final String propStartup = "LBL_StartupDialog";
-    private static Properties properties = new Properties();
+    public static final String propStartup = "LBL_StartupDialog";
 
     // pcs is initialized in CaseListener constructor
     private static PropertyChangeSupport pcs;
@@ -230,7 +227,7 @@ public class Case {
      * @param imgId  the ID of the image that being added
      * @param timeZone  the timeZone of the image where it's added
      */
-    void addImage(String[] imgPaths, long imgId, String timeZone) throws Exception {
+    Image addImage(String[] imgPaths, long imgId, String timeZone) throws Exception {
         Log.get(this.getClass()).log(Level.INFO, "Adding image to Case.  imgPaths: {0}  ID: {1} TimeZone: {2}", new Object[]{Arrays.toString(imgPaths), imgId, timeZone});
 
         try {
@@ -238,6 +235,7 @@ public class Case {
             xmlcm.writeFile(); // write any changes to the config file
             Image newImage = db.getImageById(imgId);
             pcs.firePropertyChange(CASE_ADD_IMAGE, null, newImage); // the new value is the instance of the image
+            return newImage;
         } catch (Exception ex) {
             // throw an error here
             throw ex;
@@ -645,64 +643,14 @@ public class Case {
      */
     static public void invokeStartupDialog() {
         boolean showDialog = true;
-        String propFilePath = RecentCases.getPropertiesFilePath();
-
-        // before showing the startup dialog, check if it has been disabled or not by the user
-        try {
-            // try to load the property from the properties file in the home directory
-            InputStream inputStream = new FileInputStream(propFilePath);
-            //InputStream inputStream = getClass().getResourceAsStream("Case.properties"); // old variable (can be deleted if no longer needed)
-            properties.load(inputStream);
-
-            String temp = properties.getProperty(propStartup);
-            if (temp != null) {
-                showDialog = !temp.equals("false");
-            } else {
-                // if it's null, we have to write the properties
-
-                // update the properties
-                properties.setProperty(propStartup, "true");
-
-                // write the properties file
-                try {
-                    properties.store(new FileOutputStream(new File(RecentCases.getPropertiesFilePath())), "");
-                } catch (Exception ex) {
-                    Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex);
-                }
-            }
-        } catch (Exception ex) {
-            // if cannot load it, we create a new properties file without any data inside it
-            properties.setProperty(propStartup, "true");
-
-            try {
-                // create the directory and property file to store it
-                File output = new File(propFilePath);
-
-                // if the properties file doesn't exist, we create a new one.
-                if (!output.exists()) {
-                    File parent = new File(output.getParent());
-                    if (!parent.exists()) {
-                        parent.mkdirs(); // create the parent directory if it doesn't exist
-                    }
-                    output.createNewFile(); // create the properties file
-                    FileOutputStream fos = new FileOutputStream(output);
-                    properties.store(fos, "");
-                } // if the output exist, we just add the properties
-                else {
-                    properties.setProperty(propStartup, "true");
-
-                    // write the properties file
-                    try {
-                        properties.store(new FileOutputStream(new File(RecentCases.getPropertiesFilePath())), "");
-                    } catch (Exception ex3) {
-                        Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error: Could not update the properties file.", ex3);
-                    }
-                }
-            } catch (Exception ex2) {
-                Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error: Could not create the property file.", ex2);
-            }
+        AutopsyPropFile apf = AutopsyPropFile.getInstance();
+        String temp = apf.getProperty(propStartup);
+        if (temp != null) {
+            showDialog = !temp.equals("false");
+        } else {
+          apf.setProperty(propStartup, "true");
         }
-
+        
         if (showDialog) {
             StartupWindow.getInstance().display();
         }
@@ -714,7 +662,7 @@ public class Case {
      * Call if there are no images in the case. Displays
      * a dialog offering to add one.
      */
-    private void noRootObjectsNotification() throws TskException {
+    private static void noRootObjectsNotification() {
         NotifyDescriptor nd = new NotifyDescriptor(
                 "This case contains no images. Would you like to add one?",
                 "No images in case", NotifyDescriptor.YES_NO_OPTION,
@@ -726,14 +674,6 @@ public class Case {
         }
     }
 
-    /**
-     * Get the properties.
-     *
-     * @return properties
-     */
-    public Properties getProperties() {
-        return properties;
-    }
 
     /**
      * Checks if a String is a valid case name
@@ -775,48 +715,47 @@ public class Case {
             Object oldValue = evt.getOldValue();
             Object newValue = evt.getNewValue();
 
-
             if (changed.equals(Case.CASE_CURRENT_CASE)) {
-                try {
-                    if (newValue != null) { // new case is open
-                        Case newCase = (Case) newValue;
+                if (newValue != null) { // new case is open
+                    Case newCase = (Case) newValue;
 
-                        // clear the temp folder when the case is created / opened
-                        Case.clearTempFolder();
+                    // clear the temp folder when the case is created / opened
+                    Case.clearTempFolder();
 
-                        // enable these menus
-                        CallableSystemAction.get(AddImageAction.class).setEnabled(true);
-                        CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                        CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
-                        CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
+                    // enable these menus
+                    CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
 
-                        if (newCase.getRootObjectsCount() > 0) {
-                            // open all top components
-                            CoreComponentControl.openCoreWindows();
-                        } else {
-                            // close all top components
-                            CoreComponentControl.closeCoreWindows();
-                            // notify user
-                            newCase.noRootObjectsNotification();
-                        }
-                    } else { // case is closed
-                        // disable these menus
-                        CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
-                        CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
-                        CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
-                        CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
-
+                    if (newCase.getRootObjectsCount() > 0) {
+                        // open all top components
+                        CoreComponentControl.openCoreWindows();
+                    } else {
                         // close all top components
                         CoreComponentControl.closeCoreWindows();
-
-                        Frame f = WindowManager.getDefault().getMainWindow();
-                        f.setTitle(Case.getAppName()); // set the window name to just application name
+                        // prompt user to add an image
+                        SwingUtilities.invokeLater(new Runnable() {
+                            public void run() {
+                                Case.noRootObjectsNotification();
+                            }
+                        });
                     }
-                } catch (TskException ex) {
-                    Log.get(CaseListener.class).log(Level.WARNING, "Error handling change in current case.", ex);
-                }
-            }
+                } else { // case is closed
+                    // disable these menus
+                    CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
+                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
+                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
+                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
 
+                    // close all top components
+                    CoreComponentControl.closeCoreWindows();
+
+                    Frame f = WindowManager.getDefault().getMainWindow();
+                    f.setTitle(Case.getAppName()); // set the window name to just application name
+                }
+
+            }
 
             // changed in the case name
             if (changed.equals(Case.CASE_NAME)) {

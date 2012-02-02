@@ -60,6 +60,7 @@ public class DataResultFilterNode extends FilterNode {
         @Override
         public Action[] visit(Directory dir) {
             return new Action[]{
+                new ExtractAction("Extract Directory", getOriginal()),
                 new ChangeViewAction("View", 0, getOriginal()),
                 new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath(dir))
             };
@@ -69,7 +70,7 @@ public class DataResultFilterNode extends FilterNode {
         public Action[] visit(File f) {
             return new Action[]{
                 new ExternalViewerAction("Open in External Viewer", getOriginal()),
-                new ExtractAction("Extract", getOriginal()),
+                new ExtractAction("Extract File", getOriginal()),
                 new ChangeViewAction("View", 0, getOriginal()),
                 new OpenParentFolderAction("Open Parent Directory", ContentUtils.getSystemPath(f))
             };

@@ -27,6 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
@@ -45,9 +46,12 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -102,6 +106,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private void setListener() {
         Case.addPropertyChangeListener(this);// add this class to listen to any changes in the Case.java class
         this.em.addPropertyChangeListener(this);
+        IngestManager.addPropertyChangeListener(this);
     }
 
     public void setDirectoryListingActive() {
@@ -311,7 +316,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     ((BeanTreeView) this.jScrollPane1).setRootVisible(false); // hide the root
                 } else {
                     // if there's at least one image, load the image and open the top component
-                    Node root = new AbstractNode(new RootContentChildren(currentCase.getRootObjects())) {
+                    List<Object> objects = new ArrayList<Object>();
+                    objects.addAll(currentCase.getRootObjects());
+                    objects.add(currentCase.getSleuthkitCase());
+                    Node root = new AbstractNode(new RootContentChildren(objects)) {
 
                         /** to override the right click action in the white blank space
                          * area on the directory tree window
@@ -334,22 +342,27 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             };
                         }
                     };
-
+                   
                     root = new DirectoryTreeFilterNode(root);
-
+                    
 
                     em.setRootContext(root);
                     em.getRootContext().setName(currentCase.getName());
                     em.getRootContext().setDisplayName(currentCase.getName());
                     ((BeanTreeView) this.jScrollPane1).setRootVisible(false); // hide the root
 
+                    // Reset the forward and back lists because we're resetting the root context
+                    backButton.setEnabled(false);
+                    forwardButton.setEnabled(false);
+                    forwardList.clear();
+                    backList.clear();
 
-                    Children imageNodes = em.getRootContext().getChildren();
+                    Children childNodes = em.getRootContext().getChildren();
                     TreeView tree = getTree();
 
                     // expand until image node
-                    for (Node image : imageNodes.getNodes()) {
-                        tree.expandNode(image);
+                    for (Node child : childNodes.getNodes()) {
+                        tree.expandNode(child);
                     }
 
                     // if the dataResult is not opened
@@ -362,9 +375,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     // (this has to happen after dataResult is opened, because the event
                     // of changing the selected node fires a handler that tries to make
                     // dataResult active)
-                    if (imageNodes.getNodesCount() > 0) {
+                    if (childNodes.getNodesCount() > 0) {
                         try {
-                            em.setSelectedNodes(new Node[]{imageNodes.getNodeAt(0)});
+                            em.setSelectedNodes(new Node[]{childNodes.getNodeAt(0)});
                         } catch (Exception ex) {
                             Logger logger = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
                             logger.log(Level.SEVERE, "Error setting default selected node.", ex);
@@ -555,10 +568,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                                 DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                             }
                             DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                            DirectoryTreeTopComponent.this.dataResult.setNode(new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em));
+                            //set node, wrap in filter node first to filter out children
+                            Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
+                            DirectoryTreeTopComponent.this.dataResult.setNode(new TableFilterNode(drfn, true));
                             
-                            String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(originNode.getLookup().lookup(Content.class)), 0);
-                            DirectoryTreeTopComponent.this.dataResult.setPath(path);
+                            String displayName = "";
+                            if(originNode.getLookup().lookup(Content.class) != null)
+                                displayName = DataConversion.getformattedPath(ContentUtils.getDisplayPath(originNode.getLookup().lookup(Content.class)), 0);
+                            else if(originNode.getLookup().lookup(ArtifactTypeNode.class) != null)
+                                displayName = originNode.getLookup().lookup(ArtifactTypeNode.class).getDisplayName();
+                            DirectoryTreeTopComponent.this.dataResult.setPath(displayName);
                         }
 
                         // set the directory listing to be active
@@ -584,6 +603,22 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 forwardList.clear(); // clear the "forwardList"
                 forwardButton.setEnabled(false); // disable the forward Button
             }
+        }
+        
+        if (changed.equals(IngestManager.SERVICE_COMPLETED_EVT)){
+            Node[] selectedNode = em.getSelectedNodes();
+            componentOpened();
+            try {
+                em.setSelectedNodes(selectedNode);
+                backButton.setEnabled(false);
+                forwardButton.setEnabled(false);
+                forwardList.clear();
+                backList.clear();
+            } catch (PropertyVetoException ex) {
+                Logger.getLogger(DirectoryTreeTopComponent.class.getName())
+                    .log(Level.SEVERE, "Unable to return to previously selected nodes", ex);
+            }
+            
         }
     }
 

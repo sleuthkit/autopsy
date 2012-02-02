@@ -20,24 +20,20 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JMenuItem;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 import org.openide.filesystems.FileUtil;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 
 /**
  * The action in this class is to clear the list of "Recent Cases".
@@ -51,11 +47,10 @@ public final class RecentCases extends CallableSystemAction implements Presenter
     static final String PATH_PROP_KEY = "LBL_RecentCase_Path";
     static final RecentCase BLANK_RECENTCASE = new RecentCase("", "");
     // get the path of the case.properties file in the user directory
-    private final static String propFilePath = System.getProperty("netbeans.user") + File.separator + "autopsy.properties";
+    private final static AutopsyPropFile apf = AutopsyPropFile.getInstance();
 
     private final static RecentCases INSTANCE = new RecentCases();
 
-    private Properties properties;
     private Deque<RecentCase> recentCases; // newest case is last case
 
 
@@ -69,46 +64,16 @@ public final class RecentCases extends CallableSystemAction implements Presenter
         return INSTANCE;
     }
 
-    static private Properties makeDefaults() {
-        Properties temp = new Properties();
-        for (int i = 0; i < LENGTH; i++) {
-            temp.setProperty(nameKey(i), "");
-            temp.setProperty(pathKey(i), "");
-        }
-
-        return temp;
-    }
-
     /** the constructor */
     private RecentCases() {
-        properties = new Properties(makeDefaults());
-        try {
-            // try to load all the recent cases from the properties file in the home directory
-            InputStream inputStream = new FileInputStream(propFilePath);
-            properties.load(inputStream);
-        } catch (Exception ignore) {
-            // if cannot load it, we create a new properties file without any data inside it
-            try {
-                // create the directory and property file to store it
-                File output = new File(propFilePath);
-                if (!output.exists()) {
-                    File parent = new File(output.getParent());
-                    if (!parent.exists()) {
-                        parent.mkdirs();
-                    }
-                    output.createNewFile();
-                    FileOutputStream fos = new FileOutputStream(output);
-                    properties.store(fos, "");
-                } else {
-                    // if the property file already exist, throw an error that says cannot load that file
-                    Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not load the property file.", new Exception("The properties file already exist and can't load that file."));
-                }
-            } catch (IOException ex2) {
-                Logger.getLogger(RecentCases.class.getName()).log(Level.WARNING, "Error: Could not create the property file.", ex2);
-            }
+        
+        for (int i = 0; i < LENGTH; i++) {
+            if(apf.getProperty(nameKey(i)) == null)
+                apf.setProperty(nameKey(i), "");
+            if(apf.getProperty(pathKey(i)) == null)
+                apf.setProperty(pathKey(i), "");
         }
-
-
+        
         // Load recentCases from properties
         recentCases = new LinkedList<RecentCase>();
 
@@ -137,19 +102,19 @@ public final class RecentCases extends CallableSystemAction implements Presenter
     }
 
     private String getName(int i) {
-        return properties.getProperty(nameKey(i));
+        return apf.getProperty(nameKey(i));
     }
 
     private String getPath(int i) {
-        return properties.getProperty(pathKey(i));
+        return apf.getProperty(pathKey(i));
     }
 
     private void setName(int i, String name) {
-        properties.setProperty(nameKey(i), name);
+        apf.setProperty(nameKey(i), name);
     }
 
     private void setPath(int i, String path) {
-        properties.setProperty(pathKey(i), path);
+        apf.setProperty(pathKey(i), path);
     }
 
     private void setRecentCase(int i, RecentCase rc) {
@@ -209,10 +174,6 @@ public final class RecentCases extends CallableSystemAction implements Presenter
         }
     }
 
-    private void storeProperties() throws IOException {
-        properties.store(new FileOutputStream(new File(propFilePath)), "");
-    }
-
     private void storeRecentCases() throws IOException {
         int i = 0;
 
@@ -228,7 +189,6 @@ public final class RecentCases extends CallableSystemAction implements Presenter
             i++;
         }
 
-        storeProperties();
     }
 
     /**
@@ -399,17 +359,6 @@ public final class RecentCases extends CallableSystemAction implements Presenter
         }
 
         return casePaths;
-    }
-
-
-    // TODO: really shouldn't be done like this; need one common properties tracker
-    /**
-     * Gets the properties file paths.
-     *
-     * @return propertyPath
-     */
-    public static String getPropertiesFilePath() {
-        return propFilePath;
     }
 
     /**

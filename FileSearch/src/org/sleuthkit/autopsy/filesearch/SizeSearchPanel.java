@@ -19,10 +19,13 @@
 
 package org.sleuthkit.autopsy.filesearch;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.NumberFormat;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
+import javax.swing.JMenuItem;
 
 /**
  *
@@ -33,6 +36,31 @@ class SizeSearchPanel extends javax.swing.JPanel {
     /** Creates new form SizeSearchPanel */
     SizeSearchPanel() {
         initComponents();
+        customizeComponents();
+    }
+    
+    private void customizeComponents(){
+        
+        sizeTextField.setComponentPopupMenu(rightClickMenu);
+        ActionListener actList = new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                JMenuItem jmi = (JMenuItem) e.getSource();
+                if(jmi.equals(cutMenuItem))
+                    sizeTextField.cut();
+                else if(jmi.equals(copyMenuItem))
+                    sizeTextField.copy();
+                else if(jmi.equals(pasteMenuItem))
+                    sizeTextField.paste();
+                else if(jmi.equals(selectAllMenuItem))
+                    sizeTextField.selectAll();
+            }
+        };
+        cutMenuItem.addActionListener(actList);
+        copyMenuItem.addActionListener(actList);
+        pasteMenuItem.addActionListener(actList);
+        selectAllMenuItem.addActionListener(actList);
+
     }
 
     JCheckBox getSizeCheckBox() {
@@ -60,10 +88,27 @@ class SizeSearchPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        rightClickMenu = new javax.swing.JPopupMenu();
+        cutMenuItem = new javax.swing.JMenuItem();
+        copyMenuItem = new javax.swing.JMenuItem();
+        pasteMenuItem = new javax.swing.JMenuItem();
+        selectAllMenuItem = new javax.swing.JMenuItem();
         sizeUnitComboBox = new javax.swing.JComboBox();
         sizeTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
         sizeCompareComboBox = new javax.swing.JComboBox();
         sizeCheckBox = new javax.swing.JCheckBox();
+
+        cutMenuItem.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.cutMenuItem.text")); // NOI18N
+        rightClickMenu.add(cutMenuItem);
+
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.copyMenuItem.text")); // NOI18N
+        rightClickMenu.add(copyMenuItem);
+
+        pasteMenuItem.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.pasteMenuItem.text")); // NOI18N
+        rightClickMenu.add(pasteMenuItem);
+
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(SizeSearchPanel.class, "SizeSearchPanel.selectAllMenuItem.text")); // NOI18N
+        rightClickMenu.add(selectAllMenuItem);
 
         sizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Byte(s)", "KB", "MB", "GB", "TB" }));
 
@@ -106,6 +151,11 @@ class SizeSearchPanel extends javax.swing.JPanel {
         this.sizeTextField.selectAll(); // select all so user can change it easily
     }//GEN-LAST:event_sizeTextFieldMouseClicked
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem copyMenuItem;
+    private javax.swing.JMenuItem cutMenuItem;
+    private javax.swing.JMenuItem pasteMenuItem;
+    private javax.swing.JPopupMenu rightClickMenu;
+    private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JCheckBox sizeCheckBox;
     private javax.swing.JComboBox sizeCompareComboBox;
     private javax.swing.JFormattedTextField sizeTextField;

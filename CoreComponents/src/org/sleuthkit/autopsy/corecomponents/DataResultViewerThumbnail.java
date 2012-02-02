@@ -91,6 +91,16 @@ public class DataResultViewerThumbnail extends AbstractDataResultViewer {
         return result;
     }
 
+    
+     /**
+     * Expand node
+     * @param n Node to expand
+     */
+    @Override
+    public void expandNode(Node n) {
+       
+    }
+    
     @Override
     public void setNode(Node givenNode) {
         // change the cursor to "waiting cursor" for this operation

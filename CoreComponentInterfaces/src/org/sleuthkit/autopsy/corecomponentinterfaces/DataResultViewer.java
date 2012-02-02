@@ -61,4 +61,10 @@ public interface DataResultViewer {
      * preparation for permanently disposing of it.
      */
     public void clearComponent();
+    
+    /**
+     * Expand node, if supported by the viewed
+     * @param n Node to expand
+     */
+    public void expandNode(Node n);
 }

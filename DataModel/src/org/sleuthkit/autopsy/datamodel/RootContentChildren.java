@@ -28,12 +28,12 @@ import org.sleuthkit.datamodel.Content;
  * list of root Content objects for the tree.
  */
 public class RootContentChildren extends AbstractContentChildren {
-    private Collection<? extends Content> contentKeys;
+    private Collection contentKeys;
     
     /**
      * @param contentKeys root Content objects for the Node tree
      */
-    public RootContentChildren(Collection<? extends Content> contentKeys) {
+    public RootContentChildren(Collection contentKeys) {
         super();
         this.contentKeys = contentKeys;
     }

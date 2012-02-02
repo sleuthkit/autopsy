@@ -19,6 +19,12 @@ public class KeyValue implements StringContent{
         this.id = id;
     }
 
+    public KeyValue(String name,  int id) {
+        this.name = name;
+        this.map = null;
+        this.id = id;
+    }
+    
     public int getId() {
         return id;
     }
@@ -29,6 +35,11 @@ public class KeyValue implements StringContent{
 
     public String getName() {
         return name;
+    }
+    
+    public void addMap(Map<String,Object> inMap)
+    {
+       this.map = inMap;
     }
 
     @Override

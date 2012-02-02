@@ -21,14 +21,21 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JCheckBox;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
@@ -42,7 +49,10 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
      */
     private AddImageVisualPanel1 component;
     private boolean isNextEnable = false;
-
+    private static final String PROP_LASTIMAGE = "LBL_LastImage_PATH";
+     // paths to any set hash lookup databases (can be null)
+    private String NSRLPath, knownBadPath;
+    
     /**
      * Get the visual component for the panel. In this template, the component
      * is kept separate. This can be more efficient: if the wizard is created
@@ -59,7 +69,7 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
         component.addPropertyChangeListener(this);
         return component;
     }
-
+    
     /**
      * Help for this panel. When the panel is active, this is used as the help
      * for the wizard dialog.
@@ -158,6 +168,32 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
+        AddImageVisualPanel1 component = getComponent();
+        
+        // Prepopulate the image directory from the properties file
+        String lastImageDirectory = AutopsyPropFile.getInstance().getProperty(PROP_LASTIMAGE);
+        component.getImagePathTextField().setText(lastImageDirectory);
+        
+        // Load hash database settings, enable or disable the checkbox
+        this.NSRLPath = null;
+        this.knownBadPath = null;
+        JCheckBox lookupFilesCheckbox = component.getLookupFilesCheckbox();
+        lookupFilesCheckbox.setSelected(false);
+        lookupFilesCheckbox.setEnabled(this.NSRLPath != null || this.knownBadPath != null);
+        
+        // If there is a process object in the settings, revert it and remove it from the settings
+        AddImageAction.CleanupTask cleanupTask = (AddImageAction.CleanupTask) settings.getProperty(AddImageAction.IMAGECLEANUPTASK_PROP);
+        if(cleanupTask != null){
+            try{
+                cleanupTask.cleanup();
+            }catch(Exception ex){
+                Logger logger = Logger.getLogger(AddImageWizardPanel1.class.getName());
+                logger.log(Level.WARNING, "Error cleaning up image task", ex);
+            }finally{
+                cleanupTask.disable();
+            }
+        }
+        
     }
 
     /**
@@ -173,6 +209,15 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
     public void storeSettings(WizardDescriptor settings) {
         settings.putProperty(AddImageAction.IMGPATHS_PROP, getComponent().getImagePaths());
         settings.putProperty(AddImageAction.TIMEZONE_PROP, getComponent().getSelectedTimezone()); // store the timezone
+        settings.putProperty(AddImageAction.LOOKUPFILES_PROP, getComponent().getLookupFilesCheckboxChecked());
+        settings.putProperty(AddImageAction.SOLR_PROP, getComponent().getIndexImageCheckboxChecked());
+        
+        // Store the path to the first image selected into the properties file
+        if(getComponent().getImagePaths().length > 0){
+            String firstImage = getComponent().getImagePaths()[0];
+            String firstImagePath = firstImage.substring(0, firstImage.lastIndexOf(File.separator)+1);
+            AutopsyPropFile.getInstance().setProperty(PROP_LASTIMAGE, firstImagePath);
+        }
     }
 
 

@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.FsContent;
 
@@ -25,16 +27,139 @@ import org.sleuthkit.datamodel.FsContent;
  * Abstract class that implements the commonality between File and Directory
  * Nodes (same properties).
  */
-abstract class AbstractFsContentNode<T extends FsContent> extends AbstractContentNode<T> {
+public abstract class AbstractFsContentNode<T extends FsContent> extends AbstractContentNode<T> {
 
-    /**
-     * Name of the property that holds the name.
-     */
-    public static final String PROPERTY_NAME = "Name";
-    /**
-     * Name of the property that holds the path.
-     */
-    public static final String PROPERTY_LOCATION = "Location";
+    // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
+
+    public static enum FsContentPropertyType {
+
+        NAME {
+
+            @Override
+            public String toString() {
+                return "Name";
+            }
+        },
+        LOCATION {
+
+
+            @Override
+            public String toString() {
+                return "Location";
+            }
+        },
+        MOD_TIME {
+
+
+            @Override
+            public String toString() {
+                return "Mod. Time";
+            }
+        },
+        CHANGED_TIME {
+
+
+            @Override
+            public String toString() {
+                return "Change Time";
+            }
+        },
+        ACCESS_TIME {
+
+
+            @Override
+            public String toString() {
+                return "Access Time";
+            }
+        },
+        CREATED_TIME {
+
+
+            @Override
+            public String toString() {
+                return "Created Time";
+            }
+        },
+        SIZE {
+
+            @Override
+            public String toString() {
+                return "Size";
+            }
+        },
+        FLAGS_DIR {
+            @Override
+            public String toString() {
+                return "Flags(Dir)";
+            }
+        },
+        FLAGS_META {
+
+            @Override
+            public String toString() {
+                return "Flags(Meta)";
+            }
+        },
+        MODE {
+
+            @Override
+            public String toString() {
+                return "Mode";
+            }
+        },
+        USER_ID {
+
+            @Override
+            public String toString() {
+                return "UserID";
+            }
+        },
+        GROUP_ID {
+         @Override
+            public String toString() {
+                return "GroupID";
+            }
+        },
+        META_ADDR {
+
+            @Override
+            public String toString() {
+                return "Meta Addr.";
+            }
+        },
+        ATTR_ADDR {
+
+
+            @Override
+            public String toString() {
+                return "Attr. Addr.";
+            }
+        },
+        TYPE_DIR {
+
+
+
+            @Override
+            public String toString() {
+                return "Type(Dir)";
+            }
+        },
+        TYPE_META {
+
+            @Override
+            public String toString() {
+                return "Type(Meta)";
+            }
+        },
+        KNOWN {
+
+
+            @Override
+            public String toString() {
+                return "Known";
+            }
+        },
+    }
 
     AbstractFsContentNode(T fsContent) {
         super(fsContent);
@@ -49,25 +174,43 @@ abstract class AbstractFsContentNode<T extends FsContent> extends AbstractConten
             s.put(ss);
         }
 
-        // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
-        ss.put(new NodeProperty(PROPERTY_NAME, "Name", "no description", content.getName()));
-        ss.put(new NodeProperty(PROPERTY_LOCATION, "Location", "no description", DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0)));
-        ss.put(new NodeProperty("Modified Time", "Modified Time", "no description", content.getMtimeAsDate()));
-        ss.put(new NodeProperty("Changed Time", "Changed Time", "no description", content.getCtimeAsDate()));
-        ss.put(new NodeProperty("Access Time", "Access Time", "no description", content.getAtimeAsDate()));
-        ss.put(new NodeProperty("Created Time", "Created Time", "no description", content.getCrtimeAsDate()));
-        ss.put(new NodeProperty("Size", "Size", "no description", content.getSize()));
-        ss.put(new NodeProperty("Flags (Directory)", "Flags (Directory)", "no description", content.getDirFlagsAsString()));
-        ss.put(new NodeProperty("Flags (Meta)", "Flags (Meta)", "no description", content.getMetaFlagsAsString()));
-        ss.put(new NodeProperty("Mode ", "Mode", "no description", content.getModeAsString()));
-        ss.put(new NodeProperty("User ID", "User ID", "no description", content.getUid()));
-        ss.put(new NodeProperty("Group ID", "Group ID", "no description", content.getGid()));
-        ss.put(new NodeProperty("Metadata Address", "Metadata Addr", "no description", content.getMeta_addr()));
-        ss.put(new NodeProperty("Attribute Address", "Attribute Addr", "no description", Long.toString(content.getAttr_type()) + "-" + Long.toString(content.getAttr_id())));
-        ss.put(new NodeProperty("Type (Directory)", "Type (Directory)", "no description", content.getDirTypeAsString()));
-        ss.put(new NodeProperty("Type (Meta)", "Type (Meta)", "no description", content.getMetaTypeAsString()));
-        ss.put(new NodeProperty("Known", "Known", "no description", content.getKnown().getName()));
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
+        fillPropertyMap(map, content);
+
+        FsContentPropertyType[] fsTypes = FsContentPropertyType.values();
+        final int FS_PROPS_LEN = fsTypes.length;
+        final String NO_DESCR = "no description";
+        for (int i = 0; i < FS_PROPS_LEN; ++i) {
+            final FsContentPropertyType propType = FsContentPropertyType.values()[i];
+            final String propString = propType.toString();
+            ss.put(new NodeProperty(propString, propString, NO_DESCR, map.get(propString)));
+        }
 
         return s;
+    }
+
+    /**
+     * Fill map with FsContent properties
+     * @param map, with preserved ordering, where property names/values are put
+     * @param content to extract properties from
+     */
+    public static void fillPropertyMap(Map<String, Object> map, FsContent content) {
+        map.put(FsContentPropertyType.NAME.toString(), content.getName());
+        map.put(FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0));
+        map.put(FsContentPropertyType.MOD_TIME.toString(), content.getMtimeAsDate());
+        map.put(FsContentPropertyType.CHANGED_TIME.toString(), content.getCtimeAsDate());
+        map.put(FsContentPropertyType.ACCESS_TIME.toString(), content.getAtimeAsDate());
+        map.put(FsContentPropertyType.CREATED_TIME.toString(), content.getCrtimeAsDate());
+        map.put(FsContentPropertyType.SIZE.toString(), Long.toString(content.getSize()));
+        map.put(FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlagsAsString());
+        map.put(FsContentPropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
+        map.put(FsContentPropertyType.MODE.toString(), content.getModeAsString());
+        map.put(FsContentPropertyType.USER_ID.toString(), Long.toString(content.getUid()));
+        map.put(FsContentPropertyType.GROUP_ID.toString(), Long.toString(content.getGid()));
+        map.put(FsContentPropertyType.META_ADDR.toString(), Long.toString(content.getMeta_addr()));
+        map.put(FsContentPropertyType.ATTR_ADDR.toString(), Long.toString(content.getAttr_type()) + "-" + Long.toString(content.getAttr_id()));
+        map.put(FsContentPropertyType.TYPE_DIR.toString(), content.getDirTypeAsString());
+        map.put(FsContentPropertyType.TYPE_META.toString(), content.getMetaTypeAsString());
+        map.put(FsContentPropertyType.KNOWN.toString(), content.getKnown().getName());
     }
 }

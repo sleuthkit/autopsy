@@ -48,6 +48,7 @@ import org.openide.NotifyDescriptor;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -166,15 +167,17 @@ public final class FileSearchTopComponent extends TopComponent implements DataEx
                     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
                     ResultSet rs = tempDb.runQuery(this.getQuery("count(*) as TotalMatches"));
                     totalMatches = totalMatches + rs.getInt("TotalMatches");
+                    rs.close();
                     rs = tempDb.runQuery(this.getQuery(null));
                     currentDbList = tempDb.resultSetToFsContents(rs);
+                    rs.close();
                     fsContentList.addAll(currentDbList);
                 } catch (SQLException ex) {
                     Logger logger = Logger.getLogger(this.getClass().getName());
                     logger.log(Level.WARNING, "Error while trying to get the number of matches.", ex);
                 }
 
-                TopComponent searchResultWin = DataResultTopComponent.createInstance(title, pathText, new SearchNode(fsContentList), totalMatches);
+                TopComponent searchResultWin = DataResultTopComponent.createInstance(title, pathText, new TableFilterNode(new SearchNode(fsContentList), true), totalMatches);
 
                 searchResultWin.requestActive(); // make it the active top component
 

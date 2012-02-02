@@ -23,7 +23,7 @@ import org.openide.util.NbBundle;
 import org.netbeans.core.actions.AboutAction;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
-import org.sleuthkit.autopsy.logging.Log;
+import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
  * Action to open custom implementation of the "About" window from the Help menu.
