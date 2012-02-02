@@ -66,7 +66,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
         
         try {
-            logger.log(Level.INFO, "indexing: " + fsContent.getName());
+            //logger.log(Level.INFO, "indexing: " + fsContent.getName());
             ingester.ingest(fsContent);
             ingestStatus.put(fsContent.getId(), IngestStatus.INGESTED);
         } catch (IngesterException e) {
