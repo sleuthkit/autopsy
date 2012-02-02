@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
-    <folder name="Actions">
+    <!--<folder name="Actions">
         <folder name="Window">
             <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.instance">
                 <attr name="component" methodvalue="org.sleuthkit.autopsy.filesearch.FileSearchTopComponent.findInstance"/>
@@ -28,13 +28,13 @@
     <folder name="Windows2">
         <folder name="Components">
             <file name="FileSearchTopComponent.settings" url="FileSearchTopComponentSettings.xml"/>
-        </folder>
+        </folder>-->
 
         <!-- Not letting NetBeans manage docking for us at all. It's all handled in CoreComponentInterfaces:CoreComponentControl
         <folder name="Modes">
             <folder name="explorer">
                 <file name="FileSearchTopComponent.wstcref" url="FileSearchTopComponentWstcref.xml"/>
             </folder>
-        </folder-->
-    </folder>
+        </folder>
+    </folder>-->
 </filesystem>
