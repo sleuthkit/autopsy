@@ -26,6 +26,7 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Directory;
 
 /**
@@ -52,12 +53,15 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         //TODO: ContentNode fix - replace with ContentVisitor
         
         // filter out the FileNode and the "." and ".." directories
-        if (arg0 != null && (arg0 instanceof ImageNode
-                || arg0 instanceof ExtractedContentNode
-                || arg0 instanceof ArtifactTypeNode
-                || arg0 instanceof VolumeNode || (arg0 instanceof DirectoryNode
-                && !((DirectoryNode) arg0).getDisplayName().equals("."))
-                && !((DirectoryNode) arg0).getDisplayName().equals(".."))) {
+        if (arg0 != null && 
+                (arg0 instanceof ImageNode ||
+                 arg0 instanceof VolumeNode || 
+                (arg0 instanceof DirectoryNode
+                        && !((DirectoryNode) arg0).getDisplayName().equals(".")
+                        && !((DirectoryNode) arg0).getDisplayName().equals("..")) ||
+                (arg0 instanceof ArtifactTypeNode
+                        && !((ArtifactTypeNode) arg0).getName().equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.name()) ||
+                arg0 instanceof ExtractedContentNode))) {
             return new Node[]{this.copyNode(arg0)};
         } else {
             return new Node[]{};
