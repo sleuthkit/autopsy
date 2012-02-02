@@ -130,7 +130,12 @@ public class ExtractIE { // implements BrowserActivity {
                 indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
                 temps = currentCase.getTempDirectory() + File.separator + indexFileName;
                 File datFile = new File(temps);
-                ContentUtils.writeToFile(fsc, datFile);
+                try {
+                    ContentUtils.writeToFile(fsc, datFile);
+                }
+                catch (IOException e) {
+                    logger.log(Level.INFO, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
+                }
 
                 boolean bPascProcSuccess = executePasco(temps, index, bbart.getArtifactID());
 
@@ -160,12 +165,12 @@ public class ExtractIE { // implements BrowserActivity {
             List<String> command = new ArrayList<String>();
 
             command.add("-cp");
-            command.add(PASCO_LIB_PATH);
+            command.add("\"" + PASCO_LIB_PATH + "\"");
             command.add(" isi.pasco2.Main");
             command.add(" -T history");
-            command.add(indexFilePath);
+            command.add("\"" + indexFilePath + "\"");
             //command.add(" > " + PASCO_RESULTS_PATH + "\\pasco2Result" + Integer.toString(fileIndex) + ".txt");
-            command.add(" > " + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId));
+            command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String[] cmd = command.toArray(new String[0]);
 
             JavaSystemCaller.Exec.execute("java", cmd);
