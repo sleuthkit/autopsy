@@ -75,9 +75,9 @@ public class HashDbIngestService implements IngestServiceFsContent {
                 manager.postMessage(IngestMessage.createErrorMessage(++messageId, this, "No known bad database set"));
             
         } catch (TskException ex) {
-            logger.log(Level.SEVERE, "Setting NSRL and Known database failed", ex);
+            logger.log(Level.WARNING, "Setting NSRL and Known database failed", ex);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error getting Hash DB settings", ex);
+            logger.log(Level.WARNING, "Error getting Hash DB settings", ex);
         }
     }
      
@@ -122,7 +122,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
                 manager.postMessage(IngestMessage.createDataMessage(++messageId, this, name + " is a " + status + " file", null));
             }
         } catch (TskException ex){
-            logger.log(Level.SEVERE, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
+            logger.log(Level.WARNING, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
         }
     }
 
