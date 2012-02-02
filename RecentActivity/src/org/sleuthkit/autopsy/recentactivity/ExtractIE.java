@@ -48,6 +48,7 @@ import org.sleuthkit.autopsy.datamodel.KeyValueThing;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
@@ -130,7 +131,12 @@ public class ExtractIE { // implements BrowserActivity {
                 //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
                 temps = currentCase.getTempDirectory() + File.separator + indexFileName;
                 File datFile = new File(temps);
-                ContentUtils.writeToFile(fsc, datFile);
+                try {
+                    ContentUtils.writeToFile(fsc, datFile);
+                }
+                catch (IOException e) {
+                    logger.log(Level.INFO, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
+                }
 
                 boolean bPascProcSuccess = executePasco(temps, index, index);
 
@@ -160,12 +166,12 @@ public class ExtractIE { // implements BrowserActivity {
             List<String> command = new ArrayList<String>();
 
             command.add("-cp");
-            command.add(PASCO_LIB_PATH);
+            command.add("\"" + PASCO_LIB_PATH + "\"");
             command.add(" isi.pasco2.Main");
             command.add(" -T history");
-            command.add(indexFilePath);
+            command.add("\"" + indexFilePath + "\"");
             //command.add(" > " + PASCO_RESULTS_PATH + "\\pasco2Result" + Integer.toString(fileIndex) + ".txt");
-            command.add(" > " + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId));
+            command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String[] cmd = command.toArray(new String[0]);
 
             JavaSystemCaller.Exec.execute("java", cmd);
@@ -229,15 +235,16 @@ public class ExtractIE { // implements BrowserActivity {
                                         PASCO_RESULTS_LUT.put("Last Accessed", lineBuff[3]);
                                         PASCO_RESULTS_LUT.put("Reference", "None");
 
+
                                         // TODO: Need to fix this so we have the right obj_id
                                         BlackboardArtifact bbart = tempDb.getRootObjects().get(0).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                                        BlackboardAttribute bbatturl = new BlackboardAttribute(1, "RecentActivity", "Internet Explorer", lineBuff[1]);
+                                        BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[1]);
                                         bbart.addAttribute(bbatturl);
-                                        BlackboardAttribute bbattdate = new BlackboardAttribute(31, "RecentActivity", "Internet Explorer", lineBuff[3]);
+                                        BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[3]);
                                         bbart.addAttribute(bbattdate);
-                                        BlackboardAttribute bbattref = new BlackboardAttribute(32, "RecentActivity", "Internet Explorer", "No Ref");
+                                        BlackboardAttribute bbattref = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", "Internet Explorer", "No Ref");
                                         bbart.addAttribute(bbattref);
-                                        BlackboardAttribute bbatttitle = new BlackboardAttribute(3, "RecentActivity", "Internet Explorer", lineBuff[2]);
+                                        BlackboardAttribute bbatttitle = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[2]);
                                         bbart.addAttribute(bbatttitle);
 
                                         //KeyValueThing
