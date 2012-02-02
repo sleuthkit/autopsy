@@ -73,9 +73,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     static final String SOLR_PROP = "indexInSolr";
     // boolean: whether or not to lookup files in the hashDB
     static final String LOOKUPFILES_PROP = "lookupFiles";
-    // String: for property change notification
-    public static final String WIZARD_COMPLETE = "wizardComplete";
-
+    
+    static final Logger logger = Logger.getLogger(AddImageAction.class.getName());
 
     private WizardDescriptor wizardDescriptor;
     private WizardDescriptor.Iterator<WizardDescriptor> iterator;
@@ -123,18 +122,6 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         dialog.setVisible(true);
         dialog.toFront();
         
-        boolean cancelled = wizardDescriptor.getValue() != WizardDescriptor.FINISH_OPTION;
-        if(!cancelled){
-            Logger logger = Logger.getLogger(AddImageAction.class.getName());
-            try {
-                Long imageId = (Long) wizardDescriptor.getProperty(IMAGEID_PROP);
-                Image imageById = Case.getCurrentCase().getSleuthkitCase().getImageById(imageId);
-                Case.getPropertyChangeSupport().firePropertyChange(AddImageAction.WIZARD_COMPLETE, null, imageById);
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Couldn't get recently added image", ex);
-            }
-        }
-        
     
         // Do any cleanup that needs to happen (potentially: stopping the
         //add-image process, reverting an image)
@@ -149,7 +136,6 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         // Simulate clicking finish for the current dialog
         wizardDescriptor.setValue(WizardDescriptor.FINISH_OPTION);
         dialog.setVisible(false);
-
 
         // let the previous call to AddImageAction.actionPerformed() finish up
         // after the wizard, this will run when its it's done
