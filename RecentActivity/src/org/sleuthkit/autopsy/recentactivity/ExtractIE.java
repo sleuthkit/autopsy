@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 //IO imports
-import com.sun.corba.se.spi.activation.Server;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
