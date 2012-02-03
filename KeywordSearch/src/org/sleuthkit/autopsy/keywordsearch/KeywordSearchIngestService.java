@@ -24,7 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
@@ -37,7 +37,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestService.class.getName());
     private static KeywordSearchIngestService instance = null;
-    private IngestManager manager;
+    private IngestManagerProxy managerProxy;
     private int messageID = 0;
     private static final long MAX_STRING_EXTRACT_SIZE = 10 * (1 << 10) * (1 << 10);
     private static final long MAX_INDEX_SIZE = 200 * (1 << 10) * (1 << 10);
@@ -129,7 +129,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             logger.log(Level.INFO, "Error executing Solr query to check number of indexed files: ", se);
         }
 
-        manager.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Complete"));
+        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Complete"));
         //manager.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed files: " + ingestStat));
         //postSummary();
     }
@@ -140,16 +140,16 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     }
 
     @Override
-    public void init(IngestManager manager) {
+    public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init()");
-        this.manager = manager;
+        this.managerProxy = managerProxy;
 
         final Server.Core solrCore = KeywordSearch.getServer().getCore();
         ingester = solrCore.getIngester();
 
         ingestStatus = new HashMap<Long, IngestStatus>();
 
-        manager.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Started"));
+        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Started"));
     }
 
     @Override
@@ -215,8 +215,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     ;
             }
         }
-        manager.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed files: " + indexed));
-        manager.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed strings: " + indexed_extr));
-        manager.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Skipped files: " + skipped));
+        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed files: " + indexed));
+        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed strings: " + indexed_extr));
+        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Skipped files: " + skipped));
     }
 }

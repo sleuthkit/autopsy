@@ -31,9 +31,9 @@ public interface IngestServiceAbstract {
      * Service loads its configuration and performs initialization
      * called once per new worker thread
      * 
-     * @param IngestManager handle to the manager to postMessage() to
+     * @param IngestManagerProxy interface to manager for posting messages, getting configurations
      */
-    public void init(IngestManager manager);
+    public void init(IngestManagerProxy managerProxy);
 
     /**
      * notification from manager that there is no more content to process and all work is done.

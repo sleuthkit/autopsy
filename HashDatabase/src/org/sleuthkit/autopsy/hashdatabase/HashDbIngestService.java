@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -42,7 +43,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
     private static HashDbIngestService instance = null;
     private final static String NAME = "Hash Lookup";
     private static final Logger logger = Logger.getLogger(HashDbIngestService.class.getName());
-    private IngestManager manager;
+    private IngestManagerProxy managerProxy;
     private SleuthkitCase skCase;
     private static int messageId = 0;
     // Whether or not to do hash lookups (only set to true if there are dbs set)
@@ -64,10 +65,10 @@ public class HashDbIngestService implements IngestServiceFsContent {
      * @param IngestManager handle to the manager to postMessage() to
      */
     @Override
-    public void init(IngestManager manager){
+    public void init(IngestManagerProxy managerProxy){
         this.process = false;
-        this.manager = manager;
-        manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));
+        this.managerProxy = managerProxy;
+        this.managerProxy.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
             HashDbSettings hashDbSettings = HashDbSettings.getHashDbSettings();
@@ -76,13 +77,13 @@ public class HashDbIngestService implements IngestServiceFsContent {
                 skCase.setNSRLDatabase(nsrlDbPath);
                 this.process = true;
             }else
-                manager.postMessage(IngestMessage.createErrorMessage(++messageId, this, "No NSRL database set"));
+                this.managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, this, "No NSRL database set"));
             
             if((knownBadDbPath = hashDbSettings.getKnownBadDatabasePath()) != null && !knownBadDbPath.equals("")){
                 skCase.setKnownBadDatabase(knownBadDbPath);
                 this.process = true;
             }else
-                manager.postMessage(IngestMessage.createErrorMessage(++messageId, this, "No known bad database set"));
+                this.managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, this, "No known bad database set"));
             
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Setting NSRL and Known database failed", ex);
@@ -97,7 +98,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void complete(){
-        manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Complete"));
+        managerProxy.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Complete"));
     }
     
     /**
@@ -138,7 +139,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
                     //TODO: Shouldn't be calculating the hash twice.
                     BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), NAME, "Known Bad", Hash.calculateMd5(fsContent));
                     badFile.addAttribute(att3);
-                    manager.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, null));
+                    managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, null));
                 }
             } catch (TskException ex){
                 // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup

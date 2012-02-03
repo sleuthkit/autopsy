@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.Image;
  * IngestManager sets up and manages ingest services
  * runs them in a background thread
  * notifies services when work is complete or should be interrupted
- * processes messages from services in postMessage() and posts them to GUI
+ * processes messages from services via messenger proxy  and posts them to GUI
  * 
  */
 public class IngestManager {
@@ -69,6 +69,8 @@ public class IngestManager {
     //services
     final Collection<IngestServiceImage> imageServices = enumerateImageServices();
     final Collection<IngestServiceFsContent> fsContentServices = enumerateFsContentServices();
+    //manager proxy
+    final IngestManagerProxy managerProxy = new IngestManagerProxy(this);
     //notifications
     private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
 
@@ -193,7 +195,7 @@ public class IngestManager {
                         imageIngesters.add(newImageWorker);
 
                         //image services are now initialized per instance
-                        quService.init(this);
+                        quService.init(managerProxy);
                         newImageWorker.execute();
                         IngestManager.firePropertyChange(SERVICE_STARTED_EVT, quService.getName());
                     }
@@ -223,7 +225,7 @@ public class IngestManager {
             fsContentIngester = new IngestFsContentThread();
             //init all fs services, everytime new worker starts
             for (IngestServiceFsContent s : fsContentServices) {
-                s.init(this);
+                s.init(managerProxy);
             }
             fsContentIngester.execute();
         }
@@ -280,7 +282,7 @@ public class IngestManager {
      * Services should call this between processing iterations to get current setting
      * and use the setting to change notification and data refresh intervals
      */
-    public synchronized int getUpdateFrequency() {
+    synchronized int getUpdateFrequency() {
         return updateFrequency;
     }
 
@@ -306,7 +308,7 @@ public class IngestManager {
      * IngestService should make an attempt not to publish the same message multiple times.
      * Viewer will attempt to identify duplicate messages and filter them out (slower)
      */
-    public synchronized void postMessage(final IngestMessage message) {
+     synchronized void postMessage(final IngestMessage message) {
 
         if (stats != null) {
             //record the error for stats, if stats are running
