@@ -57,4 +57,10 @@ public interface IngestServiceAbstract {
      * @return specialization of the service
      */
     public ServiceType getType();
+    
+    /**
+     * provides means for user to input service specific configuration options
+     * the new configuration is effective on next ingest
+     */
+    public void userConfigure();
 }

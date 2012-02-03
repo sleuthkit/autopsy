@@ -152,4 +152,10 @@ public class HashDbIngestService implements IngestServiceFsContent {
         return ServiceType.FsContent;
     }
     
+    
+    @Override
+    public void userConfigure() {
+        
+    }
+    
 }

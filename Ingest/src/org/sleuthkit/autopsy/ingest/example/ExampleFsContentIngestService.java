@@ -90,4 +90,9 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     public ServiceType getType() {
         return ServiceType.FsContent;
     }
+    
+    @Override
+    public void userConfigure() {
+        
+    }
 }

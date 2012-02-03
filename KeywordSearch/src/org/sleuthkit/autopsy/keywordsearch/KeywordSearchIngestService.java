@@ -175,6 +175,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public ServiceType getType() {
         return ServiceType.FsContent;
     }
+    
+    @Override
+    public void userConfigure() {
+        
+    }
 
     private boolean extractAndIngest(FsContent f) {
         boolean success = false;

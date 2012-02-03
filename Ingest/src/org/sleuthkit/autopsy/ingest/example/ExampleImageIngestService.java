@@ -121,4 +121,9 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     public ServiceType getType() {
         return ServiceType.Image;
     }
+    
+    @Override
+    public void userConfigure() {
+        
+    }
 }
