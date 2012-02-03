@@ -18,33 +18,26 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
+import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Top component explorer for the Ingest module.
@@ -57,7 +50,6 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     private Collection<IngestServiceAbstract> services;
     private Map<String, Boolean> serviceStates;
     private IngestMessagePanel messagePanel;
-    private IngestDialog iD;
     private ActionListener serviceSelListener = new ActionListener() {
 
         @Override
@@ -70,7 +62,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     private IngestTopComponent() {
         services = new ArrayList<IngestServiceAbstract>();
         serviceStates = new HashMap<String, Boolean>();
-        iD = new IngestDialog();
+
         initComponents();
         customizeComponents();
         setName(NbBundle.getMessage(IngestTopComponent.class, "CTL_IngestTopComponent"));
@@ -151,6 +143,17 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
                     }
                     //clear inbox
                     messagePanel.clearMessages();
+                } else if (evt.getPropertyName().equals(Case.CASE_ADD_IMAGE)) {
+                    final Image image = (Image) evt.getNewValue();
+                    final IngestDialog ingestDialog = new IngestDialog();
+                    ingestDialog.setImage(image);
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            ingestDialog.display();
+                        }
+                    });
+
                 }
             }
         });
@@ -158,25 +161,26 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
 
         /* Collection<IngestServiceImage> imageServices = IngestManager.enumerateImageServices();
         for (IngestServiceImage service : imageServices) {
-            final String serviceName = service.getName();
-            services.add(service);
-            JCheckBox checkbox = new JCheckBox(serviceName, true);
-            checkbox.setName(serviceName);
-            checkbox.addActionListener(serviceSelListener);
-            servicesPanel.add(checkbox);
-            serviceStates.put(serviceName, true);
+        final String serviceName = service.getName();
+        services.add(service);
+        JCheckBox checkbox = new JCheckBox(serviceName, true);
+        checkbox.setName(serviceName);
+        checkbox.addActionListener(serviceSelListener);
+        servicesPanel.add(checkbox);
+        serviceStates.put(serviceName, true);
         }
-
+        
         Collection<IngestServiceFsContent> fsServices = IngestManager.enumerateFsContentServices();
         for (IngestServiceFsContent service : fsServices) {
-            final String serviceName = service.getName();
-            services.add(service);
-            JCheckBox checkbox = new JCheckBox(serviceName, true);
-            checkbox.setName(serviceName);
-            checkbox.addActionListener(serviceSelListener);
-            servicesPanel.add(checkbox);
-            serviceStates.put(serviceName, true); 
+        final String serviceName = service.getName();
+        services.add(service);
+        JCheckBox checkbox = new JCheckBox(serviceName, true);
+        checkbox.setName(serviceName);
+        checkbox.addActionListener(serviceSelListener);
+        servicesPanel.add(checkbox);
+        serviceStates.put(serviceName, true); 
         }*/
+
 
     }
 
@@ -294,7 +298,6 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
             .addComponent(mainScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 771, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel controlPanel;
     private javax.swing.JLabel ingestProgressLabel;
@@ -308,7 +311,9 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     @Override
     public void componentOpened() {
         logger.log(Level.INFO, "IngestTopComponent opened()");
-        manager = new IngestManager(this);
+        if (manager == null) {
+            manager = new IngestManager(this);
+        }
     }
 
     @Override
@@ -363,8 +368,8 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     void updateProgress(int progress) {
         this.mainProgressBar.setValue(progress);
     }
-    
-    IngestManager getManager(){
+
+    IngestManager getManager() {
         return this.manager;
     }
 }

@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -41,9 +42,15 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private static final long MAX_STRING_EXTRACT_SIZE = 10 * (1 << 10) * (1 << 10);
     private static final long MAX_INDEX_SIZE = 200 * (1 << 10) * (1 << 10);
     private Ingester ingester;
+    private static final String[] ingestibleExtensions = {"tar", "jar", "zip", "bzip2",
+        "gz", "tgz", "doc", "xls", "ppt", "rtf", "pdf", "html", "xhtml", "txt",
+        "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
+        "pst", "xml", "class"};
 
     public enum IngestStatus {
-        INGESTED, EXTRACTED_INGESTED, SKIPPED_EXTRACTION,};
+
+        INGESTED, EXTRACTED_INGESTED, SKIPPED_EXTRACTION,
+    };
     private Map<Long, IngestStatus> ingestStatus;
 
     public static synchronized KeywordSearchIngestService getDefault() {
@@ -57,34 +64,50 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public void process(FsContent fsContent) {
         final long size = fsContent.getSize();
         //logger.log(Level.INFO, "Processing fsContent: " + fsContent.getName());
-        if (! fsContent.isFile() )
+        if (!fsContent.isFile()) {
             return;
-        
+        }
+
         if (size == 0 || size > MAX_INDEX_SIZE) {
             ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED_EXTRACTION);
             return;
         }
-        
-        try {
-            //logger.log(Level.INFO, "indexing: " + fsContent.getName());
-            ingester.ingest(fsContent);
-            ingestStatus.put(fsContent.getId(), IngestStatus.INGESTED);
-        } catch (IngesterException e) {
-            ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED_EXTRACTION);
-            //try to extract strings
-            if (fsContent.getSize() < MAX_STRING_EXTRACT_SIZE) {
-                if (!extractAndIngest(fsContent)) {
-                    logger.log(Level.INFO, "Failed to extract strings and ingest, file '" + fsContent.getName() + "' (id: " + fsContent.getId() + ").");
-                } else {
-                    ingestStatus.put(fsContent.getId(), IngestStatus.EXTRACTED_INGESTED);
-                }
-            } else {
-                ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED_EXTRACTION);
+
+        boolean ingestible = false;
+        final String fileName = fsContent.getName();
+        for (String ext : ingestibleExtensions) {
+            if (fileName.endsWith(ext)) {
+                ingestible = true;
+                break;
             }
-
         }
-       
 
+        if (ingestible == true) {
+            try {
+                //logger.log(Level.INFO, "indexing: " + fsContent.getName());
+                ingester.ingest(fsContent);
+                ingestStatus.put(fsContent.getId(), IngestStatus.INGESTED);
+            } catch (IngesterException e) {
+                ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED_EXTRACTION);
+                //try to extract strings
+                processNonIngestible(fsContent);
+
+            }
+        } else {
+            processNonIngestible(fsContent);
+        }
+    }
+
+    private void processNonIngestible(FsContent fsContent) {
+        if (fsContent.getSize() < MAX_STRING_EXTRACT_SIZE) {
+            if (!extractAndIngest(fsContent)) {
+                logger.log(Level.INFO, "Failed to extract strings and ingest, file '" + fsContent.getName() + "' (id: " + fsContent.getId() + ").");
+            } else {
+                ingestStatus.put(fsContent.getId(), IngestStatus.EXTRACTED_INGESTED);
+            }
+        } else {
+            ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED_EXTRACTION);
+        }
     }
 
     @Override
@@ -95,7 +118,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         //signal a potential change in number of indexed files
         try {
             final int numIndexedFiles = KeywordSearch.getServer().getCore().queryNumIndexedFiles();
-            KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
+                }
+            });
+
         } catch (SolrServerException se) {
             logger.log(Level.INFO, "Error executing Solr query to check number of indexed files: ", se);
         }
@@ -114,7 +143,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public void init(IngestManager manager) {
         logger.log(Level.INFO, "init()");
         this.manager = manager;
-        
+
         final Server.Core solrCore = KeywordSearch.getServer().getCore();
         ingester = solrCore.getIngester();
 
@@ -129,8 +158,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         ingester.commit();
         //signal a potential change in number of indexed files
         try {
-            final int numIndexedFiles = KeywordSearch.getServer().getCore().queryNumIndexedFiles();
-            KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
+             final int numIndexedFiles = KeywordSearch.getServer().getCore().queryNumIndexedFiles();
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
+                }
+            });
         } catch (SolrServerException se) {
             logger.log(Level.INFO, "Error executing Solr query to check number of indexed files: ", se);
         }
@@ -162,7 +196,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         int indexed_extr = 0;
         int skipped = 0;
         for (IngestStatus s : ingestStatus.values()) {
-            switch (s){
+            switch (s) {
                 case INGESTED:
                     ++indexed;
                     break;
@@ -178,6 +212,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
         manager.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed files: " + indexed));
         manager.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed strings: " + indexed_extr));
-        manager.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Skipped files: " + skipped));     
+        manager.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Skipped files: " + skipped));
     }
 }

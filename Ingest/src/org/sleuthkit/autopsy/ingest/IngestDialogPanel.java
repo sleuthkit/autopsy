@@ -58,13 +58,18 @@ public class IngestDialogPanel extends javax.swing.JPanel {
     };
 
     /** Creates new form IngestDialogPanel */
-    public IngestDialogPanel(Image image) {
+    IngestDialogPanel() {
         services = new ArrayList<IngestServiceAbstract>();
         serviceStates = new HashMap<String, Boolean>();
-        this.image = image;
         initComponents();
         customizeComponents();
     }
+    
+    void setImage(Image image) {
+        this.image = image;
+    }
+    
+    
     
     private void customizeComponents(){
         this.manager = IngestTopComponent.getDefault().getManager();
@@ -169,6 +174,7 @@ public class IngestDialogPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
+        this.manager = IngestTopComponent.getDefault().getManager();
         if (manager == null) {
             return;
         }
@@ -182,11 +188,8 @@ public class IngestDialogPanel extends javax.swing.JPanel {
             }
         }
 
-        List<Image> images = new ArrayList<Image>();
-        images.add(image);
-        
-        if (!services.isEmpty() && !images.isEmpty()) {
-            manager.execute(servicesToStart, images);
+        if (!services.isEmpty() ) {
+            manager.execute(servicesToStart, image);
         }
     }//GEN-LAST:event_startButtonActionPerformed
 
