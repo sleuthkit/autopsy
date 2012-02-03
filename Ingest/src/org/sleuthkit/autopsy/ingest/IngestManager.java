@@ -59,7 +59,7 @@ public class IngestManager {
     private IngestManagerStats stats;
     private int updateFrequency;
     //queues
-    private final ImageQueue imageQueue = new ImageQueue();
+    private final ImageQueue imageQueue = new ImageQueue();   // list of services and images to analyze
     private final FsContentQueue fsContentQueue = new FsContentQueue();
     private final Object queuesLock = new Object();
     //workers
@@ -148,7 +148,8 @@ public class IngestManager {
     }
 
     /**
-     * manage current workers
+     * Starts the needed worker threads.
+     * 
      * if fsContent service is still running, do nothing and allow it to consume queue
      * otherwise start /restart fsContent worker
      * 
@@ -160,17 +161,20 @@ public class IngestManager {
         logger.log(Level.INFO, "File queue: " + this.fsContentQueue.toString());
         
         //image ingesters
+        // cycle through each image in the queue
         while (hasNextImage()) {
             //dequeue
+            // get next image and set of services
             final QueueUnit<Image, IngestServiceImage> qu =
                     this.getNextImage();
-            //check if such (service,image) already running
-
-
+            
+            
+            // check if each service for this image is already running
             //synchronized (this) {
                 for (IngestServiceImage quService : qu.services) {
                     boolean alreadyRunning = false;
                     for (IngestImageThread worker : imageIngesters) {
+                        // ignore threads that are on different images
                         if (!worker.getImage().equals(qu.content)) {
                             continue; //check next worker
                         }
@@ -334,15 +338,25 @@ public class IngestManager {
         return (Collection<IngestServiceFsContent>) Lookup.getDefault().lookupAll(IngestServiceFsContent.class);
     }
 
+    /**
+     * Queue up an image to be processed by a given service. 
+     * @param service Service to analyze image
+     * @param image Image to analyze
+     */
     private void addImage(IngestServiceImage service, Image image) {
         synchronized (queuesLock) {
             imageQueue.enqueue(image, service);
         }
     }
 
+    /**
+     * Queue up an image to be processed by a given File service.
+     * @param service
+     * @param image 
+     */
     private void addFsContent(IngestServiceFsContent service, Image image) {
         Collection<FsContent> fsContents = new GetAllFilesContentVisitor().visit(image);
-
+        logger.log(Level.INFO, "Adding image " + image.getName() + " with " + fsContents.size() + " number of fsContent to service " + service.getName());
         synchronized (queuesLock) {
             for (FsContent fsContent : fsContents) {
                 fsContentQueue.enqueue(fsContent, service);
@@ -351,7 +365,7 @@ public class IngestManager {
     }
 
     /**
-     * get next file/dir to process
+     * get next file/dir and associated list of services to process
      * the queue of FsContent to process is maintained internally 
      * and could be dynamically sorted as data comes in
      */
@@ -392,7 +406,7 @@ public class IngestManager {
     }
 
     /**
-     * get next Image to process
+     * get next Image/Service pair to process
      * the queue of Images to process is maintained internally 
      * and could be dynamically sorted as data comes in
      */
@@ -448,7 +462,7 @@ public class IngestManager {
         }
     }
 
-    //manages queue of pending FsContent and IngestServiceFsContent to use on that content
+    //manages queue of pending FsContent and list of associated IngestServiceFsContent to use on that content
     //TODO in future content sort will be maintained based on priorities
     private class FsContentQueue {
 
@@ -494,6 +508,10 @@ public class IngestManager {
             fsContentUnits.clear();
         }
 
+        /**
+         * Returns next FsContent and list of associated services
+         * @return 
+         */
         QueueUnit<FsContent, IngestServiceFsContent> dequeue() {
             if (!hasNext()) {
                 throw new UnsupportedOperationException("FsContent processing queue is empty");
@@ -519,7 +537,11 @@ public class IngestManager {
         }
     }
 
-//manages queue of pending Images and IngestServiceImage to use on that image
+    /**
+     * manages queue of pending Images and IngestServiceImage to use on that image.
+     * image / service pairs are added one at a time and internally, it keeps track of all
+     * services for a given image.
+     */
     private class ImageQueue {
 
         List<QueueUnit<Image, IngestServiceImage>> imageUnits = new ArrayList<QueueUnit<Image, IngestServiceImage>>();
@@ -564,6 +586,10 @@ public class IngestManager {
             imageUnits.clear();
         }
 
+        /**
+         * Return a QueueUnit that contains an image and set of services to run on it.
+         * @return 
+         */
         QueueUnit<Image, IngestServiceImage> dequeue() {
             if (!hasNext()) {
                 throw new UnsupportedOperationException("Image processing queue is empty");
@@ -572,6 +598,12 @@ public class IngestManager {
             return imageUnits.remove(0);
         }
 
+        /**
+         * Search existing list to see if an image already has a set of 
+         * services associated with it
+         * @param image
+         * @return 
+         */
         private QueueUnit<Image, IngestServiceImage> findImage(Image image) {
             QueueUnit<Image, IngestServiceImage> found = null;
             for (QueueUnit<Image, IngestServiceImage> unit : imageUnits) {
@@ -850,6 +882,7 @@ public class IngestManager {
         }
     }
 
+    /* Thread that adds image/file and service pairs to queues */
     private class EnqueueWorker extends SwingWorker {
 
         Collection<IngestServiceAbstract> services;
@@ -879,6 +912,7 @@ public class IngestManager {
             return null;
         }
 
+        /* clean up or start the worker threads */
         @Override
         protected void done() {
             try {
@@ -925,6 +959,7 @@ public class IngestManager {
                             try {
                                 final IngestServiceImage newServiceInstance = (IngestServiceImage) (service.getClass()).newInstance();
                                 addImage(newServiceInstance, image);
+                                logger.log(Level.INFO, "Added image " + image.getName() + " with service " + service.getName());
                             } catch (InstantiationException e) {
                                 logger.log(Level.SEVERE, "Cannot instantiate service: " + service.getName(), e);
                             } catch (IllegalAccessException e) {

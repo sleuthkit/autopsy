@@ -54,7 +54,7 @@ public final class RAImageIngestService implements IngestServiceImage {
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
         //logger.log(Level.INFO, "process() " + this.toString());
-        manager.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + image.getName()));
+        manager.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
 
         ExtractAll ext = new ExtractAll();
 
@@ -73,7 +73,7 @@ public final class RAImageIngestService implements IngestServiceImage {
     public void complete() {
         logger.log(Level.INFO, "complete() " + this.toString());
 
-        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "completed image processing");
+        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Completed");
         manager.postMessage(msg);
 
         //service specific cleanup due to completion here
