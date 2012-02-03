@@ -832,6 +832,7 @@ public class IngestManager {
                     logger.log(Level.INFO, "Summary Report: " + stats.toString());
                     tc.displayReport(stats.toHtmlString());
                 }
+                initMainProgress(0);
             }
 
         }
