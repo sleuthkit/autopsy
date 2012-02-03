@@ -51,10 +51,10 @@ class ThumbnailViewNode extends FilterNode {
 
     @Override
     public String getDisplayName(){
-        if(getName().length() > 15)
-            return getName().substring(0, 15).concat("...");
+        if(super.getDisplayName().length() > 15)
+            return super.getDisplayName().substring(0, 15).concat("...");
         else
-            return getName();
+            return super.getDisplayName();
     }
     
     @Override
