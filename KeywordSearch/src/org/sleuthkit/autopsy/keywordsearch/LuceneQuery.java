@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -28,7 +29,6 @@ import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.request.QueryRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
@@ -59,7 +59,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         queryEscaped = KeywordSearchUtil.escapeLuceneQuery(query, true, false);
         isEscaped = true;
     }
-    
+
     @Override
     public boolean isEscaped() {
         return isEscaped;
@@ -74,9 +74,9 @@ public class LuceneQuery implements KeywordSearchQuery {
     public String getQueryString() {
         return this.query;
     }
-    
+
     @Override
-    public Collection<Term>getTerms() {
+    public Collection<Term> getTerms() {
         return null;
     }
 
@@ -121,12 +121,15 @@ public class LuceneQuery implements KeywordSearchQuery {
                     // check that we actually get 1 hit for each id
                     ResultSet rs = sc.runQuery("select * from tsk_files where obj_id=" + id);
                     matches.addAll(sc.resultSetToFsContents(rs));
-                    rs.getStatement().close();
+                    final Statement s = rs.getStatement();
                     rs.close();
+                    if (s != null) {
+                        s.close();
+                    }
                 }
 
             } catch (SolrServerException ex) {
-                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query.substring(0,Math.min(query.length()-1, 200)), ex);
+                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query.substring(0, Math.min(query.length() - 1, 200)), ex);
                 throw new RuntimeException(ex);
                 // TODO: handle bad query strings, among other issues
             } catch (SQLException ex) {
@@ -143,16 +146,16 @@ public class LuceneQuery implements KeywordSearchQuery {
         List<FsContent> matches = performQuery();
 
         String pathText = "Keyword query: " + query;
-        
+
         Node rootNode = new KeywordSearchNode(matches, query);
         Node filteredRootNode = new TableFilterNode(rootNode, true);
-        
+
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, filteredRootNode, matches.size());
         searchResultWin.requestActive(); // make it the active top component
     }
 
     @Override
     public boolean validate() {
-        return query != null && ! query.equals("");
+        return query != null && !query.equals("");
     }
 }
