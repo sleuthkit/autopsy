@@ -167,9 +167,11 @@ public final class FileSearchTopComponent extends TopComponent implements DataEx
                     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
                     ResultSet rs = tempDb.runQuery(this.getQuery("count(*) as TotalMatches"));
                     totalMatches = totalMatches + rs.getInt("TotalMatches");
+                    rs.getStatement().close();
                     rs.close();
                     rs = tempDb.runQuery(this.getQuery(null));
                     currentDbList = tempDb.resultSetToFsContents(rs);
+                    rs.getStatement().close();
                     rs.close();
                     fsContentList.addAll(currentDbList);
                 } catch (SQLException ex) {

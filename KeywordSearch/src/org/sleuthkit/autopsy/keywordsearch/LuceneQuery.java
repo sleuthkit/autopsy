@@ -121,6 +121,7 @@ public class LuceneQuery implements KeywordSearchQuery {
                     // check that we actually get 1 hit for each id
                     ResultSet rs = sc.runQuery("select * from tsk_files where obj_id=" + id);
                     matches.addAll(sc.resultSetToFsContents(rs));
+                    rs.getStatement().close();
                     rs.close();
                 }
 

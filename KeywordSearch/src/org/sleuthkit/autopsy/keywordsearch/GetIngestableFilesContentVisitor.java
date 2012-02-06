@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -94,7 +95,10 @@ class GetIngestableFilesContentVisitor extends GetFilesContentVisitor {
                 + " AND (size > 0)";
         try {
             ResultSet rs = sc.runQuery(query);
-            return sc.resultSetToFsContents(rs);
+            List<FsContent> contents =  sc.resultSetToFsContents(rs);
+            rs.getStatement().close();
+            rs.close();
+            return contents;
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Couldn't get all files in FileSystem", ex);
             return Collections.EMPTY_SET;
