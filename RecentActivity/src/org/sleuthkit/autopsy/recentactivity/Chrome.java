@@ -52,7 +52,8 @@ public class Chrome {
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' AND parent_path LIKE '%Chrome%'");
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             ChromeCount = FFSqlitedb.size();
-    
+            rs.getStatement().close();  
+            rs.close();
             
             int j = 0;
             while (j < FFSqlitedb.size())
@@ -119,7 +120,8 @@ public class Chrome {
             List<FsContent> FFSqlitedb;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'Cookies' and parent_path LIKE '%Chrome%'");
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
-            
+            rs.getStatement().close();  
+            rs.close();
             int j = 0;
      
             while (j < FFSqlitedb.size())
@@ -185,7 +187,8 @@ public class Chrome {
             List<FsContent> FFSqlitedb;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'Bookmarks' and parent_path LIKE '%Chrome%'");
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
-            
+            rs.getStatement().close();  
+            rs.close();
             int j = 0;
      
             while (j < FFSqlitedb.size())

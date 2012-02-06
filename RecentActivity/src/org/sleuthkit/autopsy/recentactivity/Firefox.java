@@ -50,6 +50,8 @@ public class Firefox {
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%places.sqlite%' and parent_path LIKE '%Firefox%'");
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
                     FireFoxCount = FFSqlitedb.size();
+                    rs.getStatement().close();  
+            rs.close();
             int j = 0;
      
             while (j < FFSqlitedb.size())
@@ -144,7 +146,8 @@ public class Firefox {
             List<FsContent> FFSqlitedb;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%cookies.sqlite%' and parent_path LIKE '%Firefox%'");
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
-            
+            rs.getStatement().close();  
+            rs.close();
             int j = 0;
      
             while (j < FFSqlitedb.size())

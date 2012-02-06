@@ -115,7 +115,8 @@ public class ExtractIE { // implements BrowserActivity {
             tempDb = currentCase.getSleuthkitCase();
             ResultSet rs = tempDb.runQuery(indexDatQueryStr);
             FsContentCollection = tempDb.resultSetToFsContents(rs);
-
+            rs.getStatement().close();  
+            rs.close();
             String temps;
             String indexFileName;
             int index = 0;
@@ -246,7 +247,7 @@ public class ExtractIE { // implements BrowserActivity {
                                         BlackboardAttribute bbatttitle = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[2]);
                                         bbart.addAttribute(bbatttitle);
                                         BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","Internet Explorer","Internet Explorer");
-                                          bbart.addAttribute(bbattprog);
+                                        bbart.addAttribute(bbattprog);
 
                                         //KeyValueThing
                                         //This will be redundant in terms IE.name() because of
