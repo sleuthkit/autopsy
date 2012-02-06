@@ -267,13 +267,6 @@ public class IngestManager {
             }
         }
 
-        //workaround for jdbc call to complete
-        //TODO synchronize this if possible   
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-        }
-
         logger.log(Level.INFO, "stopped all"); 
     }
 
