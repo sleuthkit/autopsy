@@ -17,12 +17,13 @@ public class ExtractAll {
         }
        
        public boolean extractToBlackboard(IngestImageWorkerController controller){
-           controller.switchToDeterminate(3);
+           
            try{
                // Will make registry entries later, comment out for DEMO ONLY
                // ExtractRegistry eree = new ExtractRegistry();
                 //eree.getregistryfiles();
                controller.switchToDeterminate(3);
+               controller.progress(0);
                
                 Firefox ffre = new Firefox();
                 ffre.getffdb();  
