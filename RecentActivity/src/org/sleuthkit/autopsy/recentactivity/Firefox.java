@@ -49,14 +49,16 @@ public class Firefox {
             List<FsContent> FFSqlitedb;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%places.sqlite%' and parent_path LIKE '%Firefox%'");
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
+            rs.getStatement().close();
+            rs.close();
                     FireFoxCount = FFSqlitedb.size();
             int j = 0;
      
             while (j < FFSqlitedb.size())
             {
-                String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
-                ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 File dbFile = new File(temps);
                  
                 
@@ -144,14 +146,16 @@ public class Firefox {
             List<FsContent> FFSqlitedb;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%cookies.sqlite%' and parent_path LIKE '%Firefox%'");
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
+            rs.getStatement().close();
+            rs.close();
             
             int j = 0;
      
             while (j < FFSqlitedb.size())
             {
-                String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
-                ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 File dbFile = new File(temps);
                  try
                 {

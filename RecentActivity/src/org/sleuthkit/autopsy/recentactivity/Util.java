@@ -46,6 +46,8 @@ public static boolean imgpathexists(String path){
      ResultSet rs = tempDb.runQuery("select * from tsk_files where parent_path LIKE '%"+ path + "%'");
      FFSqlitedb = tempDb.resultSetToFsContents(rs);
      count = FFSqlitedb.size();
+     rs.getStatement().close();
+     rs.close();
     }
     catch (SQLException ex) 
         {
