@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.autopsy.datamodel.KeyValue;
 
 /**
  * Representation of text posted by ingest services
@@ -39,7 +39,7 @@ public class IngestMessage {
     private MessageType messageType;
     private IngestServiceAbstract source;
     private String text;
-    private KeyValueThing data;
+    private KeyValue data;
     private Date datePosted;
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -64,7 +64,7 @@ public class IngestMessage {
         return text;
     }
 
-    public KeyValueThing getData() {
+    public KeyValue getData() {
         return data;
     }
 
@@ -144,7 +144,7 @@ public class IngestMessage {
         return im;
     }
     
-    public static IngestMessage createDataMessage(long ID, IngestServiceAbstract source, String message, KeyValueThing data) {
+    public static IngestMessage createDataMessage(long ID, IngestServiceAbstract source, String message, KeyValue data) {
         if (source == null || message == null) {
             throw new IllegalArgumentException("source and message cannot be null");
         }
