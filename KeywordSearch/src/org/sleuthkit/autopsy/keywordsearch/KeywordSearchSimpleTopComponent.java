@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.JMenuItem;
 import org.openide.windows.TopComponent;
+import org.openide.windows.WindowManager;
 
 /**
  * Top component for Simple keyword search
@@ -32,15 +33,37 @@ import org.openide.windows.TopComponent;
 public class KeywordSearchSimpleTopComponent extends TopComponent implements KeywordSearchTopComponentInterface {
 
     private Logger logger = Logger.getLogger(KeywordSearchSimpleTopComponent.class.getName());
+    private static KeywordSearchSimpleTopComponent instance = null;
+    
+    public static final String PREFERRED_ID = "KeywordSearchSimpleTopComponent";
 
     /** Creates new form KeywordSearchSimpleTopComponent */
-    public KeywordSearchSimpleTopComponent() {
+    private KeywordSearchSimpleTopComponent() {
         initComponents();
         customizeComponents();
         setName("Simple");
         searchButton.setEnabled(false);
 
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
+    }
+
+    public static synchronized KeywordSearchSimpleTopComponent getDefault() {
+        if (instance == null) {
+            instance = new KeywordSearchSimpleTopComponent();
+        }
+        return instance;
+    }
+    
+    public static synchronized KeywordSearchSimpleTopComponent findInstance() {
+        TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        if (win == null) {
+            return getDefault();
+        }
+        if (win instanceof KeywordSearchSimpleTopComponent) {
+            return (KeywordSearchSimpleTopComponent) win;
+        }
+       
+        return getDefault();
     }
 
     private void customizeComponents() {
@@ -50,20 +73,22 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
                 + "For a regular expression search, enter a valid regular expression.<br />"
                 + "Examples (in double-quotes): \"\\d\\d\\d-\\d\\d\\d\" \\d{8,10} \"phone\" \"ftp|sftp|ssh|http|https|www\".<br />"
                 + "Note: a word can be also searched using a regex search.<br />Regex containing whitespace [ \\s] matches are currently not supported.</html>");
-        
+
         queryTextField.setComponentPopupMenu(rightClickMenu);
-        ActionListener actList = new ActionListener(){
+        ActionListener actList = new ActionListener() {
+
             @Override
-            public void actionPerformed(ActionEvent e){
+            public void actionPerformed(ActionEvent e) {
                 JMenuItem jmi = (JMenuItem) e.getSource();
-                if(jmi.equals(cutMenuItem))
+                if (jmi.equals(cutMenuItem)) {
                     queryTextField.cut();
-                else if(jmi.equals(copyMenuItem))
+                } else if (jmi.equals(copyMenuItem)) {
                     queryTextField.copy();
-                else if(jmi.equals(pasteMenuItem))
+                } else if (jmi.equals(pasteMenuItem)) {
                     queryTextField.paste();
-                else if(jmi.equals(selectAllMenuItem))
+                } else if (jmi.equals(selectAllMenuItem)) {
                     queryTextField.selectAll();
+                }
             }
         };
         cutMenuItem.addActionListener(actList);
@@ -213,13 +238,10 @@ public class KeywordSearchSimpleTopComponent extends TopComponent implements Key
     }// </editor-fold>//GEN-END:initComponents
 
     private void chRegexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chRegexActionPerformed
-
     }//GEN-LAST:event_chRegexActionPerformed
 
     private void queryTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queryTextFieldActionPerformed
-
     }//GEN-LAST:event_queryTextFieldActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chRegex;
     private javax.swing.JMenuItem copyMenuItem;
