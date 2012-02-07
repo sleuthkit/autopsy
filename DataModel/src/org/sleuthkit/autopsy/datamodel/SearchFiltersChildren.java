@@ -18,45 +18,35 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.SearchFilters;
+import org.sleuthkit.datamodel.SearchFilters.FileSearchFilter;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  *
  * @author dfickling
  */
-class ArtifactTypeChildren extends ChildFactory<BlackboardArtifact>{
+class SearchFiltersChildren extends ChildFactory<SearchFilters.FileSearchFilter> {
     
-    private SleuthkitCase skCase;
-    private BlackboardArtifact.TypeWrapper type;
+    SleuthkitCase skCase;
 
-    public ArtifactTypeChildren(BlackboardArtifact.TypeWrapper type, SleuthkitCase skCase) {
+    public SearchFiltersChildren(SleuthkitCase skCase) {
         this.skCase = skCase;
-        this.type = type;
     }
 
     @Override
-    protected boolean createKeys(List<BlackboardArtifact> list) {
-        try {
-            list.addAll(skCase.getBlackboardArtifacts(type.getTypeId()));
-        } catch (TskException ex) {
-            Logger.getLogger(ArtifactTypeChildren.class.getName())
-                    .log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex);
-        }
+    protected boolean createKeys(List<FileSearchFilter> list) {
+        list.addAll(Arrays.asList(FileSearchFilter.values()));
         return true;
     }
     
     @Override
-    protected Node createNodeForKey(BlackboardArtifact key){
-        return new BlackboardArtifactNode(key);
+    protected Node createNodeForKey(FileSearchFilter key){
+        return new FileSearchFilterNode(key, skCase);
     }
     
 }

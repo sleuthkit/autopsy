@@ -19,12 +19,12 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.TskException;
  *
  * @author dfickling
  */
-public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.ARTIFACT_TYPE> {
+public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.TypeWrapper> {
     
     private SleuthkitCase skCase;
 
@@ -42,7 +42,7 @@ public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.AR
     }
 
     @Override
-    protected boolean createKeys(List<ARTIFACT_TYPE> list) {
+    protected boolean createKeys(List<BlackboardArtifact.TypeWrapper> list) {
         try {
             list.addAll(skCase.getBlackboardArtifactTypes());
         } catch (TskException ex) {
@@ -53,7 +53,7 @@ public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.AR
     }
     
     @Override
-    protected Node createNodeForKey(ARTIFACT_TYPE key){
+    protected Node createNodeForKey(BlackboardArtifact.TypeWrapper key){
         return new ArtifactTypeNode(key, skCase);
     }
     

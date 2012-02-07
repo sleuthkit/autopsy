@@ -26,6 +26,8 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
+import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
+import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Directory;
 
@@ -61,6 +63,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                         && !((DirectoryNode) arg0).getDisplayName().equals("..")) ||
                 arg0 instanceof ArtifactTypeNode ||
                 arg0 instanceof ExtractedContentNode ||
+                arg0 instanceof FileSearchFilterNode ||
+                arg0 instanceof SearchFiltersNode)) {
             return new Node[]{this.copyNode(arg0)};
         } else {
             return new Node[]{};

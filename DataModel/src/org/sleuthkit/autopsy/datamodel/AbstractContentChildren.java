@@ -23,7 +23,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.BlackboardArtifact.TypeWrapper;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.DisplayableItem;
 import org.sleuthkit.datamodel.DisplayableItemVisitor;
@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.ExtractedContent;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SearchFilters;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -101,8 +101,18 @@ abstract class AbstractContentChildren extends Keys<DisplayableItem> {
         }
 
         @Override
+        public AbstractNode visit(TypeWrapper a) {
+            return defaultVisit(a);
+        }
+
+        @Override
         public AbstractNode visit(BlackboardArtifact ba) {
             return defaultVisit(ba);
+        }
+        
+        @Override
+        public AbstractNode visit(SearchFilters sf) {
+            return new SearchFiltersNode(sf.getSleuthkitCase());
         }
 
         @Override

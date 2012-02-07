@@ -27,6 +27,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardArtifact.TypeWrapper;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
@@ -36,22 +37,23 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNode{
     
+    BlackboardArtifact.TypeWrapper type;
     int childCount = 0;
 
-    ArtifactTypeNode(ARTIFACT_TYPE t, SleuthkitCase skCase) {
-        super(Children.create(new ArtifactTypeChildren(t, skCase), true));
-        super.setName(t.getLabel());
+    ArtifactTypeNode(BlackboardArtifact.TypeWrapper type, SleuthkitCase skCase) {
+        super(Children.create(new ArtifactTypeChildren(type, skCase), true), Lookups.singleton(type));
+        super.setName(type.getDisplayName());
         // NOTE: This completely destroys our lazy-loading ideal
         //    a performance increase might be had by adding a 
         //    "getBlackboardArtifactCount()" method to skCase
         try {
-            this.childCount = skCase.getBlackboardArtifacts(t.getTypeID()).size();
+            this.childCount = skCase.getBlackboardArtifacts(type.getTypeId()).size();
         } catch (TskException ex) {
             Logger.getLogger(ArtifactTypeNode.class.getName())
                     .log(Level.INFO, "Error getting child count", ex);
         }
-        super.setDisplayName(t.getDisplayName() + " (" + childCount + ")");
-        this.artifactType = t;
+        super.setDisplayName(type.getDisplayName() + " (" + childCount + ")");
+        this.type = type;
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/artifact-icon.png");
         
     }
@@ -68,7 +70,7 @@ public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNod
         ss.put(new NodeProperty("Artifact Type",
                                 "Artifact Type",
                                 "no description",
-                                artifactType.getDisplayName()));
+                                type.getDisplayName()));
         
         ss.put(new NodeProperty("Child Count",
                                 "Child Count",

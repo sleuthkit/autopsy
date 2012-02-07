@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.DisplayableItem;
@@ -206,6 +207,10 @@ public class DataResultFilterNode extends FilterNode{
                 return null;
         }
         
+        @Override
+        public AbstractAction visit(FileSearchFilterNode fsfn){
+            return openChild(fsfn);
+        }
         
         @Override
         protected AbstractAction defaultVisit(DisplayableItemNode c) {

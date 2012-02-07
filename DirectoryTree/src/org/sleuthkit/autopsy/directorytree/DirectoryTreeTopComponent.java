@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DisplayableItem;
 import org.sleuthkit.datamodel.ExtractedContent;
+import org.sleuthkit.datamodel.SearchFilters;
 
 /**
  * Top component which displays something.
@@ -321,6 +322,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     List<DisplayableItem> items = new ArrayList<DisplayableItem>();
                     items.addAll(currentCase.getRootObjects());
                     items.add(new ExtractedContent(currentCase.getSleuthkitCase()));
+                    items.add(new SearchFilters(currentCase.getSleuthkitCase()));
                     Node root = new AbstractNode(new RootContentChildren(items)) {
 
                         /** to override the right click action in the white blank space
