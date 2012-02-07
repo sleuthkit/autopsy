@@ -30,14 +30,19 @@ import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.explorer.ExplorerManager;
+import org.openide.nodes.AbstractNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.DisplayableItem;
+import org.sleuthkit.datamodel.DisplayableItemVisitor;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Volume;
@@ -50,14 +55,16 @@ import org.sleuthkit.datamodel.Volume;
 public class DataResultFilterNode extends FilterNode{
 
     private ExplorerManager sourceEm;
-    private final ContentVisitor<List<Action>> getActionsCV;
+    private final DisplayableItemVisitor<List<Action>> getActionsDIV;
+    private final DisplayableItemNodeVisitor<AbstractAction> getPreferredActionsDIV;
 
 
     /** the constructor */
     public DataResultFilterNode(Node node, ExplorerManager em) {
         super(node, new DataResultFilterChildren(node, em));
         this.sourceEm = em;
-        getActionsCV = new GetActionsContentVisitor();
+        getActionsDIV = new GetPopupActionsDisplayableItemVisitor();
+        getPreferredActionsDIV = new GetPreferredActionsDisplayableItemNodeVisitor();
     }
     
 
@@ -73,54 +80,15 @@ public class DataResultFilterNode extends FilterNode{
 
         List<Action> actions = new ArrayList<Action>();
         
-        actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
-
-        Content nodeContent = this.getOriginal().getLookup().lookup(Content.class);
-        actions.addAll(nodeContent.accept(getActionsCV));
+        DisplayableItem nodeItem = this.getOriginal().getLookup().lookup(DisplayableItem.class);
+        actions.addAll(nodeItem.accept(getActionsDIV));
         
         //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
 
         return actions.toArray(new Action[actions.size()]);
     }
-        
-    private class GetActionsContentVisitor extends ContentVisitor.Default<List<Action>> {
-        
-        @Override
-        public List<Action> visit(Image img) {
-            return ShowDetailActionVisitor.getActions(img);
-        }
-        
-        @Override
-        public List<Action> visit(Volume vol) {
-            List<Action> actions = new ArrayList<Action>();
-            actions.addAll(ShowDetailActionVisitor.getActions(vol));
-            actions.add(new ChangeViewAction("View", 0, getOriginal()));
-            return actions;
-        }
-        
-        @Override
-        public List<Action> visit(Directory dir) {
-            List<Action> actions = new ArrayList<Action>();
-            actions.add(new ChangeViewAction("View", 0, getOriginal()));
-            actions.add(new ExtractAction("Extract Directory", getOriginal()));
-            return actions;
-        }
-        
-        @Override
-        public List<Action> visit(File f) {
-            List<Action> actions = new ArrayList<Action>();
-            actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
-            actions.add(new ExtractAction("Extract File", getOriginal()));
-            return actions;
-        }
-
-        @Override
-        protected List<Action> defaultVisit(Content cntnt) {
-            return Collections.EMPTY_LIST;
-        }
-        
-    }
-
+    
+    
     /**
      * Double click action for the nodes that we want to pass to the directory
      * table and the output view.
@@ -131,59 +99,11 @@ public class DataResultFilterNode extends FilterNode{
     public Action getPreferredAction() {
         // double click action(s) for volume node or directory node
         
-        final Node originalNode = this.getOriginal();
+        final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
         
-        if (originalNode instanceof VolumeNode ||
-            originalNode instanceof ArtifactTypeNode ||
-            (originalNode instanceof DirectoryNode && !originalNode.getDisplayName().equals("."))) {
-
-            if (originalNode instanceof DirectoryNode && originalNode.getDisplayName().equals("..")) {
-                Node[] selectedNode = sourceEm.getSelectedNodes();
-                Node selectedContext = selectedNode[0];
-                final Node parentNode = selectedContext.getParentNode();
-
-                return new AbstractAction() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        try {
-                            sourceEm.setSelectedNodes(new Node[]{parentNode});
-                        } catch (PropertyVetoException ex) {
-                            Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
-                            logger.log(Level.WARNING, "Error: can't open the parent directory.", ex);
-                        }
-                    }
-                };
-            } else {
-                final Node[] parentNode = sourceEm.getSelectedNodes();
-                final Node parentContext = parentNode[0];
-
-                return new AbstractAction() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (parentContext != null) {
-                            for (int i = 0; i < parentContext.getChildren().getNodesCount(); i++) {
-                                Node selectedNode = parentContext.getChildren().getNodeAt(i);
-                                if (selectedNode != null && selectedNode.getName().equals(originalNode.getName())) {
-                                    try {
-                                        sourceEm.setExploredContextAndSelection(selectedNode, new Node[]{selectedNode});
-                                    } catch (PropertyVetoException ex) {
-                                        // throw an error here
-                                        Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
-                                        logger.log(Level.WARNING, "Error: can't open the selected directory.", ex);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                };
-            }
-        } else {
-            return null;
-        }
+        return originalNode.accept(getPreferredActionsDIV);
     }
-
+    
     @Override
     public Node.PropertySet[] getPropertySets() {
         Node.PropertySet[] propertySets = super.getPropertySets();
@@ -204,5 +124,138 @@ public class DataResultFilterNode extends FilterNode{
         }
 
         return propertySets;
+    }
+    
+    private class GetPopupActionsDisplayableItemVisitor extends DisplayableItemVisitor.Default<List<Action>> {
+        
+        @Override
+        public List<Action> visit(Image img) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
+            actions.addAll(ShowDetailActionVisitor.getActions(img));
+            return actions;
+        }
+        
+        @Override
+        public List<Action> visit(Volume vol) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
+            actions.addAll(ShowDetailActionVisitor.getActions(vol));
+            actions.add(new ChangeViewAction("View", 0, getOriginal()));
+            
+            return actions;
+        }
+        
+        @Override
+        public List<Action> visit(Directory dir) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
+            actions.add(new ChangeViewAction("View", 0, getOriginal()));
+            actions.add(new ExtractAction("Extract Directory", getOriginal()));
+            return actions;
+        }
+        
+        @Override
+        public List<Action> visit(File f) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
+            actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
+            actions.add(new ExtractAction("Extract File", getOriginal()));
+            return actions;
+        }
+        
+        @Override
+        public List<Action> visit(BlackboardArtifact ba) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.add(new ViewAssociatedContentAction("View Associated Content", getOriginal()));
+            actions.add(new ViewContextAction("View in Directory", getOriginal()));
+            return actions;
+        }
+        
+        @Override
+        protected List<Action> defaultVisit(DisplayableItem ditem) {
+            return Collections.EMPTY_LIST;
+        }
+        
+    }
+    
+    private class GetPreferredActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<AbstractAction>{
+        
+        @Override
+        public AbstractAction visit(VolumeNode vn){
+            return openChild(vn);
+        }
+        
+        @Override
+        public AbstractAction visit(BlackboardArtifactNode ban){
+            return new ViewContextAction("View in Directory", getOriginal());
+        }
+        
+        @Override
+        public AbstractAction visit(ArtifactTypeNode atn){
+            return openChild(atn);
+        }
+        
+        @Override
+        public AbstractAction visit(DirectoryNode dn){
+            if(dn.getDisplayName().equals(".."))
+                return openParent(dn);
+            else if(!dn.getDisplayName().equals("."))
+                return openChild(dn);
+            else
+                return null;
+        }
+        
+        
+        @Override
+        protected AbstractAction defaultVisit(DisplayableItemNode c) {
+            return null;
+        }
+
+        private AbstractAction openChild(AbstractNode node) {
+            final Node[] parentNode = sourceEm.getSelectedNodes();
+            final Node parentContext = parentNode[0];
+            final Node original = node;
+
+            return new AbstractAction() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (parentContext != null) {
+                        for (int i = 0; i < parentContext.getChildren().getNodesCount(); i++) {
+                            Node selectedNode = parentContext.getChildren().getNodeAt(i);
+                            if (selectedNode != null && selectedNode.getName().equals(original.getName())) {
+                                try {
+                                    sourceEm.setExploredContextAndSelection(selectedNode, new Node[]{selectedNode});
+                                } catch (PropertyVetoException ex) {
+                                    // throw an error here
+                                    Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
+                                    logger.log(Level.WARNING, "Error: can't open the selected directory.", ex);
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+        }
+        
+        private AbstractAction openParent(AbstractNode node) {
+            Node[] selectedNode = sourceEm.getSelectedNodes();
+                Node selectedContext = selectedNode[0];
+                final Node parentNode = selectedContext.getParentNode();
+
+                return new AbstractAction() {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            sourceEm.setSelectedNodes(new Node[]{parentNode});
+                        } catch (PropertyVetoException ex) {
+                            Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
+                            logger.log(Level.WARNING, "Error: can't open the parent directory.", ex);
+                        }
+                    }
+                };
+        }
     }
 }

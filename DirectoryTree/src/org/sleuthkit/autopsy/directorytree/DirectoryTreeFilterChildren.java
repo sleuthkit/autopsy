@@ -59,9 +59,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 (arg0 instanceof DirectoryNode
                         && !((DirectoryNode) arg0).getDisplayName().equals(".")
                         && !((DirectoryNode) arg0).getDisplayName().equals("..")) ||
-                (arg0 instanceof ArtifactTypeNode
-                        && !((ArtifactTypeNode) arg0).getName().equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.name()) ||
-                arg0 instanceof ExtractedContentNode))) {
+                arg0 instanceof ArtifactTypeNode ||
+                arg0 instanceof ExtractedContentNode ||
             return new Node[]{this.copyNode(arg0)};
         } else {
             return new Node[]{};

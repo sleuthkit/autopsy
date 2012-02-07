@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.lang.reflect.InvocationTargetException;
+import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -26,21 +26,25 @@ import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskException;
 
 /**
  *
  * @author dfickling
  */
-class BlackboardArtifactNode extends AbstractNode {
+public class BlackboardArtifactNode extends AbstractNode implements DisplayableItemNode{
     
     BlackboardArtifact artifact;
+    static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
 
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
-        super(Children.LEAF);
+        super(Children.LEAF, Lookups.singleton(artifact));
         this.artifact = artifact;
         this.setName(artifact.getArtifactTypeName());
         this.setDisplayName(artifact.getDisplayName());
@@ -104,9 +108,41 @@ class BlackboardArtifactNode extends AbstractNode {
                 }
             }
         } catch (TskException ex) {
-            Logger.getLogger(BlackboardArtifactNode.class.getName())
-                    .log(Level.SEVERE, "Getting attributes failed", ex);
+            logger.log(Level.SEVERE, "Getting attributes failed", ex);
         }
+    }
+
+    @Override
+    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+        return v.visit(this);
+    }
+    
+    public File getAssociatedFile(){
+        try {
+            return artifact.getSleuthkitCase().getFileById(artifact.getObjectID());
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "SQL query threw exception", ex);
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "Getting file failed", ex);
+        }
+        throw new IllegalArgumentException("Couldn't get file from database");
+    }
+    
+    public Directory getParentDirectory(){
+        try{
+            return getAssociatedFile().getParentDirectory();
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "File has no parent", ex);
+        }
+        throw new IllegalArgumentException("Couldn't get context");
+    }
+
+    public FileNode getContentNode() {
+        return new FileNode(getAssociatedFile());
+    }
+    
+    public DirectoryNode getContextNode() {
+        return new DirectoryNode(getParentDirectory());
     }
     
 }

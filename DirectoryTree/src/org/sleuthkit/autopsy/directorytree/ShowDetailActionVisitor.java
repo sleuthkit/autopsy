@@ -36,8 +36,8 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import org.sleuthkit.autopsy.coreutils.Log;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DisplayableItem;
+import org.sleuthkit.datamodel.DisplayableItemVisitor;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskException;
@@ -48,20 +48,20 @@ import org.sleuthkit.datamodel.Volume;
  *
  * @author jantonius
  */
-class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
+class ShowDetailActionVisitor extends DisplayableItemVisitor.Default<List<? extends Action>> {
     
     private static ShowDetailActionVisitor instance = new ShowDetailActionVisitor();
    
-    public static List<Action> getActions(Content c) {
+    public static List<Action> getActions(DisplayableItem dI) {
         List<Action> actions = new ArrayList<Action>();
         
-        actions.addAll(c.accept(instance));
+        actions.addAll(dI.accept(instance));
         
-        while (c.isOnto()) {
+        /*while (dI.isOnto()) {
             try {
-                List<Content> children = c.getChildren();
+                List<? extends DisplayableItem> children = dI.getChildren();
                 if (!children.isEmpty()) {
-                    c = c.getChildren().get(0);
+                    dI = dI.getChildren().get(0);
                 } else {
                    return actions;
                 }
@@ -69,8 +69,8 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
                 Log.get(ShowDetailActionVisitor.class).log(Level.WARNING, "Error getting show detail actions.", ex);
                 return actions;
             }
-            actions.addAll(c.accept(instance));
-        }
+            actions.addAll(dI.accept(instance));
+        }*/
         return actions;
     }
 
@@ -291,7 +291,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
     }
 
     @Override
-    protected List<? extends Action> defaultVisit(Content c) {
+    protected List<? extends Action> defaultVisit(DisplayableItem di) {
         return Collections.EMPTY_LIST;
     }
 }

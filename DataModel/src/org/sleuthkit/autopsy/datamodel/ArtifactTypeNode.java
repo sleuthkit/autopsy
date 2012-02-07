@@ -18,11 +18,14 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.lookup.Lookups;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
@@ -31,9 +34,8 @@ import org.sleuthkit.datamodel.TskException;
  *
  * @author dfickling
  */
-public class ArtifactTypeNode extends AbstractNode{
+public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNode{
     
-    ARTIFACT_TYPE artifactType;
     int childCount = 0;
 
     ArtifactTypeNode(ARTIFACT_TYPE t, SleuthkitCase skCase) {
@@ -74,5 +76,10 @@ public class ArtifactTypeNode extends AbstractNode{
                                 childCount));
 
         return s;
+    }
+
+    @Override
+    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+        return v.visit(this);
     }
 }

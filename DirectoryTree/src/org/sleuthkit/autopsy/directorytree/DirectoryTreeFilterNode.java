@@ -25,8 +25,8 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.DisplayableItem;
 
 /**
  * This class sets the actions for the nodes in the directory tree and creates
@@ -54,9 +54,9 @@ class DirectoryTreeFilterNode extends FilterNode {
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<Action>();
 
-        Content content = this.getLookup().lookup(Content.class);
-        if (content != null) {
-            actions.addAll(DirectoryTreeFilterNode.getDetailActions(content));
+        DisplayableItem dItem = this.getLookup().lookup(DisplayableItem.class);
+        if (dItem != null) {
+            actions.addAll(DirectoryTreeFilterNode.getDetailActions(dItem));
             actions.add(collapseAll);
             
             Directory dir = this.getLookup().lookup(Directory.class);
@@ -69,7 +69,7 @@ class DirectoryTreeFilterNode extends FilterNode {
         return actions.toArray(new Action[actions.size()]);
     }
 
-    private static List<Action> getDetailActions(Content c) {
+    private static List<Action> getDetailActions(DisplayableItem c) {
         List<Action> actions = new ArrayList<Action>();
 
         actions.addAll(ShowDetailActionVisitor.getActions(c));

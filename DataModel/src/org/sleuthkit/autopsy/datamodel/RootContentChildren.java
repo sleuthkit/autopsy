@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Collection;
 import java.util.Collections;
-import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DisplayableItem;
 
 /**
  * Children implementation for the root node of a ContentNode tree. Accepts a
@@ -33,7 +33,7 @@ public class RootContentChildren extends AbstractContentChildren {
     /**
      * @param contentKeys root Content objects for the Node tree
      */
-    public RootContentChildren(Collection contentKeys) {
+    public RootContentChildren(Collection<? extends DisplayableItem> contentKeys) {
         super();
         this.contentKeys = contentKeys;
     }

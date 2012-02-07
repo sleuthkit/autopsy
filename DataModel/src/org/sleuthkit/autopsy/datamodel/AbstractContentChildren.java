@@ -19,11 +19,15 @@
 
 package org.sleuthkit.autopsy.datamodel;
 
+import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.DisplayableItem;
+import org.sleuthkit.datamodel.DisplayableItemVisitor;
+import org.sleuthkit.datamodel.ExtractedContent;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
@@ -35,7 +39,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
  * Abstract subclass for ContentChildren and RootContentChildren implementations
  * that handles creating Nodes from Content objects.
 */
-abstract class AbstractContentChildren extends Keys<Object> {
+abstract class AbstractContentChildren extends Keys<DisplayableItem> {
 
     /**
      * Uses lazy Content.Keys 
@@ -45,23 +49,8 @@ abstract class AbstractContentChildren extends Keys<Object> {
     }
 
     @Override
-    protected Node[] createNodes(Object key) {
-        if(key instanceof Directory)
-            return new Node[]{new DirectoryNode((Directory)key)};
-        else if(key instanceof File)
-            return new Node[]{new FileNode((File)key)};
-        else if(key instanceof FileSystem)
-            throw new UnsupportedOperationException("No Node defined for FileSystems.");
-        else if(key instanceof Image)
-            return new Node[]{new ImageNode((Image)key)};
-        else if(key instanceof Volume)
-            return new Node[]{new VolumeNode((Volume)key)};
-        else if(key instanceof VolumeSystem)
-            throw new UnsupportedOperationException("No Node defined for VolumeSystems.");
-        else if(key instanceof SleuthkitCase)
-            return new Node[]{new ExtractedContentNode((SleuthkitCase) key)};
-        else
-            throw new IllegalArgumentException("Unrecognized key type");
+    protected Node[] createNodes(DisplayableItem key) {
+        return new Node[]{key.accept(new CreateNodeVisitor())};
     }
     
     @Override
@@ -74,7 +63,7 @@ abstract class AbstractContentChildren extends Keys<Object> {
     /**
      * Creates appropriate Node for each sub-class of Content
      */
-    static class CreateNodeVisitor implements ContentVisitor<AbstractContentNode> {
+    static class CreateNodeVisitor extends DisplayableItemVisitor.Default<AbstractNode> {
         
         @Override
         public AbstractContentNode visit(Directory drctr) {
@@ -87,8 +76,8 @@ abstract class AbstractContentChildren extends Keys<Object> {
         }
 
         @Override
-        public AbstractContentNode visit(FileSystem fs) {
-            throw new UnsupportedOperationException("No Node defined for FileSystems.");
+        public AbstractNode visit(FileSystem fs) {
+            return defaultVisit(fs);
         }
 
         @Override
@@ -102,8 +91,23 @@ abstract class AbstractContentChildren extends Keys<Object> {
         }
 
         @Override
-        public AbstractContentNode visit(VolumeSystem vs) {
-            throw new UnsupportedOperationException("No Node defined for VolumeSystems.");
+        public AbstractNode visit(VolumeSystem vs) {
+            return defaultVisit(vs);
+        }
+        
+        @Override
+        public ExtractedContentNode visit(ExtractedContent ec) {
+            return new ExtractedContentNode(ec.getSleuthkitCase());
+        }
+
+        @Override
+        public AbstractNode visit(BlackboardArtifact ba) {
+            return defaultVisit(ba);
+        }
+
+        @Override
+        protected AbstractNode defaultVisit(DisplayableItem di) {
+            throw new UnsupportedOperationException("No Node defined for the given DisplayableItem");
         }
     }
     
