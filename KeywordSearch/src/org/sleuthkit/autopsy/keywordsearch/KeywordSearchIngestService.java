@@ -180,6 +180,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public void userConfigure() {
         
     }
+    
+    @Override
+    public boolean isConfigurable() {
+        return true;
+    }
 
     private boolean extractAndIngest(FsContent f) {
         boolean success = false;

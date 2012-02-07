@@ -157,6 +157,9 @@ public class HashDbIngestService implements IngestServiceFsContent {
     @Override
     public void userConfigure() {
         
+    @Override
+    public boolean isConfigurable() {
+        return true;
     }
     
 }

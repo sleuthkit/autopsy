@@ -107,6 +107,10 @@ public final class RAImageIngestService implements IngestServiceImage {
     
     @Override
     public void userConfigure() {
-        
+    }
+    
+    @Override
+    public boolean isConfigurable() {
+        return false;
     }
 }

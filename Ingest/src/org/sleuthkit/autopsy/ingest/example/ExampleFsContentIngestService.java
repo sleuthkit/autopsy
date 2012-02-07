@@ -95,4 +95,9 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     public void userConfigure() {
         
     }
+
+    @Override
+    public boolean isConfigurable() {
+        return false;
+    }
 }
