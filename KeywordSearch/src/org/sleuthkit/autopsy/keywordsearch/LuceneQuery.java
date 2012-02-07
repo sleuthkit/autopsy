@@ -24,8 +24,10 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -157,5 +159,39 @@ public class LuceneQuery implements KeywordSearchQuery {
     @Override
     public boolean validate() {
         return query != null && !query.equals("");
+    }
+    
+    
+    public static String getSnippet(String query, long contentID) {
+        final int SNIPPET_LENGTH = 45;
+        
+        final Server.Core solrCore = KeywordSearch.getServer().getCore();
+
+
+        SolrQuery q = new SolrQuery();
+        q.setQuery(query);
+        q.addFilterQuery("id:" + contentID);
+        q.addHighlightField("content");
+        q.setHighlightSimplePre("&laquo;");
+        q.setHighlightSimplePost("&raquo;");
+        q.setHighlightSnippets(1);
+        q.setHighlightFragsize(SNIPPET_LENGTH);
+
+        try {
+            QueryResponse response = solrCore.query(q);
+            Map<String,Map<String,List<String>>>responseHighlight = response.getHighlighting();
+            Map<String,List<String>>responseHighlightID = responseHighlight.get(Long.toString(contentID));
+            if (responseHighlightID == null)
+                return "";
+            List<String> contentHighlights = responseHighlightID.get("content");
+            if (contentHighlights == null) {
+                return "";
+            } else {
+                // extracted content is HTML-escaped, but snippet goes in a plain text field
+                return StringEscapeUtils.unescapeHtml(contentHighlights.get(0)).trim();
+            }
+        } catch (SolrServerException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

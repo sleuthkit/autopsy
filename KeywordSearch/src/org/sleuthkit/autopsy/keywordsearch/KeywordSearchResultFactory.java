@@ -79,7 +79,13 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 return "Match";
             }
         },
-    }
+        CONTEXT {
+
+            @Override
+            public String toString() {
+                return "Context";
+            }
+        },}
     private Presentation presentation;
     private List<Keyword> queries;
     private Collection<KeyValueThing> things;
@@ -169,7 +175,6 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
 
                 @Override
                 public void run() {
-                    //DataResultViewerTable view = Utilities.actionsGlobalContext().lookup(DataResultViewerTable.class);
                     for (DataResultViewer view : Lookup.getDefault().lookupAll(DataResultViewer.class)) {
                         view.expandNode(ret);
                     }
@@ -198,7 +203,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
 
         @Override
         protected boolean createKeys(List<KeyValueThing> toPopulate) {
-            final String origQuery = queryThing.getName();
+            //final String origQuery = queryThing.getName();
             final KeyValueThingQuery queryThingQuery = (KeyValueThingQuery) queryThing;
             final KeywordSearchQuery tcq = queryThingQuery.getQuery();
 
@@ -212,8 +217,9 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
 
 
             String highlightQueryEscaped = null;
+            final boolean literal_query = tcq.isEscaped();
 
-            if (tcq.isEscaped()) {
+            if (literal_query) {
                 //literal, treat as non-regex, non-term component query
                 highlightQueryEscaped = tcq.getEscapedQueryString();
             } else {
@@ -243,6 +249,10 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                 AbstractFsContentNode.fillPropertyMap(resMap, f);
                 setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
+                if (literal_query) {
+                    final String snippet = LuceneQuery.getSnippet(tcq.getQueryString(), f.getId());
+                    setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
+                }
                 toPopulate.add(new KeyValueThingContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped));
             }
 
