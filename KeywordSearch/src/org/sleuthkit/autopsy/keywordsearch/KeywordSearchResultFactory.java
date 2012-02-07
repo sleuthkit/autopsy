@@ -66,6 +66,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             }
         },
         REGEX {
+
             @Override
             public String toString() {
                 return "Regex";
@@ -77,7 +78,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             public String toString() {
                 return "Match";
             }
-        },}
+        },
+    }
     private Presentation presentation;
     private List<Keyword> queries;
     private Collection<KeyValueThing> things;
@@ -121,7 +123,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
         final String typeStr = type.toString();
         toSet.put(typeStr, value);
     }
-     public static void setCommonProperty(Map<String, Object> toSet, CommonPropertyTypes type, Boolean value) {
+
+    public static void setCommonProperty(Map<String, Object> toSet, CommonPropertyTypes type, Boolean value) {
         final String typeStr = type.toString();
         toSet.put(typeStr, value);
     }
@@ -207,23 +210,32 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             //execute the query and get fscontents matching
             List<FsContent> fsContents = tcq.performQuery();
 
-            //construct a Solr query using aggregated terms to get highlighting
-            //the query is executed later on demand
-            StringBuilder highlightQuery = new StringBuilder();
-            Collection<Term> terms = tcq.getTerms();
-            final int lastTerm = terms.size() - 1;
-            int curTerm = 0;
-            for (Term term : terms) {
-                final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
-                if (!termS.contains("*")) {
-                    highlightQuery.append(termS);
-                    if (lastTerm != curTerm) {
-                        highlightQuery.append(" "); //acts as OR ||
+
+            String highlightQueryEscaped = null;
+
+            if (tcq.isEscaped()) {
+                //literal, treat as non-regex, non-term component query
+                highlightQueryEscaped = tcq.getEscapedQueryString();
+            } else {
+                //construct a Solr query using aggregated terms to get highlighting
+                //the query is executed later on demand
+                StringBuilder highlightQuery = new StringBuilder();
+                Collection<Term> terms = tcq.getTerms();
+                final int lastTerm = terms.size() - 1;
+                int curTerm = 0;
+                for (Term term : terms) {
+                    final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
+                    if (!termS.contains("*")) {
+                        highlightQuery.append(termS);
+                        if (lastTerm != curTerm) {
+                            highlightQuery.append(" "); //acts as OR ||
+                        }
                     }
                 }
+                //String highlightQueryEscaped = KeywordSearchUtil.escapeLuceneQuery(highlightQuery.toString());
+                highlightQueryEscaped = highlightQuery.toString();
             }
-            //String highlightQueryEscaped = KeywordSearchUtil.escapeLuceneQuery(highlightQuery.toString());
-            String highlightQueryEscaped = highlightQuery.toString();
+
 
             int resID = 0;
             for (FsContent f : fsContents) {
@@ -327,7 +339,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                     if (contentStr != null) {//if not null, some error getting from Solr, handle it by not filtering out
                         //perform java regex to validate match from Solr
                         String origQuery = thingContent.getQuery();
-                        
+
                         //since query is a match result, we can assume literal pattern
                         origQuery = Pattern.quote(origQuery);
                         Pattern p = Pattern.compile(origQuery, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
@@ -352,7 +364,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
     /*
      * custom KeyValueThing that also stores retrieved Content and query string used
      */
-    class KeyValueThingContent extends KeyValueThing {
+    private static class KeyValueThingContent extends KeyValueThing {
 
         private Content content;
         private String query;
