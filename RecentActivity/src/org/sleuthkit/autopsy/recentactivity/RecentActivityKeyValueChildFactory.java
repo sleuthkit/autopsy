@@ -6,23 +6,23 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
-import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.autopsy.datamodel.KeyValue;
 
-public class RecentActivityKeyValueChildFactory extends ChildFactory<KeyValueThing> {
+public class RecentActivityKeyValueChildFactory extends ChildFactory<KeyValue> {
 
-    private Collection<KeyValueThing> things;
+    private Collection<KeyValue> things;
 
-    public RecentActivityKeyValueChildFactory(Collection<KeyValueThing> things) {
+    public RecentActivityKeyValueChildFactory(Collection<KeyValue> things) {
         this.things = things;
     }
 
     @Override
-    protected boolean createKeys(List<KeyValueThing> toPopulate) {
+    protected boolean createKeys(List<KeyValue> toPopulate) {
         return toPopulate.addAll(things);
     }
 
     @Override
-    protected Node createNodeForKey(KeyValueThing thing) {
+    protected Node createNodeForKey(KeyValue thing) {
         return new KeyValueNode(thing, Children.LEAF);
     }
 }

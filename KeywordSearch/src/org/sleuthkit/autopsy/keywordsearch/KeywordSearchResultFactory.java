@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
-import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.File;
@@ -52,7 +52,7 @@ import org.sleuthkit.datamodel.FsContent;
  * responsible for assembling nodes and columns in the right way
  * and performing lazy queries as needed
  */
-public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
+public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
 
     //common properties (superset of all Node properties) to be displayed as columns
     //these are merged with FsContentPropertyType defined properties
@@ -88,16 +88,16 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
         },}
     private Presentation presentation;
     private List<Keyword> queries;
-    private Collection<KeyValueThing> things;
+    private Collection<KeyValue> things;
     private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
-    KeywordSearchResultFactory(List<Keyword> queries, Collection<KeyValueThing> things, Presentation presentation) {
+    KeywordSearchResultFactory(List<Keyword> queries, Collection<KeyValue> things, Presentation presentation) {
         this.queries = queries;
         this.things = things;
         this.presentation = presentation;
     }
 
-    KeywordSearchResultFactory(String query, Collection<KeyValueThing> things, Presentation presentation) {
+    KeywordSearchResultFactory(String query, Collection<KeyValue> things, Presentation presentation) {
         queries = new ArrayList<Keyword>();
         queries.add(new Keyword(query, false));
         this.presentation = presentation;
@@ -136,7 +136,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
     }
 
     @Override
-    protected boolean createKeys(List<KeyValueThing> toPopulate) {
+    protected boolean createKeys(List<KeyValue> toPopulate) {
         int id = 0;
         if (presentation == Presentation.DETAIL) {
             for (Keyword keyword : queries) {
@@ -145,18 +145,18 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 initCommonProperties(map);
                 setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
                 setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!keyword.isLiteral()));
-                toPopulate.add(new KeyValueThing(query, map, ++id));
+                toPopulate.add(new KeyValue(query, map, ++id));
             }
         } else {
-            for (KeyValueThing thing : things) {
+            for (KeyValue thing : things) {
                 //Map<String, Object> map = new LinkedHashMap<String, Object>();
                 Map<String, Object> map = thing.getMap();
                 initCommonProperties(map);
                 final String query = thing.getName();
                 setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
-                KeyValueThingQuery thingQuery = (KeyValueThingQuery) thing;
+                KeyValueQuery thingQuery = (KeyValueQuery) thing;
                 setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thingQuery.getQuery().isEscaped()));
-                //toPopulate.add(new KeyValueThing(query, map, ++id));
+                //toPopulate.add(new KeyValue(query, map, ++id));
                 toPopulate.add(thing);
             }
         }
@@ -165,8 +165,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
     }
 
     @Override
-    protected Node createNodeForKey(KeyValueThing thing) {
-        ChildFactory<KeyValueThing> childFactory = null;
+    protected Node createNodeForKey(KeyValue thing) {
+        ChildFactory<KeyValue> childFactory = null;
 
         if (presentation == Presentation.COLLAPSE) {
             childFactory = new ResultCollapsedChildFactory(thing);
@@ -193,18 +193,18 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
      * the node produced is a child node
      * The factory actually executes query.
      */
-    class ResultCollapsedChildFactory extends ChildFactory<KeyValueThing> {
+    class ResultCollapsedChildFactory extends ChildFactory<KeyValue> {
 
-        KeyValueThing queryThing;
+        KeyValue queryThing;
 
-        ResultCollapsedChildFactory(KeyValueThing queryThing) {
+        ResultCollapsedChildFactory(KeyValue queryThing) {
             this.queryThing = queryThing;
         }
 
         @Override
-        protected boolean createKeys(List<KeyValueThing> toPopulate) {
+        protected boolean createKeys(List<KeyValue> toPopulate) {
             //final String origQuery = queryThing.getName();
-            final KeyValueThingQuery queryThingQuery = (KeyValueThingQuery) queryThing;
+            final KeyValueQuery queryThingQuery = (KeyValueQuery) queryThing;
             final KeywordSearchQuery tcq = queryThingQuery.getQuery();
 
             if (!tcq.validate()) {
@@ -253,17 +253,17 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                     final String snippet = LuceneQuery.getSnippet(tcq.getQueryString(), f.getId());
                     setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
                 }
-                toPopulate.add(new KeyValueThingContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped));
+                toPopulate.add(new KeyValueContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped));
             }
 
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(KeyValueThing thing) {
+        protected Node createNodeForKey(KeyValue thing) {
             //return new KeyValueNode(thing, Children.LEAF);
             //return new KeyValueNode(thing, Children.create(new ResultFilesChildFactory(thing), true));
-            final KeyValueThingContent thingContent = (KeyValueThingContent) thing;
+            final KeyValueContent thingContent = (KeyValueContent) thing;
             final Content content = thingContent.getContent();
             final String query = thingContent.getQuery();
 
@@ -278,21 +278,21 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
     /**
      * factory produces top level result nodes showing *exact* regex match result
      */
-    class ResulTermsMatchesChildFactory extends ChildFactory<KeyValueThing> {
+    class ResulTermsMatchesChildFactory extends ChildFactory<KeyValue> {
 
-        Collection<KeyValueThing> things;
+        Collection<KeyValue> things;
 
-        ResulTermsMatchesChildFactory(Collection<KeyValueThing> things) {
+        ResulTermsMatchesChildFactory(Collection<KeyValue> things) {
             this.things = things;
         }
 
         @Override
-        protected boolean createKeys(List<KeyValueThing> toPopulate) {
+        protected boolean createKeys(List<KeyValue> toPopulate) {
             return toPopulate.addAll(things);
         }
 
         @Override
-        protected Node createNodeForKey(KeyValueThing thing) {
+        protected Node createNodeForKey(KeyValue thing) {
             //return new KeyValueNode(thing, Children.LEAF);
             return new KeyValueNode(thing, Children.create(new ResultFilesChildFactory(thing), true));
         }
@@ -303,16 +303,16 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
          * To implement exact regex match detail view, we need to extract files content
          * returned by Lucene and further narrow down by applying a Java regex
          */
-        class ResultFilesChildFactory extends ChildFactory<KeyValueThing> {
+        class ResultFilesChildFactory extends ChildFactory<KeyValue> {
 
-            private KeyValueThing thing;
+            private KeyValue thing;
 
-            ResultFilesChildFactory(KeyValueThing thing) {
+            ResultFilesChildFactory(KeyValue thing) {
                 this.thing = thing;
             }
 
             @Override
-            protected boolean createKeys(List<KeyValueThing> toPopulate) {
+            protected boolean createKeys(List<KeyValue> toPopulate) {
                 //use Lucene query to get files with regular expression match result
                 final String keywordQuery = thing.getName();
                 LuceneQuery filesQuery = new LuceneQuery(keywordQuery);
@@ -327,15 +327,15 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
                 for (FsContent f : uniqueMatches) {
                     Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                     AbstractFsContentNode.fillPropertyMap(resMap, (File) f);
-                    toPopulate.add(new KeyValueThingContent(f.getName(), resMap, ++resID, f, keywordQuery));
+                    toPopulate.add(new KeyValueContent(f.getName(), resMap, ++resID, f, keywordQuery));
                 }
 
                 return true;
             }
 
             @Override
-            protected Node createNodeForKey(KeyValueThing thing) {
-                final KeyValueThingContent thingContent = (KeyValueThingContent) thing;
+            protected Node createNodeForKey(KeyValue thing) {
+                final KeyValueContent thingContent = (KeyValueContent) thing;
                 final Content content = thingContent.getContent();
                 final String query = thingContent.getQuery();
 
@@ -372,9 +372,9 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
     }
 
     /*
-     * custom KeyValueThing that also stores retrieved Content and query string used
+     * custom KeyValue that also stores retrieved Content and query string used
      */
-    private static class KeyValueThingContent extends KeyValueThing {
+    class KeyValueContent extends KeyValue {
 
         private Content content;
         private String query;
@@ -387,7 +387,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueThing> {
             return query;
         }
 
-        public KeyValueThingContent(String name, Map<String, Object> map, int id, Content content, String query) {
+        public KeyValueContent(String name, Map<String, Object> map, int id, Content content, String query) {
             super(name, map, id);
             this.content = content;
             this.query = query;

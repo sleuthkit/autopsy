@@ -31,7 +31,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 import org.sleuthkit.datamodel.FsContent;
 
@@ -112,12 +112,12 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
             }
         } else {
             //Collapsed view
-            Collection<KeyValueThing> things = new ArrayList<KeyValueThing>();
+            Collection<KeyValue> things = new ArrayList<KeyValue>();
             int queryID = 0;
             for (KeywordSearchQuery q : queryDelegates) {
                 Map<String, Object> kvs = new LinkedHashMap<String, Object>();
                 final String queryStr = q.getQueryString();
-                things.add(new KeyValueThingQuery(queryStr, kvs, ++queryID, q));
+                things.add(new KeyValueQuery(queryStr, kvs, ++queryID, q));
             }
 
             Node rootNode = null;
@@ -192,9 +192,9 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
 }
 
 /**
- * custom KeyValueThing that also stores query object  to execute
+ * custom KeyValue that also stores query object  to execute
  */
-class KeyValueThingQuery extends KeyValueThing {
+class KeyValueQuery extends KeyValue {
 
     private KeywordSearchQuery query;
 
@@ -202,7 +202,7 @@ class KeyValueThingQuery extends KeyValueThing {
         return query;
     }
 
-    public KeyValueThingQuery(String name, Map<String, Object> map, int id, KeywordSearchQuery query) {
+    public KeyValueQuery(String name, Map<String, Object> map, int id, KeywordSearchQuery query) {
         super(name, map, id);
         this.query = query;
     }

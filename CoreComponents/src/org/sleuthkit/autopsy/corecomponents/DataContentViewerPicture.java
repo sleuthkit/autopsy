@@ -31,6 +31,8 @@ import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -139,7 +141,7 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
     public boolean isSupported(Node node) {
         if (node != null) {
             // Note: only supports JPG, GIF, and PNG for now
-            return node.getDisplayName().toLowerCase().endsWith(".jpg")
+            /*return node.getDisplayName().toLowerCase().endsWith(".jpg")
                     || node.getDisplayName().toLowerCase().endsWith(".jpeg")
                     || node.getDisplayName().toLowerCase().endsWith(".jpe")
                     || node.getDisplayName().toLowerCase().endsWith(".jfif")
@@ -148,7 +150,24 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
                     || //node.getDisplayName().toLowerCase().endsWith(".tif") ||
                     //node.getDisplayName().toLowerCase().endsWith(".tiff") ||
                     //node.getDisplayName().toLowerCase().endsWith(".tga") ||
-                    node.getDisplayName().toLowerCase().endsWith(".png");
+                    node.getDisplayName().toLowerCase().endsWith(".png");*/
+            File file = node.getLookup().lookup(File.class);
+            
+            if(file != null){
+                return file.getName().toLowerCase().endsWith(".jpg")
+                    || file.getName().toLowerCase().endsWith(".jpeg")
+                    || file.getName().toLowerCase().endsWith(".jpe")
+                    || file.getName().toLowerCase().endsWith(".jfif")
+                    || file.getName().toLowerCase().endsWith(".gif")
+                    || file.getName().toLowerCase().endsWith(".bmp")
+                    || //node.getName().toLowerCase().endsWith(".tif") ||
+                    //node.getName().toLowerCase().endsWith(".tiff") ||
+                    //node.getName().toLowerCase().endsWith(".tga") ||
+                    file.getName().toLowerCase().endsWith(".png");
+            }
+            else{
+                return false;
+            }
         } else {
             return false;
         }
