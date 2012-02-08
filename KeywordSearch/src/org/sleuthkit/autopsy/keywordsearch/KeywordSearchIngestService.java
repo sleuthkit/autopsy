@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private final Object lock = new Object();
     private Thread timer;
     private Indexer indexer;
+    private SwingWorker searcher;
+    private volatile boolean searcherDone = true;
+    private Map<Keyword, List<FsContent>> currentResults;
     private volatile int messageID = 0;
     private static final String[] ingestibleExtensions = {"tar", "jar", "zip", "bzip2",
         "gz", "tgz", "doc", "xls", "ppt", "rtf", "pdf", "html", "xhtml", "txt",
@@ -80,8 +84,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             commitIndex = false;
             indexChangeNotify();
             //start search
-            if (keywords != null && !keywords.isEmpty()) {
-                new Searcher(keywords).execute();
+            if (keywords != null && !keywords.isEmpty() && searcherDone) {
+                searcher = new Searcher(keywords);
+                searcher.execute();
             }
         }
         indexer.indexFile(fsContent);
@@ -98,20 +103,28 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         //signal a potential change in number of indexed files
         indexChangeNotify();
 
-        //start final search
+        //run one last search as there are probably some new files committed
         if (keywords != null && !keywords.isEmpty()) {
-            new Searcher(keywords).execute();
+            searcher = new Searcher(keywords);
+            searcher.execute();
         }
 
-        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Complete"));
+        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
         //postSummary();
     }
 
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
+        
+        //stop timer
         runTimer = false;
+        //stop searcher
+        if (searcher != null) {
+            searcher.cancel(true);
+        }
 
+        //commit uncommited files
         commit();
 
         indexChangeNotify();
@@ -126,6 +139,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     @Override
     public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init()");
+        
         this.managerProxy = managerProxy;
 
         final Server.Core solrCore = KeywordSearch.getServer().getCore();
@@ -140,6 +154,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "No keywords in keyword list.  Will index and skip search."));
         }
 
+        searcherDone = true; //make sure to start the initial searcher
+        //keeps track of all results per run not to repeat reporting the same hits
+        currentResults = new HashMap<Keyword, List<FsContent>>(); 
+        
         indexer = new Indexer();
 
         //final int commitIntervalMs = managerProxy.getUpdateFrequency() * 1000;
@@ -148,8 +166,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         timer = new CommitTimer(commitIntervalMs);
         runTimer = true;
         timer.start();
-
-
+   
         managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Started"));
     }
 
@@ -310,16 +327,18 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private class Searcher extends SwingWorker {
 
         private List<Keyword> keywords;
-        private Map<Keyword, List<FsContent>> results;
         private ProgressHandle progress;
 
         Searcher(List<Keyword> keywords) {
             this.keywords = keywords;
-            results = new HashMap<Keyword, List<FsContent>>();
         }
 
         @Override
         protected Object doInBackground() throws Exception {
+            //make sure other searchers are not spawned 
+            //slight chance if interals are tight or data sets are large
+            //(would still work, but for performance reasons)
+            searcherDone = false; 
 
             progress = ProgressHandleFactory.createHandle("Keyword Search", new Cancellable() {
 
@@ -352,11 +371,41 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 }
 
                 List<FsContent> queryResult = del.performQuery();
-                results.put(query, queryResult);
+                
+                //calculate new results but substracting results already obtained in this run
+                List<FsContent> newResults = new ArrayList<FsContent>();
+                
+                List<FsContent> curResults = currentResults.get(query);
+                if (curResults == null) {
+                    currentResults.put(query, queryResult);
+                    newResults = queryResult;
+                }
+                else {
+                    for (FsContent res : queryResult) {
+                        if (! curResults.contains(res)) {
+                            //add to new results
+                            newResults.add(res);
+                        }
+                    }
+                    //update current result with new ones
+                    curResults.addAll(newResults);
+                    
+                }
 
-                if (!queryResult.isEmpty()) {
-                    //TODO check if already reported
-                    managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, instance, "Hit found: " + queryStr + " in " + queryResult.size() + " file(s)"));
+                if (!newResults.isEmpty()) {
+                    logger.log(Level.INFO, "NEW RESULT (0) " + newResults.get(0).getId());
+                    StringBuilder sb = new StringBuilder();
+                    final int hitFiles = newResults.size();
+                    sb.append("New hit: ").append("<").append(queryStr);
+                    if ( ! query.isLiteral())
+                        sb.append("(regex)");
+                    sb.append(">");
+                    sb.append(" in ").append(hitFiles).append((hitFiles>1?" files":" file"));
+                    managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, instance, sb.toString() ));
+                    
+                     //TODO
+                    //post only new results to black board
+                    //update viewer
                 }
 
 
@@ -371,12 +420,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             super.done();
 
             progress.finish();
-
-            //TODO
-            //filter out only recent results
-            //update current results map
-            //post only new results to black board
-            //update viewer
+            
+            searcherDone = true;  //next searcher can start      
         }
     }
 }
