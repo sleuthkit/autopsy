@@ -23,7 +23,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DisplayableItem;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
@@ -35,7 +34,7 @@ class KeywordSearchNode extends AbstractNode {
         super(new RootContentChildren(keys) {
 
             @Override
-            protected Node[] createNodes(DisplayableItem key) {
+            protected Node[] createNodes(Object key) {
                 Node[] originalNodes = super.createNodes(key);
                 Node[] filterNodes = new Node[originalNodes.length];
 

@@ -27,20 +27,19 @@ import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.datamodel.SearchFilters.FileSearchFilter;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.DisplayableItem;
-import org.sleuthkit.datamodel.DisplayableItemVisitor;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.SearchFilters.FileSearchFilter;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  *
  * @author dfickling
  */
-class FileSearchFilterChildren extends ChildFactory<DisplayableItem> {
+class FileSearchFilterChildren extends ChildFactory<Content> {
     
     SleuthkitCase skCase;
     FileSearchFilter filter;
@@ -51,7 +50,7 @@ class FileSearchFilterChildren extends ChildFactory<DisplayableItem> {
     }
 
     @Override
-    protected boolean createKeys(List<DisplayableItem> list) {
+    protected boolean createKeys(List<Content> list) {
         list.addAll(runQuery());
         return true;
     }
@@ -64,8 +63,8 @@ class FileSearchFilterChildren extends ChildFactory<DisplayableItem> {
         return query;
     }
     
-    private List<? extends DisplayableItem> runQuery(){
-        List<? extends DisplayableItem> list = new ArrayList<FsContent>();
+    private List<? extends Content> runQuery(){
+        List<? extends Content> list = new ArrayList<FsContent>();
         try {
             ResultSet rs = skCase.runQuery(createQuery());
             return skCase.resultSetToFsContents(rs);
@@ -78,8 +77,8 @@ class FileSearchFilterChildren extends ChildFactory<DisplayableItem> {
     }
     
     @Override
-    protected Node createNodeForKey(DisplayableItem key){
-        return key.accept(new DisplayableItemVisitor.Default<AbstractNode>(){
+    protected Node createNodeForKey(Content key){
+        return key.accept(new ContentVisitor.Default<AbstractNode>(){
             
             @Override
             public FileNode visit(File f){
@@ -92,7 +91,7 @@ class FileSearchFilterChildren extends ChildFactory<DisplayableItem> {
             }
 
             @Override
-            protected AbstractNode defaultVisit(DisplayableItem di) {
+            protected AbstractNode defaultVisit(Content di) {
                 throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());
             }
             

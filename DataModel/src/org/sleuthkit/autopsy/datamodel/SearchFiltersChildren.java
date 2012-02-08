@@ -22,8 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.SearchFilters;
-import org.sleuthkit.datamodel.SearchFilters.FileSearchFilter;
+import org.sleuthkit.autopsy.datamodel.SearchFilters.FileSearchFilter;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**

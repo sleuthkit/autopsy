@@ -50,12 +50,11 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.autopsy.datamodel.SearchFilters;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.DisplayableItem;
-import org.sleuthkit.datamodel.ExtractedContent;
-import org.sleuthkit.datamodel.SearchFilters;
 
 /**
  * Top component which displays something.
@@ -319,7 +318,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     ((BeanTreeView) this.jScrollPane1).setRootVisible(false); // hide the root
                 } else {
                     // if there's at least one image, load the image and open the top component
-                    List<DisplayableItem> items = new ArrayList<DisplayableItem>();
+                    List<Object> items = new ArrayList<Object>();
                     items.addAll(currentCase.getRootObjects());
                     items.add(new ExtractedContent(currentCase.getSleuthkitCase()));
                     items.add(new SearchFilters(currentCase.getSleuthkitCase()));

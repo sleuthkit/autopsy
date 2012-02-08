@@ -42,13 +42,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.DisplayableItem;
-import org.sleuthkit.datamodel.DisplayableItemVisitor;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.Content;
 
 
 /**
@@ -135,7 +129,7 @@ public class DataResultFilterNode extends FilterNode{
         public List<Action> visit(ImageNode img) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
-            actions.addAll(ShowDetailActionVisitor.getActions(img.getLookup().lookup(DisplayableItem.class)));
+            actions.addAll(ShowDetailActionVisitor.getActions(img.getLookup().lookup(Content.class)));
             return actions;
         }
         
@@ -143,7 +137,7 @@ public class DataResultFilterNode extends FilterNode{
         public List<Action> visit(VolumeNode vol) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
-            actions.addAll(ShowDetailActionVisitor.getActions(vol.getLookup().lookup(DisplayableItem.class)));
+            actions.addAll(ShowDetailActionVisitor.getActions(vol.getLookup().lookup(Content.class)));
             actions.add(new ChangeViewAction("View", 0, getOriginal()));
             
             return actions;

@@ -25,13 +25,11 @@ import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.TypeWrapper;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.DisplayableItem;
-import org.sleuthkit.datamodel.DisplayableItemVisitor;
-import org.sleuthkit.datamodel.ExtractedContent;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SearchFilters;
+import org.sleuthkit.datamodel.SleuthkitVisitableItem;
+import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -39,7 +37,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
  * Abstract subclass for ContentChildren and RootContentChildren implementations
  * that handles creating Nodes from Content objects.
 */
-abstract class AbstractContentChildren extends Keys<DisplayableItem> {
+abstract class AbstractContentChildren extends Keys<Object> {
 
     /**
      * Uses lazy Content.Keys 
@@ -49,8 +47,11 @@ abstract class AbstractContentChildren extends Keys<DisplayableItem> {
     }
 
     @Override
-    protected Node[] createNodes(DisplayableItem key) {
-        return new Node[]{key.accept(new CreateNodeVisitor())};
+    protected Node[] createNodes(Object key) {
+        if(key instanceof SleuthkitVisitableItem)
+            return new Node[]{((SleuthkitVisitableItem) key).accept(new CreateSleuthkitNodeVisitor())};
+        else
+            return new Node[]{((AutopsyVisitableItem) key).accept(new CreateAutopsyNodeVisitor())};
     }
     
     @Override
@@ -63,7 +64,7 @@ abstract class AbstractContentChildren extends Keys<DisplayableItem> {
     /**
      * Creates appropriate Node for each sub-class of Content
      */
-    static class CreateNodeVisitor extends DisplayableItemVisitor.Default<AbstractNode> {
+    static class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<AbstractNode> {
         
         @Override
         public AbstractContentNode visit(Directory drctr) {
@@ -94,11 +95,6 @@ abstract class AbstractContentChildren extends Keys<DisplayableItem> {
         public AbstractNode visit(VolumeSystem vs) {
             return defaultVisit(vs);
         }
-        
-        @Override
-        public ExtractedContentNode visit(ExtractedContent ec) {
-            return new ExtractedContentNode(ec.getSleuthkitCase());
-        }
 
         @Override
         public AbstractNode visit(TypeWrapper a) {
@@ -109,6 +105,22 @@ abstract class AbstractContentChildren extends Keys<DisplayableItem> {
         public AbstractNode visit(BlackboardArtifact ba) {
             return defaultVisit(ba);
         }
+
+        @Override
+        protected AbstractNode defaultVisit(SleuthkitVisitableItem di) {
+            throw new UnsupportedOperationException("No Node defined for the given DisplayableItem");
+        }
+    }
+    
+    /**
+     * Creates appropriate Node for each sub-class of Content
+     */
+    static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
+        
+        @Override
+        public ExtractedContentNode visit(ExtractedContent ec) {
+            return new ExtractedContentNode(ec.getSleuthkitCase());
+        }
         
         @Override
         public AbstractNode visit(SearchFilters sf) {
@@ -116,7 +128,7 @@ abstract class AbstractContentChildren extends Keys<DisplayableItem> {
         }
 
         @Override
-        protected AbstractNode defaultVisit(DisplayableItem di) {
+        protected AbstractNode defaultVisit(AutopsyVisitableItem di) {
             throw new UnsupportedOperationException("No Node defined for the given DisplayableItem");
         }
     }

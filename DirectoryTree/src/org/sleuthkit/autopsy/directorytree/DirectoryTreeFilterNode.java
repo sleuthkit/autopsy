@@ -28,8 +28,8 @@ import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.ingest.IngestDialog;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.DisplayableItem;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -58,11 +58,11 @@ class DirectoryTreeFilterNode extends FilterNode {
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<Action>();
 
-        DisplayableItem dItem = this.getLookup().lookup(DisplayableItem.class);
-        if (dItem != null) {
-            actions.addAll(DirectoryTreeFilterNode.getDetailActions(dItem));
+        Content c = this.getLookup().lookup(Content.class);
+        if (c != null) {
+            actions.addAll(DirectoryTreeFilterNode.getDetailActions(c));
             actions.add(collapseAll);
-            
+
             Directory dir = this.getLookup().lookup(Directory.class);
             if (dir != null) {
                 actions.add(new ExtractAction("Extract Directory",
@@ -70,7 +70,8 @@ class DirectoryTreeFilterNode extends FilterNode {
             }
             final Image img = this.getLookup().lookup(Image.class);
             if (img != null) {
-                actions.add(new AbstractAction("Restart Ingest Modules"){
+                actions.add(new AbstractAction("Restart Ingest Modules") {
+
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         final IngestDialog ingestDialog = new IngestDialog();
@@ -84,7 +85,7 @@ class DirectoryTreeFilterNode extends FilterNode {
         return actions.toArray(new Action[actions.size()]);
     }
 
-    private static List<Action> getDetailActions(DisplayableItem c) {
+    private static List<Action> getDetailActions(Content c) {
         List<Action> actions = new ArrayList<Action>();
 
         actions.addAll(ShowDetailActionVisitor.getActions(c));

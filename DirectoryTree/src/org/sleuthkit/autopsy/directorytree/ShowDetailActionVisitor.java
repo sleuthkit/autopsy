@@ -36,8 +36,9 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import org.sleuthkit.autopsy.coreutils.Log;
-import org.sleuthkit.datamodel.DisplayableItem;
-import org.sleuthkit.datamodel.DisplayableItemVisitor;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskException;
@@ -48,20 +49,20 @@ import org.sleuthkit.datamodel.Volume;
  *
  * @author jantonius
  */
-class ShowDetailActionVisitor extends DisplayableItemVisitor.Default<List<? extends Action>> {
+class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
     
     private static ShowDetailActionVisitor instance = new ShowDetailActionVisitor();
    
-    public static List<Action> getActions(DisplayableItem dI) {
+    public static List<Action> getActions(Content c) {
         List<Action> actions = new ArrayList<Action>();
         
-        actions.addAll(dI.accept(instance));
+        actions.addAll(c.accept(instance));
         
-        /*while (dI.isOnto()) {
+        while (c.isOnto()) {
             try {
-                List<? extends DisplayableItem> children = dI.getChildren();
+                List<? extends Content> children = c.getChildren();
                 if (!children.isEmpty()) {
-                    dI = dI.getChildren().get(0);
+                    c = c.getChildren().get(0);
                 } else {
                    return actions;
                 }
@@ -69,8 +70,8 @@ class ShowDetailActionVisitor extends DisplayableItemVisitor.Default<List<? exte
                 Log.get(ShowDetailActionVisitor.class).log(Level.WARNING, "Error getting show detail actions.", ex);
                 return actions;
             }
-            actions.addAll(dI.accept(instance));
-        }*/
+            actions.addAll(c.accept(instance));
+        }
         return actions;
     }
 
@@ -291,7 +292,7 @@ class ShowDetailActionVisitor extends DisplayableItemVisitor.Default<List<? exte
     }
 
     @Override
-    protected List<? extends Action> defaultVisit(DisplayableItem di) {
+    protected List<? extends Action> defaultVisit(Content di) {
         return Collections.EMPTY_LIST;
     }
 }
