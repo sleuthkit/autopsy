@@ -41,7 +41,6 @@ import org.sleuthkit.datamodel.Content;
  */
 class KeywordSearchFilterNode extends FilterNode {
 
-    private static final int SNIPPET_LENGTH = 45;
     String solrQuery;
 
     KeywordSearchFilterNode(HighlightedMatchesSource highlights, Node original, String solrQuery) {
@@ -50,36 +49,9 @@ class KeywordSearchFilterNode extends FilterNode {
     }
 
     String getSnippet() {
-        Core solrCore = KeywordSearch.getServer().getCore();
-
-        Content content = this.getOriginal().getLookup().lookup(Content.class);
-
-        SolrQuery q = new SolrQuery();
-        q.setQuery(solrQuery);
-        q.addFilterQuery("id:" + content.getId());
-        q.addHighlightField("content");
-        q.setHighlightSimplePre("&laquo;");
-        q.setHighlightSimplePost("&raquo;");
-        q.setHighlightSnippets(1);
-        q.setHighlightFragsize(SNIPPET_LENGTH);
-
-        try {
-            QueryResponse response = solrCore.query(q);
-            Map<String,Map<String,List<String>>>responseHighlight = response.getHighlighting();
-            long contentID = content.getId();
-            Map<String,List<String>>responseHighlightID = responseHighlight.get(Long.toString(contentID));
-            if (responseHighlightID == null)
-                return "";
-            List<String> contentHighlights = responseHighlightID.get("content");
-            if (contentHighlights == null) {
-                return "";
-            } else {
-                // extracted content is HTML-escaped, but snippet goes in a plain text field
-                return StringEscapeUtils.unescapeHtml(contentHighlights.get(0)).trim();
-            }
-        } catch (SolrServerException ex) {
-            throw new RuntimeException(ex);
-        }
+        final Content content = this.getOriginal().getLookup().lookup(Content.class);
+        final String snippet = LuceneQuery.getSnippet(solrQuery, content.getId());
+        return snippet;
     }
 
     Property<String> getSnippetProperty() {

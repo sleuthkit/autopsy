@@ -45,7 +45,6 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
 
         COLLAPSE, DETAIL
     };
-
     private List<Keyword> queries;
     private Presentation presentation;
     private List<KeywordSearchQuery> queryDelegates;
@@ -84,13 +83,18 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
                     del = new LuceneQuery(query.getQuery());
                     break;
                 case REGEX:
-                    del = new TermComponentQuery(query.getQuery());
+                    if (query.isLiteral()) {
+                        del = new LuceneQuery(query.getQuery());
+                    } else {
+                        del = new TermComponentQuery(query.getQuery());
+                    }
                     break;
                 default:
                     ;
             }
-            if (query.isLiteral())
+            if (query.isLiteral()) {
                 del.escape();
+            }
             queryDelegates.add(del);
 
         }
@@ -117,7 +121,7 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
             }
 
             Node rootNode = null;
-           
+
             if (things.size() > 0) {
                 Children childThingNodes =
                         Children.create(new KeywordSearchResultFactory(queries, things, Presentation.COLLAPSE), true);
@@ -135,7 +139,6 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
 
     @Override
     public void escape() {
-        
     }
 
     @Override
@@ -166,7 +169,7 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
         }
         return sb.toString();
     }
-    
+
     @Override
     public boolean isEscaped() {
         return false;
@@ -217,8 +220,14 @@ class Keyword {
         this.query = query;
         this.isLiteral = isLiteral;
     }
-    String getQuery() {return query;}
-    boolean isLiteral() {return isLiteral;}
+
+    String getQuery() {
+        return query;
+    }
+
+    boolean isLiteral() {
+        return isLiteral;
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -245,6 +254,4 @@ class Keyword {
         hash = 17 * hash + (this.isLiteral ? 1 : 0);
         return hash;
     }
-    
 }
-

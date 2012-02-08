@@ -27,31 +27,32 @@ import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.netbeans.api.settings.ConvertAsProperties;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
+import org.openide.windows.WindowManager;
 
 /**
  * Keyword Search explorer top component, container for specific Keyword Search tabs
  */
-@ConvertAsProperties(dtd = "-//org.sleuthkit.autopsy.keywordsearch//KeywordSearchTabsTopComponent//EN",
-autostore = false)
-@TopComponent.Description(preferredID = "KeywordSearchTabsTopComponent",
-//iconBase="SET/PATH/TO/ICON/HERE", 
-persistenceType = TopComponent.PERSISTENCE_NEVER)
-@TopComponent.Registration(mode = "explorer", openAtStartup = false)
-@ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchTabsTopComponentTopComponent")
-@ActionReference(path = "Menu/Window" /*, position = 333 */)
-@TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchTabsTopComponentAction",
-preferredID = "KeywordSearchTabsTopComponent")
+//@ConvertAsProperties(dtd = "-//org.sleuthkit.autopsy.keywordsearch//KeywordSearchTabsTopComponent//EN",
+//autostore = false)
+//@TopComponent.Description(preferredID = "KeywordSearchTabsTopComponent",
+////iconBase="SET/PATH/TO/ICON/HERE", 
+//persistenceType = TopComponent.PERSISTENCE_NEVER)
+//@TopComponent.Registration(mode = "explorer", openAtStartup = false)
+//@ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchTabsTopComponentTopComponent")
+//@ActionReference(path = "Menu/Window" /*, position = 333 */)
+//@TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchTabsTopComponentAction",
+//preferredID = "KeywordSearchTabsTopComponent")
 public final class KeywordSearchTabsTopComponent extends TopComponent implements KeywordSearchTopComponentInterface {
 
     private Logger logger = Logger.getLogger(KeywordSearchTabsTopComponent.class.getName());
     private PropertyChangeListener serverChangeListener;
     
+    private static KeywordSearchTabsTopComponent instance = null;
+    public static final String PREFERRED_ID = "KeywordSearchTabsTopComponent";
+    
     public enum TABS{Simple, List, History};
 
-    public KeywordSearchTabsTopComponent() {
+    private KeywordSearchTabsTopComponent() {
         initComponents();
         initTabs();
         setName(NbBundle.getMessage(KeywordSearchTabsTopComponent.class, "CTL_KeywordSearchTabsTopComponentTopComponent"));
@@ -64,7 +65,31 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
         serverChangeListener = new KeywordSearchServerListener();
         KeywordSearch.getServer().addServerActionListener(serverChangeListener);
     }
+    
+    @Override
+    public int getPersistenceType() {
+        return TopComponent.PERSISTENCE_NEVER;
+    }
 
+     public static synchronized KeywordSearchTabsTopComponent getDefault() {
+        if (instance == null) {
+            instance = new KeywordSearchTabsTopComponent();
+        }
+        return instance;
+    }
+    
+     public static synchronized KeywordSearchTabsTopComponent findInstance() {
+        TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        if (win == null) {
+            return getDefault();
+        }
+        if (win instanceof KeywordSearchTabsTopComponent) {
+            return (KeywordSearchTabsTopComponent) win;
+        }
+       
+        return getDefault();
+    }
+    
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -91,8 +116,8 @@ public final class KeywordSearchTabsTopComponent extends TopComponent implements
     // End of variables declaration//GEN-END:variables
 
     private void initTabs() {
-        tabs.addTab(TABS.Simple.name(), null, new KeywordSearchSimpleTopComponent(), "Single keyword or regex search");
-        tabs.addTab(TABS.List.name(), null, new KeywordSearchListTopComponent(), "Search for or load a saved list of keywords.");
+        tabs.addTab(TABS.Simple.name(), null, KeywordSearchSimpleTopComponent.findInstance(), "Single keyword or regex search");
+        tabs.addTab(TABS.List.name(), null, KeywordSearchListTopComponent.findInstance(), "Search for or load a saved list of keywords.");
         //tabs.addTab(TABS.Lists.name(), null, new KeywordSearchListImportExportTopComponent(), "Manage (import, export, delete) lists of keywords.");
         //tabs.addTab(TABS.History.name(), null, new KeywordSearchHistoryTopComponent(), "Review keyword search history and saved search results."); //TODO
     }

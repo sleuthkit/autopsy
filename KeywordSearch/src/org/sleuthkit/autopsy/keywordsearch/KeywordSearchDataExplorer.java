@@ -40,7 +40,7 @@ public class KeywordSearchDataExplorer implements DataExplorer {
 
     private KeywordSearchDataExplorer() {
         this.filesIndexed = 0;
-        this.tc = new KeywordSearchTabsTopComponent();
+        this.tc = KeywordSearchTabsTopComponent.findInstance();
 
         this.tc.addSearchButtonListener(new ActionListener() {
 
