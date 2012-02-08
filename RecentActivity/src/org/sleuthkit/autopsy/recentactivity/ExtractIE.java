@@ -55,7 +55,7 @@ import org.sleuthkit.datamodel.TskException;
 public class ExtractIE { // implements BrowserActivity {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    private final String indexDatQueryStr = "select * from tsk_files where name LIKE '%index.dat%'";
+    private String indexDatQueryStr = "select * from tsk_files where name LIKE '%index.dat%'";
     
     //sleauthkit db handle
     SleuthkitCase tempDb;
@@ -74,8 +74,8 @@ public class ExtractIE { // implements BrowserActivity {
     
     boolean pascoFound = false;
 
-    public ExtractIE() {
-        init();
+    public ExtractIE(int image) {
+        init(image);
     }
 
     //@Override
@@ -83,7 +83,7 @@ public class ExtractIE { // implements BrowserActivity {
         return IE_PASCO_LUT;
     }
 
-    private void init() {
+    private void init(int image) {
         final Case currentCase = Case.getCurrentCase();
         final String caseDir = Case.getCurrentCase().getCaseDirectory();
         PASCO_RESULTS_PATH = caseDir + File.separator + "recentactivity" + File.separator + "results";
@@ -111,12 +111,12 @@ public class ExtractIE { // implements BrowserActivity {
             resultsDir.mkdirs();
 
             Collection<FsContent> FsContentCollection;
-
+            indexDatQueryStr = indexDatQueryStr; // + " and fs_obj_id = '" + image + "'";
             tempDb = currentCase.getSleuthkitCase();
             ResultSet rs = tempDb.runQuery(indexDatQueryStr);
             FsContentCollection = tempDb.resultSetToFsContents(rs);
-            rs.getStatement().close();  
             rs.close();
+            rs.getStatement().close(); 
             String temps;
             String indexFileName;
             int index = 0;
@@ -229,16 +229,22 @@ public class ExtractIE { // implements BrowserActivity {
                                     try {
                                         String[] lineBuff = line.split("\\t");
                                         PASCO_RESULTS_LUT = new HashMap<String, Object>();
-                                        PASCO_RESULTS_LUT.put(BrowserActivityType.Url.name(), lineBuff[1]);
-                                        PASCO_RESULTS_LUT.put("Title", lineBuff[2]);
-                                        PASCO_RESULTS_LUT.put("Count", lineBuff[0]);
-                                        PASCO_RESULTS_LUT.put("Last Accessed", lineBuff[3]);
-                                        PASCO_RESULTS_LUT.put("Reference", "None");
-
-
+                                        String url[] = lineBuff[1].split("@",2);
+                                        String user = "";
+                                        String realurl = "";
+                                      if(url.length > 1)
+                                      {
+                                       user = url[0];
+                  
+                                       realurl = url[1];
+                                       realurl = realurl.replace("Visited:", "");
+                                       realurl = realurl.replace(":.*:", "");
+                                       realurl = realurl.replace(":Host:", "");
+                                      }
+                                       
                                         // TODO: Need to fix this so we have the right obj_id
                                         BlackboardArtifact bbart = tempDb.getRootObjects().get(0).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                                        BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[1]);
+                                        BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "Internet Explorer", realurl);
                                         bbart.addAttribute(bbatturl);
                                         BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[3]);
                                         bbart.addAttribute(bbattdate);
@@ -248,6 +254,8 @@ public class ExtractIE { // implements BrowserActivity {
                                         bbart.addAttribute(bbatttitle);
                                         BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","Internet Explorer","Internet Explorer");
                                         bbart.addAttribute(bbattprog);
+                                        BlackboardAttribute bbattuser = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(),"RecentActivity","Internet Explorer",user);
+                                        bbart.addAttribute(bbattuser);
 
                                         //KeyValueThing
                                         //This will be redundant in terms IE.name() because of

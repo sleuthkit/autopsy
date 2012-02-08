@@ -55,12 +55,12 @@ public final class RAImageIngestService implements IngestServiceImage {
     public void process(Image image, IngestImageWorkerController controller) {
         //logger.log(Level.INFO, "process() " + this.toString());
         manager.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + image.getName()));
-
+        
         ExtractAll ext = new ExtractAll();
 
         try {
             //do the work
-            ext.extractToBlackboard(controller);
+            ext.extractToBlackboard(controller, (int)image.getId());
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error extracting recent activity", e);

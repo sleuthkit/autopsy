@@ -30,28 +30,27 @@ public class Firefox {
     private static final String ffcookiequery = "SELECT name,value,host,expiry,datetime(moz_cookies.lastAccessed/1000000,'unixepoch','localtime') as lastAccessed,creationTime FROM moz_cookies";
     private static final String ffbookmarkquery = "SELECT fk, moz_bookmarks.title, url FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id";
     
-    public ArrayList<HashMap> als = new ArrayList<HashMap>();
     public Logger logger = Logger.getLogger(this.getClass().getName());
-    public ArrayList<HashMap> cookies = new ArrayList<HashMap>();
-    public ArrayList<HashMap> bookmarks = new ArrayList<HashMap>();
+
     public int FireFoxCount = 0;
        
    public Firefox(){
        
    }
 
-       public void getffdb(){
+       public void getffdb(int image){
          //Make these seperate, this is for history
         try 
         {   
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             List<FsContent> FFSqlitedb;  
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%places.sqlite%' and parent_path LIKE '%Firefox%'");
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%places.sqlite%' and parent_path LIKE '%Firefox%' and fs_obj_id = '" + image + "'");
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
                     FireFoxCount = FFSqlitedb.size();
-                    rs.getStatement().close();  
+                      
             rs.close();
+            rs.getStatement().close();
             int j = 0;
      
             while (j < FFSqlitedb.size())
@@ -70,13 +69,7 @@ public class Firefox {
                    while(temprs.next()) 
                    {
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                      HashMap<String, Object> kvs = new HashMap<String, Object>();
-                      kvs.put("Url", temprs.getString("url"));
-                      kvs.put("Title", ((temprs.getString("title") != null) ? temprs.getString("title") : "No Title"));
-                      kvs.put("Count", temprs.getString("visit_count"));
-                      kvs.put("Last Accessed", temprs.getString("visit_date"));
-                      kvs.put("Reference", temprs.getString("from_visit"));
-                      
+               
                       BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","FireFox",temprs.getString("url"));
                       bbart.addAttribute(bbatturl);
                        BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","FireFox",temprs.getString("visit_date"));
@@ -87,11 +80,7 @@ public class Firefox {
                       bbart.addAttribute(bbatttitle);
                        BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","FireFox","FireFox");
                        bbart.addAttribute(bbattprog);
-                      //bbart.addAttribute(ATTRIBUTE_TYPE.TSK_URL, temprs.getString("url"), "RecentActivity","FireFox");
-                      //bbart.addAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, temprs.getString("visit_date"), "RecentActivity","FireFox");
-                      //bbart.addAttribute(ATTRIBUTE_TYPE.TSK_REFERRER, temprs.getString("from_visit"), "RecentActivity","FireFox");
-                      //bbart.addAttribute(ATTRIBUTE_TYPE.TSK_NAME, ((temprs.getString("title") != null) ? temprs.getString("title") : "No Title"), "RecentActivity","FireFox");
-                      als.add(kvs);
+                  
                       
                    }
                    temprs.close(); 
@@ -99,20 +88,14 @@ public class Firefox {
                    while(tempbm.next()) 
                    {
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-                      HashMap<String, Object> kvs = new HashMap<String, Object>();
-                      kvs.put("Url", temprs.getString("url"));
-                      kvs.put("Title", ((temprs.getString("title") != null) ? temprs.getString("title") : "No Title"));
-                      kvs.put("Count", "");
-                      kvs.put("Last Accessed", "");
-                      kvs.put("Reference", "");   
+           
                       BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","FireFox",((temprs.getString("url") != null) ? temprs.getString("url") : "No URL"));
                       bbart.addAttribute(bbatturl);
                       BlackboardAttribute bbatttitle = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","FireFox", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "No Title"));
                       bbart.addAttribute(bbatttitle);
                      BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","FireFox","FireFox");
                        bbart.addAttribute(bbattprog);
-                      bookmarks.add(kvs);
-                      
+         
                    } 
                    tempbm.close();
                    tempdbconnect.closeConnection();
@@ -144,10 +127,10 @@ public class Firefox {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             List<FsContent> FFSqlitedb;  
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%cookies.sqlite%' and parent_path LIKE '%Firefox%'");
-            FFSqlitedb = tempDb.resultSetToFsContents(rs);
-            rs.getStatement().close();  
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%cookies.sqlite%' and parent_path LIKE '%Firefox%' and fs_obj_id = '" + image + "'");
+            FFSqlitedb = tempDb.resultSetToFsContents(rs);   
             rs.close();
+            rs.getStatement().close();  
             int j = 0;
      
             while (j < FFSqlitedb.size())
@@ -163,13 +146,7 @@ public class Firefox {
                    while(temprs.next()) 
                    {
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
-                      HashMap<String, Object> kvs = new HashMap<String, Object>();
-                      kvs.put("Url", temprs.getString("host"));
-                      kvs.put("Title", ((temprs.getString("name") != null) ? temprs.getString("name") : "No name"));
-                      kvs.put("Count", temprs.getString("value"));
-                      kvs.put("Last Accessed", temprs.getString("lastAccessed"));
-                      kvs.put("Reference", temprs.getString("creationTime"));
-                     BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "FireFox", temprs.getString("host"));
+                      BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "FireFox", temprs.getString("host"));
                      bbart.addAttribute(bbatturl);
                      BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "FireFox", temprs.getString("lastAccessed"));
                      bbart.addAttribute(bbattdate);
@@ -179,9 +156,6 @@ public class Firefox {
                      bbart.addAttribute(bbatttitle);
                        BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","FireFox","FireFox");
                        bbart.addAttribute(bbattprog);
-                      
-                      cookies.add(kvs);
-                      
                    } 
                    tempdbconnect.closeConnection();
                    temprs.close();

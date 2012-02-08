@@ -30,9 +30,6 @@ public class Chrome {
            + "datetime(urls.last_visit_time/1000000-11644473600,'unixepoch','localtime') as last_visit_time, urls.hidden, visits.visit_time, visits.from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
    public static final String chcookiequery = "select name, value, host, expires_utc, datetime(last_access_utc/1000000-11644473600,'unixepoch','localtime') as last_access_utc, creation_utc from cookies";
    public static final String chbookmarkquery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count, datetime(urls.last_visit_time/1000000-11644473600,'unixepoch','localtime') as urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
-   public List<Map> als = new ArrayList();
-   public ArrayList<HashMap> cookies = new ArrayList<HashMap>();
-    public ArrayList<HashMap> bookmarks = new ArrayList<HashMap>();
    private final Logger logger = Logger.getLogger(this.getClass().getName());
    public int ChromeCount = 0;
     
@@ -40,7 +37,7 @@ public class Chrome {
  
    }
   
-     public void getchdb(){
+     public void getchdb(int image){
          
         try 
         {   
@@ -49,12 +46,12 @@ public class Chrome {
             List<FsContent> FFSqlitedb;  
             Map<String, Object> kvs = new LinkedHashMap<String, Object>();
             
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' AND parent_path LIKE '%Chrome%'");
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' AND parent_path LIKE '%Chrome%' and fs_obj_id = '" + image + "'");
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             ChromeCount = FFSqlitedb.size();
-            rs.getStatement().close();  
+              
             rs.close();
-            
+            rs.getStatement().close();
             int j = 0;
             while (j < FFSqlitedb.size())
             {
@@ -69,12 +66,7 @@ public class Chrome {
                   
                    while(temprs.next()) 
                    {
-                      kvs.clear();        
-                      kvs.put("Url", temprs.getString("url"));
-                      kvs.put("Title", ((temprs.getString("title") != null) ? temprs.getString("title") : "No Title"));
-                      kvs.put("Count", temprs.getString("visit_count"));
-                      kvs.put("Last Accessed", temprs.getString("visit_date"));
-                      kvs.put("Reference", temprs.getString("from_visit"));
+                     
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                       BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","Chrome",temprs.getString("url"));
                       bbart.addAttribute(bbatturl);
@@ -86,8 +78,7 @@ public class Chrome {
                       bbart.addAttribute(bbatttitle);
                       BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","Chrome","Chrome");
                                         bbart.addAttribute(bbattprog);
-                      
-                      als.add(kvs);
+                     
                      
                    } 
                    tempdbconnect.closeConnection();
@@ -118,10 +109,11 @@ public class Chrome {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             List<FsContent> FFSqlitedb;  
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'Cookies' and parent_path LIKE '%Chrome%'");
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'Cookies' and parent_path LIKE '%Chrome%' and fs_obj_id = '" + image + "'");
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
-            rs.getStatement().close();  
+             
             rs.close();
+            rs.getStatement().close(); 
             int j = 0;
      
             while (j < FFSqlitedb.size())
@@ -136,14 +128,6 @@ public class Chrome {
                    ResultSet temprs = tempdbconnect.executeQry(chcookiequery);  
                    while(temprs.next()) 
                    {
-                      HashMap<String, Object> kvs = new HashMap<String, Object>();
-                      kvs.put("Url", temprs.getString("host"));
-                      kvs.put("Title", ((temprs.getString("name") != null) ? temprs.getString("name") : "No name"));
-                      kvs.put("Count", temprs.getString("value"));
-                      kvs.put("Last Accessed", temprs.getString("access_utc"));
-                      kvs.put("Reference", temprs.getString("creation_utc"));
-                      cookies.add(kvs);
-                      
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
                      BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "Chrome", temprs.getString("host"));
                      bbart.addAttribute(bbatturl);
@@ -185,10 +169,11 @@ public class Chrome {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             List<FsContent> FFSqlitedb;  
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'Bookmarks' and parent_path LIKE '%Chrome%'");
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'Bookmarks' and parent_path LIKE '%Chrome%' and fs_obj_id = '" + image + "'");
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
-            rs.getStatement().close();  
             rs.close();
+            rs.getStatement().close();  
+            
             int j = 0;
      
             while (j < FFSqlitedb.size())
@@ -203,13 +188,7 @@ public class Chrome {
                    ResultSet temprs = tempdbconnect.executeQry(chbookmarkquery);  
                    while(temprs.next()) 
                    {
-                      BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-                      HashMap<String, Object> kvs = new HashMap<String, Object>();
-                      kvs.put("Url", temprs.getString("urls.url"));
-                      kvs.put("Title", ((temprs.getString("starred.title") != null) ? temprs.getString("starred.title") : "No name"));
-                      kvs.put("Count", temprs.getString("urls.typed_count"));
-                      kvs.put("Last Accessed", temprs.getString("urls._last_visit_time"));
-                      kvs.put("Reference", temprs.getString("starred.date_added"));
+                      BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
                       BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Chrome",temprs.getString("last_visit_time"));
                       bbart.addAttribute(bbattdate);
                       BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","Chrome",((temprs.getString("url") != null) ? temprs.getString("url") : "No URL"));
@@ -218,7 +197,7 @@ public class Chrome {
                       bbart.addAttribute(bbatttitle);
                        BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","Chrome","Chrome");
                       bbart.addAttribute(bbattprog);
-                      bookmarks.add(kvs);
+                      
                      
                       
                    } 
