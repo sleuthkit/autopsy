@@ -39,7 +39,9 @@ import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
+import org.sleuthkit.autopsy.datamodel.ImageNode;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.DisplayableItem;
@@ -56,7 +58,7 @@ import org.sleuthkit.datamodel.Volume;
 public class DataResultFilterNode extends FilterNode{
 
     private ExplorerManager sourceEm;
-    private final DisplayableItemVisitor<List<Action>> getActionsDIV;
+    private final DisplayableItemNodeVisitor<List<Action>> getActionsDIV;
     private final DisplayableItemNodeVisitor<AbstractAction> getPreferredActionsDIV;
 
 
@@ -64,7 +66,7 @@ public class DataResultFilterNode extends FilterNode{
     public DataResultFilterNode(Node node, ExplorerManager em) {
         super(node, new DataResultFilterChildren(node, em));
         this.sourceEm = em;
-        getActionsDIV = new GetPopupActionsDisplayableItemVisitor();
+        getActionsDIV = new GetPopupActionsDisplayableItemNodeVisitor();
         getPreferredActionsDIV = new GetPreferredActionsDisplayableItemNodeVisitor();
     }
     
@@ -81,8 +83,8 @@ public class DataResultFilterNode extends FilterNode{
 
         List<Action> actions = new ArrayList<Action>();
         
-        DisplayableItem nodeItem = this.getOriginal().getLookup().lookup(DisplayableItem.class);
-        actions.addAll(nodeItem.accept(getActionsDIV));
+        final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
+        actions.addAll(originalNode.accept(getActionsDIV));
         
         //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
 
@@ -127,28 +129,28 @@ public class DataResultFilterNode extends FilterNode{
         return propertySets;
     }
     
-    private class GetPopupActionsDisplayableItemVisitor extends DisplayableItemVisitor.Default<List<Action>> {
+    private class GetPopupActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<List<Action>> {
         
         @Override
-        public List<Action> visit(Image img) {
+        public List<Action> visit(ImageNode img) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
-            actions.addAll(ShowDetailActionVisitor.getActions(img));
+            actions.addAll(ShowDetailActionVisitor.getActions(img.getLookup().lookup(DisplayableItem.class)));
             return actions;
         }
         
         @Override
-        public List<Action> visit(Volume vol) {
+        public List<Action> visit(VolumeNode vol) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
-            actions.addAll(ShowDetailActionVisitor.getActions(vol));
+            actions.addAll(ShowDetailActionVisitor.getActions(vol.getLookup().lookup(DisplayableItem.class)));
             actions.add(new ChangeViewAction("View", 0, getOriginal()));
             
             return actions;
         }
         
         @Override
-        public List<Action> visit(Directory dir) {
+        public List<Action> visit(DirectoryNode dir) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
             actions.add(new ChangeViewAction("View", 0, getOriginal()));
@@ -157,7 +159,7 @@ public class DataResultFilterNode extends FilterNode{
         }
         
         @Override
-        public List<Action> visit(File f) {
+        public List<Action> visit(FileNode f) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
             actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
@@ -166,7 +168,7 @@ public class DataResultFilterNode extends FilterNode{
         }
         
         @Override
-        public List<Action> visit(BlackboardArtifact ba) {
+        public List<Action> visit(BlackboardArtifactNode ba) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new ViewAssociatedContentAction("View Associated Content", getOriginal()));
             actions.add(new ViewContextAction("View in Directory", getOriginal()));
@@ -174,7 +176,7 @@ public class DataResultFilterNode extends FilterNode{
         }
         
         @Override
-        protected List<Action> defaultVisit(DisplayableItem ditem) {
+        protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             return Collections.EMPTY_LIST;
         }
         
