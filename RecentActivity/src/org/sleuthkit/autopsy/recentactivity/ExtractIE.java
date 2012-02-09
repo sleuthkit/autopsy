@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 
 //Util Imports
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -118,7 +119,6 @@ public class ExtractIE { // implements BrowserActivity {
 
             String temps;
             String indexFileName;
-            int index = 0;
 
             for (FsContent fsc : FsContentCollection) {
                 // Since each result represent an index.dat file,
@@ -126,7 +126,7 @@ public class ExtractIE { // implements BrowserActivity {
                 // index<Number>.dat (i.e. index0.dat, index1.dat,..., indexN.dat)
                 // Write each index.dat file to a temp directory.
                 //BlackboardArtifact bbart = fsc.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                indexFileName = "index" + Integer.toString(index) + ".dat";
+                indexFileName = "index" + Integer.toString((int)fsc.getId()) + ".dat";
                 //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
                 temps = currentCase.getTempDirectory() + File.separator + indexFileName;
                 File datFile = new File(temps);
@@ -137,7 +137,7 @@ public class ExtractIE { // implements BrowserActivity {
                     logger.log(Level.INFO, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
                 }
 
-                boolean bPascProcSuccess = executePasco(temps, index);
+                boolean bPascProcSuccess = executePasco(temps, (int)fsc.getId());
 
                 //At this point pasco2 proccessed the index files.
                 //Now fetch the results, parse them and the delete the files.
@@ -146,7 +146,6 @@ public class ExtractIE { // implements BrowserActivity {
                     //Delete index<n>.dat file since it was succcessfully by Pasco
                     datFile.delete();
                 }
-                ++index;
             }
         } catch (Exception ioex) {
             logger.log(Level.SEVERE, "Error while trying to write index.dat files.", ioex);
@@ -169,7 +168,7 @@ public class ExtractIE { // implements BrowserActivity {
             command.add(" isi.pasco2.Main");
             command.add(" -T history");
             command.add("\"" + indexFilePath + "\"");
-            command.add(" > \"" + PASCO_RESULTS_PATH + "\\pasco2Result" + Integer.toString(fileIndex) + ".txt\"");
+            command.add(" > \"" + PASCO_RESULTS_PATH + "\\pasco2Result." + Integer.toString(fileIndex) + ".txt\"");
            // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String[] cmd = command.toArray(new String[0]);
 
@@ -201,7 +200,8 @@ public class ExtractIE { // implements BrowserActivity {
             if (pascoFiles.length > 0) {
                 try {
                     for (File file : pascoFiles) {
-                       // String bbartname = file.getName();
+                       String fileName = file.getName();
+                       long artObjId = Long.parseLong(fileName.substring(fileName.indexOf(".")+1, fileName.lastIndexOf(".")));
                         //bbartname = bbartname.substring(0, 4);
 
                         // Make sure the file the is not empty or the Scanner will
@@ -236,7 +236,7 @@ public class ExtractIE { // implements BrowserActivity {
 
 
                                         // TODO: Need to fix this so we have the right obj_id
-                                        BlackboardArtifact bbart = tempDb.getRootObjects().get(0).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+                                        BlackboardArtifact bbart = tempDb.getFileById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                                         BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[1]);
                                         bbart.addAttribute(bbatturl);
                                         BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[3]);
@@ -258,6 +258,8 @@ public class ExtractIE { // implements BrowserActivity {
                                         PASCO_RESULTS_LIST.add(PASCO_RESULTS_LUT);
                                     } catch (TskException ex) {
                                         Exceptions.printStackTrace(ex);
+                                    } catch (SQLException ex) {
+                                        logger.log(Level.WARNING, "Couldn't find file with id: " + artObjId, ex);
                                     }
                                 }
 
