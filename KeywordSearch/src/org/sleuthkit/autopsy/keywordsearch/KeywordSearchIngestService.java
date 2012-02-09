@@ -78,8 +78,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,
-    };
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
     private Map<Long, IngestStatus> ingestStatus;
     private Map<String, List<FsContent>> reportedHits; //already reported hits
 
@@ -117,9 +116,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         //handle case if previous search running
         //cancel it, will re-run after final commit
         //note: cancellation of Searcher worker is graceful (between keywords)
-        if (searcher != null)
+        if (searcher != null) {
             searcher.cancel(true);
-        
+        }
+
         //final commit
         commit();
 
@@ -131,8 +131,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             finalRun = true;
             searcher = new Searcher(keywords);
             searcher.execute();
-        }
-        else {
+        } else {
             managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
         }
         //postSummary();
@@ -179,6 +178,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "No keywords in keyword list.  Will index and skip search."));
         }
 
+        finalRun = false;
         searcherDone = true; //make sure to start the initial searcher
         //keeps track of all results per run not to repeat reporting the same hits
         currentResults = new HashMap<Keyword, List<FsContent>>();
@@ -363,12 +363,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         Searcher(List<Keyword> keywords) {
             this.keywords = keywords;
-            StringBuilder sb = new StringBuilder();
-            for (Keyword k : keywords) {
-                sb.append(k.getQuery()).append(" ");
-            }
-            logger.log(Level.INFO, "got keywords: " + sb.toString());
-
         }
 
         @Override
@@ -377,7 +371,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             //slight chance if interals are tight or data sets are large
             //(would still work, but for performance reasons)
             searcherDone = false;
-            logger.log(Level.INFO, "Starting search");
+            //logger.log(Level.INFO, "Starting search");
 
             progress = ProgressHandleFactory.createHandle("Keyword Search", new Cancellable() {
 
@@ -396,7 +390,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 }
                 final String queryStr = query.getQuery();
 
-                logger.log(Level.INFO, "Searching: " + queryStr);
+                //logger.log(Level.INFO, "Searching: " + queryStr);
 
                 progress.progress(queryStr, numSearched);
 
@@ -464,28 +458,36 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             String snippet = null;
                             try {
                                 snippet = LuceneQuery.getSnippet(queryStr, hitFile.getId());
-                                if (snippet != null) {
-                                    //escape in case of garbage so that sql accepts it
-                                    snippet = URLEncoder.encode(snippet, "UTF-8");
-                                }
-                            } catch (UnsupportedEncodingException ex) {
                             } catch (Exception e) {
                                 logger.log(Level.INFO, "Error querying snippet: " + queryStr, e);
                             }
-                            try {
-                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "keyword", queryStr));
-                                //snippet
-                                if (snippet != null) {
+                            if (snippet != null) {
+                                try {
                                     bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
+                                } catch (Exception e1) {
+                                    logger.log(Level.INFO, "Error adding bb snippet attribute, will encode and retry", e1);
+                                    try {
+                                        //escape in case of garbage so that sql accepts it
+                                        snippet = URLEncoder.encode(snippet, "UTF-8");
+                                        bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
+                                    }
+                                    catch (Exception e2) {
+                                        logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
+                                    }
                                 }
+                            }
+                            try {
+                                //keyword
+                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "keyword", queryStr));
                                 //bogus 
                                 bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "keyword", ""));
                             } catch (Exception e) {
                                 logger.log(Level.INFO, "Error adding bb attribute", e);
                             }
                         } else {
+                            //regex case
                             try {
-                                //regex
+                                //regex keyword
                                 bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "keyword", queryStr));
                                 //bogus
                                 bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "keyword", ""));
@@ -508,11 +510,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             String snippet = null;
                             try {
                                 snippet = LuceneQuery.getSnippet(termSnipQuery, hitFile.getId());
-                                if (snippet != null) {
-                                    //escape in case of garbage so that sql accepts it
-                                    snippet = URLEncoder.encode(snippet, "UTF-8");
-                                }
-                            } catch (UnsupportedEncodingException ex) {
                             } catch (Exception e) {
                                 logger.log(Level.INFO, "Error querying snippet: " + termSnipQuery, e);
                             }
@@ -521,7 +518,14 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                 try {
                                     bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
                                 } catch (Exception e) {
-                                    logger.log(Level.INFO, "Error adding bb attribute", e);
+                                    logger.log(Level.INFO, "Error adding bb snippet attribute, will encode and retry", e);
+                                    try {
+                                        //escape in case of garbage so that sql accepts it
+                                        snippet = URLEncoder.encode(snippet, "UTF-8");
+                                        bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
+                                    } catch (Exception e2) {
+                                        logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
+                                    }
                                 }
                             }
 
@@ -534,11 +538,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     //TODO use has data evt
                     IngestManager.firePropertyChange(IngestManager.SERVICE_STARTED_EVT, MODULE_NAME);
                     IngestManager.firePropertyChange(IngestManager.SERVICE_HAS_DATA_EVT, MODULE_NAME);
-
-
                 }
-
-
                 progress.progress(queryStr, ++numSearched);
             }
 
@@ -552,9 +552,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
             progress.finish();
 
-            logger.log(Level.INFO, "Finished search");
-            if (finalRun)
+            //logger.log(Level.INFO, "Finished search");
+            if (finalRun) {
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
+            }
         }
     }
 }
