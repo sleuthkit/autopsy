@@ -40,7 +40,7 @@ public class SearchFiltersNode extends AbstractNode implements DisplayableItemNo
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-        throw new UnsupportedOperationException("Not supported yet.");
+       return v.visit(this);
     }
     
 }

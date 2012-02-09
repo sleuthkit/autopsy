@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -63,11 +64,19 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
         return query;
     }
     
-    private List<? extends Content> runQuery(){
-        List<? extends Content> list = new ArrayList<FsContent>();
+    private List<FsContent> runQuery(){
+        List<FsContent> list = new ArrayList<FsContent>();
         try {
             ResultSet rs = skCase.runQuery(createQuery());
-            return skCase.resultSetToFsContents(rs);
+            for(FsContent c : skCase.resultSetToFsContents(rs)){
+                if(!c.getName().equals(".") && !c.getName().equals("..")){
+                    list.add(c);
+                }
+            }
+            Statement s = rs.getStatement();
+            rs.close();
+            if (s != null)
+                s.close();
         } catch (SQLException ex) {
             Logger.getLogger(FileSearchFilterChildren.class.getName())
                     .log(Level.INFO, "Couldn't get search results", ex);
