@@ -23,7 +23,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.TypeWrapper;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
@@ -97,7 +96,7 @@ abstract class AbstractContentChildren extends Keys<Object> {
         }
 
         @Override
-        public AbstractNode visit(TypeWrapper a) {
+        public AbstractNode visit(BlackboardArtifact.ARTIFACT_TYPE a) {
             return defaultVisit(a);
         }
 
@@ -125,6 +124,11 @@ abstract class AbstractContentChildren extends Keys<Object> {
         @Override
         public AbstractNode visit(SearchFilters sf) {
             return new SearchFiltersNode(sf.getSleuthkitCase());
+        }
+        
+        @Override
+        public AbstractNode visit(RecentFiles rf) {
+            return new RecentFilesNode(rf.getSleuthkitCase());
         }
 
         @Override

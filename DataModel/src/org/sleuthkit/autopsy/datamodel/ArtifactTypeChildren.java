@@ -36,9 +36,9 @@ import org.sleuthkit.datamodel.TskException;
 class ArtifactTypeChildren extends ChildFactory<BlackboardArtifact>{
     
     private SleuthkitCase skCase;
-    private BlackboardArtifact.TypeWrapper type;
+    private BlackboardArtifact.ARTIFACT_TYPE type;
 
-    public ArtifactTypeChildren(BlackboardArtifact.TypeWrapper type, SleuthkitCase skCase) {
+    public ArtifactTypeChildren(BlackboardArtifact.ARTIFACT_TYPE type, SleuthkitCase skCase) {
         this.skCase = skCase;
         this.type = type;
     }
@@ -46,7 +46,7 @@ class ArtifactTypeChildren extends ChildFactory<BlackboardArtifact>{
     @Override
     protected boolean createKeys(List<BlackboardArtifact> list) {
         try {
-            list.addAll(skCase.getBlackboardArtifacts(type.getTypeId()));
+            list.addAll(skCase.getBlackboardArtifacts(type.getTypeID()));
         } catch (TskException ex) {
             Logger.getLogger(ArtifactTypeChildren.class.getName())
                     .log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex);

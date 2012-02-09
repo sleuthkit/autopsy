@@ -18,21 +18,18 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  *
  * @author dfickling
  */
-public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.TypeWrapper> {
+public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.ARTIFACT_TYPE> {
     
     private SleuthkitCase skCase;
 
@@ -42,18 +39,13 @@ public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.Ty
     }
 
     @Override
-    protected boolean createKeys(List<BlackboardArtifact.TypeWrapper> list) {
-        try {
-            list.addAll(skCase.getBlackboardArtifactTypes());
-        } catch (TskException ex) {
-            Logger.getLogger(ExtractedContentChildren.class.getName())
-                    .log(Level.SEVERE, "Couldn't get all artifact types from db", ex);
-        }
+    protected boolean createKeys(List<BlackboardArtifact.ARTIFACT_TYPE> list) {
+        list.addAll(Arrays.asList(BlackboardArtifact.ARTIFACT_TYPE.values()));
         return true;
     }
     
     @Override
-    protected Node createNodeForKey(BlackboardArtifact.TypeWrapper key){
+    protected Node createNodeForKey(BlackboardArtifact.ARTIFACT_TYPE key){
         return new ArtifactTypeNode(key, skCase);
     }
     
