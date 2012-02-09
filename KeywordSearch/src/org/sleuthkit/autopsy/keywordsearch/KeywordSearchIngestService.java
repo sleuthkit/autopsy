@@ -18,7 +18,10 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,21 +30,30 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
 //service provider registered in layer.xml
 public final class KeywordSearchIngestService implements IngestServiceFsContent {
 
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestService.class.getName());
+    public static final String MODULE_NAME = "Keyword Search";
     private static KeywordSearchIngestService instance = null;
     private IngestManagerProxy managerProxy;
     private static final long MAX_STRING_EXTRACT_SIZE = 10 * (1 << 10) * (1 << 10);
@@ -50,13 +62,15 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runTimer = false;
     private List<Keyword> keywords; //keywords to search
-    private final Object lock = new Object();
+    //private final Object lock = new Object();
     private Thread timer;
     private Indexer indexer;
     private SwingWorker searcher;
     private volatile boolean searcherDone = true;
     private Map<Keyword, List<FsContent>> currentResults;
     private volatile int messageID = 0;
+    private volatile boolean finalRun = false;
+    private final SleuthkitCase caseHandle = Case.getCurrentCase().getSleuthkitCase();
     private static final String[] ingestibleExtensions = {"tar", "jar", "zip", "bzip2",
         "gz", "tgz", "doc", "xls", "ppt", "rtf", "pdf", "html", "xhtml", "txt",
         "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
@@ -64,7 +78,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED_EXTRACTION,};
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,
+    };
     private Map<Long, IngestStatus> ingestStatus;
     private Map<String, List<FsContent>> reportedHits; //already reported hits
 
@@ -77,13 +92,14 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     @Override
     public void process(FsContent fsContent) {
-        //enqueue(fsContent);
-        if (commitIndex) {
+        //check if time to commit and previous search is not running
+        //commiting while searching causes performance issues
+        if (commitIndex && searcherDone) {
             logger.log(Level.INFO, "Commiting index");
             commit();
             commitIndex = false;
             indexChangeNotify();
-            //start search
+            //start search if previous not running
             if (keywords != null && !keywords.isEmpty() && searcherDone) {
                 searcher = new Searcher(keywords);
                 searcher.execute();
@@ -98,6 +114,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         logger.log(Level.INFO, "complete()");
         runTimer = false;
 
+        //handle case if previous search running
+        //cancel it, will re-run after final commit
+        //note: cancellation of Searcher worker is graceful (between keywords)
+        if (searcher != null)
+            searcher.cancel(true);
+        
+        //final commit
         commit();
 
         //signal a potential change in number of indexed files
@@ -105,18 +128,20 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         //run one last search as there are probably some new files committed
         if (keywords != null && !keywords.isEmpty()) {
+            finalRun = true;
             searcher = new Searcher(keywords);
             searcher.execute();
         }
-
-        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
+        else {
+            managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
+        }
         //postSummary();
     }
 
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
-        
+
         //stop timer
         runTimer = false;
         //stop searcher
@@ -124,7 +149,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             searcher.cancel(true);
         }
 
-        //commit uncommited files
+        //commit uncommited files, don't search again
         commit();
 
         indexChangeNotify();
@@ -133,13 +158,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     @Override
     public String getName() {
-        return "Keyword Search";
+        return MODULE_NAME;
     }
 
     @Override
     public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init()");
-        
+
         this.managerProxy = managerProxy;
 
         final Server.Core solrCore = KeywordSearch.getServer().getCore();
@@ -149,15 +174,15 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         reportedHits = new HashMap<String, List<FsContent>>();
 
-        keywords = KeywordSearchListTopComponent.getDefault().getAllKeywords();
+        keywords = new ArrayList(KeywordSearchListTopComponent.getDefault().getAllKeywords());
         if (keywords.isEmpty()) {
             managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "No keywords in keyword list.  Will index and skip search."));
         }
 
         searcherDone = true; //make sure to start the initial searcher
         //keeps track of all results per run not to repeat reporting the same hits
-        currentResults = new HashMap<Keyword, List<FsContent>>(); 
-        
+        currentResults = new HashMap<Keyword, List<FsContent>>();
+
         indexer = new Indexer();
 
         //final int commitIntervalMs = managerProxy.getUpdateFrequency() * 1000;
@@ -166,7 +191,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         timer = new CommitTimer(commitIntervalMs);
         runTimer = true;
         timer.start();
-   
+
         managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Started"));
     }
 
@@ -180,9 +205,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     }
 
     private void commit() {
-        synchronized (lock) {
-            ingester.commit();
-        }
+        ingester.commit();
+
     }
 
     private void postSummary() {
@@ -197,7 +221,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 case EXTRACTED_INGESTED:
                     ++indexed_extr;
                     break;
-                case SKIPPED_EXTRACTION:
+                case SKIPPED:
                     ++skipped;
                     break;
                 default:
@@ -270,6 +294,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 logger.log(Level.INFO, "Problem extracting string from file: '" + f.getName() + "' (id: " + f.getId() + ").", tskEx);
             } catch (IngesterException ingEx) {
                 logger.log(Level.INFO, "Ingester had a problem with extracted strings from file '" + f.getName() + "' (id: " + f.getId() + ").", ingEx);
+            } catch (Exception ingEx) {
+                logger.log(Level.INFO, "Ingester had a problem with extracted strings from file '" + f.getName() + "' (id: " + f.getId() + ").", ingEx);
             }
             return success;
         }
@@ -282,7 +308,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             }
 
             if (size == 0 || size > MAX_INDEX_SIZE) {
-                ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED_EXTRACTION);
+                ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                 return;
             }
 
@@ -301,7 +327,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     ingester.ingest(fsContent);
                     ingestStatus.put(fsContent.getId(), IngestStatus.INGESTED);
                 } catch (IngesterException e) {
-                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED_EXTRACTION);
+                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+                    //try to extract strings
+                    processNonIngestible(fsContent);
+
+                } catch (Exception e) {
+                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
                     processNonIngestible(fsContent);
 
@@ -319,7 +350,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     ingestStatus.put(fsContent.getId(), IngestStatus.EXTRACTED_INGESTED);
                 }
             } else {
-                ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED_EXTRACTION);
+                ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
             }
         }
     }
@@ -328,9 +359,16 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         private List<Keyword> keywords;
         private ProgressHandle progress;
+        private final Logger logger = Logger.getLogger(Searcher.class.getName());
 
         Searcher(List<Keyword> keywords) {
             this.keywords = keywords;
+            StringBuilder sb = new StringBuilder();
+            for (Keyword k : keywords) {
+                sb.append(k.getQuery()).append(" ");
+            }
+            logger.log(Level.INFO, "got keywords: " + sb.toString());
+
         }
 
         @Override
@@ -338,7 +376,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             //make sure other searchers are not spawned 
             //slight chance if interals are tight or data sets are large
             //(would still work, but for performance reasons)
-            searcherDone = false; 
+            searcherDone = false;
+            logger.log(Level.INFO, "Starting search");
 
             progress = ProgressHandleFactory.createHandle("Keyword Search", new Cancellable() {
 
@@ -356,56 +395,147 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     return null;
                 }
                 final String queryStr = query.getQuery();
+
+                logger.log(Level.INFO, "Searching: " + queryStr);
+
                 progress.progress(queryStr, numSearched);
 
                 KeywordSearchQuery del = null;
 
                 if (query.isLiteral()) {
-                    del = new LuceneQuery(query.getQuery());
+                    del = new LuceneQuery(queryStr);
                 } else {
-                    del = new TermComponentQuery(query.getQuery());
+                    del = new TermComponentQuery(queryStr);
                 }
 
                 if (query.isLiteral()) {
                     del.escape();
                 }
 
-                List<FsContent> queryResult = del.performQuery();
-                
+                List<FsContent> queryResult = null;
+
+                try {
+                    queryResult = del.performQuery();
+                } catch (Exception e) {
+                    logger.log(Level.INFO, "Error performing query: " + query.getQuery(), e);
+                    continue;
+                }
+
                 //calculate new results but substracting results already obtained in this run
                 List<FsContent> newResults = new ArrayList<FsContent>();
-                
+
                 List<FsContent> curResults = currentResults.get(query);
                 if (curResults == null) {
                     currentResults.put(query, queryResult);
                     newResults = queryResult;
-                }
-                else {
+                } else {
                     for (FsContent res : queryResult) {
-                        if (! curResults.contains(res)) {
+                        if (!curResults.contains(res)) {
                             //add to new results
                             newResults.add(res);
                         }
                     }
                     //update current result with new ones
                     curResults.addAll(newResults);
-                    
+
                 }
 
                 if (!newResults.isEmpty()) {
-                    logger.log(Level.INFO, "NEW RESULT (0) " + newResults.get(0).getId());
                     StringBuilder sb = new StringBuilder();
                     final int hitFiles = newResults.size();
                     sb.append("New hit: ").append("<").append(queryStr);
-                    if ( ! query.isLiteral())
-                        sb.append("(regex)");
+                    if (!query.isLiteral()) {
+                        sb.append(" (regex)");
+                    }
                     sb.append(">");
-                    sb.append(" in ").append(hitFiles).append((hitFiles>1?" files":" file"));
-                    managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, instance, sb.toString() ));
-                    
-                     //TODO
-                    //post only new results to black board
-                    //update viewer
+                    sb.append(" in ").append(hitFiles).append((hitFiles > 1 ? " files" : " file"));
+                    managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, instance, sb.toString()));
+
+                    //write results to BB
+                    for (FsContent hitFile : newResults) {
+                        BlackboardArtifact bba = null;
+                        try {
+                            bba = hitFile.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+                        } catch (Exception e) {
+                            logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
+                            continue;
+                        }
+                        if (query.isLiteral()) {
+                            String snippet = null;
+                            try {
+                                snippet = LuceneQuery.getSnippet(queryStr, hitFile.getId());
+                                if (snippet != null) {
+                                    //escape in case of garbage so that sql accepts it
+                                    snippet = URLEncoder.encode(snippet, "UTF-8");
+                                }
+                            } catch (UnsupportedEncodingException ex) {
+                            } catch (Exception e) {
+                                logger.log(Level.INFO, "Error querying snippet: " + queryStr, e);
+                            }
+                            try {
+                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "keyword", queryStr));
+                                //snippet
+                                if (snippet != null) {
+                                    bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
+                                }
+                                //bogus 
+                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "keyword", ""));
+                            } catch (Exception e) {
+                                logger.log(Level.INFO, "Error adding bb attribute", e);
+                            }
+                        } else {
+                            try {
+                                //regex
+                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "keyword", queryStr));
+                                //bogus
+                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "keyword", ""));
+                            } catch (Exception e) {
+                                logger.log(Level.INFO, "Error adding bb attribute", e);
+                            }
+                            //build preview query from terms
+                            StringBuilder termSb = new StringBuilder();
+                            Collection<Term> terms = del.getTerms();
+                            int i = 0;
+                            final int total = terms.size();
+                            for (Term term : terms) {
+                                termSb.append(term.getTerm());
+                                if (i < total - 1) {
+                                    termSb.append(" "); //OR
+                                }
+                                ++i;
+                            }
+                            final String termSnipQuery = termSb.toString();
+                            String snippet = null;
+                            try {
+                                snippet = LuceneQuery.getSnippet(termSnipQuery, hitFile.getId());
+                                if (snippet != null) {
+                                    //escape in case of garbage so that sql accepts it
+                                    snippet = URLEncoder.encode(snippet, "UTF-8");
+                                }
+                            } catch (UnsupportedEncodingException ex) {
+                            } catch (Exception e) {
+                                logger.log(Level.INFO, "Error querying snippet: " + termSnipQuery, e);
+                            }
+
+                            if (snippet != null) {
+                                try {
+                                    bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
+                                } catch (Exception e) {
+                                    logger.log(Level.INFO, "Error adding bb attribute", e);
+                                }
+                            }
+
+                            //TODO add all terms that matched to attribute
+                        }
+
+                    }
+
+                    //update artifact browser
+                    //TODO use has data evt
+                    IngestManager.firePropertyChange(IngestManager.SERVICE_STARTED_EVT, MODULE_NAME);
+                    IngestManager.firePropertyChange(IngestManager.SERVICE_HAS_DATA_EVT, MODULE_NAME);
+
+
                 }
 
 
@@ -418,10 +548,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         @Override
         protected void done() {
             super.done();
+            searcherDone = true;  //next searcher can start      
 
             progress.finish();
-            
-            searcherDone = true;  //next searcher can start      
+
+            logger.log(Level.INFO, "Finished search");
+            if (finalRun)
+                managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
         }
     }
 }

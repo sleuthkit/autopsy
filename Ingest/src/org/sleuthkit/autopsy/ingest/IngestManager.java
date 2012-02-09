@@ -57,7 +57,7 @@ public class IngestManager {
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private IngestTopComponent tc;
     private IngestManagerStats stats;
-    private int updateFrequency;
+    private volatile int updateFrequency = 60; //in seconds
     //queues
     private final ImageQueue imageQueue = new ImageQueue();   // list of services and images to analyze
     private final FsContentQueue fsContentQueue = new FsContentQueue();
@@ -76,11 +76,12 @@ public class IngestManager {
 
     private enum IngestManagerEvents {
 
-        SERVICE_STARTED, SERVICE_COMPLETED, SERVICE_STOPPED
+        SERVICE_STARTED, SERVICE_COMPLETED, SERVICE_STOPPED, SERVICE_HAS_DATA
     };
     public final static String SERVICE_STARTED_EVT = IngestManagerEvents.SERVICE_STARTED.name();
     public final static String SERVICE_COMPLETED_EVT = IngestManagerEvents.SERVICE_COMPLETED.name();
     public final static String SERVICE_STOPPED_EVT = IngestManagerEvents.SERVICE_STOPPED.name();
+    public final static String SERVICE_HAS_DATA_EVT = IngestManagerEvents.SERVICE_HAS_DATA.name();
     //initialization
     //private boolean initialized = false;
 
@@ -101,7 +102,7 @@ public class IngestManager {
         pcs.addPropertyChangeListener(l);
     }
 
-    static synchronized void firePropertyChange(String property, String serviceName) {
+    public static synchronized void firePropertyChange(String property, String serviceName) {
         pcs.firePropertyChange(property, serviceName, null);
     }
 
@@ -271,11 +272,11 @@ public class IngestManager {
     }
 
     /**
-     * returns the current minimal update frequency setting
-     * Services should call this between processing iterations to get current setting
+     * returns the current minimal update frequency setting in seconds
+     * Services should call this at init() to get current setting
      * and use the setting to change notification and data refresh intervals
      */
-    synchronized int getUpdateFrequency() {
+    int getUpdateFrequency() {
         return updateFrequency;
     }
 
@@ -283,7 +284,7 @@ public class IngestManager {
      * set new minimal update frequency services should use
      * @param frequency 
      */
-    synchronized void setUpdateFrequency(int frequency) {
+    void setUpdateFrequency(int frequency) {
         this.updateFrequency = frequency;
     }
 
