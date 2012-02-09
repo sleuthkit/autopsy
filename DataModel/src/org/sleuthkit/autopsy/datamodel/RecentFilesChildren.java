@@ -18,43 +18,33 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  *
  * @author dfickling
  */
-class ArtifactTypeChildren extends ChildFactory<BlackboardArtifact>{
+public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFilter>{
     
-    private SleuthkitCase skCase;
-    private BlackboardArtifact.ARTIFACT_TYPE type;
-
-    public ArtifactTypeChildren(BlackboardArtifact.ARTIFACT_TYPE type, SleuthkitCase skCase) {
+    SleuthkitCase skCase;
+    
+    public RecentFilesChildren(SleuthkitCase skCase) {
         this.skCase = skCase;
-        this.type = type;
     }
 
     @Override
-    protected boolean createKeys(List<BlackboardArtifact> list) {
-        try {
-            list.addAll(skCase.getBlackboardArtifacts(type.getTypeID()));
-        } catch (TskException ex) {
-            Logger.getLogger(ArtifactTypeChildren.class.getName())
-                    .log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex);
-        }
+    protected boolean createKeys(List<RecentFiles.RecentFilesFilter> list) {
+        list.addAll(Arrays.asList(RecentFiles.RecentFilesFilter.values()));
         return true;
     }
     
     @Override
-    protected Node createNodeForKey(BlackboardArtifact key){
-        return new BlackboardArtifactNode(key);
+    protected Node createNodeForKey(RecentFiles.RecentFilesFilter key){
+        return new RecentFilesFilterNode(skCase, key);
     }
     
 }

@@ -40,6 +40,10 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(FileSearchFilterNode fsfn);
 
     T visit(SearchFiltersNode sfn);
+    
+    T visit(RecentFilesNode rfn);
+    
+    T visit(RecentFilesFilterNode rffn);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -98,6 +102,16 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(SearchFiltersNode sfn){
             return defaultVisit(sfn);
+        }
+        
+        @Override
+        public T visit(RecentFilesNode rfn) {
+            return defaultVisit(rfn);
+        }
+        
+        @Override
+        public T visit(RecentFilesFilterNode rffn) {
+            return defaultVisit(rffn);
         }
     }
 }

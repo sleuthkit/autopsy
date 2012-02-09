@@ -27,6 +27,8 @@ public interface AutopsyItemVisitor<T> {
     T visit(ExtractedContent ec);
     T visit(SearchFilters sf);
     T visit(SearchFilters.FileSearchFilter fsf);
+    T visit(RecentFiles rf);
+    T visit(RecentFiles.RecentFilesFilter rff);
     
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
@@ -45,6 +47,16 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(SearchFilters.FileSearchFilter fsf) {
             return defaultVisit(fsf);
+        }
+        
+        @Override
+        public T visit(RecentFiles rf) {
+            return defaultVisit(rf);
+        }
+        
+        @Override
+        public T visit(RecentFiles.RecentFilesFilter rff) {
+            return defaultVisit(rff);
         }
     }
 }

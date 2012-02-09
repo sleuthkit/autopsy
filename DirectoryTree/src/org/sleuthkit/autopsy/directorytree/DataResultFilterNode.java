@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
+import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.datamodel.Content;
 
 
@@ -206,6 +207,11 @@ public class DataResultFilterNode extends FilterNode{
         @Override
         public AbstractAction visit(FileSearchFilterNode fsfn){
             return openChild(fsfn);
+        }
+        
+        @Override
+        public AbstractAction visit(RecentFilesFilterNode rffn) {
+            return openChild(rffn);
         }
         
         @Override
