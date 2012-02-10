@@ -11,9 +11,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -30,13 +30,18 @@ public class ExtractRegistry {
     
     
     
-public void getregistryfiles(){
+public void getregistryfiles(List<String> image, IngestImageWorkerController controller){
  try 
         {   
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+             String allFS = new String();
+            for(String img : image)
+            {
+               allFS += " and fs_obj_id = '" + img + "'";
+            }
             List<FsContent> Regfiles;  
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where lower(name) = 'ntuser.dat' OR lower(parent_path) LIKE '%/system32/config%' and (name = 'system' OR name = 'software' OR name = 'SECURITY' OR name = 'SAM' OR name = 'default')");
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where lower(name) = 'ntuser.dat' OR lower(parent_path) LIKE '%/system32/config%' and (name = 'system' OR name = 'software' OR name = 'SECURITY' OR name = 'SAM' OR name = 'default')" + allFS);
             Regfiles = tempDb.resultSetToFsContents(rs);
             
             int j = 0;
@@ -54,7 +59,7 @@ public void getregistryfiles(){
              //Now fetch the results, parse them and the delete the files.
              if(regSuccess)
              {
-                //Delete index<n>.dat file since it was succcessfully by Pasco
+                //Delete dat file since it was succcessfully by Pasco
                 regFile.delete();
              }
                 j++;
@@ -73,7 +78,7 @@ public void getregistryfiles(){
         }
 }
 
-//Simple wrapper to JavaSystemCaller.Exec() to execute pasco2 jar
+
     // TODO: Hardcoded command args/path needs to be removed. Maybe set some constants and set env variables for classpath
     // I'm not happy with this code. Can't stand making a system call, is not an acceptable solution but is a hack for now.
 	private  boolean executeRegRip(String regFilePath, int fileIndex)
@@ -94,7 +99,7 @@ public void getregistryfiles(){
                 }
                 if(regFilePath.toLowerCase().contains("ntuser"))
                 {
-                    type = "ntuser";
+                    type = "autopsy";
                 }
                 if(regFilePath.toLowerCase().contains("default"))
                 {

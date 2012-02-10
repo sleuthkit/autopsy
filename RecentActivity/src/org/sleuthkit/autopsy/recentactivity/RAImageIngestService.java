@@ -18,14 +18,20 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceImage;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.FileSystem;
 
 /**
  * Example implementation of an image ingest service 
@@ -54,13 +60,26 @@ public final class RAImageIngestService implements IngestServiceImage {
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
         //logger.log(Level.INFO, "process() " + this.toString());
+
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
 
         ExtractAll ext = new ExtractAll();
-
+         Case currentCase = Case.getCurrentCase(); // get the most updated case
+         SleuthkitCase sCurrentCase = currentCase.getSleuthkitCase();
+           //long imageId = image.getId();
+         Collection<FileSystem> imageFS = sCurrentCase.getFileSystems(image);
+         List<String> fsIds = new LinkedList<String>();
+         for(FileSystem img : imageFS ){
+             Long tempID = img.getId();
+              fsIds.add(tempID.toString());
+         }
+         
         try {
-            //do the work
-            ext.extractToBlackboard(controller);
+            //do the work for(FileSystem img : imageFS )
+         
+             ext.extractToBlackboard(controller, fsIds);
+          
+            
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error extracting recent activity", e);
