@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,6 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
+import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -443,12 +443,14 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, instance, sb.toString()));
 
                     //write results to BB
+                    Collection<Long> newArtifacts = new ArrayList<Long>(); //new artifacts to report
                     for (FsContent hitFile : newResults) {
                         Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
                         if (query.isLiteral()) {
                             BlackboardArtifact bba = null;
                             try {
                                 bba = hitFile.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+                                newArtifacts.add(bba.getArtifactID());
                             } catch (Exception e) {
                                 logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
                                 continue;
@@ -510,6 +512,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                     BlackboardArtifact bba = null;
                                     try {
                                         bba = hitFile.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+                                        newArtifacts.add(bba.getArtifactID());
                                     } catch (Exception e) {
                                         logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
                                         continue;
@@ -546,9 +549,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     } //for each file hit
 
                     //update artifact browser
-                    //TODO use has data evt
-                    IngestManager.firePropertyChange(IngestManager.SERVICE_STARTED_EVT, MODULE_NAME);
-                    IngestManager.firePropertyChange(IngestManager.SERVICE_HAS_DATA_EVT, MODULE_NAME);
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                 }
                 progress.progress(queryStr, ++numSearched);
             }

@@ -102,8 +102,12 @@ public class IngestManager {
         pcs.addPropertyChangeListener(l);
     }
 
-    public static synchronized void firePropertyChange(String property, String serviceName) {
-        pcs.firePropertyChange(property, serviceName, null);
+    public static synchronized void fireServiceEvent(String eventType, String serviceName) {
+        pcs.firePropertyChange(eventType, serviceName, null);
+    }
+
+    public static synchronized void fireServiceDataEvent(ServiceDataEvent serviceDataEvent) {
+        pcs.firePropertyChange(SERVICE_HAS_DATA_EVT, serviceDataEvent, null);
     }
 
     /**
@@ -112,19 +116,19 @@ public class IngestManager {
      * @param images images to execute services on
      */
     void execute(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
-        logger.log(Level.INFO, "Will enqueue number of images: " + images.size() );
+        logger.log(Level.INFO, "Will enqueue number of images: " + images.size());
         /*if (!initialized) {
-            //one time initialization of services
-
-            //image services are now initialized per instance
-            //for (IngestServiceImage s : imageServices) {
-            //    s.init(this);
-            //}
-
-            for (IngestServiceFsContent s : fsContentServices) {
-                s.init(this);
-            }
-            initialized = true;
+        //one time initialization of services
+        
+        //image services are now initialized per instance
+        //for (IngestServiceImage s : imageServices) {
+        //    s.init(this);
+        //}
+        
+        for (IngestServiceFsContent s : fsContentServices) {
+        s.init(this);
+        }
+        initialized = true;
         }*/
 
         tc.enableStartButton(false);
@@ -146,7 +150,7 @@ public class IngestManager {
     void execute(final Collection<IngestServiceAbstract> services, final Image image) {
         Collection<Image> images = new ArrayList<Image>();
         images.add(image);
-        logger.log(Level.INFO, "Will enqueue image: " + image.getName() );
+        logger.log(Level.INFO, "Will enqueue image: " + image.getName());
         execute(services, images);
     }
 
@@ -162,7 +166,7 @@ public class IngestManager {
     private synchronized void startAll() {
         logger.log(Level.INFO, "Image queue: " + this.imageQueue.toString());
         logger.log(Level.INFO, "File queue: " + this.fsContentQueue.toString());
-        
+
         //image ingesters
         // cycle through each image in the queue
         while (hasNextImage()) {
@@ -170,38 +174,38 @@ public class IngestManager {
             // get next image and set of services
             final QueueUnit<Image, IngestServiceImage> qu =
                     this.getNextImage();
-            
-            
+
+
             // check if each service for this image is already running
             //synchronized (this) {
-                for (IngestServiceImage quService : qu.services) {
-                    boolean alreadyRunning = false;
-                    for (IngestImageThread worker : imageIngesters) {
-                        // ignore threads that are on different images
-                        if (!worker.getImage().equals(qu.content)) {
-                            continue; //check next worker
-                        }
-                        //same image, check service (by name, not id, since different instances)
-                        if (worker.getService().getName().equals(quService.getName())) {
-                            alreadyRunning = true;
-                            logger.log(Level.INFO, "Image Ingester <" + qu.content + ", " + quService.getName() + "> is already running");
-                            break;
-                        }
+            for (IngestServiceImage quService : qu.services) {
+                boolean alreadyRunning = false;
+                for (IngestImageThread worker : imageIngesters) {
+                    // ignore threads that are on different images
+                    if (!worker.getImage().equals(qu.content)) {
+                        continue; //check next worker
                     }
-                    //checked all workers
-                    if (alreadyRunning == false) {
-                        logger.log(Level.INFO, "Starting new image Ingester <" + qu.content + ", " + quService.getName() + ">");
-                        IngestImageThread newImageWorker = new IngestImageThread(this, qu.content, quService);
-
-                        imageIngesters.add(newImageWorker);
-
-                        //image services are now initialized per instance
-                        quService.init(managerProxy);
-                        newImageWorker.execute();
-                        IngestManager.firePropertyChange(SERVICE_STARTED_EVT, quService.getName());
+                    //same image, check service (by name, not id, since different instances)
+                    if (worker.getService().getName().equals(quService.getName())) {
+                        alreadyRunning = true;
+                        logger.log(Level.INFO, "Image Ingester <" + qu.content + ", " + quService.getName() + "> is already running");
+                        break;
                     }
                 }
+                //checked all workers
+                if (alreadyRunning == false) {
+                    logger.log(Level.INFO, "Starting new image Ingester <" + qu.content + ", " + quService.getName() + ">");
+                    IngestImageThread newImageWorker = new IngestImageThread(this, qu.content, quService);
+
+                    imageIngesters.add(newImageWorker);
+
+                    //image services are now initialized per instance
+                    quService.init(managerProxy);
+                    newImageWorker.execute();
+                    IngestManager.fireServiceEvent(SERVICE_STARTED_EVT, quService.getName());
+                }
             }
+        }
         //}
 
 
@@ -268,7 +272,7 @@ public class IngestManager {
             }
         }
 
-        logger.log(Level.INFO, "stopped all"); 
+        logger.log(Level.INFO, "stopped all");
     }
 
     /**
@@ -302,7 +306,7 @@ public class IngestManager {
      * IngestService should make an attempt not to publish the same message multiple times.
      * Viewer will attempt to identify duplicate messages and filter them out (slower)
      */
-     synchronized void postMessage(final IngestMessage message) {
+    synchronized void postMessage(final IngestMessage message) {
 
         if (stats != null) {
             //record the error for stats, if stats are running
@@ -750,8 +754,7 @@ public class IngestManager {
             Integer curServiceErrorI = errors.get(source);
             if (curServiceErrorI == null) {
                 errors.put(source, 1);
-            }
-            else {
+            } else {
                 errors.put(source, curServiceErrorI + 1);
             }
         }
@@ -777,7 +780,7 @@ public class IngestManager {
                 @Override
                 public void run() {
                     for (IngestServiceFsContent s : fsContentServices) {
-                        IngestManager.firePropertyChange(SERVICE_STARTED_EVT, s.getName());
+                        IngestManager.fireServiceEvent(SERVICE_STARTED_EVT, s.getName());
                     }
                 }
             });
@@ -835,7 +838,7 @@ public class IngestManager {
                 if (!this.isCancelled()) {
                     for (IngestServiceFsContent s : fsContentServices) {
                         s.complete();
-                        IngestManager.firePropertyChange(SERVICE_COMPLETED_EVT, s.getName());
+                        IngestManager.fireServiceEvent(SERVICE_COMPLETED_EVT, s.getName());
                     }
                 }
 
@@ -868,7 +871,7 @@ public class IngestManager {
         private void handleInterruption() {
             for (IngestServiceFsContent s : fsContentServices) {
                 s.stop();
-                IngestManager.firePropertyChange(SERVICE_STOPPED_EVT, s.getName());
+                IngestManager.fireServiceEvent(SERVICE_STOPPED_EVT, s.getName());
             }
             //empty queues
             emptyFsContents();
