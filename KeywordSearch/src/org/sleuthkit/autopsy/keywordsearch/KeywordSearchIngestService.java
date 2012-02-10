@@ -173,7 +173,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         reportedHits = new HashMap<String, List<FsContent>>();
 
-        keywords = new ArrayList(KeywordSearchListTopComponent.getDefault().getAllKeywords());
+        keywords = new ArrayList<Keyword>(KeywordSearchListTopComponent.getDefault().getAllKeywords());
         if (keywords.isEmpty()) {
             managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "No keywords in keyword list.  Will index and skip search."));
         }
