@@ -44,6 +44,8 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -74,8 +76,8 @@ public class ExtractIE { // implements BrowserActivity {
     
     boolean pascoFound = false;
 
-    public ExtractIE(int image) {
-        init(image);
+    public ExtractIE(List<String> image, IngestImageWorkerController controller) {
+        init(image, controller);
     }
 
     //@Override
@@ -83,7 +85,7 @@ public class ExtractIE { // implements BrowserActivity {
         return IE_PASCO_LUT;
     }
 
-    private void init(int image) {
+    private void init(List<String> image, IngestImageWorkerController controller) {
         final Case currentCase = Case.getCurrentCase();
         final String caseDir = Case.getCurrentCase().getCaseDirectory();
         PASCO_RESULTS_PATH = caseDir + File.separator + "recentactivity" + File.separator + "results";
@@ -111,9 +113,13 @@ public class ExtractIE { // implements BrowserActivity {
             resultsDir.mkdirs();
 
             Collection<FsContent> FsContentCollection;
-            indexDatQueryStr = indexDatQueryStr; // + " and fs_obj_id = '" + image + "'";
             tempDb = currentCase.getSleuthkitCase();
-            ResultSet rs = tempDb.runQuery(indexDatQueryStr);
+            String allFS = new String();
+            for(String img : image)
+            {
+               allFS += " and fs_obj_id = '" + img + "'";
+            }
+            ResultSet rs = tempDb.runQuery(indexDatQueryStr + allFS);
             FsContentCollection = tempDb.resultSetToFsContents(rs);
             rs.close();
             rs.getStatement().close(); 
@@ -131,6 +137,10 @@ public class ExtractIE { // implements BrowserActivity {
                 //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
                 temps = currentCase.getTempDirectory() + File.separator + indexFileName;
                 File datFile = new File(temps);
+                if (controller.isCancelled() ) {
+                 datFile.delete();
+                 break;
+                }  
                 try {
                     ContentUtils.writeToFile(fsc, datFile);
                 }
@@ -235,7 +245,6 @@ public class ExtractIE { // implements BrowserActivity {
                                       if(url.length > 1)
                                       {
                                        user = url[0];
-                  
                                        realurl = url[1];
                                        realurl = realurl.replace("Visited:", "");
                                        realurl = realurl.replace(":.*:", "");

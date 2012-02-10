@@ -16,6 +16,7 @@ import java.lang.*;
 import java.util.*;
 import java.io.File;
 import java.io.IOException;
+import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -38,14 +39,20 @@ public class Firefox {
        
    }
 
-       public void getffdb(int image){
+       public void getffdb(List<String> image, IngestImageWorkerController controller){
          //Make these seperate, this is for history
         try 
         {   
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+            String allFS = new String();
+            for(String img : image)
+            {
+               allFS += " and fs_obj_id = '" + img + "'";
+            }        
             List<FsContent> FFSqlitedb;  
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%places.sqlite%' and parent_path LIKE '%Firefox%' and fs_obj_id = '" + image + "'");
+
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%places.sqlite%' and parent_path LIKE '%Firefox%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
                     FireFoxCount = FFSqlitedb.size();
                       
@@ -54,12 +61,15 @@ public class Firefox {
             int j = 0;
      
             while (j < FFSqlitedb.size())
-            {
+            {         
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
                 ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 File dbFile = new File(temps);
-                 
+                if (controller.isCancelled() ) {
+                 dbFile.delete();
+                 break;
+                }  
                 
                 try
                 {
@@ -126,8 +136,13 @@ public class Firefox {
         {   
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+            String allFS = new String();
+            for(String img : image)
+            {
+               allFS += " and fs_obj_id = '" + img + "'";
+            }
             List<FsContent> FFSqlitedb;  
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%cookies.sqlite%' and parent_path LIKE '%Firefox%' and fs_obj_id = '" + image + "'");
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%cookies.sqlite%' and parent_path LIKE '%Firefox%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);   
             rs.close();
             rs.getStatement().close();  
@@ -139,6 +154,10 @@ public class Firefox {
                 String connectionString = "jdbc:sqlite:" + temps;
                 ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 File dbFile = new File(temps);
+                if (controller.isCancelled() ) {
+                 dbFile.delete();
+                 break;
+                }  
                  try
                 {
                    dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connectionString);

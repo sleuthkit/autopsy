@@ -96,7 +96,7 @@ if ($config{file}) {
 	
 	my %plugins = parsePluginsFile($config{file});
 	if (%plugins) {
-		logMsg("Parsed Plugins file.");
+		#logMsg("Parsed Plugins file.");
 	}
 	else {
 		logMsg("Plugins file not parsed.");
@@ -110,8 +110,8 @@ if ($config{file}) {
 		if ($@) {
 			logMsg("Error in ".$plugins{$i}.": ".$@);
 		}
-		logMsg($plugins{$i}." complete.");
-		rptMsg("-" x 40);
+		#logMsg($plugins{$i}." complete.");
+		#rptMsg("-" x 40);
 	}
 }
 
@@ -206,7 +206,6 @@ used if no other filename given is \"plugins\\plugins\"\.
   -s system name.....Server name (TLN support)
   -u username........User name (TLN support)
   -h.................Help (print this information)
-  
 Ex: C:\\>rr -r c:\\case\\system -f system
     C:\\>rr -r c:\\case\\ntuser.dat -p userassist
     C:\\>rr -l -c

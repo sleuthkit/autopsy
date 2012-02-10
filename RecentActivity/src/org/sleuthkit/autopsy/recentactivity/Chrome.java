@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import java.util.*;
 import java.io.File;
 import java.io.IOException;
+import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -37,16 +38,21 @@ public class Chrome {
  
    }
   
-     public void getchdb(int image){
+     public void getchdb(List<String> image, IngestImageWorkerController controller){
          
         try 
         {   
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             List<FsContent> FFSqlitedb;  
-            Map<String, Object> kvs = new LinkedHashMap<String, Object>();
+            Map<String, Object> kvs = new LinkedHashMap<String, Object>(); 
+            String allFS = new String();
+            for(String img : image)
+            {
+               allFS += " and fs_obj_id = '" + img + "'";
+            }
             
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' AND parent_path LIKE '%Chrome%' and fs_obj_id = '" + image + "'");
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' AND parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             ChromeCount = FFSqlitedb.size();
               
@@ -58,7 +64,11 @@ public class Chrome {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
                  ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
-                
+                File dbFile = new File(temps);
+                if (controller.isCancelled() ) {
+                 dbFile.delete();
+                 break;
+                }  
                 try
                 {
                    dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connectionString);
@@ -91,6 +101,7 @@ public class Chrome {
                  }
 		 
                 j++;
+               dbFile.delete();
             }
         }
         catch (SQLException ex) 
@@ -122,6 +133,10 @@ public class Chrome {
                 String connectionString = "jdbc:sqlite:" + temps;
                 ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 File dbFile = new File(temps);
+                if (controller.isCancelled() ) {
+                 dbFile.delete();
+                 break;
+                }  
                  try
                 {
                    dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connectionString);
@@ -182,6 +197,10 @@ public class Chrome {
                 String connectionString = "jdbc:sqlite:" + temps;
                 ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 File dbFile = new File(temps);
+                if (controller.isCancelled() ) {
+                 dbFile.delete();
+                 break;
+                }  
                  try
                 {
                    dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connectionString);

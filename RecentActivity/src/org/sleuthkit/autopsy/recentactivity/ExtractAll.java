@@ -4,6 +4,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.util.List;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 
 /**
@@ -16,27 +17,27 @@ public class ExtractAll {
             
         }
        
-       public boolean extractToBlackboard(IngestImageWorkerController controller, int image){
+       public boolean extractToBlackboard(IngestImageWorkerController controller, List<String> imgIds){
            controller.switchToDeterminate(3);
            try{
                // Will make registry entries later, comment out for DEMO ONLY
-               // ExtractRegistry eree = new ExtractRegistry();
-                //eree.getregistryfiles();
+                ExtractRegistry eree = new ExtractRegistry();
+                eree.getregistryfiles(imgIds, controller);
                controller.switchToDeterminate(3);
                
                 Firefox ffre = new Firefox();
-                ffre.getffdb(image);  
+                ffre.getffdb(imgIds, controller);  
                 controller.progress(1);
                 if (controller.isCancelled())
                     return true;
                 
                 Chrome chre = new Chrome();
-                chre.getchdb(image);
+                chre.getchdb(imgIds, controller);
                 controller.progress(2);
                 if (controller.isCancelled())
                     return true;
                 
-                ExtractIE eere = new ExtractIE(image);
+                ExtractIE eere = new ExtractIE(imgIds, controller);
                 eere.parsePascoResults();
                 controller.progress(3);
                 if (controller.isCancelled())
