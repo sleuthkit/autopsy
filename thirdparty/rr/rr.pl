@@ -255,7 +255,7 @@ sub go_Click {
 	logMsg("File: ".$env{ntuser});
 	logMsg("Environment set up.");
 	my %plugins = parsePluginsFile($pluginfile);
-	logMsg("Parsed Plugins file ".$pluginfile);
+	#logMsg("Parsed Plugins file ".$pluginfile);
 	if (scalar(keys %plugins) == 0) {
 		Win32::GUI::MessageBox($main,$ENV{USERNAME}.", the plugins file has no plugins!!.\r\n",
 		                       "Doh!!",16);
@@ -277,8 +277,9 @@ sub go_Click {
 		
 		Win32::GUI::DoEvents();
 		logMsg($err_cnt." plugins completed with errors.");
-		logMsg($plugins{$i}." complete.");
-		rptMsg("-" x 40);
+		#logMsg($plugins{$i}." complete.");
+		#rptMsg("-" x 40);
+		rptMsg("---");
 	}
 	$report->Append($err_cnt." plugins completed with errors.\r\n");
 	$status->Text("Done.");

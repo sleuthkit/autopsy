@@ -4,6 +4,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.util.List;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 
 /**
@@ -16,30 +17,34 @@ public class ExtractAll {
             
         }
        
-       public boolean extractToBlackboard(IngestImageWorkerController controller){
-           
+
+       public boolean extractToBlackboard(IngestImageWorkerController controller, List<String> imgIds){
+           controller.switchToDeterminate(3);
            try{
                // Will make registry entries later, comment out for DEMO ONLY
-               // ExtractRegistry eree = new ExtractRegistry();
-                //eree.getregistryfiles();
-               controller.switchToDeterminate(3);
+               controller.switchToDeterminate(4);
                controller.progress(0);
-               
-                Firefox ffre = new Firefox();
-                ffre.getffdb();  
+                ExtractRegistry eree = new ExtractRegistry();
+                eree.getregistryfiles(imgIds, controller);
                 controller.progress(1);
                 if (controller.isCancelled())
                     return true;
-                
-                Chrome chre = new Chrome();
-                chre.getchdb();
+               
+                Firefox ffre = new Firefox();
+                ffre.getffdb(imgIds, controller);  
                 controller.progress(2);
                 if (controller.isCancelled())
                     return true;
                 
-                ExtractIE eere = new ExtractIE();
-                eere.parsePascoResults();
+                Chrome chre = new Chrome();
+                chre.getchdb(imgIds, controller);
                 controller.progress(3);
+                if (controller.isCancelled())
+                    return true;
+                
+                ExtractIE eere = new ExtractIE(imgIds, controller);
+                eere.parsePascoResults();
+                controller.progress(4);
                 if (controller.isCancelled())
                     return true;
                 //Find a way to put these results into BB
@@ -51,29 +56,5 @@ public class ExtractAll {
            }
           
        }
-        public int getExtractCount(){
-           int count = 0;
-           try{
-               // Will make registry entries later, comment out for DEMO ONLY
-               // ExtractRegistry eree = new ExtractRegistry();
-                //eree.getregistryfiles();
-                Firefox ffre = new Firefox();
-                ffre.getffdb();
-                count = count + ffre.FireFoxCount;
-                Chrome chre = new Chrome();
-                chre.getchdb();
-                count = count + chre.ChromeCount;
-                
-               ExtractIE eere = new ExtractIE();
-               eere.parsePascoResults();
-               count = count + eere.PASCO_RESULTS_LIST.size();
-                //Find a way to put these results into BB
-              //  ArrayList<HashMap<String,Object>> IEresults = eere.PASCO_RESULTS_LIST; 
-                return count;
-           }
-           catch(Error e){
-               return 0;
-           }
-          
-       }
+      
 }

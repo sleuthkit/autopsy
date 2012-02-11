@@ -147,7 +147,13 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
                     final Image image = (Image) evt.getNewValue();
                     final IngestDialog ingestDialog = new IngestDialog();
                     ingestDialog.setImage(image);
-                    ingestDialog.display();
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            ingestDialog.display();
+                        }
+                    });
+
                 }
             }
         });
@@ -313,7 +319,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     @Override
     public void componentClosed() {
         logger.log(Level.INFO, "IngestTopComponent closed()");
-        
+
     }
 
     void enableStartButton(boolean enable) {
