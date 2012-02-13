@@ -201,13 +201,13 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         map.put(FsContentPropertyType.CHANGED_TIME.toString(), content.getCtimeAsDate());
         map.put(FsContentPropertyType.ACCESS_TIME.toString(), content.getAtimeAsDate());
         map.put(FsContentPropertyType.CREATED_TIME.toString(), content.getCrtimeAsDate());
-        map.put(FsContentPropertyType.SIZE.toString(), Long.toString(content.getSize()));
+        map.put(FsContentPropertyType.SIZE.toString(), content.getSize());
         map.put(FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlagsAsString());
         map.put(FsContentPropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
         map.put(FsContentPropertyType.MODE.toString(), content.getModeAsString());
-        map.put(FsContentPropertyType.USER_ID.toString(), Long.toString(content.getUid()));
-        map.put(FsContentPropertyType.GROUP_ID.toString(), Long.toString(content.getGid()));
-        map.put(FsContentPropertyType.META_ADDR.toString(), Long.toString(content.getMeta_addr()));
+        map.put(FsContentPropertyType.USER_ID.toString(), content.getUid());
+        map.put(FsContentPropertyType.GROUP_ID.toString(), content.getGid());
+        map.put(FsContentPropertyType.META_ADDR.toString(), content.getMeta_addr());
         map.put(FsContentPropertyType.ATTR_ADDR.toString(), Long.toString(content.getAttr_type()) + "-" + Long.toString(content.getAttr_id()));
         map.put(FsContentPropertyType.TYPE_DIR.toString(), content.getDirTypeAsString());
         map.put(FsContentPropertyType.TYPE_META.toString(), content.getMetaTypeAsString());

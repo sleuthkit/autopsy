@@ -56,7 +56,7 @@ public class IngestDialog extends JDialog {
     /**
      * Shows the Ingest dialog.
      */
-    void display() {
+    public void display() {
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
         // set the popUp window / JFrame
@@ -87,7 +87,7 @@ public class IngestDialog extends JDialog {
         setVisible(true);
     }
     
-    void setImage(Image image) {
+    public void setImage(Image image) {
         panel.setImage(image);
     }
     

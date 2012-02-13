@@ -214,8 +214,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 OutlineView ov = ((OutlineView) this.tableScrollPanel);
 
                 List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(getAllChildPropertyHeaders(selectedNode)));
-
-                tempProps.remove(0);
+                if(tempProps.size() > 0)
+                    tempProps.remove(0);
 
                 Node.Property[] props = tempProps.toArray(new Node.Property[tempProps.size()]);
 
@@ -224,10 +224,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 //First property column is sortable, but also sorted initially, so
                 //initially this one will have the arrow icon:
-                props[0].setValue("TreeColumnTTV", Boolean.TRUE); // Identifies special property representing first (tree) column.
-                props[0].setValue("ComparableColumnTTV", Boolean.TRUE); // This property column should be used for sorting.
-                props[0].setValue("SortingColumnTTV", Boolean.TRUE); // TreeTableView should be initially sorted by this property column.
-
+                if(props.length > 0){
+                    props[0].setValue("TreeColumnTTV", Boolean.TRUE); // Identifies special property representing first (tree) column.
+                    props[0].setValue("ComparableColumnTTV", Boolean.TRUE); // This property column should be used for sorting.
+                    props[0].setValue("SortingColumnTTV", Boolean.TRUE); // TreeTableView should be initially sorted by this property column.
+                }
+                
                 // The rest of the columns are sortable, but not initially sorted,
                 // so initially will have no arrow icon:
                 for (int i = 1; i < props.length; i++) {
@@ -252,8 +254,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 int totalColumns = props.length;
 
                 //int scrollWidth = ttv.getWidth();
-                int scrollWidth = ov.getWidth();
-                int minWidth = scrollWidth / totalColumns;
                 int margin = 4;
                 int startColumn = 1;
                 ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);

@@ -59,6 +59,11 @@ public interface IngestServiceAbstract {
     public ServiceType getType();
     
     /**
+     * @return is this service configurable?
+     */
+    public boolean isConfigurable();
+    
+    /**
      * provides means for user to input service specific configuration options
      * the new configuration is effective on next ingest
      */

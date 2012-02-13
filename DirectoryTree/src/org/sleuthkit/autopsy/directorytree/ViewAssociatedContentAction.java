@@ -16,27 +16,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.directorytree;
 
-import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
-import org.sleuthkit.datamodel.SleuthkitCase;
+import java.awt.event.ActionEvent;
+import javax.swing.AbstractAction;
+import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 
 /**
- *
- * @author dfickling
+ * View the content associated with the given BlackboardArtifactNode
  */
-public class ExtractedContentNode extends AbstractNode implements DisplayableItemNode{
-    
-    public ExtractedContentNode(SleuthkitCase skCase){
-        super(Children.create(new ExtractedContentChildren(skCase), true));
-        super.setName("Extracted Content");
-        super.setDisplayName("Extracted Content");
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/artifact-icon.png");
+class ViewAssociatedContentAction extends AbstractAction {
+
+    private BlackboardArtifactNode node;
+
+    public ViewAssociatedContentAction(String title, Node node) {
+        super(title);
+        this.node = (BlackboardArtifactNode) node;
     }
 
     @Override
-    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-        return v.visit(this);
+    public void actionPerformed(ActionEvent e) {
+        DataContentTopComponent.getDefault().setNode(node.getContentNode());
     }
 }

@@ -36,6 +36,7 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.FileSystem;
@@ -59,7 +60,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
         
         while (c.isOnto()) {
             try {
-                List<Content> children = c.getChildren();
+                List<? extends Content> children = c.getChildren();
                 if (!children.isEmpty()) {
                     c = c.getChildren().get(0);
                 } else {
@@ -291,7 +292,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
     }
 
     @Override
-    protected List<? extends Action> defaultVisit(Content c) {
+    protected List<? extends Action> defaultVisit(Content di) {
         return Collections.EMPTY_LIST;
     }
 }

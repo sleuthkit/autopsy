@@ -44,7 +44,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 import org.sleuthkit.datamodel.FsContent;
 
@@ -229,7 +229,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
      */
     private void publishNodes(List<Term> terms) {
 
-        Collection<KeyValueThing> things = new ArrayList<KeyValueThing>();
+        Collection<KeyValue> things = new ArrayList<KeyValue>();
 
         Iterator<Term> it = terms.iterator();
         int termID = 0;
@@ -241,7 +241,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
             final String match = term.getTerm();
             KeywordSearchResultFactory.setCommonProperty(kvs, KeywordSearchResultFactory.CommonPropertyTypes.MATCH, match);
             //setCommonProperty(kvs, CommonPropertyTypes.MATCH_RANK, Long.toString(matches));
-            things.add(new KeyValueThing(match, kvs, ++termID));
+            things.add(new KeyValue(match, kvs, ++termID));
             //totalMatches += matches;
         }
 

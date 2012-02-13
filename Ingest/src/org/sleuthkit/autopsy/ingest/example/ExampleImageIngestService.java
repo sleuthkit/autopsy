@@ -127,4 +127,9 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     public void userConfigure() {
         
     }
+
+    @Override
+    public boolean isConfigurable() {
+        return false;
+    }
 }

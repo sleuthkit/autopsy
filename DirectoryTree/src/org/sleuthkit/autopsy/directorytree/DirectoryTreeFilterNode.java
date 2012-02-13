@@ -18,15 +18,19 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
+import org.sleuthkit.autopsy.ingest.IngestDialog;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.Image;
 
 /**
  * This class sets the actions for the nodes in the directory tree and creates
@@ -54,15 +58,27 @@ class DirectoryTreeFilterNode extends FilterNode {
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<Action>();
 
-        Content content = this.getLookup().lookup(Content.class);
-        if (content != null) {
-            actions.addAll(DirectoryTreeFilterNode.getDetailActions(content));
+        Content c = this.getLookup().lookup(Content.class);
+        if (c != null) {
+            actions.addAll(DirectoryTreeFilterNode.getDetailActions(c));
             actions.add(collapseAll);
-            
+
             Directory dir = this.getLookup().lookup(Directory.class);
             if (dir != null) {
                 actions.add(new ExtractAction("Extract Directory",
                         getOriginal()));
+            }
+            final Image img = this.getLookup().lookup(Image.class);
+            if (img != null) {
+                actions.add(new AbstractAction("Restart Ingest Modules") {
+
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        final IngestDialog ingestDialog = new IngestDialog();
+                        ingestDialog.setImage(img);
+                        ingestDialog.display();
+                    }
+                });
             }
         }
 

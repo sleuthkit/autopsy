@@ -25,6 +25,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -32,8 +33,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import org.sleuthkit.datamodel.Image;
 
@@ -81,24 +85,54 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         servicesPanel.setLayout(new BoxLayout(servicesPanel, BoxLayout.Y_AXIS));
         
         Collection<IngestServiceImage> imageServices = IngestManager.enumerateImageServices();
-        for (IngestServiceImage service : imageServices) {
+        for (final IngestServiceImage service : imageServices) {
             final String serviceName = service.getName();
             services.add(service);
+            JPanel panel = new JPanel();
+            panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
             JCheckBox checkbox = new JCheckBox(serviceName, true);
             checkbox.setName(serviceName);
             checkbox.addActionListener(serviceSelListener);
-            servicesPanel.add(checkbox);
+            panel.add(checkbox);
+            panel.add(Box.createHorizontalGlue());
+            JButton button = new JButton("Configure");
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    service.userConfigure();
+                }
+            });
+            if(!service.isConfigurable())
+                button.setEnabled(false);
+            panel.add(button);
+            servicesPanel.add(panel);
             serviceStates.put(serviceName, true);
         }
 
         Collection<IngestServiceFsContent> fsServices = IngestManager.enumerateFsContentServices();
-        for (IngestServiceFsContent service : fsServices) {
+        for (final IngestServiceFsContent service : fsServices) {
             final String serviceName = service.getName();
             services.add(service);
+            JPanel panel = new JPanel();
+            panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
             JCheckBox checkbox = new JCheckBox(serviceName, true);
             checkbox.setName(serviceName);
             checkbox.addActionListener(serviceSelListener);
-            servicesPanel.add(checkbox);
+            checkbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+            panel.add(checkbox);
+            panel.add(Box.createHorizontalGlue());
+            JButton button = new JButton("Configure");
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    service.userConfigure();
+                }
+            });
+            if(!service.isConfigurable())
+                button.setEnabled(false);
+            button.setAlignmentX(Component.RIGHT_ALIGNMENT);
+            panel.add(button);
+            servicesPanel.add(panel);
             serviceStates.put(serviceName, true);
         }
     }

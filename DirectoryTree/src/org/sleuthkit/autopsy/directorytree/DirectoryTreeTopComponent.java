@@ -50,7 +50,10 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent;
+import org.sleuthkit.autopsy.datamodel.RecentFiles;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.autopsy.datamodel.SearchFilters;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
 
@@ -316,10 +319,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     ((BeanTreeView) this.jScrollPane1).setRootVisible(false); // hide the root
                 } else {
                     // if there's at least one image, load the image and open the top component
-                    List<Object> objects = new ArrayList<Object>();
-                    objects.addAll(currentCase.getRootObjects());
-                    objects.add(currentCase.getSleuthkitCase());
-                    Node root = new AbstractNode(new RootContentChildren(objects)) {
+                    List<Object> items = new ArrayList<Object>();
+                    items.addAll(currentCase.getRootObjects());
+                    items.add(new ExtractedContent(currentCase.getSleuthkitCase()));
+                    items.add(new SearchFilters(currentCase.getSleuthkitCase()));
+                    items.add(new RecentFiles(currentCase.getSleuthkitCase()));
+                    Node root = new AbstractNode(new RootContentChildren(items)) {
 
                         /** to override the right click action in the white blank space
                          * area on the directory tree window

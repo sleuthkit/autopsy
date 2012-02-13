@@ -24,6 +24,7 @@ package org.sleuthkit.autopsy.hashdatabase;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
@@ -156,7 +157,12 @@ public class HashDbIngestService implements IngestServiceFsContent {
     
     @Override
     public void userConfigure() {
-        
+        SystemAction.get(HashDbMgmtAction.class).performAction();
+    }
+    
+    @Override
+    public boolean isConfigurable() {
+        return true;
     }
     
 }
