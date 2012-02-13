@@ -187,8 +187,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         indexer = new Indexer();
 
-        //final int commitIntervalMs = managerProxy.getUpdateFrequency() * 1000;
-        final int commitIntervalMs = 60 * 1000;
+        final int commitIntervalMs = managerProxy.getUpdateFrequency() * 60 * 1000;
+        logger.log(Level.INFO, "Using refresh interval (ms): " + commitIntervalMs);
 
         timer = new CommitTimer(commitIntervalMs);
         runTimer = true;
@@ -480,12 +480,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             if (snippet != null) {
                                 //first try to add attr not in bulk so we can catch sql exception and encode the string
                                 try {
-                                    bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
+                                    bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
                                 } catch (Exception e1) {
                                     try {
                                         //escape in case of garbage so that sql accepts it
                                         snippet = URLEncoder.encode(snippet, "UTF-8");
-                                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
+                                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
                                     } catch (Exception e2) {
                                         logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
                                     }
@@ -493,9 +493,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             }
                             try {
                                 //keyword
-                                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "keyword", queryStr));
+                                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", queryStr));
                                 //bogus 
-                                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "keyword", ""));
+                                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
                             } catch (Exception e) {
                                 logger.log(Level.INFO, "Error adding bb attribute", e);
                             }
@@ -535,21 +535,21 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
                                     try {
                                         //regex keyword
-                                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "keyword", queryStr));
+                                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", queryStr));
                                         //regex match
-                                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "keyword", regexMatch));
+                                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", regexMatch));
                                     } catch (Exception e) {
                                         logger.log(Level.INFO, "Error adding bb attribute", e);
                                     }
 
                                     try {
                                         //first try to add attr not in bulk so we can catch sql exception and encode the string
-                                        bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
+                                        bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
                                     } catch (Exception e) {
                                         try {
                                             //escape in case of garbage so that sql accepts it
                                             snippet = URLEncoder.encode(snippet, "UTF-8");
-                                            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
+                                            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
                                         } catch (Exception e2) {
                                             logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
                                         }

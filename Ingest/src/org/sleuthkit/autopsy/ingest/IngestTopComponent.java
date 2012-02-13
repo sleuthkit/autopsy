@@ -96,16 +96,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
 
     private void customizeComponents() {
         //custom GUI setup not done by builder
-        //freqSlider.setToolTipText("Lower update frequency can optimize performance of certain ingest services, but also reduce real time status feedback");
-
-        /* JScrollPane scrollPane = new JScrollPane(servicesPanel);
-        scrollPane.setPreferredSize(this.getSize());
-        this.add(scrollPane, BorderLayout.CENTER);
-        servicesPanel.setLayout(new BoxLayout(servicesPanel, BoxLayout.Y_AXIS)); */
-
-
-        //freqSlider.setEnabled(false);
-
+        
         messagePanel = new IngestMessagePanel();
 
         messagePanel.setOpaque(false);
@@ -157,29 +148,6 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
                 }
             }
         });
-
-
-        /* Collection<IngestServiceImage> imageServices = IngestManager.enumerateImageServices();
-        for (IngestServiceImage service : imageServices) {
-        final String serviceName = service.getName();
-        services.add(service);
-        JCheckBox checkbox = new JCheckBox(serviceName, true);
-        checkbox.setName(serviceName);
-        checkbox.addActionListener(serviceSelListener);
-        servicesPanel.add(checkbox);
-        serviceStates.put(serviceName, true);
-        }
-        
-        Collection<IngestServiceFsContent> fsServices = IngestManager.enumerateFsContentServices();
-        for (IngestServiceFsContent service : fsServices) {
-        final String serviceName = service.getName();
-        services.add(service);
-        JCheckBox checkbox = new JCheckBox(serviceName, true);
-        checkbox.setName(serviceName);
-        checkbox.addActionListener(serviceSelListener);
-        servicesPanel.add(checkbox);
-        serviceStates.put(serviceName, true); 
-        }*/
 
 
     }

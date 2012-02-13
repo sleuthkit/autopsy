@@ -135,6 +135,14 @@ public class IngestDialogPanel extends javax.swing.JPanel {
             servicesPanel.add(panel);
             serviceStates.put(serviceName, true);
         }
+        
+        if (manager.isIngestRunning()) {
+            freqSlider.setEnabled(false);
+        }
+        else {
+            freqSlider.setEnabled(true);
+        }
+        freqSlider.setValue(manager.getUpdateFrequency());
     }
 
     /** This method is called from within the constructor to
@@ -150,6 +158,8 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         servicesPanel = new javax.swing.JPanel();
         startButton = new javax.swing.JButton();
         closeButton = new javax.swing.JButton();
+        freqSlider = new javax.swing.JSlider();
+        freqSliderLabel = new javax.swing.JLabel();
 
         servicesLabel.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.servicesLabel.text")); // NOI18N
 
@@ -177,6 +187,19 @@ public class IngestDialogPanel extends javax.swing.JPanel {
 
         closeButton.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.closeButton.text")); // NOI18N
 
+        freqSlider.setMajorTickSpacing(5);
+        freqSlider.setMaximum(60);
+        freqSlider.setMinimum(5);
+        freqSlider.setMinorTickSpacing(1);
+        freqSlider.setPaintLabels(true);
+        freqSlider.setPaintTicks(true);
+        freqSlider.setSnapToTicks(true);
+        freqSlider.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.freqSlider.toolTipText")); // NOI18N
+        freqSlider.setValue(30);
+
+        freqSliderLabel.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.freqSliderLabel.text")); // NOI18N
+        freqSliderLabel.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.freqSliderLabel.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -185,12 +208,22 @@ public class IngestDialogPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(servicesLabel)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(startButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(closeButton))
                     .addComponent(servicesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(21, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(21, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(93, Short.MAX_VALUE)
+                .addComponent(startButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(closeButton)
+                .addGap(16, 16, 16))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(54, Short.MAX_VALUE)
+                .addComponent(freqSliderLabel)
+                .addGap(52, 52, 52))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -199,11 +232,15 @@ public class IngestDialogPanel extends javax.swing.JPanel {
                 .addComponent(servicesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(servicesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(closeButton)
-                    .addComponent(startButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(freqSliderLabel)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(startButton)
+                    .addComponent(closeButton))
+                .addGap(23, 23, 23))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -225,10 +262,17 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         if (!services.isEmpty() ) {
             manager.execute(servicesToStart, image);
         }
+        
+        //update ingest freq. refresh
+        if (freqSlider.isEnabled()) {
+            manager.setUpdateFrequency(freqSlider.getValue());
+        }
     }//GEN-LAST:event_startButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
+    private javax.swing.JSlider freqSlider;
+    private javax.swing.JLabel freqSliderLabel;
     private javax.swing.JLabel servicesLabel;
     private javax.swing.JPanel servicesPanel;
     private javax.swing.JButton startButton;

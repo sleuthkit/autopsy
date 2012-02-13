@@ -57,7 +57,7 @@ public class IngestManager {
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private IngestTopComponent tc;
     private IngestManagerStats stats;
-    private volatile int updateFrequency = 60; //in seconds
+    private volatile int updateFrequency = 30; //in minutes
     //queues
     private final ImageQueue imageQueue = new ImageQueue();   // list of services and images to analyze
     private final FsContentQueue fsContentQueue = new FsContentQueue();
@@ -274,9 +274,43 @@ public class IngestManager {
 
         logger.log(Level.INFO, "stopped all");
     }
+    
+    /**
+     * test if any of image of fscontent ingesters are running
+     * @return true if any service is running, false otherwise
+     */
+    synchronized boolean isIngestRunning() {
+        //enqueue running?
+        if (queueWorker != null && !queueWorker.isDone())
+            return true;
+        
+        //enque not running
+        
+        //file ingester running?
+        if (fsContentIngester != null && !fsContentIngester.isDone())
+            return true;
+        
+        //file ingester not running
+        
+        if (imageIngesters.isEmpty())
+            return false;
+        
+        //in case there are still image ingesters in the queue but already done
+        boolean allDone = true;
+        for (IngestImageThread ii : imageIngesters) {
+            if (ii.isDone() == false) {
+                allDone = false;
+                break;
+            }
+        }
+        if (allDone)
+            return false;
+        
+        return true;
+    }
 
     /**
-     * returns the current minimal update frequency setting in seconds
+     * returns the current minimal update frequency setting in minutes
      * Services should call this at init() to get current setting
      * and use the setting to change notification and data refresh intervals
      */
@@ -286,7 +320,7 @@ public class IngestManager {
 
     /**
      * set new minimal update frequency services should use
-     * @param frequency 
+     * @param frequency to use in minutes
      */
     void setUpdateFrequency(int frequency) {
         this.updateFrequency = frequency;
