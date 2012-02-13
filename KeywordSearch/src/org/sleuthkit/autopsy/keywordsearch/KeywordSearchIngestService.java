@@ -172,8 +172,16 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         ingestStatus = new HashMap<Long, IngestStatus>();
 
         reportedHits = new HashMap<String, List<FsContent>>();
-
-        keywords = new ArrayList(KeywordSearchListTopComponent.getDefault().getAllKeywords());
+        
+        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
+        
+        keywords = new ArrayList<Keyword>();
+        
+        for(String listName : KeywordSearchListsManagementPanel.getDefault().getIngestLists()){
+            KeywordSearchList list = loader.getList(listName);
+            keywords.addAll(list.getKeywords());
+        }
+        
         if (keywords.isEmpty()) {
             managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "No keywords in keyword list.  Will index and skip search."));
         }
@@ -202,6 +210,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     @Override
     public void userConfigure() {
+        new KeywordSearchConfigurationDialog().setVisible(true);
     }
     
     @Override

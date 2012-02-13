@@ -187,11 +187,10 @@ public class KeywordSearchListsXML {
         boolean replaced = false;
         KeywordSearchList curList = getList(name);
         final Date now = new Date();
-        final int oldSize = this.getNumberLists();
         if (curList == null) {
             theLists.put(name, new KeywordSearchList(name, now, now, newList));
             save();
-            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), oldSize, this.getNumberLists());
+            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
         } else {
             theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, newList));
             save();
@@ -212,15 +211,19 @@ public class KeywordSearchListsXML {
         int oldSize = this.getNumberLists();
         
         List<KeywordSearchList> overwritten = new ArrayList<KeywordSearchList>();
-        
+        List<KeywordSearchList> newLists = new ArrayList<KeywordSearchList>();
         for (KeywordSearchList list : lists) {
             if (this.listExists(list.getName()))
                 overwritten.add(list);
+            else
+                newLists.add(list);
             theLists.put(list.getName(), list);
         }
         boolean saved = save();
         if (saved) {
-            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), oldSize, this.getNumberLists());
+            for (KeywordSearchList list : newLists) {
+                changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
+            }
             for (KeywordSearchList over : overwritten) {
                 changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
             }
@@ -235,13 +238,12 @@ public class KeywordSearchListsXML {
      */
     boolean deleteList(String name) {
         boolean deleted = false;
-        final int oldSize = this.getNumberLists();
         KeywordSearchList delList = getList(name);
         if (delList != null) {
             theLists.remove(name);
             deleted = save();
         }
-        changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), oldSize, this.getNumberLists());
+        changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), null, name);
         return deleted;
 
     }
