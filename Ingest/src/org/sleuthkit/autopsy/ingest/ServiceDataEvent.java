@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.Collection;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
@@ -30,14 +31,14 @@ public class ServiceDataEvent {
 
     private String serviceName;
     private ARTIFACT_TYPE artifactType;
-    private Collection<Long> artifactIDs;
+    private Collection<BlackboardArtifact> artifactIDs;
     
     public ServiceDataEvent(String serviceName, ARTIFACT_TYPE artifactType) {
         this.serviceName = serviceName;
         this.artifactType = artifactType;
     }
     
-    public ServiceDataEvent(String serviceName, ARTIFACT_TYPE artifactType, Collection<Long> artifactIDs) {
+    public ServiceDataEvent(String serviceName, ARTIFACT_TYPE artifactType, Collection<BlackboardArtifact> artifactIDs) {
         this(serviceName, artifactType);
         this.artifactIDs = artifactIDs;
     }
@@ -46,7 +47,7 @@ public class ServiceDataEvent {
      * get new artifact IDs associated with the event
      * @return Collection of artifact ids or null if not provided
      */
-    public Collection<Long> getArtifactIDs() {
+    public Collection<BlackboardArtifact> getArtifacts() {
         return artifactIDs;
     }
 

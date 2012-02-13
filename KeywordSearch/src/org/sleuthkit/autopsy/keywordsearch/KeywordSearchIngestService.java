@@ -458,14 +458,14 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, instance, sb.toString()));
 
                     //write results to BB
-                    Collection<Long> newArtifacts = new ArrayList<Long>(); //new artifacts to report
+                    Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>(); //new artifacts to report
                     for (FsContent hitFile : newResults) {
                         Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
                         if (query.isLiteral()) {
                             BlackboardArtifact bba = null;
                             try {
                                 bba = hitFile.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-                                newArtifacts.add(bba.getArtifactID());
+                                newArtifacts.add(bba);
                             } catch (Exception e) {
                                 logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
                                 continue;
@@ -527,7 +527,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                     BlackboardArtifact bba = null;
                                     try {
                                         bba = hitFile.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-                                        newArtifacts.add(bba.getArtifactID());
+                                        newArtifacts.add(bba);
                                     } catch (Exception e) {
                                         logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
                                         continue;
