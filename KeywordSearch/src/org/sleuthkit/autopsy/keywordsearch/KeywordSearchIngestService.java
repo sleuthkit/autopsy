@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,6 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
+import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -125,6 +125,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         //signal a potential change in number of indexed files
         indexChangeNotify();
+        
+        postIndexSummary();
 
         //run one last search as there are probably some new files committed
         if (keywords != null && !keywords.isEmpty()) {
@@ -193,8 +195,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         indexer = new Indexer();
 
-        //final int commitIntervalMs = managerProxy.getUpdateFrequency() * 1000;
-        final int commitIntervalMs = 60 * 1000;
+        final int commitIntervalMs = managerProxy.getUpdateFrequency() * 60 * 1000;
+        logger.log(Level.INFO, "Using refresh interval (ms): " + commitIntervalMs);
 
         timer = new CommitTimer(commitIntervalMs);
         runTimer = true;
@@ -223,7 +225,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     }
 
-    private void postSummary() {
+    private void postIndexSummary() {
         int indexed = 0;
         int indexed_extr = 0;
         int skipped = 0;
@@ -242,9 +244,17 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     ;
             }
         }
-        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed files: " + indexed));
-        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed strings: " + indexed_extr));
-        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Skipped files: " + skipped));
+        
+        StringBuilder msg = new StringBuilder();
+        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Keyword Indexing Complete"));
+        msg.append("Indexed files: ").append(indexed).append(", indexed strings: ").append(indexed_extr);
+        msg.append(", skipped files: ").append(skipped);
+        
+        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, msg.toString()));
+        
+        //managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed files: " + indexed));
+        //managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed strings: " + indexed_extr));
+        //managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Skipped files: " + skipped));
     }
 
     private void indexChangeNotify() {
@@ -412,12 +422,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
                 if (query.isLiteral()) {
                     del = new LuceneQuery(queryStr);
+                    del.escape();
                 } else {
                     del = new TermComponentQuery(queryStr);
-                }
-
-                if (query.isLiteral()) {
-                    del.escape();
                 }
 
                 List<FsContent> queryResult = null;
@@ -460,15 +467,19 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, instance, sb.toString()));
 
                     //write results to BB
+                    Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>(); //new artifacts to report
                     for (FsContent hitFile : newResults) {
-                        BlackboardArtifact bba = null;
-                        try {
-                            bba = hitFile.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-                        } catch (Exception e) {
-                            logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
-                            continue;
-                        }
+                        Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
                         if (query.isLiteral()) {
+                            BlackboardArtifact bba = null;
+                            try {
+                                bba = hitFile.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+                                newArtifacts.add(bba);
+                            } catch (Exception e) {
+                                logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
+                                continue;
+                            }
+
                             String snippet = null;
                             try {
                                 snippet = LuceneQuery.getSnippet(queryStr, hitFile.getId());
@@ -476,82 +487,93 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                 logger.log(Level.INFO, "Error querying snippet: " + queryStr, e);
                             }
                             if (snippet != null) {
+                                //first try to add attr not in bulk so we can catch sql exception and encode the string
                                 try {
-                                    bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
+                                    bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
                                 } catch (Exception e1) {
-                                    logger.log(Level.INFO, "Error adding bb snippet attribute, will encode and retry", e1);
                                     try {
                                         //escape in case of garbage so that sql accepts it
                                         snippet = URLEncoder.encode(snippet, "UTF-8");
-                                        bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
-                                    }
-                                    catch (Exception e2) {
+                                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+                                    } catch (Exception e2) {
                                         logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
                                     }
                                 }
                             }
                             try {
                                 //keyword
-                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "keyword", queryStr));
+                                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", queryStr));
                                 //bogus 
-                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "keyword", ""));
+                                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
                             } catch (Exception e) {
                                 logger.log(Level.INFO, "Error adding bb attribute", e);
                             }
+
+                            try {
+                                bba.addAttributes(attributes);
+                            } catch (TskException e) {
+                                logger.log(Level.INFO, "Error adding bb attributes to artifact", e);
+                            }
+
                         } else {
                             //regex case
-                            try {
-                                //regex keyword
-                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "keyword", queryStr));
-                                //bogus
-                                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "keyword", ""));
-                            } catch (Exception e) {
-                                logger.log(Level.INFO, "Error adding bb attribute", e);
-                            }
-                            //build preview query from terms
-                            StringBuilder termSb = new StringBuilder();
-                            Collection<Term> terms = del.getTerms();
-                            int i = 0;
-                            final int total = terms.size();
+                            //create a separate artifact per regex hit
+
+                            final Collection<Term> terms = del.getTerms();
                             for (Term term : terms) {
-                                termSb.append(term.getTerm());
-                                if (i < total - 1) {
-                                    termSb.append(" "); //OR
-                                }
-                                ++i;
-                            }
-                            final String termSnipQuery = termSb.toString();
-                            String snippet = null;
-                            try {
-                                snippet = LuceneQuery.getSnippet(termSnipQuery, hitFile.getId());
-                            } catch (Exception e) {
-                                logger.log(Level.INFO, "Error querying snippet: " + termSnipQuery, e);
-                            }
-
-                            if (snippet != null) {
+                                final String regexMatch = term.getTerm();
+                                //snippet
+                                String snippet = null;
                                 try {
-                                    bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
+                                    snippet = LuceneQuery.getSnippet(regexMatch, hitFile.getId());
                                 } catch (Exception e) {
-                                    logger.log(Level.INFO, "Error adding bb snippet attribute, will encode and retry", e);
-                                    try {
-                                        //escape in case of garbage so that sql accepts it
-                                        snippet = URLEncoder.encode(snippet, "UTF-8");
-                                        bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "keyword", snippet));
-                                    } catch (Exception e2) {
-                                        logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
-                                    }
+                                    logger.log(Level.INFO, "Error querying snippet: " + regexMatch, e);
+                                    continue;
                                 }
-                            }
 
-                            //TODO add all terms that matched to attribute
-                        }
+                                if (snippet != null && ! snippet.equals("")) {
+                                    //there is match actually in this file, create artifact only then
+                                    BlackboardArtifact bba = null;
+                                    try {
+                                        bba = hitFile.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+                                        newArtifacts.add(bba);
+                                    } catch (Exception e) {
+                                        logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
+                                        continue;
+                                    }
 
-                    }
+                                    try {
+                                        //regex keyword
+                                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", queryStr));
+                                        //regex match
+                                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", regexMatch));
+                                    } catch (Exception e) {
+                                        logger.log(Level.INFO, "Error adding bb attribute", e);
+                                    }
+
+                                    try {
+                                        //first try to add attr not in bulk so we can catch sql exception and encode the string
+                                        bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+                                    } catch (Exception e) {
+                                        try {
+                                            //escape in case of garbage so that sql accepts it
+                                            snippet = URLEncoder.encode(snippet, "UTF-8");
+                                            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+                                        } catch (Exception e2) {
+                                            logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
+                                        }
+                                    }
+                                    bba.addAttributes(attributes);
+                                }
+
+                            } //for each term
+
+                        } //end regex case
+
+                    } //for each file hit
 
                     //update artifact browser
-                    //TODO use has data evt
-                    IngestManager.firePropertyChange(IngestManager.SERVICE_STARTED_EVT, MODULE_NAME);
-                    IngestManager.firePropertyChange(IngestManager.SERVICE_HAS_DATA_EVT, MODULE_NAME);
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                 }
                 progress.progress(queryStr, ++numSearched);
             }
