@@ -125,6 +125,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         //signal a potential change in number of indexed files
         indexChangeNotify();
+        
+        postIndexSummary();
 
         //run one last search as there are probably some new files committed
         if (keywords != null && !keywords.isEmpty()) {
@@ -209,7 +211,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     }
 
-    private void postSummary() {
+    private void postIndexSummary() {
         int indexed = 0;
         int indexed_extr = 0;
         int skipped = 0;
@@ -228,9 +230,17 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     ;
             }
         }
-        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed files: " + indexed));
-        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed strings: " + indexed_extr));
-        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Skipped files: " + skipped));
+        
+        StringBuilder msg = new StringBuilder();
+        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Keyword Indexing Complete"));
+        msg.append("Indexed files: ").append(indexed).append(", indexed strings: ").append(indexed_extr);
+        msg.append(", skipped files: ").append(skipped);
+        
+        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, msg.toString()));
+        
+        //managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed files: " + indexed));
+        //managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Indexed strings: " + indexed_extr));
+        //managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Skipped files: " + skipped));
     }
 
     private void indexChangeNotify() {
