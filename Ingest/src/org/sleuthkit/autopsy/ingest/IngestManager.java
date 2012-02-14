@@ -24,17 +24,22 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
@@ -274,27 +279,30 @@ public class IngestManager {
 
         logger.log(Level.INFO, "stopped all");
     }
-    
+
     /**
      * test if any of image of fscontent ingesters are running
      * @return true if any service is running, false otherwise
      */
     synchronized boolean isIngestRunning() {
         //enqueue running?
-        if (queueWorker != null && !queueWorker.isDone())
+        if (queueWorker != null && !queueWorker.isDone()) {
             return true;
-        
+        }
+
         //enque not running
-        
+
         //file ingester running?
-        if (fsContentIngester != null && !fsContentIngester.isDone())
+        if (fsContentIngester != null && !fsContentIngester.isDone()) {
             return true;
-        
+        }
+
         //file ingester not running
-        
-        if (imageIngesters.isEmpty())
+
+        if (imageIngesters.isEmpty()) {
             return false;
-        
+        }
+
         //in case there are still image ingesters in the queue but already done
         boolean allDone = true;
         for (IngestImageThread ii : imageIngesters) {
@@ -303,9 +311,10 @@ public class IngestManager {
                 break;
             }
         }
-        if (allDone)
+        if (allDone) {
             return false;
-        
+        }
+
         return true;
     }
 
@@ -432,6 +441,14 @@ public class IngestManager {
             fsContentQueue.empty();
         }
     }
+    
+    private void sortFsContents() {
+        logger.log(Level.INFO, "Sorting fscontents");
+        synchronized (queuesLock) {
+            fsContentQueue.sort();
+        }
+        logger.log(Level.INFO, "Done sorting fscontents");
+    }
 
     private void emptyImages() {
         synchronized (queuesLock) {
@@ -496,11 +513,73 @@ public class IngestManager {
         }
     }
 
-    //manages queue of pending FsContent and list of associated IngestServiceFsContent to use on that content
-    //TODO in future content sort will be maintained based on priorities
+    /**
+     * Priority determination for FsContent
+     */
+    private static class FsContentPriotity {
+
+        enum Priority {
+
+            LOW, MEDIUM, HIGH
+        };
+        static final List<Pattern> lowPriorityPaths = new ArrayList();
+        static final List<Pattern> highPriorityPaths = new ArrayList();
+
+        static {
+            lowPriorityPaths.add(Pattern.compile("^\\/Windows", Pattern.CASE_INSENSITIVE));
+            lowPriorityPaths.add(Pattern.compile("^\\/Program Files", Pattern.CASE_INSENSITIVE));
+
+            highPriorityPaths.add(Pattern.compile("^\\/Users", Pattern.CASE_INSENSITIVE));
+            highPriorityPaths.add(Pattern.compile("^\\/Documents and Settings", Pattern.CASE_INSENSITIVE));
+            highPriorityPaths.add(Pattern.compile("^\\/home", Pattern.CASE_INSENSITIVE));
+            highPriorityPaths.add(Pattern.compile("^\\/ProgramData", Pattern.CASE_INSENSITIVE));
+            highPriorityPaths.add(Pattern.compile("^\\/Windows\\/Temp", Pattern.CASE_INSENSITIVE));
+        }
+
+        static Priority getPriority(final FsContent fsContent) {
+            final String path = fsContent.getParentPath();
+
+            for (Pattern p : highPriorityPaths) {
+                Matcher m = p.matcher(path);
+                if (m.find()) {
+                    return Priority.HIGH;
+                }
+            }
+
+            for (Pattern p : lowPriorityPaths) {
+                Matcher m = p.matcher(path);
+                if (m.find()) {
+                    return Priority.LOW;
+                }
+            }
+
+            return Priority.MEDIUM;
+        }
+    }
+
+    /**
+     * manages queue of pending FsContent and list of associated IngestServiceFsContent to use on that content
+     * sorted based on FsContentPriotity
+     */
     private class FsContentQueue {
 
-        List<QueueUnit<FsContent, IngestServiceFsContent>> fsContentUnits = new ArrayList<QueueUnit<FsContent, IngestServiceFsContent>>();
+        final List<QueueUnit<FsContent, IngestServiceFsContent>> fsContentUnits = new ArrayList<QueueUnit<FsContent, IngestServiceFsContent>>();
+        
+        final Comparator sorter = new Comparator() {
+
+            @Override
+            public int compare(Object o1, Object o2) {
+                final QueueUnit<FsContent, IngestServiceFsContent> q1 = (QueueUnit<FsContent, IngestServiceFsContent>) o1;
+                final QueueUnit<FsContent, IngestServiceFsContent> q2 = (QueueUnit<FsContent, IngestServiceFsContent>) o2;
+                FsContentPriotity.Priority p1 = FsContentPriotity.getPriority(q1.content);
+                FsContentPriotity.Priority p2 = FsContentPriotity.getPriority(q2.content);
+                if (p1 == p2) {
+                    return (int) (q2.content.getId() - q1.content.getId());
+                }
+                else return p2.ordinal() - p1.ordinal();
+                
+            }
+        };
 
         void enqueue(FsContent fsContent, IngestServiceFsContent service) {
             QueueUnit<FsContent, IngestServiceFsContent> found = findFsContent(fsContent);
@@ -541,6 +620,10 @@ public class IngestManager {
         void empty() {
             fsContentUnits.clear();
         }
+        
+        void sort() {
+            Collections.sort(fsContentUnits, sorter);
+        }
 
         /**
          * Returns next FsContent and list of associated services
@@ -551,7 +634,9 @@ public class IngestManager {
                 throw new UnsupportedOperationException("FsContent processing queue is empty");
             }
 
-            return fsContentUnits.remove(0);
+            QueueUnit<FsContent, IngestServiceFsContent> remove = fsContentUnits.remove(0);
+            //logger.log(Level.INFO, "DEQUE: " + remove.content.getParentPath() + " SIZE: " + toString());
+            return (remove);
         }
 
         private QueueUnit<FsContent, IngestServiceFsContent> findFsContent(FsContent fsContent) {
@@ -578,7 +663,7 @@ public class IngestManager {
      */
     private class ImageQueue {
 
-        List<QueueUnit<Image, IngestServiceImage>> imageUnits = new ArrayList<QueueUnit<Image, IngestServiceImage>>();
+        private List<QueueUnit<Image, IngestServiceImage>> imageUnits = new ArrayList<QueueUnit<Image, IngestServiceImage>>();
 
         void enqueue(Image image, IngestServiceImage service) {
             QueueUnit<Image, IngestServiceImage> found = findImage(image);
@@ -687,6 +772,34 @@ public class IngestManager {
         final void add(S service) {
             this.services.add(service);
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final QueueUnit<T, S> other = (QueueUnit<T, S>) obj;
+            if (this.content != other.content && (this.content == null || !this.content.equals(other.content))) {
+                return false;
+            }
+            if (this.services != other.services && (this.services == null || !this.services.equals(other.services))) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 37 * hash + (this.content != null ? this.content.hashCode() : 0);
+            hash = 37 * hash + (this.services != null ? this.services.hashCode() : 0);
+            return hash;
+        }
+        
+        
     }
 
     /**
@@ -1011,6 +1124,8 @@ public class IngestManager {
                     progress.progress(serviceName + " " + imageName, ++processed);
                 }
             }
+            progress.progress("Sorting files", processed);
+            sortFsContents();
         }
 
         private void handleInterruption() {
