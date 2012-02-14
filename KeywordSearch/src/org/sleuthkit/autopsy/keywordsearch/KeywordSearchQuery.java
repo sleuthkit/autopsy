@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.Collection;
 import java.util.List;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.FsContent;
 
 public interface KeywordSearchQuery {
@@ -72,6 +73,13 @@ public interface KeywordSearchQuery {
      * @return collection of terms associated with the query
      */
     public Collection<Term>getTerms();
+    
+    /**
+     * write search results to blackboard
+     * @param newFsHit hew fscontent hit associated with the result to write to bb
+     * @return collection of bb artifacts created and written
+     */
+    public Collection<BlackboardArtifact> writeToBlackBoard(FsContent newFsHit);
     
     
 }
