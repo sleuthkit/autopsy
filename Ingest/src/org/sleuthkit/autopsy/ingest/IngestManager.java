@@ -523,11 +523,13 @@ public class IngestManager {
             LOW, MEDIUM, HIGH
         };
         static final List<Pattern> lowPriorityPaths = new ArrayList();
+        static final List<Pattern> mediumPriorityPaths = new ArrayList();
         static final List<Pattern> highPriorityPaths = new ArrayList();
 
         static {
             lowPriorityPaths.add(Pattern.compile("^\\/Windows", Pattern.CASE_INSENSITIVE));
-            lowPriorityPaths.add(Pattern.compile("^\\/Program Files", Pattern.CASE_INSENSITIVE));
+            
+            mediumPriorityPaths.add(Pattern.compile("^\\/Program Files", Pattern.CASE_INSENSITIVE));
 
             highPriorityPaths.add(Pattern.compile("^\\/Users", Pattern.CASE_INSENSITIVE));
             highPriorityPaths.add(Pattern.compile("^\\/Documents and Settings", Pattern.CASE_INSENSITIVE));
@@ -545,6 +547,13 @@ public class IngestManager {
                     return Priority.HIGH;
                 }
             }
+            
+            for (Pattern p : mediumPriorityPaths) {
+                Matcher m = p.matcher(path);
+                if (m.find()) {
+                    return Priority.MEDIUM;
+                }
+            }
 
             for (Pattern p : lowPriorityPaths) {
                 Matcher m = p.matcher(path);
@@ -553,6 +562,7 @@ public class IngestManager {
                 }
             }
 
+            //default is medium
             return Priority.MEDIUM;
         }
     }
