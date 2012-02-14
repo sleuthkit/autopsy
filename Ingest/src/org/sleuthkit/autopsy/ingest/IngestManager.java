@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.DateFormat;
@@ -32,7 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +46,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
@@ -60,7 +61,6 @@ import org.sleuthkit.datamodel.Image;
 public class IngestManager {
 
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
-    private IngestTopComponent tc;
     private IngestManagerStats stats;
     private volatile int updateFrequency = 30; //in minutes
     //queues
@@ -87,17 +87,23 @@ public class IngestManager {
     public final static String SERVICE_COMPLETED_EVT = IngestManagerEvents.SERVICE_COMPLETED.name();
     public final static String SERVICE_STOPPED_EVT = IngestManagerEvents.SERVICE_STOPPED.name();
     public final static String SERVICE_HAS_DATA_EVT = IngestManagerEvents.SERVICE_HAS_DATA.name();
-    //initialization
-    //private boolean initialized = false;
+    //ui
+    private IngestUI ui = IngestTopComponent.getDefault();
+    //singleton
+    private static IngestManager instance;
 
-    /**
-     * 
-     * @param tc handle to Ingest top component
-     */
-    IngestManager(IngestTopComponent tc) {
-        this.tc = tc;
+    private IngestManager() {
         imageIngesters = new ArrayList<IngestImageThread>();
     }
+
+    static synchronized IngestManager getDefault() {
+        logger.log(Level.INFO, "creating manager instance");
+        if (instance == null) {
+            instance = new IngestManager();
+        }
+        return instance;
+    }
+
 
     /**
      * Add property change listener to listen to ingest events
@@ -122,21 +128,7 @@ public class IngestManager {
      */
     void execute(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
         logger.log(Level.INFO, "Will enqueue number of images: " + images.size());
-        /*if (!initialized) {
-        //one time initialization of services
-        
-        //image services are now initialized per instance
-        //for (IngestServiceImage s : imageServices) {
-        //    s.init(this);
-        //}
-        
-        for (IngestServiceFsContent s : fsContentServices) {
-        s.init(this);
-        }
-        initialized = true;
-        }*/
 
-        tc.enableStartButton(false);
         logger.log(Level.INFO, "Starting enqueue worker");
         queueWorker = new EnqueueWorker(services, images);
         queueWorker.execute();
@@ -362,7 +354,7 @@ public class IngestManager {
 
             @Override
             public void run() {
-                tc.displayMessage(message);
+                ui.displayMessage(message);
             }
         });
     }
@@ -441,7 +433,7 @@ public class IngestManager {
             fsContentQueue.empty();
         }
     }
-    
+
     private void sortFsContents() {
         logger.log(Level.INFO, "Sorting fscontents");
         synchronized (queuesLock) {
@@ -490,7 +482,7 @@ public class IngestManager {
 
             @Override
             public void run() {
-                tc.initProgress(maximum);
+                ui.initProgress(maximum);
             }
         });
     }
@@ -500,7 +492,7 @@ public class IngestManager {
 
             @Override
             public void run() {
-                tc.updateProgress(progress);
+                ui.updateProgress(progress);
             }
         });
     }
@@ -528,7 +520,7 @@ public class IngestManager {
 
         static {
             lowPriorityPaths.add(Pattern.compile("^\\/Windows", Pattern.CASE_INSENSITIVE));
-            
+
             mediumPriorityPaths.add(Pattern.compile("^\\/Program Files", Pattern.CASE_INSENSITIVE));
 
             highPriorityPaths.add(Pattern.compile("^\\/Users", Pattern.CASE_INSENSITIVE));
@@ -547,7 +539,7 @@ public class IngestManager {
                     return Priority.HIGH;
                 }
             }
-            
+
             for (Pattern p : mediumPriorityPaths) {
                 Matcher m = p.matcher(path);
                 if (m.find()) {
@@ -574,7 +566,6 @@ public class IngestManager {
     private class FsContentQueue {
 
         final List<QueueUnit<FsContent, IngestServiceFsContent>> fsContentUnits = new ArrayList<QueueUnit<FsContent, IngestServiceFsContent>>();
-        
         final Comparator sorter = new Comparator() {
 
             @Override
@@ -585,9 +576,10 @@ public class IngestManager {
                 FsContentPriotity.Priority p2 = FsContentPriotity.getPriority(q2.content);
                 if (p1 == p2) {
                     return (int) (q2.content.getId() - q1.content.getId());
+                } else {
+                    return p2.ordinal() - p1.ordinal();
                 }
-                else return p2.ordinal() - p1.ordinal();
-                
+
             }
         };
 
@@ -630,7 +622,7 @@ public class IngestManager {
         void empty() {
             fsContentUnits.clear();
         }
-        
+
         void sort() {
             Collections.sort(fsContentUnits, sorter);
         }
@@ -808,8 +800,6 @@ public class IngestManager {
             hash = 37 * hash + (this.services != null ? this.services.hashCode() : 0);
             return hash;
         }
-        
-        
     }
 
     /**
@@ -1018,7 +1008,7 @@ public class IngestManager {
 
                 if (!this.isCancelled()) {
                     logger.log(Level.INFO, "Summary Report: " + stats.toString());
-                    tc.displayReport(stats.toHtmlString());
+                    ui.displayReport(stats.toHtmlString());
                 }
                 initMainProgress(0);
             }
@@ -1095,7 +1085,6 @@ public class IngestManager {
                     startAll();
                 }
                 progress.finish();
-                tc.enableStartButton(true);
             }
         }
 

@@ -76,7 +76,7 @@ public class IngestDialogPanel extends javax.swing.JPanel {
     
     
     private void customizeComponents(){
-        this.manager = IngestTopComponent.getDefault().getManager();
+        this.manager = IngestManager.getDefault();
         
         JScrollPane scrollPane = new JScrollPane(servicesPanel);
         scrollPane.setPreferredSize(this.getSize());
@@ -244,11 +244,7 @@ public class IngestDialogPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
-        this.manager = IngestTopComponent.getDefault().getManager();
-        if (manager == null) {
-            return;
-        }
-
+       
         //pick the services
         List<IngestServiceAbstract> servicesToStart = new ArrayList<IngestServiceAbstract>();
         for (IngestServiceAbstract service : services) {
