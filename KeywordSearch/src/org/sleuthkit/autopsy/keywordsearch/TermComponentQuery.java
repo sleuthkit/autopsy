@@ -18,14 +18,13 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,7 +45,12 @@ import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.TskException;
 
 public class TermComponentQuery implements KeywordSearchQuery {
 
@@ -95,7 +99,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
     public boolean isEscaped() {
         return isEscaped;
     }
-    
+
     /*
      * helper method to create a Solr terms component query
      */
@@ -146,6 +150,71 @@ public class TermComponentQuery implements KeywordSearchQuery {
     @Override
     public Collection<Term> getTerms() {
         return terms;
+    }
+
+    @Override
+    public Collection<BlackboardArtifact> writeToBlackBoard(FsContent newFsHit) {
+        final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
+
+        Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>();
+
+        for (Term term : terms) {
+            final String regexMatch = term.getTerm();
+            //snippet
+            String snippet = null;
+            try {
+                snippet = LuceneQuery.getSnippet(regexMatch, newFsHit.getId());
+            } catch (Exception e) {
+                logger.log(Level.INFO, "Error querying snippet: " + regexMatch, e);
+                continue;
+            }
+
+            if (snippet == null || snippet.equals("")) {
+                continue;
+            }
+            
+            //there is match actually in this file, create artifact only then
+            BlackboardArtifact bba = null;
+            Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
+            try {
+                bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+                newArtifacts.add(bba);
+            } catch (Exception e) {
+                logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
+                continue;
+            }
+
+            try {
+                //regex keyword
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", termsQuery));
+                //regex match
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", regexMatch));
+            } catch (Exception e) {
+                logger.log(Level.INFO, "Error adding bb attribute", e);
+            }
+
+            try {
+                //first try to add attr not in bulk so we can catch sql exception and encode the string
+                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+            } catch (Exception e) {
+                try {
+                    //escape in case of garbage so that sql accepts it
+                    snippet = URLEncoder.encode(snippet, "UTF-8");
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+                } catch (Exception e2) {
+                    logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
+                }
+            }
+            try {
+                bba.addAttributes(attributes);
+            } catch (TskException e) {
+                logger.log(Level.INFO, "Error adding bb attributes for terms search artifact", e);
+            }
+
+
+        } //for each term
+
+        return newArtifacts;
     }
 
     /**

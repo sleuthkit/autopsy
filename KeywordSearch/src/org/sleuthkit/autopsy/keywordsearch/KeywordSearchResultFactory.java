@@ -36,12 +36,15 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
@@ -244,7 +247,10 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
 
 
             int resID = 0;
-            for (FsContent f : fsContents) {
+            final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
+            final int numFsContents = fsContents.size();
+            int cur = 0;
+            for (final FsContent f : fsContents) {
                 //get unique match result files
                 Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                 AbstractFsContentNode.fillPropertyMap(resMap, f);
@@ -254,6 +260,19 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                     setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
                 }
                 toPopulate.add(new KeyValueContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped));
+
+                //write to bb
+                final boolean sendDataEvent = (cur == numFsContents-1?true:false);
+                new Thread() {
+                    @Override
+                    public void run() {
+                        na.addAll(tcq.writeToBlackBoard(f));
+                        if (sendDataEvent == true) {
+                            IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+                        }
+                    }
+                }.start();
+                cur++;
             }
 
             return true;
@@ -328,6 +347,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                     Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                     AbstractFsContentNode.fillPropertyMap(resMap, (File) f);
                     toPopulate.add(new KeyValueContent(f.getName(), resMap, ++resID, f, keywordQuery));
+                    //writeToBlackBoard(f);
                 }
 
                 return true;

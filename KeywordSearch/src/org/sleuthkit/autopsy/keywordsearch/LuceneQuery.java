@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.net.URLEncoder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -40,8 +41,15 @@ import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskException;
 
 public class LuceneQuery implements KeywordSearchQuery {
 
@@ -145,7 +153,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     @Override
     public void execute() {
         escape();
-        List<FsContent> matches = performQuery();
+        final List<FsContent> matches = performQuery();
 
         String pathText = "Keyword query: " + query;
 
@@ -154,17 +162,81 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, filteredRootNode, matches.size());
         searchResultWin.requestActive(); // make it the active top component
+
+        //write to bb
+        new Thread() {
+            @Override
+            public void run() {
+                Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
+                for (FsContent newHit : matches) {
+                    na.addAll(writeToBlackBoard(newHit));
+                }
+                //notify bb viewers
+                IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+            }
+        }.start();
     }
 
     @Override
     public boolean validate() {
         return query != null && !query.equals("");
     }
-    
-    
+
+    @Override
+    public Collection<BlackboardArtifact> writeToBlackBoard(FsContent newFsHit) {
+        final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
+
+        Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>();
+        Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
+        BlackboardArtifact bba = null;
+        try {
+            bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+            newArtifacts.add(bba);
+        } catch (Exception e) {
+            logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
+            return newArtifacts;
+        }
+
+        String snippet = null;
+        try {
+            snippet = LuceneQuery.getSnippet(query, newFsHit.getId());
+        } catch (Exception e) {
+            logger.log(Level.INFO, "Error querying snippet: " + query, e);
+        }
+        if (snippet != null) {
+            //first try to add attr not in bulk so we can catch sql exception and encode the string
+            try {
+                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+            } catch (Exception e1) {
+                try {
+                    //escape in case of garbage so that sql accepts it
+                    snippet = URLEncoder.encode(snippet, "UTF-8");
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+                } catch (Exception e2) {
+                    logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
+                }
+            }
+        }
+        try {
+            //keyword
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", query));
+            //bogus 
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
+        } catch (Exception e) {
+            logger.log(Level.INFO, "Error adding bb attribute", e);
+        }
+
+        try {
+            bba.addAttributes(attributes);
+        } catch (TskException e) {
+            logger.log(Level.INFO, "Error adding bb attributes to artifact", e);
+        }
+        return newArtifacts;
+    }
+
     public static String getSnippet(String query, long contentID) {
         final int SNIPPET_LENGTH = 45;
-        
+
         final Server.Core solrCore = KeywordSearch.getServer().getCore();
 
 
@@ -179,10 +251,11 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         try {
             QueryResponse response = solrCore.query(q);
-            Map<String,Map<String,List<String>>>responseHighlight = response.getHighlighting();
-            Map<String,List<String>>responseHighlightID = responseHighlight.get(Long.toString(contentID));
-            if (responseHighlightID == null)
+            Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
+            Map<String, List<String>> responseHighlightID = responseHighlight.get(Long.toString(contentID));
+            if (responseHighlightID == null) {
                 return "";
+            }
             List<String> contentHighlights = responseHighlightID.get("content");
             if (contentHighlights == null) {
                 return "";
