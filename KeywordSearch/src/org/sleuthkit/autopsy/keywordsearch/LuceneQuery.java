@@ -153,7 +153,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     @Override
     public void execute() {
         escape();
-        List<FsContent> matches = performQuery();
+        final List<FsContent> matches = performQuery();
 
         String pathText = "Keyword query: " + query;
 
@@ -162,14 +162,19 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, filteredRootNode, matches.size());
         searchResultWin.requestActive(); // make it the active top component
-        
+
         //write to bb
-        Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
-        for (FsContent newHit : matches) {
-            na.addAll(writeToBlackBoard(newHit));
-        }
-        //notify bb viewers
-        IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+        new Thread() {
+            @Override
+            public void run() {
+                Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
+                for (FsContent newHit : matches) {
+                    na.addAll(writeToBlackBoard(newHit));
+                }
+                //notify bb viewers
+                IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+            }
+        }.start();
     }
 
     @Override
