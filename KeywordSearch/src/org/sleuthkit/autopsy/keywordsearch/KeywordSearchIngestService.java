@@ -70,7 +70,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private Map<Keyword, List<FsContent>> currentResults;
     private volatile int messageID = 0;
     private volatile boolean finalRun = false;
-    private final SleuthkitCase caseHandle = Case.getCurrentCase().getSleuthkitCase();
+    private SleuthkitCase caseHandle = null;
     private static final String[] ingestibleExtensions = {"tar", "jar", "zip", "bzip2",
         "gz", "tgz", "doc", "xls", "ppt", "rtf", "pdf", "html", "xhtml", "txt",
         "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
@@ -166,6 +166,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     @Override
     public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init()");
+        
+        caseHandle = Case.getCurrentCase().getSleuthkitCase();
 
         this.managerProxy = managerProxy;
 
