@@ -360,7 +360,6 @@ public class IngestManager {
         }
 
         SwingUtilities.invokeLater(new Runnable() {
-
             @Override
             public void run() {
                 ui.displayMessage(message);
@@ -492,16 +491,6 @@ public class IngestManager {
             @Override
             public void run() {
                 ui.initProgress(maximum);
-            }
-        });
-    }
-
-    private void updateMainProgress(final int progress) {
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                ui.updateProgress(progress);
             }
         });
     }
@@ -979,7 +968,6 @@ public class IngestManager {
 
                 }
                 progress.progress(unit.content.getName(), ++processedFiles);
-                updateMainProgress(processedFiles);
                 --numFsContents;
             }
             logger.log(Level.INFO, "Done background processing");
