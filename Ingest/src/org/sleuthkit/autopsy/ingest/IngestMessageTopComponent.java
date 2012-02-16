@@ -21,11 +21,13 @@ package org.sleuthkit.autopsy.ingest;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
+import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -34,24 +36,13 @@ import org.sleuthkit.datamodel.Image;
 /**
  * Top component which displays something.
  */
-
-//@ConvertAsProperties(dtd = "-//org.sleuthkit.autopsy.ingest//IngestMessage//EN",
-//autostore = false)
-//@TopComponent.Description(preferredID = "IngestMessageTopComponent",
-//iconBase = "org/sleuthkit/autopsy/ingest/ingest-msg-icon.png",
-//persistenceType = TopComponent.PERSISTENCE_NEVER)
-//@TopComponent.Registration(mode = "floatingLeftBottom", openAtStartup = false)
-//@ActionID(category = "Window", id = "org.sleuthkit.autopsy.ingest.IngestMessageTopComponent")
-//@ActionReference(path = "Menu/Window" /*, position = 333 */)
-//@TopComponent.OpenActionRegistration(displayName = "#CTL_IngestMessageAction",
-//preferredID = "IngestMessageTopComponent")
 public final class IngestMessageTopComponent extends TopComponent implements IngestUI {
 
     private static IngestMessageTopComponent instance;
     private static final Logger logger = Logger.getLogger(IngestMessageTopComponent.class.getName());
     private IngestMessagePanel messagePanel;
+    private IngestManager manager;
     private static String PREFERRED_ID = "IngestMessageTopComponent";
-
 
     public IngestMessageTopComponent() {
         initComponents();
@@ -59,8 +50,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
         registerListeners();
         setName(NbBundle.getMessage(IngestMessageTopComponent.class, "CTL_IngestMessageTopComponent"));
         setToolTipText(NbBundle.getMessage(IngestMessageTopComponent.class, "HINT_IngestMessageTopComponent"));
-        putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
-        //putClientProperty(TopComponent.PROP_UNDOCKING_DISABLED, Boolean.TRUE);
+        //putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
 
     }
 
@@ -82,7 +72,6 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
         return getDefault();
     }
-
 
     /** This method is called from within the constructor to
      * initialize the form.
@@ -108,29 +97,53 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
     @Override
     public void componentOpened() {
-        // TODO add custom code on component opening
-        // WindowManager.getDefault().findMode("floatingLeftBottom").dockInto(this);
-        IngestManager.getDefault(); //create initial instance
-        //TODO alternatively, reigster manager with lookup and instantiate when case is opened or image added
+        logger.log(Level.INFO, "OPENED");
+        //create manager instance
+        if (manager == null)
+            manager = IngestManager.getDefault();
     }
 
     @Override
     public void componentClosed() {
+        logger.log(Level.INFO, "CLOSED");
         // TODO add custom code on component closing
         // WindowManager.getDefault().findMode("bottomSlidingSide").dockInto(this);
+        if (manager.isIngestRunning()) {
+            /*
+            Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom");
+            //Mode mode = WindowManager.getDefault().findMode("bottomSlidingSide");
+            if (mode != null) {
+                mode.dockInto(this);
+                this.open();
+            }
+            
+            return;
+            */
+        }
+
+        Mode mode = WindowManager.getDefault().findMode("dockedBottom");
+        if (mode != null) {
+            mode.dockInto(this);
+            this.open();
+        }
+
     }
 
     @Override
     protected void componentShowing() {
-        super.componentShowing();
-        //WindowManager.getDefault().findMode("floatingLeftBottom").dockInto(this);
+        logger.log(Level.INFO, "SHOWING");
+
+        Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom");
+        if (mode != null) {
+            mode.dockInto(this);
+            this.open();
+        }
     }
 
     @Override
     protected void componentHidden() {
-        super.componentHidden();
-        //WindowManager.getDefault().findMode("bottomSlidingSide").dockInto(this);
-        //WindowManager.getDefault().findMode("floatingLeftBottom").dockInto(this);
+        logger.log(Level.INFO, "HIDDEN");
+
     }
 
     @Override
@@ -145,7 +158,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
     @Override
     public boolean canClose() {
-        return false;
+        return true;
     }
 
     @Override
@@ -156,10 +169,8 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     @Override
     public java.awt.Image getIcon() {
         return ImageUtilities.loadImage(
-                    "org/sleuthkit/autopsy/ingest/ingest-msg-icon.png");
+                "org/sleuthkit/autopsy/ingest/ingest-msg-icon.png");
     }
-    
-    
 
     void writeProperties(java.util.Properties p) {
         // better to version settings since initial version as advocated at
@@ -211,10 +222,6 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
         messagePanel.setOpaque(false);
         setLayout(new BorderLayout());
         add(messagePanel, BorderLayout.CENTER);
-
-        //messagePanel.addMessage(IngestMessage.createManagerMessage("TEST1"));
-        //messagePanel.addMessage(IngestMessage.createManagerMessage("TEST2"));
-        //messagePanel.addMessage(IngestMessage.createManagerMessage("TEST3"));
     }
 
     /**
@@ -234,7 +241,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
      */
     @Override
     public void displayMessage(IngestMessage ingestMessage) {
-        addMessage(ingestMessage);
+        messagePanel.addMessage(ingestMessage);
     }
 
     @Override
@@ -258,7 +265,8 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
     }
 
-    public void addMessage(IngestMessage m) {
-        messagePanel.addMessage(m);
+    @Override
+    public void restoreMessages() {
+        componentShowing();
     }
 }

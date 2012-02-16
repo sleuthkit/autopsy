@@ -30,8 +30,12 @@
     </folder>
     <folder name="Windows2">
         <folder name="Modes">
-            <folder name="floatingLeftBottom">
+            <folder name="dockedBottom">
                 <file name="IngestMessageTopComponent.wstcref" url="IngestMessageTopComponentWstcref.xml"/>
+            </folder>
+            <file name="dockedBottom.wsmode" url="dockedBottomWsmode.xml" />
+            <folder name="floatingLeftBottom">
+          
             </folder>
             <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml"/>
         </folder>

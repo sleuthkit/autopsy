@@ -102,7 +102,6 @@ public class IngestManager {
         return instance;
     }
 
-
     /**
      * Add property change listener to listen to ingest events
      * @param l PropertyChangeListener to add
@@ -127,10 +126,9 @@ public class IngestManager {
     void execute(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
         logger.log(Level.INFO, "Will enqueue number of images: " + images.size());
 
-        logger.log(Level.INFO, "Starting enqueue worker");
         queueWorker = new EnqueueWorker(services, images);
         queueWorker.execute();
-
+        ui.restoreMessages();
         //logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + fsContentQueue.toString());
     }
 
@@ -274,21 +272,34 @@ public class IngestManager {
      * test if any of image of fscontent ingesters are running
      * @return true if any service is running, false otherwise
      */
-    synchronized boolean isIngestRunning() {
-        //enqueue running?
+    public synchronized boolean isIngestRunning() {
+        if (isEnqueueRunning()) {
+            return true;
+        } else if (isFileIngestRunning()) {
+            return true;
+        } else if (isImageIngestRunning()) {
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
+    public synchronized boolean isEnqueueRunning() {
         if (queueWorker != null && !queueWorker.isDone()) {
             return true;
         }
+        return false;
+    }
 
-        //enque not running
-
-        //file ingester running?
+    public synchronized boolean isFileIngestRunning() {
         if (fsContentIngester != null && !fsContentIngester.isDone()) {
             return true;
         }
+        return false;
+    }
 
-        //file ingester not running
-
+    public synchronized boolean isImageIngestRunning() {
         if (imageIngesters.isEmpty()) {
             return false;
         }
@@ -303,9 +314,9 @@ public class IngestManager {
         }
         if (allDone) {
             return false;
+        } else {
+            return true;
         }
-
-        return true;
     }
 
     /**

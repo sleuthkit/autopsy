@@ -27,11 +27,10 @@ import org.sleuthkit.datamodel.Image;
 public interface IngestUI {
     void displayMessage(final IngestMessage message);
     void clearMessages();
+    void restoreMessages();
     void displayIngestDialog(final Image image);
     void initProgress(final int maximum);
     void updateProgress(final int progress);
     void displayReport(final String report);
-    
-    
     
 }

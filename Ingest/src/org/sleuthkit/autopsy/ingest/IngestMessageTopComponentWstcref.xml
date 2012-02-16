@@ -7,5 +7,5 @@ and open the template in the editor.
     <tc-ref version="2.2">
     <tc-id id="IngestMessageTopComponent" />
     <state opened="true" />
-    <previousMode name="bottomSlidingSide"  index="0"  />
+    <previousMode name="floatingLeftBottom"  index="0"  />
 </tc-ref>
