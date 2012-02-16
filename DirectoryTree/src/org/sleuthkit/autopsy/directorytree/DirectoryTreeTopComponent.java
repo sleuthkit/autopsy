@@ -553,13 +553,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         // change in node selection
         if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
-            /*if (getSelectedNode() == null && oldValue != null) {
+            if (getSelectedNode() == null && oldValue != null) {
                 try {
                     em.setSelectedNodes((Node[]) oldValue);
                 } catch (PropertyVetoException ex) {
                     logger.log(Level.WARNING, "Error resetting node", ex);
                 }
-            }*/
+            }
             // Some lock that prevents certain Node operations is set during the
             // ExplorerManager selection-change, so we must handle changes after the
             // selection-change event is processed.
