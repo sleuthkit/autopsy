@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.DateFormat;
@@ -46,7 +45,6 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
@@ -88,7 +86,7 @@ public class IngestManager {
     public final static String SERVICE_STOPPED_EVT = IngestManagerEvents.SERVICE_STOPPED.name();
     public final static String SERVICE_HAS_DATA_EVT = IngestManagerEvents.SERVICE_HAS_DATA.name();
     //ui
-    private IngestUI ui = IngestTopComponent.getDefault();
+    private IngestUI ui = IngestMessageTopComponent.findInstance();
     //singleton
     private static IngestManager instance;
 
@@ -97,8 +95,8 @@ public class IngestManager {
     }
 
     static synchronized IngestManager getDefault() {
-        logger.log(Level.INFO, "creating manager instance");
         if (instance == null) {
+            logger.log(Level.INFO, "creating manager instance");
             instance = new IngestManager();
         }
         return instance;
