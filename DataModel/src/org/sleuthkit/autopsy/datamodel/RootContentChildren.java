@@ -46,4 +46,10 @@ public class RootContentChildren extends AbstractContentChildren {
     protected void removeNotify() {
         setKeys(Collections.EMPTY_SET);
     }
+    
+    public void refreshKeys() {
+        for(Object o : contentKeys){
+            this.refreshKey(o);
+        }
+    }
 }
