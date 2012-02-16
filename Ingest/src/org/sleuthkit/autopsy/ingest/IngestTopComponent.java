@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.Image;
 /**
  * Top component explorer for the Ingest module.
  */
-public final class IngestTopComponent extends TopComponent implements DataExplorer, IngestUI {
+public final class IngestTopComponent extends TopComponent implements DataExplorer {
 
     private static IngestTopComponent instance;
     private static final Logger logger = Logger.getLogger(IngestTopComponent.class.getName());
@@ -43,8 +43,8 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
 
     private IngestTopComponent() {
         initComponents();
-        customizeComponents();
-        registerListeners();
+       // customizeComponents();
+        //registerListeners();
         setName(NbBundle.getMessage(IngestTopComponent.class, "CTL_IngestTopComponent"));
         setToolTipText(NbBundle.getMessage(IngestTopComponent.class, "HINT_IngestTopComponent"));
         //putClientProperty(TopComponent.PROP_UNDOCKING_DISABLED, Boolean.TRUE);
@@ -74,36 +74,6 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
         return TopComponent.PERSISTENCE_NEVER;
     }
 
-    private void registerListeners() {
-        //handle case change
-        Case.addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)) {
-                    Case oldCase = (Case) evt.getOldValue();
-                    if (oldCase == null) //nothing to do, new case had been opened
-                    {
-                        return;
-                    }
-                    //stop workers if running
-                    IngestManager.getDefault().stopAll();
-                    //clear inbox 
-                    clearMessages();
-                } else if (evt.getPropertyName().equals(Case.CASE_ADD_IMAGE)) {
-                    final Image image = (Image) evt.getNewValue();
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            displayIngestDialog(image);
-                        }
-                    });
-
-                }
-            }
-        });
-    }
 
     private void customizeComponents() {
         //custom GUI setup not done by builder
@@ -257,7 +227,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
     @Override
     public void componentOpened() {
         logger.log(Level.INFO, "IngestTopComponent opened()");
-        IngestManager.getDefault(); //create initial instance
+       // IngestManager.getDefault(); //create initial instance
 
     }
 
@@ -279,46 +249,7 @@ public final class IngestTopComponent extends TopComponent implements DataExplor
 
     }
 
-    /**
-     * Display ingest summary report in some dialog
-     */
-    @Override
-    public void displayReport(String ingestReport) {
-        JOptionPane.showMessageDialog(
-                null,
-                ingestReport,
-                "File Ingest Summary",
-                JOptionPane.INFORMATION_MESSAGE);
-    }
+   
 
-    /**
-     * Display IngestMessage from service (forwarded by IngestManager)
-     */
-    @Override
-    public void displayMessage(IngestMessage ingestMessage) {
-        messagePanel.addMessage(ingestMessage);
-    }
-
-    @Override
-    public void initProgress(int maximum) {
-        this.mainProgressBar.setMaximum(maximum);
-    }
-
-    @Override
-    public void updateProgress(int progress) {
-        this.mainProgressBar.setValue(progress);
-    }
-
-    @Override
-    public void clearMessages() {
-        messagePanel.clearMessages();
-    }
-
-    @Override
-    public void displayIngestDialog(final Image image) {
-        final IngestDialog ingestDialog = new IngestDialog();
-        ingestDialog.setImage(image);
-        ingestDialog.display();
-
-    }
+   
 }

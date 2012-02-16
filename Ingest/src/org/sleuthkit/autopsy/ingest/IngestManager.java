@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.DateFormat;
@@ -46,7 +45,6 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
@@ -88,7 +86,7 @@ public class IngestManager {
     public final static String SERVICE_STOPPED_EVT = IngestManagerEvents.SERVICE_STOPPED.name();
     public final static String SERVICE_HAS_DATA_EVT = IngestManagerEvents.SERVICE_HAS_DATA.name();
     //ui
-    private IngestUI ui = IngestTopComponent.getDefault();
+    private IngestUI ui = IngestMessageTopComponent.findInstance();
     //singleton
     private static IngestManager instance;
 
@@ -97,13 +95,12 @@ public class IngestManager {
     }
 
     static synchronized IngestManager getDefault() {
-        logger.log(Level.INFO, "creating manager instance");
         if (instance == null) {
+            logger.log(Level.INFO, "creating manager instance");
             instance = new IngestManager();
         }
         return instance;
     }
-
 
     /**
      * Add property change listener to listen to ingest events
@@ -129,10 +126,9 @@ public class IngestManager {
     void execute(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
         logger.log(Level.INFO, "Will enqueue number of images: " + images.size());
 
-        logger.log(Level.INFO, "Starting enqueue worker");
         queueWorker = new EnqueueWorker(services, images);
         queueWorker.execute();
-
+        ui.restoreMessages();
         //logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + fsContentQueue.toString());
     }
 
@@ -276,21 +272,34 @@ public class IngestManager {
      * test if any of image of fscontent ingesters are running
      * @return true if any service is running, false otherwise
      */
-    synchronized boolean isIngestRunning() {
-        //enqueue running?
+    public synchronized boolean isIngestRunning() {
+        if (isEnqueueRunning()) {
+            return true;
+        } else if (isFileIngestRunning()) {
+            return true;
+        } else if (isImageIngestRunning()) {
+            return true;
+        } else {
+            return false;
+        }
+
+    }
+
+    public synchronized boolean isEnqueueRunning() {
         if (queueWorker != null && !queueWorker.isDone()) {
             return true;
         }
+        return false;
+    }
 
-        //enque not running
-
-        //file ingester running?
+    public synchronized boolean isFileIngestRunning() {
         if (fsContentIngester != null && !fsContentIngester.isDone()) {
             return true;
         }
+        return false;
+    }
 
-        //file ingester not running
-
+    public synchronized boolean isImageIngestRunning() {
         if (imageIngesters.isEmpty()) {
             return false;
         }
@@ -305,9 +314,9 @@ public class IngestManager {
         }
         if (allDone) {
             return false;
+        } else {
+            return true;
         }
-
-        return true;
     }
 
     /**
@@ -351,7 +360,6 @@ public class IngestManager {
         }
 
         SwingUtilities.invokeLater(new Runnable() {
-
             @Override
             public void run() {
                 ui.displayMessage(message);
@@ -483,16 +491,6 @@ public class IngestManager {
             @Override
             public void run() {
                 ui.initProgress(maximum);
-            }
-        });
-    }
-
-    private void updateMainProgress(final int progress) {
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                ui.updateProgress(progress);
             }
         });
     }
@@ -970,7 +968,6 @@ public class IngestManager {
 
                 }
                 progress.progress(unit.content.getName(), ++processedFiles);
-                updateMainProgress(processedFiles);
                 --numFsContents;
             }
             logger.log(Level.INFO, "Done background processing");
