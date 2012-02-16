@@ -598,7 +598,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         }
 
                         // set the directory listing to be active
-                        dataResult.requestActive();
+                        //dataResult.requestActive();
                     } finally {
                         DirectoryTreeTopComponent.this.setCursor(null);
                     }

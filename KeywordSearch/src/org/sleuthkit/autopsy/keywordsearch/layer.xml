@@ -24,5 +24,10 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestService.getDefault"/>
             <attr name="position" intvalue="200"/>
         </file>
+        <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchDataExplorer.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.keywordsearch.KeywordSearchDataExplorer.getDefault"/>
+            <attr name="position" intvalue="300"/>
+        </file>
     </folder>
 </filesystem>
