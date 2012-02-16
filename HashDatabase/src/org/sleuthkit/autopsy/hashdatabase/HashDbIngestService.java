@@ -22,6 +22,7 @@
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.util.actions.SystemAction;
@@ -30,6 +31,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
+import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -141,6 +143,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
                     BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), NAME, "Known Bad", Hash.calculateMd5(fsContent));
                     badFile.addAttribute(att3);
                     managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, null));
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent(NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
                 }
             } catch (TskException ex){
                 // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
