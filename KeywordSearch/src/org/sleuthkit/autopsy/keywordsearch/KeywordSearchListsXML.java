@@ -65,6 +65,7 @@ public class KeywordSearchListsXML {
     private static final String LIST_NAME_ATTR = "name";
     private static final String LIST_CREATE_ATTR = "created";
     private static final String LIST_MOD_ATTR = "modified";
+    private static final String LIST_USE_FOR_INGEST = "use_for_ingest";
     private static final String KEYWORD_EL = "keyword";
     private static final String KEYWORD_LITERAL_ATTR = "literal";
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";
@@ -188,11 +189,11 @@ public class KeywordSearchListsXML {
         KeywordSearchList curList = getList(name);
         final Date now = new Date();
         if (curList == null) {
-            theLists.put(name, new KeywordSearchList(name, now, now, newList));
+            theLists.put(name, new KeywordSearchList(name, now, now, false, newList));
             save();
             changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
         } else {
-            theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, newList));
+            theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, curList.getUseForIngest(), newList));
             save();
             replaced = true;
             changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
@@ -267,12 +268,14 @@ public class KeywordSearchListsXML {
                 KeywordSearchList list = theLists.get(listName);
                 String created = dateFormatter.format(list.getDateCreated());
                 String modified = dateFormatter.format(list.getDateModified());
+                String useForIngest = list.getUseForIngest().toString();
                 List<Keyword> keywords = list.getKeywords();
 
                 Element listEl = doc.createElement(LIST_EL);
                 listEl.setAttribute(LIST_NAME_ATTR, listName);
                 listEl.setAttribute(LIST_CREATE_ATTR, created);
                 listEl.setAttribute(LIST_MOD_ATTR, modified);
+                listEl.setAttribute(LIST_USE_FOR_INGEST, useForIngest);
 
                 for (Keyword keyword : keywords) {
                     Element keywordEl = doc.createElement(KEYWORD_EL);
@@ -313,10 +316,12 @@ public class KeywordSearchListsXML {
                 final String name = listEl.getAttribute(LIST_NAME_ATTR);
                 final String created = listEl.getAttribute(LIST_CREATE_ATTR);
                 final String modified = listEl.getAttribute(LIST_MOD_ATTR);
+                final String useForIngest = listEl.getAttribute(LIST_USE_FOR_INGEST);
                 Date createdDate = dateFormatter.parse(created);
                 Date modDate = dateFormatter.parse(modified);
+                Boolean useForIngestBool = Boolean.parseBoolean(useForIngest);
                 List<Keyword> words = new ArrayList<Keyword>();
-                KeywordSearchList list = new KeywordSearchList(name, createdDate, modDate, words);
+                KeywordSearchList list = new KeywordSearchList(name, createdDate, modDate, useForIngestBool, words);
 
                 //parse all words
                 NodeList wordsNList = listEl.getElementsByTagName(KEYWORD_EL);
@@ -412,12 +417,14 @@ class KeywordSearchList {
     private String name;
     private Date created;
     private Date modified;
+    private Boolean useForIngest;
     private List<Keyword> keywords;
 
-    KeywordSearchList(String name, Date created, Date modified, List<Keyword> keywords) {
+    KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, List<Keyword> keywords) {
         this.name = name;
         this.created = created;
         this.modified = modified;
+        this.useForIngest = useForIngest;
         this.keywords = keywords;
     }
 
@@ -452,6 +459,14 @@ class KeywordSearchList {
 
     Date getDateModified() {
         return modified;
+    }
+    
+    Boolean getUseForIngest() {
+        return useForIngest;
+    }
+    
+    void setUseForIngest(boolean use) {
+        this.useForIngest = use;
     }
 
     List<Keyword> getKeywords() {

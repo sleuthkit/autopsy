@@ -33,6 +33,7 @@ import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
@@ -180,9 +181,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         
         keywords = new ArrayList<Keyword>();
         
-        for(String listName : KeywordSearchListsManagementPanel.getDefault().getIngestLists()){
-            KeywordSearchList list = loader.getList(listName);
-            keywords.addAll(list.getKeywords());
+        for(KeywordSearchList list : loader.getListsL()){
+            if(list.getUseForIngest())
+                keywords.addAll(list.getKeywords());
         }
         
         if (keywords.isEmpty()) {
@@ -213,7 +214,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     @Override
     public void userConfigure() {
-        new KeywordSearchConfigurationDialog().setVisible(true);
+        SystemAction.get(KeywordSearchConfigurationAction.class).performAction();
     }
 
     @Override

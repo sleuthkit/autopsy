@@ -38,8 +38,8 @@ public class KeywordSearchConfigurationDialog extends javax.swing.JDialog {
     KeywordSearchEditListPanel editListPanel;
 
     /** Creates new form KeywordSearchConfigurationDialog */
-    public KeywordSearchConfigurationDialog() {
-        super(new JFrame("Keyword Search Configuration"), "Keyword Search Configuration", true);
+    public KeywordSearchConfigurationDialog(String title) {
+        super(new JFrame(title), title, true);
         setResizable(false);
         initComponents();
         customizeComponents();
