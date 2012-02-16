@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeSelectionModel;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
@@ -44,6 +45,8 @@ import org.openide.explorer.view.TreeView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.NodeNotFoundException;
+import org.openide.nodes.NodeOp;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
@@ -76,6 +79,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     // for error handling
     private JPanel caller;
     private String className = this.getClass().toString();
+    private static final Logger logger = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
+    private RootContentChildren contentChildren;
 
     /** the constructor */
     private DirectoryTreeTopComponent() {
@@ -324,7 +329,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     items.add(new ExtractedContent(currentCase.getSleuthkitCase()));
                     items.add(new SearchFilters(currentCase.getSleuthkitCase()));
                     items.add(new RecentFiles(currentCase.getSleuthkitCase()));
-                    Node root = new AbstractNode(new RootContentChildren(items)) {
+                    contentChildren = new RootContentChildren(items);
+                    Node root = new AbstractNode(contentChildren) {
 
                         /** to override the right click action in the white blank space
                          * area on the directory tree window
@@ -547,7 +553,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         // change in node selection
         if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
-
+            /*if (getSelectedNode() == null && oldValue != null) {
+                try {
+                    em.setSelectedNodes((Node[]) oldValue);
+                } catch (PropertyVetoException ex) {
+                    logger.log(Level.WARNING, "Error resetting node", ex);
+                }
+            }*/
             // Some lock that prevents certain Node operations is set during the
             // ExplorerManager selection-change, so we must handle changes after the
             // selection-change event is processed.
@@ -576,7 +588,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             //set node, wrap in filter node first to filter out children
                             Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                             DirectoryTreeTopComponent.this.dataResult.setNode(new TableFilterNode(drfn, true));
-                            
+
                             String displayName = "";
                             if(originNode.getLookup().lookup(Content.class) != null)
                                 displayName = DataConversion.getformattedPath(ContentUtils.getDisplayPath(originNode.getLookup().lookup(Content.class)), 0);
@@ -609,21 +621,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 forwardButton.setEnabled(false); // disable the forward Button
             }
         }
-        
-        if (changed.equals(IngestManager.SERVICE_COMPLETED_EVT)){
-            Node[] selectedNode = em.getSelectedNodes();
-            componentOpened();
-            try {
-                em.setSelectedNodes(selectedNode);
-                backButton.setEnabled(false);
-                forwardButton.setEnabled(false);
-                forwardList.clear();
-                backList.clear();
-            } catch (PropertyVetoException ex) {
-                Logger.getLogger(DirectoryTreeTopComponent.class.getName())
-                    .log(Level.SEVERE, "Unable to return to previously selected nodes", ex);
-            }
-            
+
+        if (changed.equals(IngestManager.SERVICE_HAS_DATA_EVT)) {
+            refreshTree();
         }
     }
 
@@ -657,6 +657,45 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public BeanTreeView getTree() {
         return (BeanTreeView) this.jScrollPane1;
     }
+    
+    /**
+     * Refreshes the nodes in the tree to reflect updates in the database
+     * 
+     */
+    public void refreshTree() {
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                Node selected = getSelectedNode();
+                String[] path = NodeOp.createPath(selected, em.getRootContext());
+
+                //TODO: instead, we should choose a specific key to refresh? Maybe?
+                contentChildren.refreshKeys();
+
+                Children dirChilds = em.getRootContext().getChildren();
+                TreeView tree = getTree();
+
+                // expand all root trees node
+                for (Node child : dirChilds.getNodes()) {
+                    tree.expandNode(child);
+                }
+                try {
+                    Node newSelection = NodeOp.findPath(em.getRootContext(), path);
+                    resetHistoryListAndButtons();
+                    tree.expandNode(newSelection);
+                    em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                    // We need to set the selection, which will refresh dataresult and get rid of the oob exception
+                } catch (NodeNotFoundException ex) {
+                    logger.log(Level.WARNING, "Node not found", ex);
+                } catch (PropertyVetoException ex) {
+                    logger.log(Level.WARNING, "Property Veto", ex);
+                }
+            }
+        });
+    }
+    
+    
 
     @Override
     public TopComponent getTopComponent() {
