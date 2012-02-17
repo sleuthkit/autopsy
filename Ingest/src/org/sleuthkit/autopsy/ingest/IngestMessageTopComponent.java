@@ -97,44 +97,37 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
     @Override
     public void componentOpened() {
-        logger.log(Level.INFO, "OPENED");
+        //logger.log(Level.INFO, "OPENED");
         //create manager instance
-        if (manager == null)
+        if (manager == null) {
             manager = IngestManager.getDefault();
+        }
     }
+    
+    
 
     @Override
     public void componentClosed() {
-        logger.log(Level.INFO, "CLOSED");
-        // TODO add custom code on component closing
-        // WindowManager.getDefault().findMode("bottomSlidingSide").dockInto(this);
-        if (manager.isIngestRunning()) {
-            /*
-            Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom");
-            //Mode mode = WindowManager.getDefault().findMode("bottomSlidingSide");
-            if (mode != null) {
-                mode.dockInto(this);
-                this.open();
-            }
-            
-            return;
-            */
-        }
-
+        //logger.log(Level.INFO, "CLOSED");
         Mode mode = WindowManager.getDefault().findMode("dockedBottom");
         if (mode != null) {
             mode.dockInto(this);
             this.open();
         }
-
     }
 
     @Override
     protected void componentShowing() {
-        logger.log(Level.INFO, "SHOWING");
+        //logger.log(Level.INFO, "SHOWING");
 
         Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom");
         if (mode != null) {
+            TopComponent [] tcs = mode.getTopComponents();
+            for (int i = 0; i<tcs.length; ++i) {
+                if (tcs[i] == this)
+                    //already floating
+                    return;
+            }
             mode.dockInto(this);
             this.open();
         }
@@ -142,17 +135,20 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
     @Override
     protected void componentHidden() {
-        logger.log(Level.INFO, "HIDDEN");
+        //logger.log(Level.INFO, "HIDDEN");
+        super.componentHidden();
 
     }
 
     @Override
     protected void componentActivated() {
+        //logger.log(Level.INFO, "ACTIVATED");
         super.componentActivated();
     }
 
     @Override
     protected void componentDeactivated() {
+        //logger.log(Level.INFO, "DEACTIVATED");
         super.componentDeactivated();
     }
 
