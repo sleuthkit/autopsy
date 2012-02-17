@@ -263,6 +263,6 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
     @Override
     public void restoreMessages() {
-        componentShowing();
+        //componentShowing();
     }
 }
