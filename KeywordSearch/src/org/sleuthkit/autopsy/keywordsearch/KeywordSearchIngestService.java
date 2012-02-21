@@ -494,7 +494,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             detailsSb.append("<html>");
                             detailsSb.append("Keyword hit: ");
                             detailsSb.append(attr.getValueString());
-                            detailsSb.append("<br />>");
+                            detailsSb.append("<br />");
                             //regex
                             if (!query.isLiteral()) {
                                 attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
@@ -506,7 +506,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             }
                             //file
                             detailsSb.append("File: ");
-                            detailsSb.append(hitFile.getParentPath()).append(File.separator).append(hitFile.getName());
+                            detailsSb.append(hitFile.getParentPath()).append(hitFile.getName());
                             detailsSb.append("<br />");
                             //preview
                             attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
