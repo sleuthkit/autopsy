@@ -32,7 +32,10 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
+import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.ingest.IngestMessage.*;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Notification window showing messages from services to user
@@ -43,6 +46,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
     private MessageTableModel tableModel;
     private static Font visitedFont = new Font("Arial", Font.PLAIN, 11);
     private static Font notVisitedFont = new Font("Arial", Font.BOLD, 11);
+    private int lastRowSelected = -1;
 
     /** Creates new form IngestMessagePanel */
     public IngestMessagePanel() {
@@ -147,7 +151,18 @@ public class IngestMessagePanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void viewArtifactButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewArtifactButtonActionPerformed
-        // TODO add your handling code here:
+        if (lastRowSelected < 0) {
+            return;
+        }
+        final IngestMessage message = tableModel.getMessage(lastRowSelected);
+        if (message != null) {
+            BlackboardArtifact art = message.getData();
+            if (art != null) {
+                BlackboardResultViewer v = Lookup.getDefault().lookup(BlackboardResultViewer.class);
+                v.viewArtifact(art);
+            }
+        }
+
     }//GEN-LAST:event_viewArtifactButtonActionPerformed
 
     private void readAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_readAllButtonActionPerformed
@@ -157,7 +172,6 @@ public class IngestMessagePanel extends javax.swing.JPanel {
     private void clearAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearAllButtonActionPerformed
         clearMessages();
     }//GEN-LAST:event_clearAllButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clearAllButton;
     private javax.swing.JEditorPane detailsViewerPane;
@@ -197,7 +211,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.setColumnSelectionAllowed(false);
         messageTable.setRowSelectionAllowed(true);
         messageTable.getSelectionModel().addListSelectionListener(new MessageVisitedSelection());
-        
+
         detailsViewerPane.setContentType("text/html");
 
     }
@@ -207,28 +221,32 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         //autoscroll
         messageTable.scrollRectToVisible(messageTable.getCellRect(messageTable.getRowCount() - 1, messageTable.getColumnCount(), true));
     }
-    
+
     public void clearMessages() {
         tableModel.clearMessages();
     }
 
     private void setVisited(int rowNumber) {
         tableModel.setVisited(rowNumber);
+        lastRowSelected = rowNumber;
         //messageTable.repaint(); //TODO repaint only needed cell
     }
-    
-     private void updateDetails(int rowNumber) {
+
+    private void updateDetails(int rowNumber) {
         final IngestMessage message = tableModel.getMessage(rowNumber);
         if (message != null) {
             String details = message.getDetails();
-            if (details != null)
+            if (details != null) {
                 this.detailsViewerPane.setText(details);
-            else this.detailsViewerPane.setText("");
-            if (message.getData() != null)
+            } else {
+                this.detailsViewerPane.setText("");
+            }
+            if (message.getData() != null) {
                 this.viewArtifactButton.setEnabled(true);
-            else this.viewArtifactButton.setEnabled(false);
-        }
-        else {
+            } else {
+                this.viewArtifactButton.setEnabled(false);
+            }
+        } else {
             this.viewArtifactButton.setEnabled(false);
             this.detailsViewerPane.setText("");
         }
@@ -281,8 +299,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
                     Object service = entry.message.getSource();
                     if (service == null) {
                         ret = "";
-                    }
-                    else {
+                    } else {
                         ret = (Object) entry.message.getSource().getName();
                     }
                     break;
@@ -306,9 +323,9 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         public void addMessage(IngestMessage m) {
             messageData.add(new TableEntry(m));
             int size = messageData.size();
-            this.fireTableRowsInserted(size - 1, size); 
+            this.fireTableRowsInserted(size - 1, size);
         }
-        
+
         public void clearMessages() {
             messageData.clear();
             fireTableDataChanged();
@@ -319,7 +336,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
             //repaint the cell 
             fireTableCellUpdated(rowNumber, 0);
         }
-        
+
         public void setVisitedAll() {
             int row = 0;
             for (TableEntry e : messageData) {
@@ -338,8 +355,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         public MessageType getMessageType(int rowNumber) {
             return messageData.get(rowNumber).message.getMessageType();
         }
-        
-        
+
         public IngestMessage getMessage(int rowNumber) {
             return messageData.get(rowNumber).message;
         }
@@ -356,7 +372,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
 
             @Override
             public int compareTo(Object o) {
-               return this.message.getDatePosted().compareTo(((TableEntry) o).message.getDatePosted());
+                return this.message.getDatePosted().compareTo(((TableEntry) o).message.getDatePosted());
             }
         }
     }
