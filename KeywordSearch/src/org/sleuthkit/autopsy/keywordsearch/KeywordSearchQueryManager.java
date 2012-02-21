@@ -192,8 +192,8 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
     }
     
     @Override
-    public Collection<BlackboardArtifact> writeToBlackBoard(FsContent newFsHit) {     
-        Collection<BlackboardArtifact> ret = new ArrayList<BlackboardArtifact>();
+    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit) {     
+        Collection<KeywordWriteResult> ret = new ArrayList<KeywordWriteResult>();
          for (KeywordSearchQuery q : queryDelegates) {
             ret.addAll(q.writeToBlackBoard(newFsHit));
         }

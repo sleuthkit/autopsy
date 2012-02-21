@@ -153,17 +153,17 @@ public class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public Collection<BlackboardArtifact> writeToBlackBoard(FsContent newFsHit) {
+    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit) {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
 
-        Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>();
+        Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
 
         for (Term term : terms) {
             final String regexMatch = term.getTerm();
             //snippet
             String snippet = null;
             try {
-                snippet = LuceneQuery.getSnippet(regexMatch, newFsHit.getId());
+                snippet = LuceneQuery.querySnippet(regexMatch, newFsHit.getId());
             } catch (Exception e) {
                 logger.log(Level.INFO, "Error querying snippet: " + regexMatch, e);
                 continue;
@@ -175,10 +175,12 @@ public class TermComponentQuery implements KeywordSearchQuery {
             
             //there is match actually in this file, create artifact only then
             BlackboardArtifact bba = null;
+            KeywordWriteResult writeResult = null;
             Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
             try {
                 bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-                newArtifacts.add(bba);
+                writeResult = new KeywordWriteResult(bba);
+                writeResults.add(writeResult);
             } catch (Exception e) {
                 logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
                 continue;
@@ -195,7 +197,9 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
             try {
                 //first try to add attr not in bulk so we can catch sql exception and encode the string
-                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+                BlackboardAttribute attr = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet);
+                bba.addAttribute(attr);
+                writeResult.add(attr);
             } catch (Exception e) {
                 try {
                     //escape in case of garbage so that sql accepts it
@@ -207,6 +211,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
             }
             try {
                 bba.addAttributes(attributes);
+                writeResult.add(attributes);
             } catch (TskException e) {
                 logger.log(Level.INFO, "Error adding bb attributes for terms search artifact", e);
             }
@@ -214,7 +219,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         } //for each term
 
-        return newArtifacts;
+        return writeResults;
     }
 
     /**

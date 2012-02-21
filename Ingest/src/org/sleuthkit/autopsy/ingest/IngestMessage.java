@@ -21,9 +21,10 @@ package org.sleuthkit.autopsy.ingest;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Representation of text posted by ingest services
+ * Representation of subject posted by ingest services
  * 
  * Message should have a unique ID within context of originating source
  * 
@@ -38,16 +39,19 @@ public class IngestMessage {
     private long ID;
     private MessageType messageType;
     private IngestServiceAbstract source;
-    private String text;
-    private KeyValue data;
+    private String subject;
+    private String detailsHtml;
+    private String uniqueKey;
+    private BlackboardArtifact data;
     private Date datePosted;
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    private IngestMessage(long ID, MessageType messageType, IngestServiceAbstract source, String text) {
+    private IngestMessage(long ID, MessageType messageType, IngestServiceAbstract source, String subject, String detailsHtml) {
         this.ID = ID;
         this.source = source;
         this.messageType = messageType;
-        this.text = text;
+        this.subject = subject;
+        this.detailsHtml = detailsHtml;
         datePosted = new Date();
     }
 
@@ -60,11 +64,19 @@ public class IngestMessage {
         return source;
     }
 
-    public String getText() {
-        return text;
+    public String getSubject() {
+        return subject;
+    }
+    
+    public String getDetails() {
+        return detailsHtml;
+    }
+    
+    public String getUniqueKey() {
+        return uniqueKey;
     }
 
-    public KeyValue getData() {
+    public BlackboardArtifact getData() {
         return data;
     }
 
@@ -84,12 +96,13 @@ public class IngestMessage {
         if (source != null) //can be null for manager messages
             sb.append(" source: ").append(source.getName());
         sb.append(" date: ").append(dateFormat.format(datePosted));
-        sb.append(" text: ").append(text);
+        sb.append(" subject: ").append(subject);
+        if (detailsHtml != null)
+            sb.append(" details: ").append(detailsHtml);
         if (data != null)
             sb.append(" data: ").append(data.toString()).append(' ');
         return sb.toString();
     }
-    
 
     @Override
     public boolean equals(Object obj) {
@@ -109,7 +122,16 @@ public class IngestMessage {
         if (this.source != other.source && (this.source == null || !this.source.equals(other.source))) {
             return false;
         }
-        if (this.datePosted != other.datePosted && (this.datePosted == null || !this.datePosted.equals(other.datePosted))) {
+        if ((this.subject == null) ? (other.subject != null) : !this.subject.equals(other.subject)) {
+            return false;
+        }
+        if ((this.detailsHtml == null) ? (other.detailsHtml != null) : !this.detailsHtml.equals(other.detailsHtml)) {
+            return false;
+        }
+        if ((this.uniqueKey == null) ? (other.uniqueKey != null) : !this.uniqueKey.equals(other.uniqueKey)) {
+            return false;
+        }
+        if (this.data != other.data && (this.data == null || !this.data.equals(other.data))) {
             return false;
         }
         return true;
@@ -118,44 +140,85 @@ public class IngestMessage {
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 29 * hash + (int) (this.ID ^ (this.ID >>> 32));
-        hash = 29 * hash + (this.messageType != null ? this.messageType.hashCode() : 0);
-        hash = 29 * hash + (this.source != null ? this.source.hashCode() : 0);
-        hash = 29 * hash + (this.text != null ? this.text.hashCode() : 0);
-        hash = 29 * hash + (this.datePosted != null ? this.datePosted.hashCode() : 0);
+        hash = 59 * hash + (int) (this.ID ^ (this.ID >>> 32));
+        hash = 59 * hash + (this.messageType != null ? this.messageType.hashCode() : 0);
+        hash = 59 * hash + (this.source != null ? this.source.hashCode() : 0);
+        hash = 59 * hash + (this.subject != null ? this.subject.hashCode() : 0);
+        hash = 59 * hash + (this.detailsHtml != null ? this.detailsHtml.hashCode() : 0);
+        hash = 59 * hash + (this.uniqueKey != null ? this.uniqueKey.hashCode() : 0);
+        hash = 59 * hash + (this.data != null ? this.data.hashCode() : 0);
         return hash;
     }
+    
+
+  
 
 
     //factory methods
-    public static IngestMessage createMessage(long ID, MessageType messageType, IngestServiceAbstract source, String message) {
-        if (messageType == null || source == null || message == null) {
-            throw new IllegalArgumentException("message type, source and message cannot be null");
+    /**
+     * Create a simple message with a subject only
+     * @param ID ID of the message, unique in the context of module that generated it
+     * @param messageType message type
+     * @param source originating service
+     * @param subject message subject to be displayed
+     * @param details message details to be displayed
+     * @return 
+     */
+    public static IngestMessage createMessage(long ID, MessageType messageType, IngestServiceAbstract source, String subject, String detailsHtml) {
+        if (messageType == null || source == null || subject == null) {
+            throw new IllegalArgumentException("message type, source and subject cannot be null");
         }
-        IngestMessage im = new IngestMessage(ID, messageType, source, message);
-        return im;
-    }
-
-    public static IngestMessage createErrorMessage(long ID, IngestServiceAbstract source, String message) {
-        if (source == null || message == null) {
-            throw new IllegalArgumentException("message type, source and message cannot be null");
-        }
-        IngestMessage im = new IngestMessage(ID, MessageType.ERROR, source, message);
-        return im;
+        return new IngestMessage(ID, messageType, source, subject, detailsHtml);
     }
     
-    public static IngestMessage createDataMessage(long ID, IngestServiceAbstract source, String message, KeyValue data) {
-        if (source == null || message == null) {
-            throw new IllegalArgumentException("source and message cannot be null");
+    /**
+     * Create a simple message with a subject only
+     * @param ID ID of the message, unique in the context of module that generated it
+     * @param messageType message type
+     * @param source originating service
+     * @param subject message subject to be displayed
+     * @return 
+     */
+    public static IngestMessage createMessage(long ID, MessageType messageType, IngestServiceAbstract source, String subject) {
+        return createMessage(ID, messageType, source, subject, null);
+    }
+
+    /**
+     * Create error message
+     * @param ID ID of the message, unique in the context of module that generated it
+     * @param source originating service
+     * @param subject message subject to be displayed
+     * @return 
+     */
+    public static IngestMessage createErrorMessage(long ID, IngestServiceAbstract source, String subject) {
+        if (source == null || subject == null) {
+            throw new IllegalArgumentException("source and subject cannot be null");
         }
-        IngestMessage im = new IngestMessage(ID, MessageType.DATA, source, message);
+        return new IngestMessage(ID, MessageType.ERROR, source, subject, null);
+    }
+    
+    /**
+     * 
+     * @param ID ID of the message, unique in the context of module that generated it
+     * @param source originating service
+     * @param subject message subject to be displayed
+     * @param detailsHtml html formatted detailed message, for instance, a human-readable representation of the data. 
+     * @param uniqueKey unique key determining uniqueness of the message, or null. Helps grouping similar messages and determine their importance.  Subsequent messages with the same uniqueKey will be treated with lower priority.
+     * @param data data blackboard artifact associated with the message, the same as fired in ServiceDataEvent by the service
+     * @return 
+     */
+    public static IngestMessage createDataMessage(long ID, IngestServiceAbstract source, String subject, String detailsHtml, String uniqueKey, BlackboardArtifact data) {
+        if (source == null || subject == null || detailsHtml == null || data == null) {
+            throw new IllegalArgumentException("source, subject, details and data cannot be null");
+        }
+        IngestMessage im = new IngestMessage(ID, MessageType.DATA, source, subject, detailsHtml);
+        im.uniqueKey = uniqueKey;
         im.data = data;
         return im;
     }
     
-    static IngestMessage createManagerMessage(String message) {
-        IngestMessage im = new IngestMessage(0, MessageType.INFO, null, message);
-        return im;
+    static IngestMessage createManagerMessage(String subject) {
+        return new IngestMessage(0, MessageType.INFO, null, subject, null);
     }
     
 }

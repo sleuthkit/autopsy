@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.File;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -167,7 +168,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     @Override
     public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init()");
-        
+
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
 
         this.managerProxy = managerProxy;
@@ -178,16 +179,17 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         ingestStatus = new HashMap<Long, IngestStatus>();
 
         reportedHits = new HashMap<String, List<FsContent>>();
-        
+
         KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
-        
+
         keywords = new ArrayList<Keyword>();
-        
-        for(KeywordSearchList list : loader.getListsL()){
-            if(list.getUseForIngest())
+
+        for (KeywordSearchList list : loader.getListsL()) {
+            if (list.getUseForIngest()) {
                 keywords.addAll(list.getKeywords());
+            }
         }
-        
+
         if (keywords.isEmpty()) {
             managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "No keywords in keyword list.  Will index and skip search."));
         }
@@ -457,20 +459,57 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 }
 
                 if (!newResults.isEmpty()) {
-                    StringBuilder sb = new StringBuilder();
-                    final int hitFiles = newResults.size();
-                    sb.append("New hit: ").append("<").append(queryStr);
-                    if (!query.isLiteral()) {
-                        sb.append(" (regex)");
-                    }
-                    sb.append(">");
-                    sb.append(" in ").append(hitFiles).append((hitFiles > 1 ? " files" : " file"));
-                    managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, instance, sb.toString()));
 
                     //write results to BB
                     Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>(); //new artifacts to report
                     for (FsContent hitFile : newResults) {
-                        newArtifacts.addAll(del.writeToBlackBoard(hitFile));
+                        Collection<KeywordWriteResult> written = del.writeToBlackBoard(hitFile);
+                        for (KeywordWriteResult res : written) {
+                            newArtifacts.add(res.getArtifact());
+
+                            //generate a data message for each artifact
+                            StringBuilder subjectSb = new StringBuilder();
+                            StringBuilder detailsSb = new StringBuilder();
+                            //final int hitFiles = newResults.size();
+
+                            subjectSb.append("Keyword hit: ").append("<");
+                            BlackboardAttribute attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
+                            if (attr != null) {
+                                subjectSb.append(attr.getValueString());
+                            }
+                            subjectSb.append(">");
+                            String uniqueKey = queryStr;
+
+                            //details
+                            //hit
+                            detailsSb.append("<html>");
+                            detailsSb.append("Keyword hit: ");
+                            detailsSb.append(attr.getValueString());
+                            detailsSb.append("<br />>");
+                            //regex
+                            if (!query.isLiteral()) {
+                                attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
+                                if (attr != null) {
+                                    detailsSb.append("Regular expression: ");
+                                    detailsSb.append(attr.getValueString());
+                                    detailsSb.append("<br />>");
+                                }
+                            }
+                            //file
+                            detailsSb.append("File: ");
+                            detailsSb.append(hitFile.getParentPath()).append(File.separator).append(hitFile.getName());
+                            detailsSb.append("<br />>");
+                            //preview
+                            attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
+                            if (attr != null) {
+                                detailsSb.append("Preview: ");
+                                detailsSb.append(attr.getValueString());
+                                detailsSb.append("<br />>");
+                            }
+
+                            detailsSb.append("</html>");
+                            managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, res.getArtifact()));
+                        }
                     } //for each file hit
 
                     //update artifact browser
