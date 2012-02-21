@@ -29,11 +29,14 @@
         -->
     </folder>
     <folder name="Windows2">
+        <folder name="Components">
+            <file name="IngestMessageTopComponent.settings" url="IngestMessageTopComponentSettings.xml" />
+        </folder>
         <folder name="Modes">
             <folder name="dockedBottom">
                 <file name="IngestMessageTopComponent.wstcref" url="IngestMessageTopComponentWstcref.xml"/>
             </folder>
-            <file name="dockedBottom.wsmode" url="dockedBottomWsmode.xml" />
+            <file name="dockedBottom.wsmode" url="dockedBottomWsmode.xml"/>
             <folder name="floatingLeftBottom">
           
             </folder>
