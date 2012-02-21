@@ -250,7 +250,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
     @Override
     public void clearMessages() {
-        clearMessages();
+        messagePanel.clearMessages();
     }
 
     @Override

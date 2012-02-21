@@ -94,7 +94,7 @@ public class IngestManager {
         imageIngesters = new ArrayList<IngestImageThread>();
     }
 
-    static synchronized IngestManager getDefault() {
+    public static synchronized IngestManager getDefault() {
         if (instance == null) {
             logger.log(Level.INFO, "creating manager instance");
             instance = new IngestManager();
