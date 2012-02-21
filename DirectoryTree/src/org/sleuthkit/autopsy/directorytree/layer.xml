@@ -28,6 +28,11 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent.getDefault"/>
             <attr name="position" intvalue="100"/>
         </file>
+         <file name="org-sleuthkit-autopsy-directorytree-DirectoryTreeTopComponent2.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent.getDefault"/>
+            <attr name="position" intvalue="100"/>
+        </file>
     </folder>
     <folder name="Windows2">
         <folder name="Components">

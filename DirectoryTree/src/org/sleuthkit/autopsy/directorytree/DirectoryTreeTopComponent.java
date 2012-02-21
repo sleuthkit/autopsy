@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeSelectionModel;
@@ -48,6 +47,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
@@ -66,7 +66,7 @@ import org.sleuthkit.datamodel.Content;
  * Top component which displays something.
  */
 // Registered as a service provider for DataExplorer in layer.xml
-public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider {
+public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider, BlackboardResultViewer {
 
     private transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
@@ -704,7 +704,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         return this;
     }
     
-    public void openNode(BlackboardArtifact art) {
+    @Override
+    public void viewArtifact(BlackboardArtifact art) {
         BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(art.getArtifactTypeID());
         Children rootChilds = em.getRootContext().getChildren();
         Node extractedContent = rootChilds.findChild(ExtractedContentNode.EXTRACTED_NAME);
@@ -715,6 +716,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } catch (PropertyVetoException ex) {
             logger.log(Level.WARNING, "Property Veto: ", ex);
         }
+    }
+    
+    @Override
+    public void viewArtifactContent(BlackboardArtifact art) {
+        
     }
 //    private class HistoryManager<T> {
 //        private Stack<T> past, future;
