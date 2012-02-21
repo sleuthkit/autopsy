@@ -60,7 +60,7 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
     private String createQuery(){
         String query = "select * from tsk_files where ";
         long latestUpdate = getLastTime();
-        long threshold = latestUpdate-filter.getDuration();
+        long threshold = latestUpdate-filter.getDurationSeconds();
         query += "(crtime between " + threshold + " and " + latestUpdate + ") or ";
         query += "(ctime between " + threshold + " and " + latestUpdate + ") or ";
         query += "(atime between " + threshold + " and " + latestUpdate + ") or ";

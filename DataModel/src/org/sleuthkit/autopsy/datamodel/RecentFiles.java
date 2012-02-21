@@ -29,20 +29,26 @@ public class RecentFiles implements AutopsyVisitableItem {
     SleuthkitCase skCase;
     
     public enum RecentFilesFilter implements AutopsyVisitableItem {
-        AUT_1DAY_FILTER(0, "AUT_1DAY_FILTER", "Last 24 Hours", 60*60*24),
-        AUT_1WEEK_FILTER(1, "AUT_1WEEK_FILTER", "Last 7 Days", 60*60*24*7),
-        AUT_1MONTH_FILTER(2, "AUT_1MONTH_FILTER", "Last 30 Days", 60*60*24*30);
+        AUT_1DAY_FILTER(0, "AUT_1DAY_FILTER", "Last 1 Day", 1),
+        AUT_2DAY_FILTER(0, "AUT_2DAY_FILTER", "Last 2 Days", 2),
+        AUT_3DAY_FILTER(0, "AUT_3DAY_FILTER", "Last 3 Days", 3),
+        AUT_4DAY_FILTER(0, "AUT_4DAY_FILTER", "Last 4 Days", 4),
+        AUT_5DAY_FILTER(0, "AUT_5DAY_FILTER", "Last 5 Days", 5),
+        AUT_10DAY_FILTER(0, "AUT_10DAY_FILTER", "Last 10 Days", 10),
+        AUT_15DAY_FILTER(0, "AUT_15DAY_FILTER", "Last 15 Days", 15);
         
         int id;
         String name;
         String displayName;
-        int duration;
+        int durationDays;
+        int durationSeconds;
         
-        private RecentFilesFilter(int id, String name, String displayName, int duration){
+        private RecentFilesFilter(int id, String name, String displayName, int durationDays){
             this.id = id;
             this.name = name;
             this.displayName = displayName;
-            this.duration = duration;
+            this.durationDays = durationDays;
+            this.durationSeconds = durationDays*60*60*24;
         }
         
         public String getName(){
@@ -57,8 +63,8 @@ public class RecentFiles implements AutopsyVisitableItem {
             return this.displayName;
         }
         
-        public int getDuration() {
-            return this.duration;
+        public int getDurationSeconds() {
+            return this.durationSeconds;
         }
 
         @Override
