@@ -62,6 +62,10 @@ public class IngestMessagePanel extends javax.swing.JPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         messageTable = new javax.swing.JTable();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        detailsViewerPane = new javax.swing.JEditorPane();
+        viewArtifactButton = new javax.swing.JButton();
+        readAllButton = new javax.swing.JButton();
 
         setOpaque(false);
 
@@ -72,7 +76,6 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
         messageTable.setAutoscrolls(false);
-        messageTable.setColumnSelectionAllowed(false);
         messageTable.setGridColor(new java.awt.Color(204, 204, 204));
         messageTable.setOpaque(false);
         messageTable.setSelectionForeground(new java.awt.Color(0, 0, 0));
@@ -82,20 +85,69 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(messageTable);
 
+        detailsViewerPane.setBackground(new java.awt.Color(221, 221, 235));
+        detailsViewerPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.detailsViewerPane.contentType")); // NOI18N
+        detailsViewerPane.setEditable(false);
+        jScrollPane2.setViewportView(detailsViewerPane);
+
+        viewArtifactButton.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.viewArtifactButton.text")); // NOI18N
+        viewArtifactButton.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.viewArtifactButton.toolTipText")); // NOI18N
+        viewArtifactButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                viewArtifactButtonActionPerformed(evt);
+            }
+        });
+
+        readAllButton.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.readAllButton.text")); // NOI18N
+        readAllButton.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.readAllButton.toolTipText")); // NOI18N
+        readAllButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                readAllButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(readAllButton))
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(viewArtifactButton))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(readAllButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(viewArtifactButton)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void viewArtifactButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewArtifactButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_viewArtifactButtonActionPerformed
+
+    private void readAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_readAllButtonActionPerformed
+        tableModel.setVisitedAll();
+    }//GEN-LAST:event_readAllButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JEditorPane detailsViewerPane;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable messageTable;
+    private javax.swing.JButton readAllButton;
+    private javax.swing.JButton viewArtifactButton;
     // End of variables declaration//GEN-END:variables
 
     private void customizeComponents() {
@@ -127,6 +179,8 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.setColumnSelectionAllowed(false);
         messageTable.setRowSelectionAllowed(true);
         messageTable.getSelectionModel().addListSelectionListener(new MessageVisitedSelection());
+        
+        detailsViewerPane.setContentType("text/html");
 
     }
 
@@ -143,6 +197,23 @@ public class IngestMessagePanel extends javax.swing.JPanel {
     private void setVisited(int rowNumber) {
         tableModel.setVisited(rowNumber);
         //messageTable.repaint(); //TODO repaint only needed cell
+    }
+    
+     private void updateDetails(int rowNumber) {
+        final IngestMessage message = tableModel.getMessage(rowNumber);
+        if (message != null) {
+            String details = message.getDetails();
+            if (details != null)
+                this.detailsViewerPane.setText(details);
+            else this.detailsViewerPane.setText("");
+            if (message.getData() != null)
+                this.viewArtifactButton.setEnabled(true);
+            else this.viewArtifactButton.setEnabled(false);
+        }
+        else {
+            this.viewArtifactButton.setEnabled(false);
+            this.detailsViewerPane.setText("");
+        }
     }
 
     private class MessageTableModel extends AbstractTableModel {
@@ -230,6 +301,17 @@ public class IngestMessagePanel extends javax.swing.JPanel {
             //repaint the cell 
             fireTableCellUpdated(rowNumber, 0);
         }
+        
+        public void setVisitedAll() {
+            int row = 0;
+            for (TableEntry e : messageData) {
+                if (e.visited == false) {
+                    e.visited = true;
+                    fireTableCellUpdated(row, 0);
+                }
+                ++row;
+            }
+        }
 
         public boolean isVisited(int rowNumber) {
             return messageData.get(rowNumber).visited;
@@ -237,6 +319,11 @@ public class IngestMessagePanel extends javax.swing.JPanel {
 
         public MessageType getMessageType(int rowNumber) {
             return messageData.get(rowNumber).message.getMessageType();
+        }
+        
+        
+        public IngestMessage getMessage(int rowNumber) {
+            return messageData.get(rowNumber).message;
         }
 
         class TableEntry implements Comparable {
@@ -324,9 +411,10 @@ public class IngestMessagePanel extends javax.swing.JPanel {
                 }
                 if (selected != -1) {
                     setVisited(selected);
+                    updateDetails(selected);
                 }
 
-                //TODO popup detail viewer
+
             }
         }
     }
