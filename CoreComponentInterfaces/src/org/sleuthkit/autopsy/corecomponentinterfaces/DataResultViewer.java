@@ -67,4 +67,9 @@ public interface DataResultViewer {
      * @param n Node to expand
      */
     public void expandNode(Node n);
+    
+    /**
+     * Select the given node array
+     */
+    public void setSelectedNodes(Node[] selected);
 }

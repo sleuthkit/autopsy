@@ -258,8 +258,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private javax.swing.JButton backButton;
     private javax.swing.JButton forwardButton;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JButton refreshButton;
     // End of variables declaration//GEN-END:variables
-
     /**
      * Gets default instance. Do not use directly: reserved for *.settings files only,
      * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
@@ -578,12 +578,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         if (treeNode != null) {
                             Node originNode = treeNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class).getNode();
 
-                            int count = originNode.getChildren().getNodesCount(true);
-                            if (count > 1000) {
-                                DirectoryTreeTopComponent.this.setCursor(null);
-                                JOptionPane.showMessageDialog(caller, "Note: The selected directory contains " + count + " child files and folders. It may take some time to display them.\n\nAlso note that in the current version of Autopsy this will also make certain functions very slow (thumbnail view in particular, should be fixed in a future version)", "Large Data", JOptionPane.INFORMATION_MESSAGE);
-                                DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                            }
+                            //int count = originNode.getChildren().getNodesCount(true);
+                            //if (count > 1000) {
+                            //    DirectoryTreeTopComponent.this.setCursor(null);
+                            //    JOptionPane.showMessageDialog(caller, "Note: The selected directory contains " + count + " child files and folders. It may take some time to display them.\n\nAlso note that in the current version of Autopsy this will also make certain functions very slow (thumbnail view in particular, should be fixed in a future version)", "Large Data", JOptionPane.INFORMATION_MESSAGE);
+                            //    DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                            //}
                             DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                             //set node, wrap in filter node first to filter out children
                             Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);

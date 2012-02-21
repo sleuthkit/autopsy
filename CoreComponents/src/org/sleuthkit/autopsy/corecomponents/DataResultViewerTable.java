@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.FontMetrics;
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -28,6 +29,8 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import org.openide.explorer.ExplorerManager;
@@ -38,7 +41,6 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Sheet;
-import org.openide.util.lookup.AbstractLookup;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
@@ -403,5 +405,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     public Component getComponent() {
         return this;
+    }
+    
+    @Override
+    public void setSelectedNodes(Node[] selected) {
+        try{
+            this.em.setSelectedNodes(selected);
+        } catch (PropertyVetoException ex) {
+            Logger.getLogger(DataResultViewerTable.class.getName())
+                    .log(Level.WARNING, "Couldn't set selected nodes.", ex);
+        }
     }
 }

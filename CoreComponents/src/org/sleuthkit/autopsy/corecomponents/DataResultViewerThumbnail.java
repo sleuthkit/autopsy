@@ -21,7 +21,10 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.beans.PropertyVetoException;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ListSelectionModel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.IconView;
@@ -152,5 +155,15 @@ public class DataResultViewerThumbnail extends AbstractDataResultViewer {
     @Override
     public Component getComponent() {
         return this;
+    }
+    
+    @Override
+    public void setSelectedNodes(Node[] selected) {
+        try{
+            this.em.setSelectedNodes(selected);
+        } catch (PropertyVetoException ex) {
+            Logger.getLogger(DataResultViewerThumbnail.class.getName())
+                    .log(Level.WARNING, "Couldn't set selected nodes.", ex);
+        }
     }
 }
