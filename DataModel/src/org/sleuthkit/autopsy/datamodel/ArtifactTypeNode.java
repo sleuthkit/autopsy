@@ -40,7 +40,7 @@ public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNod
 
     ArtifactTypeNode(BlackboardArtifact.ARTIFACT_TYPE type, SleuthkitCase skCase) {
         super(Children.create(new ArtifactTypeChildren(type, skCase), true), Lookups.singleton(type));
-        super.setName(type.getDisplayName());
+        super.setName(type.getLabel());
         // NOTE: This completely destroys our lazy-loading ideal
         //    a performance increase might be had by adding a 
         //    "getBlackboardArtifactCount()" method to skCase

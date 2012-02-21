@@ -196,12 +196,6 @@ public class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerforme
                 searchAddButton.addActionListener(searchListener);
                 listsTableModel.resync();
                 break;
-            case 2:
-                ingestRunning = false;
-                break;
-            case 3:
-                ingestRunning = true;
-                break;
         }
     }
 

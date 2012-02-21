@@ -54,10 +54,12 @@ import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
+import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.RecentFiles;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.autopsy.datamodel.SearchFilters;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -700,6 +702,19 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     @Override
     public TopComponent getTopComponent() {
         return this;
+    }
+    
+    public void openNode(BlackboardArtifact art) {
+        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(art.getArtifactTypeID());
+        Children rootChilds = em.getRootContext().getChildren();
+        Node extractedContent = rootChilds.findChild(ExtractedContentNode.EXTRACTED_NAME);
+        Children extractedChilds = extractedContent.getChildren();
+        Node typeNode = extractedChilds.findChild(type.getLabel());
+        try {
+            em.setExploredContextAndSelection(typeNode, new Node[]{typeNode});
+        } catch (PropertyVetoException ex) {
+            logger.log(Level.WARNING, "Property Veto: ", ex);
+        }
     }
 //    private class HistoryManager<T> {
 //        private Stack<T> past, future;

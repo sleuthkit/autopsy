@@ -124,7 +124,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         searchBoxPanel.setBorder(new javax.swing.border.LineBorder(java.awt.Color.lightGray, 1, true));
         searchBoxPanel.setPreferredSize(new java.awt.Dimension(255, 18));
 
-        searchBox.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        searchBox.setFont(new java.awt.Font("Tahoma", 0, 12));
         searchBox.setForeground(java.awt.Color.lightGray);
         searchBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.searchBox.text")); // NOI18N
         searchBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 3, 4, 1));
@@ -153,16 +153,15 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
             searchBoxPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(searchBoxPanelLayout.createSequentialGroup()
                 .addComponent(settingsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(searchBox, javax.swing.GroupLayout.DEFAULT_SIZE, 227, Short.MAX_VALUE)
-                .addGap(3, 3, 3))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(searchBox, javax.swing.GroupLayout.DEFAULT_SIZE, 226, Short.MAX_VALUE))
         );
         searchBoxPanelLayout.setVerticalGroup(
             searchBoxPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(searchBoxPanelLayout.createSequentialGroup()
                 .addGroup(searchBoxPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(searchBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(settingsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(settingsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(searchBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
