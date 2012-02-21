@@ -492,19 +492,19 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                 if (attr != null) {
                                     detailsSb.append("Regular expression: ");
                                     detailsSb.append(attr.getValueString());
-                                    detailsSb.append("<br />>");
+                                    detailsSb.append("<br />");
                                 }
                             }
                             //file
                             detailsSb.append("File: ");
                             detailsSb.append(hitFile.getParentPath()).append(File.separator).append(hitFile.getName());
-                            detailsSb.append("<br />>");
+                            detailsSb.append("<br />");
                             //preview
                             attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
                             if (attr != null) {
                                 detailsSb.append("Preview: ");
                                 detailsSb.append(attr.getValueString());
-                                detailsSb.append("<br />>");
+                                detailsSb.append("<br />");
                             }
 
                             detailsSb.append("</html>");
