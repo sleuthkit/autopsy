@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
@@ -30,15 +31,21 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.FileSystemParent;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
+
 /**
  * View the directory content associated with the given Artifact
  */
@@ -54,53 +61,127 @@ class ViewContextAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        List<Content> hierarchy = new ArrayList<Content>();
-        FsContent associated = node.getAssociatedFile();
-        while(!associated.isRoot()){
-            hierarchy.add(associated);
-            try {
-                associated = associated.getParentDirectory();
-            } catch (TskException ex) {
-                Logger.getLogger(ViewContextAction.class.getName())
-                        .log(Level.INFO, "Couldn't get parent directory", ex);
-                return;
+        EventQueue.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                ReverseHierarchyVisitor vtor = new ReverseHierarchyVisitor();
+                List<Content> hierarchy = node.getAssociatedFile().accept(vtor);
+                Collections.reverse(hierarchy);
+                Node generated = new AbstractNode(new RootContentChildren(hierarchy));
+                Children genChilds = generated.getChildren();
+
+                final DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();
+                ExplorerManager man = directoryTree.getExplorerManager();
+                Node dirRoot = man.getRootContext();
+                Children dirChilds = dirRoot.getChildren();
+
+                Node dirExplored = null;
+
+                for (int i = 0; i < genChilds.getNodesCount() - 1; i++) {
+                    Node currentGeneratedNode = genChilds.getNodeAt(i);
+                    for (int j = 0; j < dirChilds.getNodesCount(); j++) {
+                        Node currentDirectoryTreeNode = dirChilds.getNodeAt(j);
+                        if (currentGeneratedNode.getDisplayName().equals(currentDirectoryTreeNode.getDisplayName())) {
+                            dirExplored = currentDirectoryTreeNode;
+                            dirChilds = currentDirectoryTreeNode.getChildren();
+                            break;
+                        }
+                    }
+                }
+
+                try {
+                    if (dirExplored != null) {
+                        man.setExploredContextAndSelection(dirExplored, new Node[]{dirExplored});
+                    }
+
+                } catch (PropertyVetoException ex) {
+                    logger.log(Level.WARNING, "Couldn't set selected node", ex);
+                }
+
+                // Another thread is needed because we have to wait for dataResult to populate
+                EventQueue.invokeLater(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        DataResultTopComponent dataResult = directoryTree.getDirectoryListing();
+                        Node resultRoot = dataResult.getRootNode();
+                        Children resultChilds = resultRoot.getChildren();
+                        Node generated = node.getContentNode();
+                        for (int i = 0; i < resultChilds.getNodesCount(); i++) {
+                            Node current = resultChilds.getNodeAt(i);
+                            if (generated.getName().equals(current.getName())) {
+                                dataResult.setSelectedNodes(new Node[]{current});
+                                break;
+                            }
+                        }
+                    }
+                });
             }
-        }
-        FileSystem fs = associated.getFileSystem();
-        //hierarchy.add(fs);
-        Volume v = (Volume) fs.getParent();
-        hierarchy.add(v);
-        VolumeSystem vs = v.getParent();
-        //hierarchy.add(vs);
-        Image img = vs.getParent();
-        hierarchy.add(img);
-        Collections.reverse(hierarchy);
-        Node generated = new AbstractNode(new RootContentChildren(hierarchy));
-        Children genChilds = generated.getChildren();
+        });
+    }
 
-        ExplorerManager man = DirectoryTreeTopComponent.findInstance().getExplorerManager();
-        Node root = man.getRootContext();
-        Children dirChilds = root.getChildren();
+    private class ReverseHierarchyVisitor implements ContentVisitor<List<Content>> {
 
-        Node dirExplored = null;
+        List<Content> ret = new ArrayList<Content>();
 
-        for(int i = 0; i < genChilds.getNodesCount()-1; i++){
-            Node currentGeneratedNode = genChilds.getNodeAt(i);
-            for(int j = 0; j < dirChilds.getNodesCount(); j++){
-                Node currentDirectoryTreeNode = dirChilds.getNodeAt(j);
-                if(currentGeneratedNode.getDisplayName().equals(currentDirectoryTreeNode.getDisplayName())){
-                    dirExplored = currentDirectoryTreeNode;
-                    dirChilds = currentDirectoryTreeNode.getChildren();
-                    break;
+        @Override
+        public List<Content> visit(Directory drctr) {
+            ret.add(drctr);
+            if (drctr.isRoot()) {
+                return visit(drctr.getFileSystem());
+            } else {
+                try {
+                    return visit(drctr.getParentDirectory());
+                } catch (TskException ex) {
+                    logger.log(Level.WARNING, "Couldn't get directory's parent directory", ex);
                 }
             }
+            return ret;
         }
 
-        try {
-            if(dirExplored != null)
-                man.setExploredContextAndSelection(dirExplored, new Node[]{dirExplored});
-        } catch (PropertyVetoException ex) {
-            logger.log(Level.WARNING, "Couldn't set selected node", ex);
+        @Override
+        public List<Content> visit(File file) {
+            ret.add(file);
+            if (file.isRoot()) {
+                return visit(file.getFileSystem());
+            } else {
+                try {
+                    return visit(file.getParentDirectory());
+                } catch (TskException ex) {
+                    logger.log(Level.WARNING, "Couldn't get file's parent directory", ex);
+                }
+            }
+            return ret;
+        }
+
+        @Override
+        public List<Content> visit(FileSystem fs) {
+            FileSystemParent parent = fs.getParent();
+            if (parent instanceof Image) {
+                return visit((Image) parent);
+            } else if (parent instanceof Volume) {
+                return visit((Volume) parent);
+            } else {
+                throw new UnsupportedOperationException("Unsupported Parent");
+            }
+        }
+
+        @Override
+        public List<Content> visit(Image image) {
+            ret.add(image);
+            return ret;
+        }
+
+        @Override
+        public List<Content> visit(Volume volume) {
+            ret.add(volume);
+            return visit(volume.getParent());
+        }
+
+        @Override
+        public List<Content> visit(VolumeSystem vs) {
+            return visit(vs.getParent());
         }
     }
 }
