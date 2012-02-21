@@ -256,17 +256,19 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                 AbstractFsContentNode.fillPropertyMap(resMap, f);
                 setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
                 if (literal_query) {
-                    final String snippet = LuceneQuery.getSnippet(tcq.getQueryString(), f.getId());
+                    final String snippet = LuceneQuery.querySnippet(tcq.getQueryString(), f.getId());
                     setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
                 }
                 toPopulate.add(new KeyValueContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped));
 
                 //write to bb
-                final boolean sendDataEvent = (cur == numFsContents-1?true:false);
+                final boolean sendDataEvent = (cur == numFsContents-1?true:false); //send a single bulk notification after the last write
                 new Thread() {
                     @Override
                     public void run() {
-                        na.addAll(tcq.writeToBlackBoard(f));
+                        Collection<KeywordWriteResult> written = tcq.writeToBlackBoard(f);
+                        for (KeywordWriteResult w : written)
+                            na.add(w.getArtifact());
                         if (sendDataEvent == true) {
                             IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
                         }

@@ -89,6 +89,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     public Collection<Term> getTerms() {
         return null;
     }
+    
 
     /**
      * Just perform the query and return result without updating the GUI
@@ -169,7 +170,10 @@ public class LuceneQuery implements KeywordSearchQuery {
             public void run() {
                 Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
                 for (FsContent newHit : matches) {
-                    na.addAll(writeToBlackBoard(newHit));
+                    Collection<KeywordWriteResult> written = writeToBlackBoard(newHit);
+                    for (KeywordWriteResult w : written) {
+                        na.add(w.getArtifact());
+                    }
                 }
                 //notify bb viewers
                 IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
@@ -183,30 +187,34 @@ public class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public Collection<BlackboardArtifact> writeToBlackBoard(FsContent newFsHit) {
+    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit) {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
 
-        Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>();
+        Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
+        KeywordWriteResult writeResult = null;
         Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
         BlackboardArtifact bba = null;
         try {
             bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-            newArtifacts.add(bba);
+            writeResult = new KeywordWriteResult(bba);
+            writeResults.add(writeResult);
         } catch (Exception e) {
             logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
-            return newArtifacts;
+            return writeResults;
         }
 
         String snippet = null;
         try {
-            snippet = LuceneQuery.getSnippet(query, newFsHit.getId());
+            snippet = LuceneQuery.querySnippet(query, newFsHit.getId());
         } catch (Exception e) {
             logger.log(Level.INFO, "Error querying snippet: " + query, e);
         }
         if (snippet != null) {
             //first try to add attr not in bulk so we can catch sql exception and encode the string
             try {
-                bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+                BlackboardAttribute attr = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet);
+                bba.addAttribute(attr);
+                writeResult.add(attr);
             } catch (Exception e1) {
                 try {
                     //escape in case of garbage so that sql accepts it
@@ -227,14 +235,15 @@ public class LuceneQuery implements KeywordSearchQuery {
         }
 
         try {
-            bba.addAttributes(attributes);
+            bba.addAttributes(attributes); //write out to bb
+            writeResult.add(attributes);
         } catch (TskException e) {
             logger.log(Level.INFO, "Error adding bb attributes to artifact", e);
         }
-        return newArtifacts;
+        return writeResults;
     }
 
-    public static String getSnippet(String query, long contentID) {
+    public static String querySnippet(String query, long contentID) {
         final int SNIPPET_LENGTH = 45;
 
         final Server.Core solrCore = KeywordSearch.getServer().getCore();

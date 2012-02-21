@@ -116,11 +116,11 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         for (int i = 0; i < 2; i++) {
             column = messageTable.getColumnModel().getColumn(i);
             if (i == 0) {
-                column.setPreferredWidth(((int) (width * 0.30)));
-                column.setCellRenderer(new MessageTableRenderer());
-            } else {
                 column.setCellRenderer(new MessageTableRenderer());
                 column.setPreferredWidth(((int) (width * 0.68)));
+            } else {
+                column.setPreferredWidth(((int) (width * 0.30)));
+                column.setCellRenderer(new MessageTableRenderer());
             }
         }
         messageTable.setCellSelectionEnabled(false);
@@ -167,10 +167,10 @@ public class IngestMessagePanel extends javax.swing.JPanel {
 
             switch (column) {
                 case 0:
-                    colName = "Module";
+                    colName = "Subject";
                     break;
                 case 1:
-                    colName = "Message";
+                    colName = "Module";
                     break;
                 default:
                     ;
@@ -186,6 +186,9 @@ public class IngestMessagePanel extends javax.swing.JPanel {
 
             switch (columnIndex) {
                 case 0:
+                    ret = (Object) entry.message.getSubject();
+                    break;
+                case 1:
                     Object service = entry.message.getSource();
                     if (service == null) {
                         ret = "";
@@ -193,9 +196,6 @@ public class IngestMessagePanel extends javax.swing.JPanel {
                     else {
                         ret = (Object) entry.message.getSource().getName();
                     }
-                    break;
-                case 1:
-                    ret = (Object) entry.message.getText();
                     break;
                 default:
                     logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
@@ -228,7 +228,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         public void setVisited(int rowNumber) {
             messageData.get(rowNumber).visited = true;
             //repaint the cell 
-            fireTableCellUpdated(rowNumber, 1);
+            fireTableCellUpdated(rowNumber, 0);
         }
 
         public boolean isVisited(int rowNumber) {
@@ -277,7 +277,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
                 setText(val);
             }
 
-            if (column == 1) {
+            if (column == 0) {
                 if (tableModel.isVisited(row)) {
                     cell.setFont(visitedFont);
                 } else {

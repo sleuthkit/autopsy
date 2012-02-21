@@ -142,7 +142,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
                     //TODO: Shouldn't be calculating the hash twice.
                     BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), NAME, "Known Bad", Hash.calculateMd5(fsContent));
                     badFile.addAttribute(att3);
-                    managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, null));
+                    managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, "", null, badFile));
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent(NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
                 }
             } catch (TskException ex){
