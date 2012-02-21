@@ -182,8 +182,27 @@ public class KeywordSearchListsXML {
      * replacing old one if exists with the same name
      * @param name the name of the new list or list to replace
      * @param newList list of keywords
+     * @param useForIngest should this list be used for ingest
      * @return true if old list was replaced
      */
+    boolean addList(String name, List<Keyword> newList, boolean useForIngest) {
+        boolean replaced = false;
+        KeywordSearchList curList = getList(name);
+        final Date now = new Date();
+        if (curList == null) {
+            theLists.put(name, new KeywordSearchList(name, now, now, useForIngest, newList));
+            save();
+            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
+        } else {
+            theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, newList));
+            save();
+            replaced = true;
+            changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
+        }
+
+        return replaced;
+    }
+    
     boolean addList(String name, List<Keyword> newList) {
         boolean replaced = false;
         KeywordSearchList curList = getList(name);

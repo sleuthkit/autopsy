@@ -46,16 +46,16 @@ import org.openide.awt.ActionReference;
 /**
  * Top component which displays something.
  */
-@ConvertAsProperties(dtd = "-//org.sleuthkit.autopsy.keywordsearch//KeywordSearchListImportExport//EN",
-autostore = false)
-@TopComponent.Description(preferredID = "KeywordSearchListImportExportTopComponent",
-//iconBase="SET/PATH/TO/ICON/HERE", 
-persistenceType = TopComponent.PERSISTENCE_NEVER)
-@TopComponent.Registration(mode = "explorer", openAtStartup = false)
-@ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchListImportExportTopComponent")
-@ActionReference(path = "Menu/Window" /*, position = 333 */)
-@TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchListImportExportAction",
-preferredID = "KeywordSearchListImportExportTopComponent")
+//@ConvertAsProperties(dtd = "-//org.sleuthkit.autopsy.keywordsearch//KeywordSearchListImportExport//EN",
+//autostore = false)
+//@TopComponent.Description(preferredID = "KeywordSearchListImportExportTopComponent",
+////iconBase="SET/PATH/TO/ICON/HERE", 
+//persistenceType = TopComponent.PERSISTENCE_NEVER)
+//@TopComponent.Registration(mode = "explorer", openAtStartup = false)
+//@ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchListImportExportTopComponent")
+//@ActionReference(path = "Menu/Window" /*, position = 333 */)
+//@TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchListImportExportAction",
+//preferredID = "KeywordSearchListImportExportTopComponent")
 public final class KeywordSearchListImportExportTopComponent extends TopComponent {
 
     private Logger logger = Logger.getLogger(KeywordSearchListImportExportTopComponent.class.getName());

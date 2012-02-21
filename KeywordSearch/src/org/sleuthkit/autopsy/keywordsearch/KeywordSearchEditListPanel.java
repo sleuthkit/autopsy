@@ -92,7 +92,7 @@ public class KeywordSearchEditListPanel extends javax.swing.JPanel implements Li
         //customize column witdhs
         final int width = jScrollPane1.getPreferredSize().width;
         TableColumn column = null;
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < keywordTable.getColumnCount(); i++) {
             column = keywordTable.getColumnModel().getColumn(i);
             if (i == 0) {
                 column.setPreferredWidth(((int) (width * 0.85)));
@@ -140,17 +140,17 @@ public class KeywordSearchEditListPanel extends javax.swing.JPanel implements Li
     }
 
     private void initButtons() {
-        //initialize save buttons
-        if(currentKeywordList == null) {
-            saveListButton.setEnabled(false);
-            exportButton.setEnabled(false);
-            deleteListButton.setEnabled(false);
-            deleteWordButton.setEnabled(false);
-        } else {
-            saveListButton.setEnabled(true);
-            exportButton.setEnabled(true);
-            deleteListButton.setEnabled(true);
-        }
+        //initialize buttons
+        boolean listSet = (currentKeywordList != null);
+        addWordButton.setEnabled(listSet);
+        addWordField.setEnabled(listSet);
+        chRegex.setEnabled(listSet);
+        useForIngestCheckbox.setEnabled(listSet);
+        saveListButton.setEnabled(listSet);
+        exportButton.setEnabled(listSet);
+        deleteListButton.setEnabled(listSet);
+        deleteWordButton.setEnabled(listSet);
+        
         if (getAllKeywords().isEmpty()) {
             saveListButton.setEnabled(false);
             exportButton.setEnabled(false);
@@ -220,11 +220,6 @@ public class KeywordSearchEditListPanel extends javax.swing.JPanel implements Li
         });
 
         useForIngestCheckbox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.useForIngestCheckbox.text")); // NOI18N
-        useForIngestCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                useForIngestCheckboxActionPerformed(evt);
-            }
-        });
 
         addWordButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.addWordButton.text")); // NOI18N
         addWordButton.addActionListener(new java.awt.event.ActionListener() {
@@ -496,12 +491,6 @@ public class KeywordSearchEditListPanel extends javax.swing.JPanel implements Li
         deleter.deleteList(toDelete);
     }//GEN-LAST:event_deleteListButtonActionPerformed
 
-    private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useForIngestCheckboxActionPerformed
-        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
-        KeywordSearchList currentList = loader.getList(currentKeywordList);
-        currentList.setUseForIngest(useForIngestCheckbox.isSelected());
-    }//GEN-LAST:event_useForIngestCheckboxActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel addKeywordPanel;
     private javax.swing.JButton addWordButton;
@@ -536,6 +525,10 @@ public class KeywordSearchEditListPanel extends javax.swing.JPanel implements Li
             currentKeywordList = listsPanel.getAllLists().get(index);
             tableModel.resync(currentKeywordList);
             initButtons();
+        } else {
+            currentKeywordList = null;
+            tableModel.deleteAll();
+            initButtons();
         }
     }
 
@@ -556,15 +549,17 @@ public class KeywordSearchEditListPanel extends javax.swing.JPanel implements Li
             KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
             KeywordSearchList oldList = loader.getList(currentKeywordList);
             List<Keyword> oldKeywords = oldList.getKeywords();
+            boolean oldIngest = oldList.getUseForIngest();
             List<Keyword> newKeywords = getAllKeywords();
+            boolean newIngest = useForIngestCheckbox.isSelected();
 
-            if (!oldKeywords.equals(newKeywords)) {
+            if (!oldKeywords.equals(newKeywords) || oldIngest != newIngest) {
                 /*boolean save = KeywordSearchUtil.displayConfirmDialog("Save List Changes",
                         "Do you want to save the changes you made to list " + currentKeywordList + "?",
                         KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);*/
                 boolean save = true;
                 if (save) {
-                    loader.addList(currentKeywordList, newKeywords);
+                    loader.addList(currentKeywordList, newKeywords, newIngest);
                 }
             }
         }

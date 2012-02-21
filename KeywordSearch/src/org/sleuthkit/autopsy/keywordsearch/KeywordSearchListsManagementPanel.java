@@ -41,7 +41,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumn;
 
 /**
  *
@@ -97,6 +96,8 @@ public class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
                     tableModel.resync();
                     if(listsTable.getRowCount() > 0)
                         listsTable.getSelectionModel().setSelectionInterval(0, 0);
+                    else
+                        listsTable.getSelectionModel().clearSelection();
                 } else if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_UPDATED.toString())) {
                     tableModel.resync((String) evt.getNewValue()); //changed list name
                 }
@@ -294,35 +295,18 @@ public class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
 
         @Override
         public String getColumnName(int column) {
-            String colName = null;
-            switch (column) {
-                case 0:
-                    colName = "Name";
-                    break;
-                default:
-                    ;
-
-            }
-            return colName;
+            return "Name";
         }
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            Object ret = null;
             TableEntry entry = null;
             //iterate until row
             Iterator<TableEntry> it = listData.iterator();
             for (int i = 0; i <= rowIndex; ++i) {
                 entry = it.next();
             }
-            switch (columnIndex) {
-                case 0:
-                    ret = (Object) entry.name;
-                    break;
-                default:
-                    break;
-            }
-            return ret;
+            return (Object) entry.name;
         }
 
         @Override
