@@ -260,7 +260,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private javax.swing.JButton backButton;
     private javax.swing.JButton forwardButton;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JButton refreshButton;
     // End of variables declaration//GEN-END:variables
     /**
      * Gets default instance. Do not use directly: reserved for *.settings files only,
