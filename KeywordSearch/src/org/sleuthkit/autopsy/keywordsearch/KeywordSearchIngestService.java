@@ -62,6 +62,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private Ingester ingester;
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runTimer = false;
+    private List<KeywordSearchList> keywordLists;
     private List<Keyword> keywords; //keywords to search
     //private final Object lock = new Object();
     private Thread timer;
@@ -100,6 +101,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             commit();
             commitIndex = false;
             indexChangeNotify();
+            
+            updateKeywords();
             //start search if previous not running
             if (keywords != null && !keywords.isEmpty() && searcherDone) {
                 searcher = new Searcher(keywords);
@@ -129,7 +132,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         indexChangeNotify();
 
         postIndexSummary();
-
+        
+        updateKeywords();
         //run one last search as there are probably some new files committed
         if (keywords != null && !keywords.isEmpty()) {
             finalRun = true;
@@ -178,15 +182,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         ingestStatus = new HashMap<Long, IngestStatus>();
 
         reportedHits = new HashMap<String, List<FsContent>>();
-        
-        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
-        
         keywords = new ArrayList<Keyword>();
         
-        for(KeywordSearchList list : loader.getListsL()){
-            if(list.getUseForIngest())
-                keywords.addAll(list.getKeywords());
-        }
+        updateKeywords();
         
         if (keywords.isEmpty()) {
             managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "No keywords in keyword list.  Will index and skip search."));
@@ -272,6 +270,18 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         } catch (SolrServerException se) {
             logger.log(Level.INFO, "Error executing Solr query to check number of indexed files: ", se);
         }
+    }
+    
+    private void updateKeywords() {
+        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
+        
+        keywords.clear();
+        
+        for(KeywordSearchList list : loader.getListsL()){
+            if(list.getUseForIngest())
+                keywords.addAll(list.getKeywords());
+        }
+        logger.info(keywords.size()+"");
     }
 
     //CommitTimer wakes up every interval ms
