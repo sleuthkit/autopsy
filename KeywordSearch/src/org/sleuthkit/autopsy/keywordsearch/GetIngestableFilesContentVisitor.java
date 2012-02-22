@@ -43,13 +43,8 @@ import org.sleuthkit.datamodel.TskData;
 class GetIngestableFilesContentVisitor extends GetFilesContentVisitor {
 
     private static final Logger logger = Logger.getLogger(GetIngestableFilesContentVisitor.class.getName());
-    // TODO: use a more robust method than checking file extension to determine
-    // whether to try a file
-    // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
-    private static final String[] supportedExtensions = {"tar", "jar", "zip", "bzip2",
-        "gz", "tgz", "doc", "xls", "ppt", "rtf", "pdf", "html", "xhtml", "txt",
-        "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
-        "pst", "xml", "class"};
+    
+    private static final String[] supportedExtensions = KeywordSearchIngestService.ingestibleExtensions;
     // the full predicate of a SQLite statement to match supported extensions
     private static final String extensionsLikePredicate;
 

@@ -73,8 +73,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private volatile int messageID = 0;
     private volatile boolean finalRun = false;
     private SleuthkitCase caseHandle = null;
-    private static final String[] ingestibleExtensions = {"tar", "jar", "zip", "bzip2",
-        "gz", "tgz", "doc", "xls", "ppt", "rtf", "pdf", "html", "xhtml", "txt",
+    
+     // TODO: use a more robust method than checking file extension to determine
+    // whether to try a file
+    // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
+    static final String[] ingestibleExtensions = {"tar", "jar", "zip", "bzip2",
+        "gz", "tgz", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt",
         "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
         "pst", "xml", "class"};
 
