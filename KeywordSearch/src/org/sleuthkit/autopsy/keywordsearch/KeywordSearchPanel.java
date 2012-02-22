@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.sleuthkit.autopsy.casemodule.Case;
 
@@ -87,7 +89,27 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
             }
             
         });
+        // Adding border of six to account for menu border
+        listsMenu.setSize(listsPanel.getPreferredSize().width+6, listsPanel.getPreferredSize().height+6);
         listsMenu.add(listsPanel);
+        listsMenu.addPopupMenuListener(new PopupMenuListener() {
+
+            @Override
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                listsButton.setSelected(true);
+            }
+
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                listsButton.setSelected(false);
+            }
+
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
+                listsButton.setSelected(false);
+            }
+            
+        });
         
     }
     
@@ -172,6 +194,11 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
                 listsButtonMousePressed(evt);
             }
         });
+        listsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                listsButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -214,6 +241,10 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
     private void listsButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_listsButtonMousePressed
         maybeShowListsPopup(evt);
     }//GEN-LAST:event_listsButtonMousePressed
+
+    private void listsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listsButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_listsButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton listsButton;
@@ -305,7 +336,6 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         if (evt != null && !SwingUtilities.isLeftMouseButton(evt)) {
             return;
         }
-        
-        listsMenu.show(listsButton, listsButton.getWidth()-listsMenu.getWidth(), listsButton.getHeight());
+        listsMenu.show(listsButton, listsButton.getWidth()-listsMenu.getWidth(), listsButton.getHeight()-1);
     }
 }

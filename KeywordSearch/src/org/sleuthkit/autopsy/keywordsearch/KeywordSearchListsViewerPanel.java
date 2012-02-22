@@ -216,6 +216,8 @@ public class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerforme
         manageListsButton = new javax.swing.JButton();
         searchAddButton = new javax.swing.JButton();
 
+        jSplitPane1.setPreferredSize(new java.awt.Dimension(406, 404));
+
         leftPane.setBackground(new java.awt.Color(204, 204, 204));
         leftPane.setMinimumSize(new java.awt.Dimension(150, 23));
 
@@ -227,6 +229,8 @@ public class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerforme
         leftPane.setViewportView(listsTable);
 
         jSplitPane1.setLeftComponent(leftPane);
+
+        rightPane.setBackground(new java.awt.Color(204, 204, 204));
 
         keywordsTable.setBackground(new java.awt.Color(240, 240, 240));
         keywordsTable.setModel(keywordsTableModel);
@@ -261,7 +265,7 @@ public class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerforme
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 268, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(manageListsButton)
                     .addComponent(searchAddButton))
