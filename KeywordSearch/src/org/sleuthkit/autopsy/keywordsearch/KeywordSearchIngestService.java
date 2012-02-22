@@ -226,6 +226,17 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public boolean isConfigurable() {
         return true;
     }
+    
+    @Override
+    public boolean hasBackgroundJobsRunning() {    
+        if (searcher != null && searcherDone == false) {
+                return true;
+        }
+        else return false;
+        
+        //no need to check timer thread
+        
+    }
 
     private void commit() {
         ingester.commit();

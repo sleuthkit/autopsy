@@ -68,4 +68,12 @@ public interface IngestServiceAbstract {
      * the new configuration is effective on next ingest
      */
     public void userConfigure();
+    
+    /**
+     * A service can manage and use additional threads to perform some work in the background.
+     * This method provides insight to the manager if the service has truly completed its work or not.
+     * @return true if any background threads/workers managed by this service are still running
+     * false if all work has been done, or if background threads are not used by this service
+     */
+    public boolean hasBackgroundJobsRunning();
 }
