@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -44,7 +45,8 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
 
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
-        super(Children.LEAF, Lookups.singleton(new ArtifactStringContent(artifact)));
+        super(Children.LEAF, Lookups.singleton(getAssociatedFile(artifact)));
+        //super(Children.LEAF, Lookups.singleton(new ArtifactStringContent(artifact)));
         this.artifact = artifact;
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName(artifact.getDisplayName());
@@ -119,6 +121,17 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     }
     
     public File getAssociatedFile(){
+        try {
+            return artifact.getSleuthkitCase().getFileById(artifact.getObjectID());
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "SQL query threw exception", ex);
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "Getting file failed", ex);
+        }
+        throw new IllegalArgumentException("Couldn't get file from database");
+    }
+    
+    public static File getAssociatedFile(BlackboardArtifact artifact){
         try {
             return artifact.getSleuthkitCase().getFileById(artifact.getObjectID());
         } catch (SQLException ex) {
