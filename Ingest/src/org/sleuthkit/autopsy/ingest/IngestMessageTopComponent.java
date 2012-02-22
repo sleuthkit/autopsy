@@ -21,8 +21,9 @@ package org.sleuthkit.autopsy.ingest;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.logging.Level;
+import java.util.ArrayList;
 import java.util.logging.Logger;
+import javax.swing.Action;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.ImageUtilities;
@@ -103,8 +104,6 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
             manager = IngestManager.getDefault();
         }
     }
-    
-    
 
     @Override
     public void componentClosed() {
@@ -122,11 +121,12 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
         Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom");
         if (mode != null) {
-            TopComponent [] tcs = mode.getTopComponents();
-            for (int i = 0; i<tcs.length; ++i) {
-                if (tcs[i] == this)
-                    //already floating
+            TopComponent[] tcs = mode.getTopComponents();
+            for (int i = 0; i < tcs.length; ++i) {
+                if (tcs[i] == this) //already floating
+                {
                     return;
+                }
             }
             mode.dockInto(this);
             this.open();
@@ -194,7 +194,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
                     }
                     //stop workers if running
                     if (manager == null) {
-                       manager = IngestManager.getDefault();
+                        manager = IngestManager.getDefault();
                     }
                     manager.stopAll();
                     //clear inbox 
@@ -267,5 +267,14 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     @Override
     public void restoreMessages() {
         //componentShowing();
+    }
+
+    @Override
+    public Action[] getActions() {
+        //disable TC toolbar actions
+        ArrayList actions = new ArrayList();
+        Action[] retVal = new Action[actions.size()];
+        actions.toArray(retVal);
+        return retVal;
     }
 }

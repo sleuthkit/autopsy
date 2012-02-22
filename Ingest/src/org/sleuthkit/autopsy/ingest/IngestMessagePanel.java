@@ -69,8 +69,6 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         jScrollPane2 = new javax.swing.JScrollPane();
         detailsViewerPane = new javax.swing.JEditorPane();
         viewArtifactButton = new javax.swing.JButton();
-        readAllButton = new javax.swing.JButton();
-        clearAllButton = new javax.swing.JButton();
         viewContentButton = new javax.swing.JButton();
 
         setOpaque(false);
@@ -105,22 +103,6 @@ public class IngestMessagePanel extends javax.swing.JPanel {
             }
         });
 
-        readAllButton.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.readAllButton.text")); // NOI18N
-        readAllButton.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.readAllButton.toolTipText")); // NOI18N
-        readAllButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                readAllButtonActionPerformed(evt);
-            }
-        });
-
-        clearAllButton.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.clearAllButton.text")); // NOI18N
-        clearAllButton.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.clearAllButton.toolTipText")); // NOI18N
-        clearAllButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                clearAllButtonActionPerformed(evt);
-            }
-        });
-
         viewContentButton.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.viewContentButton.text")); // NOI18N
         viewContentButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -132,34 +114,24 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(152, 152, 152)
-                .addComponent(clearAllButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(readAllButton))
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(110, Short.MAX_VALUE)
+                .addContainerGap(106, Short.MAX_VALUE)
                 .addComponent(viewArtifactButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(18, 18, 18)
                 .addComponent(viewContentButton))
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(readAllButton)
-                    .addComponent(clearAllButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(viewContentButton)
                     .addComponent(viewArtifactButton))
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 144, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -178,15 +150,6 @@ public class IngestMessagePanel extends javax.swing.JPanel {
 
     }//GEN-LAST:event_viewArtifactButtonActionPerformed
 
-    private void readAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_readAllButtonActionPerformed
-        tableModel.setVisitedAll();
-    }//GEN-LAST:event_readAllButtonActionPerformed
-
-    private void clearAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearAllButtonActionPerformed
-        clearMessages();
-        detailsViewerPane.setText("");
-    }//GEN-LAST:event_clearAllButtonActionPerformed
-
     private void viewContentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewContentButtonActionPerformed
         if (lastRowSelected < 0) {
             return;
@@ -201,12 +164,10 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_viewContentButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton clearAllButton;
     private javax.swing.JEditorPane detailsViewerPane;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable messageTable;
-    private javax.swing.JButton readAllButton;
     private javax.swing.JButton viewArtifactButton;
     private javax.swing.JButton viewContentButton;
     // End of variables declaration//GEN-END:variables
