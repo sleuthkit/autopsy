@@ -184,6 +184,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
 
     private void clearAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearAllButtonActionPerformed
         clearMessages();
+        detailsViewerPane.setText("");
     }//GEN-LAST:event_clearAllButtonActionPerformed
 
     private void viewContentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewContentButtonActionPerformed
