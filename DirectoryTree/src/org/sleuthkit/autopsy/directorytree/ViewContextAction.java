@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import org.openide.explorer.ExplorerManager;
+import org.openide.explorer.view.TreeView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -92,6 +93,8 @@ class ViewContextAction extends AbstractAction {
 
                 try {
                     if (dirExplored != null) {
+                        TreeView tree = directoryTree.getTree();
+                        tree.expandNode(dirExplored);
                         man.setExploredContextAndSelection(dirExplored, new Node[]{dirExplored});
                     }
 

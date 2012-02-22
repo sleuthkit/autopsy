@@ -46,11 +46,13 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
+import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
@@ -702,9 +704,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public TopComponent getTopComponent() {
         return this;
     }
-    
+
     @Override
-    public void viewArtifact(BlackboardArtifact art) {
+    public void viewArtifact(final BlackboardArtifact art) {
         BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(art.getArtifactTypeID());
         Children rootChilds = em.getRootContext().getChildren();
         Node extractedContent = rootChilds.findChild(ExtractedContentNode.EXTRACTED_NAME);
@@ -715,11 +717,25 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } catch (PropertyVetoException ex) {
             logger.log(Level.WARNING, "Property Veto: ", ex);
         }
+
+        // Another thread is needed because we have to wait for dataResult to populate
+        EventQueue.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+
+                Children resultChilds = dataResult.getRootNode().getChildren();
+                Node select = resultChilds.findChild(Long.toString(art.getArtifactID()));
+                if (select != null) {
+                    dataResult.setSelectedNodes(new Node[]{select});
+                }
+            }
+        });
     }
-    
+
     @Override
     public void viewArtifactContent(BlackboardArtifact art) {
-        
+        new ViewContextAction("View Artifact Content", new BlackboardArtifactNode(art)).actionPerformed(null);
     }
 //    private class HistoryManager<T> {
 //        private Stack<T> past, future;

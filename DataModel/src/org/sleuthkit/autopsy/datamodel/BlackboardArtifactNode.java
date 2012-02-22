@@ -46,7 +46,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         super(Children.LEAF, Lookups.singleton(new ArtifactStringContent(artifact)));
         this.artifact = artifact;
-        this.setName(artifact.getArtifactTypeName());
+        this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName(artifact.getDisplayName());
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/artifact-icon.png");
         
