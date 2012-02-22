@@ -193,7 +193,10 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
                         return;
                     }
                     //stop workers if running
-                    IngestManager.getDefault().stopAll();
+                    if (manager == null) {
+                       manager = IngestManager.getDefault();
+                    }
+                    manager.stopAll();
                     //clear inbox 
                     clearMessages();
                 } else if (evt.getPropertyName().equals(Case.CASE_ADD_IMAGE)) {

@@ -78,10 +78,11 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         jScrollPane1.setOpaque(false);
 
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
-        messageTable.setFont(new java.awt.Font("Arial", 0, 10));
+        messageTable.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
         messageTable.setAutoscrolls(false);
+        messageTable.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         messageTable.setGridColor(new java.awt.Color(204, 204, 204));
         messageTable.setOpaque(false);
         messageTable.setSelectionForeground(new java.awt.Color(0, 0, 0));
