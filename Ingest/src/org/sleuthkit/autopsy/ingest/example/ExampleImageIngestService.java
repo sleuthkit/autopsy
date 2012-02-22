@@ -132,4 +132,9 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     public boolean isConfigurable() {
         return false;
     }
+    
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        return false;
+    }
 }

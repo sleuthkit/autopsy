@@ -100,4 +100,9 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     public boolean isConfigurable() {
         return false;
     }
+    
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        return false;
+    }
 }

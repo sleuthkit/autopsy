@@ -168,4 +168,9 @@ public class HashDbIngestService implements IngestServiceFsContent {
         return true;
     }
     
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        return false;
+    }
+    
 }

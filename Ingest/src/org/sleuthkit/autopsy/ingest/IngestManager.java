@@ -320,6 +320,57 @@ public class IngestManager {
     }
 
     /**
+     * check if the service is running (was started and not yet complete/stopped)
+     * give a complete answer, i.e. it's already consumed all files
+     * but it might have background threads running
+     * 
+     */
+    public boolean isServiceRunning(final IngestServiceAbstract service) {
+
+        if (service.getType() == IngestServiceAbstract.ServiceType.FsContent) {
+         
+            synchronized (queuesLock) {
+              if (fsContentQueue.hasServiceEnqueued((IngestServiceFsContent)service) ) {
+                  //has work enqueued, so running
+                  return true;
+              }
+              else {
+                  //not in the queue, but could still have bkg work running
+                  return service.hasBackgroundJobsRunning();
+              }
+            }
+
+        } else {
+            //image service
+            synchronized (this) {
+                if (imageIngesters.isEmpty()) {
+                    return false;
+                }
+                IngestImageThread imt = null;
+                for (IngestImageThread ii : imageIngesters) {
+                    if (ii.getService().equals(service)) {
+                        imt = ii;
+                        break;
+                    }
+                }
+
+                if (imt == null) {
+                    return false;
+                }
+
+                if (imt.isDone() == false) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+        }
+
+
+    }
+
+    /**
      * returns the current minimal update frequency setting in minutes
      * Services should call this at init() to get current setting
      * and use the setting to change notification and data refresh intervals
@@ -360,6 +411,7 @@ public class IngestManager {
         }
 
         SwingUtilities.invokeLater(new Runnable() {
+
             @Override
             public void run() {
                 ui.displayMessage(message);
@@ -508,7 +560,7 @@ public class IngestManager {
      */
     private static class FsContentPriotity {
 
-        enum Priority {
+         enum Priority {
 
             LOW, MEDIUM, HIGH
         };
@@ -637,6 +689,26 @@ public class IngestManager {
             QueueUnit<FsContent, IngestServiceFsContent> remove = fsContentUnits.remove(0);
             //logger.log(Level.INFO, "DEQUE: " + remove.content.getParentPath() + " SIZE: " + toString());
             return (remove);
+        }
+
+        /**
+         * checks if the service has any work enqueued
+         * @param service to check for 
+         * @return true if the service is enqueued to do work
+         */
+        boolean hasServiceEnqueued(IngestServiceFsContent service) {
+            boolean found = false;
+            for (QueueUnit<FsContent, IngestServiceFsContent> unit : fsContentUnits) {
+                for (IngestServiceFsContent s : unit.services) {
+                    if (s.equals(service)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found == true)
+                    break;
+            }
+            return found;
         }
 
         private QueueUnit<FsContent, IngestServiceFsContent> findFsContent(FsContent fsContent) {

@@ -200,7 +200,6 @@ public class IngestMessagePanel extends javax.swing.JPanel {
             }
         }
     }//GEN-LAST:event_viewContentButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clearAllButton;
     private javax.swing.JEditorPane detailsViewerPane;
@@ -438,11 +437,25 @@ public class IngestMessagePanel extends javax.swing.JPanel {
                 } else {
                     cell.setFont(notVisitedFont);
                 }
-                MessageType mt = tableModel.getMessageType(row);
-                if (mt == MessageType.ERROR) {
-                    cell.setBackground(Color.red);
-                } else if (mt == MessageType.WARNING) {
-                    cell.setBackground(Color.orange);
+                if (!isSelected) {
+                    MessageType mt = tableModel.getMessageType(row);
+                    if (mt == MessageType.ERROR) {
+                        cell.setBackground(Color.red);
+                    } else if (mt == MessageType.WARNING) {
+                        cell.setBackground(Color.orange);
+                    } else {
+                        cell.setBackground(table.getBackground());
+                    }
+                } else {
+                    super.setForeground(table.getSelectionForeground());
+                    super.setBackground(table.getSelectionBackground());
+                }
+            }
+
+            if (column == 1) {
+                if (isSelected) {
+                    super.setForeground(table.getSelectionForeground());
+                    super.setBackground(table.getSelectionBackground());
                 } else {
                     cell.setBackground(table.getBackground());
                 }
