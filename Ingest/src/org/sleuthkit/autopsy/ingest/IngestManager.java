@@ -320,6 +320,47 @@ public class IngestManager {
     }
 
     /**
+     * check if the service is running (was started and not yet complete/stopped)
+     * give a complete answer, i.e. it's already consumed all files
+     * but it might have background threads running
+     * 
+     */
+    public synchronized boolean isServiceRunning(final IngestServiceAbstract service) {
+
+        if (service.getType() == IngestServiceAbstract.ServiceType.FsContent) {
+            //TODO check the actual state tracked by the manager
+            //if complete, then query the service for the background threads
+            return this.isFileIngestRunning();
+
+        } else {
+            //image service
+            if (imageIngesters.isEmpty()) {
+                return false;
+            }
+            IngestImageThread imt = null;
+            for (IngestImageThread ii : imageIngesters) {
+                if (ii.getService().equals(service)) {
+                    imt = ii;
+                    break;
+                }
+            }
+
+            if (imt == null) {
+                return false;
+            }
+
+            if (imt.isDone() == false) {
+                return true;
+            } else {
+                return false;
+            }
+
+        }
+
+
+    }
+
+    /**
      * returns the current minimal update frequency setting in minutes
      * Services should call this at init() to get current setting
      * and use the setting to change notification and data refresh intervals
@@ -360,6 +401,7 @@ public class IngestManager {
         }
 
         SwingUtilities.invokeLater(new Runnable() {
+
             @Override
             public void run() {
                 ui.displayMessage(message);
@@ -508,7 +550,7 @@ public class IngestManager {
      */
     private static class FsContentPriotity {
 
-        enum Priority {
+         enum Priority {
 
             LOW, MEDIUM, HIGH
         };
