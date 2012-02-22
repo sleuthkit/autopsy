@@ -325,34 +325,44 @@ public class IngestManager {
      * but it might have background threads running
      * 
      */
-    public synchronized boolean isServiceRunning(final IngestServiceAbstract service) {
+    public boolean isServiceRunning(final IngestServiceAbstract service) {
 
         if (service.getType() == IngestServiceAbstract.ServiceType.FsContent) {
-            //TODO check the actual state tracked by the manager
-            //if complete, then query the service for the background threads
-            return this.isFileIngestRunning();
+         
+            synchronized (queuesLock) {
+              if (fsContentQueue.hasServiceEnqueued((IngestServiceFsContent)service) ) {
+                  //has work enqueued, so running
+                  return true;
+              }
+              else {
+                  //not in the queue, but could still have bkg work running
+                  return service.hasBackgroundJobsRunning();
+              }
+            }
 
         } else {
             //image service
-            if (imageIngesters.isEmpty()) {
-                return false;
-            }
-            IngestImageThread imt = null;
-            for (IngestImageThread ii : imageIngesters) {
-                if (ii.getService().equals(service)) {
-                    imt = ii;
-                    break;
+            synchronized (this) {
+                if (imageIngesters.isEmpty()) {
+                    return false;
                 }
-            }
+                IngestImageThread imt = null;
+                for (IngestImageThread ii : imageIngesters) {
+                    if (ii.getService().equals(service)) {
+                        imt = ii;
+                        break;
+                    }
+                }
 
-            if (imt == null) {
-                return false;
-            }
+                if (imt == null) {
+                    return false;
+                }
 
-            if (imt.isDone() == false) {
-                return true;
-            } else {
-                return false;
+                if (imt.isDone() == false) {
+                    return true;
+                } else {
+                    return false;
+                }
             }
 
         }
@@ -679,6 +689,26 @@ public class IngestManager {
             QueueUnit<FsContent, IngestServiceFsContent> remove = fsContentUnits.remove(0);
             //logger.log(Level.INFO, "DEQUE: " + remove.content.getParentPath() + " SIZE: " + toString());
             return (remove);
+        }
+
+        /**
+         * checks if the service has any work enqueued
+         * @param service to check for 
+         * @return true if the service is enqueued to do work
+         */
+        boolean hasServiceEnqueued(IngestServiceFsContent service) {
+            boolean found = false;
+            for (QueueUnit<FsContent, IngestServiceFsContent> unit : fsContentUnits) {
+                for (IngestServiceFsContent s : unit.services) {
+                    if (s.equals(service)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found == true)
+                    break;
+            }
+            return found;
         }
 
         private QueueUnit<FsContent, IngestServiceFsContent> findFsContent(FsContent fsContent) {
