@@ -26,16 +26,19 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.util.logging.Logger;
 import javax.swing.JFrame;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  *
  * @author dfickling
  */
 public class KeywordSearchConfigurationDialog extends javax.swing.JDialog {
-    
+
     KeywordSearchListsManagementPanel listsManagementPanel;
     KeywordSearchEditListPanel editListPanel;
+    private final static Logger logger = Logger.getLogger(KeywordSearchConfigurationDialog.class.getName());
 
     /** Creates new form KeywordSearchConfigurationDialog */
     public KeywordSearchConfigurationDialog(String title) {
@@ -44,17 +47,17 @@ public class KeywordSearchConfigurationDialog extends javax.swing.JDialog {
         initComponents();
         customizeComponents();
     }
-    
+
     private void customizeComponents() {
         listsManagementPanel = KeywordSearchListsManagementPanel.getDefault();
         editListPanel = KeywordSearchEditListPanel.getDefault();
-        
+
         listsManagementPanel.addListSelectionListener(KeywordSearchEditListPanel.getDefault());
         mainSplitPane.setLeftComponent(listsManagementPanel);
         mainSplitPane.setRightComponent(editListPanel);
         mainSplitPane.revalidate();
         mainSplitPane.repaint();
-        
+
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
         // set the popUp window / JFrame
@@ -113,9 +116,17 @@ public class KeywordSearchConfigurationDialog extends javax.swing.JDialog {
 
     private void applyButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_applyButtonActionPerformed
         editListPanel.save();
+        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
+        KeywordSearchIngestService service = KeywordSearchIngestService.getDefault();
+        if (IngestManager.getDefault().isServiceRunning(service)) {
+            for (KeywordSearchList list : loader.getListsL()) {
+                if (list.getUseForIngest()) {
+                    service.addToKeywordLists(list.getName());
+                }
+            }
+        }
         this.dispose();
     }//GEN-LAST:event_applyButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton applyButton;
     private javax.swing.JSplitPane mainSplitPane;

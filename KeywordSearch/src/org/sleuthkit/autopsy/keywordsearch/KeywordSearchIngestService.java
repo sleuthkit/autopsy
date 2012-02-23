@@ -64,7 +64,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runTimer = false;
     private List<Keyword> keywords; //keywords to search
-    private List<KeywordSearchList> keywordLists; // lists currently being searched
+    private List<String> keywordLists; // lists currently being searched
     //private final Object lock = new Object();
     private Thread timer;
     private Indexer indexer;
@@ -189,9 +189,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         reportedHits = new HashMap<String, List<FsContent>>();
         
         keywords = new ArrayList<Keyword>();
-        keywordLists = new ArrayList<KeywordSearchList>();
+        keywordLists = new ArrayList<String>();
 
-        updateKeywords();
+        initKeywords();
 
         if (keywords.isEmpty()) {
             managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "No keywords in keyword list.  Will index and skip search."));
@@ -291,9 +291,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     }
 
     /**
-     * Retrieve the updated keyword search lists from the XML loader
+     * Initialize the keyword search lists from the XML loader
      */
-    private void updateKeywords() {
+    private void initKeywords() {
         KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
         
         keywords.clear();
@@ -301,20 +301,31 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         
         for(KeywordSearchList list : loader.getListsL()){
             if(list.getUseForIngest())
-                keywordLists.add(list);
+                keywordLists.add(list.getName());
                 keywords.addAll(list.getKeywords());
         }
-        logger.info(keywords.size()+"");
+    }
+    
+    /**
+     * Retrieve the updated keyword search lists from the XML loader
+     */
+    private void updateKeywords() {
+        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
+        
+        keywords.clear();
+        
+        for(String name : keywordLists) {
+            keywords.addAll(loader.getList(name).getKeywords());
+        }
     }
     
     List<String> getKeywordLists() {
-        List<String> ret = new ArrayList<String>();
-        if(keywordLists == null)
-            return ret;
-        for(KeywordSearchList list : keywordLists) {
-            ret.add(list.getName());
-        }
-        return ret;
+        return keywordLists == null ? new ArrayList<String>() : keywordLists;
+    }
+    
+    void addToKeywordLists(String name) {
+        if(!keywordLists.contains(name))
+            keywordLists.add(name);
     }
 
     //CommitTimer wakes up every interval ms
@@ -571,6 +582,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
             //logger.log(Level.INFO, "Finished search");
             if (finalRun) {
+                keywords.clear();
+                keywordLists.clear();
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
             }
         }
