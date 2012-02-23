@@ -30,10 +30,15 @@ public class SearchFilters implements AutopsyVisitableItem{
     SleuthkitCase skCase;
 
     public enum FileSearchFilter implements AutopsyVisitableItem {
-        TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", "Images", Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef")),
-        TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", "Videos", Arrays.asList(".mov", ".avi", ".m4v")),
-        TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", "Audio", Arrays.asList(".mp3", ".aac", ".wav", ".ogg", ".wma", ".m4a")),
-        TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", "Documents", Arrays.asList(".doc", ".docx", ".pdf", ".xls"));
+        TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", "Images", Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff")),
+        TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", "Videos",
+            Arrays.asList(".aaf", ".3gp", ".asf", ".avi", ".m1v", ".m2v", ".m4v",
+            ".mov", ".mpeg", ".mpg", ".mpe", ".mp4", ".rm", ".wmv", ".mpv")),
+        TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", "Audio", 
+            Arrays.asList(".aiff", ".aif", ".flac", ".wav", ".m4a", ".ape", ".wma", ".mp2",
+            ".mp1", ".mp3", ".aac", ".mp4", ".m4p", ".m1a", ".m2a", ".m4r", ".mpa",
+            ".m3u", ".mid", ".midi", ".ogg")),
+        TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", "Documents", Arrays.asList(".doc", ".docx", ".pdf", ".xls", ".rtf", ".txt"));
 
         int id;
         String name;

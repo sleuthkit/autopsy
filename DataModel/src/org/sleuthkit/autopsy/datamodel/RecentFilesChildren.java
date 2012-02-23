@@ -18,8 +18,13 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -31,6 +36,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFilter>{
     
     SleuthkitCase skCase;
+    long latestUpdateTime;
+    private final static Logger logger = Logger.getLogger(RecentFilesChildren.class.getName());
     
     public RecentFilesChildren(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -39,12 +46,45 @@ public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFil
     @Override
     protected boolean createKeys(List<RecentFiles.RecentFilesFilter> list) {
         list.addAll(Arrays.asList(RecentFiles.RecentFilesFilter.values()));
+        latestUpdateTime = getLastTime();
         return true;
     }
     
     @Override
     protected Node createNodeForKey(RecentFiles.RecentFilesFilter key){
-        return new RecentFilesFilterNode(skCase, key);
+        return new RecentFilesFilterNode(skCase, key, latestUpdateTime);
+    }
+    
+    private long getLastTime() {
+        String query = createMaxQuery("crtime");
+        long maxcr = runTimeQuery(query);
+        query = createMaxQuery("ctime");
+        long maxc = runTimeQuery(query);
+        query = createMaxQuery("mtime");
+        long maxm = runTimeQuery(query);
+        query = createMaxQuery("atime");
+        long maxa = runTimeQuery(query);
+        return Math.max(maxcr, Math.max(maxc, Math.max(maxm, maxa)));
+    }
+    
+    private String createMaxQuery(String attr){
+        return "select max(" + attr + ") from tsk_files where " + attr + " < " + System.currentTimeMillis()/1000;
+    }
+    
+    private long runTimeQuery(String query) {
+        long result = 0;
+        try {
+            ResultSet rs = skCase.runQuery(query);
+            result = rs.getLong(1);
+            Statement s = rs.getStatement();
+            rs.close();
+            if (s != null)
+                s.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(RecentFilesFilterChildren.class.getName())
+                    .log(Level.INFO, "Couldn't get search results", ex);
+        }
+        return result;
     }
     
 }

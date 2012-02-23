@@ -32,8 +32,8 @@ public class SearchFiltersNode extends AbstractNode implements DisplayableItemNo
 
     SearchFiltersNode(SleuthkitCase skCase) {
         super(Children.create(new SearchFiltersChildren(skCase), true));
-        super.setName("Search Filters");
-        super.setDisplayName("Search Filters");
+        super.setName("File Types");
+        super.setDisplayName("File Types");
         this.skCase = skCase;
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/filter-icon.png");
 }

@@ -18,6 +18,12 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
@@ -34,12 +40,15 @@ public class RecentFilesFilterNode extends AbstractNode implements DisplayableIt
     SleuthkitCase skCase;
     RecentFilesFilter filter;
 
-    RecentFilesFilterNode(SleuthkitCase skCase, RecentFilesFilter filter) {
-        super(Children.create(new RecentFilesFilterChildren(filter, skCase), true), Lookups.singleton(filter));
+    RecentFilesFilterNode(SleuthkitCase skCase, RecentFilesFilter filter, long latestUpdate) {
+        super(Children.create(new RecentFilesFilterChildren(filter, skCase, latestUpdate), true), Lookups.singleton(filter));
         super.setName(filter.getName());
         super.setDisplayName(filter.getDisplayName());
         this.skCase = skCase;
         this.filter = filter;
+        String tooltip = "Between " + new Date((latestUpdate-filter.getDurationSeconds())*1000).toString();
+        tooltip += "\n and " + new Date(latestUpdate*1000).toString();
+        this.setShortDescription(tooltip);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent-icon.png");
     }
 
