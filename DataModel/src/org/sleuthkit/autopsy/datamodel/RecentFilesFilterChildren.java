@@ -44,11 +44,13 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
     
     SleuthkitCase skCase;
     RecentFilesFilter filter;
+    long latestUpdate;
     private final static Logger logger = Logger.getLogger(RecentFilesFilterChildren.class.getName());
 
-    RecentFilesFilterChildren(RecentFilesFilter filter, SleuthkitCase skCase) {
+    RecentFilesFilterChildren(RecentFilesFilter filter, SleuthkitCase skCase, long latestUpdate) {
         this.skCase = skCase;
         this.filter = filter;
+        this.latestUpdate = latestUpdate;
     }
 
     @Override
@@ -59,7 +61,6 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
     
     private String createQuery(){
         String query = "select * from tsk_files where ";
-        long latestUpdate = getLastTime();
         long threshold = latestUpdate-filter.getDurationSeconds();
         query += "(crtime between " + threshold + " and " + latestUpdate + ") or ";
         query += "(ctime between " + threshold + " and " + latestUpdate + ") or ";
@@ -108,37 +109,5 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
             }
             
         });
-    }
-
-    private long getLastTime() {
-        String query = createMaxQuery("crtime");
-        long maxcr = runTimeQuery(query);
-        query = createMaxQuery("ctime");
-        long maxc = runTimeQuery(query);
-        query = createMaxQuery("mtime");
-        long maxm = runTimeQuery(query);
-        query = createMaxQuery("atime");
-        long maxa = runTimeQuery(query);
-        return Math.max(maxcr, Math.max(maxc, Math.max(maxm, maxa)));
-    }
-    
-    private String createMaxQuery(String attr){
-        return "select max(" + attr + ") from tsk_files where " + attr + " < " + System.currentTimeMillis()/1000;
-    }
-    
-    private long runTimeQuery(String query) {
-        long result = 0;
-        try {
-            ResultSet rs = skCase.runQuery(query);
-            result = rs.getLong(1);
-            Statement s = rs.getStatement();
-            rs.close();
-            if (s != null)
-                s.close();
-        } catch (SQLException ex) {
-            Logger.getLogger(RecentFilesFilterChildren.class.getName())
-                    .log(Level.INFO, "Couldn't get search results", ex);
-        }
-        return result;
     }
 }

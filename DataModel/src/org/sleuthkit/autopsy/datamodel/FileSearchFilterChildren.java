@@ -44,6 +44,7 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
     
     SleuthkitCase skCase;
     FileSearchFilter filter;
+    Logger logger = Logger.getLogger(FileSearchFilterChildren.class.getName());
 
     public FileSearchFilterChildren(FileSearchFilter filter, SleuthkitCase skCase) {
         this.filter = filter;
@@ -57,10 +58,11 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
     }
     
     private String createQuery(){
-        String query = "select * from tsk_files where 0";
+        String query = "select * from tsk_files where known <> 1 and (0";
         for(String s : filter.getFilter()){
             query += " or name like '%" + s + "'";
         }
+        query += ')';
         return query;
     }
     
@@ -78,8 +80,7 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
             if (s != null)
                 s.close();
         } catch (SQLException ex) {
-            Logger.getLogger(FileSearchFilterChildren.class.getName())
-                    .log(Level.INFO, "Couldn't get search results", ex);
+            logger.log(Level.INFO, "Couldn't get search results", ex);
         }
         return list;
         

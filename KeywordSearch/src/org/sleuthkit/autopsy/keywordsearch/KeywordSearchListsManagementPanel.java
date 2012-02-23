@@ -46,7 +46,7 @@ import javax.swing.table.DefaultTableCellRenderer;
  *
  * @author dfickling
  */
-public class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
+class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
 
     private Logger logger = Logger.getLogger(KeywordSearchListsManagementPanel.class.getName());
     private KeywordListTableModel tableModel;
@@ -409,27 +409,6 @@ public class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
             public int compareTo(Object o) {
                 return this.name.compareTo(((TableEntry) o).name);
             }
-        }
-    }
-
-    /**
-     * tooltips that show text
-     */
-    private static class CellTooltipRenderer extends DefaultTableCellRenderer {
-
-        @Override
-        public Component getTableCellRendererComponent(
-                JTable table, Object value,
-                boolean isSelected, boolean hasFocus,
-                int row, int column) {
-
-            if (column < 3) {
-                String val = (String) table.getModel().getValueAt(row, column);
-                setToolTipText(val);
-                setText(val);
-            }
-
-            return this;
         }
     }
     

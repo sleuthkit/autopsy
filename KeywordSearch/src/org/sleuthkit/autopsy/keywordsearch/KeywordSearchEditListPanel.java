@@ -27,6 +27,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -48,16 +50,18 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  *
  * @author dfickling
  */
-public class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelectionListener{
+class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelectionListener{
 
     private static Logger logger = Logger.getLogger(KeywordSearchEditListPanel.class.getName());
     private KeywordTableModel tableModel;
     private String currentKeywordList;
+    private boolean ingestRunning;
     
     private static KeywordSearchEditListPanel instance = null;
     
@@ -137,19 +141,69 @@ public class KeywordSearchEditListPanel extends javax.swing.JPanel implements Li
         copyMenuItem.addActionListener(actList);
         pasteMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
+        
+        
+        
+        if(IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault()))
+            initIngest(0);
+        else
+            initIngest(1);
+        
+        IngestManager.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String changed = evt.getPropertyName();
+                Object oldValue = evt.getOldValue();
+                if(changed.equals(IngestManager.SERVICE_COMPLETED_EVT) &&
+                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME))
+                    initIngest(1);
+                else if(changed.equals(IngestManager.SERVICE_STARTED_EVT) &&
+                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME))
+                    initIngest(0);
+                else if(changed.equals(IngestManager.SERVICE_STOPPED_EVT) &&
+                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME))
+                    initIngest(1);
+            }
+            
+        });
+
+    }
+    
+    /** 
+     * Initialize this panel depending on whether ingest is running
+     * @param running 
+     * case 0: ingest running
+     * case 1: ingest not running
+     */
+    private void initIngest(int running) {
+        switch (running) {
+            case 0:
+                ingestRunning = true;
+                break;
+            case 1:
+                ingestRunning = false;
+                break;
+        }
+        initButtons();
     }
 
-    private void initButtons() {
+    void initButtons() {
         //initialize buttons
         boolean listSet = (currentKeywordList != null);
-        addWordButton.setEnabled(listSet);
-        addWordField.setEnabled(listSet);
-        chRegex.setEnabled(listSet);
-        useForIngestCheckbox.setEnabled(listSet);
+        List<String> locked = new ArrayList<String>();
+        if (ingestRunning) {
+            locked = KeywordSearchIngestService.getDefault().getKeywordLists();
+        }
+        boolean currentUnlocked = !locked.contains(currentKeywordList);
+        addWordButton.setEnabled(listSet && currentUnlocked);
+        addWordField.setEnabled(listSet && currentUnlocked);
+        chRegex.setEnabled(listSet && currentUnlocked);
+        useForIngestCheckbox.setEnabled(listSet && currentUnlocked);
         saveListButton.setEnabled(listSet);
         exportButton.setEnabled(listSet);
-        deleteListButton.setEnabled(listSet);
-        deleteWordButton.setEnabled(listSet);
+        deleteListButton.setEnabled(listSet && currentUnlocked);
+        deleteWordButton.setEnabled(listSet && currentUnlocked);
         
         if (getAllKeywords().isEmpty()) {
             saveListButton.setEnabled(false);

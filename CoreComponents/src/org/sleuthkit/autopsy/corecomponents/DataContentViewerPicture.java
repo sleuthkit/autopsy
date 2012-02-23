@@ -150,22 +150,22 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
                     || //node.getDisplayName().toLowerCase().endsWith(".tif") ||
                     //node.getDisplayName().toLowerCase().endsWith(".tiff") ||
                     //node.getDisplayName().toLowerCase().endsWith(".tga") ||
-                    node.getDisplayName().toLowerCase().endsWith(".png");*/
+            node.getDisplayName().toLowerCase().endsWith(".png");*/
             File file = node.getLookup().lookup(File.class);
-            
-            if(file != null){
-                return file.getName().toLowerCase().endsWith(".jpg")
-                    || file.getName().toLowerCase().endsWith(".jpeg")
-                    || file.getName().toLowerCase().endsWith(".jpe")
-                    || file.getName().toLowerCase().endsWith(".jfif")
-                    || file.getName().toLowerCase().endsWith(".gif")
-                    || file.getName().toLowerCase().endsWith(".bmp")
-                    || //node.getName().toLowerCase().endsWith(".tif") ||
-                    //node.getName().toLowerCase().endsWith(".tiff") ||
-                    //node.getName().toLowerCase().endsWith(".tga") ||
-                    file.getName().toLowerCase().endsWith(".png");
-            }
-            else{
+
+            if (file != null) {
+                return file.getSize() > 0
+                        && (file.getName().toLowerCase().endsWith(".jpg")
+                        || file.getName().toLowerCase().endsWith(".jpeg")
+                        || file.getName().toLowerCase().endsWith(".jpe")
+                        || file.getName().toLowerCase().endsWith(".jfif")
+                        || file.getName().toLowerCase().endsWith(".gif")
+                        || file.getName().toLowerCase().endsWith(".bmp")
+                        || //node.getName().toLowerCase().endsWith(".tif") ||
+                        //node.getName().toLowerCase().endsWith(".tiff") ||
+                        //node.getName().toLowerCase().endsWith(".tga") ||
+                        file.getName().toLowerCase().endsWith(".png"));
+            } else {
                 return false;
             }
         } else {

@@ -69,10 +69,11 @@ class ViewContextAction extends AbstractAction {
                 ReverseHierarchyVisitor vtor = new ReverseHierarchyVisitor();
                 List<Content> hierarchy = node.getAssociatedFile().accept(vtor);
                 Collections.reverse(hierarchy);
-                Node generated = new AbstractNode(new RootContentChildren(hierarchy));
+                Node generated = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(hierarchy)));
                 Children genChilds = generated.getChildren();
 
                 final DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();
+                TreeView tree = directoryTree.getTree();
                 ExplorerManager man = directoryTree.getExplorerManager();
                 Node dirRoot = man.getRootContext();
                 Children dirChilds = dirRoot.getChildren();
@@ -85,6 +86,7 @@ class ViewContextAction extends AbstractAction {
                         Node currentDirectoryTreeNode = dirChilds.getNodeAt(j);
                         if (currentGeneratedNode.getDisplayName().equals(currentDirectoryTreeNode.getDisplayName())) {
                             dirExplored = currentDirectoryTreeNode;
+                            tree.expandNode(dirExplored);
                             dirChilds = currentDirectoryTreeNode.getChildren();
                             break;
                         }
@@ -93,7 +95,6 @@ class ViewContextAction extends AbstractAction {
 
                 try {
                     if (dirExplored != null) {
-                        TreeView tree = directoryTree.getTree();
                         tree.expandNode(dirExplored);
                         man.setExploredContextAndSelection(dirExplored, new Node[]{dirExplored});
                     }
@@ -114,6 +115,7 @@ class ViewContextAction extends AbstractAction {
                         for (int i = 0; i < resultChilds.getNodesCount(); i++) {
                             Node current = resultChilds.getNodeAt(i);
                             if (generated.getName().equals(current.getName())) {
+                                dataResult.requestActive();
                                 dataResult.setSelectedNodes(new Node[]{current});
                                 break;
                             }

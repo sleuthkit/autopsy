@@ -64,6 +64,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runTimer = false;
     private List<Keyword> keywords; //keywords to search
+    private List<String> keywordLists; // lists currently being searched
     //private final Object lock = new Object();
     private Thread timer;
     private Indexer indexer;
@@ -188,8 +189,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         reportedHits = new HashMap<String, List<FsContent>>();
         
         keywords = new ArrayList<Keyword>();
+        keywordLists = new ArrayList<String>();
 
-        updateKeywords();
+        initKeywords();
 
         if (keywords.isEmpty()) {
             managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "No keywords in keyword list.  Will index and skip search."));
@@ -288,16 +290,42 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
     }
 
+    /**
+     * Initialize the keyword search lists from the XML loader
+     */
+    private void initKeywords() {
+        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
+        
+        keywords.clear();
+        keywordLists.clear();
+        
+        for(KeywordSearchList list : loader.getListsL()){
+            if(list.getUseForIngest())
+                keywordLists.add(list.getName());
+                keywords.addAll(list.getKeywords());
+        }
+    }
+    
+    /**
+     * Retrieve the updated keyword search lists from the XML loader
+     */
     private void updateKeywords() {
         KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
         
         keywords.clear();
         
-        for(KeywordSearchList list : loader.getListsL()){
-            if(list.getUseForIngest())
-                keywords.addAll(list.getKeywords());
+        for(String name : keywordLists) {
+            keywords.addAll(loader.getList(name).getKeywords());
         }
-        logger.info(keywords.size()+"");
+    }
+    
+    List<String> getKeywordLists() {
+        return keywordLists == null ? new ArrayList<String>() : keywordLists;
+    }
+    
+    void addToKeywordLists(String name) {
+        if(!keywordLists.contains(name))
+            keywordLists.add(name);
     }
 
     //CommitTimer wakes up every interval ms
@@ -554,6 +582,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
             //logger.log(Level.INFO, "Finished search");
             if (finalRun) {
+                keywords.clear();
+                keywordLists.clear();
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
             }
         }
