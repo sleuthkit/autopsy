@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,27 +33,41 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
-import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.ingest.IngestMessage.*;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Notification window showing messages from services to user
  * 
  */
-public class IngestMessagePanel extends javax.swing.JPanel {
+class IngestMessagePanel extends javax.swing.JPanel {
 
     private MessageTableModel tableModel;
+    private IngestMessageMainPanel mainPanel;
     private static Font visitedFont = new Font("Arial", Font.PLAIN, 11);
     private static Font notVisitedFont = new Font("Arial", Font.BOLD, 11);
     private int lastRowSelected = -1;
 
     /** Creates new form IngestMessagePanel */
-    public IngestMessagePanel() {
+    public IngestMessagePanel(IngestMessageMainPanel mainPanel) {
+        this.mainPanel = mainPanel;
         tableModel = new MessageTableModel();
         initComponents();
         customizeComponents();
+    }
+    
+    int getLastRowSelected() {
+        return this.lastRowSelected;
+    }
+    
+    IngestMessage getSelectedMessage() {
+        if (lastRowSelected < 0)
+            return null;
+                    
+        return tableModel.getMessage(lastRowSelected);
+    }
+    
+    IngestMessage getMessage(int rowNumber) { 
+        return tableModel.getMessage(rowNumber);
     }
 
     /** This method is called from within the constructor to
@@ -66,10 +81,6 @@ public class IngestMessagePanel extends javax.swing.JPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         messageTable = new javax.swing.JTable();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        detailsViewerPane = new javax.swing.JEditorPane();
-        viewArtifactButton = new javax.swing.JButton();
-        viewContentButton = new javax.swing.JButton();
 
         setOpaque(false);
 
@@ -90,89 +101,28 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(messageTable);
 
-        detailsViewerPane.setBackground(new java.awt.Color(221, 221, 235));
-        detailsViewerPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.detailsViewerPane.contentType")); // NOI18N
-        detailsViewerPane.setEditable(false);
-        jScrollPane2.setViewportView(detailsViewerPane);
-
-        viewArtifactButton.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.viewArtifactButton.text")); // NOI18N
-        viewArtifactButton.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.viewArtifactButton.toolTipText")); // NOI18N
-        viewArtifactButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                viewArtifactButtonActionPerformed(evt);
-            }
-        });
-
-        viewContentButton.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.viewContentButton.text")); // NOI18N
-        viewContentButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                viewContentButtonActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(106, Short.MAX_VALUE)
-                .addComponent(viewArtifactButton)
-                .addGap(18, 18, 18)
-                .addComponent(viewContentButton))
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(viewContentButton)
-                    .addComponent(viewArtifactButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 144, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 144, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void viewArtifactButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewArtifactButtonActionPerformed
-        if (lastRowSelected < 0) {
-            return;
-        }
-        final IngestMessage message = tableModel.getMessage(lastRowSelected);
-        if (message != null) {
-            BlackboardArtifact art = message.getData();
-            if (art != null) {
-                BlackboardResultViewer v = Lookup.getDefault().lookup(BlackboardResultViewer.class);
-                v.viewArtifact(art);
-            }
-        }
-
-    }//GEN-LAST:event_viewArtifactButtonActionPerformed
-
-    private void viewContentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewContentButtonActionPerformed
-        if (lastRowSelected < 0) {
-            return;
-        }
-        final IngestMessage message = tableModel.getMessage(lastRowSelected);
-        if (message != null) {
-            BlackboardArtifact art = message.getData();
-            if (art != null) {
-                BlackboardResultViewer v = Lookup.getDefault().lookup(BlackboardResultViewer.class);
-                v.viewArtifactContent(art);
-            }
-        }
-    }//GEN-LAST:event_viewContentButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JEditorPane detailsViewerPane;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable messageTable;
-    private javax.swing.JButton viewArtifactButton;
-    private javax.swing.JButton viewContentButton;
     // End of variables declaration//GEN-END:variables
 
     private void customizeComponents() {
+        mainPanel.setOpaque(true);
+        jScrollPane1.setOpaque(true);
+        messageTable.setOpaque(false);
+        
         jScrollPane1.setWheelScrollingEnabled(true);
 
         messageTable.setAutoscrolls(true);
@@ -184,7 +134,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
 
         //customize column witdhs
         //messageTable.setSize(260, 260);
-        messageTable.setSize(messageTable.getParent().getPreferredSize());
+        //messageTable.setSize(messageTable.getParent().getPreferredSize());
         final int width = messageTable.getSize().width;
         TableColumn column = null;
         for (int i = 0; i < 2; i++) {
@@ -201,12 +151,14 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.setColumnSelectionAllowed(false);
         messageTable.setRowSelectionAllowed(true);
         messageTable.getSelectionModel().addListSelectionListener(new MessageVisitedSelection());
-
-        detailsViewerPane.setContentType("text/html");
-        viewArtifactButton.setEnabled(false);
-        viewContentButton.setEnabled(false);
-
     }
+    
+    @Override
+    public void setSize(Dimension d) {
+        super.setSize(d);
+        messageTable.setSize(d);
+    }
+
 
     public void addMessage(IngestMessage m) {
         tableModel.addMessage(m);
@@ -223,28 +175,6 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         lastRowSelected = rowNumber;
     }
 
-    private void updateDetails(int rowNumber) {
-        final IngestMessage message = tableModel.getMessage(rowNumber);
-        if (message != null) {
-            String details = message.getDetails();
-            if (details != null) {
-                this.detailsViewerPane.setText(details);
-            } else {
-                this.detailsViewerPane.setText("");
-            }
-            if (message.getData() != null) {
-                viewArtifactButton.setEnabled(true);
-                viewContentButton.setEnabled(true);
-            } else {
-                viewArtifactButton.setEnabled(false);
-                viewContentButton.setEnabled(false);
-            }
-        } else {
-            viewArtifactButton.setEnabled(false);
-            viewContentButton.setEnabled(false);
-            detailsViewerPane.setText("");
-        }
-    }
 
     private class MessageTableModel extends AbstractTableModel {
         //data
@@ -453,11 +383,12 @@ public class IngestMessagePanel extends javax.swing.JPanel {
                 }
                 if (selected != -1) {
                     setVisited(selected);
-                    updateDetails(selected);
+                    mainPanel.showDetails(selected);
                 }
 
 
             }
         }
     }
+    
 }

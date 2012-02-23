@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
     private static IngestMessageTopComponent instance;
     private static final Logger logger = Logger.getLogger(IngestMessageTopComponent.class.getName());
-    private IngestMessagePanel messagePanel;
+    private IngestMessageMainPanel messagePanel;
     private IngestManager manager;
     private static String PREFERRED_ID = "IngestMessageTopComponent";
 
@@ -86,11 +87,11 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 385, Short.MAX_VALUE)
+            .addGap(0, 332, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 362, Short.MAX_VALUE)
+            .addGap(0, 210, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -103,6 +104,8 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
         if (manager == null) {
             manager = IngestManager.getDefault();
         }
+        
+        //messagePanel.setSize(this.getSize());
     }
 
     @Override
@@ -131,6 +134,8 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
             mode.dockInto(this);
             this.open();
         }
+        
+        //messagePanel.setSize(this.getSize());
     }
 
     @Override
@@ -216,11 +221,12 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
     private void customizeComponents() {
         //custom GUI setup not done by builder
-
-        messagePanel = new IngestMessagePanel();
-        messagePanel.setOpaque(false);
+        messagePanel = new IngestMessageMainPanel();
+        messagePanel.setOpaque(true);
         setLayout(new BorderLayout());
         add(messagePanel, BorderLayout.CENTER);
+        
+        //this.setBackground(Color.yellow);
     }
 
     /**
