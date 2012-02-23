@@ -190,22 +190,38 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
     void initButtons() {
         //initialize buttons
-        boolean listSet = (currentKeywordList != null);
-        List<String> locked = new ArrayList<String>();
-        if (ingestRunning) {
-            locked = KeywordSearchIngestService.getDefault().getKeywordLists();
+        // Certain buttons will be disabled if no list is set
+        boolean listSet = currentKeywordList != null;
+        // Certain buttons will be disabled if ingest is ongoing
+        boolean ingestOngoing = this.ingestRunning;
+        // Certain buttons will be disabled if ingest is ongoing on this list
+        boolean inIngest = false;
+        // Certain buttons will be disabled if the selected list is locked
+        boolean locked = false;
+        // Certain buttons will be disabled if no keywords are set
+        boolean noKeywords = getAllKeywords().isEmpty();
+        
+        List<String> ingestLists = new ArrayList<String>();
+        if (ingestOngoing) {
+            ingestLists = KeywordSearchIngestService.getDefault().getKeywordLists();
         }
-        boolean currentUnlocked = !locked.contains(currentKeywordList);
-        addWordButton.setEnabled(listSet && currentUnlocked);
-        addWordField.setEnabled(listSet && currentUnlocked);
-        chRegex.setEnabled(listSet && currentUnlocked);
-        useForIngestCheckbox.setEnabled(listSet && currentUnlocked);
+        inIngest = ingestLists.contains(currentKeywordList);
+        
+        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
+        KeywordSearchList currentList = loader.getList(currentKeywordList);
+        if(currentList != null){
+            locked = currentList.isLocked();
+        }
+        addWordButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !locked);
+        addWordField.setEnabled(listSet && (!ingestOngoing || !inIngest) && !locked);
+        chRegex.setEnabled(listSet && (!ingestOngoing || !inIngest) && !locked);
+        useForIngestCheckbox.setEnabled(listSet && (!ingestOngoing || !inIngest));
         saveListButton.setEnabled(listSet);
         exportButton.setEnabled(listSet);
-        deleteListButton.setEnabled(listSet && currentUnlocked);
-        deleteWordButton.setEnabled(listSet && currentUnlocked);
+        deleteListButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !locked);
+        deleteWordButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !locked);
         
-        if (getAllKeywords().isEmpty()) {
+        if (noKeywords) {
             saveListButton.setEnabled(false);
             exportButton.setEnabled(false);
             deleteWordButton.setEnabled(false);
@@ -613,7 +629,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                         KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);*/
                 boolean save = true;
                 if (save) {
-                    loader.addList(currentKeywordList, newKeywords, newIngest);
+                    loader.addList(currentKeywordList, newKeywords, newIngest, oldList.isLocked());
                 }
             }
         }
