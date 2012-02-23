@@ -18,10 +18,13 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.sql.SQLException;
 import java.util.Arrays;
-import org.openide.util.Exceptions;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -31,6 +34,7 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class ArtifactStringContent implements StringContent{
     BlackboardArtifact wrapped;
+    static final Logger logger = Logger.getLogger(ArtifactStringContent.class.getName());
     
     public ArtifactStringContent(BlackboardArtifact art){
         wrapped = art;
@@ -72,6 +76,17 @@ public class ArtifactStringContent implements StringContent{
         catch (TskException ex) {
             return "Error getting content";
         }    
+    }
+    
+    public static File getAssociatedFile(BlackboardArtifact artifact){
+        try {
+            return artifact.getSleuthkitCase().getFileById(artifact.getObjectID());
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "SQL query threw exception", ex);
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "Getting file failed", ex);
+        }
+        throw new IllegalArgumentException("Couldn't get file from database");
     }
     
 }

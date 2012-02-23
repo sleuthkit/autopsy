@@ -579,8 +579,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
                         Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                         if (treeNode != null) {
-                            Node originNode = treeNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class).getNode();
-
+                            OriginalNode origin = treeNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class);
+                            if(origin == null)
+                                return;
+                            Node originNode = origin.getNode();
+                            
                             //int count = originNode.getChildren().getNodesCount(true);
                             //if (count > 1000) {
                             //    DirectoryTreeTopComponent.this.setCursor(null);
@@ -723,10 +726,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
             @Override
             public void run() {
-
                 Children resultChilds = dataResult.getRootNode().getChildren();
                 Node select = resultChilds.findChild(Long.toString(art.getArtifactID()));
                 if (select != null) {
+                    dataResult.requestActive();
                     dataResult.setSelectedNodes(new Node[]{select});
                 }
             }

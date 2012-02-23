@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.StringContent;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -360,6 +361,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
     @Override
     public boolean isSupported(Node node) {
+        if(node == null) {
+            return false;
+        }
+        File file = node.getLookup().lookup(File.class);
+        if(file != null && file.getSize() == 0)
+            return false;
         return true;
     }
     

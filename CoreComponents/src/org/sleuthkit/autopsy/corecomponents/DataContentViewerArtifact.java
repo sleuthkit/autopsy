@@ -277,12 +277,30 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     @Override
     public boolean isSupported(Node node) {
-        return true;
+        if (node == null) {
+            return false;
+        }
+
+        ArtifactStringContent artifact = node.getLookup().lookup(ArtifactStringContent.class);
+        Content content = node.getLookup().lookup(Content.class);
+        
+        if(artifact != null) {
+            return true;
+        }
+        if(content != null) {
+            try {
+                int size = content.getAllArtifacts().size();
+                return size > 0;
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Couldn't get All blackboard Artifacts", ex);
+            }
+        }
+        return false;
     }
 
     @Override
     public boolean isPreferred(Node node, boolean isSupported) {
-        return false;
+        return node.getLookup().lookup(ArtifactStringContent.class) != null;
     }
 
     private void customizeComponents(){
