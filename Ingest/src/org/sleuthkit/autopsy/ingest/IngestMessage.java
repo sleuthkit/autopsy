@@ -35,7 +35,6 @@ public class IngestMessage {
 
         DATA, INFO, WARNING, ERROR
     };
-    
     private long ID;
     private MessageType messageType;
     private IngestServiceAbstract source;
@@ -67,11 +66,11 @@ public class IngestMessage {
     public String getSubject() {
         return subject;
     }
-    
+
     public String getDetails() {
         return detailsHtml;
     }
-    
+
     public String getUniqueKey() {
         return uniqueKey;
     }
@@ -83,24 +82,28 @@ public class IngestMessage {
     public MessageType getMessageType() {
         return messageType;
     }
-    
+
     public Date getDatePosted() {
         return datePosted;
     }
-    
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(Long.toString(ID)).append(": ");
         sb.append("type: ").append(messageType.name());
         if (source != null) //can be null for manager messages
+        {
             sb.append(" source: ").append(source.getName());
+        }
         sb.append(" date: ").append(dateFormat.format(datePosted));
         sb.append(" subject: ").append(subject);
-        if (detailsHtml != null)
+        if (detailsHtml != null) {
             sb.append(" details: ").append(detailsHtml);
-        if (data != null)
+        }
+        if (data != null) {
             sb.append(" data: ").append(data.toString()).append(' ');
+        }
         return sb.toString();
     }
 
@@ -149,10 +152,6 @@ public class IngestMessage {
         hash = 59 * hash + (this.data != null ? this.data.hashCode() : 0);
         return hash;
     }
-    
-
-  
-
 
     //factory methods
     /**
@@ -161,16 +160,22 @@ public class IngestMessage {
      * @param messageType message type
      * @param source originating service
      * @param subject message subject to be displayed
-     * @param details message details to be displayed
+     * @param details message details to be displayed, or null
      * @return 
      */
     public static IngestMessage createMessage(long ID, MessageType messageType, IngestServiceAbstract source, String subject, String detailsHtml) {
         if (messageType == null || source == null || subject == null) {
             throw new IllegalArgumentException("message type, source and subject cannot be null");
         }
+         //add html tags
+        if (detailsHtml != null) {
+            StringBuilder htmlB = new StringBuilder();
+            htmlB.append("<html>").append(detailsHtml).append("</html>");
+            detailsHtml = htmlB.toString();
+        }
         return new IngestMessage(ID, messageType, source, subject, detailsHtml);
     }
-    
+
     /**
      * Create a simple message with a subject only
      * @param ID ID of the message, unique in the context of module that generated it
@@ -196,13 +201,13 @@ public class IngestMessage {
         }
         return new IngestMessage(ID, MessageType.ERROR, source, subject, null);
     }
-    
+
     /**
      * 
      * @param ID ID of the message, unique in the context of module that generated it
      * @param source originating service
      * @param subject message subject to be displayed
-     * @param detailsHtml html formatted detailed message, for instance, a human-readable representation of the data. 
+     * @param detailsHtml html formatted detailed message (without leading and closing <html> tags), for instance, a human-readable representation of the data. 
      * @param uniqueKey unique key determining uniqueness of the message, or null. Helps grouping similar messages and determine their importance.  Subsequent messages with the same uniqueKey will be treated with lower priority.
      * @param data data blackboard artifact associated with the message, the same as fired in ServiceDataEvent by the service
      * @return 
@@ -211,14 +216,18 @@ public class IngestMessage {
         if (source == null || subject == null || detailsHtml == null || data == null) {
             throw new IllegalArgumentException("source, subject, details and data cannot be null");
         }
+        //add html tags
+        StringBuilder htmlB = new StringBuilder();
+        htmlB.append("<html>").append(detailsHtml).append("</html>");
+        detailsHtml = htmlB.toString();
+
         IngestMessage im = new IngestMessage(ID, MessageType.DATA, source, subject, detailsHtml);
         im.uniqueKey = uniqueKey;
         im.data = data;
         return im;
     }
-    
+
     static IngestMessage createManagerMessage(String subject) {
         return new IngestMessage(0, MessageType.INFO, null, subject, null);
     }
-    
 }

@@ -266,11 +266,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
 
         StringBuilder msg = new StringBuilder();
-        msg.append("Keyword Indexing Completed, ");
-        msg.append("indexed files: ").append(indexed).append(", indexed strings: ").append(indexed_extr);
-        msg.append(", skipped files: ").append(skipped);
+        msg.append("Indexed files: ").append(indexed).append("<br />Indexed strings: ").append(indexed_extr);
+        msg.append("<br />Skipped files: ").append(skipped).append("<br />");
 
-        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, msg.toString()));
+        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Keyword Indexing Completed", msg.toString()));
 
     }
 
@@ -534,7 +533,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
                             //details
                             //hit
-                            detailsSb.append("<html>");
                             detailsSb.append("Keyword hit: ");
                             detailsSb.append(attr.getValueString());
                             detailsSb.append("<br />");
@@ -559,7 +557,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                 detailsSb.append("<br />");
                             }
 
-                            detailsSb.append("</html>");
                             managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, res.getArtifact()));
                         }
                     } //for each file hit
