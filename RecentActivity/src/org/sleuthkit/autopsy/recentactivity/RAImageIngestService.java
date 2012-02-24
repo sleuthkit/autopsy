@@ -33,6 +33,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.FileSystem;
 
+
 /**
  * Example implementation of an image ingest service 
  * 
@@ -75,10 +76,7 @@ public final class RAImageIngestService implements IngestServiceImage {
          
         try {
             //do the work for(FileSystem img : imageFS )
-         
              ext.extractToBlackboard(controller, imgIds);
-          
-            
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error extracting recent activity", e);

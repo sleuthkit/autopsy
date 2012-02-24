@@ -13,4 +13,12 @@
             <attr name="position" intvalue="300"/>
         </file>
     </folder>
+    <folder name="Toolbars">
+        <folder name="Reports">
+            <file name="org-sleuthkit-autopsy-report-reportFilterAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-reportFilter.instance"/>
+            </file>
+        </folder>
+        <file name="org-sleuthkit-autopsy-report-reportFilterAction.shadow_hidden"/>
+    </folder>
 </filesystem>

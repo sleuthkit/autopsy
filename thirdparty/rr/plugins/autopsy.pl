@@ -38,7 +38,7 @@ sub pluginmain {
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 	
-	my $logon_name = "Logon User Name";
+	my $logon_name = "Username";
 	
 	my $key_path = 'Software\\Microsoft\\Windows\\CurrentVersion\\Explorer';
 	my $key;
@@ -46,11 +46,11 @@ sub pluginmain {
 		my @vals = $key->get_list_of_values();
 		if (scalar(@vals) > 0) {
 			#::rptMsg("Logon User Name");
-			::rptMsg($key_path);
-			::rptMsg("LastWrite Time [".gmtime($key->get_timestamp())." (UTC)]");
+			#::rptMsg($key_path);
+			::rptMsg("Time[".gmtime($key->get_timestamp())."]");
 			foreach my $v (@vals) {
 				if ($v->get_name() eq $logon_name) {
-					::rptMsg($logon_name." = ".$v->get_data());
+					::rptMsg($logon_name."[".$v->get_data() ."]");
 				}
 			}
 		}

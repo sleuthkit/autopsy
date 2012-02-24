@@ -145,6 +145,7 @@
             <file name="org-netbeans-modules-autoupdate-ui-actions-CheckForUpdatesAction.shadow_hidden"/>
         </folder>
         
+        <file name="Reports_hidden"/>
         <folder name="View">
             <file name="org-netbeans-core-actions-HTMLViewAction.shadow_hidden"/>
             <file name="org-netbeans-core-actions-LogAction.shadow_hidden"/>
