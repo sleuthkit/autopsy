@@ -20,8 +20,8 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import org.openide.modules.ModuleInstall;
+import org.openide.windows.WindowManager;
 
 /**
  * Initializes ingest manager when the module is loaded
@@ -34,14 +34,11 @@ public class Installer extends ModuleInstall {
         Logger logger = Logger.getLogger(Installer.class.getName());
         logger.log(Level.INFO, "Initializing ingest manager");
         final IngestManager manager = IngestManager.getDefault();
-        SwingUtilities.invokeLater(new Runnable() {
-
+        WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
                 manager.initUI();
             }
-            
-            
         });
 
     }
