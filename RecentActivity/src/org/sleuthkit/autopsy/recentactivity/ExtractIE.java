@@ -251,9 +251,9 @@ public class ExtractIE { // implements BrowserActivity {
                                        realurl = realurl.replace(":Host:", "");
                                       }
                                        
-                                     // TODO: Need to fix this so we have the right obj_id
-                                        BlackboardArtifact bbart = tempDb.getRootObjects().get(0).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                                        Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                                        // TODO: Need to fix this so we have the right obj_id
+                                        BlackboardArtifact bbart = tempDb.getFileById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+                                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "Internet Explorer", realurl));
                                        
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[3]));
