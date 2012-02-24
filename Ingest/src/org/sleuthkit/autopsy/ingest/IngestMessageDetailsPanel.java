@@ -52,13 +52,16 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         backButton = new javax.swing.JButton();
-        viewArtifactButton = new javax.swing.JButton();
         viewContentButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         messageDetailsPane = new javax.swing.JEditorPane();
+        viewArtifactButton = new javax.swing.JButton();
 
         backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/arrow_left.gif"))); // NOI18N
         backButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.backButton.text")); // NOI18N
+        backButton.setAlignmentY(0.0F);
+        backButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        backButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
         backButton.setMaximumSize(new java.awt.Dimension(23, 23));
         backButton.setMinimumSize(new java.awt.Dimension(23, 23));
         backButton.setPreferredSize(new java.awt.Dimension(23, 23));
@@ -68,14 +71,9 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
             }
         });
 
-        viewArtifactButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewArtifactButton.text")); // NOI18N
-        viewArtifactButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                viewArtifactButtonActionPerformed(evt);
-            }
-        });
-
         viewContentButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewContentButton.text")); // NOI18N
+        viewContentButton.setAlignmentY(0.0F);
+        viewContentButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
         viewContentButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewContentButtonActionPerformed(evt);
@@ -83,9 +81,20 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         });
 
         messageDetailsPane.setBackground(new java.awt.Color(221, 221, 235));
+        messageDetailsPane.setBorder(null);
         messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
         messageDetailsPane.setEditable(false);
+        messageDetailsPane.setMargin(new java.awt.Insets(1, 1, 1, 1));
         jScrollPane1.setViewportView(messageDetailsPane);
+
+        viewArtifactButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewArtifactButton.text")); // NOI18N
+        viewArtifactButton.setAlignmentY(0.0F);
+        viewArtifactButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        viewArtifactButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                viewArtifactButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -93,21 +102,22 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 86, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 153, Short.MAX_VALUE)
                 .addComponent(viewArtifactButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(viewContentButton))
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 309, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(viewContentButton)
-                    .addComponent(viewArtifactButton))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(viewContentButton)
+                        .addComponent(viewArtifactButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 149, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -122,6 +132,7 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
     private void backButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backButtonActionPerformed
         mainPanel.showMessages();
     }//GEN-LAST:event_backButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
     private javax.swing.JScrollPane jScrollPane1;

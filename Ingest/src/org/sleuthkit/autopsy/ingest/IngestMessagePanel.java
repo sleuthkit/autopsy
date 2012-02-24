@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
@@ -153,11 +152,6 @@ class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.getSelectionModel().addListSelectionListener(new MessageVisitedSelection());
     }
     
-    @Override
-    public void setSize(Dimension d) {
-        super.setSize(d);
-        messageTable.setSize(d);
-    }
     
     public void addMessage(IngestMessage m) {
         tableModel.addMessage(m);

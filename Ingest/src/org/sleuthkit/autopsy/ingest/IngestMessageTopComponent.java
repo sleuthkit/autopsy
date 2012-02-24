@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
+import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.ImageUtilities;
@@ -104,8 +104,6 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
         if (manager == null) {
             manager = IngestManager.getDefault();
         }
-        
-        //messagePanel.setSize(this.getSize());
     }
 
     @Override
@@ -133,9 +131,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
             }
             mode.dockInto(this);
             this.open();
-        }
-        
-        //messagePanel.setSize(this.getSize());
+        }    
     }
 
     @Override
@@ -149,6 +145,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     protected void componentActivated() {
         //logger.log(Level.INFO, "ACTIVATED");
         super.componentActivated();
+        
     }
 
     @Override
@@ -223,10 +220,9 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
         //custom GUI setup not done by builder
         messagePanel = new IngestMessageMainPanel();
         messagePanel.setOpaque(true);
-        setLayout(new BorderLayout());
-        add(messagePanel, BorderLayout.CENTER);
-        
-        //this.setBackground(Color.yellow);
+        //setLayout(new BorderLayout());
+        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+        add(messagePanel);
     }
 
     /**
