@@ -25,10 +25,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceImage;
+import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.FileSystem;
@@ -91,7 +94,9 @@ public final class RAImageIngestService implements IngestServiceImage {
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete() " + this.toString());
-
+        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Completed");
         managerProxy.postMessage(msg);
 

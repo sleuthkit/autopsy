@@ -274,7 +274,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(ingestLabel)
-                .addContainerGap(51, Short.MAX_VALUE))
+                .addContainerGap(109, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -626,7 +626,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
             String name = (String) table.getModel().getValueAt(row, 1);
             List<String> locked = KeywordSearchIngestService.getDefault().getKeywordLists();
-            setEnabled(!locked.contains(name));
+            setEnabled(!locked.contains(name) || !ingestRunning);
             Boolean selected = (Boolean) table.getModel().getValueAt(row, 0);
             setSelected(selected);
 
