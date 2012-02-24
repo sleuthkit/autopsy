@@ -167,12 +167,6 @@ public class IngestMessage {
         if (messageType == null || source == null || subject == null) {
             throw new IllegalArgumentException("message type, source and subject cannot be null");
         }
-         //add html tags
-        if (detailsHtml != null) {
-            StringBuilder htmlB = new StringBuilder();
-            htmlB.append("<html>").append(detailsHtml).append("</html>");
-            detailsHtml = htmlB.toString();
-        }
         return new IngestMessage(ID, messageType, source, subject, detailsHtml);
     }
 
@@ -230,10 +224,6 @@ public class IngestMessage {
         if (source == null || subject == null || detailsHtml == null || data == null) {
             throw new IllegalArgumentException("source, subject, details and data cannot be null");
         }
-        //add html tags
-        StringBuilder htmlB = new StringBuilder();
-        htmlB.append("<html>").append(detailsHtml).append("</html>");
-        detailsHtml = htmlB.toString();
 
         IngestMessage im = new IngestMessage(ID, MessageType.DATA, source, subject, detailsHtml);
         im.uniqueKey = uniqueKey;

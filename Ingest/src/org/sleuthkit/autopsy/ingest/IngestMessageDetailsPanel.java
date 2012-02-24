@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
+import org.sleuthkit.autopsy.ingest.IngestMessagePanel.IngestMessageGroup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -143,9 +144,9 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
 
     private void viewArtifact(java.awt.event.ActionEvent evt) {
 
-        final IngestMessage message = mainPanel.getMessagePanel().getSelectedMessage();
-        if (message != null) {
-            BlackboardArtifact art = message.getData();
+        final IngestMessageGroup messageGroup = mainPanel.getMessagePanel().getSelectedMessage();
+        if (messageGroup != null) {
+            BlackboardArtifact art = messageGroup.getData();
             if (art != null) {
                 BlackboardResultViewer v = Lookup.getDefault().lookup(BlackboardResultViewer.class);
                 v.viewArtifact(art);
@@ -156,9 +157,9 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
 
     private void viewContent(java.awt.event.ActionEvent evt) {
 
-        final IngestMessage message = mainPanel.getMessagePanel().getSelectedMessage();
-        if (message != null) {
-            BlackboardArtifact art = message.getData();
+        final IngestMessageGroup messageGroup = mainPanel.getMessagePanel().getSelectedMessage();
+        if (messageGroup != null) {
+            BlackboardArtifact art = messageGroup.getData();
             if (art != null) {
                 BlackboardResultViewer v = Lookup.getDefault().lookup(BlackboardResultViewer.class);
                 v.viewArtifactContent(art);
@@ -168,15 +169,18 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
 
 
     void showDetails(int rowNumber) {
-        final IngestMessage message = mainPanel.getMessagePanel().getMessage(rowNumber);
-        if (message != null) {
-            String details = message.getDetails();
+        final IngestMessageGroup messageGroup = mainPanel.getMessagePanel().getMessageGroup(rowNumber);
+        if (messageGroup != null) {
+            String details = messageGroup.getDetails();
             if (details != null) {
-                this.messageDetailsPane.setText(details);
+                StringBuilder b = new StringBuilder();
+                b.append("<html>").append(details).append("</html>");
+                this.messageDetailsPane.setText(b.toString());
             } else {
                 this.messageDetailsPane.setText("");
             }
-            if (message.getData() != null) {
+            //show artifact/content only for a message group with a single message
+            if (messageGroup.getData() != null && messageGroup.getCount() == 1) {
                 viewArtifactButton.setEnabled(true);
                 viewContentButton.setEnabled(true);
             } else {
