@@ -201,6 +201,20 @@ public class IngestMessage {
         }
         return new IngestMessage(ID, MessageType.ERROR, source, subject, null);
     }
+    
+    /**
+     * Create warning message
+     * @param ID ID of the message, unique in the context of module that generated it
+     * @param source originating service
+     * @param subject message subject to be displayed
+     * @return 
+     */
+    public static IngestMessage createWarningMessage(long ID, IngestServiceAbstract source, String subject) {
+        if (source == null || subject == null) {
+            throw new IllegalArgumentException("source and subject cannot be null");
+        }
+        return new IngestMessage(ID, MessageType.WARNING, source, subject, null);
+    }
 
     /**
      * 
