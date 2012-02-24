@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
-    <folder name="Actions">
-        <folder name="Window">
-            <file name="org-sleuthkit-autopsy-ingest-IngestMessageTopComponent.instance"/>
-        </folder>
-    </folder>
     <folder name="Services">
     
 <!--    <file name="org-sleuthkit-autopsy-ingest-IngestMessageTopComponent.instance">
@@ -30,7 +25,7 @@
     </folder>
     <folder name="Windows2">
         <folder name="Components">
-            <file name="IngestMessageTopComponent.settings" url="IngestMessageTopComponentSettings.xml" />
+            <file name="IngestMessageTopComponent.settings" url="IngestMessageTopComponentSettings.xml"/>
         </folder>
         <folder name="Modes">
           <!--  <folder name="dockedBottom">
@@ -42,4 +37,45 @@
             <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml"/>
         </folder>
     </folder>
+   
+    <!-- <folder name="Actions">
+        <folder name="Ingest">
+            <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance">
+              
+                <attr bundlevalue="org.sleuthkit.autopsy.ingest.Bundle#CTL_IngestMessagesAction" name="displayName"/>
+                <attr methodvalue="org.openide.awt.Actions.alwaysEnabled" name="instanceCreate"/>
+                <attr name="delegate" newvalue="org.sleuthkit.autopsy.ingest.IngestMessagesAction"/>
+                <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/ingest/eye-icon.png"/>
+                <attr boolvalue="false" name="noIconInMenu"/>
+            </file>
+        </folder>
+    </folder> 
+    -->
+    
+     <folder name="Actions">
+        <folder name="File">
+            <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance">
+                <!--org.sleuthkit.autopsy.ingest.IngestMessagesAction-->
+                <attr
+                    bundlevalue="org.sleuthkit.autopsy.ingest.Bundle#CTL_IngestMessagesAction" name="displayName"/>
+                <attr
+                    methodvalue="org.openide.awt.Actions.alwaysEnabled" name="instanceCreate"/>
+                <attr name="delegate" newvalue="org.sleuthkit.autopsy.ingest.IngestMessagesAction"/>
+                <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/ingest/eye-icon.png"/>
+                <attr boolvalue="false" name="noIconInMenu"/>
+            </file>
+        </folder>
+    </folder>
+    <folder name="Toolbars">
+        <folder name="Ingest">
+            <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.shadow">
+                <!--org.sleuthkit.autopsy.ingest.IngestMessagesAction-->
+                <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance"/>
+                <attr intvalue="500" name="position"/>
+            </file>
+        </folder>
+    </folder>
+
+    
+
 </filesystem>
