@@ -39,16 +39,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
@@ -62,6 +65,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
     private KeywordTableModel tableModel;
     private String currentKeywordList;
     private boolean ingestRunning;
+    private boolean locked;
     
     private static KeywordSearchEditListPanel instance = null;
     
@@ -80,6 +84,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
     }
     
     private void customizeComponents() {
+        locked = false;
         chRegex.setToolTipText("Keyword is a regular expression");
         addWordButton.setToolTipText(("Add a new word to the keyword search list"));
         addWordField.setToolTipText("Enter a new word or regex to search");
@@ -102,6 +107,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                 column.setPreferredWidth(((int) (width * 0.85)));
             } else {
                 column.setPreferredWidth(((int) (width * 0.14)));
+                column.setCellRenderer(new CheckBoxRenderer());
             }
         }
         keywordTable.setCellSelectionEnabled(false);
@@ -111,7 +117,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         lsm.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                if(lsm.isSelectionEmpty())
+                if(lsm.isSelectionEmpty() || locked)
                     deleteWordButton.setEnabled(false);
                 else
                     deleteWordButton.setEnabled(true);
@@ -197,7 +203,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         // Certain buttons will be disabled if ingest is ongoing on this list
         boolean inIngest = false;
         // Certain buttons will be disabled if the selected list is locked
-        boolean locked = false;
+        boolean isLocked = this.locked;
         // Certain buttons will be disabled if no keywords are set
         boolean noKeywords = getAllKeywords().isEmpty();
         
@@ -207,19 +213,14 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         }
         inIngest = ingestLists.contains(currentKeywordList);
         
-        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
-        KeywordSearchList currentList = loader.getList(currentKeywordList);
-        if(currentList != null){
-            locked = currentList.isLocked();
-        }
-        addWordButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !locked);
-        addWordField.setEnabled(listSet && (!ingestOngoing || !inIngest) && !locked);
-        chRegex.setEnabled(listSet && (!ingestOngoing || !inIngest) && !locked);
+        addWordButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked);
+        addWordField.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked);
+        chRegex.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked);
         useForIngestCheckbox.setEnabled(listSet && (!ingestOngoing || !inIngest));
         saveListButton.setEnabled(listSet);
         exportButton.setEnabled(listSet);
-        deleteListButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !locked);
-        deleteWordButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !locked);
+        deleteListButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked);
+        deleteWordButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked);
         
         if (noKeywords) {
             saveListButton.setEnabled(false);
@@ -593,6 +594,12 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             save();
             listSelectionModel.setSelectionInterval(index, index);
             currentKeywordList = listsPanel.getAllLists().get(index);
+            KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
+            
+            KeywordSearchList currentList = loader.getList(currentKeywordList);
+            if (currentList != null) {
+                locked = currentList.isLocked();
+            }
             tableModel.resync(currentKeywordList);
             initButtons();
         } else {
@@ -801,10 +808,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         }
     }
 
-    /**
-     * tooltips that show entire query string
-     */
-    private static class CellTooltipRenderer extends DefaultTableCellRenderer {
+    private class CheckBoxRenderer extends JCheckBox implements TableCellRenderer{
 
         @Override
         public Component getTableCellRendererComponent(
@@ -812,11 +816,16 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                 boolean isSelected, boolean hasFocus,
                 int row, int column) {
 
-            if (column == 0) {
-                String val = (String) table.getModel().getValueAt(row, column);
-                setToolTipText(val);
-                setText(val);
-            }
+            this.setHorizontalAlignment(JCheckBox.CENTER);
+            this.setVerticalAlignment(JCheckBox.CENTER);
+
+            Boolean selected = (Boolean) table.getModel().getValueAt(row, 1);
+            setSelected(selected);
+            if(isSelected)
+                setBackground(keywordTable.getSelectionBackground());
+            else
+                setBackground(keywordTable.getBackground());
+            setEnabled(false);
 
             return this;
         }
