@@ -8,6 +8,9 @@
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.menuactions.Bundle#CTL_FileBrowserAction"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
+            <file name="org-sleuthkit-autopsy-menuactions-SpacerAction.instance">
+                <attr name="delegate" newvalue="org.sleuthkit.autopsy.menuactions.SpacerAction"/>
+            </file>
         </folder>
         <folder name="Window">
         </folder>
@@ -49,5 +52,13 @@
                 <attr name="position" intvalue="175"/>
             </file>
        </folder>
+    </folder>
+    <folder name="Toolbars">
+        <folder name="File">
+            <file name="org-sleuthkit-autopsy-menuactions-SpacerAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-menuactions-SpacerAction.instance"/>
+                <attr name="position" intvalue="600"/>
+            </file>
+        </folder>
     </folder>
 </filesystem>

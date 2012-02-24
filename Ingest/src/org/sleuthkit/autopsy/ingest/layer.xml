@@ -68,10 +68,10 @@
     </folder>
     <folder name="Toolbars">
         <folder name="Ingest">
+            <attr intvalue="500" name="position"/>
             <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.shadow">
                 <!--org.sleuthkit.autopsy.ingest.IngestMessagesAction-->
                 <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance"/>
-                <attr intvalue="500" name="position"/>
             </file>
         </folder>
     </folder>
