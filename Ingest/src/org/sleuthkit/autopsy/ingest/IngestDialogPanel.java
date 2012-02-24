@@ -39,6 +39,8 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -143,6 +145,18 @@ public class IngestDialogPanel extends javax.swing.JPanel {
             freqSlider.setEnabled(true);
         }
         freqSlider.setValue(manager.getUpdateFrequency());
+        
+        freqSlider.addChangeListener(new ChangeListener() {
+
+            @Override
+            public void stateChanged(ChangeEvent e) {
+               int val = freqSlider.getValue();
+               if (val<2)
+                   freqSlider.setValue(2);
+            }
+            
+        
+        });
     }
 
     /** This method is called from within the constructor to
@@ -188,14 +202,13 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         closeButton.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.closeButton.text")); // NOI18N
 
         freqSlider.setMajorTickSpacing(5);
-        freqSlider.setMaximum(60);
-        freqSlider.setMinimum(5);
-        freqSlider.setMinorTickSpacing(1);
+        freqSlider.setMaximum(30);
+        freqSlider.setMinorTickSpacing(2);
         freqSlider.setPaintLabels(true);
         freqSlider.setPaintTicks(true);
         freqSlider.setSnapToTicks(true);
         freqSlider.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.freqSlider.toolTipText")); // NOI18N
-        freqSlider.setValue(30);
+        freqSlider.setValue(15);
 
         freqSliderLabel.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.freqSliderLabel.text")); // NOI18N
         freqSliderLabel.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.freqSliderLabel.toolTipText")); // NOI18N
