@@ -116,10 +116,10 @@ public class KeywordSearchListsXML {
         urls.add(new Keyword("ftp|sftp|ssh|http|https|www", false));
         
         
-        addList("Phone Numbers", phones, true, true);
-        addList("IP Addresses", ips, true, true);
-        addList("Email Addresses", emails, true, true);
-        addList("URLs", urls, true, true);
+        addList("Phone Numbers", phones, false, true);
+        addList("IP Addresses", ips, false, true);
+        addList("Email Addresses", emails, false, true);
+        addList("URLs", urls, false, true);
     }
 
     /**
