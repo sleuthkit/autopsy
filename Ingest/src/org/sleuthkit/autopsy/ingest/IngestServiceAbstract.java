@@ -31,9 +31,9 @@ public interface IngestServiceAbstract {
      * Service loads its configuration and performs initialization
      * called once per new worker thread
      * 
-     * @param IngestManager handle to the manager to postMessage() to
+     * @param IngestManagerProxy interface to manager for posting messages, getting configurations
      */
-    public void init(IngestManager manager);
+    public void init(IngestManagerProxy managerProxy);
 
     /**
      * notification from manager that there is no more content to process and all work is done.
@@ -57,4 +57,23 @@ public interface IngestServiceAbstract {
      * @return specialization of the service
      */
     public ServiceType getType();
+    
+    /**
+     * @return is this service configurable?
+     */
+    public boolean isConfigurable();
+    
+    /**
+     * provides means for user to input service specific configuration options
+     * the new configuration is effective on next ingest
+     */
+    public void userConfigure();
+    
+    /**
+     * A service can manage and use additional threads to perform some work in the background.
+     * This method provides insight to the manager if the service has truly completed its work or not.
+     * @return true if any background threads/workers managed by this service are still running
+     * false if all work has been done, or if background threads are not used by this service
+     */
+    public boolean hasBackgroundJobsRunning();
 }

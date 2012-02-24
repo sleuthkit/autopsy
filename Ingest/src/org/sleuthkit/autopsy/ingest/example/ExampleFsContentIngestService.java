@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.ingest.example;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceAbstract.ServiceType;
@@ -35,7 +35,7 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
 
     private static final Logger logger = Logger.getLogger(ExampleFsContentIngestService.class.getName());
     private static ExampleFsContentIngestService instance = null;
-    private IngestManager manager;
+    private IngestManagerProxy managerProxy;
     private static int messageId = 0;
 
     public static synchronized ExampleFsContentIngestService getDefault() {
@@ -47,7 +47,7 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
 
     @Override
     public void process(FsContent fsContent) {
-        manager.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
+        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
 
         //service specific FsContent processing code here
         try {
@@ -61,7 +61,7 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete()");
-        manager.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
+        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
         
          //service specific cleanup due completion here
     }
@@ -72,9 +72,9 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     }
 
     @Override
-    public void init(IngestManager manager) {
+    public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init()");
-        this.manager = manager;
+        this.managerProxy = managerProxy;
 
         //service specific initialization here
     }
@@ -89,5 +89,20 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     @Override
     public ServiceType getType() {
         return ServiceType.FsContent;
+    }
+    
+    @Override
+    public void userConfigure() {
+        
+    }
+
+    @Override
+    public boolean isConfigurable() {
+        return false;
+    }
+    
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        return false;
     }
 }

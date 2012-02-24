@@ -55,6 +55,10 @@ public class Firefox {
 
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%places.sqlite%' and parent_path LIKE '%Firefox%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
+            Statement s = rs.getStatement();
+            rs.close();
+            if (s != null)
+                s.close();
                     FireFoxCount = FFSqlitedb.size();
                       
             rs.close();
@@ -62,10 +66,11 @@ public class Firefox {
             int j = 0;
      
             while (j < FFSqlitedb.size())
+
             {         
-                String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
-                ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 File dbFile = new File(temps);
                 if (controller.isCancelled() ) {
                  dbFile.delete();
@@ -135,6 +140,7 @@ public class Firefox {
                allFS += " and fs_obj_id = '" + img + "'";
             }
             List<FsContent> FFSqlitedb;  
+
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%cookies.sqlite%' and parent_path LIKE '%Firefox%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);   
             rs.close();
@@ -143,9 +149,9 @@ public class Firefox {
      
             while (j < FFSqlitedb.size())
             {
-                String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
-                ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 File dbFile = new File(temps);
                 if (controller.isCancelled() ) {
                  dbFile.delete();

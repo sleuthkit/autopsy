@@ -25,6 +25,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -32,8 +33,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import org.sleuthkit.datamodel.Image;
 
@@ -58,16 +62,21 @@ public class IngestDialogPanel extends javax.swing.JPanel {
     };
 
     /** Creates new form IngestDialogPanel */
-    public IngestDialogPanel(Image image) {
+    IngestDialogPanel() {
         services = new ArrayList<IngestServiceAbstract>();
         serviceStates = new HashMap<String, Boolean>();
-        this.image = image;
         initComponents();
         customizeComponents();
     }
     
+    void setImage(Image image) {
+        this.image = image;
+    }
+    
+    
+    
     private void customizeComponents(){
-        this.manager = IngestTopComponent.getDefault().getManager();
+        this.manager = IngestManager.getDefault();
         
         JScrollPane scrollPane = new JScrollPane(servicesPanel);
         scrollPane.setPreferredSize(this.getSize());
@@ -76,26 +85,64 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         servicesPanel.setLayout(new BoxLayout(servicesPanel, BoxLayout.Y_AXIS));
         
         Collection<IngestServiceImage> imageServices = IngestManager.enumerateImageServices();
-        for (IngestServiceImage service : imageServices) {
+        for (final IngestServiceImage service : imageServices) {
             final String serviceName = service.getName();
             services.add(service);
+            JPanel panel = new JPanel();
+            panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
             JCheckBox checkbox = new JCheckBox(serviceName, true);
             checkbox.setName(serviceName);
             checkbox.addActionListener(serviceSelListener);
-            servicesPanel.add(checkbox);
+            panel.add(checkbox);
+            panel.add(Box.createHorizontalGlue());
+            JButton button = new JButton("Configure");
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    service.userConfigure();
+                }
+            });
+            if(!service.isConfigurable())
+                button.setEnabled(false);
+            panel.add(button);
+            servicesPanel.add(panel);
             serviceStates.put(serviceName, true);
         }
 
         Collection<IngestServiceFsContent> fsServices = IngestManager.enumerateFsContentServices();
-        for (IngestServiceFsContent service : fsServices) {
+        for (final IngestServiceFsContent service : fsServices) {
             final String serviceName = service.getName();
             services.add(service);
+            JPanel panel = new JPanel();
+            panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
             JCheckBox checkbox = new JCheckBox(serviceName, true);
             checkbox.setName(serviceName);
             checkbox.addActionListener(serviceSelListener);
-            servicesPanel.add(checkbox);
+            checkbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+            panel.add(checkbox);
+            panel.add(Box.createHorizontalGlue());
+            JButton button = new JButton("Configure");
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    service.userConfigure();
+                }
+            });
+            if(!service.isConfigurable())
+                button.setEnabled(false);
+            button.setAlignmentX(Component.RIGHT_ALIGNMENT);
+            panel.add(button);
+            servicesPanel.add(panel);
             serviceStates.put(serviceName, true);
         }
+        
+        if (manager.isIngestRunning()) {
+            freqSlider.setEnabled(false);
+        }
+        else {
+            freqSlider.setEnabled(true);
+        }
+        freqSlider.setValue(manager.getUpdateFrequency());
     }
 
     /** This method is called from within the constructor to
@@ -111,6 +158,8 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         servicesPanel = new javax.swing.JPanel();
         startButton = new javax.swing.JButton();
         closeButton = new javax.swing.JButton();
+        freqSlider = new javax.swing.JSlider();
+        freqSliderLabel = new javax.swing.JLabel();
 
         servicesLabel.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.servicesLabel.text")); // NOI18N
 
@@ -138,6 +187,19 @@ public class IngestDialogPanel extends javax.swing.JPanel {
 
         closeButton.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.closeButton.text")); // NOI18N
 
+        freqSlider.setMajorTickSpacing(5);
+        freqSlider.setMaximum(60);
+        freqSlider.setMinimum(5);
+        freqSlider.setMinorTickSpacing(1);
+        freqSlider.setPaintLabels(true);
+        freqSlider.setPaintTicks(true);
+        freqSlider.setSnapToTicks(true);
+        freqSlider.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.freqSlider.toolTipText")); // NOI18N
+        freqSlider.setValue(30);
+
+        freqSliderLabel.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.freqSliderLabel.text")); // NOI18N
+        freqSliderLabel.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.freqSliderLabel.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -145,13 +207,22 @@ public class IngestDialogPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(servicesLabel)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(servicesLabel)
+                            .addComponent(servicesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(21, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(startButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(closeButton))
-                    .addComponent(servicesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(freqSliderLabel)
+                        .addGap(52, 52, 52))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(startButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(closeButton))
+                            .addComponent(freqSlider, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(21, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -160,19 +231,20 @@ public class IngestDialogPanel extends javax.swing.JPanel {
                 .addComponent(servicesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(servicesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(freqSliderLabel)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(closeButton)
                     .addComponent(startButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
-        if (manager == null) {
-            return;
-        }
-
+       
         //pick the services
         List<IngestServiceAbstract> servicesToStart = new ArrayList<IngestServiceAbstract>();
         for (IngestServiceAbstract service : services) {
@@ -182,16 +254,20 @@ public class IngestDialogPanel extends javax.swing.JPanel {
             }
         }
 
-        List<Image> images = new ArrayList<Image>();
-        images.add(image);
+        if (!services.isEmpty() ) {
+            manager.execute(servicesToStart, image);
+        }
         
-        if (!services.isEmpty() && !images.isEmpty()) {
-            manager.execute(servicesToStart, images);
+        //update ingest freq. refresh
+        if (freqSlider.isEnabled()) {
+            manager.setUpdateFrequency(freqSlider.getValue());
         }
     }//GEN-LAST:event_startButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
+    private javax.swing.JSlider freqSlider;
+    private javax.swing.JLabel freqSliderLabel;
     private javax.swing.JLabel servicesLabel;
     private javax.swing.JPanel servicesPanel;
     private javax.swing.JButton startButton;

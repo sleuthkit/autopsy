@@ -94,7 +94,7 @@ public class IngestImageThread extends SwingWorker {
             //notify services of completion
             if (!this.isCancelled()) {
                 service.complete();
-                IngestManager.firePropertyChange(IngestManager.SERVICE_COMPLETED_EVT, service.getName());
+                IngestManager.fireServiceEvent(IngestManager.SERVICE_COMPLETED_EVT, service.getName());
             }
         } catch (CancellationException e) {
             //task was cancelled
@@ -117,6 +117,6 @@ public class IngestImageThread extends SwingWorker {
     
     private void handleInterruption() {
         service.stop();
-        IngestManager.firePropertyChange(IngestManager.SERVICE_STOPPED_EVT, service.getName());
+        IngestManager.fireServiceEvent(IngestManager.SERVICE_STOPPED_EVT, service.getName());
     }
 }

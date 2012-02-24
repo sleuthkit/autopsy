@@ -11,7 +11,7 @@ needed even if you have a 64-bit system).
 
 2) Ensure that JDK_HOME is set to the root JDK directory. 
 
-3) Download and install Netbeans IDE (http://netbeans.org/)
+3) Download and install Netbeans IDE 7.0.1 (http://netbeans.org/)
 
 4) Download and build the release version of Libewf 20100226 (note that TSK will fail with the new alpha versions).  All you need is the dll file. 
 - http://sourceforge.net/projects/libewf/

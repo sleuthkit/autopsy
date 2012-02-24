@@ -73,5 +73,12 @@ public interface KeywordSearchQuery {
      */
     public Collection<Term>getTerms();
     
-    
+    /**
+     * write search results to blackboard
+     * @param newFsHit hew fscontent hit associated with the result to write to bb
+     * @return collection of results (with cached bb artifacts/attributes) created and written
+     */
+    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit);
+       
 }
+

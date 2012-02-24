@@ -23,7 +23,7 @@ package org.sleuthkit.autopsy.datamodel;
  * Provides basic information such as ID, parent ID, etc.
  */
 
-interface ContentNode {
+interface ContentNode extends DisplayableItemNode{
 
     /**
      * Visitor pattern support.

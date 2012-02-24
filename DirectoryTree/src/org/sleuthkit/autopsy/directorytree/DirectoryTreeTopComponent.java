@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeSelectionModel;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
@@ -44,21 +44,31 @@ import org.openide.explorer.view.TreeView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.NodeNotFoundException;
+import org.openide.nodes.NodeOp;
+import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.autopsy.datamodel.ExtractedContent;
+import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
+import org.sleuthkit.autopsy.datamodel.RecentFiles;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.autopsy.datamodel.SearchFilters;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 
 /**
  * Top component which displays something.
  */
 // Registered as a service provider for DataExplorer in layer.xml
-public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider {
+public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider, BlackboardResultViewer {
 
     private transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
@@ -73,6 +83,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     // for error handling
     private JPanel caller;
     private String className = this.getClass().toString();
+    private static final Logger logger = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
+    private RootContentChildren contentChildren;
 
     /** the constructor */
     private DirectoryTreeTopComponent() {
@@ -251,7 +263,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private javax.swing.JButton forwardButton;
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
-
     /**
      * Gets default instance. Do not use directly: reserved for *.settings files only,
      * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
@@ -316,10 +327,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     ((BeanTreeView) this.jScrollPane1).setRootVisible(false); // hide the root
                 } else {
                     // if there's at least one image, load the image and open the top component
-                    List<Object> objects = new ArrayList<Object>();
-                    objects.addAll(currentCase.getRootObjects());
-                    objects.add(currentCase.getSleuthkitCase());
-                    Node root = new AbstractNode(new RootContentChildren(objects)) {
+                    List<Object> items = new ArrayList<Object>();
+                    items.addAll(currentCase.getRootObjects());
+                    items.add(new ExtractedContent(currentCase.getSleuthkitCase()));
+                    items.add(new SearchFilters(currentCase.getSleuthkitCase()));
+                    items.add(new RecentFiles(currentCase.getSleuthkitCase()));
+                    contentChildren = new RootContentChildren(items);
+                    Node root = new AbstractNode(contentChildren) {
 
                         /** to override the right click action in the white blank space
                          * area on the directory tree window
@@ -542,7 +556,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         // change in node selection
         if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
-
+            if (getSelectedNode() == null && oldValue != null) {
+                try {
+                    em.setSelectedNodes((Node[]) oldValue);
+                } catch (PropertyVetoException ex) {
+                    logger.log(Level.WARNING, "Error resetting node", ex);
+                }
+            }
             // Some lock that prevents certain Node operations is set during the
             // ExplorerManager selection-change, so we must handle changes after the
             // selection-change event is processed.
@@ -559,19 +579,22 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
                         Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                         if (treeNode != null) {
-                            Node originNode = treeNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class).getNode();
-
-                            int count = originNode.getChildren().getNodesCount(true);
-                            if (count > 1000) {
-                                DirectoryTreeTopComponent.this.setCursor(null);
-                                JOptionPane.showMessageDialog(caller, "Note: The selected directory contains " + count + " child files and folders. It may take some time to display them.\n\nAlso note that in the current version of Autopsy this will also make certain functions very slow (thumbnail view in particular, should be fixed in a future version)", "Large Data", JOptionPane.INFORMATION_MESSAGE);
-                                DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                            }
+                            OriginalNode origin = treeNode.getLookup().lookup(OriginalNode.class);
+                            if(origin == null)
+                                return;
+                            Node originNode = origin.getNode();
+                            
+                            //int count = originNode.getChildren().getNodesCount(true);
+                            //if (count > 1000) {
+                            //    DirectoryTreeTopComponent.this.setCursor(null);
+                            //    JOptionPane.showMessageDialog(caller, "Note: The selected directory contains " + count + " child files and folders. It may take some time to display them.\n\nAlso note that in the current version of Autopsy this will also make certain functions very slow (thumbnail view in particular, should be fixed in a future version)", "Large Data", JOptionPane.INFORMATION_MESSAGE);
+                            //    DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                            //}
                             DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                             //set node, wrap in filter node first to filter out children
                             Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                             DirectoryTreeTopComponent.this.dataResult.setNode(new TableFilterNode(drfn, true));
-                            
+
                             String displayName = "";
                             if(originNode.getLookup().lookup(Content.class) != null)
                                 displayName = DataConversion.getformattedPath(ContentUtils.getDisplayPath(originNode.getLookup().lookup(Content.class)), 0);
@@ -581,7 +604,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         }
 
                         // set the directory listing to be active
-                        dataResult.requestActive();
+                        //dataResult.requestActive();
                     } finally {
                         DirectoryTreeTopComponent.this.setCursor(null);
                     }
@@ -604,21 +627,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 forwardButton.setEnabled(false); // disable the forward Button
             }
         }
-        
-        if (changed.equals(IngestManager.SERVICE_COMPLETED_EVT)){
-            Node[] selectedNode = em.getSelectedNodes();
-            componentOpened();
-            try {
-                em.setSelectedNodes(selectedNode);
-                backButton.setEnabled(false);
-                forwardButton.setEnabled(false);
-                forwardList.clear();
-                backList.clear();
-            } catch (PropertyVetoException ex) {
-                Logger.getLogger(DirectoryTreeTopComponent.class.getName())
-                    .log(Level.SEVERE, "Unable to return to previously selected nodes", ex);
-            }
-            
+
+        if (changed.equals(IngestManager.SERVICE_HAS_DATA_EVT)) {
+            refreshTree();
         }
     }
 
@@ -652,10 +663,82 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public BeanTreeView getTree() {
         return (BeanTreeView) this.jScrollPane1;
     }
+    
+    /**
+     * Refreshes the nodes in the tree to reflect updates in the database
+     * 
+     */
+    public void refreshTree() {
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                Node selected = getSelectedNode();
+                String[] path = NodeOp.createPath(selected, em.getRootContext());
+
+                //TODO: instead, we should choose a specific key to refresh? Maybe?
+                contentChildren.refreshKeys();
+
+                Children dirChilds = em.getRootContext().getChildren();
+                TreeView tree = getTree();
+
+                // expand all root trees node
+                for (Node child : dirChilds.getNodes()) {
+                    tree.expandNode(child);
+                }
+                try {
+                    Node newSelection = NodeOp.findPath(em.getRootContext(), path);
+                    resetHistoryListAndButtons();
+                    tree.expandNode(newSelection);
+                    em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                    // We need to set the selection, which will refresh dataresult and get rid of the oob exception
+                } catch (NodeNotFoundException ex) {
+                    logger.log(Level.WARNING, "Node not found", ex);
+                } catch (PropertyVetoException ex) {
+                    logger.log(Level.WARNING, "Property Veto", ex);
+                }
+            }
+        });
+    }
+    
+    
 
     @Override
     public TopComponent getTopComponent() {
         return this;
+    }
+
+    @Override
+    public void viewArtifact(final BlackboardArtifact art) {
+        BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(art.getArtifactTypeID());
+        Children rootChilds = em.getRootContext().getChildren();
+        Node extractedContent = rootChilds.findChild(ExtractedContentNode.EXTRACTED_NAME);
+        Children extractedChilds = extractedContent.getChildren();
+        Node typeNode = extractedChilds.findChild(type.getLabel());
+        try {
+            em.setExploredContextAndSelection(typeNode, new Node[]{typeNode});
+        } catch (PropertyVetoException ex) {
+            logger.log(Level.WARNING, "Property Veto: ", ex);
+        }
+
+        // Another thread is needed because we have to wait for dataResult to populate
+        EventQueue.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                Children resultChilds = dataResult.getRootNode().getChildren();
+                Node select = resultChilds.findChild(Long.toString(art.getArtifactID()));
+                if (select != null) {
+                    dataResult.requestActive();
+                    dataResult.setSelectedNodes(new Node[]{select});
+                }
+            }
+        });
+    }
+
+    @Override
+    public void viewArtifactContent(BlackboardArtifact art) {
+        new ViewContextAction("View Artifact Content", new BlackboardArtifactNode(art)).actionPerformed(null);
     }
 //    private class HistoryManager<T> {
 //        private Stack<T> past, future;

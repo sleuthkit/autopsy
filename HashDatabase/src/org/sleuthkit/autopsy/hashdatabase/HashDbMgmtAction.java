@@ -103,4 +103,9 @@ class HashDbMgmtAction extends CallableSystemAction {
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
+    
+    @Override
+    protected boolean asynchronous() {
+        return false;
+    }
 }

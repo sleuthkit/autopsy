@@ -80,13 +80,10 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                           artifact += attribute;
                          }
                     artifact += "</ul>";
-                    if(entry.getKey().getArtifactTypeID() == 1){
-                     
+                    if(entry.getKey().getArtifactTypeID() == 1){  
                         nodeGen += artifact;
                     }
                     if(entry.getKey().getArtifactTypeID() == 2){
-
-
                         nodeWebBookmark +=artifact;
                     }
                     if(entry.getKey().getArtifactTypeID() == 3){

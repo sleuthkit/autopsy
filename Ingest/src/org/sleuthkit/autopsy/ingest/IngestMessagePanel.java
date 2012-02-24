@@ -38,17 +38,37 @@ import org.sleuthkit.autopsy.ingest.IngestMessage.*;
  * Notification window showing messages from services to user
  * 
  */
-public class IngestMessagePanel extends javax.swing.JPanel {
-
+class IngestMessagePanel extends javax.swing.JPanel {
+    
     private MessageTableModel tableModel;
+    private IngestMessageMainPanel mainPanel;
     private static Font visitedFont = new Font("Arial", Font.PLAIN, 11);
     private static Font notVisitedFont = new Font("Arial", Font.BOLD, 11);
+    private static Color ERROR_COLOR = new Color (255, 90, 90);
+    private int lastRowSelected = -1;
 
     /** Creates new form IngestMessagePanel */
-    public IngestMessagePanel() {
+    public IngestMessagePanel(IngestMessageMainPanel mainPanel) {
+        this.mainPanel = mainPanel;
         tableModel = new MessageTableModel();
         initComponents();
         customizeComponents();
+    }
+    
+    int getLastRowSelected() {
+        return this.lastRowSelected;
+    }
+    
+    IngestMessage getSelectedMessage() {
+        if (lastRowSelected < 0) {
+            return null;
+        }
+        
+        return tableModel.getMessage(lastRowSelected);
+    }
+    
+    IngestMessage getMessage(int rowNumber) {        
+        return tableModel.getMessage(rowNumber);
     }
 
     /** This method is called from within the constructor to
@@ -72,7 +92,7 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
         messageTable.setAutoscrolls(false);
-        messageTable.setColumnSelectionAllowed(false);
+        messageTable.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         messageTable.setGridColor(new java.awt.Color(204, 204, 204));
         messageTable.setOpaque(false);
         messageTable.setSelectionForeground(new java.awt.Color(0, 0, 0));
@@ -86,11 +106,11 @@ public class IngestMessagePanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 144, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -99,37 +119,41 @@ public class IngestMessagePanel extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     private void customizeComponents() {
+        mainPanel.setOpaque(true);
+        jScrollPane1.setOpaque(true);
+        messageTable.setOpaque(false);
+        
         jScrollPane1.setWheelScrollingEnabled(true);
-
+        
         messageTable.setAutoscrolls(true);
         //messageTable.setTableHeader(null);
         messageTable.setShowHorizontalLines(false);
         messageTable.setShowVerticalLines(false);
-
+        
         messageTable.getParent().setBackground(messageTable.getBackground());
 
         //customize column witdhs
         //messageTable.setSize(260, 260);
-        messageTable.setSize(messageTable.getParent().getPreferredSize());
+        //messageTable.setSize(messageTable.getParent().getPreferredSize());
         final int width = messageTable.getSize().width;
         TableColumn column = null;
         for (int i = 0; i < 2; i++) {
             column = messageTable.getColumnModel().getColumn(i);
             if (i == 0) {
-                column.setPreferredWidth(((int) (width * 0.30)));
-                column.setCellRenderer(new MessageTableRenderer());
-            } else {
                 column.setCellRenderer(new MessageTableRenderer());
                 column.setPreferredWidth(((int) (width * 0.68)));
+            } else {
+                column.setPreferredWidth(((int) (width * 0.30)));
+                column.setCellRenderer(new MessageTableRenderer());
             }
         }
         messageTable.setCellSelectionEnabled(false);
         messageTable.setColumnSelectionAllowed(false);
         messageTable.setRowSelectionAllowed(true);
         messageTable.getSelectionModel().addListSelectionListener(new MessageVisitedSelection());
-
     }
-
+    
+    
     public void addMessage(IngestMessage m) {
         tableModel.addMessage(m);
         //autoscroll
@@ -139,63 +163,62 @@ public class IngestMessagePanel extends javax.swing.JPanel {
     public void clearMessages() {
         tableModel.clearMessages();
     }
-
+    
     private void setVisited(int rowNumber) {
         tableModel.setVisited(rowNumber);
-        //messageTable.repaint(); //TODO repaint only needed cell
+        lastRowSelected = rowNumber;
     }
-
+    
     private class MessageTableModel extends AbstractTableModel {
         //data
 
         private Logger logger = Logger.getLogger(MessageTableModel.class.getName());
         private List<TableEntry> messageData = new ArrayList<TableEntry>();
-
+        
         @Override
         public int getColumnCount() {
             return 2;
         }
-
+        
         @Override
         public int getRowCount() {
             return messageData.size();
         }
-
+        
         @Override
         public String getColumnName(int column) {
             String colName = null;
-
+            
             switch (column) {
                 case 0:
-                    colName = "Module";
+                    colName = "Subject";
                     break;
                 case 1:
-                    colName = "Message";
+                    colName = "Module";
                     break;
                 default:
                     ;
-
+                
             }
             return colName;
         }
-
+        
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
             TableEntry entry = messageData.get(rowIndex);
-
+            
             switch (columnIndex) {
                 case 0:
+                    ret = (Object) entry.message.getSubject();
+                    break;
+                case 1:
                     Object service = entry.message.getSource();
                     if (service == null) {
                         ret = "";
-                    }
-                    else {
+                    } else {
                         ret = (Object) entry.message.getSource().getName();
                     }
-                    break;
-                case 1:
-                    ret = (Object) entry.message.getText();
                     break;
                 default:
                     logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
@@ -203,55 +226,70 @@ public class IngestMessagePanel extends javax.swing.JPanel {
             }
             return ret;
         }
-
+        
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             return false;
         }
-
+        
         @Override
         public Class getColumnClass(int c) {
             return getValueAt(0, c).getClass();
         }
-
+        
         public void addMessage(IngestMessage m) {
             messageData.add(new TableEntry(m));
             int size = messageData.size();
-            this.fireTableRowsInserted(size - 1, size); 
+            this.fireTableRowsInserted(size - 1, size);
         }
         
         public void clearMessages() {
             messageData.clear();
             fireTableDataChanged();
         }
-
+        
         public void setVisited(int rowNumber) {
             messageData.get(rowNumber).visited = true;
             //repaint the cell 
-            fireTableCellUpdated(rowNumber, 1);
+            fireTableCellUpdated(rowNumber, 0);
         }
-
+        
+        public void setVisitedAll() {
+            int row = 0;
+            for (TableEntry e : messageData) {
+                if (e.visited == false) {
+                    e.visited = true;
+                    fireTableCellUpdated(row, 0);
+                }
+                ++row;
+            }
+        }
+        
         public boolean isVisited(int rowNumber) {
             return messageData.get(rowNumber).visited;
         }
-
+        
         public MessageType getMessageType(int rowNumber) {
             return messageData.get(rowNumber).message.getMessageType();
         }
-
+        
+        public IngestMessage getMessage(int rowNumber) {
+            return messageData.get(rowNumber).message;
+        }
+        
         class TableEntry implements Comparable {
-
+            
             IngestMessage message;
             boolean visited;
-
+            
             TableEntry(IngestMessage message) {
                 this.message = message;
                 visited = false;
             }
-
+            
             @Override
             public int compareTo(Object o) {
-               return this.message.getDatePosted().compareTo(((TableEntry) o).message.getDatePosted());
+                return this.message.getDatePosted().compareTo(((TableEntry) o).message.getDatePosted());
             }
         }
     }
@@ -261,41 +299,55 @@ public class IngestMessagePanel extends javax.swing.JPanel {
      * tooltips that show entire query string, disable selection borders
      */
     private class MessageTableRenderer extends DefaultTableCellRenderer {
-
+        
         @Override
         public Component getTableCellRendererComponent(
                 JTable table, Object value,
                 boolean isSelected, boolean hasFocus,
                 int row, int column) {
-
+            
             final Component cell = super.getTableCellRendererComponent(
                     table, value, false, false, row, column);
-
+            
             if (column < 2) {
                 String val = (String) table.getModel().getValueAt(row, column);
                 setToolTipText(val);
                 setText(val);
             }
-
-            if (column == 1) {
+            
+            if (column == 0) {
                 if (tableModel.isVisited(row)) {
                     cell.setFont(visitedFont);
                 } else {
                     cell.setFont(notVisitedFont);
                 }
-                MessageType mt = tableModel.getMessageType(row);
-                if (mt == MessageType.ERROR) {
-                    cell.setBackground(Color.red);
-                } else if (mt == MessageType.WARNING) {
-                    cell.setBackground(Color.orange);
+                if (!isSelected) {
+                    MessageType mt = tableModel.getMessageType(row);
+                    if (mt == MessageType.ERROR) {
+                        cell.setBackground(ERROR_COLOR);
+                    } else if (mt == MessageType.WARNING) {
+                        cell.setBackground(Color.orange);
+                    } else {
+                        cell.setBackground(table.getBackground());
+                    }
+                } else {
+                    super.setForeground(table.getSelectionForeground());
+                    super.setBackground(table.getSelectionBackground());
+                }
+            }
+            
+            if (column == 1) {
+                if (isSelected) {
+                    super.setForeground(table.getSelectionForeground());
+                    super.setBackground(table.getSelectionBackground());
                 } else {
                     cell.setBackground(table.getBackground());
                 }
             }
-
+            
             return this;
         }
-
+        
         @Override
         protected void setValue(Object value) {
             super.setValue(value);
@@ -306,9 +358,9 @@ public class IngestMessagePanel extends javax.swing.JPanel {
      * handle table selections / cell visitations
      */
     private class MessageVisitedSelection implements ListSelectionListener {
-
+        
         private Logger logger = Logger.getLogger(MessageVisitedSelection.class.getName());
-
+        
         @Override
         public void valueChanged(ListSelectionEvent e) {
             DefaultListSelectionModel selModel = (DefaultListSelectionModel) e.getSource();
@@ -324,9 +376,15 @@ public class IngestMessagePanel extends javax.swing.JPanel {
                 }
                 if (selected != -1) {
                     setVisited(selected);
+                    //check if has details
+                    IngestMessage m = getMessage(selected);
+                    String details = m.getDetails();
+                    if (details != null && !details.equals("")) {
+                        mainPanel.showDetails(selected);
+                    }
                 }
-
-                //TODO popup detail viewer
+                
+                
             }
         }
     }

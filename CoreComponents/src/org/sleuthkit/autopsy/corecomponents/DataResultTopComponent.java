@@ -91,6 +91,10 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         boolean isOutdated() {
             return this.outdated;
         }
+        
+        void setSelectedNodes(Node[] selected) {
+            this.wrapped.setSelectedNodes(selected);
+        }
     }
 
     /**
@@ -352,5 +356,15 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         for (UpdateWrapper drv : this.viewers) {
             drv.resetComponent();
         }
+    }
+    
+    public void setSelectedNodes(Node[] selected) {
+        for (UpdateWrapper drv : this.viewers) {
+            drv.setSelectedNodes(selected);
+        }
+    }
+    
+    public Node getRootNode() {
+        return this.rootNode;
     }
 }

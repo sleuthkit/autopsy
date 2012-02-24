@@ -24,48 +24,39 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import org.sleuthkit.autopsy.casemodule.AddImageAction;
+import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Image;
 
 /**
  * IngestDialog shown on Case.CASE_ADD_IMAGE property change
  */
-public class IngestDialog extends JDialog implements PropertyChangeListener{
+public class IngestDialog extends JDialog {
     
-    private static IngestDialog instance;
     private static final String TITLE = "Ingest Modules";
     private static Dimension DIMENSIONS = new Dimension(300, 300);
-    private Image image;
+    private IngestDialogPanel panel = new IngestDialogPanel();
+    
+    private static Logger logger = Logger.getLogger(IngestDialog.class.getName());
 
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        Case.addPropertyChangeListener(this);
     }
     
     public IngestDialog(){
         this(new JFrame(TITLE), TITLE, true);
     }
 
-    /**
-     * Get the Ingest dialog
-     * @return the startup window singleton
-     */
-    public static synchronized IngestDialog getInstance() {
-        if (IngestDialog.instance == null) {
-            JFrame frame = new JFrame(TITLE);
-            IngestDialog.instance = new IngestDialog(frame, TITLE, true);
-        }
-        return instance;
-    }
+
 
     /**
      * Shows the Ingest dialog.
      */
     public void display() {
-
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
         // set the popUp window / JFrame
@@ -75,8 +66,6 @@ public class IngestDialog extends JDialog implements PropertyChangeListener{
 
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-
-        IngestDialogPanel panel = new IngestDialogPanel(image);
 
         // add the command to close the window to both buttons
         panel.setCloseButtonActionListener(new ActionListener() {
@@ -96,24 +85,20 @@ public class IngestDialog extends JDialog implements PropertyChangeListener{
         pack();
         setResizable(false);
         setVisible(true);
-
     }
+    
+    public void setImage(Image image) {
+        panel.setImage(image);
+    }
+    
 
     /**
      * Closes the Ingest dialog
      */
     public void close() {
-        this.dispose();
+        setVisible(false);
+        dispose();
     }
 
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        String changed = evt.getPropertyName();
-        Object newValue = evt.getNewValue();
-        
-        if(changed.equals(Case.CASE_ADD_IMAGE)){
-            this.image = (Image) newValue;
-            display();
-        }
-    }
+   
 }

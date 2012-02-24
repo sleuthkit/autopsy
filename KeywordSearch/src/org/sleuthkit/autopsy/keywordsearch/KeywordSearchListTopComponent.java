@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
@@ -42,42 +40,71 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
-import org.netbeans.api.settings.ConvertAsProperties;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchTabsTopComponent.TABS;
+import org.openide.windows.WindowManager;
 
 /**
  * Top component for Keyword List search
  */
-@ConvertAsProperties(dtd = "-//org.sleuthkit.autopsy.keywordsearch//KeywordSearchList//EN",
-autostore = false)
-@TopComponent.Description(preferredID = "KeywordSearchListTopComponent",
-//iconBase="SET/PATH/TO/ICON/HERE", 
-persistenceType = TopComponent.PERSISTENCE_NEVER)
-@TopComponent.Registration(mode = "explorer", openAtStartup = false)
-//@ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchListTopComponent")
-//@ActionReference(path = "Menu/Window" /*, position = 333 */)
-//@TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchListAction",
-//preferredID = "KeywordSearchListTopComponent")
+
+//@ConvertAsProperties(dtd = "-//org.sleuthkit.autopsy.keywordsearch//KeywordSearchList//EN",
+//autostore = false)
+//@TopComponent.Description(preferredID = "KeywordSearchListTopComponent",
+////iconBase="SET/PATH/TO/ICON/HERE", 
+//persistenceType = TopComponent.PERSISTENCE_NEVER)
+//@TopComponent.Registration(mode = "explorer", openAtStartup = false)
+////@ActionID(category = "Window", id = "org.sleuthkit.autopsy.keywordsearch.KeywordSearchListTopComponent")
+////@ActionReference(path = "Menu/Window" /*, position = 333 */)
+////@TopComponent.OpenActionRegistration(displayName = "#CTL_KeywordSearchListAction",
+////preferredID = "KeywordSearchListTopComponent")
 public final class KeywordSearchListTopComponent extends TopComponent implements KeywordSearchTopComponentInterface {
 
     private static Logger logger = Logger.getLogger(KeywordSearchListTopComponent.class.getName());
     private KeywordTableModel tableModel;
     private String currentKeywordList;
+    
+    public static final String PREFERRED_ID = "KeywordSearchListTopComponent";
+    
+    private static KeywordSearchListTopComponent instance = null;
 
-    public KeywordSearchListTopComponent() {
+    private KeywordSearchListTopComponent() {
         tableModel = new KeywordTableModel();
         initComponents();
         customizeComponents();
         setName(NbBundle.getMessage(KeywordSearchListTopComponent.class, "CTL_KeywordSearchListTopComponent"));
         setToolTipText(NbBundle.getMessage(KeywordSearchListTopComponent.class, "HINT_KeywordSearchListTopComponent"));
 
+    }
+
+    @Override
+    public int getPersistenceType() {
+        return TopComponent.PERSISTENCE_NEVER;
+    }
+    
+    
+    
+    public static synchronized KeywordSearchListTopComponent getDefault() {
+        if (instance == null) {
+            instance = new KeywordSearchListTopComponent();
+        }
+        return instance;
+    }
+    
+     public static synchronized KeywordSearchListTopComponent findInstance() {
+        TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        if (win == null) {
+            return getDefault();
+        }
+        if (win instanceof KeywordSearchListTopComponent) {
+            return (KeywordSearchListTopComponent) win;
+        }
+       
+        return getDefault();
     }
 
     private void customizeComponents() {

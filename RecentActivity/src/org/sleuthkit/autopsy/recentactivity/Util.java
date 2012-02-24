@@ -11,6 +11,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -64,6 +65,10 @@ public static boolean imgpathexists(String path){
      ResultSet rs = tempDb.runQuery("select * from tsk_files where parent_path LIKE '%"+ path + "%'");
      FFSqlitedb = tempDb.resultSetToFsContents(rs);
      count = FFSqlitedb.size();
+     final Statement s = rs.getStatement();
+     rs.close();
+     if (s != null)
+        s.close();
     }
     catch (SQLException ex) 
         {

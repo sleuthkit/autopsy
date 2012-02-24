@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.FontMetrics;
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -28,6 +29,8 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import org.openide.explorer.ExplorerManager;
@@ -38,7 +41,6 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.Sheet;
-import org.openide.util.lookup.AbstractLookup;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
@@ -214,8 +216,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 OutlineView ov = ((OutlineView) this.tableScrollPanel);
 
                 List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(getAllChildPropertyHeaders(selectedNode)));
-
-                tempProps.remove(0);
+                if(tempProps.size() > 0)
+                    tempProps.remove(0);
 
                 Node.Property[] props = tempProps.toArray(new Node.Property[tempProps.size()]);
 
@@ -224,10 +226,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 //First property column is sortable, but also sorted initially, so
                 //initially this one will have the arrow icon:
-                props[0].setValue("TreeColumnTTV", Boolean.TRUE); // Identifies special property representing first (tree) column.
-                props[0].setValue("ComparableColumnTTV", Boolean.TRUE); // This property column should be used for sorting.
-                props[0].setValue("SortingColumnTTV", Boolean.TRUE); // TreeTableView should be initially sorted by this property column.
-
+                if(props.length > 0){
+                    props[0].setValue("TreeColumnTTV", Boolean.TRUE); // Identifies special property representing first (tree) column.
+                    props[0].setValue("ComparableColumnTTV", Boolean.TRUE); // This property column should be used for sorting.
+                    props[0].setValue("SortingColumnTTV", Boolean.TRUE); // TreeTableView should be initially sorted by this property column.
+                }
+                
                 // The rest of the columns are sortable, but not initially sorted,
                 // so initially will have no arrow icon:
                 for (int i = 1; i < props.length; i++) {
@@ -252,8 +256,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 int totalColumns = props.length;
 
                 //int scrollWidth = ttv.getWidth();
-                int scrollWidth = ov.getWidth();
-                int minWidth = scrollWidth / totalColumns;
                 int margin = 4;
                 int startColumn = 1;
                 ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -403,5 +405,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     public Component getComponent() {
         return this;
+    }
+    
+    @Override
+    public void setSelectedNodes(Node[] selected) {
+        try{
+            this.em.setSelectedNodes(selected);
+        } catch (PropertyVetoException ex) {
+            Logger.getLogger(DataResultViewerTable.class.getName())
+                    .log(Level.WARNING, "Couldn't set selected nodes.", ex);
+        }
     }
 }

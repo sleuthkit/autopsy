@@ -26,13 +26,19 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  *
  * @author dfickling
  */
-public class ExtractedContentNode extends AbstractNode{
+public class ExtractedContentNode extends AbstractNode implements DisplayableItemNode{
+    
+    public static final String EXTRACTED_NAME = "Extracted Content";
     
     public ExtractedContentNode(SleuthkitCase skCase){
         super(Children.create(new ExtractedContentChildren(skCase), true));
-        super.setName("Extracted Content");
-        super.setDisplayName("Extracted Content");
+        super.setName(EXTRACTED_NAME);
+        super.setDisplayName(EXTRACTED_NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/artifact-icon.png");
     }
-    
+
+    @Override
+    public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+        return v.visit(this);
+    }
 }

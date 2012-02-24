@@ -31,8 +31,9 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.datamodel.KeyValueThing;
+import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
@@ -45,7 +46,6 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
 
         COLLAPSE, DETAIL
     };
-
     private List<Keyword> queries;
     private Presentation presentation;
     private List<KeywordSearchQuery> queryDelegates;
@@ -84,13 +84,18 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
                     del = new LuceneQuery(query.getQuery());
                     break;
                 case REGEX:
-                    del = new TermComponentQuery(query.getQuery());
+                    if (query.isLiteral()) {
+                        del = new LuceneQuery(query.getQuery());
+                    } else {
+                        del = new TermComponentQuery(query.getQuery());
+                    }
                     break;
                 default:
                     ;
             }
-            if (query.isLiteral())
+            if (query.isLiteral()) {
                 del.escape();
+            }
             queryDelegates.add(del);
 
         }
@@ -108,16 +113,16 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
             }
         } else {
             //Collapsed view
-            Collection<KeyValueThing> things = new ArrayList<KeyValueThing>();
+            Collection<KeyValue> things = new ArrayList<KeyValue>();
             int queryID = 0;
             for (KeywordSearchQuery q : queryDelegates) {
                 Map<String, Object> kvs = new LinkedHashMap<String, Object>();
                 final String queryStr = q.getQueryString();
-                things.add(new KeyValueThingQuery(queryStr, kvs, ++queryID, q));
+                things.add(new KeyValueQuery(queryStr, kvs, ++queryID, q));
             }
 
             Node rootNode = null;
-           
+
             if (things.size() > 0) {
                 Children childThingNodes =
                         Children.create(new KeywordSearchResultFactory(queries, things, Presentation.COLLAPSE), true);
@@ -135,7 +140,6 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
 
     @Override
     public void escape() {
-        
     }
 
     @Override
@@ -166,7 +170,7 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
         }
         return sb.toString();
     }
-    
+
     @Override
     public boolean isEscaped() {
         return false;
@@ -186,12 +190,21 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
     public Collection<Term> getTerms() {
         return null;
     }
+    
+    @Override
+    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit) {     
+        Collection<KeywordWriteResult> ret = new ArrayList<KeywordWriteResult>();
+         for (KeywordSearchQuery q : queryDelegates) {
+            ret.addAll(q.writeToBlackBoard(newFsHit));
+        }
+        return ret;
+    }
 }
 
 /**
- * custom KeyValueThing that also stores query object  to execute
+ * custom KeyValue that also stores query object  to execute
  */
-class KeyValueThingQuery extends KeyValueThing {
+class KeyValueQuery extends KeyValue {
 
     private KeywordSearchQuery query;
 
@@ -199,7 +212,7 @@ class KeyValueThingQuery extends KeyValueThing {
         return query;
     }
 
-    public KeyValueThingQuery(String name, Map<String, Object> map, int id, KeywordSearchQuery query) {
+    public KeyValueQuery(String name, Map<String, Object> map, int id, KeywordSearchQuery query) {
         super(name, map, id);
         this.query = query;
     }
@@ -217,8 +230,14 @@ class Keyword {
         this.query = query;
         this.isLiteral = isLiteral;
     }
-    String getQuery() {return query;}
-    boolean isLiteral() {return isLiteral;}
+
+    String getQuery() {
+        return query;
+    }
+
+    boolean isLiteral() {
+        return isLiteral;
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -245,6 +264,4 @@ class Keyword {
         hash = 17 * hash + (this.isLiteral ? 1 : 0);
         return hash;
     }
-    
 }
-

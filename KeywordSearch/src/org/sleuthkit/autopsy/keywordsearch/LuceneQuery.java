@@ -18,17 +18,20 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.net.URLEncoder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.request.QueryRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
@@ -38,8 +41,15 @@ import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskException;
 
 public class LuceneQuery implements KeywordSearchQuery {
 
@@ -59,7 +69,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         queryEscaped = KeywordSearchUtil.escapeLuceneQuery(query, true, false);
         isEscaped = true;
     }
-    
+
     @Override
     public boolean isEscaped() {
         return isEscaped;
@@ -74,11 +84,12 @@ public class LuceneQuery implements KeywordSearchQuery {
     public String getQueryString() {
         return this.query;
     }
-    
+
     @Override
-    public Collection<Term>getTerms() {
+    public Collection<Term> getTerms() {
         return null;
     }
+    
 
     /**
      * Just perform the query and return result without updating the GUI
@@ -121,11 +132,15 @@ public class LuceneQuery implements KeywordSearchQuery {
                     // check that we actually get 1 hit for each id
                     ResultSet rs = sc.runQuery("select * from tsk_files where obj_id=" + id);
                     matches.addAll(sc.resultSetToFsContents(rs));
+                    final Statement s = rs.getStatement();
                     rs.close();
+                    if (s != null) {
+                        s.close();
+                    }
                 }
 
             } catch (SolrServerException ex) {
-                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query.substring(0,Math.min(query.length()-1, 200)), ex);
+                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query.substring(0, Math.min(query.length() - 1, 200)), ex);
                 throw new RuntimeException(ex);
                 // TODO: handle bad query strings, among other issues
             } catch (SQLException ex) {
@@ -139,19 +154,126 @@ public class LuceneQuery implements KeywordSearchQuery {
     @Override
     public void execute() {
         escape();
-        List<FsContent> matches = performQuery();
+        final List<FsContent> matches = performQuery();
 
         String pathText = "Keyword query: " + query;
-        
+
         Node rootNode = new KeywordSearchNode(matches, query);
         Node filteredRootNode = new TableFilterNode(rootNode, true);
-        
+
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, filteredRootNode, matches.size());
         searchResultWin.requestActive(); // make it the active top component
+
+        //write to bb
+        new Thread() {
+            @Override
+            public void run() {
+                Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
+                for (FsContent newHit : matches) {
+                    Collection<KeywordWriteResult> written = writeToBlackBoard(newHit);
+                    for (KeywordWriteResult w : written) {
+                        na.add(w.getArtifact());
+                    }
+                }
+                //notify bb viewers
+                IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+            }
+        }.start();
     }
 
     @Override
     public boolean validate() {
-        return query != null && ! query.equals("");
+        return query != null && !query.equals("");
+    }
+
+    @Override
+    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit) {
+        final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
+
+        Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
+        KeywordWriteResult writeResult = null;
+        Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
+        BlackboardArtifact bba = null;
+        try {
+            bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+            writeResult = new KeywordWriteResult(bba);
+            writeResults.add(writeResult);
+        } catch (Exception e) {
+            logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
+            return writeResults;
+        }
+
+        String snippet = null;
+        try {
+            snippet = LuceneQuery.querySnippet(query, newFsHit.getId());
+        } catch (Exception e) {
+            logger.log(Level.INFO, "Error querying snippet: " + query, e);
+        }
+        if (snippet != null) {
+            //first try to add attr not in bulk so we can catch sql exception and encode the string
+            try {
+                BlackboardAttribute attr = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet);
+                bba.addAttribute(attr);
+                writeResult.add(attr);
+            } catch (Exception e1) {
+                try {
+                    //escape in case of garbage so that sql accepts it
+                    snippet = URLEncoder.encode(snippet, "UTF-8");
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+                } catch (Exception e2) {
+                    logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
+                }
+            }
+        }
+        try {
+            //keyword
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", query));
+            //bogus 
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
+        } catch (Exception e) {
+            logger.log(Level.INFO, "Error adding bb attribute", e);
+        }
+
+        try {
+            bba.addAttributes(attributes); //write out to bb
+            writeResult.add(attributes);
+        } catch (TskException e) {
+            logger.log(Level.INFO, "Error adding bb attributes to artifact", e);
+        }
+        return writeResults;
+    }
+
+    public static String querySnippet(String query, long contentID) {
+        final int SNIPPET_LENGTH = 45;
+
+        final Server.Core solrCore = KeywordSearch.getServer().getCore();
+
+
+        SolrQuery q = new SolrQuery();
+        q.setQuery(query);
+        q.addFilterQuery("id:" + contentID);
+        q.addHighlightField("content");
+        q.setHighlightSimplePre("&laquo;");
+        q.setHighlightSimplePost("&raquo;");
+        q.setHighlightSnippets(1);
+        q.setHighlightFragsize(SNIPPET_LENGTH);
+
+        try {
+            QueryResponse response = solrCore.query(q);
+            Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
+            Map<String, List<String>> responseHighlightID = responseHighlight.get(Long.toString(contentID));
+            if (responseHighlightID == null) {
+                return "";
+            }
+            List<String> contentHighlights = responseHighlightID.get("content");
+            if (contentHighlights == null) {
+                return "";
+            } else {
+                // extracted content is HTML-escaped, but snippet goes in a plain text field
+                return StringEscapeUtils.unescapeHtml(contentHighlights.get(0)).trim();
+            }
+        } catch (SolrServerException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 }

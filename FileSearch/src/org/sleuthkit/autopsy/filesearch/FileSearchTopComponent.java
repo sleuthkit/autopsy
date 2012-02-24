@@ -29,6 +29,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -167,10 +168,16 @@ public final class FileSearchTopComponent extends TopComponent implements DataEx
                     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
                     ResultSet rs = tempDb.runQuery(this.getQuery("count(*) as TotalMatches"));
                     totalMatches = totalMatches + rs.getInt("TotalMatches");
+                    Statement s = rs.getStatement();
                     rs.close();
+                    if (s != null)
+                        s.close();
                     rs = tempDb.runQuery(this.getQuery(null));
                     currentDbList = tempDb.resultSetToFsContents(rs);
+                    s = rs.getStatement();
                     rs.close();
+                    if (s != null)
+                        s.close();
                     fsContentList.addAll(currentDbList);
                 } catch (SQLException ex) {
                     Logger logger = Logger.getLogger(this.getClass().getName());
