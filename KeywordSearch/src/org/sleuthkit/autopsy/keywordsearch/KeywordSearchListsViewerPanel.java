@@ -612,24 +612,27 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         }
     }
     
-    private static class CheckBoxRenderer extends JCheckBox implements TableCellRenderer{
+    private class CheckBoxRenderer extends JCheckBox implements TableCellRenderer{
 
-        private static final Border noFocusBorder = new EmptyBorder(3, 6, 3, 3);
-        
         @Override
         public Component getTableCellRendererComponent(
                 JTable table, Object value,
                 boolean isSelected, boolean hasFocus,
                 int row, int column) {
 
-            setBorder(noFocusBorder);
+            this.setHorizontalAlignment(JCheckBox.CENTER);
+            this.setVerticalAlignment(JCheckBox.CENTER);
 
-            if (column == 0) {
-                String name = (String) table.getModel().getValueAt(row, 1);
-                Boolean selected = (Boolean) table.getModel().getValueAt(row, 0);
-                List<String> locked = KeywordSearchIngestService.getDefault().getKeywordLists();
-                setEnabled(!locked.contains(name));
-                setSelected(selected);
+            String name = (String) table.getModel().getValueAt(row, 1);
+            List<String> locked = KeywordSearchIngestService.getDefault().getKeywordLists();
+            setEnabled(!locked.contains(name));
+            Boolean selected = (Boolean) table.getModel().getValueAt(row, 0);
+            setSelected(selected);
+
+            if (isSelected) {
+                setBackground(listsTable.getSelectionBackground());
+            } else {
+                setBackground(listsTable.getBackground());
             }
 
             return this;
