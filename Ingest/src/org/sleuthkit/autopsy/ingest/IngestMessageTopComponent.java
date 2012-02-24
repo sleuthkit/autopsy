@@ -109,17 +109,24 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     @Override
     public void componentClosed() {
         //logger.log(Level.INFO, "CLOSED");
+        super.componentClosed();
+        
+        /*
         Mode mode = WindowManager.getDefault().findMode("dockedBottom");
         if (mode != null) {
             mode.dockInto(this);
             this.open();
         }
+         * */
+         
+        //this.close();
     }
 
     @Override
     protected void componentShowing() {
         //logger.log(Level.INFO, "SHOWING");
-
+        super.componentShowing();
+        
         Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom");
         if (mode != null) {
             TopComponent[] tcs = mode.getTopComponents();
@@ -131,7 +138,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
             }
             mode.dockInto(this);
             this.open();
-        }    
+        }                  
     }
 
     @Override
@@ -161,13 +168,13 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
     @Override
     public int getPersistenceType() {
-        return TopComponent.PERSISTENCE_NEVER;
+        return TopComponent.PERSISTENCE_ALWAYS;
     }
 
     @Override
     public java.awt.Image getIcon() {
         return ImageUtilities.loadImage(
-                "org/sleuthkit/autopsy/ingest/ingest-msg-icon.png");
+                "org/sleuthkit/autopsy/ingest/eye-icon.png");
     }
 
     void writeProperties(java.util.Properties p) {

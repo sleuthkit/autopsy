@@ -12,6 +12,6 @@
   <state type="joined" />
   <bounds x="8" y="710" width="369" height="421" />
   <frame state="0"/>
-     <active-tc  id="IngestMessageTopComponent" /> 
+     <!-- <active-tc  id="IngestMessageTopComponent" />  -->
     <empty-behavior permanent="true"/>
 </mode>
