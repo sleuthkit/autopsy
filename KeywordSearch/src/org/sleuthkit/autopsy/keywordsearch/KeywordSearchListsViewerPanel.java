@@ -90,7 +90,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             column = listsTable.getColumnModel().getColumn(i);
             if (i == 0) {
                 column.setPreferredWidth(((int) (leftWidth * 0.10)));
-                column.setCellRenderer(new CheckBoxRenderer());
+                column.setCellRenderer(new LeftCheckBoxRenderer());
             } else {
                 column.setPreferredWidth(((int) (leftWidth * 0.89)));
             }
@@ -102,6 +102,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
                 column.setPreferredWidth(((int) (rightWidth * 0.84)));
             } else {
                 column.setPreferredWidth(((int) (rightWidth * 0.15)));
+                column.setCellRenderer(new RightCheckBoxRenderer());
             }
         }
         
@@ -612,7 +613,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         }
     }
     
-    private class CheckBoxRenderer extends JCheckBox implements TableCellRenderer{
+    private class LeftCheckBoxRenderer extends JCheckBox implements TableCellRenderer{
 
         @Override
         public Component getTableCellRendererComponent(
@@ -634,6 +635,29 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             } else {
                 setBackground(listsTable.getBackground());
             }
+
+            return this;
+        }
+    }
+    
+    private class RightCheckBoxRenderer extends JCheckBox implements TableCellRenderer{
+
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable table, Object value,
+                boolean isSelected, boolean hasFocus,
+                int row, int column) {
+
+            this.setHorizontalAlignment(JCheckBox.CENTER);
+            this.setVerticalAlignment(JCheckBox.CENTER);
+
+            Boolean selected = (Boolean) table.getModel().getValueAt(row, 1);
+            setSelected(selected);
+            if(isSelected)
+                setBackground(keywordsTable.getSelectionBackground());
+            else
+                setBackground(keywordsTable.getBackground());
+            setEnabled(false);
 
             return this;
         }
