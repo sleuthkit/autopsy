@@ -97,6 +97,30 @@ public class KeywordSearchListsXML {
 
         dateFormatter = new SimpleDateFormat(DATE_FORMAT);
     }
+    
+    private void prepopulateLists() {
+        //phone number
+        List<Keyword> phones = new ArrayList<Keyword>();
+        phones.add(new Keyword("\\d\\d\\d[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d", false));
+        phones.add(new Keyword("\\d{8,10}", false));
+        phones.add(new Keyword("phone|fax", false));
+        //IP address
+        List<Keyword> ips = new ArrayList<Keyword>();
+        ips.add(new Keyword("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])", false));
+        //email
+        List<Keyword> emails = new ArrayList<Keyword>();
+        emails.add(new Keyword("[e\\-]{0,2}mail", false));
+        emails.add(new Keyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", false));
+        //URL
+        List<Keyword> urls = new ArrayList<Keyword>();
+        urls.add(new Keyword("ftp|sftp|ssh|http|https|www", false));
+        
+        
+        addList("Phone Numbers", phones, true, true);
+        addList("IP Addresses", ips, true, true);
+        addList("Email Addresses", emails, true, true);
+        addList("URLs", urls, true, true);
+    }
 
     /**
      * get instance for managing the current keyword list of the application
@@ -120,6 +144,7 @@ public class KeywordSearchListsXML {
         boolean created = false;
 
         theLists.clear();
+        prepopulateLists();
         if (!this.listFileExists()) {
             //create new if it doesn't exist
             save();
@@ -185,16 +210,16 @@ public class KeywordSearchListsXML {
      * @param useForIngest should this list be used for ingest
      * @return true if old list was replaced
      */
-    boolean addList(String name, List<Keyword> newList, boolean useForIngest) {
+    boolean addList(String name, List<Keyword> newList, boolean useForIngest, boolean locked) {
         boolean replaced = false;
         KeywordSearchList curList = getList(name);
         final Date now = new Date();
         if (curList == null) {
-            theLists.put(name, new KeywordSearchList(name, now, now, useForIngest, newList));
+            theLists.put(name, new KeywordSearchList(name, now, now, useForIngest, newList, locked));
             save();
             changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
         } else {
-            theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, newList));
+            theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, newList, locked));
             save();
             replaced = true;
             changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
@@ -203,22 +228,17 @@ public class KeywordSearchListsXML {
         return replaced;
     }
     
-    boolean addList(String name, List<Keyword> newList) {
-        boolean replaced = false;
+    boolean addList(String name, List<Keyword> newList, boolean useForIngest) {
         KeywordSearchList curList = getList(name);
-        final Date now = new Date();
         if (curList == null) {
-            theLists.put(name, new KeywordSearchList(name, now, now, false, newList));
-            save();
-            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
+            return addList(name, newList, false, false);
         } else {
-            theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, curList.getUseForIngest(), newList));
-            save();
-            replaced = true;
-            changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
+            return addList(name, newList, curList.getUseForIngest(), false);
         }
-
-        return replaced;
+    }
+    
+    boolean addList(String name, List<Keyword> newList) {
+        return addList(name, newList, false);
     }
     
 
@@ -284,6 +304,9 @@ public class KeywordSearchListsXML {
             doc.appendChild(rootEl);
 
             for (String listName : theLists.keySet()) {
+                if(listName.equals("IP Addresses") || listName.equals("Email Addresses") ||
+                        listName.equals("Phone Numbers") || listName.equals("URLs"))
+                    break;
                 KeywordSearchList list = theLists.get(listName);
                 String created = dateFormatter.format(list.getDateCreated());
                 String modified = dateFormatter.format(list.getDateModified());
@@ -438,14 +461,21 @@ class KeywordSearchList {
     private Date modified;
     private Boolean useForIngest;
     private List<Keyword> keywords;
+    private Boolean locked;
 
-    KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, List<Keyword> keywords) {
+    KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, List<Keyword> keywords, boolean locked) {
         this.name = name;
         this.created = created;
         this.modified = modified;
         this.useForIngest = useForIngest;
         this.keywords = keywords;
+        this.locked = locked;
     }
+    
+    KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, List<Keyword> keywords) {
+        this(name, created, modified, useForIngest, keywords, false);
+    }
+
 
     @Override
     public boolean equals(Object obj) {
@@ -490,5 +520,9 @@ class KeywordSearchList {
 
     List<Keyword> getKeywords() {
         return keywords;
+    }
+    
+    Boolean isLocked() {
+        return locked;
     }
 }
