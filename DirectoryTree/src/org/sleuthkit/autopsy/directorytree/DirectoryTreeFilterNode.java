@@ -92,17 +92,17 @@ class DirectoryTreeFilterNode extends FilterNode {
 
         return actions;
     }
+}
 
-    static class OriginalNode {
+class OriginalNode {
 
-        private Node original;
+    private Node original;
 
-        private OriginalNode(Node original) {
-            this.original = original;
-        }
+    OriginalNode(Node original) {
+        this.original = original;
+    }
 
-        Node getNode() {
-            return original;
-        }
+    Node getNode() {
+        return original;
     }
 }

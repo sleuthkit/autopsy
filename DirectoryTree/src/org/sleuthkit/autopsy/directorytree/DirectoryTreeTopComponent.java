@@ -579,7 +579,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
                         Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                         if (treeNode != null) {
-                            OriginalNode origin = treeNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class);
+                            OriginalNode origin = treeNode.getLookup().lookup(OriginalNode.class);
                             if(origin == null)
                                 return;
                             Node originNode = origin.getNode();
