@@ -60,7 +60,7 @@ public class IngestManager {
 
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private IngestManagerStats stats;
-    private volatile int updateFrequency = 30; //in minutes
+    private volatile int updateFrequency = 15; //in minutes
     //queues
     private final ImageQueue imageQueue = new ImageQueue();   // list of services and images to analyze
     private final FsContentQueue fsContentQueue = new FsContentQueue();
