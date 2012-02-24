@@ -44,6 +44,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private IngestMessageMainPanel mainPanel;
     private static Font visitedFont = new Font("Arial", Font.PLAIN, 11);
     private static Font notVisitedFont = new Font("Arial", Font.BOLD, 11);
+    private static Color ERROR_COLOR = new Color (255, 90, 90);
     private int lastRowSelected = -1;
 
     /** Creates new form IngestMessagePanel */
@@ -323,7 +324,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
                 if (!isSelected) {
                     MessageType mt = tableModel.getMessageType(row);
                     if (mt == MessageType.ERROR) {
-                        cell.setBackground(Color.red);
+                        cell.setBackground(ERROR_COLOR);
                     } else if (mt == MessageType.WARNING) {
                         cell.setBackground(Color.orange);
                     } else {
