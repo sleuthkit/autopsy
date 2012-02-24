@@ -35,7 +35,7 @@
         </file>-->
     </folder>
     <folder name="Toolbars">
-        <folder name="File">
+        <folder name="Keyword">
             <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-keywordsearch-KeywordSearchAction.instance"/>
                 <attr name="position" intvalue="600"/>

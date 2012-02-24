@@ -474,6 +474,10 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             return;
         }
 
+        if (writer.listExists(listName) && writer.getList(listName).isLocked()){
+            KeywordSearchUtil.displayDialog(FEATURE_NAME, "Cannot overwrite default list", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+            return;
+        }
         boolean shouldAdd = false;
         if (writer.listExists(listName)) {
             boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, "Keyword List <" + listName + "> already exists, do you want to replace it?",
