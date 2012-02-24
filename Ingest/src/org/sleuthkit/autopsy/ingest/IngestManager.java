@@ -86,7 +86,7 @@ public class IngestManager {
     public final static String SERVICE_STOPPED_EVT = IngestManagerEvents.SERVICE_STOPPED.name();
     public final static String SERVICE_HAS_DATA_EVT = IngestManagerEvents.SERVICE_HAS_DATA.name();
     //ui
-    private IngestUI ui = IngestMessageTopComponent.findInstance();
+    private IngestUI ui = null;
     //singleton
     private static IngestManager instance;
 
@@ -100,6 +100,10 @@ public class IngestManager {
             instance = new IngestManager();
         }
         return instance;
+    }
+    
+    void initUI() {
+        ui = IngestMessageTopComponent.findInstance();
     }
 
     /**
