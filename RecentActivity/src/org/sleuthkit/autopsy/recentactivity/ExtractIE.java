@@ -253,18 +253,19 @@ public class ExtractIE { // implements BrowserActivity {
                                        
                                         // TODO: Need to fix this so we have the right obj_id
                                         BlackboardArtifact bbart = tempDb.getFileById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                                        BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "Internet Explorer", realurl);
-                                        bbart.addAttribute(bbatturl);
-                                        BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[3]);
-                                        bbart.addAttribute(bbattdate);
-                                        BlackboardAttribute bbattref = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", "Internet Explorer", "No Ref");
-                                        bbart.addAttribute(bbattref);
-                                        BlackboardAttribute bbatttitle = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[2]);
-                                        bbart.addAttribute(bbatttitle);
-                                        BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","Internet Explorer","Internet Explorer");
-                                        bbart.addAttribute(bbattprog);
-                                        BlackboardAttribute bbattuser = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(),"RecentActivity","Internet Explorer",user);
-                                        bbart.addAttribute(bbattuser);
+                                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "Internet Explorer", realurl));
+                                       
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[3]));
+                                        
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", "Internet Explorer", "No Ref"));
+                                   
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Internet Explorer", lineBuff[2]));
+                                       
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","Internet Explorer","Internet Explorer"));
+                                        
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(),"RecentActivity","Internet Explorer",user));
+                                        bbart.addAttributes(bbattributes);
 
                                         //KeyValueThing
                                         //This will be redundant in terms IE.name() because of

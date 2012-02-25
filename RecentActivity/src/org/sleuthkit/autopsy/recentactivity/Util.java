@@ -4,6 +4,11 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -35,6 +40,19 @@ public static String utcConvert(String utc){
                 SimpleDateFormat formatter = new SimpleDateFormat("MM-dd-yyyy HH:mm");
                String tempconvert = formatter.format(new Date(Long.parseLong(utc)));
                return tempconvert;
+}
+
+public static String readFile(String path) throws IOException {
+  FileInputStream stream = new FileInputStream(new File(path));
+  try {
+    FileChannel fc = stream.getChannel();
+    MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+    /* Instead of using default, pass in a decoder. */
+    return Charset.defaultCharset().decode(bb).toString();
+  }
+  finally {
+    stream.close();
+  }
 }
 
 public static boolean imgpathexists(String path){
