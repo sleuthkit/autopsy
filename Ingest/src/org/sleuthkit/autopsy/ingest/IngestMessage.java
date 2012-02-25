@@ -45,12 +45,15 @@ public class IngestMessage {
     private Date datePosted;
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    private IngestMessage(long ID, MessageType messageType, IngestServiceAbstract source, String subject, String detailsHtml) {
+    private IngestMessage(long ID, MessageType messageType, IngestServiceAbstract source, String subject, String detailsHtml, String uniqueKey) {
         this.ID = ID;
         this.source = source;
         this.messageType = messageType;
         this.subject = subject;
         this.detailsHtml = detailsHtml;
+        if (uniqueKey == null)
+            this.uniqueKey = "";
+        else this.uniqueKey = uniqueKey;
         datePosted = new Date();
     }
 
@@ -167,7 +170,7 @@ public class IngestMessage {
         if (messageType == null || source == null || subject == null) {
             throw new IllegalArgumentException("message type, source and subject cannot be null");
         }
-        return new IngestMessage(ID, messageType, source, subject, detailsHtml);
+        return new IngestMessage(ID, messageType, source, subject, detailsHtml, null);
     }
 
     /**
@@ -193,7 +196,7 @@ public class IngestMessage {
         if (source == null || subject == null) {
             throw new IllegalArgumentException("source and subject cannot be null");
         }
-        return new IngestMessage(ID, MessageType.ERROR, source, subject, null);
+        return new IngestMessage(ID, MessageType.ERROR, source, subject, null, null);
     }
     
     /**
@@ -207,7 +210,7 @@ public class IngestMessage {
         if (source == null || subject == null) {
             throw new IllegalArgumentException("source and subject cannot be null");
         }
-        return new IngestMessage(ID, MessageType.WARNING, source, subject, null);
+        return new IngestMessage(ID, MessageType.WARNING, source, subject, null, null);
     }
 
     /**
@@ -225,13 +228,12 @@ public class IngestMessage {
             throw new IllegalArgumentException("source, subject, details and data cannot be null");
         }
 
-        IngestMessage im = new IngestMessage(ID, MessageType.DATA, source, subject, detailsHtml);
-        im.uniqueKey = uniqueKey;
+        IngestMessage im = new IngestMessage(ID, MessageType.DATA, source, subject, detailsHtml, uniqueKey);
         im.data = data;
         return im;
     }
 
     static IngestMessage createManagerMessage(String subject) {
-        return new IngestMessage(0, MessageType.INFO, null, subject, null);
+        return new IngestMessage(0, MessageType.INFO, null, subject, null, null);
     }
 }

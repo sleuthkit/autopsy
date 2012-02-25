@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.File;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,7 +28,6 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
@@ -46,7 +43,6 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
@@ -524,12 +520,16 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             //final int hitFiles = newResults.size();
 
                             subjectSb.append("Keyword hit: ").append("<");
+                            String uniqueKey = null;
                             BlackboardAttribute attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
                             if (attr != null) {
-                                subjectSb.append(attr.getValueString());
+                                final String keyword = attr.getValueString();
+                                subjectSb.append(keyword);
+                                uniqueKey = keyword;
                             }
+                     
                             subjectSb.append(">");
-                            String uniqueKey = queryStr;
+                            //String uniqueKey = queryStr;
 
                             //details
                             //hit
@@ -545,6 +545,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                     detailsSb.append("<br />");
                                 }
                             }
+              
                             //file
                             detailsSb.append("File: ");
                             detailsSb.append(hitFile.getParentPath()).append(hitFile.getName());

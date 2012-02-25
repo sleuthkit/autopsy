@@ -281,8 +281,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
             //and add to existing group or create a new group
             IngestServiceAbstract service = m.getSource();
             IngestMessageGroup messageGroup = null;
-            if (service != null) {
-                //not a manager message, then group
+            if (service != null && m.getMessageType() == IngestMessage.MessageType.DATA) {
+                //not a manager message, a data message, then group
                 final Map<String, List<IngestMessageGroup>> groups = groupings.get(service);
                 //groups for this uniqueness
                 final String uniqueness = m.getUniqueKey();
@@ -315,9 +315,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
                         IngestMessageGroup first = uniqGroups.get(0);
                         //one group with multiple messages
                         if (first.getCount() > 1) {
+                            //had already been merged
                             first.add(m);
                             messageGroup = first;
-                            //TODO move to bottom of table
+                            //move to bottom of table
                             //remove from existing position
                             int toRemove = getTableEntryIndex(messageGroup);
                             messageData.remove(toRemove);
@@ -325,12 +326,14 @@ class IngestMessagePanel extends javax.swing.JPanel {
                             this.fireTableRowsDeleted(toRemove, toRemove); //TODO check
                         } else {
                             //one group with one message
+                            //create another group
                             messageGroup = new IngestMessageGroup(m);
                             uniqGroups.add(messageGroup);
 
                         }
                     } else {
                         //multiple groups with 1 msg each
+                        //create another group, until need to merge
                         messageGroup = new IngestMessageGroup(m);
                         uniqGroups.add(messageGroup);
                         //add to bottom
@@ -338,7 +341,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
                 }
 
             } else {
-                //manager message
+                //manager or non-data message
                 messageGroup = new IngestMessageGroup(m);
             }
 
@@ -457,7 +460,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
         String getDetails() {
             StringBuilder b = new StringBuilder();
             for (IngestMessage m : messages) {
-                b.append(m.getDetails());
+                String details = m.getDetails();
+                if (details == null)
+                    details = "";
+                b.append(details);
                 b.append("<hr />");
             }
 
