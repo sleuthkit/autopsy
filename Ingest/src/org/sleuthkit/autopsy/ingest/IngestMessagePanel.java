@@ -267,7 +267,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
             int ret = -1;
             int i = 0;
             for (TableEntry e : messageData) {
-                if (e.messageGroup.equals(group)) {
+                if (e.messageGroup.getUniqueKey().equals(group.getUniqueKey())) {
                     ret = i;
                     break;
                 }
@@ -388,6 +388,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
         public IngestMessageGroup getMessageGroup(int rowNumber) {
             return messageData.get(rowNumber).messageGroup;
         }
+        
+        
 
         class TableEntry implements Comparable {
 
