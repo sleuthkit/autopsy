@@ -129,7 +129,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         jScrollPane1.setWheelScrollingEnabled(true);
 
-        messageTable.setAutoscrolls(true);
+        messageTable.setAutoscrolls(false);
         //messageTable.setTableHeader(null);
         messageTable.setShowHorizontalLines(false);
         messageTable.setShowVerticalLines(false);
@@ -262,7 +262,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         public Class getColumnClass(int c) {
             return getValueAt(0, c).getClass();
         }
-        
+
         private int getTableEntryIndex(IngestMessageGroup group) {
             int ret = -1;
             int i = 0;
@@ -298,19 +298,21 @@ class IngestMessagePanel extends javax.swing.JPanel {
                     if (uniqueGroupsCount > MESSAGE_GROUP_THRESH) {
                         //merge them
                         messageGroup = uniqGroups.get(0);
-                        for (int i = 1; i<uniqueGroupsCount; ++i) {
+                        for (int i = 1; i < uniqueGroupsCount; ++i) {
                             messageGroup.add(uniqGroups.get(i));
                         }
                         //remove merged groups
                         uniqGroups.clear();
                         uniqGroups.add(messageGroup);
-                        //remove the row, will be added to the bottom
-                        int toRemove = getTableEntryIndex(messageGroup);
-                        messageData.remove(toRemove);
-                        //remove the row, will be added to the bottom
-                        this.fireTableRowsDeleted(toRemove, toRemove); //TODO check
-                        
-                        
+                        //remove all rows, new merged row will be added to the bottom
+                        int toRemove = 0;
+                        while ((toRemove = getTableEntryIndex(messageGroup)) != -1) {
+                            messageData.remove(toRemove);
+                            //remove the row, will be added to the bottom
+                            this.fireTableRowsDeleted(toRemove, toRemove); //TODO check
+                        }
+
+
                     } else if (uniqueGroupsCount == 1) {
                         IngestMessageGroup first = uniqGroups.get(0);
                         //one group with multiple messages
@@ -320,10 +322,12 @@ class IngestMessagePanel extends javax.swing.JPanel {
                             messageGroup = first;
                             //move to bottom of table
                             //remove from existing position
-                            int toRemove = getTableEntryIndex(messageGroup);
-                            messageData.remove(toRemove);
-                            //remove the row, will be added to the bottom
-                            this.fireTableRowsDeleted(toRemove, toRemove); //TODO check
+                            int toRemove = 0;
+                            while ((toRemove = getTableEntryIndex(messageGroup)) != -1) {
+                                messageData.remove(toRemove);
+                                //remove the row, will be added to the bottom
+                                this.fireTableRowsDeleted(toRemove, toRemove); //TODO check
+                            }
                         } else {
                             //one group with one message
                             //create another group
@@ -418,7 +422,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
             messages.add(message);
             count = 1;
         }
-        
+
         List<IngestMessage> getMessages() {
             return messages;
         }
@@ -435,7 +439,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
             messages.add(message);
             ++count;
         }
-        
+
         //add all messages from another group
         void add(IngestMessageGroup group) {
 
@@ -461,8 +465,9 @@ class IngestMessagePanel extends javax.swing.JPanel {
             StringBuilder b = new StringBuilder("");
             for (IngestMessage m : messages) {
                 String details = m.getDetails();
-                if (details == null || details.equals(""))
+                if (details == null || details.equals("")) {
                     continue;
+                }
                 b.append(details);
                 b.append("<hr />");
             }
