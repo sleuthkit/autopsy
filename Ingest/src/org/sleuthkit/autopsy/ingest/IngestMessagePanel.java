@@ -458,11 +458,11 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         String getDetails() {
-            StringBuilder b = new StringBuilder();
+            StringBuilder b = new StringBuilder("");
             for (IngestMessage m : messages) {
                 String details = m.getDetails();
-                if (details == null)
-                    details = "";
+                if (details == null || details.equals(""))
+                    continue;
                 b.append(details);
                 b.append("<hr />");
             }
