@@ -114,8 +114,9 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
      */
     @Override
     public Component getToolbarPresenter() {
-        ImageIcon icon = new ImageIcon(getClass().getResource("close-icon.png"));
-        toolbarButton.setIcon(icon);
+        //ImageIcon icon = new ImageIcon(getClass().getResource("close-icon.png"));
+        //toolbarButton.setIcon(icon);
+        toolbarButton.setText(this.getName());
         return toolbarButton;
     }
 

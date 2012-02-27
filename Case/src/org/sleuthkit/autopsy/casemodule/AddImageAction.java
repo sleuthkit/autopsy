@@ -186,8 +186,9 @@ public final class AddImageAction extends CallableSystemAction implements Presen
      */
     @Override
     public Component getToolbarPresenter() {
-        ImageIcon icon = new ImageIcon(getClass().getResource("addImage-icon.png"));
-        toolbarButton.setIcon(icon);
+        //ImageIcon icon = new ImageIcon(getClass().getResource("addImage-icon.png"));
+        //toolbarButton.setIcon(icon);
+        toolbarButton.setText(this.getName());
         return toolbarButton;
     }
 
