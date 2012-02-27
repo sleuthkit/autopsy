@@ -214,7 +214,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
                     colName = "Subject";
                     break;
                 case 1:
-                    colName = "Pri";
+                    colName = "# Messages";
                     break;
                 case 2:
                     colName = "Module";
@@ -412,12 +412,13 @@ class IngestMessagePanel extends javax.swing.JPanel {
     //with the same uniqness
     static class IngestMessageGroup {
 
-        static Color VERY_HIGH_PRI_COLOR = new Color(5, 131, 46); //for a single message in a group
-        static Color HIGH_PRI_COLOR = new Color(36, 166, 65);
-        static Color MED_PRI_COLOR = new Color(55, 213, 90);
-        static Color LOW_PRI_COLOR = new Color(160, 235, 177);
-        List<IngestMessage> messages;
-        int count;
+        static Color VERY_HIGH_PRI_COLOR = new Color(136, 136, 185); //for a single message in a group
+        static Color HIGH_PRI_COLOR = new Color(158, 158, 199);
+        static Color MED_PRI_COLOR = new Color(193, 193, 219);
+        static Color LOW_PRI_COLOR = new Color(221, 221, 235);
+        
+        private List<IngestMessage> messages;
+        private int count;
 
         IngestMessageGroup(IngestMessage message) {
             messages = new ArrayList<IngestMessage>();
