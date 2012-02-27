@@ -164,6 +164,10 @@ public class IngestManager {
         logger.log(Level.INFO, "Image queue: " + this.imageQueue.toString());
         logger.log(Level.INFO, "File queue: " + this.fsContentQueue.toString());
 
+        if (! isIngestRunning()) {
+            ui.clearMessages();
+        }
+        
         //image ingesters
         // cycle through each image in the queue
         while (hasNextImage()) {
