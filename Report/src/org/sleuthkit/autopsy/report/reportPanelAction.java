@@ -50,7 +50,7 @@ public class reportPanelAction {
             final JDialog popUpWindow = new JDialog(frame, ACTION_NAME, true); // to make the popUp Window to be modal
 
             // initialize panel with loaded settings
-            final reportPanel panel = new reportPanel(htmlReport.formatted_Report);
+            final reportPanel panel = new reportPanel(htmlReport.formatted_Report.toString());
              panel.setjButton1ActionListener(new ActionListener() {
 
                             @Override
