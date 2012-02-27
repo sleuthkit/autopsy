@@ -216,11 +216,13 @@ public class KeywordSearchListsXML {
         final Date now = new Date();
         if (curList == null) {
             theLists.put(name, new KeywordSearchList(name, now, now, useForIngest, newList, locked));
-            save();
+            if(!locked)
+                save();
             changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
         } else {
             theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, newList, locked));
-            save();
+            if(!locked)
+                save();
             replaced = true;
             changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
         }
@@ -306,7 +308,7 @@ public class KeywordSearchListsXML {
             for (String listName : theLists.keySet()) {
                 if(listName.equals("IP Addresses") || listName.equals("Email Addresses") ||
                         listName.equals("Phone Numbers") || listName.equals("URLs"))
-                    break;
+                    continue;
                 KeywordSearchList list = theLists.get(listName);
                 String created = dateFormatter.format(list.getDateCreated());
                 String modified = dateFormatter.format(list.getDateModified());
