@@ -529,7 +529,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             if (attr != null) {
                                 final String keyword = attr.getValueString();
                                 subjectSb.append(keyword);
-                                uniqueKey = keyword;
+                                uniqueKey = keyword.toLowerCase();
                             }
 
                             subjectSb.append(">");
