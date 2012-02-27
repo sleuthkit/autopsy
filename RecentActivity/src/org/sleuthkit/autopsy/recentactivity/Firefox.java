@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -84,18 +85,13 @@ public class Firefox {
                    while(temprs.next()) 
                    {
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-               
-                      BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","FireFox",temprs.getString("url"));
-                      bbart.addAttribute(bbatturl);
-                       BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","FireFox",temprs.getString("visit_date"));
-                      bbart.addAttribute(bbattdate);
-                       BlackboardAttribute bbattref = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),"RecentActivity","FireFox",temprs.getString("from_visit"));
-                      bbart.addAttribute(bbattref);
-                       BlackboardAttribute bbatttitle = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),"RecentActivity","FireFox",((temprs.getString("title") != null) ? temprs.getString("title") : "No Title"));
-                      bbart.addAttribute(bbatttitle);
-                       BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","FireFox","FireFox");
-                       bbart.addAttribute(bbattprog);
-                  
+                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","FireFox",temprs.getString("url")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","FireFox",temprs.getString("visit_date")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),"RecentActivity","FireFox",temprs.getString("from_visit")));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),"RecentActivity","FireFox",((temprs.getString("title") != null) ? temprs.getString("title") : "No Title")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","FireFox","FireFox"));
+                       bbart.addAttributes(bbattributes);
                       
                    }
                    temprs.close(); 
@@ -103,14 +99,11 @@ public class Firefox {
                    while(tempbm.next()) 
                    {
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-           
-                      BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","FireFox",((temprs.getString("url") != null) ? temprs.getString("url") : "No URL"));
-                      bbart.addAttribute(bbatturl);
-                      BlackboardAttribute bbatttitle = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","FireFox", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "No Title"));
-                      bbart.addAttribute(bbatttitle);
-                     BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","FireFox","FireFox");
-                       bbart.addAttribute(bbattprog);
-         
+                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","FireFox",((temprs.getString("url") != null) ? temprs.getString("url") : "No URL")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","FireFox", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "No Title")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","FireFox","FireFox")); 
+                     bbart.addAttributes(bbattributes);
                    } 
                    tempbm.close();
                    tempdbconnect.closeConnection();
@@ -171,16 +164,14 @@ public class Firefox {
                    while(temprs.next()) 
                    {
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
-                      BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "FireFox", temprs.getString("host"));
-                     bbart.addAttribute(bbatturl);
-                     BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "FireFox", temprs.getString("lastAccessed"));
-                     bbart.addAttribute(bbattdate);
-                     BlackboardAttribute bbattvalue = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), "RecentActivity", "FireFox", temprs.getString("value"));
-                     bbart.addAttribute(bbattvalue);
-                     BlackboardAttribute bbatttitle = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","FireFox",((temprs.getString("name") != null) ? temprs.getString("name") : "No name"));
-                     bbart.addAttribute(bbatttitle);
-                       BlackboardAttribute bbattprog = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","FireFox","FireFox");
-                       bbart.addAttribute(bbattprog);
+                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "FireFox", temprs.getString("host")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "FireFox", temprs.getString("lastAccessed")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), "RecentActivity", "FireFox", temprs.getString("value")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","FireFox",((temprs.getString("name") != null) ? temprs.getString("name") : "No name")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","FireFox","FireFox"));
+                       bbart.addAttributes(bbattributes);
+                      
                    } 
                    tempdbconnect.closeConnection();
                    temprs.close();

@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.File;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,7 +28,6 @@ import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
@@ -46,7 +43,6 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
@@ -74,8 +70,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private volatile int messageID = 0;
     private volatile boolean finalRun = false;
     private SleuthkitCase caseHandle = null;
-    
-     // TODO: use a more robust method than checking file extension to determine
+    // TODO: use a more robust method than checking file extension to determine
     // whether to try a file
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
     static final String[] ingestibleExtensions = {"tar", "jar", "zip", "bzip2",
@@ -85,8 +80,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,
-    };
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
     private Map<Long, IngestStatus> ingestStatus;
     private Map<String, List<FsContent>> reportedHits; //already reported hits
 
@@ -106,7 +100,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             commit();
             commitIndex = false;
             indexChangeNotify();
-            
+
             updateKeywords();
             //start search if previous not running
             if (keywords != null && !keywords.isEmpty() && searcherDone) {
@@ -187,7 +181,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         ingestStatus = new HashMap<Long, IngestStatus>();
 
         reportedHits = new HashMap<String, List<FsContent>>();
-        
+
         keywords = new ArrayList<Keyword>();
         keywordLists = new ArrayList<String>();
 
@@ -228,16 +222,17 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public boolean isConfigurable() {
         return true;
     }
-    
+
     @Override
-    public boolean hasBackgroundJobsRunning() {    
+    public boolean hasBackgroundJobsRunning() {
         if (searcher != null && searcherDone == false) {
-                return true;
+            return true;
+        } else {
+            return false;
         }
-        else return false;
-        
+
         //no need to check timer thread
-        
+
     }
 
     private void commit() {
@@ -294,37 +289,39 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
      */
     private void initKeywords() {
         KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
-        
+
         keywords.clear();
         keywordLists.clear();
-        
-        for(KeywordSearchList list : loader.getListsL()){
-            if(list.getUseForIngest())
+
+        for (KeywordSearchList list : loader.getListsL()) {
+            if (list.getUseForIngest()) {
                 keywordLists.add(list.getName());
-                keywords.addAll(list.getKeywords());
+            }
+            keywords.addAll(list.getKeywords());
         }
     }
-    
+
     /**
      * Retrieve the updated keyword search lists from the XML loader
      */
     private void updateKeywords() {
         KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
-        
+
         keywords.clear();
-        
-        for(String name : keywordLists) {
+
+        for (String name : keywordLists) {
             keywords.addAll(loader.getList(name).getKeywords());
         }
     }
-    
+
     List<String> getKeywordLists() {
         return keywordLists == null ? new ArrayList<String>() : keywordLists;
     }
-    
+
     void addToKeywordLists(String name) {
-        if(!keywordLists.contains(name))
+        if (!keywordLists.contains(name)) {
             keywordLists.add(name);
+        }
     }
 
     //CommitTimer wakes up every interval ms
@@ -514,6 +511,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     //write results to BB
                     Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>(); //new artifacts to report
                     for (FsContent hitFile : newResults) {
+                        if (this.isCancelled()) {
+                            return null;
+                        }
                         Collection<KeywordWriteResult> written = del.writeToBlackBoard(hitFile);
                         for (KeywordWriteResult res : written) {
                             newArtifacts.add(res.getArtifact());
@@ -524,12 +524,16 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             //final int hitFiles = newResults.size();
 
                             subjectSb.append("Keyword hit: ").append("<");
+                            String uniqueKey = null;
                             BlackboardAttribute attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
                             if (attr != null) {
-                                subjectSb.append(attr.getValueString());
+                                final String keyword = attr.getValueString();
+                                subjectSb.append(keyword);
+                                uniqueKey = keyword;
                             }
+
                             subjectSb.append(">");
-                            String uniqueKey = queryStr;
+                            //String uniqueKey = queryStr;
 
                             //details
                             //hit
@@ -545,6 +549,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                     detailsSb.append("<br />");
                                 }
                             }
+
                             //file
                             detailsSb.append("File: ");
                             detailsSb.append(hitFile.getParentPath()).append(hitFile.getName());

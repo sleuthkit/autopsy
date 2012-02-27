@@ -11,9 +11,15 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -48,16 +54,23 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
      
             while (j < Regfiles.size())
             {
-               
+                boolean Success;
                 String temps = currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName().toString();
                 ContentUtils.writeToFile(Regfiles.get(j), new File(currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName()));
                 File regFile = new File(temps);
                
-                 boolean regSuccess = executeRegRip(temps, j);
-
+                 String txtPath = executeRegRip(temps, j);
+                 if(txtPath.length() > 0)
+                 {
+                    Success = parseReg(txtPath);
+                 }
+                 else
+                 {
+                     Success = false;
+                 }
              //At this point pasco2 proccessed the index files.
              //Now fetch the results, parse them and the delete the files.
-             if(regSuccess)
+             if(Success)
              {
                 //Delete dat file since it was succcessfully by Pasco
                 regFile.delete();
@@ -81,9 +94,9 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
 
     // TODO: Hardcoded command args/path needs to be removed. Maybe set some constants and set env variables for classpath
     // I'm not happy with this code. Can't stand making a system call, is not an acceptable solution but is a hack for now.
-	private  boolean executeRegRip(String regFilePath, int fileIndex)
+	private  String executeRegRip(String regFilePath, int fileIndex)
     {
-       boolean success = true;
+       String txtPath = regFilePath + Integer.toString(fileIndex) + ".txt";
        String type = "";
    
 
@@ -117,19 +130,74 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                 String rrpath = System.getProperty("user.dir");
                 rrpath = rrpath.substring(0, rrpath.length()-14);
                 rrpath = rrpath + "thirdparty\\rr\\";
-                String command = rrpath + "rip.exe -r " + regFilePath +" -f " + type + " >> " + regFilePath + Integer.toString(fileIndex) + ".txt";
+                
+                String command = rrpath + "rip.exe -r " + regFilePath +" -f " + type + " >> " + txtPath;
 
                 JavaSystemCaller.Exec.execute(command);
+               
 
        }
        catch(Exception e)
        {
-          success = false;
+          
           logger.log(Level.SEVERE, "ExtractRegistry::executeRegRip() -> " ,e.getMessage() );
        }
 
-       return success;
+       return txtPath;
     }
+  
+   
+     private boolean parseReg(String regRecord)
+    {
+        Case currentCase = Case.getCurrentCase(); // get the most updated case
+        SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+     
+       String[] result = regRecord.split("----------------------------------------");
+       for(String tempresult : result)
+       {
+           try{
+                
+               if(tempresult.contains("not found") || tempresult.contains("no values"))
+               {
+                   
+               }
+               else
+               {
+                BlackboardArtifact bbart = tempDb.getRootObjects().get(0).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);  
+                   if(tempresult.contains("Username"))
+                   {
+                    Pattern p = Pattern.compile("Username\\[.*?\\]"); 
+                    Matcher m = p.matcher(tempresult);
+                    while (m.find()) {
+                         String s = m.group(1);
+                    
+                       BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "RecentActivity", "Registry", s);
+                        bbart.addAttribute(bbatturl);  
+                    }             
+                   }
 
+                   if(tempresult.contains("Time["))
+                   {
+                    Pattern p = Pattern.compile("Time\\[.*?\\]"); 
+                    Matcher m = p.matcher(tempresult);
+                    while (m.find()) {
+                     String s = m.group(1);
+                     BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Registry", s);
+                     bbart.addAttribute(bbattdate);
+                    }
+                   
+                    }
+               }
+           }
+           catch (Exception ex)
+           {
+            logger.log(Level.WARNING, "Error while trying to read into a sqlite db." +  ex);      
+           }
+       }
+   
+
+       
+       return true;
+    }
 
 }
