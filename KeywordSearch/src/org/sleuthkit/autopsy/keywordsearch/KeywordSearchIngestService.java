@@ -187,8 +187,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         initKeywords();
 
-        if (keywords.isEmpty()) {
-            managerProxy.postMessage(IngestMessage.createWarningMessage(++messageID, instance, "No keywords in keyword list.  Will index and skip search."));
+        if (keywords.isEmpty() || keywordLists.isEmpty()) {
+            managerProxy.postMessage(IngestMessage.createWarningMessage(++messageID, instance, "No keywords in keyword list.", "Only indexing will be done and and keyword search will be skipped (it can be executed later again as ingest or using toolbar search feature)."));
         }
 
         finalRun = false;
