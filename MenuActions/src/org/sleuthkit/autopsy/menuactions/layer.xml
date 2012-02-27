@@ -57,7 +57,7 @@
         <folder name="File">
             <file name="org-sleuthkit-autopsy-menuactions-SpacerAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-menuactions-SpacerAction.instance"/>
-                <attr name="position" intvalue="600"/>
+                <attr name="position" intvalue="10000"/>
             </file>
         </folder>
     </folder>
