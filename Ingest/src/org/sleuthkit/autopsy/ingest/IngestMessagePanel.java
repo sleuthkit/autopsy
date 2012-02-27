@@ -22,6 +22,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -86,9 +87,13 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         messageTable = new javax.swing.JTable();
+        controlPanel = new javax.swing.JPanel();
+        sortByLabel = new javax.swing.JLabel();
+        sortByComboBox = new javax.swing.JComboBox();
 
         setOpaque(false);
 
+        jScrollPane1.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
         jScrollPane1.setOpaque(false);
 
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
@@ -106,20 +111,68 @@ class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(messageTable);
 
+        sortByLabel.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.sortByLabel.text")); // NOI18N
+
+        sortByComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Time", "Priority" }));
+        sortByComboBox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.sortByComboBox.toolTipText")); // NOI18N
+        sortByComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                sortByComboBoxActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
+        controlPanel.setLayout(controlPanelLayout);
+        controlPanelLayout.setHorizontalGroup(
+            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelLayout.createSequentialGroup()
+                .addGap(2, 2, 2)
+                .addComponent(sortByLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(sortByComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(247, Short.MAX_VALUE))
+        );
+        controlPanelLayout.setVerticalGroup(
+            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, controlPanelLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(sortByComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sortByLabel))
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 357, Short.MAX_VALUE)
+            .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 144, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 174, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void sortByComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortByComboBoxActionPerformed
+        if (sortByComboBox.getSelectedIndex() == 0) {
+            tableModel.reSort(true);
+        }
+        else {
+            tableModel.reSort(false);
+        }
+    }//GEN-LAST:event_sortByComboBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel controlPanel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable messageTable;
+    private javax.swing.JComboBox sortByComboBox;
+    private javax.swing.JLabel sortByLabel;
     // End of variables declaration//GEN-END:variables
 
     private void customizeComponents() {
@@ -178,12 +231,14 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
     private class MessageTableModel extends AbstractTableModel {
         //data
-
-        private Logger logger = Logger.getLogger(MessageTableModel.class.getName());
         private List<TableEntry> messageData = new ArrayList<TableEntry>();
         //for keeping track of messages to group, per service, by uniqness
         private Map<IngestServiceAbstract, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<IngestServiceAbstract, Map<String, List<IngestMessageGroup>>>();
+        
+        private boolean chronoSort = true; //chronological sort default
+        
         private static final int MESSAGE_GROUP_THRESH = 3; //group messages after 3 messages per service with same uniqness
+        private Logger logger = Logger.getLogger(MessageTableModel.class.getName());
 
         MessageTableModel() {
             //initialize groupings map with services
@@ -309,7 +364,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
                         while ((toRemove = getTableEntryIndex(messageGroup)) != -1) {
                             messageData.remove(toRemove);
                             //remove the row, will be added to the bottom
-                            this.fireTableRowsDeleted(toRemove, toRemove); //TODO check
+                            this.fireTableRowsDeleted(toRemove, toRemove); 
                         }
 
 
@@ -326,7 +381,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
                             while ((toRemove = getTableEntryIndex(messageGroup)) != -1) {
                                 messageData.remove(toRemove);
                                 //remove the row, will be added to the bottom
-                                this.fireTableRowsDeleted(toRemove, toRemove); //TODO check
+                                this.fireTableRowsDeleted(toRemove, toRemove); 
                             }
                         } else {
                             //one group with one message
@@ -352,7 +407,13 @@ class IngestMessagePanel extends javax.swing.JPanel {
             //add new or updated row to the bottom
             messageData.add(new TableEntry(messageGroup));
             int size = messageData.size();
-            this.fireTableRowsInserted(size - 1, size);
+            fireTableRowsInserted(size - 1, size);
+            
+            //if priority sort, need to re-sort everything
+            if (chronoSort == false) {
+                Collections.sort(messageData);
+                fireTableDataChanged();
+            }
         }
 
         public void clearMessages() {
@@ -389,6 +450,15 @@ class IngestMessagePanel extends javax.swing.JPanel {
             return messageData.get(rowNumber).messageGroup;
         }
         
+        public void reSort(boolean chronoLogical) {
+            if (chronoSort == chronoLogical)
+                return;
+            
+            chronoSort = chronoLogical;
+            Collections.sort(messageData);
+            fireTableDataChanged();
+        }
+        
         
 
         class TableEntry implements Comparable {
@@ -403,7 +473,12 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
             @Override
             public int compareTo(Object o) {
-                return this.messageGroup.getDatePosted().compareTo(((TableEntry) o).messageGroup.getDatePosted());
+                if (chronoSort == true) {
+                    return this.messageGroup.getDatePosted().compareTo(((TableEntry) o).messageGroup.getDatePosted());
+                }
+                else {
+                    return messageGroup.count - ((TableEntry) o).messageGroup.count;
+                }
             }
         }
     }
