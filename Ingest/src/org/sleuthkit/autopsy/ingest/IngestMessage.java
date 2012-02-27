@@ -185,18 +185,20 @@ public class IngestMessage {
         return createMessage(ID, messageType, source, subject, null);
     }
 
-    /**
+    
+     /**
      * Create error message
      * @param ID ID of the message, unique in the context of module that generated it
      * @param source originating service
      * @param subject message subject to be displayed
+     * @param details message details to be displayed, or null
      * @return 
      */
-    public static IngestMessage createErrorMessage(long ID, IngestServiceAbstract source, String subject) {
+    public static IngestMessage createErrorMessage(long ID, IngestServiceAbstract source, String subject, String details) {
         if (source == null || subject == null) {
             throw new IllegalArgumentException("source and subject cannot be null");
         }
-        return new IngestMessage(ID, MessageType.ERROR, source, subject, null, null);
+        return new IngestMessage(ID, MessageType.ERROR, source, subject, details, null);
     }
     
     /**
@@ -204,13 +206,14 @@ public class IngestMessage {
      * @param ID ID of the message, unique in the context of module that generated it
      * @param source originating service
      * @param subject message subject to be displayed
+     * @param details message details to be displayed, or null
      * @return 
      */
-    public static IngestMessage createWarningMessage(long ID, IngestServiceAbstract source, String subject) {
+    public static IngestMessage createWarningMessage(long ID, IngestServiceAbstract source, String subject, String details) {
         if (source == null || subject == null) {
             throw new IllegalArgumentException("source and subject cannot be null");
         }
-        return new IngestMessage(ID, MessageType.WARNING, source, subject, null, null);
+        return new IngestMessage(ID, MessageType.WARNING, source, subject, details, null);
     }
 
     /**

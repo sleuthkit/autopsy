@@ -86,7 +86,7 @@ public final class RAImageIngestService implements IngestServiceImage {
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error extracting recent activity", e);
-            managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, this, "Error extracting recent activity data"));
+            managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, this, "Error extracting recent activity data", null));
         }
 
     }

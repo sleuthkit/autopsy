@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -158,8 +159,13 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
 
-        for (Term term : terms) {
-            final String regexMatch = term.getTerm();
+        //get case-insensitive term matches
+        Map<String,Void> caseInsMatches = new HashMap<String,Void>();
+        for (Term term:terms) {
+            caseInsMatches.put(term.getTerm().toLowerCase(), null);
+        }
+        
+        for (String regexMatch : caseInsMatches.keySet()) {
             //snippet
             String snippet = null;
             try {

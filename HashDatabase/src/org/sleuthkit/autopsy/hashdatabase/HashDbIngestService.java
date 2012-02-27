@@ -80,13 +80,13 @@ public class HashDbIngestService implements IngestServiceFsContent {
                 skCase.setNSRLDatabase(nsrlDbPath);
                 this.process = true;
             }else
-                this.managerProxy.postMessage(IngestMessage.createWarningMessage(++messageId, this, "No NSRL database set"));
+                this.managerProxy.postMessage(IngestMessage.createWarningMessage(++messageId, this, "No NSRL database set", "Known file search will not be executed."));
             
             if((knownBadDbPath = hashDbSettings.getKnownBadDatabasePath()) != null && !knownBadDbPath.equals("")){
                 skCase.setKnownBadDatabase(knownBadDbPath);
                 this.process = true;
             }else
-                this.managerProxy.postMessage(IngestMessage.createWarningMessage(++messageId, this, "No known bad database set"));
+                this.managerProxy.postMessage(IngestMessage.createWarningMessage(++messageId, this, "No known bad database set", "Known bad file search will not be executed."));
             
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Setting NSRL and Known database failed", ex);
