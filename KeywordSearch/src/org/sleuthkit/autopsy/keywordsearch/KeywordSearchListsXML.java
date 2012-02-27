@@ -101,8 +101,8 @@ public class KeywordSearchListsXML {
     private void prepopulateLists() {
         //phone number
         List<Keyword> phones = new ArrayList<Keyword>();
-        phones.add(new Keyword("\\d\\d\\d[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d", false));
-        phones.add(new Keyword("\\d{8,10}", false));
+        phones.add(new Keyword("[(]{0,1}\\d\\d\\d[)]{0,1}[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d", false));
+        //phones.add(new Keyword("\\d{8,10}", false));
         phones.add(new Keyword("phone|fax", false));
         //IP address
         List<Keyword> ips = new ArrayList<Keyword>();
