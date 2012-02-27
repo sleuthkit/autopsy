@@ -110,7 +110,7 @@ public final class reportAction extends CallableSystemAction implements Presente
     public Component getToolbarPresenter() {
         //ImageIcon icon = new ImageIcon(getClass().getResource("close-icon.png"));
         //toolbarButton.setIcon(icon);
-        toolbarButton.setText(this.getName());
+        toolbarButton.setText("Generate Report");
         return toolbarButton;
     }
 

@@ -4,10 +4,15 @@
        <folder name="Services"/>
     <folder name="Toolbars">
          
-        <folder name="Reports">
+        <folder name="File">
+            <file name="sep2.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JToolBar$Separator"/>
+                <attr name="position" intvalue="600"/>
+            </file>
             <file name="org-sleuthkit-autopsy-report-reportAction.shadow">
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.report.Bundle#Toolbars/Reports/org-sleuthkit-autopsy-report-reportAction.shadow"/>
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-reportAction.instance"/>
+                <attr name="position" intvalue="650"/>
             </file>
             <file name="org-sleuthkit-autopsy-report-reportFilterAction.shadow_hidden"/>
         </folder>

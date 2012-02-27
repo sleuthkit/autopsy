@@ -18,26 +18,10 @@ import java.util.logging.Logger;
  */
 public class reportPanel extends javax.swing.JPanel {
 
-     private static final Logger logger = Logger.getLogger(reportPanel.class.getName());
-     int page;
-     int offset;
-     int numPages;
-     final int PAGE_SIZE = 25000;
-     String report;
     /** Creates new form reportPanel */
     public reportPanel(String report) {
         initComponents();
-        page = 0;
-        offset = 0;
-        numPages = report.length()/PAGE_SIZE;
-        this.totalLabel.setText(Integer.toString(numPages));
-        this.report = report;
-        setReportWindow(offset);
-        setPage(page);
-    }
-    
-    private void setPage(int page) {
-        this.currentLabel.setText(Integer.toString(page));
+        setReportWindow(report);
     }
 
     /** This method is called from within the constructor to
@@ -52,40 +36,12 @@ public class reportPanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         jEditorPane1 = new javax.swing.JEditorPane();
         jButton1 = new javax.swing.JButton();
-        prevButton = new javax.swing.JButton();
-        nextButton = new javax.swing.JButton();
-        totalLabel = new javax.swing.JLabel();
-        ofLabel = new javax.swing.JLabel();
-        currentLabel = new javax.swing.JLabel();
-        pageLabel = new javax.swing.JLabel();
 
         jEditorPane1.setContentType(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.jEditorPane1.contentType")); // NOI18N
         jEditorPane1.setEditable(false);
         jScrollPane1.setViewportView(jEditorPane1);
 
         jButton1.setText(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.jButton1.text")); // NOI18N
-
-        prevButton.setText(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.prevButton.text")); // NOI18N
-        prevButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                prevButtonActionPerformed(evt);
-            }
-        });
-
-        nextButton.setText(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.nextButton.text")); // NOI18N
-        nextButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nextButtonActionPerformed(evt);
-            }
-        });
-
-        totalLabel.setText(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.totalLabel.text")); // NOI18N
-
-        ofLabel.setText(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.ofLabel.text")); // NOI18N
-
-        currentLabel.setText(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.currentLabel.text")); // NOI18N
-
-        pageLabel.setText(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.pageLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -96,19 +52,8 @@ public class reportPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 811, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(prevButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(nextButton)
-                        .addGap(204, 204, 204)
-                        .addComponent(jButton1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 291, Short.MAX_VALUE)
-                        .addComponent(pageLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(currentLabel)
-                        .addGap(18, 18, 18)
-                        .addComponent(ofLabel)
-                        .addGap(18, 18, 18)
-                        .addComponent(totalLabel)))
+                        .addGap(320, 320, 320)
+                        .addComponent(jButton1)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -117,40 +62,13 @@ public class reportPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 599, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jButton1)
-                        .addComponent(prevButton)
-                        .addComponent(nextButton))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(totalLabel)
-                        .addComponent(ofLabel)
-                        .addComponent(currentLabel)
-                        .addComponent(pageLabel)))
+                .addComponent(jButton1)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         getAccessibleContext().setAccessibleName("");
         getAccessibleContext().setAccessibleParent(this);
     }// </editor-fold>//GEN-END:initComponents
-
-    private void prevButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevButtonActionPerformed
-        if(page > 0){
-            page -= 1;
-            offset -= PAGE_SIZE;
-            setReportWindow(offset);
-            setPage(page);
-        }
-    }//GEN-LAST:event_prevButtonActionPerformed
-
-    private void nextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextButtonActionPerformed
-        if(page < numPages) {
-            page += 1;
-            offset += PAGE_SIZE;
-            setReportWindow(offset);
-            setPage(page);
-        }
-    }//GEN-LAST:event_nextButtonActionPerformed
   /**
      * Sets the listener for the OK button
      *
@@ -159,22 +77,16 @@ public class reportPanel extends javax.swing.JPanel {
     public void setjButton1ActionListener(ActionListener e){
        jButton1.addActionListener(e);
     }
-    private void setReportWindow(int offset)
+    private void setReportWindow(String report)
     {
-        jEditorPane1.setText(report.substring(offset, offset+PAGE_SIZE));
+        jEditorPane1.setText(report);
     }
     
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel currentLabel;
     private javax.swing.JButton jButton1;
     private javax.swing.JEditorPane jEditorPane1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JButton nextButton;
-    private javax.swing.JLabel ofLabel;
-    private javax.swing.JLabel pageLabel;
-    private javax.swing.JButton prevButton;
-    private javax.swing.JLabel totalLabel;
     // End of variables declaration//GEN-END:variables
 
 
