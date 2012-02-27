@@ -198,7 +198,7 @@ public class IngestMessage {
         if (source == null || subject == null) {
             throw new IllegalArgumentException("source and subject cannot be null");
         }
-        return new IngestMessage(ID, MessageType.ERROR, source, subject, null, details);
+        return new IngestMessage(ID, MessageType.ERROR, source, subject, details, null);
     }
     
     /**
@@ -213,7 +213,7 @@ public class IngestMessage {
         if (source == null || subject == null) {
             throw new IllegalArgumentException("source and subject cannot be null");
         }
-        return new IngestMessage(ID, MessageType.WARNING, source, subject, null, details);
+        return new IngestMessage(ID, MessageType.WARNING, source, subject, details, null);
     }
 
     /**
