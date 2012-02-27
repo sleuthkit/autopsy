@@ -68,7 +68,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
              StringBuilder nodeInstalled =  new StringBuilder("<h3>Installed Programs</h3>");
              StringBuilder nodeKeyword =  new StringBuilder("<h3>Keyword Search Hits</h3>");
              StringBuilder nodeHash =  new StringBuilder("<h3>Hashset Hits</h3>");
-            
+             
              for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
                 StringBuilder artifact = new StringBuilder("<p>Artifact");
                 Long objId = entry.getKey().getObjectID();
@@ -76,7 +76,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                 Long filesize = cont.getSize();
                 artifact.append(" ID: " + objId.toString());
                 artifact.append("<br /> Name: <strong>" +  cont.accept(new NameVisitor()) + "</strong>");
-                artifact.append("<br />Path: " + cont.accept(new PathVisitor());
+                artifact.append("<br />Path: " + cont.accept(new PathVisitor()));
                 artifact.append("<br /> Size: " + filesize.toString());
                 artifact.append("</p><ul style=\"list-style-type: none;\">");
                 
