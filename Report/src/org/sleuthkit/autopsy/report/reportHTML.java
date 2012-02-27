@@ -120,6 +120,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                     if(entry.getKey().getArtifactTypeID() == 10){
                          nodeHash.append(artifact);
                     } 
+             }
             //Add them back in order
             formatted_Report.append(nodeGen);
             formatted_Report.append(nodeWebBookmark);
@@ -132,7 +133,6 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             formatted_Report.append(nodeKeyword);
             formatted_Report.append(nodeHash); 
             //end of master loop
-            }
                 formatted_Report.append("</div></div></body></html>");
             }
             catch(Exception e)
