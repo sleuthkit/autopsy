@@ -63,7 +63,7 @@ abstract class AbstractContentChildren extends Keys<Object> {
     /**
      * Creates appropriate Node for each sub-class of Content
      */
-    static class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<AbstractNode> {
+    static class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<AbstractContentNode> {
         
         @Override
         public AbstractContentNode visit(Directory drctr) {
@@ -76,7 +76,7 @@ abstract class AbstractContentChildren extends Keys<Object> {
         }
 
         @Override
-        public AbstractNode visit(FileSystem fs) {
+        public AbstractContentNode visit(FileSystem fs) {
             return defaultVisit(fs);
         }
 
@@ -91,22 +91,22 @@ abstract class AbstractContentChildren extends Keys<Object> {
         }
 
         @Override
-        public AbstractNode visit(VolumeSystem vs) {
+        public AbstractContentNode visit(VolumeSystem vs) {
             return defaultVisit(vs);
         }
 
         @Override
-        public AbstractNode visit(BlackboardArtifact.ARTIFACT_TYPE a) {
+        public AbstractContentNode visit(BlackboardArtifact.ARTIFACT_TYPE a) {
             return defaultVisit(a);
         }
 
         @Override
-        public AbstractNode visit(BlackboardArtifact ba) {
+        public AbstractContentNode visit(BlackboardArtifact ba) {
             return defaultVisit(ba);
         }
 
         @Override
-        protected AbstractNode defaultVisit(SleuthkitVisitableItem di) {
+        protected AbstractContentNode defaultVisit(SleuthkitVisitableItem di) {
             throw new UnsupportedOperationException("No Node defined for the given DisplayableItem");
         }
     }

@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -40,7 +42,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getGenInfo() {
     }
     catch (Exception e)
     {
-        
+        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
     }
     
     return reportMap;
@@ -62,7 +64,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebHistory(
     }
     catch (Exception e)
     {
-        
+        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
     }
     
     return reportMap;
@@ -83,7 +85,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebCookie()
     }
     catch (Exception e)
     {
-        
+        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
     }
     
     return reportMap;
@@ -104,7 +106,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebBookmark
     }
     catch (Exception e)
     {
-        
+        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
     }
     
     return reportMap;
@@ -126,7 +128,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebDownload
     }
     catch (Exception e)
     {
-        
+        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
     }
     
     return reportMap;
@@ -148,7 +150,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getRecentObjec
     }
     catch (Exception e)
     {
-        
+        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
     }
     
     return reportMap;
@@ -170,7 +172,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getKeywordHit(
     }
     catch (Exception e)
     {
-        
+        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
     }
     
     return reportMap;
@@ -191,7 +193,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getHashHit() {
     }
     catch (Exception e)
     {
-        
+        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
     }
     
     return reportMap;

@@ -25,12 +25,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskException;
@@ -45,7 +47,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
 
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
-        super(Children.LEAF, Lookups.singleton(getAssociatedFile(artifact)));
+        super(Children.LEAF, Lookups.singleton(getAssociatedContent(artifact)));
         //super(Children.LEAF, Lookups.singleton(new ArtifactStringContent(artifact)));
         this.artifact = artifact;
         this.setName(Long.toString(artifact.getArtifactID()));
@@ -120,9 +122,9 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         return v.visit(this);
     }
     
-    public File getAssociatedFile(){
+    public Content getAssociatedContent(){
         try {
-            return artifact.getSleuthkitCase().getFileById(artifact.getObjectID());
+            return artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "SQL query threw exception", ex);
         } catch (TskException ex) {
@@ -131,32 +133,20 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         throw new IllegalArgumentException("Couldn't get file from database");
     }
     
-    public static File getAssociatedFile(BlackboardArtifact artifact){
+    public static Content getAssociatedContent(BlackboardArtifact artifact){
         try {
-            return artifact.getSleuthkitCase().getFileById(artifact.getObjectID());
+            return artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "SQL query threw exception", ex);
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Getting file failed", ex);
         }
         throw new IllegalArgumentException("Couldn't get file from database");
-    }
-    
-    public Directory getParentDirectory(){
-        try{
-            return getAssociatedFile().getParentDirectory();
-        } catch (TskException ex) {
-            logger.log(Level.WARNING, "File has no parent", ex);
-        }
-        throw new IllegalArgumentException("Couldn't get context");
     }
 
-    public FileNode getContentNode() {
-        return new FileNode(getAssociatedFile());
+    public Node getContentNode() {
+        return getAssociatedContent().accept(new AbstractContentChildren.CreateSleuthkitNodeVisitor());
     }
     
-    public DirectoryNode getContextNode() {
-        return new DirectoryNode(getParentDirectory());
-    }
     
 }

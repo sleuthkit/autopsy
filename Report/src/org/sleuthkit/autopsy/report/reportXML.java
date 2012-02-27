@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jdom.Comment;
 import org.jdom.Document;
 import org.jdom.Document.*;
@@ -19,7 +21,11 @@ import org.jdom.output.XMLOutputter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 public class reportXML {
     
@@ -59,11 +65,11 @@ public class reportXML {
          for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
             Element artifact = new Element("Artifact");
             Long objId = entry.getKey().getObjectID();
-          File file = skCase.getFileById(objId);
-            Long filesize = file.getSize();
+            Content cont = skCase.getContentById(objId);
+            Long filesize = cont.getSize();
             artifact.setAttribute("ID", objId.toString());
-          artifact.setAttribute("Name", file.getName().toString());
-         artifact.setAttribute("Size", filesize.toString());
+            artifact.setAttribute("Name", cont.accept(new NameVisitor()));
+            artifact.setAttribute("Size", filesize.toString());
             
             // Get all the attributes for this guy
              for (BlackboardAttribute tempatt : entry.getValue())
@@ -142,7 +148,30 @@ public class reportXML {
 
                 }   
     catch (Exception e){
-        
+        Logger.getLogger(reportXML.class.getName()).log(Level.INFO, "Exception occurred", e);
     }
   }
+    
+    private class NameVisitor extends ContentVisitor.Default<String> {
+
+        @Override
+        protected String defaultVisit(Content cntnt) {
+            throw new UnsupportedOperationException("Not supported for " + cntnt.toString());
+        }
+
+        @Override
+        public String visit(Directory dir) {
+            return dir.getName();
+        }
+
+        @Override
+        public String visit(Image img) {
+            return img.getName();
+        }
+
+        @Override
+        public String visit(File fil) {
+            return fil.getName();
+        }
+    }
 }

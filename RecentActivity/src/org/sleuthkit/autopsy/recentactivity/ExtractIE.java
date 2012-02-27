@@ -252,7 +252,7 @@ public class ExtractIE { // implements BrowserActivity {
                                       }
                                        
                                         // TODO: Need to fix this so we have the right obj_id
-                                        BlackboardArtifact bbart = tempDb.getFileById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+                                        BlackboardArtifact bbart = tempDb.getContentById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "Internet Explorer", realurl));
                                        

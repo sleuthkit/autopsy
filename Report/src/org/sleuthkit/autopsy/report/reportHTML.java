@@ -10,13 +10,21 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jdom.Comment;
 import org.jdom.Element;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.Volume;
 
 /**
  *
@@ -64,11 +72,11 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
              for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
                 String artifact = "<p>Artifact";
                 Long objId = entry.getKey().getObjectID();
-                File file = skCase.getFileById(objId);
-                Long filesize = file.getSize();
+                Content cont = skCase.getContentById(objId);
+                Long filesize = cont.getSize();
                 artifact += " ID: " + objId.toString();
-                artifact += "<br /> Name: <strong>" + file.getName().toString() + "</strong>";
-                artifact += "<br />Path: " + file.getParentPath();
+                artifact += "<br /> Name: <strong>" + cont.accept(new NameVisitor()) + "</strong>";
+                artifact += "<br />Path: " + cont.accept(new PathVisitor());
                 artifact += "<br /> Size: " + filesize.toString();
                 artifact += "</p><ul style=\"list-style-type: none;\">";
                 
@@ -131,9 +139,53 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             }
             catch(Exception e)
             {
-
+                Logger.getLogger(reportHTML.class.getName()).log(Level.INFO, "Exception occurred", e);
             }
         }
 
+    private class NameVisitor extends ContentVisitor.Default<String> {
 
+        @Override
+        protected String defaultVisit(Content cntnt) {
+            throw new UnsupportedOperationException("Not supported for " + cntnt.toString());
+        }
+
+        @Override
+        public String visit(Directory dir) {
+            return dir.getName();
+        }
+
+        @Override
+        public String visit(Image img) {
+            return img.getName();
+        }
+
+        @Override
+        public String visit(File fil) {
+            return fil.getName();
+        }
+    }
+    
+    private class PathVisitor extends ContentVisitor.Default<String> {
+        
+        @Override
+        protected String defaultVisit(Content cntnt) {
+            throw new UnsupportedOperationException("Not supported for " + cntnt.toString());
+        }
+        
+        @Override
+        public String visit(Directory dir) {
+            return dir.getParentPath();
+        }
+
+        @Override
+        public String visit(Image img) {
+            return img.getName();
+        }
+
+        @Override
+        public String visit(File fil) {
+            return fil.getParentPath();
+        }
+    }
 }

@@ -4,18 +4,23 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.logging.Level;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import org.openide.awt.ActionRegistration;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionID;
+import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.actions.CallableSystemAction;
+import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.coreutils.Log;
 
 @ActionID(category = "Tools",
@@ -25,10 +30,26 @@ id = "org.sleuthkit.autopsy.report.reportAction")
     @ActionReference(path = "Menu/Tools", position = 80)
 })
 @Messages("CTL_reportAction=Run Report")
-public final class reportAction implements ActionListener {
+public final class reportAction extends CallableSystemAction implements Presenter.Toolbar{
+    
+    private JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = "Report Filter";
+    
+    public reportAction() {
+        // set action of the toolbar button
+        toolbarButton.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                reportAction.this.actionPerformed(e);
+            }
+        });
+
+    }
+    
+    @Override
     public void actionPerformed(ActionEvent e) {
-         try {
+        try {
             
             // create the popUp window for it
             final JFrame frame = new JFrame(ACTION_NAME);
@@ -65,7 +86,42 @@ public final class reportAction implements ActionListener {
         }
     }
     
-    public void closeme(JFrame frame){
-       frame.dispose();
+    @Override
+    public void performAction() {
+        
+    }
+
+    @Override
+    public String getName() {
+        return ACTION_NAME;
+    }
+
+    @Override
+    public HelpCtx getHelpCtx() {
+        return HelpCtx.DEFAULT_HELP;
+    }
+    
+    /**
+     * Returns the toolbar component of this action
+     *
+     * @return component  the toolbar button
+     */
+    @Override
+    public Component getToolbarPresenter() {
+        //ImageIcon icon = new ImageIcon(getClass().getResource("close-icon.png"));
+        //toolbarButton.setIcon(icon);
+        toolbarButton.setText(this.getName());
+        return toolbarButton;
+    }
+
+    /**
+     * Set this action to be enabled/disabled
+     *
+     * @param value  whether to enable this action or not
+     */
+    @Override
+    public void setEnabled(boolean value){
+        super.setEnabled(value);
+        toolbarButton.setEnabled(value);
     }
 }
