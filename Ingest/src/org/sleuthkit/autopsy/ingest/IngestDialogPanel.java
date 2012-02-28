@@ -48,8 +48,6 @@ import org.sleuthkit.datamodel.Image;
  */
 public class IngestDialogPanel extends javax.swing.JPanel {
     
-    // The image that's just been added to the database
-    private Image image;
     private IngestManager manager = null;
     private List<IngestServiceAbstract> services;
     private String current;
@@ -70,12 +68,6 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         initComponents();
         customizeComponents();
     }
-    
-    void setImage(Image image) {
-        this.image = image;
-    }
-    
-    
     
     private void customizeComponents(){
         servicesTable.setModel(tableModel);
@@ -180,23 +172,12 @@ public class IngestDialogPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        startButton = new javax.swing.JButton();
-        closeButton = new javax.swing.JButton();
         freqSlider = new javax.swing.JSlider();
         freqSliderLabel = new javax.swing.JLabel();
         servicesScrollPane = new javax.swing.JScrollPane();
         servicesTable = new javax.swing.JTable();
         configurePane = new javax.swing.JLayeredPane();
         advancedButton = new javax.swing.JButton();
-
-        startButton.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.startButton.text")); // NOI18N
-        startButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                startButtonActionPerformed(evt);
-            }
-        });
-
-        closeButton.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.closeButton.text")); // NOI18N
 
         freqSlider.setMajorTickSpacing(5);
         freqSlider.setMaximum(30);
@@ -241,63 +222,44 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(startButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(closeButton))
-                    .addComponent(freqSliderLabel)
-                    .addComponent(freqSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(19, 19, 19)
+                        .addComponent(freqSliderLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(freqSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(configurePane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(advancedButton))
-                .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(6, 6, 6)
+                        .addComponent(configurePane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(advancedButton))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(configurePane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE)
+                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(freqSliderLabel)))
+                        .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(configurePane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(closeButton)
-                    .addComponent(startButton)
-                    .addComponent(advancedButton))
-                .addContainerGap())
+                    .addComponent(advancedButton)
+                    .addComponent(freqSliderLabel))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
-       
-        //pick the services
-        List<IngestServiceAbstract> servicesToStart = new ArrayList<IngestServiceAbstract>();
-        for (IngestServiceAbstract service : services) {
-            boolean serviceEnabled = serviceStates.get(service.getName());
-            if (serviceEnabled) {
-                servicesToStart.add(service);
-            }
-        }
-
-        if (!services.isEmpty() ) {
-            manager.execute(servicesToStart, image);
-        }
-        
-        //update ingest freq. refresh
-        if (freqSlider.isEnabled()) {
-            manager.setUpdateFrequency(freqSlider.getValue());
-        }
-    }//GEN-LAST:event_startButtonActionPerformed
 
     private void advancedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_advancedButtonActionPerformed
         AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog();
@@ -306,28 +268,13 @@ public class IngestDialogPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
-    private javax.swing.JButton closeButton;
     private javax.swing.JLayeredPane configurePane;
     private javax.swing.JSlider freqSlider;
     private javax.swing.JLabel freqSliderLabel;
     private javax.swing.JScrollPane servicesScrollPane;
     private javax.swing.JTable servicesTable;
-    private javax.swing.JButton startButton;
     // End of variables declaration//GEN-END:variables
 
-    public void setCloseButtonActionListener(ActionListener actionListener) {
-        closeButton.addActionListener(actionListener);
-    }
-    
-    public void setStartButtonActionListener(ActionListener actionListener) {
-        startButton.addActionListener(actionListener);
-    }
-    
-    public void setBothButtonActionListener(ActionListener actionListener) {
-        startButton.addActionListener(actionListener);
-        closeButton.addActionListener(actionListener);
-    }
-    
     private class ServicesTableModel extends AbstractTableModel {
 
         @Override
@@ -367,8 +314,24 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         public Class getColumnClass(int c) {
             return getValueAt(0, c).getClass();
         }
-        
-        
-        
+    }
+    
+    List<IngestServiceAbstract> getServicesToStart() {
+        List<IngestServiceAbstract> servicesToStart = new ArrayList<IngestServiceAbstract>();
+        for (IngestServiceAbstract service : services) {
+            boolean serviceEnabled = serviceStates.get(service.getName());
+            if (serviceEnabled) {
+                servicesToStart.add(service);
+            }
+        }
+        return servicesToStart;
+    }
+    
+    boolean freqSliderEnabled() {
+        return freqSlider.isEnabled();
+    }
+    
+    int sliderValue() {
+        return freqSlider.getValue();
     }
 }
