@@ -1,0 +1,11 @@
+Known issues and limitations
+
+We plan to address the following issues in future releases.
+
+Ingest:
+- Ingest can fail and cause unexpected behavior if "Add image" action is performed while ingest is running.
+
+Keyword search module:
+- Keyword search module does not currently search unallocated space,
+- Keyword search maximum size of files to be indexed and searched is 200MB,
+- Keyword search maximum size of unknown files to be searched is 10MB.
