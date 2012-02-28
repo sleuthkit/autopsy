@@ -175,7 +175,39 @@ public class KeywordSearchListsXML {
     List<String> getListNames() {
         return new ArrayList<String>(theLists.keySet());
     }
+    
+    /**
+     * return first list that contains the keyword
+     * @param keyword
+     * @return foudn list or null
+     */
+    KeywordSearchList getListWithKeyword(Keyword keyword) {
+        KeywordSearchList found = null;
+        for (KeywordSearchList list : theLists.values()) {
+            if (list.hasKeyword(keyword)) {
+                found = list;
+                break;
+            }
+        }
+        return found;
+    }
 
+    /**
+     * return first list that contains the keyword
+     * @param keyword
+     * @return foudn list or null
+     */
+    KeywordSearchList getListWithKeyword(String keyword) {
+        KeywordSearchList found = null;
+        for (KeywordSearchList list : theLists.values()) {
+            if (list.hasKeyword(keyword)) {
+                found = list;
+                break;
+            }
+        }
+        return found;
+    }
+    
     /**
      * get number of lists currently stored
      * @return number of lists currently stored
@@ -216,11 +248,13 @@ public class KeywordSearchListsXML {
         final Date now = new Date();
         if (curList == null) {
             theLists.put(name, new KeywordSearchList(name, now, now, useForIngest, newList, locked));
-            save();
+            if(!locked)
+                save();
             changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
         } else {
             theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, newList, locked));
-            save();
+            if(!locked)
+                save();
             replaced = true;
             changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
         }
@@ -306,7 +340,7 @@ public class KeywordSearchListsXML {
             for (String listName : theLists.keySet()) {
                 if(listName.equals("IP Addresses") || listName.equals("Email Addresses") ||
                         listName.equals("Phone Numbers") || listName.equals("URLs"))
-                    break;
+                    continue;
                 KeywordSearchList list = theLists.get(listName);
                 String created = dateFormatter.format(list.getDateCreated());
                 String modified = dateFormatter.format(list.getDateModified());
@@ -520,6 +554,19 @@ class KeywordSearchList {
 
     List<Keyword> getKeywords() {
         return keywords;
+    }
+    
+    boolean hasKeyword(Keyword keyword) {
+        return keywords.contains(keyword);
+    }
+    
+     boolean hasKeyword(String keyword) {
+        //note, this ignores isLiteral
+         for (Keyword k : keywords) {
+             if (k.getQuery().equals(keyword))
+                 return true;
+         }
+         return false;
     }
     
     Boolean isLocked() {

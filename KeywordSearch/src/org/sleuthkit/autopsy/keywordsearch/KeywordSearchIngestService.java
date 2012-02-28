@@ -61,6 +61,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private volatile boolean runTimer = false;
     private List<Keyword> keywords; //keywords to search
     private List<String> keywordLists; // lists currently being searched
+    private Map<String,String>keywordToList; //keyword to list name mapping
     //private final Object lock = new Object();
     private Thread timer;
     private Indexer indexer;
@@ -184,6 +185,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         keywords = new ArrayList<Keyword>();
         keywordLists = new ArrayList<String>();
+        keywordToList = new HashMap<String,String>();
 
         initKeywords();
 
@@ -292,12 +294,18 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         keywords.clear();
         keywordLists.clear();
+        keywordToList.clear();
 
         for (KeywordSearchList list : loader.getListsL()) {
+            String listName = list.getName();
             if (list.getUseForIngest()) {
-                keywordLists.add(list.getName());
+                keywordLists.add(listName);
             }
-            keywords.addAll(list.getKeywords());
+            for (Keyword keyword : list.getKeywords()) {
+                keywords.add(keyword);
+                keywordToList.put(keyword.getQuery(), listName);
+            }
+            
         }
     }
 
@@ -308,9 +316,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
 
         keywords.clear();
+        keywordToList.clear();
 
         for (String name : keywordLists) {
-            keywords.addAll(loader.getList(name).getKeywords());
+            for (Keyword k : loader.getList(name).getKeywords()) {
+                keywords.add(k);
+                keywordToList.put(k.getQuery(), name);
+            }
         }
     }
 
@@ -464,6 +476,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     return null;
                 }
                 final String queryStr = query.getQuery();
+                final String listName = keywordToList.get(queryStr);
 
                 //logger.log(Level.INFO, "Searching: " + queryStr);
 
@@ -514,7 +527,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                         if (this.isCancelled()) {
                             return null;
                         }
-                        Collection<KeywordWriteResult> written = del.writeToBlackBoard(hitFile);
+                        Collection<KeywordWriteResult> written = del.writeToBlackBoard(hitFile, listName);
                         for (KeywordWriteResult res : written) {
                             newArtifacts.add(res.getArtifact());
 
@@ -538,6 +551,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             //details
                             //hit
                             detailsSb.append("Keyword hit: ");
+                            detailsSb.append(attr.getValueString());
+                            detailsSb.append("<br />");
+                            //list
+                            detailsSb.append("List: ");
+                            attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID());
                             detailsSb.append(attr.getValueString());
                             detailsSb.append("<br />");
                             //regex

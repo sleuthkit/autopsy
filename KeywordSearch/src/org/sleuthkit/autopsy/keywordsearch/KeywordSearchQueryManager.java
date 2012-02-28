@@ -33,7 +33,6 @@ import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
@@ -192,10 +191,10 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
     }
     
     @Override
-    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit) {     
+    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {     
         Collection<KeywordWriteResult> ret = new ArrayList<KeywordWriteResult>();
          for (KeywordSearchQuery q : queryDelegates) {
-            ret.addAll(q.writeToBlackBoard(newFsHit));
+            ret.addAll(q.writeToBlackBoard(newFsHit, listName));
         }
         return ret;
     }
