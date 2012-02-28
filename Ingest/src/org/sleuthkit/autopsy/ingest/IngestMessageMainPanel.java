@@ -78,6 +78,8 @@ public class IngestMessageMainPanel extends JLayeredPane {
             }
         });
 
+        messagePanel.setOpaque(true);
+        detailsPanel.setOpaque(true);
         add(messagePanel, JLayeredPane.PALETTE_LAYER);
         add(detailsPanel, JLayeredPane.DEFAULT_LAYER);
         this.setOpaque(true);
