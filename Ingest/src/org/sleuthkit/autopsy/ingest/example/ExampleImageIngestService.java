@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest.example;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.sleuthkit.autopsy.ingest.ConfigurationInterface;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
@@ -124,13 +125,23 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     }
     
     @Override
-    public void userConfigure() {
-        
-    }
-
-    @Override
-    public boolean isConfigurable() {
+    public boolean hasSimpleConfiguration() {
         return false;
+    }
+    
+    @Override
+    public boolean hasAdvancedConfiguration() {
+        return false;
+    }
+    
+    @Override
+    public ConfigurationInterface getSimpleConfiguration() {
+        return null;
+    }
+    
+    @Override
+    public ConfigurationInterface getAdvancedConfiguration() {
+        return null;
     }
     
     @Override

@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.ingest.ConfigurationInterface;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -157,15 +158,28 @@ public class HashDbIngestService implements IngestServiceFsContent {
         return ServiceType.FsContent;
     }
     
-    
     @Override
-    public void userConfigure() {
-        SystemAction.get(HashDbMgmtAction.class).performAction();
+    public boolean hasSimpleConfiguration() {
+        return true;
     }
     
     @Override
-    public boolean isConfigurable() {
-        return true;
+    public boolean hasAdvancedConfiguration() {
+        return false;
+    }
+    
+    @Override
+    public ConfigurationInterface getSimpleConfiguration() {
+        try {
+            return new HashDbMgmtPanel(HashDbSettings.getHashDbSettings());
+        } catch(IOException ex) {
+            return null;
+        }
+    }
+    
+    @Override
+    public ConfigurationInterface getAdvancedConfiguration() {
+        return null;
     }
     
     @Override

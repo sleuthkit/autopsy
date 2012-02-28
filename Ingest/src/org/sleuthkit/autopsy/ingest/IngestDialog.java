@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Image;
@@ -91,7 +92,7 @@ public class IngestDialog extends JDialog {
         panel.setImage(image);
     }
     
-
+    
     /**
      * Closes the Ingest dialog
      */

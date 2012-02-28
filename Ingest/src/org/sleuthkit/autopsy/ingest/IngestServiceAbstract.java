@@ -59,15 +59,26 @@ public interface IngestServiceAbstract {
     public ServiceType getType();
     
     /**
-     * @return is this service configurable?
+     * @return does this service have a simple configuration?
      */
-    public boolean isConfigurable();
+    public boolean hasSimpleConfiguration();
     
     /**
-     * provides means for user to input service specific configuration options
+     * @return does this service have advanced configuration?
+     */
+    public boolean hasAdvancedConfiguration();
+    
+    /**
+     * provides means for user to input simple service configuration options
      * the new configuration is effective on next ingest
      */
-    public void userConfigure();
+    public ConfigurationInterface getSimpleConfiguration();
+    
+    /**
+     * provides means for user to input advanced service configuration options
+     * the new configuration is effective on next ingest
+     */
+    public ConfigurationInterface getAdvancedConfiguration();
     
     /**
      * A service can manage and use additional threads to perform some work in the background.

@@ -233,7 +233,7 @@ public class KeywordSearchListsXML {
     boolean addList(String name, List<Keyword> newList, boolean useForIngest) {
         KeywordSearchList curList = getList(name);
         if (curList == null) {
-            return addList(name, newList, false, false);
+            return addList(name, newList, useForIngest, false);
         } else {
             return addList(name, newList, curList.getUseForIngest(), false);
         }

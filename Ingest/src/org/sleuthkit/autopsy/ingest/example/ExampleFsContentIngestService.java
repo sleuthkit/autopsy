@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest.example;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.sleuthkit.autopsy.ingest.ConfigurationInterface;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -92,13 +93,23 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     }
     
     @Override
-    public void userConfigure() {
-        
-    }
-
-    @Override
-    public boolean isConfigurable() {
+    public boolean hasSimpleConfiguration() {
         return false;
+    }
+    
+    @Override
+    public boolean hasAdvancedConfiguration() {
+        return false;
+    }
+    
+    @Override
+    public ConfigurationInterface getSimpleConfiguration() {
+        return null;
+    }
+    
+    @Override
+    public ConfigurationInterface getAdvancedConfiguration() {
+        return null;
     }
     
     @Override

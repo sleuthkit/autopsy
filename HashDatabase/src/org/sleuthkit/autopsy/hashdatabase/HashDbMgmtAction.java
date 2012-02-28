@@ -56,6 +56,7 @@ class HashDbMgmtAction extends CallableSystemAction {
 
             // initialize panel with loaded settings
             final HashDbMgmtPanel panel = new HashDbMgmtPanel(hashDatabaseSettings);
+            panel.setPreferredSize(new Dimension(360, 300));
 
             // set action for the "Apply" button
             panel.setApplyButtonActionListener(new ActionListener() {
