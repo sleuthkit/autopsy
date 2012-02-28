@@ -176,6 +176,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void newListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newListButtonActionPerformed
+        KeywordSearchEditListPanel.getDefault().save();
         KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
         String listName = (String) JOptionPane.showInputDialog(null, "New keyword list name:", "New Keyword List", JOptionPane.PLAIN_MESSAGE, null, null, "");
         if (listName == null || listName.trim().equals("")) {
@@ -201,6 +202,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_newListButtonActionPerformed
 
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
+        KeywordSearchEditListPanel.getDefault().save();
         final String FEATURE_NAME = "Keyword List Import";
 
         JFileChooser chooser = new JFileChooser();
