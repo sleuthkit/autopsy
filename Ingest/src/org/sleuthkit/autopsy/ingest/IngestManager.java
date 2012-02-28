@@ -101,7 +101,7 @@ public class IngestManager {
         }
         return instance;
     }
-    
+
     void initUI() {
         ui = IngestMessageTopComponent.findInstance();
     }
@@ -130,8 +130,13 @@ public class IngestManager {
     void execute(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
         logger.log(Level.INFO, "Will enqueue number of images: " + images.size());
 
+        if (!isIngestRunning()) {
+            ui.clearMessages();
+        }
+
         queueWorker = new EnqueueWorker(services, images);
         queueWorker.execute();
+
         ui.restoreMessages();
         //logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + fsContentQueue.toString());
     }
@@ -164,10 +169,6 @@ public class IngestManager {
         logger.log(Level.INFO, "Image queue: " + this.imageQueue.toString());
         logger.log(Level.INFO, "File queue: " + this.fsContentQueue.toString());
 
-        if (! isIngestRunning()) {
-            ui.clearMessages();
-        }
-        
         //image ingesters
         // cycle through each image in the queue
         while (hasNextImage()) {
@@ -336,16 +337,15 @@ public class IngestManager {
     public boolean isServiceRunning(final IngestServiceAbstract service) {
 
         if (service.getType() == IngestServiceAbstract.ServiceType.FsContent) {
-         
+
             synchronized (queuesLock) {
-              if (fsContentQueue.hasServiceEnqueued((IngestServiceFsContent)service) ) {
-                  //has work enqueued, so running
-                  return true;
-              }
-              else {
-                  //not in the queue, but could still have bkg work running
-                  return service.hasBackgroundJobsRunning();
-              }
+                if (fsContentQueue.hasServiceEnqueued((IngestServiceFsContent) service)) {
+                    //has work enqueued, so running
+                    return true;
+                } else {
+                    //not in the queue, but could still have bkg work running
+                    return service.hasBackgroundJobsRunning();
+                }
             }
 
         } else {
@@ -568,7 +568,7 @@ public class IngestManager {
      */
     private static class FsContentPriotity {
 
-         enum Priority {
+        enum Priority {
 
             LOW, MEDIUM, HIGH
         };
@@ -713,8 +713,9 @@ public class IngestManager {
                         break;
                     }
                 }
-                if (found == true)
+                if (found == true) {
                     break;
+                }
             }
             return found;
         }
