@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest.example;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JPanel;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -62,8 +63,8 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     public void complete() {
         logger.log(Level.INFO, "complete()");
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
-        
-         //service specific cleanup due completion here
+
+        //service specific cleanup due completion here
     }
 
     @Override
@@ -82,7 +83,7 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
-        
+
         //service specific cleanup due interruption here
     }
 
@@ -90,17 +91,34 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     public ServiceType getType() {
         return ServiceType.FsContent;
     }
-    
+
     @Override
     public void userConfigure() {
-        
     }
 
     @Override
     public boolean isConfigurable() {
         return false;
     }
-    
+
+    @Override
+    public boolean isAdvancedConfigurable() {
+        return false;
+    }
+
+    @Override
+    public JPanel userConfigureAdvanced() {
+        return null;
+    }
+
+    @Override
+    public void userConfigureAdvancedSave() {
+    }
+
+    @Override
+    public void userConfigureSave() {
+    }
+
     @Override
     public boolean hasBackgroundJobsRunning() {
         return false;

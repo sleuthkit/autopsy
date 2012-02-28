@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -224,6 +225,26 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public boolean isConfigurable() {
         return true;
     }
+
+    @Override
+    public boolean isAdvancedConfigurable() {
+        return false;
+    }
+
+    @Override
+    public JPanel userConfigureAdvanced() {
+        return null;
+    }
+
+    @Override
+    public void userConfigureAdvancedSave() {
+    }
+
+    @Override
+    public void userConfigureSave() {
+    }
+    
+    
 
     @Override
     public boolean hasBackgroundJobsRunning() {

@@ -19,6 +19,8 @@
 
 package org.sleuthkit.autopsy.ingest;
 
+import javax.swing.JPanel;
+
 /**
  * Base interface for ingest services
  */
@@ -58,22 +60,62 @@ public interface IngestServiceAbstract {
      */
     public ServiceType getType();
     
-    /**
-     * @return is this service configurable?
-     */
-    public boolean isConfigurable();
-    
-    /**
-     * provides means for user to input service specific configuration options
-     * the new configuration is effective on next ingest
-     */
-    public void userConfigure();
-    
-    /**
+     /**
      * A service can manage and use additional threads to perform some work in the background.
      * This method provides insight to the manager if the service has truly completed its work or not.
      * @return true if any background threads/workers managed by this service are still running
      * false if all work has been done, or if background threads are not used by this service
      */
     public boolean hasBackgroundJobsRunning();
+    
+    
+    /**
+     * @return true if the service has basic configuration
+     */
+    public boolean isConfigurable();
+    
+    /**
+     * Provides basic module configuration to the user (available e.g. via the add image wizard)
+     * Only basic configuration should be exposed in this panel due to its size limitation
+     * More options, if any, should be available via userConfigureAdvanced()
+     * The module is responsible for preserving / saving its configuration state
+     * In addition, userConfigureSave() can be used
+     * 
+     * @return JPanel containing basic configuration widgets or null
+     */
+    //public JPanel userConfigure();
+    public void userConfigure();
+    
+    /**
+     * Opportunity for the module to save its configuration options from from the userConfigure() JPanel into the module
+     * This is invoked by the framework e.g. when configuration dialog is going out of scope
+     */
+    public void userConfigureSave();
+    
+    
+     /**
+     * @return does the service have advanced configuration panel
+     */
+    public boolean isAdvancedConfigurable();
+    
+    
+     /**
+     * Provides advanced module configuration to the user (available e.g. via the add image wizard)
+     * The module is responsible for preserving / saving its configuration state
+     * In addition, userConfigureAdvancedSave() can be used
+     * 
+     * @return JPanel containing basic configuration widgets or null
+     */
+    public JPanel userConfigureAdvanced();
+    
+    /**
+     * Opportunity for the module to save its configuration options from from the userConfigureAdvanced() JPanel into the module
+     * This is invoked by the framework e.g. when advanced configuration dialog is going out of scope
+     */
+    public void userConfigureAdvancedSave();
+    
+    
+    
+    
+   
 }

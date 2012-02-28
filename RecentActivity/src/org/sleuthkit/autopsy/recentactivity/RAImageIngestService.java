@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -67,22 +68,22 @@ public final class RAImageIngestService implements IngestServiceImage {
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
 
         ExtractAll ext = new ExtractAll();
-         Case currentCase = Case.getCurrentCase(); // get the most updated case
-         SleuthkitCase sCurrentCase = currentCase.getSleuthkitCase();
-           //long imageId = image.getId();
-         Collection<FileSystem> imageFS = sCurrentCase.getFileSystems(image);
-         List<String> fsIds = new LinkedList<String>();
-         for(FileSystem img : imageFS ){
-             Long tempID = img.getId();
-              fsIds.add(tempID.toString());
-         }
-         
+        Case currentCase = Case.getCurrentCase(); // get the most updated case
+        SleuthkitCase sCurrentCase = currentCase.getSleuthkitCase();
+        //long imageId = image.getId();
+        Collection<FileSystem> imageFS = sCurrentCase.getFileSystems(image);
+        List<String> fsIds = new LinkedList<String>();
+        for (FileSystem img : imageFS) {
+            Long tempID = img.getId();
+            fsIds.add(tempID.toString());
+        }
+
         try {
             //do the work for(FileSystem img : imageFS )
-         
-             ext.extractToBlackboard(controller, fsIds);
-          
-            
+
+            ext.extractToBlackboard(controller, fsIds);
+
+
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error extracting recent activity", e);
@@ -128,16 +129,34 @@ public final class RAImageIngestService implements IngestServiceImage {
     public ServiceType getType() {
         return ServiceType.Image;
     }
-    
+
     @Override
     public void userConfigure() {
     }
-    
+
     @Override
     public boolean isConfigurable() {
         return false;
     }
-    
+
+    @Override
+    public boolean isAdvancedConfigurable() {
+        return false;
+    }
+
+    @Override
+    public JPanel userConfigureAdvanced() {
+        return null;
+    }
+
+    @Override
+    public void userConfigureAdvancedSave() {
+    }
+
+    @Override
+    public void userConfigureSave() {
+    }
+
     @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
