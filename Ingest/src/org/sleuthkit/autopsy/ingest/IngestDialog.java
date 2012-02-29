@@ -79,18 +79,7 @@ public class IngestDialog extends JDialog {
             public void actionPerformed(ActionEvent e) {
                 
                 panel.save();
-                
-                //pick the services
-                List<IngestServiceAbstract> servicesToStart = panel.getServicesToStart();
-
-                if (!servicesToStart.isEmpty()) {
-                    manager.execute(servicesToStart, image);
-                }
-
-                //update ingest freq. refresh
-                if (panel.freqSliderEnabled()) {
-                    manager.setUpdateFrequency(panel.sliderValue());
-                }
+                panel.setImage(image);
                 panel.start();
                 close();
             }
