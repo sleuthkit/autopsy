@@ -67,34 +67,38 @@ public class AddImageVisualPanel3 extends javax.swing.JPanel {
         subtitleLabel = new javax.swing.JLabel();
         configPanel = new javax.swing.JPanel();
 
+        setPreferredSize(new java.awt.Dimension(569, 300));
+
         titleLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         titleLabel.setText(org.openide.util.NbBundle.getMessage(AddImageVisualPanel3.class, "AddImageVisualPanel3.titleLabel.text")); // NOI18N
 
         subtitleLabel.setText(org.openide.util.NbBundle.getMessage(AddImageVisualPanel3.class, "AddImageVisualPanel3.subtitleLabel.text")); // NOI18N
 
+        configPanel.setPreferredSize(new java.awt.Dimension(569, 255));
+
         javax.swing.GroupLayout configPanelLayout = new javax.swing.GroupLayout(configPanel);
         configPanel.setLayout(configPanelLayout);
         configPanelLayout.setHorizontalGroup(
             configPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 623, Short.MAX_VALUE)
+            .addGap(0, 596, Short.MAX_VALUE)
         );
         configPanelLayout.setVerticalGroup(
             configPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGap(0, 266, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(titleLabel)
-                .addContainerGap())
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(subtitleLabel)
-                .addContainerGap(186, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(titleLabel)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(subtitleLabel)))
+                .addContainerGap(159, Short.MAX_VALUE))
+            .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 596, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -103,7 +107,7 @@ public class AddImageVisualPanel3 extends javax.swing.JPanel {
                 .addGap(5, 5, 5)
                 .addComponent(subtitleLabel)
                 .addGap(18, 18, 18)
-                .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables

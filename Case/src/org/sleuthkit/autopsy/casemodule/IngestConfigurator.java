@@ -25,8 +25,26 @@ import org.sleuthkit.datamodel.Image;
  * Lookup interface for ingest configuration dialog
  */
 public interface IngestConfigurator {
+    /**
+     * get JPanel container with the configurator
+     * @return 
+     */
     JPanel getIngestConfigPanel();
+    
+    /**
+     * set image for the ingest
+     * @param image to enqueue to ingest
+     */
     void setImage(Image image);
+    
+    /**
+     * start ingest enqueing previously set image
+     */
     void start();
+    
+    /**
+     * save configuration of lastly selected service
+     */
+    void save();
     
 }

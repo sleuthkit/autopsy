@@ -44,9 +44,9 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
-    private Component component;
+    private Component component = null;
     
-    private Image newImage;
+    private Image newImage = null;
 
     /**
      * Get the visual component for the panel. In this template, the component
@@ -161,7 +161,10 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     public void storeSettings(WizardDescriptor settings) {
         //logger.log(Level.INFO, "storeSettings");
         
-        //start / enqueue ingest
+        //save previously selected config
+        ingestConfig.save();
+        
+        //start / enqueue ingest if next/finish pressed
         if (newImage != null) {
             ingestConfig.setImage(newImage);
             ingestConfig.start();
