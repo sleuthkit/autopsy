@@ -83,6 +83,7 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
 
         setPreferredSize(new java.awt.Dimension(300, 300));
 
+        listsTable.setBackground(new java.awt.Color(240, 240, 240));
         listsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
