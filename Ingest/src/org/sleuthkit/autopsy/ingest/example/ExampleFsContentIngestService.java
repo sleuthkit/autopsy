@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest.example;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JPanel;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -62,8 +63,8 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     public void complete() {
         logger.log(Level.INFO, "complete()");
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
-        
-         //service specific cleanup due completion here
+
+        //service specific cleanup due completion here
     }
 
     @Override
@@ -82,7 +83,7 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
-        
+
         //service specific cleanup due interruption here
     }
 
@@ -100,7 +101,7 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     public boolean hasAdvancedConfiguration() {
         return false;
     }
-    
+
     @Override
     public javax.swing.JPanel getSimpleConfiguration() {
         return null;
@@ -117,10 +118,10 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     }
     
     @Override
-    public void advancedConfigurationSave() {
+    public void saveAdvancedConfiguration() {
     }
     
     @Override
-    public void simpleConfigurationSave() {
+    public void saveSimpleConfiguration() {
     }
 }

@@ -89,7 +89,6 @@ public class LuceneQuery implements KeywordSearchQuery {
     public Collection<Term> getTerms() {
         return null;
     }
-    
 
     /**
      * Just perform the query and return result without updating the GUI
@@ -158,6 +157,14 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         String pathText = "Keyword query: " + query;
 
+        //get listname
+        String listName = "";
+        KeywordSearchList list = KeywordSearchListsXML.getCurrent().getListWithKeyword(query);
+        if (list != null) {
+            listName = list.getName();
+        }
+        final String theListName = listName;
+
         Node rootNode = new KeywordSearchNode(matches, query);
         Node filteredRootNode = new TableFilterNode(rootNode, true);
 
@@ -166,11 +173,12 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         //write to bb
         new Thread() {
+
             @Override
             public void run() {
                 Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
                 for (FsContent newHit : matches) {
-                    Collection<KeywordWriteResult> written = writeToBlackBoard(newHit);
+                    Collection<KeywordWriteResult> written = writeToBlackBoard(newHit, theListName);
                     for (KeywordWriteResult w : written) {
                         na.add(w.getArtifact());
                     }
@@ -187,7 +195,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit) {
+    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
 
         Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
@@ -228,6 +236,12 @@ public class LuceneQuery implements KeywordSearchQuery {
         try {
             //keyword
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", query));
+            //list
+            //list
+            if (listName == null) {
+                listName = "";
+            }
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID(), MODULE_NAME, "", listName));
             //bogus 
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
         } catch (Exception e) {

@@ -88,7 +88,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
             public String toString() {
                 return "Context";
             }
-        },}
+        },
+    }
     private Presentation presentation;
     private List<Keyword> queries;
     private Collection<KeyValue> things;
@@ -246,6 +247,14 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
             }
 
 
+            //get listname
+            String listName = "";
+            KeywordSearchList list = KeywordSearchListsXML.getCurrent().getListWithKeyword(tcq.getQueryString());
+            if (list != null) {
+                listName = list.getName();
+            }
+            final String theListName = listName;
+
             int resID = 0;
             final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
             final int numFsContents = fsContents.size();
@@ -262,13 +271,15 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                 toPopulate.add(new KeyValueContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped));
 
                 //write to bb
-                final boolean sendDataEvent = (cur == numFsContents-1?true:false); //send a single bulk notification after the last write
+                final boolean sendDataEvent = (cur == numFsContents - 1 ? true : false); //send a single bulk notification after the last write
                 new Thread() {
+
                     @Override
                     public void run() {
-                        Collection<KeywordWriteResult> written = tcq.writeToBlackBoard(f);
-                        for (KeywordWriteResult w : written)
+                        Collection<KeywordWriteResult> written = tcq.writeToBlackBoard(f, theListName);
+                        for (KeywordWriteResult w : written) {
                             na.add(w.getArtifact());
+                        }
                         if (sendDataEvent == true) {
                             IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
                         }

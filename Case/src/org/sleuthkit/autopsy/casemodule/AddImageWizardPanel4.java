@@ -20,33 +20,21 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
-import org.openide.util.Lookup;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitJNI;
 
 /**
- * The "Add Image" wizard panel3. Presents the
- * options to finish/cancel image-add and run ingest.
+ * The "Add Image" wizard panel4. Presents the
+ * options to add another image.
  */
-class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
+class AddImageWizardPanel4 implements WizardDescriptor.Panel<WizardDescriptor> {
 
-    private Logger logger = Logger.getLogger(AddImageWizardPanel3.class.getName());
-    
-    private IngestConfigurator ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
-   
-    
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
     private Component component;
-    
-    private Image newImage;
 
     /**
      * Get the visual component for the panel. In this template, the component
@@ -59,7 +47,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     @Override
     public Component getComponent() {
         if (component == null) {
-            component = new AddImageVisualPanel3(ingestConfig.getIngestConfigPanel());
+            component = new AddImageVisualPanel4();
         }
         return component;
     }
@@ -103,6 +91,8 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     @Override
     public final void addChangeListener(ChangeListener l) {
     }
+    
+    
 
     /**
      * Removes a listener to changes of the panel's validity.
@@ -113,7 +103,30 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     public final void removeChangeListener(ChangeListener l) {
     }
     
-  
+    /*
+    private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1); // or can use ChangeSupport in NB 6.0
+    public final void addChangeListener(ChangeListener l) {
+    synchronized (listeners) {
+    listeners.add(l);
+    }
+    }
+    public final void removeChangeListener(ChangeListener l) {
+    synchronized (listeners) {
+    listeners.remove(l);
+    }
+    }
+    protected final void fireChangeEvent() {
+    Iterator<ChangeListener> it;
+    synchronized (listeners) {
+    it = new HashSet<ChangeListener>(listeners).iterator();
+    }
+    ChangeEvent ev = new ChangeEvent(this);
+    while (it.hasNext()) {
+    it.next().stateChanged(ev);
+    }
+    }
+     */
+
     // You can use a settings object to keep track of state. Normally the
     // settings object will be the WizardDescriptor, so you can use
     // WizardDescriptor.getProperty & putProperty to store information entered
@@ -129,23 +142,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
-        //logger.log(Level.INFO, "readSettings, will commit image");
-        
-        if (newImage != null)
-            //already commited
-            return;
-        
-        if ((SleuthkitJNI.CaseDbHandle.AddImageProcess) settings.getProperty(AddImageAction.PROCESS_PROP) != null) {
-            // commit anything
-            try {
-                commitImage(settings);
-            } catch (Exception ex) {
-                // Log error/display warning
-                logger.log(Level.SEVERE, "Error adding image to case.", ex);
-            }
-        }else{
-            logger.log(Level.SEVERE, "Missing image process object");
-        }
+      
     }
 
     /**
@@ -159,47 +156,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        //logger.log(Level.INFO, "storeSettings");
-        
-        //start / enqueue ingest
-        if (newImage != null) {
-            ingestConfig.setImage(newImage);
-            ingestConfig.start();
-        }       
     }
     
     
-
-    /**
-     * Commit the finished AddImageProcess, and cancel the CleanupTask that
-     * would have reverted it.
-     * @param settings property set to get AddImageProcess and CleanupTask from
-     * @throws Exception if commit or adding the image to the case failed
-     */
-    private void commitImage(WizardDescriptor settings) throws Exception {
-        
-        String[] imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
-        String timezone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
-        boolean indexImage = (Boolean) settings.getProperty(AddImageAction.SOLR_PROP);
-        settings.putProperty(AddImageAction.IMAGEID_PROP, "");
-        SleuthkitJNI.CaseDbHandle.AddImageProcess process = (SleuthkitJNI.CaseDbHandle.AddImageProcess) settings.getProperty(AddImageAction.PROCESS_PROP);
-        
-        try {
-            long imageId = process.commit();
-            newImage = Case.getCurrentCase().addImage(imgPaths, imageId, timezone);
-            
-            if (indexImage) {
-                // Must use a Lookup here to prevent a circular dependency
-                // between Case and KeywordSearch...
-                Lookup.getDefault().lookup(AddImageAction.IndexImageTask.class).runTask(newImage);
-            }
-            settings.putProperty(AddImageAction.IMAGEID_PROP, imageId);
-        } finally {
-            // Can't bail and revert image add after commit, so disable image cleanup
-            // task
-            AddImageAction.CleanupTask cleanupImage = (AddImageAction.CleanupTask) settings.getProperty(AddImageAction.IMAGECLEANUPTASK_PROP);
-            cleanupImage.disable();
-            settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, null);
-        }
-    }
 }

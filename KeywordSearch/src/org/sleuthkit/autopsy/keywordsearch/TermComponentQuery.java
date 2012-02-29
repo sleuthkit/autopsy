@@ -154,7 +154,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit) {
+    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
 
         Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
@@ -197,6 +197,12 @@ public class TermComponentQuery implements KeywordSearchQuery {
                 attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", termsQuery));
                 //regex match
                 attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", regexMatch));
+                //list
+                if (listName == null) {
+                    listName = "";
+                }
+                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID(), MODULE_NAME, "", listName));
+                
             } catch (Exception e) {
                 logger.log(Level.INFO, "Error adding bb attribute", e);
             }

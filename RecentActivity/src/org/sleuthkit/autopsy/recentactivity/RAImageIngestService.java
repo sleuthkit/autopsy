@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -37,7 +38,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.FileSystem;
 
 /**
- * Example implementation of an image ingest service 
+ * Recent activity image ingest service 
  * 
  */
 public final class RAImageIngestService implements IngestServiceImage {
@@ -67,22 +68,22 @@ public final class RAImageIngestService implements IngestServiceImage {
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
 
         ExtractAll ext = new ExtractAll();
-         Case currentCase = Case.getCurrentCase(); // get the most updated case
-         SleuthkitCase sCurrentCase = currentCase.getSleuthkitCase();
-           //long imageId = image.getId();
-         Collection<FileSystem> imageFS = sCurrentCase.getFileSystems(image);
-         List<String> fsIds = new LinkedList<String>();
-         for(FileSystem img : imageFS ){
-             Long tempID = img.getId();
-              fsIds.add(tempID.toString());
-         }
-         
+        Case currentCase = Case.getCurrentCase(); // get the most updated case
+        SleuthkitCase sCurrentCase = currentCase.getSleuthkitCase();
+        //long imageId = image.getId();
+        Collection<FileSystem> imageFS = sCurrentCase.getFileSystems(image);
+        List<String> fsIds = new LinkedList<String>();
+        for (FileSystem img : imageFS) {
+            Long tempID = img.getId();
+            fsIds.add(tempID.toString());
+        }
+
         try {
             //do the work for(FileSystem img : imageFS )
-         
-             ext.extractToBlackboard(controller, fsIds);
-          
-            
+
+            ext.extractToBlackboard(controller, fsIds);
+
+
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error extracting recent activity", e);
@@ -128,8 +129,8 @@ public final class RAImageIngestService implements IngestServiceImage {
     public ServiceType getType() {
         return ServiceType.Image;
     }
-    
-    @Override
+   
+     @Override
     public boolean hasSimpleConfiguration() {
         return false;
     }
@@ -138,7 +139,7 @@ public final class RAImageIngestService implements IngestServiceImage {
     public boolean hasAdvancedConfiguration() {
         return false;
     }
-    
+
     @Override
     public javax.swing.JPanel getSimpleConfiguration() {
         return null;
@@ -150,11 +151,11 @@ public final class RAImageIngestService implements IngestServiceImage {
     }
     
     @Override
-    public void advancedConfigurationSave() {
+    public void saveAdvancedConfiguration() {
     }
     
     @Override
-    public void simpleConfigurationSave() {
+    public void saveSimpleConfiguration() {
     }
     
     @Override

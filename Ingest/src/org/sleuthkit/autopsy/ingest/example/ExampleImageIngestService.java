@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.ingest.example;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -122,8 +121,8 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     public ServiceType getType() {
         return ServiceType.Image;
     }
-    
-    @Override
+
+     @Override
     public boolean hasSimpleConfiguration() {
         return false;
     }
@@ -132,7 +131,7 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     public boolean hasAdvancedConfiguration() {
         return false;
     }
-    
+
     @Override
     public javax.swing.JPanel getSimpleConfiguration() {
         return null;
@@ -149,10 +148,10 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     }
     
     @Override
-    public void advancedConfigurationSave() {
+    public void saveAdvancedConfiguration() {
     }
     
     @Override
-    public void simpleConfigurationSave() {
+    public void saveSimpleConfiguration() {
     }
 }

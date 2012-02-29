@@ -23,17 +23,11 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -43,15 +37,16 @@ public class IngestDialog extends JDialog {
     
     private static final String TITLE = "Ingest Modules";
     private static Dimension DIMENSIONS = new Dimension(300, 300);
-    private IngestDialogPanel panel = new IngestDialogPanel();
     private Image image = null;
     private IngestManager manager = null;
+    private IngestDialogPanel panel = null;
     
     private static Logger logger = Logger.getLogger(IngestDialog.class.getName());
 
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
         this.manager = IngestManager.getDefault();
+        panel = IngestDialogPanel.getDefault();
     }
     
     public IngestDialog(){
@@ -96,6 +91,7 @@ public class IngestDialog extends JDialog {
                 if (panel.freqSliderEnabled()) {
                     manager.setUpdateFrequency(panel.sliderValue());
                 }
+                panel.start();
                 close();
             }
         });

@@ -21,12 +21,10 @@ package org.sleuthkit.autopsy.ingest;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
@@ -208,16 +206,6 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
                     manager.stopAll();
                     //clear inbox 
                     clearMessages();
-                } else if (evt.getPropertyName().equals(Case.CASE_ADD_IMAGE)) {
-                    final Image image = (Image) evt.getNewValue();
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            displayIngestDialog(image);
-                        }
-                    });
-
                 }
             }
         });
@@ -267,9 +255,11 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
 
     @Override
     public void displayIngestDialog(final Image image) {
+        /*
         final IngestDialog ingestDialog = new IngestDialog();
         ingestDialog.setImage(image);
-        ingestDialog.display();
+        ingestDialog.display();    
+         */
 
     }
 

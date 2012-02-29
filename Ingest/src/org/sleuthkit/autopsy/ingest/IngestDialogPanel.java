@@ -17,11 +17,7 @@
  * limitations under the License.
  */
 
-/*
- * IngestDialogPanel.java
- *
- * Created on Feb 1, 2012, 3:02:15 PM
- */
+
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.event.ActionEvent;
@@ -33,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -40,28 +37,41 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
+import org.sleuthkit.datamodel.Image;
 
 /**
- *
- * @author dfickling
+ * main configuration panel for all ingest services, reusable JPanel component
  */
-public class IngestDialogPanel extends javax.swing.JPanel {
+public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfigurator {
     
     private IngestManager manager = null;
     private List<IngestServiceAbstract> services;
     private IngestServiceAbstract currentService;
-    private JLabel defaultLabel;
     private Map<String, Boolean> serviceStates;
     private ServicesTableModel tableModel;
     private static final Logger logger = Logger.getLogger(IngestDialogPanel.class.getName());
 
+    
+    // The image that's just been added to the database
+     private Image image;
+     
+    private static IngestDialogPanel instance = null;
+
     /** Creates new form IngestDialogPanel */
-    IngestDialogPanel() {
+    private IngestDialogPanel() {
         tableModel = new ServicesTableModel();
         services = new ArrayList<IngestServiceAbstract>();
         serviceStates = new HashMap<String, Boolean>();
         initComponents();
         customizeComponents();
+    }
+    
+    synchronized static IngestDialogPanel getDefault() {
+        if (instance == null) {
+            instance = new IngestDialogPanel();
+        }
+        return instance;
     }
     
     private void customizeComponents(){
@@ -117,7 +127,7 @@ public class IngestDialogPanel extends javax.swing.JPanel {
                 ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
                 if (!listSelectionModel.isSelectionEmpty()) {
                     if(currentService != null && currentService.hasSimpleConfiguration())
-                        currentService.simpleConfigurationSave();
+                        currentService.saveSimpleConfiguration();
                     int index = listSelectionModel.getMinSelectionIndex();
                     currentService = services.get(index);
                     reloadSimpleConfiguration();
@@ -234,7 +244,7 @@ public class IngestDialogPanel extends javax.swing.JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 dialog.close();
-                currentService.advancedConfigurationSave();
+                currentService.saveAdvancedConfiguration();
                 reloadSimpleConfiguration();
             }
             
@@ -327,7 +337,33 @@ public class IngestDialogPanel extends javax.swing.JPanel {
      * 
      */
     void save() {
-        if(currentService != null)
-            currentService.simpleConfigurationSave();
+        if (currentService != null) {
+            currentService.saveSimpleConfiguration();
+        }
+    }
+
+    @Override
+    public JPanel getIngestConfigPanel() {
+        return this;
+    }
+    
+    @Override
+    public void setImage(Image image) {
+        this.image = image;
+    }
+
+    @Override
+    public void start() {
+        //pick the services
+        List<IngestServiceAbstract> servicesToStart = getServicesToStart();
+
+        if (!servicesToStart.isEmpty()) {
+            manager.execute(servicesToStart, image);
+        }
+
+        //update ingest freq. refresh
+        if (freqSlider.isEnabled()) {
+            manager.setUpdateFrequency(freqSlider.getValue());
+        }
     }
 }

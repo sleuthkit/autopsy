@@ -175,7 +175,39 @@ public class KeywordSearchListsXML {
     List<String> getListNames() {
         return new ArrayList<String>(theLists.keySet());
     }
+    
+    /**
+     * return first list that contains the keyword
+     * @param keyword
+     * @return found list or null
+     */
+    KeywordSearchList getListWithKeyword(Keyword keyword) {
+        KeywordSearchList found = null;
+        for (KeywordSearchList list : theLists.values()) {
+            if (list.hasKeyword(keyword)) {
+                found = list;
+                break;
+            }
+        }
+        return found;
+    }
 
+    /**
+     * return first list that contains the keyword
+     * @param keyword
+     * @return found list or null
+     */
+    KeywordSearchList getListWithKeyword(String keyword) {
+        KeywordSearchList found = null;
+        for (KeywordSearchList list : theLists.values()) {
+            if (list.hasKeyword(keyword)) {
+                found = list;
+                break;
+            }
+        }
+        return found;
+    }
+    
     /**
      * get number of lists currently stored
      * @return number of lists currently stored
@@ -522,6 +554,19 @@ class KeywordSearchList {
 
     List<Keyword> getKeywords() {
         return keywords;
+    }
+    
+    boolean hasKeyword(Keyword keyword) {
+        return keywords.contains(keyword);
+    }
+    
+     boolean hasKeyword(String keyword) {
+        //note, this ignores isLiteral
+         for (Keyword k : keywords) {
+             if (k.getQuery().equals(keyword))
+                 return true;
+         }
+         return false;
     }
     
     Boolean isLocked() {

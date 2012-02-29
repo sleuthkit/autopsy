@@ -58,6 +58,15 @@ public interface IngestServiceAbstract {
      */
     public ServiceType getType();
     
+     /**
+     * A service can manage and use additional threads to perform some work in the background.
+     * This method provides insight to the manager if the service has truly completed its work or not.
+     * @return true if any background threads/workers managed by this service are still running
+     * false if all work has been done, or if background threads are not used by this service
+     */
+    public boolean hasBackgroundJobsRunning();
+    
+    
     /**
      * @return does this service have a simple configuration?
      */
@@ -68,34 +77,34 @@ public interface IngestServiceAbstract {
      */
     public boolean hasAdvancedConfiguration();
     
-    /**
-     * provides means for user to input simple service configuration options
-     * the new configuration is effective on next ingest
-     */
-    public javax.swing.JPanel getSimpleConfiguration();
-    
-    /**
-     * provides means for user to input advanced service configuration options
-     * the new configuration is effective on next ingest
-     */
-    public javax.swing.JPanel getAdvancedConfiguration();
-
     /**	
      * Opportunity for the module to save its configuration options from from the getSimpleConfiguration() JPanel into the module
      * This is invoked by the framework e.g. when simple configuration panel is going out of scope
      */
-    public void simpleConfigurationSave();
+    public void saveSimpleConfiguration();
 
     /** Opportunity for the module to save its configuration options from from the getAdvancedConfiguration() JPanel into the module
      * This is invoked by the framework e.g. when advanced configuration dialog is going out of scope	
      */
-    public void advancedConfigurationSave();
+    public void saveAdvancedConfiguration();
 
     /**
-     * A service can manage and use additional threads to perform some work in the background.
-     * This method provides insight to the manager if the service has truly completed its work or not.
-     * @return true if any background threads/workers managed by this service are still running
-     * false if all work has been done, or if background threads are not used by this service
+     * Provides basic module configuration to the user (available e.g. via the add image wizard)
+     * Only basic configuration should be exposed in this panel due to its size limitation
+     * More options, if any, should be available via userConfigureAdvanced()
+     * The module is responsible for preserving / saving its configuration state
+     * In addition, userConfigureSave() can be used
+     * 
+     * @return JPanel containing basic configuration widgets or null
      */
-    public boolean hasBackgroundJobsRunning();
+    public javax.swing.JPanel getSimpleConfiguration();
+    
+     /**
+     * Provides advanced module configuration to the user (available e.g. via the add image wizard)
+     * The module is responsible for preserving / saving its configuration state
+     * In addition, userConfigureAdvancedSave() can be used
+     * 
+     * @return JPanel containing basic configuration widgets or null
+     */
+    public javax.swing.JPanel getAdvancedConfiguration();
 }

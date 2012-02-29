@@ -25,13 +25,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
@@ -61,6 +61,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private volatile boolean runTimer = false;
     private List<Keyword> keywords; //keywords to search
     private List<String> keywordLists; // lists currently being searched
+    private Map<String, String> keywordToList; //keyword to list name mapping
     //private final Object lock = new Object();
     private Thread timer;
     private Indexer indexer;
@@ -77,10 +78,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         "gz", "tgz", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt",
         "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
         "pst", "xml", "class"};
+   
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,
+    };
     private Map<Long, IngestStatus> ingestStatus;
     private Map<String, List<FsContent>> reportedHits; //already reported hits
 
@@ -184,6 +187,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         keywords = new ArrayList<Keyword>();
         keywordLists = new ArrayList<String>();
+        keywordToList = new HashMap<String, String>();
 
         initKeywords();
 
@@ -234,12 +238,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     }
     
     @Override
-    public void advancedConfigurationSave() {
+    public void saveAdvancedConfiguration() {
         KeywordSearchConfigurationPanel.getDefault().editListPanel.save();
     }
     
     @Override
-    public void simpleConfigurationSave() {
+    public void saveSimpleConfiguration() {
     }
 
     @Override
@@ -311,12 +315,18 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         keywords.clear();
         keywordLists.clear();
+        keywordToList.clear();
 
         for (KeywordSearchList list : loader.getListsL()) {
+            String listName = list.getName();
             if (list.getUseForIngest()) {
-                keywordLists.add(list.getName());
+                keywordLists.add(listName);
             }
-            keywords.addAll(list.getKeywords());
+            for (Keyword keyword : list.getKeywords()) {
+                keywords.add(keyword);
+                keywordToList.put(keyword.getQuery(), listName);
+            }
+
         }
     }
 
@@ -327,9 +337,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
 
         keywords.clear();
+        keywordToList.clear();
 
         for (String name : keywordLists) {
-            keywords.addAll(loader.getList(name).getKeywords());
+            for (Keyword k : loader.getList(name).getKeywords()) {
+                keywords.add(k);
+                keywordToList.put(k.getQuery(), name);
+            }
         }
     }
 
@@ -483,6 +497,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     return null;
                 }
                 final String queryStr = query.getQuery();
+                final String listName = keywordToList.get(queryStr);
 
                 //logger.log(Level.INFO, "Searching: " + queryStr);
 
@@ -533,7 +548,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                         if (this.isCancelled()) {
                             return null;
                         }
-                        Collection<KeywordWriteResult> written = del.writeToBlackBoard(hitFile);
+                        Collection<KeywordWriteResult> written = del.writeToBlackBoard(hitFile, listName);
                         for (KeywordWriteResult res : written) {
                             newArtifacts.add(res.getArtifact());
 
@@ -557,6 +572,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             //details
                             //hit
                             detailsSb.append("Keyword hit: ");
+                            detailsSb.append(attr.getValueString());
+                            detailsSb.append("<br />");
+                            //list
+                            detailsSb.append("List: ");
+                            attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID());
                             detailsSb.append(attr.getValueString());
                             detailsSb.append("<br />");
                             //regex
