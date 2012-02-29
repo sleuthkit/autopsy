@@ -51,7 +51,7 @@ public class AddImageVisualPanel3 extends javax.swing.JPanel {
      */
     @Override
     public String getName() {
-        return "Ingest";
+        return "Ingest Image";
     }
 
     /** This method is called from within the constructor to

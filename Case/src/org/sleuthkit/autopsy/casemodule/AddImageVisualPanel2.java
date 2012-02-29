@@ -45,7 +45,7 @@ final class AddImageVisualPanel2 extends JPanel {
      */
     @Override
     public String getName() {
-        return "Create Database";
+        return "Add Image To Database";
     }
 
     public JProgressBar getCrDbProgressBar() {
