@@ -65,7 +65,7 @@ public class KeywordSearchConfigurationDialog extends javax.swing.JDialog {
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
         
-        applyButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        applyButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         
          // set action for the "Apply" button
             applyButton.addActionListener(new ActionListener() {

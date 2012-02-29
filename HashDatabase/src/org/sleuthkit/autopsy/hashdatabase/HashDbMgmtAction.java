@@ -65,7 +65,7 @@ class HashDbMgmtAction extends CallableSystemAction {
 
             applyButton = new JButton();
             applyButton.setText("Apply");
-            applyButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
+            applyButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
             // set action for the "Apply" button
             applyButton.addActionListener(new ActionListener() {
