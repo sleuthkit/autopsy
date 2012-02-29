@@ -38,14 +38,12 @@ public class IngestDialog extends JDialog {
     private static final String TITLE = "Ingest Modules";
     private static Dimension DIMENSIONS = new Dimension(300, 300);
     private Image image = null;
-    private IngestManager manager = null;
     private IngestDialogPanel panel = null;
     
     private static Logger logger = Logger.getLogger(IngestDialog.class.getName());
 
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
-        this.manager = IngestManager.getDefault();
         panel = IngestDialogPanel.getDefault();
     }
     
@@ -88,7 +86,6 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                panel.setImage(image);
                 panel.save();
                 close();
             }
