@@ -88,6 +88,7 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+                panel.setImage(image);
                 panel.save();
                 close();
             }
