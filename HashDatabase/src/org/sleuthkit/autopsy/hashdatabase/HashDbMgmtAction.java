@@ -18,19 +18,21 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.logging.Level;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
@@ -51,15 +53,22 @@ class HashDbMgmtAction extends CallableSystemAction {
             HashDbSettings hashDatabaseSettings = HashDbSettings.getHashDbSettings();
 
             // create the popUp window for it
-            final JFrame frame = new JFrame(ACTION_NAME);
+            JFrame frame = new JFrame(ACTION_NAME);
             final JDialog popUpWindow = new JDialog(frame, ACTION_NAME, true); // to make the popUp Window to be modal
-
+            JButton applyButton;
+            BoxLayout layout = new BoxLayout(popUpWindow.getContentPane(), BoxLayout.PAGE_AXIS);
+            popUpWindow.getContentPane().setLayout(layout);
             // initialize panel with loaded settings
-            final HashDbMgmtPanel panel = new HashDbMgmtPanel(hashDatabaseSettings);
-            panel.setPreferredSize(new Dimension(360, 300));
+            final HashDbMgmtPanel panel = HashDbMgmtPanel.getDefault();
+            //panel.setPreferredSize(new Dimension(360, 300));
+            panel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            applyButton = new JButton();
+            applyButton.setText("Apply");
+            applyButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
 
             // set action for the "Apply" button
-            panel.setApplyButtonActionListener(new ActionListener() {
+            applyButton.addActionListener(new ActionListener() {
 
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -79,6 +88,7 @@ class HashDbMgmtAction extends CallableSystemAction {
 
             // add the panel to the popup window
             popUpWindow.add(panel);
+            popUpWindow.add(applyButton);
             popUpWindow.pack();
             popUpWindow.setResizable(false);
 

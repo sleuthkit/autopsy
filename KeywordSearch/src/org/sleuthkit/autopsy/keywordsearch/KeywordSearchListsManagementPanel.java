@@ -54,7 +54,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
     private static KeywordSearchListsManagementPanel instance = null;
     
     /** Creates new form KeywordSearchListImportExportForm */
-    public KeywordSearchListsManagementPanel() {
+    private KeywordSearchListsManagementPanel() {
         tableModel = new KeywordListTableModel();
         initComponents();
         customizeComponents();

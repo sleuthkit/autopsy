@@ -24,17 +24,23 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.awt.event.ActionListener;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
 
 /**
  *
  * @author dfickling
  */
 public class AdvancedConfigurationDialog extends javax.swing.JDialog {
+    private JButton applyButton = new JButton("Apply");
 
     /** Creates new form AdvancedConfigurationDialog */
     public AdvancedConfigurationDialog() {
@@ -52,8 +58,14 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
 
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-        this.setLayout(new BorderLayout());
+        
+        this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.PAGE_AXIS));
+        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        applyButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        
         this.add(panel);
+        this.add(new JSeparator(SwingConstants.HORIZONTAL));
+        this.add(applyButton);
         this.pack();
         this.setVisible(true);
     }
@@ -85,4 +97,12 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
+
+    void addApplyButtonListener(ActionListener l) {
+        this.applyButton.addActionListener(l);
+    }
+    
+    void close() {
+        this.setVisible(false);
+    }
 }

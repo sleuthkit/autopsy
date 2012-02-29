@@ -28,16 +28,18 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.border.EmptyBorder;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.sleuthkit.autopsy.coreutils.Log;
-import org.sleuthkit.autopsy.ingest.ConfigurationInterface;
 
 /**
  * Panel for displaying and editing the Hash Database settings.
  * @author pmartel
  */
-class HashDbMgmtPanel extends ConfigurationInterface {
+class HashDbMgmtPanel extends javax.swing.JPanel {
 
     private HashDbSettings settings;
+    private static HashDbMgmtPanel instance;
     // text of panel for each database
     private static final String INTRO_TEXT1 = "Hash lookups are conducted when ingest is run.";
     private static final String INTRO_TEXT2 = "Lookup results can be found using the File Search feature.";
@@ -49,7 +51,6 @@ class HashDbMgmtPanel extends ConfigurationInterface {
     private JLabel introText2;
     private HashDbPanel NSRLPanel;
     private HashDbPanel knownBadPanel;
-    private JButton applyButton;
 
     /**
      * 
@@ -60,13 +61,15 @@ class HashDbMgmtPanel extends ConfigurationInterface {
 
         initComponents();
     }
-
-    /**
-     * Sets a listener for the Apply button
-     * @param e  The action listener
-     */
-    void setApplyButtonActionListener(ActionListener e) {
-        this.applyButton.addActionListener(e);
+    
+    static HashDbMgmtPanel getDefault() {
+        if (instance == null)
+            try {
+                instance = new HashDbMgmtPanel(HashDbSettings.getHashDbSettings());
+            } catch (IOException ex) {
+                Log.get(HashDbMgmtPanel.class).log(Level.WARNING, "Couldn't get Hash DB settings", ex);
+            }
+        return instance;
     }
 
     /**
@@ -106,10 +109,6 @@ class HashDbMgmtPanel extends ConfigurationInterface {
         NSRLPanel = new HashDbPanel(this.settings.getNSRLDatabase(), HashDbMgmtPanel.NSRL_NAME, HashDbMgmtPanel.NSRL_DESC);
         knownBadPanel = new HashDbPanel(this.settings.getKnownBadDatabase(), HashDbMgmtPanel.KNOWN_BAD_NAME, HashDbMgmtPanel.KNOWN_BAD_DESC);
 
-        applyButton = new JButton();
-        applyButton.setText("OK");
-        applyButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-
         introText1 = new JLabel();
         introText1.setText(INTRO_TEXT1);
         introText1.setBorder(new EmptyBorder(10, 10, 5, 10));
@@ -128,16 +127,19 @@ class HashDbMgmtPanel extends ConfigurationInterface {
         this.add(introText2);
         this.add(NSRLPanel);
         this.add(knownBadPanel);
-        this.add(applyButton);
         this.add(Box.createRigidArea(new Dimension(0, 10)));
     }
 
-    @Override
-    public void save(){
-        try {
-            saveSettings();
-        } catch (IOException ex){
-            
+    void save(){
+        if (indexesExist()) {
+            try {
+                saveSettings();
+            } catch (IOException ex) {
+                Log.get(HashDbMgmtPanel.class).log(Level.WARNING, "Couldn't save hash database settings.", ex);
+            }
+        } else {
+            NotifyDescriptor d = new NotifyDescriptor.Message("All selected databases must have indexes.", NotifyDescriptor.INFORMATION_MESSAGE);
+            DialogDisplayer.getDefault().notify(d);
         }
     }
 }

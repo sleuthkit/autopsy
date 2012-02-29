@@ -141,7 +141,7 @@ class HashDbPanel extends javax.swing.JPanel {
         databaseDetailsLabel = new javax.swing.JLabel();
         fileSelectButton = new javax.swing.JButton();
 
-        setPreferredSize(new java.awt.Dimension(300, 116));
+        setPreferredSize(new java.awt.Dimension(360, 116));
 
         databaseNameLabel.setFont(databaseNameLabel.getFont().deriveFont(databaseNameLabel.getFont().getStyle() | java.awt.Font.BOLD, databaseNameLabel.getFont().getSize()+2));
         databaseNameLabel.setText(databaseName());
@@ -195,10 +195,10 @@ class HashDbPanel extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(indexStatusLabel))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(databasePathField, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
+                                .addComponent(databasePathField, javax.swing.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(fileSelectButton))
-                            .addComponent(databaseDetailsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 270, Short.MAX_VALUE))))
+                            .addComponent(databaseDetailsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(

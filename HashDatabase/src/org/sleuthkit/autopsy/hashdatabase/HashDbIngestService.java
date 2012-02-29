@@ -27,7 +27,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.ConfigurationInterface;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -52,6 +51,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
     private static int messageId = 0;
     // Whether or not to do hash lookups (only set to true if there are dbs set)
     private boolean process;
+    private HashDbMgmtPanel settingsPanel;
     String nsrlDbPath;
     String knownBadDbPath;
     
@@ -160,26 +160,31 @@ public class HashDbIngestService implements IngestServiceFsContent {
     
     @Override
     public boolean hasSimpleConfiguration() {
-        return true;
-    }
-    
-    @Override
-    public boolean hasAdvancedConfiguration() {
         return false;
     }
     
     @Override
-    public ConfigurationInterface getSimpleConfiguration() {
-        try {
-            return new HashDbMgmtPanel(HashDbSettings.getHashDbSettings());
-        } catch(IOException ex) {
-            return null;
-        }
+    public boolean hasAdvancedConfiguration() {
+        return true;
+    }
+
+    @Override
+    public javax.swing.JPanel getSimpleConfiguration() {
+        return null;
+    }
+
+    @Override
+    public javax.swing.JPanel getAdvancedConfiguration() {
+        return HashDbMgmtPanel.getDefault();
     }
     
     @Override
-    public ConfigurationInterface getAdvancedConfiguration() {
-        return null;
+    public void advancedConfigurationSave() {
+        HashDbMgmtPanel.getDefault().save();
+    }
+    
+    @Override
+    public void simpleConfigurationSave() {
     }
     
     @Override

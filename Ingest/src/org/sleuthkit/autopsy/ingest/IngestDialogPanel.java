@@ -24,6 +24,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import javax.swing.JLabel;
-import javax.swing.JLayeredPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -40,7 +40,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import org.sleuthkit.datamodel.Image;
 
 /**
  *
@@ -50,9 +49,7 @@ public class IngestDialogPanel extends javax.swing.JPanel {
     
     private IngestManager manager = null;
     private List<IngestServiceAbstract> services;
-    private String current;
-    private Map<String, ConfigurationInterface> simpleConfigures;
-    private Map<String, ConfigurationInterface> advancedConfigures;
+    private IngestServiceAbstract currentService;
     private JLabel defaultLabel;
     private Map<String, Boolean> serviceStates;
     private ServicesTableModel tableModel;
@@ -62,8 +59,6 @@ public class IngestDialogPanel extends javax.swing.JPanel {
     IngestDialogPanel() {
         tableModel = new ServicesTableModel();
         services = new ArrayList<IngestServiceAbstract>();
-        simpleConfigures = new HashMap<String, ConfigurationInterface>();
-        advancedConfigures = new HashMap<String, ConfigurationInterface>();
         serviceStates = new HashMap<String, Boolean>();
         initComponents();
         customizeComponents();
@@ -72,10 +67,6 @@ public class IngestDialogPanel extends javax.swing.JPanel {
     private void customizeComponents(){
         servicesTable.setModel(tableModel);
         this.manager = IngestManager.getDefault();
-        defaultLabel = new JLabel("This ingest service has no user-configurable settings");
-        defaultLabel.setOpaque(true);
-        defaultLabel.setBounds(0, 0, 300, 300);
-        configurePane.add(defaultLabel, JLayeredPane.DEFAULT_LAYER);
         Collection<IngestServiceImage> imageServices = IngestManager.enumerateImageServices();
         for (final IngestServiceImage service : imageServices) {
             addService(service);
@@ -125,20 +116,14 @@ public class IngestDialogPanel extends javax.swing.JPanel {
             public void valueChanged(ListSelectionEvent e) {
                 ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
                 if (!listSelectionModel.isSelectionEmpty()) {
-                    if(current != null)
-                        simpleConfigures.get(current).save();
+                    if(currentService != null && currentService.hasSimpleConfiguration())
+                        currentService.simpleConfigurationSave();
                     int index = listSelectionModel.getMinSelectionIndex();
-                    String name = (String) tableModel.getValueAt(index, 1);
-                    if(simpleConfigures.containsKey(name)){
-                        configurePane.moveToFront(simpleConfigures.get(name));
-                        current = name;
-                    } else {
-                        configurePane.moveToFront(defaultLabel);
-                        current = null;
-                    }
-                    advancedButton.setEnabled(advancedConfigures.containsKey(name));
+                    currentService = services.get(index);
+                    reloadSimpleConfiguration();
+                    advancedButton.setEnabled(currentService.hasAdvancedConfiguration());
                 } else {
-                    current = null;
+                    currentService = null;
                 }
             }
             
@@ -150,17 +135,6 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         final String serviceName = service.getName();
         services.add(service);
         serviceStates.put(serviceName, true);
-        ConfigurationInterface serviceConfigure;
-        if (service.hasSimpleConfiguration()) {
-            serviceConfigure = service.getSimpleConfiguration();
-            serviceConfigure.setOpaque(true);
-            serviceConfigure.setBounds(0, 0, 300, 300);
-            simpleConfigures.put(serviceName, serviceConfigure);
-            configurePane.add(serviceConfigure, JLayeredPane.DEFAULT_LAYER);
-        }
-        if (service.hasAdvancedConfiguration()) {
-            advancedConfigures.put(serviceName, service.getAdvancedConfiguration());
-        }
     }
 
     /** This method is called from within the constructor to
@@ -176,8 +150,8 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         freqSliderLabel = new javax.swing.JLabel();
         servicesScrollPane = new javax.swing.JScrollPane();
         servicesTable = new javax.swing.JTable();
-        configurePane = new javax.swing.JLayeredPane();
         advancedButton = new javax.swing.JButton();
+        simplePanel = new javax.swing.JPanel();
 
         freqSlider.setMajorTickSpacing(5);
         freqSlider.setMaximum(30);
@@ -206,10 +180,6 @@ public class IngestDialogPanel extends javax.swing.JPanel {
         servicesTable.setShowVerticalLines(false);
         servicesScrollPane.setViewportView(servicesTable);
 
-        configurePane.setOpaque(true);
-        configurePane.setPreferredSize(new java.awt.Dimension(300, 300));
-        configurePane.setRequestFocusEnabled(false);
-
         advancedButton.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.advancedButton.text")); // NOI18N
         advancedButton.setEnabled(false);
         advancedButton.addActionListener(new java.awt.event.ActionListener() {
@@ -218,61 +188,67 @@ public class IngestDialogPanel extends javax.swing.JPanel {
             }
         });
 
+        simplePanel.setLayout(new javax.swing.BoxLayout(simplePanel, javax.swing.BoxLayout.PAGE_AXIS));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(19, 19, 19)
                         .addComponent(freqSliderLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(freqSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 275, Short.MAX_VALUE)
+                        .addComponent(advancedButton))
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)))
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(6, 6, 6)
-                        .addComponent(configurePane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(freqSlider, 0, 0, Short.MAX_VALUE)
+                            .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 177, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(advancedButton))))
+                        .addComponent(simplePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 248, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(configurePane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(simplePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(advancedButton)
-                    .addComponent(freqSliderLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(freqSliderLabel)
+                    .addComponent(advancedButton))
+                .addGap(16, 16, 16))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void advancedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_advancedButtonActionPerformed
-        AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog();
-        dialog.display(advancedConfigures.get(current));
+        final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog();
+        dialog.addApplyButtonListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.close();
+                currentService.advancedConfigurationSave();
+                reloadSimpleConfiguration();
+            }
+            
+        });
+        dialog.display(currentService.getAdvancedConfiguration());
     }//GEN-LAST:event_advancedButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
-    private javax.swing.JLayeredPane configurePane;
     private javax.swing.JSlider freqSlider;
     private javax.swing.JLabel freqSliderLabel;
     private javax.swing.JScrollPane servicesScrollPane;
     private javax.swing.JTable servicesTable;
+    private javax.swing.JPanel simplePanel;
     // End of variables declaration//GEN-END:variables
 
     private class ServicesTableModel extends AbstractTableModel {
@@ -333,5 +309,25 @@ public class IngestDialogPanel extends javax.swing.JPanel {
     
     int sliderValue() {
         return freqSlider.getValue();
+    }
+
+    private void reloadSimpleConfiguration() {
+        simplePanel.removeAll();
+        if (currentService.hasSimpleConfiguration()) {
+            simplePanel.add(currentService.getSimpleConfiguration());
+        } else {
+            simplePanel.add(new JLabel("This ingest service has no simple configuration settings"));
+        }
+        simplePanel.revalidate();
+        simplePanel.repaint();
+    }
+
+    /**
+     * To be called whenever the next, close, or start buttons are pressed.
+     * 
+     */
+    void save() {
+        if(currentService != null)
+            currentService.simpleConfigurationSave();
     }
 }

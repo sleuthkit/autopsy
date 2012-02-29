@@ -72,14 +72,25 @@ public interface IngestServiceAbstract {
      * provides means for user to input simple service configuration options
      * the new configuration is effective on next ingest
      */
-    public ConfigurationInterface getSimpleConfiguration();
+    public javax.swing.JPanel getSimpleConfiguration();
     
     /**
      * provides means for user to input advanced service configuration options
      * the new configuration is effective on next ingest
      */
-    public ConfigurationInterface getAdvancedConfiguration();
-    
+    public javax.swing.JPanel getAdvancedConfiguration();
+
+    /**	
+     * Opportunity for the module to save its configuration options from from the getSimpleConfiguration() JPanel into the module
+     * This is invoked by the framework e.g. when simple configuration panel is going out of scope
+     */
+    public void simpleConfigurationSave();
+
+    /** Opportunity for the module to save its configuration options from from the getAdvancedConfiguration() JPanel into the module
+     * This is invoked by the framework e.g. when advanced configuration dialog is going out of scope	
+     */
+    public void advancedConfigurationSave();
+
     /**
      * A service can manage and use additional threads to perform some work in the background.
      * This method provides insight to the manager if the service has truly completed its work or not.

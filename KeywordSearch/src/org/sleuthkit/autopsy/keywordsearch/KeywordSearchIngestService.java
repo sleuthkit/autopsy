@@ -33,7 +33,6 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.ConfigurationInterface;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -225,13 +224,22 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     }
     
     @Override
-    public ConfigurationInterface getSimpleConfiguration() {
+    public javax.swing.JPanel getSimpleConfiguration() {
         return new KeywordSearchIngestSimplePanel();
     }
     
     @Override
-    public ConfigurationInterface getAdvancedConfiguration() {
+    public javax.swing.JPanel getAdvancedConfiguration() {
         return KeywordSearchConfigurationPanel.getDefault();
+    }
+    
+    @Override
+    public void advancedConfigurationSave() {
+        KeywordSearchConfigurationPanel.getDefault().editListPanel.save();
+    }
+    
+    @Override
+    public void simpleConfigurationSave() {
     }
 
     @Override

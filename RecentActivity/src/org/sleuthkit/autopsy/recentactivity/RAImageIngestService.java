@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.ConfigurationInterface;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
@@ -141,13 +140,21 @@ public final class RAImageIngestService implements IngestServiceImage {
     }
     
     @Override
-    public ConfigurationInterface getSimpleConfiguration() {
+    public javax.swing.JPanel getSimpleConfiguration() {
         return null;
     }
     
     @Override
-    public ConfigurationInterface getAdvancedConfiguration() {
+    public javax.swing.JPanel getAdvancedConfiguration() {
         return null;
+    }
+    
+    @Override
+    public void advancedConfigurationSave() {
+    }
+    
+    @Override
+    public void simpleConfigurationSave() {
     }
     
     @Override

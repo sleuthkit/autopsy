@@ -82,6 +82,9 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+                
+                panel.save();
+                
                 //pick the services
                 List<IngestServiceAbstract> servicesToStart = panel.getServicesToStart();
 
@@ -100,6 +103,7 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+                panel.save();
                 close();
             }
         });

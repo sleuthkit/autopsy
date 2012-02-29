@@ -24,18 +24,24 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.logging.Logger;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
 
 /**
  *
  * @author dfickling
  */
 public class KeywordSearchConfigurationDialog extends javax.swing.JDialog {
+    private JButton applyButton = new JButton("Apply");
 
     private final static Logger logger = Logger.getLogger(KeywordSearchConfigurationDialog.class.getName());
 
@@ -48,9 +54,8 @@ public class KeywordSearchConfigurationDialog extends javax.swing.JDialog {
     }
 
     private void customizeComponents() {
-
-        this.setLayout(new BorderLayout());
-        this.add(KeywordSearchConfigurationPanel.getDefault());
+        this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.PAGE_AXIS));
+        final KeywordSearchConfigurationPanel panel = KeywordSearchConfigurationPanel.getDefault();
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
         // set the popUp window / JFrame
@@ -59,6 +64,23 @@ public class KeywordSearchConfigurationDialog extends javax.swing.JDialog {
 
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
+        
+        applyButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        
+         // set action for the "Apply" button
+            applyButton.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    panel.save();
+                    KeywordSearchConfigurationDialog.this.dispose();
+                }
+            });
+        
+        this.add(panel);
+        this.add(new JSeparator(SwingConstants.HORIZONTAL));
+        this.add(applyButton);
+        
         this.pack();
     }
 

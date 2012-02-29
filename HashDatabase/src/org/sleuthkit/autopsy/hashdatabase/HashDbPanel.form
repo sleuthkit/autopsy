@@ -3,7 +3,7 @@
 <Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <Properties>
     <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[300, 116]"/>
+      <Dimension value="[360, 116]"/>
     </Property>
   </Properties>
   <AuxValues>
@@ -34,11 +34,11 @@
                               <Component id="indexStatusLabel" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="1" attributes="0">
-                              <Component id="databasePathField" pref="189" max="32767" attributes="0"/>
+                              <Component id="databasePathField" pref="249" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="fileSelectButton" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="databaseDetailsLabel" alignment="0" pref="270" max="32767" attributes="1"/>
+                          <Component id="databaseDetailsLabel" alignment="0" pref="330" max="32767" attributes="1"/>
                       </Group>
                   </Group>
               </Group>

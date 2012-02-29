@@ -30,13 +30,12 @@ import java.util.logging.Logger;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import org.sleuthkit.autopsy.ingest.ConfigurationInterface;
 
 /**
  *
  * @author dfickling
  */
-public class KeywordSearchIngestSimplePanel extends ConfigurationInterface {
+public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
     
     private final static Logger logger = Logger.getLogger(KeywordSearchIngestSimplePanel.class.getName());
     private KeywordTableModel tableModel;
@@ -168,11 +167,6 @@ public class KeywordSearchIngestSimplePanel extends ConfigurationInterface {
         public Class getColumnClass(int c) {
             return getValueAt(0, c).getClass();
         }
-        
-    }
-    
-    @Override
-    public void save() {
         
     }
 }

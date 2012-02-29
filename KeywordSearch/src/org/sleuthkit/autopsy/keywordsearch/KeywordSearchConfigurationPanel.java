@@ -26,14 +26,13 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.BorderLayout;
 import java.util.logging.Logger;
-import org.sleuthkit.autopsy.ingest.ConfigurationInterface;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  *
  * @author dfickling
  */
-public class KeywordSearchConfigurationPanel extends ConfigurationInterface {
+public class KeywordSearchConfigurationPanel extends javax.swing.JPanel {
 
     KeywordSearchListsManagementPanel listsManagementPanel;
     KeywordSearchEditListPanel editListPanel;
@@ -54,8 +53,8 @@ public class KeywordSearchConfigurationPanel extends ConfigurationInterface {
     }
 
     private void customizeComponents() {
-        listsManagementPanel = new KeywordSearchListsManagementPanel();
-        editListPanel = new KeywordSearchEditListPanel();
+        listsManagementPanel = KeywordSearchListsManagementPanel.getDefault();
+        editListPanel = KeywordSearchEditListPanel.getDefault();
 
         listsManagementPanel.addListSelectionListener(editListPanel);
         
@@ -77,7 +76,6 @@ public class KeywordSearchConfigurationPanel extends ConfigurationInterface {
         mainSplitPane = new javax.swing.JSplitPane();
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
-        applyButton = new javax.swing.JButton();
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -105,46 +103,25 @@ public class KeywordSearchConfigurationPanel extends ConfigurationInterface {
 
         mainSplitPane.setRightComponent(jPanel2);
 
-        applyButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel.class, "KeywordSearchConfigurationPanel.applyButton.text")); // NOI18N
-        applyButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                applyButtonActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(mainSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(327, Short.MAX_VALUE)
-                .addComponent(applyButton)
-                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(mainSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(applyButton)
-                .addContainerGap())
+            .addComponent(mainSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void applyButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_applyButtonActionPerformed
-        save();
-    }//GEN-LAST:event_applyButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton applyButton;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JSplitPane mainSplitPane;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public void save() {
+    void save() {
         editListPanel.save();
         KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
         KeywordSearchIngestService service = KeywordSearchIngestService.getDefault();

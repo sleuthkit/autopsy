@@ -70,7 +70,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
     private static KeywordSearchEditListPanel instance = null;
     
     /** Creates new form KeywordSearchEditListPanel */
-    public KeywordSearchEditListPanel() {
+    private KeywordSearchEditListPanel() {
         tableModel = new KeywordTableModel();
         initComponents();
         customizeComponents();
