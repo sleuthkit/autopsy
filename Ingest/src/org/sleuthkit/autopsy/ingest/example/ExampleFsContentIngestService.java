@@ -91,36 +91,41 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     public ServiceType getType() {
         return ServiceType.FsContent;
     }
-
-    @Override
-    public void userConfigure() {
-    }
-
-    @Override
-    public boolean isConfigurable() {
-        return false;
-    }
-
-    @Override
-    public boolean isAdvancedConfigurable() {
-        return false;
-    }
-
-    @Override
-    public JPanel userConfigureAdvanced() {
-        return null;
-    }
-
-    @Override
-    public void userConfigureAdvancedSave() {
-    }
-
-    @Override
-    public void userConfigureSave() {
-    }
-
+    
     @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
     }
+
+    @Override
+    public JPanel getAdvancedConfiguration() {
+        return null;
+    }
+
+    @Override
+    public JPanel getSimpleConfiguration() {
+        return null;
+    }
+
+    @Override
+    public boolean hasAdvancedConfiguration() {
+        return false;
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+        
+    }
+
+    @Override
+    public boolean hasSimpleConfiguration() {
+       return false;
+    }
+
+    @Override
+    public void saveSimpleConfiguration() {
+    }
+
+
+    
 }

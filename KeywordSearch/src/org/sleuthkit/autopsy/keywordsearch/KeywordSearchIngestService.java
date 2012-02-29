@@ -32,7 +32,6 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
@@ -62,7 +61,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private volatile boolean runTimer = false;
     private List<Keyword> keywords; //keywords to search
     private List<String> keywordLists; // lists currently being searched
-    private Map<String,String>keywordToList; //keyword to list name mapping
+    private Map<String, String> keywordToList; //keyword to list name mapping
     //private final Object lock = new Object();
     private Thread timer;
     private Indexer indexer;
@@ -79,10 +78,14 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         "gz", "tgz", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt",
         "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
         "pst", "xml", "class"};
+   
+    //config
+    private KeywordSearchIngestSimplePanel simpleConfig = null; 
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,
+    };
     private Map<Long, IngestStatus> ingestStatus;
     private Map<String, List<FsContent>> reportedHits; //already reported hits
 
@@ -186,7 +189,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         keywords = new ArrayList<Keyword>();
         keywordLists = new ArrayList<String>();
-        keywordToList = new HashMap<String,String>();
+        keywordToList = new HashMap<String, String>();
 
         initKeywords();
 
@@ -217,34 +220,37 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     }
 
     @Override
-    public void userConfigure() {
-        SystemAction.get(KeywordSearchConfigurationAction.class).performAction();
+    public JPanel getAdvancedConfiguration() {
+        return KeywordSearchConfigurationPanel.getDefault();
+
     }
 
     @Override
-    public boolean isConfigurable() {
+    public JPanel getSimpleConfiguration() {
+        if (simpleConfig == null) {
+            simpleConfig = new KeywordSearchIngestSimplePanel();
+        }
+        return simpleConfig;
+    }
+
+    @Override
+    public boolean hasAdvancedConfiguration() {
         return true;
     }
 
     @Override
-    public boolean isAdvancedConfigurable() {
-        return false;
+    public boolean hasSimpleConfiguration() {
+        return true;
     }
 
     @Override
-    public JPanel userConfigureAdvanced() {
-        return null;
+    public void saveAdvancedConfiguration() {
+        KeywordSearchConfigurationPanel.getDefault().save();
     }
 
     @Override
-    public void userConfigureAdvancedSave() {
+    public void saveSimpleConfiguration() {
     }
-
-    @Override
-    public void userConfigureSave() {
-    }
-    
-    
 
     @Override
     public boolean hasBackgroundJobsRunning() {
@@ -326,7 +332,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 keywords.add(keyword);
                 keywordToList.put(keyword.getQuery(), listName);
             }
-            
+
         }
     }
 

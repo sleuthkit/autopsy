@@ -141,10 +141,13 @@ class HashDbPanel extends javax.swing.JPanel {
         databaseDetailsLabel = new javax.swing.JLabel();
         fileSelectButton = new javax.swing.JButton();
 
+        setPreferredSize(new java.awt.Dimension(300, 116));
+
         databaseNameLabel.setFont(databaseNameLabel.getFont().deriveFont(databaseNameLabel.getFont().getStyle() | java.awt.Font.BOLD, databaseNameLabel.getFont().getSize()+2));
         databaseNameLabel.setText(databaseName());
 
         databasePathField.setText(path());
+        databasePathField.setPreferredSize(new java.awt.Dimension(250, 20));
         databasePathField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 databasePathFieldActionPerformed(evt);
@@ -191,11 +194,11 @@ class HashDbPanel extends javax.swing.JPanel {
                                 .addComponent(indexButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(indexStatusLabel))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(databasePathField, javax.swing.GroupLayout.PREFERRED_SIZE, 329, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(databasePathField, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(fileSelectButton))
-                            .addComponent(databaseDetailsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(databaseDetailsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 270, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -204,7 +207,7 @@ class HashDbPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(databaseNameLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(databaseDetailsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(databaseDetailsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(databasePathField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)

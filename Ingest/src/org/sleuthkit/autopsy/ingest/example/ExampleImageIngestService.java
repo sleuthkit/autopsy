@@ -124,34 +124,36 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     }
 
     @Override
-    public void userConfigure() {
-    }
-
-    @Override
-    public boolean isConfigurable() {
+    public boolean hasBackgroundJobsRunning() {
         return false;
     }
-
-    @Override
-    public boolean isAdvancedConfigurable() {
-        return false;
-    }
-
-    @Override
-    public JPanel userConfigureAdvanced() {
+    
+     @Override
+    public JPanel getAdvancedConfiguration() {
         return null;
     }
 
     @Override
-    public void userConfigureAdvancedSave() {
+    public JPanel getSimpleConfiguration() {
+        return null;
     }
 
     @Override
-    public void userConfigureSave() {
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
+    public boolean hasAdvancedConfiguration() {
         return false;
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+        
+    }
+
+    @Override
+    public boolean hasSimpleConfiguration() {
+       return false;
+    }
+
+    @Override
+    public void saveSimpleConfiguration() {
     }
 }

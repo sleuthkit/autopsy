@@ -72,7 +72,7 @@ public interface IngestServiceAbstract {
     /**
      * @return true if the service has basic configuration
      */
-    public boolean isConfigurable();
+    public boolean hasSimpleConfiguration();
     
     /**
      * Provides basic module configuration to the user (available e.g. via the add image wizard)
@@ -83,20 +83,19 @@ public interface IngestServiceAbstract {
      * 
      * @return JPanel containing basic configuration widgets or null
      */
-    //public JPanel userConfigure();
-    public void userConfigure();
+    public JPanel getSimpleConfiguration();
     
     /**
      * Opportunity for the module to save its configuration options from from the userConfigure() JPanel into the module
      * This is invoked by the framework e.g. when configuration dialog is going out of scope
      */
-    public void userConfigureSave();
+    public void saveSimpleConfiguration();
     
     
      /**
      * @return does the service have advanced configuration panel
      */
-    public boolean isAdvancedConfigurable();
+    public boolean hasAdvancedConfiguration();
     
     
      /**
@@ -106,13 +105,13 @@ public interface IngestServiceAbstract {
      * 
      * @return JPanel containing basic configuration widgets or null
      */
-    public JPanel userConfigureAdvanced();
+    public JPanel getAdvancedConfiguration();
     
     /**
      * Opportunity for the module to save its configuration options from from the userConfigureAdvanced() JPanel into the module
      * This is invoked by the framework e.g. when advanced configuration dialog is going out of scope
      */
-    public void userConfigureAdvancedSave();
+    public void saveAdvancedConfiguration();
     
     
     

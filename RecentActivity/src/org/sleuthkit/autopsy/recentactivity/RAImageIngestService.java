@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.FileSystem;
 
 /**
- * Example implementation of an image ingest service 
+ * Recent activity image ingest service 
  * 
  */
 public final class RAImageIngestService implements IngestServiceImage {
@@ -129,36 +129,38 @@ public final class RAImageIngestService implements IngestServiceImage {
     public ServiceType getType() {
         return ServiceType.Image;
     }
-
+   
     @Override
-    public void userConfigure() {
-    }
-
-    @Override
-    public boolean isConfigurable() {
+    public boolean hasBackgroundJobsRunning() {
         return false;
     }
-
-    @Override
-    public boolean isAdvancedConfigurable() {
-        return false;
-    }
-
-    @Override
-    public JPanel userConfigureAdvanced() {
+    
+     @Override
+    public JPanel getAdvancedConfiguration() {
         return null;
     }
 
     @Override
-    public void userConfigureAdvancedSave() {
+    public JPanel getSimpleConfiguration() {
+        return null;
     }
 
     @Override
-    public void userConfigureSave() {
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
+    public boolean hasAdvancedConfiguration() {
         return false;
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+        
+    }
+
+    @Override
+    public boolean hasSimpleConfiguration() {
+       return false;
+    }
+
+    @Override
+    public void saveSimpleConfiguration() {
     }
 }

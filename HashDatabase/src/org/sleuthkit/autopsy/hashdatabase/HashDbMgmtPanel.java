@@ -22,23 +22,23 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.logging.Level;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import org.sleuthkit.autopsy.coreutils.Log;
+
 
 /**
  * Panel for displaying and editing the Hash Database settings.
  * @author pmartel
  */
-class HashDbMgmtPanel extends javax.swing.JPanel {
+class HashDbMgmtPanel extends JPanel{
 
     private HashDbSettings settings;
     // text of panel for each database
-    private static final String INTRO_TEXT1 = "Hash lookups are conducted when an image is added to a case.";
+    private static final String INTRO_TEXT1 = "Hash lookups are conducted when ingest is run.";
     private static final String INTRO_TEXT2 = "Lookup results can be found using the File Search feature.";
     private static final String NSRL_NAME = "NIST NSRL Database";
     private static final String NSRL_DESC = "Hashes that are known good and bad.";
@@ -130,4 +130,6 @@ class HashDbMgmtPanel extends javax.swing.JPanel {
         this.add(applyButton);
         this.add(Box.createRigidArea(new Dimension(0, 10)));
     }
+
+   
 }

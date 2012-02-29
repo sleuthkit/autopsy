@@ -18,39 +18,32 @@
  */
 
 /*
- * KeywordSearchConfigurationDialog.java
+ * AdvancedConfigurationDialog.java
  *
- * Created on Feb 10, 2012, 4:32:33 PM
+ * Created on Feb 28, 2012, 4:47:31 PM
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.ingest;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.util.logging.Logger;
 import javax.swing.JFrame;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import javax.swing.JPanel;
 
 /**
  *
  * @author dfickling
  */
-public class KeywordSearchConfigurationDialog extends javax.swing.JDialog {
+public class AdvancedConfigurationDialog extends javax.swing.JDialog {
 
-    private final static Logger logger = Logger.getLogger(KeywordSearchConfigurationDialog.class.getName());
-
-    /** Creates new form KeywordSearchConfigurationDialog */
-    public KeywordSearchConfigurationDialog(String title) {
-        super(new JFrame(title), title, true);
+    /** Creates new form AdvancedConfigurationDialog */
+    public AdvancedConfigurationDialog() {
+        super(new JFrame(), "Advanced Configuration", true);
         setResizable(false);
         initComponents();
-        customizeComponents();
     }
-
-    private void customizeComponents() {
-
-        this.setLayout(new BorderLayout());
-        this.add(KeywordSearchConfigurationPanel.getDefault());
+    
+    public void display(JPanel panel) {
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
         // set the popUp window / JFrame
@@ -59,7 +52,10 @@ public class KeywordSearchConfigurationDialog extends javax.swing.JDialog {
 
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
+        this.setLayout(new BorderLayout());
+        this.add(panel);
         this.pack();
+        this.setVisible(true);
     }
 
     /** This method is called from within the constructor to
@@ -77,7 +73,7 @@ public class KeywordSearchConfigurationDialog extends javax.swing.JDialog {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 402, Short.MAX_VALUE)
+            .addGap(0, 400, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -89,5 +85,4 @@ public class KeywordSearchConfigurationDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
-
 }

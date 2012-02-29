@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
-import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
@@ -51,6 +50,17 @@ public class HashDbIngestService implements IngestServiceFsContent {
     private boolean process;
     String nsrlDbPath;
     String knownBadDbPath;
+    
+    private HashDbMgmtPanel config;
+
+    private HashDbIngestService() {
+        try {
+            config = new HashDbMgmtPanel(HashDbSettings.getHashDbSettings());
+        }
+        catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to get config for service " + NAME);
+        }
+    }
 
     public static synchronized HashDbIngestService getDefault() {
         if (instance == null) {
@@ -158,35 +168,42 @@ public class HashDbIngestService implements IngestServiceFsContent {
     }
 
     @Override
-    public void userConfigure() {
-        SystemAction.get(HashDbMgmtAction.class).performAction();
-    }
-
-    @Override
-    public boolean isConfigurable() {
-        return true;
-    }
-
-    @Override
-    public boolean isAdvancedConfigurable() {
+    public boolean hasBackgroundJobsRunning() {
         return false;
     }
 
     @Override
-    public JPanel userConfigureAdvanced() {
+    public JPanel getAdvancedConfiguration() {
         return null;
     }
 
     @Override
-    public void userConfigureAdvancedSave() {
+    public JPanel getSimpleConfiguration() {
+        return config;
     }
 
     @Override
-    public void userConfigureSave() {
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
+    public boolean hasAdvancedConfiguration() {
         return false;
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+    }
+
+    @Override
+    public boolean hasSimpleConfiguration() {
+        return true;
+    }
+
+    @Override
+    public void saveSimpleConfiguration() {
+         if (config != null)
+             try {
+             config.saveSettings();
+             }
+         catch (IOException e) {
+             logger.log(Level.SEVERE, "Unable to save config for service " + NAME);
+         }
     }
 }

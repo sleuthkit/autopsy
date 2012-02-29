@@ -51,6 +51,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
             panels.add(new AddImageWizardPanel1());
             panels.add(new AddImageWizardPanel2(action));
             panels.add(new AddImageWizardPanel3());
+            panels.add(new AddImageWizardPanel4());
 
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
@@ -127,7 +128,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     @Override
     // disable the previous button on all panels
     public boolean hasPrevious() {
-        return index > 0;
+        return index == 1;
     }
 
     /**
