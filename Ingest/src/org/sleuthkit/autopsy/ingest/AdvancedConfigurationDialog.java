@@ -40,7 +40,6 @@ import javax.swing.SwingConstants;
  * @author dfickling
  */
 public class AdvancedConfigurationDialog extends javax.swing.JDialog {
-    private JButton applyButton = new JButton("Apply");
 
     /** Creates new form AdvancedConfigurationDialog */
     public AdvancedConfigurationDialog() {
@@ -59,13 +58,9 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
         
-        this.setLayout(new BoxLayout(this.getContentPane(), BoxLayout.PAGE_AXIS));
         panel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        applyButton.setAlignmentX(Component.RIGHT_ALIGNMENT);
-        
-        this.add(panel);
-        this.add(new JSeparator(SwingConstants.HORIZONTAL));
-        this.add(applyButton);
+        applyButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        this.add(panel, 0);
         this.pack();
         this.setVisible(true);
     }
@@ -79,23 +74,25 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        jSeparator1 = new javax.swing.JSeparator();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 10), new java.awt.Dimension(0, 10), new java.awt.Dimension(0, 10));
+        applyButton = new javax.swing.JButton();
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-        );
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        getContentPane().setLayout(new javax.swing.BoxLayout(getContentPane(), javax.swing.BoxLayout.PAGE_AXIS));
+        getContentPane().add(jSeparator1);
+        getContentPane().add(filler1);
+
+        applyButton.setText(org.openide.util.NbBundle.getMessage(AdvancedConfigurationDialog.class, "AdvancedConfigurationDialog.applyButton.text")); // NOI18N
+        getContentPane().add(applyButton);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton applyButton;
+    private javax.swing.Box.Filler filler1;
+    private javax.swing.JSeparator jSeparator1;
     // End of variables declaration//GEN-END:variables
 
     void addApplyButtonListener(ActionListener l) {

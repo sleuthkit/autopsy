@@ -126,8 +126,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             public void valueChanged(ListSelectionEvent e) {
                 ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
                 if (!listSelectionModel.isSelectionEmpty()) {
-                    if(currentService != null && currentService.hasSimpleConfiguration())
-                        currentService.saveSimpleConfiguration();
+                    save();
                     int index = listSelectionModel.getMinSelectionIndex();
                     currentService = services.get(index);
                     reloadSimpleConfiguration();
@@ -162,6 +161,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         servicesTable = new javax.swing.JTable();
         advancedButton = new javax.swing.JButton();
         simplePanel = new javax.swing.JPanel();
+        jSeparator2 = new javax.swing.JSeparator();
 
         freqSlider.setMajorTickSpacing(5);
         freqSlider.setMaximum(30);
@@ -198,6 +198,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             }
         });
 
+        simplePanel.setPreferredSize(new java.awt.Dimension(300, 300));
         simplePanel.setLayout(new javax.swing.BoxLayout(simplePanel, javax.swing.BoxLayout.PAGE_AXIS));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -210,31 +211,35 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                         .addContainerGap()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(freqSlider, 0, 0, Short.MAX_VALUE)
-                            .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 177, Short.MAX_VALUE))
+                            .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(simplePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jSeparator2, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                            .addComponent(simplePanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(advancedButton)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addGap(37, 37, 37)
-                        .addComponent(freqSliderLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 250, Short.MAX_VALUE)
-                        .addComponent(advancedButton)))
+                        .addComponent(freqSliderLabel)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
+                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 279, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(simplePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(simplePanel, javax.swing.GroupLayout.PREFERRED_SIZE, 291, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0)
+                        .addComponent(advancedButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(advancedButton)
-                    .addComponent(freqSliderLabel))
-                .addGap(16, 16, 16))
+                .addComponent(freqSliderLabel)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -257,6 +262,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     private javax.swing.JButton advancedButton;
     private javax.swing.JSlider freqSlider;
     private javax.swing.JLabel freqSliderLabel;
+    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JScrollPane servicesScrollPane;
     private javax.swing.JTable servicesTable;
     private javax.swing.JPanel simplePanel;
@@ -339,7 +345,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
      */
     @Override
     public void save() {
-        if (currentService != null) {
+        if (currentService != null && currentService.hasSimpleConfiguration()) {
             currentService.saveSimpleConfiguration();
         }
     }
