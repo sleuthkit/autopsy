@@ -38,8 +38,9 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
 
     static String[] caseName;
     static String[] casePaths;
+    private static OpenRecentCasePanel instance;
     
-    OpenRecentCasePanel() {
+    private OpenRecentCasePanel() {
         initComponents();
 
         caseName = RecentCases.getInstance().getRecentCaseNames();
@@ -112,6 +113,13 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         };
 
         ButtonColumn buttonColumn = new ButtonColumn(imagesTable, open, lastColumn, "Open");
+    }
+    
+    static OpenRecentCasePanel getInstance() {
+        if (instance == null) {
+            instance = new OpenRecentCasePanel();
+        }
+        return instance;
     }
 
     /** This method is called from within the constructor to

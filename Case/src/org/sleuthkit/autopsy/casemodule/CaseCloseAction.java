@@ -20,12 +20,12 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
@@ -75,6 +75,12 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
         Case result = Case.getCurrentCase();
         try {
             result.closeCase();
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    StartupWindow.getInstance().open();
+                }
+            });
         } catch (Exception ex) {
             Logger.getLogger(CaseCloseAction.class.getName()).log(Level.SEVERE, "Error closing case.", ex);
         }

@@ -652,7 +652,7 @@ public class Case {
         }
         
         if (showDialog) {
-            StartupWindow.getInstance().display();
+            StartupWindow.getInstance().open();
         }
     }
 

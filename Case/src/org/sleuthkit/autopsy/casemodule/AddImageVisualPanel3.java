@@ -36,7 +36,7 @@ public class AddImageVisualPanel3 extends javax.swing.JPanel {
     }
     
     private void customizeComponents() {
-        ingestPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        configPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         configPanel.setLayout(new BorderLayout());
         configPanel.add(ingestPanel, BorderLayout.CENTER);
         

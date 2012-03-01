@@ -38,6 +38,7 @@ public final class StartupWindow extends JDialog {
 
     private StartupWindow(JFrame frame, String title, boolean isModal) {
         super(frame, title, isModal);
+        init();
     }
 
     /**
@@ -58,7 +59,7 @@ public final class StartupWindow extends JDialog {
     /**
      * Shows the startup window.
      */
-    public void display() {
+    public void init() {
 
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -84,14 +85,17 @@ public final class StartupWindow extends JDialog {
         add(welcomeWindow);
         pack();
         setResizable(false);
-        setVisible(true);
 
+    }
+    
+    public void open() {
+        setVisible(true);
     }
 
     /**
      * Closes the startup window.
      */
     public void close() {
-        this.dispose();
+        this.setVisible(false);
     }
 }

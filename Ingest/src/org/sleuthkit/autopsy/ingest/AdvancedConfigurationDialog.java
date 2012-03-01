@@ -75,8 +75,9 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         jSeparator1 = new javax.swing.JSeparator();
-        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 10), new java.awt.Dimension(0, 10), new java.awt.Dimension(0, 10));
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 4), new java.awt.Dimension(0, 4), new java.awt.Dimension(0, 4));
         applyButton = new javax.swing.JButton();
+        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 4), new java.awt.Dimension(0, 4), new java.awt.Dimension(0, 4));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         getContentPane().setLayout(new javax.swing.BoxLayout(getContentPane(), javax.swing.BoxLayout.PAGE_AXIS));
@@ -85,6 +86,7 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
 
         applyButton.setText(org.openide.util.NbBundle.getMessage(AdvancedConfigurationDialog.class, "AdvancedConfigurationDialog.applyButton.text")); // NOI18N
         getContentPane().add(applyButton);
+        getContentPane().add(filler2);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -92,6 +94,7 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton applyButton;
     private javax.swing.Box.Filler filler1;
+    private javax.swing.Box.Filler filler2;
     private javax.swing.JSeparator jSeparator1;
     // End of variables declaration//GEN-END:variables
 

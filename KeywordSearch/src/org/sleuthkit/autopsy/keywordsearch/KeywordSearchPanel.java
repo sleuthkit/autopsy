@@ -145,7 +145,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         searchBoxPanel.setBorder(new javax.swing.border.LineBorder(java.awt.Color.lightGray, 1, true));
         searchBoxPanel.setPreferredSize(new java.awt.Dimension(255, 18));
 
-        searchBox.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        searchBox.setFont(new java.awt.Font("Tahoma", 0, 12));
         searchBox.setForeground(java.awt.Color.lightGray);
         searchBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.searchBox.text")); // NOI18N
         searchBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 3, 4, 1));
@@ -208,7 +208,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
                 .addComponent(listsButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(searchBoxPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(34, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -220,13 +220,13 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
     private void searchBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchBoxActionPerformed
         if (filesIndexed == 0)
             return;
-
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        
+        this.getTopLevelAncestor().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         try {
             search();
         } finally {
-            setCursor(null);
+            this.getTopLevelAncestor().setCursor(null);
         }
     }//GEN-LAST:event_searchBoxActionPerformed
 

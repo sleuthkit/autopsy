@@ -43,7 +43,7 @@ public class ArtifactStringContent implements StringContent{
         try{
         StringBuilder buffer = new StringBuilder();
         buffer.append(wrapped.getDisplayName());
-        buffer.append("\n");
+        buffer.append(" Artifact Details:\n   ");
         for(BlackboardAttribute attr : wrapped.getAttributes()){
             buffer.append(attr.getAttributeTypeDisplayName()); 
             buffer.append(": ");
@@ -67,7 +67,7 @@ public class ArtifactStringContent implements StringContent{
             }
             buffer.append(": ");
             buffer.append(attr.getContext());
-            buffer.append("\n");
+            buffer.append("\n   ");
         }
         return buffer.toString();
         }

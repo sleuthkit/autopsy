@@ -263,7 +263,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
         // set the location of the popUp Window on the center of the screen
         recentCasesWindow.setLocation((screenDimension.width - w)/2, (screenDimension.height - h)/2);
 
-        OpenRecentCasePanel welcomeWindow = new OpenRecentCasePanel();
+        OpenRecentCasePanel welcomeWindow = OpenRecentCasePanel.getInstance();
 
         // add the command to close the window to the button on the Volume Detail Panel
         welcomeWindow.setCloseButtonActionListener( new ActionListener(){
