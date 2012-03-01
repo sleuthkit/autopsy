@@ -161,7 +161,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
      */
     @Override
     public String getName() {
-        return NbBundle.getMessage(AddImageAction.class, "CTL_AddImage");
+        return NbBundle.getMessage(AddImageAction.class, "CTL_AddImageButton");
     }
 
     /**

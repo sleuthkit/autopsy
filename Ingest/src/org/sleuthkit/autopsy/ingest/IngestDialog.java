@@ -23,11 +23,13 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 import java.util.logging.Logger;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -36,7 +38,7 @@ import org.sleuthkit.datamodel.Image;
 public class IngestDialog extends JDialog {
     
     private static final String TITLE = "Ingest Modules";
-    private static Dimension DIMENSIONS = new Dimension(300, 300);
+    private static Dimension DIMENSIONS = new Dimension(500, 300);
     private Image image = null;
     private IngestDialogPanel panel = null;
     
@@ -90,8 +92,13 @@ public class IngestDialog extends JDialog {
                 close();
             }
         });
-        add(startButton, BorderLayout.LINE_START);
-        add(closeButton, BorderLayout.LINE_END);
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
+        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10,10), new Dimension(10,10), new Dimension(10,10)));
+        buttonPanel.add(startButton);
+        buttonPanel.add(new javax.swing.Box.Filler(new Dimension(10,10), new Dimension(10,10), new Dimension(10,10)));
+        buttonPanel.add(closeButton);
+        add(buttonPanel, BorderLayout.LINE_START);
         
         pack();
         setResizable(false);
