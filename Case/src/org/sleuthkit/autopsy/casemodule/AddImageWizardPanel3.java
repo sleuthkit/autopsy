@@ -164,7 +164,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         //save previously selected config
         ingestConfig.save();
         
-        final boolean cancelled = settings.getValue() == WizardDescriptor.CANCEL_OPTION;
+        final boolean cancelled = settings.getValue() == WizardDescriptor.CANCEL_OPTION || settings.getValue() == WizardDescriptor.CLOSED_OPTION;
         //start / enqueue ingest if next/finish pressed
         if (! cancelled && newImage != null) {
             ingestConfig.setImage(newImage);
