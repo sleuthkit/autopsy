@@ -137,12 +137,12 @@ public class HashDbIngestService implements IngestServiceFsContent {
                 String status = skCase.lookupFileMd5(fsContent);
                 if (status.equals("known bad")) {
                     BlackboardArtifact badFile = fsContent.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
-                    BlackboardAttribute att1 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), NAME, "Known Bad", fsContent.getName());
+                    BlackboardAttribute att1 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), NAME, "", fsContent.getName());
                     badFile.addAttribute(att1);
                     BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID(), NAME, "Known Bad", knownBadDbPath != null ? knownBadDbPath : "");
                     badFile.addAttribute(att2);
                     //TODO: Shouldn't be calculating the hash twice.
-                    BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), NAME, "Known Bad", Hash.calculateMd5(fsContent));
+                    BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), NAME, "", Hash.calculateMd5(fsContent));
                     badFile.addAttribute(att3);
                     managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, "", null, badFile));
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent(NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
