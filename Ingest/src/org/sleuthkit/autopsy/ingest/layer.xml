@@ -59,16 +59,16 @@
     -->
     
      <folder name="Actions">
-        <folder name="File">
+        <folder name="Tools">
             <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance">
                 <!--org.sleuthkit.autopsy.ingest.IngestMessagesAction-->
-                <attr
-                    bundlevalue="org.sleuthkit.autopsy.ingest.Bundle#CTL_IngestMessagesAction" name="displayName"/>
-                <attr
-                    methodvalue="org.openide.awt.Actions.alwaysEnabled" name="instanceCreate"/>
+                <!-- <attr
+                    bundlevalue="org.sleuthkit.autopsy.ingest.Bundle#CTL_IngestMessagesAction" name="displayName"/> -->
+                <!-- <attr
+                    methodvalue="org.openide.awt.Actions.alwaysEnabled" name="instanceCreate"/> -->
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.ingest.IngestMessagesAction"/>
-                <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/ingest/eye-icon.png"/>
-                <attr boolvalue="false" name="noIconInMenu"/>
+              <!--  <attr name="iconBase" stringvalue="org/sleuthkit/autopsy/ingest/eye-icon.png"/> -->
+                <!-- <attr boolvalue="false" name="noIconInMenu"/> -->
             </file>
         </folder>
     </folder>
@@ -77,7 +77,7 @@
             <attr intvalue="500" name="position"/>
             <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.shadow">
                 <!--org.sleuthkit.autopsy.ingest.IngestMessagesAction-->
-                <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance"/>
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance"/>
             </file>
         </folder>
     </folder>

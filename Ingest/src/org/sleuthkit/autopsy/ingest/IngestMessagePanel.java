@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.ingest;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -51,6 +53,9 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private static Font notVisitedFont = new Font("Arial", Font.BOLD, 11);
     private static Color ERROR_COLOR = new Color(255, 90, 90);
     private int lastRowSelected = -1;
+    
+    private static PropertyChangeSupport messagePcs = new PropertyChangeSupport(IngestMessagePanel.class);
+    static final String MESSAGE_CHANGE_EVT = "MESSAGE_CHANGE_EVT"; //number of unread messages changed
 
     /** Creates new form IngestMessagePanel */
     public IngestMessagePanel(IngestMessageMainPanel mainPanel) {
@@ -74,6 +79,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
     IngestMessageGroup getMessageGroup(int rowNumber) {
         return tableModel.getMessageGroup(rowNumber);
+    }
+    
+    synchronized static void addPropertyChangeSupportListener(PropertyChangeListener l) {
+        messagePcs.addPropertyChangeListener(l);
     }
 
     /** This method is called from within the constructor to
@@ -215,18 +224,25 @@ class IngestMessagePanel extends javax.swing.JPanel {
     }
 
     public void addMessage(IngestMessage m) {
+        final int origMsgGroups = tableModel.getNumberUnreadGroups();
         tableModel.addMessage(m);
+        messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, tableModel.getNumberUnreadGroups());
+        
         //autoscroll
         //messageTable.scrollRectToVisible(messageTable.getCellRect(messageTable.getRowCount() - 1, messageTable.getColumnCount(), true));
     }
 
     public void clearMessages() {
+        final int origMsgGroups = tableModel.getNumberUnreadGroups();
         tableModel.clearMessages();
+        messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, 0);
     }
 
     private void setVisited(int rowNumber) {
+        final int origMsgGroups = tableModel.getNumberUnreadGroups();
         tableModel.setVisited(rowNumber);
         lastRowSelected = rowNumber;
+        messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, tableModel.getNumberUnreadGroups());
     }
 
     private class MessageTableModel extends AbstractTableModel {
@@ -257,7 +273,37 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         @Override
         public int getRowCount() {
+            return getNumberGroups();
+        }
+        
+        int getNumberGroups() {
             return messageData.size();
+        }
+        
+        int getNumberMessages() {
+            int total = 0;
+            for (TableEntry e : messageData) {
+                total += e.messageGroup.count;
+            }
+            return total;
+        }
+        
+        int getNumberUnreadMessages() {
+            int total = 0;
+            for (TableEntry e : messageData) {
+                if (e.visited == false)
+                    total += e.messageGroup.count;
+            }
+            return total;
+        }
+        
+        int getNumberUnreadGroups() {
+            int total = 0;
+            for (TableEntry e : messageData) {
+                if (e.visited == false)
+                    ++total;
+            }
+            return total;
         }
 
         @Override
@@ -715,4 +761,5 @@ class IngestMessagePanel extends javax.swing.JPanel {
             }
         }
     }
+    
 }
