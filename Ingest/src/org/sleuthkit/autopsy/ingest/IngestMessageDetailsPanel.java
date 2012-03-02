@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.awt.Cursor;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.ingest.IngestMessagePanel.IngestMessageGroup;
@@ -41,6 +44,24 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         messageDetailsPane.setContentType("text/html");
         viewArtifactButton.setEnabled(false);
         viewContentButton.setEnabled(false);
+        BlackboardResultViewer v = Lookup.getDefault().lookup(BlackboardResultViewer.class);
+        v.addOnFinishedListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals(BlackboardResultViewer.FINISHED_DISPLAY_EVT)) {
+                   // SwingUtilities.invokeLater(new Runnable() {
+                     //   @Override
+                       // public void run() {
+                            artifactViewerFinished();
+                        //}
+                        
+                   
+                    //});
+                }
+            }
+            
+        });
     }
 
     /** This method is called from within the constructor to
@@ -142,7 +163,8 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     private void viewArtifact(java.awt.event.ActionEvent evt) {
-
+        artifactViewerInvoked();
+        
         final IngestMessageGroup messageGroup = mainPanel.getMessagePanel().getSelectedMessage();
         if (messageGroup != null) {
             BlackboardArtifact art = messageGroup.getData();
@@ -155,7 +177,8 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
     }
 
     private void viewContent(java.awt.event.ActionEvent evt) {
-
+        artifactViewerInvoked();
+        
         final IngestMessageGroup messageGroup = mainPanel.getMessagePanel().getSelectedMessage();
         if (messageGroup != null) {
             BlackboardArtifact art = messageGroup.getData();
@@ -164,6 +187,19 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
                 v.viewArtifactContent(art);
             }
         }
+    }
+    
+    private void artifactViewerInvoked() {
+        //viewArtifactButton.setEnabled(false);
+        //viewContentButton.setEnabled(false);
+        messageDetailsPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+   
+    }
+    
+    private void artifactViewerFinished() {
+        //viewArtifactButton.setEnabled(true);
+        //viewContentButton.setEnabled(true);
+        messageDetailsPane.setCursor(null);
     }
 
     void showDetails(int rowNumber) {

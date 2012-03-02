@@ -117,6 +117,7 @@ class ViewContextAction extends AbstractAction {
                             if (generated.getName().equals(current.getName())) {
                                 dataResult.requestActive();
                                 dataResult.setSelectedNodes(new Node[]{current});
+                                DirectoryTreeTopComponent.getDefault().fireViewerComplete();
                                 break;
                             }
                         }

@@ -20,6 +20,7 @@
 
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
+import java.beans.PropertyChangeListener;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
@@ -28,6 +29,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * such as the directory tree
  */
 public interface BlackboardResultViewer {
+    
+    public static final String FINISHED_DISPLAY_EVT = "FINISHED_DISPLAY_EVT";
+    
     
     /**
      * View artifact in a viewer
@@ -40,5 +44,11 @@ public interface BlackboardResultViewer {
      * @param art artifact content to view
      */
    void viewArtifactContent(BlackboardArtifact art);
+   
+   /**
+    * Add listener to fire an action when viewer is done displaying 
+    * @param l 
+    */
+   void addOnFinishedListener(PropertyChangeListener l);
     
 }

@@ -492,7 +492,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         public void setVisited(int rowNumber) {
             messageData.get(rowNumber).visited = true;
             //repaint the cell 
-            fireTableCellUpdated(rowNumber, 0);
+            fireTableCellUpdated(rowNumber, 2);
         }
 
         public void setVisitedAll() {
@@ -500,7 +500,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
             for (TableEntry e : messageData) {
                 if (e.visited == false) {
                     e.visited = true;
-                    fireTableCellUpdated(row, 0);
+                    fireTableCellUpdated(row, 2);
                 }
                 ++row;
             }

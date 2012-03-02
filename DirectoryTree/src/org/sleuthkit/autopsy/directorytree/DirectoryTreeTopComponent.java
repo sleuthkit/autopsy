@@ -46,7 +46,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
-import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -263,6 +262,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private javax.swing.JButton forwardButton;
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
+
     /**
      * Gets default instance. Do not use directly: reserved for *.settings files only,
      * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
@@ -356,9 +356,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             };
                         }
                     };
-                   
+
                     root = new DirectoryTreeFilterNode(root);
-                    
+
 
                     em.setRootContext(root);
                     em.getRootContext().setName(currentCase.getName());
@@ -580,10 +580,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
                         if (treeNode != null) {
                             OriginalNode origin = treeNode.getLookup().lookup(OriginalNode.class);
-                            if(origin == null)
+                            if (origin == null) {
                                 return;
+                            }
                             Node originNode = origin.getNode();
-                            
+
                             //int count = originNode.getChildren().getNodesCount(true);
                             //if (count > 1000) {
                             //    DirectoryTreeTopComponent.this.setCursor(null);
@@ -596,10 +597,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             DirectoryTreeTopComponent.this.dataResult.setNode(new TableFilterNode(drfn, true));
 
                             String displayName = "";
-                            if(originNode.getLookup().lookup(Content.class) != null)
+                            if (originNode.getLookup().lookup(Content.class) != null) {
                                 displayName = DataConversion.getformattedPath(ContentUtils.getDisplayPath(originNode.getLookup().lookup(Content.class)), 0);
-                            else if(originNode.getLookup().lookup(ArtifactTypeNode.class) != null)
+                            } else if (originNode.getLookup().lookup(ArtifactTypeNode.class) != null) {
                                 displayName = originNode.getLookup().lookup(ArtifactTypeNode.class).getDisplayName();
+                            }
                             DirectoryTreeTopComponent.this.dataResult.setPath(displayName);
                         }
 
@@ -663,7 +665,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public BeanTreeView getTree() {
         return (BeanTreeView) this.jScrollPane1;
     }
-    
+
     /**
      * Refreshes the nodes in the tree to reflect updates in the database
      * 
@@ -700,8 +702,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         });
     }
-    
-    
 
     @Override
     public TopComponent getTopComponent() {
@@ -731,6 +731,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 if (select != null) {
                     dataResult.requestActive();
                     dataResult.setSelectedNodes(new Node[]{select});
+                    fireViewerComplete();
                 }
             }
         });
@@ -740,8 +741,17 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public void viewArtifactContent(BlackboardArtifact art) {
         new ViewContextAction("View Artifact Content", new BlackboardArtifactNode(art)).actionPerformed(null);
     }
+
 //    private class HistoryManager<T> {
 //        private Stack<T> past, future;
 //
 //    }
+    @Override
+    public void addOnFinishedListener(PropertyChangeListener l) {
+        DirectoryTreeTopComponent.this.addPropertyChangeListener(l);
+    }
+    
+    void fireViewerComplete() {
+        firePropertyChange(BlackboardResultViewer.FINISHED_DISPLAY_EVT, 0, 1);
+    }
 }
