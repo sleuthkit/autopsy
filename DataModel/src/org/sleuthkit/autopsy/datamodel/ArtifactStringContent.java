@@ -65,8 +65,11 @@ public class ArtifactStringContent implements StringContent{
                     break;
                     
             }
-            buffer.append(": ");
-            buffer.append(attr.getContext());
+            if (!"".equals(attr.getContext())) {
+                buffer.append(" (");
+                buffer.append(attr.getContext());
+                buffer.append(")");
+            }
             buffer.append("\n   ");
         }
         return buffer.toString();
