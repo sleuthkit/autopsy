@@ -98,10 +98,12 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     @Override
     public void componentOpened() {
         //logger.log(Level.INFO, "OPENED");
+        super.componentOpened();
         //create manager instance
         if (manager == null) {
             manager = IngestManager.getDefault();
         }
+        
     }
 
     @Override
@@ -136,7 +138,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
             }
             mode.dockInto(this);
             this.open();
-        }                  
+        }                
     }
 
     @Override
@@ -149,8 +151,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     @Override
     protected void componentActivated() {
         //logger.log(Level.INFO, "ACTIVATED");
-        super.componentActivated();
-        
+        super.componentActivated();   
     }
 
     @Override

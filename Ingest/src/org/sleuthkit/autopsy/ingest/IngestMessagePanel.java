@@ -22,6 +22,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
@@ -54,6 +55,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private static Font notVisitedFont = new Font("Arial", Font.BOLD, 11);
     private static Color ERROR_COLOR = new Color(255, 90, 90);
     private int lastRowSelected = -1;
+    private boolean resized = false;
 
     private enum COLUMN {
 
@@ -113,7 +115,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
         messageTable.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
         messageTable.setModel(tableModel);
-        messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
+        messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         messageTable.setAutoscrolls(false);
         messageTable.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         messageTable.setGridColor(new java.awt.Color(204, 204, 204));
@@ -192,7 +194,6 @@ class IngestMessagePanel extends javax.swing.JPanel {
         jScrollPane1.setWheelScrollingEnabled(true);
 
         messageTable.setAutoscrolls(false);
-        //messageTable.setTableHeader(null);
         messageTable.setShowHorizontalLines(false);
         messageTable.setShowVerticalLines(false);
 
@@ -204,42 +205,44 @@ class IngestMessagePanel extends javax.swing.JPanel {
             //column.setCellRenderer(new MessageTableRenderer());
             column.setCellRenderer(renderer);
         }
-        setTableSize(messageTable.getSize().width);
-
+        
         messageTable.setCellSelectionEnabled(false);
         messageTable.setColumnSelectionAllowed(false);
         messageTable.setRowSelectionAllowed(true);
         messageTable.getSelectionModel().addListSelectionListener(new MessageVisitedSelection());
+        
     }
 
     @Override
     public void setPreferredSize(Dimension dmnsn) {
         super.setPreferredSize(dmnsn);
-        final int width = messageTable.getSize().width;
-        setTableSize(width);
-
+        setTableSize(messageTable.getParent().getSize());
     }
+    
 
-    @Override
-    public void setSize(Dimension dmnsn) {
-        super.setSize(dmnsn);
-        final int width = messageTable.getSize().width;
-        setTableSize(width);
-
-    }
-
-    private void setTableSize(int width) {
-        for (int i = 0; i < 3; i++) {
+     void setTableSize(Dimension d) {
+        for (int i = 0; i < 3; ++i) {
             TableColumn column = messageTable.getColumnModel().getColumn(i);
             if (i == 0) {
-                column.setPreferredWidth(((int) (width * 0.66)));
+                column.setPreferredWidth(((int) (d.width * 0.23)));
             } else if (i == 1) {
-                column.setPreferredWidth(((int) (width * 0.10)));
+                column.setPreferredWidth(((int) (d.width * 0.10)));
             } else {
-                column.setPreferredWidth(((int) (width * 0.23)));
+                column.setPreferredWidth(((int) (d.width * 0.66)));
             }
         }
     }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        //workaround to force initial resize when window fully initialized
+        if (resized == false) {
+            mainPanel.doResize();
+            resized = true;
+        }
+    }
+
 
     public void addMessage(IngestMessage m) {
         final int origMsgGroups = tableModel.getNumberUnreadGroups();
@@ -331,13 +334,13 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
             switch (column) {
                 case 0:
-                    colName = "Subject";
+                    colName = "Module";
                     break;
                 case 1:
                     colName = "Num";
                     break;
                 case 2:
-                    colName = "Module";
+                    colName = "Subject";
                     break;
                 default:
                     ;
@@ -353,18 +356,18 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
             switch (columnIndex) {
                 case 0:
-                    ret = (Object) entry.messageGroup.getSubject();
-                    break;
-                case 1:
-                    ret = (Object) entry.messageGroup.getCount();
-                    break;
-                case 2:
                     Object service = entry.messageGroup.getSource();
                     if (service == null) {
                         ret = "";
                     } else {
                         ret = (Object) entry.messageGroup.getSource().getName();
                     }
+                    break;
+                case 1:
+                    ret = (Object) entry.messageGroup.getCount();
+                    break;
+                case 2:
+                    ret = (Object) entry.messageGroup.getSubject();
                     break;
                 default:
                     logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
@@ -571,10 +574,11 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
             IngestMessage first = messages.get(0);
             //make sure uniqness agrees
+            /*
             if (!message.getSource().equals(first.getSource())
                     || !message.getUniqueKey().equals(first.getUniqueKey())) {
                 throw new IllegalArgumentException("Tried to add a message to a wrong message group.");
-            }
+            } */
 
             messages.add(message);
             ++count;
@@ -586,10 +590,11 @@ class IngestMessagePanel extends javax.swing.JPanel {
             IngestMessage first = messages.get(0);
             IngestMessage firstG = group.messages.get(0);
             //make sure uniqness agrees
+            /*
             if (!firstG.getSource().equals(first.getSource())
                     || !firstG.getUniqueKey().equals(first.getUniqueKey())) {
                 throw new IllegalArgumentException("Tried to add a message to a wrong message group.");
-            }
+            } */
 
             for (IngestMessage m : group.getMessages()) {
                 messages.add(m);
@@ -694,7 +699,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
             final Component cell = super.getTableCellRendererComponent(
                     table, value, false, false, row, column);
 
-            if (column == 0) {
+            if (column == 2) {
                 String val = (String) table.getModel().getValueAt(row, column);
                 setToolTipText(val);
                 //setText(val);

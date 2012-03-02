@@ -35,9 +35,12 @@ public class Installer extends ModuleInstall {
         logger.log(Level.INFO, "Initializing ingest manager");
         final IngestManager manager = IngestManager.getDefault();
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
+
             @Override
             public void run() {
                 manager.initUI();
+                //force ingest inbox closed, even if previous state was open
+                //IngestMessageTopComponent.findInstance().close();
             }
         });
 
@@ -45,7 +48,9 @@ public class Installer extends ModuleInstall {
 
     @Override
     public boolean closing() {
-       
+        //force ingest inbox closed on exit and save state as such
+        IngestMessageTopComponent.findInstance().close();
+
         return true;
     }
 }
