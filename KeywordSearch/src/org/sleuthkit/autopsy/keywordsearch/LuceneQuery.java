@@ -156,6 +156,11 @@ public class LuceneQuery implements KeywordSearchQuery {
         final List<FsContent> matches = performQuery();
 
         String pathText = "Keyword query: " + query;
+        
+        if (matches.isEmpty()) {
+            KeywordSearchUtil.displayDialog("Keyword Search", "No results for keyword: " + query, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+            return;
+        }
 
         //get listname
         String listName = "";

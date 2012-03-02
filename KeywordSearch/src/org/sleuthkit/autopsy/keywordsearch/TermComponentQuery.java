@@ -160,11 +160,11 @@ public class TermComponentQuery implements KeywordSearchQuery {
         Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
 
         //get case-insensitive term matches
-        Map<String,Void> caseInsMatches = new HashMap<String,Void>();
-        for (Term term:terms) {
+        Map<String, Void> caseInsMatches = new HashMap<String, Void>();
+        for (Term term : terms) {
             caseInsMatches.put(term.getTerm().toLowerCase(), null);
         }
-        
+
         for (String regexMatch : caseInsMatches.keySet()) {
             //snippet
             String snippet = null;
@@ -178,7 +178,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
             if (snippet == null || snippet.equals("")) {
                 continue;
             }
-            
+
             //there is match actually in this file, create artifact only then
             BlackboardArtifact bba = null;
             KeywordWriteResult writeResult = null;
@@ -202,7 +202,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
                     listName = "";
                 }
                 attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID(), MODULE_NAME, "", listName));
-                
+
             } catch (Exception e) {
                 logger.log(Level.INFO, "Error adding bb attribute", e);
             }
@@ -377,7 +377,12 @@ public class TermComponentQuery implements KeywordSearchQuery {
             if (!this.isCancelled()) {
                 try {
                     List<Term> terms = get();
-                    publishNodes(terms);
+                    if (terms.isEmpty()) {
+                        KeywordSearchUtil.displayDialog("Keyword Search", "No results for regex search: " + termsQuery, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+
+                    } else {
+                        publishNodes(terms);
+                    }
                 } catch (InterruptedException e) {
                     logger.log(Level.INFO, "Exception while executing regex query,", e);
 
