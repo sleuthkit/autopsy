@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -31,7 +32,7 @@ public class SearchFiltersNode extends AbstractNode implements DisplayableItemNo
     SleuthkitCase skCase;
 
     SearchFiltersNode(SleuthkitCase skCase) {
-        super(Children.create(new SearchFiltersChildren(skCase), true));
+        super(Children.create(new SearchFiltersChildren(skCase), true), Lookups.singleton("Search Filters"));
         super.setName("File Types");
         super.setDisplayName("File Types");
         this.skCase = skCase;

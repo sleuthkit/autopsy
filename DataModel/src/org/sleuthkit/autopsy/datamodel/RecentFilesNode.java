@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -31,7 +32,7 @@ public class RecentFilesNode extends AbstractNode implements DisplayableItemNode
     SleuthkitCase skCase;
 
     RecentFilesNode(SleuthkitCase skCase) {
-        super(Children.create(new RecentFilesChildren(skCase), true));
+        super(Children.create(new RecentFilesChildren(skCase), true), Lookups.singleton("Recent Files"));
         super.setName("Recent Files");
         super.setDisplayName("Recent Files");
         this.skCase = skCase;

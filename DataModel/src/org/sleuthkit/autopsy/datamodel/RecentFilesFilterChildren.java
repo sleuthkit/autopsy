@@ -22,6 +22,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,13 +45,14 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
     
     SleuthkitCase skCase;
     RecentFilesFilter filter;
-    long latestUpdate;
+    Calendar prevDay;
     private final static Logger logger = Logger.getLogger(RecentFilesFilterChildren.class.getName());
 
-    RecentFilesFilterChildren(RecentFilesFilter filter, SleuthkitCase skCase, long latestUpdate) {
+    RecentFilesFilterChildren(RecentFilesFilter filter, SleuthkitCase skCase, Calendar lastDay) {
         this.skCase = skCase;
         this.filter = filter;
-        this.latestUpdate = latestUpdate;
+        this.prevDay = (Calendar) lastDay.clone();
+        prevDay.add(Calendar.DATE, -filter.getDurationDays());
     }
 
     @Override
@@ -61,11 +63,14 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
     
     private String createQuery(){
         String query = "select * from tsk_files where ";
-        long threshold = latestUpdate-filter.getDurationSeconds();
-        query += "(crtime between " + threshold + " and " + latestUpdate + ") or ";
-        query += "(ctime between " + threshold + " and " + latestUpdate + ") or ";
-        query += "(atime between " + threshold + " and " + latestUpdate + ") or ";
-        query += "(mtime between " + threshold + " and " + latestUpdate + ")";
+        long lowerLimit = prevDay.getTimeInMillis()/1000;
+        prevDay.add(Calendar.DATE, 1);
+        prevDay.add(Calendar.MILLISECOND, -1);
+        long upperLimit = prevDay.getTimeInMillis()/1000;
+        query += "(crtime between " + lowerLimit + " and " + upperLimit + ") or ";
+        query += "(ctime between " + lowerLimit + " and " + upperLimit + ") or ";
+        query += "(atime between " + lowerLimit + " and " + upperLimit + ") or ";
+        query += "(mtime between " + lowerLimit + " and " + upperLimit + ")";
         return query;
     }
     
@@ -74,7 +79,7 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
         try {
             ResultSet rs = skCase.runQuery(createQuery());
             for(FsContent c : skCase.resultSetToFsContents(rs)){
-                if(!c.getName().equals(".") && !c.getName().equals("..")){
+                if(c.isFile()){
                     list.add(c);
                 }
             }
