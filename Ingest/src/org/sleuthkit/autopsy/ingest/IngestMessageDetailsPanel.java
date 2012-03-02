@@ -54,9 +54,9 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
 
         backButton = new javax.swing.JButton();
         viewContentButton = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        messageDetailsPane = new javax.swing.JEditorPane();
         viewArtifactButton = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        messageDetailsPane = new javax.swing.JTextPane();
 
         backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/arrow_left.gif"))); // NOI18N
         backButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.backButton.text")); // NOI18N
@@ -81,13 +81,6 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
             }
         });
 
-        messageDetailsPane.setBackground(new java.awt.Color(221, 221, 235));
-        messageDetailsPane.setBorder(null);
-        messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
-        messageDetailsPane.setEditable(false);
-        messageDetailsPane.setMargin(new java.awt.Insets(1, 1, 1, 1));
-        jScrollPane1.setViewportView(messageDetailsPane);
-
         viewArtifactButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewArtifactButton.text")); // NOI18N
         viewArtifactButton.setAlignmentY(0.0F);
         viewArtifactButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
@@ -96,6 +89,13 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
                 viewArtifactButtonActionPerformed(evt);
             }
         });
+
+        messageDetailsPane.setBackground(new java.awt.Color(221, 221, 235));
+        messageDetailsPane.setBorder(null);
+        messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
+        messageDetailsPane.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        messageDetailsPane.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.toolTipText")); // NOI18N
+        jScrollPane1.setViewportView(messageDetailsPane);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -118,7 +118,7 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
                         .addComponent(viewContentButton)
                         .addComponent(viewArtifactButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 197, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -133,11 +133,10 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
     private void backButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_backButtonActionPerformed
         mainPanel.showMessages();
     }//GEN-LAST:event_backButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JEditorPane messageDetailsPane;
+    private javax.swing.JTextPane messageDetailsPane;
     private javax.swing.JButton viewArtifactButton;
     private javax.swing.JButton viewContentButton;
     // End of variables declaration//GEN-END:variables
@@ -167,14 +166,22 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         }
     }
 
-
     void showDetails(int rowNumber) {
         final IngestMessageGroup messageGroup = mainPanel.getMessagePanel().getMessageGroup(rowNumber);
         if (messageGroup != null) {
             String details = messageGroup.getDetails();
             if (details != null) {
                 StringBuilder b = new StringBuilder();
-                b.append("<html>").append(details).append("</html>");
+                b.append("<html>");
+                b.append("<head>");
+                b.append("<style type='text/css'>");
+                b.append("table {table-layout:fixed;}");
+                b.append("td {font-family:Arial;font-size:10pt;white-space:pre-wrap;overflow:hidden;}");
+                b.append("th {font-family:Arial;font-size:10pt;font-weight:bold;}");
+                b.append("p {font-family:Arial;font-size:10pt;}");
+                b.append("</style>");
+                b.append("</head>");
+                b.append(details).append("</html>");
                 this.messageDetailsPane.setText(b.toString());
             } else {
                 this.messageDetailsPane.setText("");
@@ -193,6 +200,4 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
             messageDetailsPane.setText("");
         }
     }
-    
-    
 }

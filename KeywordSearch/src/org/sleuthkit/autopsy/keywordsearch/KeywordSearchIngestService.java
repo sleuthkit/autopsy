@@ -570,36 +570,37 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             //String uniqueKey = queryStr;
 
                             //details
+                            //title
+                            detailsSb.append("<table border='1' width='200'><tr><th>Keyword hit</th><th>Preview</th>");
+                            detailsSb.append("<th>File</th><th>List</th>");
+                            if (! query.isLiteral())
+                                detailsSb.append("<th>Regex</th>");
+                            detailsSb.append("</tr><tr>");
+                            
                             //hit
-                            detailsSb.append("Keyword hit: ");
-                            detailsSb.append(attr.getValueString());
-                            detailsSb.append("<br />");
+                            detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
+                            
+                             //preview
+                            attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
+                            if (attr != null) {
+                                detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
+                            }
+                            
+                            //file
+                            detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
+                            
                             //list
-                            detailsSb.append("List: ");
                             attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID());
-                            detailsSb.append(attr.getValueString());
-                            detailsSb.append("<br />");
+                            detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
+                            
                             //regex
                             if (!query.isLiteral()) {
                                 attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
                                 if (attr != null) {
-                                    detailsSb.append("Regular expression: ");
-                                    detailsSb.append(attr.getValueString());
-                                    detailsSb.append("<br />");
+                                    detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
                                 }
                             }
-
-                            //file
-                            detailsSb.append("File: ");
-                            detailsSb.append(hitFile.getParentPath()).append(hitFile.getName());
-                            detailsSb.append("<br />");
-                            //preview
-                            attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
-                            if (attr != null) {
-                                detailsSb.append("Preview: ");
-                                detailsSb.append(attr.getValueString());
-                                detailsSb.append("<br />");
-                            }
+                            detailsSb.append("</tr></table>");
 
                             managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, res.getArtifact()));
                         }

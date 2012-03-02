@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -53,7 +54,11 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private static Font notVisitedFont = new Font("Arial", Font.BOLD, 11);
     private static Color ERROR_COLOR = new Color(255, 90, 90);
     private int lastRowSelected = -1;
-    
+
+    private enum COLUMN {
+
+        SUBJECT, COUNT, SERVICE
+    };
     private static PropertyChangeSupport messagePcs = new PropertyChangeSupport(IngestMessagePanel.class);
     static final String MESSAGE_CHANGE_EVT = "MESSAGE_CHANGE_EVT"; //number of unread messages changed
 
@@ -80,7 +85,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
     IngestMessageGroup getMessageGroup(int rowNumber) {
         return tableModel.getMessageGroup(rowNumber);
     }
-    
+
     synchronized static void addPropertyChangeSupportListener(PropertyChangeListener l) {
         messagePcs.addPropertyChangeListener(l);
     }
@@ -170,12 +175,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private void sortByComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortByComboBoxActionPerformed
         if (sortByComboBox.getSelectedIndex() == 0) {
             tableModel.reSort(true);
-        }
-        else {
+        } else {
             tableModel.reSort(false);
         }
     }//GEN-LAST:event_sortByComboBoxActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel controlPanel;
     private javax.swing.JScrollPane jScrollPane1;
@@ -198,36 +201,54 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         messageTable.getParent().setBackground(messageTable.getBackground());
 
-        //customize column witdhs
-        //messageTable.setSize(260, 260);
-        //messageTable.setSize(messageTable.getParent().getPreferredSize());
-        final int width = messageTable.getSize().width;
-        TableColumn column = null;
-        for (int i = 0; i < 2; i++) {
-            column = messageTable.getColumnModel().getColumn(i);
-            if (i == 0) {
-                column.setCellRenderer(new MessageTableRenderer());
-                column.setPreferredWidth(((int) (width * 0.61)));
-            } else if (i == 1) {
-                column.setPreferredWidth(((int) (width * 0.15)));
-                column.setCellRenderer(new MessageTableRenderer());
-            } else {
-                column.setPreferredWidth(((int) (width * 0.23)));
-                column.setCellRenderer(new MessageTableRenderer());
-
-            }
+        MessageTableRenderer renderer = new MessageTableRenderer();
+        for (int i = 0; i < 3; i++) {
+            TableColumn column = messageTable.getColumnModel().getColumn(i);
+            //column.setCellRenderer(new MessageTableRenderer());
+            column.setCellRenderer(renderer);
         }
+        setTableSize(messageTable.getSize().width);
+
         messageTable.setCellSelectionEnabled(false);
         messageTable.setColumnSelectionAllowed(false);
         messageTable.setRowSelectionAllowed(true);
         messageTable.getSelectionModel().addListSelectionListener(new MessageVisitedSelection());
     }
 
+    @Override
+    public void setPreferredSize(Dimension dmnsn) {
+        super.setPreferredSize(dmnsn);
+        final int width = messageTable.getSize().width;
+        setTableSize(width);
+
+    }
+
+    @Override
+    public void setSize(Dimension dmnsn) {
+        super.setSize(dmnsn);
+        final int width = messageTable.getSize().width;
+        setTableSize(width);
+
+    }
+
+    private void setTableSize(int width) {
+        for (int i = 0; i < 3; i++) {
+            TableColumn column = messageTable.getColumnModel().getColumn(i);
+            if (i == 0) {
+                column.setPreferredWidth(((int) (width * 0.66)));
+            } else if (i == 1) {
+                column.setPreferredWidth(((int) (width * 0.10)));
+            } else {
+                column.setPreferredWidth(((int) (width * 0.23)));
+            }
+        }
+    }
+
     public void addMessage(IngestMessage m) {
         final int origMsgGroups = tableModel.getNumberUnreadGroups();
         tableModel.addMessage(m);
         messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, tableModel.getNumberUnreadGroups());
-        
+
         //autoscroll
         //messageTable.scrollRectToVisible(messageTable.getCellRect(messageTable.getRowCount() - 1, messageTable.getColumnCount(), true));
     }
@@ -247,12 +268,11 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
     private class MessageTableModel extends AbstractTableModel {
         //data
+
         private List<TableEntry> messageData = new ArrayList<TableEntry>();
         //for keeping track of messages to group, per service, by uniqness
         private Map<IngestServiceAbstract, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<IngestServiceAbstract, Map<String, List<IngestMessageGroup>>>();
-        
         private boolean chronoSort = true; //chronological sort default
-        
         private static final int MESSAGE_GROUP_THRESH = 3; //group messages after 3 messages per service with same uniqness
         private Logger logger = Logger.getLogger(MessageTableModel.class.getName());
 
@@ -275,11 +295,11 @@ class IngestMessagePanel extends javax.swing.JPanel {
         public int getRowCount() {
             return getNumberGroups();
         }
-        
+
         int getNumberGroups() {
             return messageData.size();
         }
-        
+
         int getNumberMessages() {
             int total = 0;
             for (TableEntry e : messageData) {
@@ -287,21 +307,23 @@ class IngestMessagePanel extends javax.swing.JPanel {
             }
             return total;
         }
-        
+
         int getNumberUnreadMessages() {
             int total = 0;
             for (TableEntry e : messageData) {
-                if (e.visited == false)
+                if (e.visited == false) {
                     total += e.messageGroup.count;
+                }
             }
             return total;
         }
-        
+
         int getNumberUnreadGroups() {
             int total = 0;
             for (TableEntry e : messageData) {
-                if (e.visited == false)
+                if (e.visited == false) {
                     ++total;
+                }
             }
             return total;
         }
@@ -315,7 +337,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
                     colName = "Subject";
                     break;
                 case 1:
-                    colName = "# Messages";
+                    colName = "Num";
                     break;
                 case 2:
                     colName = "Module";
@@ -410,7 +432,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
                         while ((toRemove = getTableEntryIndex(messageGroup)) != -1) {
                             messageData.remove(toRemove);
                             //remove the row, will be added to the bottom
-                            this.fireTableRowsDeleted(toRemove, toRemove); 
+                            this.fireTableRowsDeleted(toRemove, toRemove);
                         }
 
 
@@ -427,7 +449,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
                             while ((toRemove = getTableEntryIndex(messageGroup)) != -1) {
                                 messageData.remove(toRemove);
                                 //remove the row, will be added to the bottom
-                                this.fireTableRowsDeleted(toRemove, toRemove); 
+                                this.fireTableRowsDeleted(toRemove, toRemove);
                             }
                         } else {
                             //one group with one message
@@ -454,7 +476,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
             messageData.add(new TableEntry(messageGroup));
             int size = messageData.size();
             fireTableRowsInserted(size - 1, size);
-            
+
             //if priority sort, need to re-sort everything
             if (chronoSort == false) {
                 Collections.sort(messageData);
@@ -495,17 +517,16 @@ class IngestMessagePanel extends javax.swing.JPanel {
         public IngestMessageGroup getMessageGroup(int rowNumber) {
             return messageData.get(rowNumber).messageGroup;
         }
-        
+
         public void reSort(boolean chronoLogical) {
-            if (chronoSort == chronoLogical)
+            if (chronoSort == chronoLogical) {
                 return;
-            
+            }
+
             chronoSort = chronoLogical;
             Collections.sort(messageData);
             fireTableDataChanged();
         }
-        
-        
 
         class TableEntry implements Comparable {
 
@@ -521,8 +542,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
             public int compareTo(Object o) {
                 if (chronoSort == true) {
                     return this.messageGroup.getDatePosted().compareTo(((TableEntry) o).messageGroup.getDatePosted());
-                }
-                else {
+                } else {
                     return messageGroup.count - ((TableEntry) o).messageGroup.count;
                 }
             }
@@ -533,11 +553,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
     //with the same uniqness
     static class IngestMessageGroup {
 
-        static Color VERY_HIGH_PRI_COLOR = new Color(136, 136, 185); //for a single message in a group
-        static Color HIGH_PRI_COLOR = new Color(158, 158, 199);
-        static Color MED_PRI_COLOR = new Color(193, 193, 219);
+        static Color VERY_HIGH_PRI_COLOR = new Color(164, 164, 202); //for a single message in a group
+        static Color HIGH_PRI_COLOR = new Color(180, 180, 211);
+        static Color MED_PRI_COLOR = new Color(199, 199, 202);
         static Color LOW_PRI_COLOR = new Color(221, 221, 235);
-        
         private List<IngestMessage> messages;
         private int count;
 
@@ -593,7 +612,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
                     continue;
                 }
                 b.append(details);
-                b.append("<hr />");
+                //b.append("<hr />");
+                b.append("<br />");
             }
 
             return b.toString();
@@ -677,46 +697,43 @@ class IngestMessagePanel extends javax.swing.JPanel {
             final Component cell = super.getTableCellRendererComponent(
                     table, value, false, false, row, column);
 
-            if (column == 0 || column == 2) {
+            if (column == 0) {
                 String val = (String) table.getModel().getValueAt(row, column);
                 setToolTipText(val);
                 //setText(val);
-            } else if (column == 1) {
-                //Integer val = (Integer) table.getModel().getValueAt(row, column);
-                //setToolTipText(Integer.toString(val));
-            }
-
-            if (column == 0) {
                 if (tableModel.isVisited(row)) {
                     cell.setFont(visitedFont);
                 } else {
                     cell.setFont(notVisitedFont);
                 }
-                if (!isSelected) {
-                    final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
-                    MessageType mt = messageGroup.getMessageType();
-                    if (mt == MessageType.ERROR) {
-                        cell.setBackground(ERROR_COLOR);
-                    } else if (mt == MessageType.WARNING) {
-                        cell.setBackground(Color.orange);
-                    } else {
-                        //cell.setBackground(table.getBackground());
-                        cell.setBackground(messageGroup.getColor());
-                    }
-                } else {
-                    super.setForeground(table.getSelectionForeground());
-                    super.setBackground(table.getSelectionBackground());
-                }
             }
 
-            if (column == 1) {
-                if (isSelected) {
-                    super.setForeground(table.getSelectionForeground());
-                    super.setBackground(table.getSelectionBackground());
+
+            if (!isSelected) {
+                final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
+                MessageType mt = messageGroup.getMessageType();
+                if (mt == MessageType.ERROR) {
+                    cell.setBackground(ERROR_COLOR);
+                } else if (mt == MessageType.WARNING) {
+                    cell.setBackground(Color.orange);
                 } else {
-                    cell.setBackground(table.getBackground());
+                    //cell.setBackground(table.getBackground());
+                    cell.setBackground(messageGroup.getColor());
                 }
+            } else {
+                super.setForeground(table.getSelectionForeground());
+                super.setBackground(table.getSelectionBackground());
             }
+            //}
+                /*
+            if (column == 1) {
+            if (isSelected) {
+            super.setForeground(table.getSelectionForeground());
+            super.setBackground(table.getSelectionBackground());
+            } else {
+            cell.setBackground(table.getBackground());
+            }
+            } */
 
             return this;
         }
@@ -761,5 +778,4 @@ class IngestMessagePanel extends javax.swing.JPanel {
             }
         }
     }
-    
 }
