@@ -20,7 +20,7 @@
               <Component id="backButton" min="-2" pref="23" max="-2" attributes="0"/>
               <EmptySpace pref="153" max="32767" attributes="0"/>
               <Component id="viewArtifactButton" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
               <Component id="viewContentButton" min="-2" max="-2" attributes="0"/>
           </Group>
           <Component id="jScrollPane1" alignment="0" pref="328" max="32767" attributes="0"/>
@@ -36,8 +36,8 @@
                       <Component id="viewArtifactButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="197" max="32767" attributes="0"/>
+              <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
+              <Component id="jScrollPane1" pref="203" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
