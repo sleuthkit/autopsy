@@ -62,18 +62,14 @@ public class IngestMessageMainPanel extends JLayeredPane {
 
             @Override
             public void componentShown(ComponentEvent e) {
+                //doResize();
             }
 
             @Override
             public void componentResized(ComponentEvent e) {
                 //we need to handle resizing ourselves due to absence of layout manager
                 //in layered layout
-                Dimension dim = getSize();
-                messagePanel.setPreferredSize(dim);
-                detailsPanel.setPreferredSize(dim);
-                messagePanel.setBounds(0, 0, dim.width, dim.height);
-                detailsPanel.setBounds(0, 0, dim.width, dim.height);
-                revalidate();
+                doResize();
 
             }
         });
@@ -83,6 +79,15 @@ public class IngestMessageMainPanel extends JLayeredPane {
         add(messagePanel, JLayeredPane.PALETTE_LAYER);
         add(detailsPanel, JLayeredPane.DEFAULT_LAYER);
         this.setOpaque(true);
+    }
+
+    void doResize() {
+        Dimension dim = getSize();
+        messagePanel.setPreferredSize(dim);
+        detailsPanel.setPreferredSize(dim);
+        messagePanel.setBounds(0, 0, dim.width, dim.height);
+        detailsPanel.setBounds(0, 0, dim.width, dim.height);
+        revalidate();
     }
 
     IngestMessagePanel getMessagePanel() {
