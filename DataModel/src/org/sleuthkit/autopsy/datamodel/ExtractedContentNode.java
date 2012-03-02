@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -31,7 +32,7 @@ public class ExtractedContentNode extends AbstractNode implements DisplayableIte
     public static final String EXTRACTED_NAME = "Extracted Content";
     
     public ExtractedContentNode(SleuthkitCase skCase){
-        super(Children.create(new ExtractedContentChildren(skCase), true));
+        super(Children.create(new ExtractedContentChildren(skCase), true), Lookups.singleton(EXTRACTED_NAME));
         super.setName(EXTRACTED_NAME);
         super.setDisplayName(EXTRACTED_NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/artifact-icon.png");

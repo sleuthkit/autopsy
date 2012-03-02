@@ -22,6 +22,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,7 +37,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFilter>{
     
     SleuthkitCase skCase;
-    long latestUpdateTime;
+    Calendar lastDay;
     private final static Logger logger = Logger.getLogger(RecentFilesChildren.class.getName());
     
     public RecentFilesChildren(SleuthkitCase skCase) {
@@ -46,13 +47,18 @@ public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFil
     @Override
     protected boolean createKeys(List<RecentFiles.RecentFilesFilter> list) {
         list.addAll(Arrays.asList(RecentFiles.RecentFilesFilter.values()));
-        latestUpdateTime = getLastTime();
+        lastDay = Calendar.getInstance();
+        lastDay.setTimeInMillis(getLastTime()*1000);
+        lastDay.set(Calendar.HOUR_OF_DAY, 0);
+        lastDay.set(Calendar.MINUTE, 0);
+        lastDay.set(Calendar.SECOND, 0);
+        lastDay.set(Calendar.MILLISECOND, 0);
         return true;
     }
-    
+
     @Override
     protected Node createNodeForKey(RecentFiles.RecentFilesFilter key){
-        return new RecentFilesFilterNode(skCase, key, latestUpdateTime);
+        return new RecentFilesFilterNode(skCase, key, lastDay);
     }
     
     private long getLastTime() {

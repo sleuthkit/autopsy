@@ -35,7 +35,7 @@ public class FileSearchFilterNode extends AbstractNode implements DisplayableIte
     SleuthkitCase skCase;
 
     FileSearchFilterNode(FileSearchFilter filter, SleuthkitCase skCase) {
-        super(Children.create(new FileSearchFilterChildren(filter, skCase), true), Lookups.singleton(filter));
+        super(Children.create(new FileSearchFilterChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
         super.setName(filter.getName());
         super.setDisplayName(filter.getDisplayName());
         this.filter = filter;
