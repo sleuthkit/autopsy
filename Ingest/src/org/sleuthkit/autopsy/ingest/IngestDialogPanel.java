@@ -20,6 +20,7 @@
 
 package org.sleuthkit.autopsy.ingest;
 
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -103,8 +104,8 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                    freqSlider.setValue(2);
             }
             
-        
         });
+        
         
         servicesTable.setTableHeader(null);
         servicesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -139,6 +140,16 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         });
         
     }
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        if (manager.isIngestRunning())
+            freqSlider.setEnabled(false);
+        else freqSlider.setEnabled(true);
+    }
+
+    
 
     private void addService(IngestServiceAbstract service) {
         final String serviceName = service.getName();
