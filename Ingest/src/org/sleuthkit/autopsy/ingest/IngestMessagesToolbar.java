@@ -48,19 +48,19 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
 
         ingestMessagesButton = new javax.swing.JButton();
 
-        setPreferredSize(new java.awt.Dimension(93, 23));
+        setMaximumSize(new java.awt.Dimension(32767, 25));
+        setPreferredSize(new java.awt.Dimension(80, 23));
 
         ingestMessagesButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-icon-16.png"))); // NOI18N
         ingestMessagesButton.setText(org.openide.util.NbBundle.getMessage(IngestMessagesToolbar.class, "IngestMessagesToolbar.ingestMessagesButton.text")); // NOI18N
         ingestMessagesButton.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagesToolbar.class, "IngestMessagesToolbar.ingestMessagesButton.toolTipText")); // NOI18N
-        ingestMessagesButton.setAlignmentX(0.5F);
-        ingestMessagesButton.setEnabled(false);
         ingestMessagesButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         ingestMessagesButton.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        ingestMessagesButton.setMargin(new java.awt.Insets(1, 0, 1, 14));
+        ingestMessagesButton.setMargin(new java.awt.Insets(2, 0, 2, 2));
         ingestMessagesButton.setMaximumSize(new java.awt.Dimension(65, 23));
         ingestMessagesButton.setMinimumSize(new java.awt.Dimension(65, 23));
+        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(65, 23));
         ingestMessagesButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 ingestMessagesButtonActionPerformed(evt);
@@ -71,7 +71,10 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(ingestMessagesButton, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(30, Short.MAX_VALUE)
+                .addComponent(ingestMessagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
