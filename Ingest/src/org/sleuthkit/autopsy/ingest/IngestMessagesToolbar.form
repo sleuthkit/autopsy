@@ -46,6 +46,7 @@
           <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="IngestMessagesToolbar.ingestMessagesButton.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="alignmentX" type="float" value="0.5"/>
+        <Property name="enabled" type="boolean" value="false"/>
         <Property name="horizontalAlignment" type="int" value="2"/>
         <Property name="horizontalTextPosition" type="int" value="4"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">

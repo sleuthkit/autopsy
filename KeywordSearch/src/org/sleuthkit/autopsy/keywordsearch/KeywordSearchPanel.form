@@ -126,6 +126,7 @@
                 <EmptyBorder bottom="1" left="2" right="2" top="1"/>
               </Border>
             </Property>
+            <Property name="enabled" type="boolean" value="false"/>
             <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
               <Dimension value="[23, 20]"/>
             </Property>
