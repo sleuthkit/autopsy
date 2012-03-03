@@ -23,6 +23,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Toolbar for Ingest
@@ -54,6 +55,7 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         ingestMessagesButton.setText(org.openide.util.NbBundle.getMessage(IngestMessagesToolbar.class, "IngestMessagesToolbar.ingestMessagesButton.text")); // NOI18N
         ingestMessagesButton.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagesToolbar.class, "IngestMessagesToolbar.ingestMessagesButton.toolTipText")); // NOI18N
         ingestMessagesButton.setAlignmentX(0.5F);
+        ingestMessagesButton.setEnabled(false);
         ingestMessagesButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         ingestMessagesButton.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
         ingestMessagesButton.setMargin(new java.awt.Insets(1, 0, 1, 14));
@@ -97,6 +99,16 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
             }
             
         });
+        
+        Case.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if(evt.getPropertyName().equals(Case.CASE_CURRENT_CASE))
+                    setEnabled(evt.getNewValue() != null);
+            }
+            
+        });
     }
 
     private void showIngestMessages() {
@@ -109,5 +121,11 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
             tc.open();
             //tc.requestActive();   
         }
+    }
+    
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        ingestMessagesButton.setEnabled(enabled);
     }
 }

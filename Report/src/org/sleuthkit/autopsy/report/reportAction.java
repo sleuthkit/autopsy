@@ -9,6 +9,8 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -21,6 +23,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Log;
 
 @ActionID(category = "Tools",
@@ -36,6 +39,17 @@ public final class reportAction extends CallableSystemAction implements Presente
     private static final String ACTION_NAME = "Report Filter";
     
     public reportAction() {
+        setEnabled(false);
+        Case.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if(evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)){
+                    setEnabled(evt.getNewValue() != null);
+                }
+            }
+            
+        });
         // set action of the toolbar button
         toolbarButton.addActionListener(new ActionListener() {
 

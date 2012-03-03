@@ -642,18 +642,7 @@ public class Case {
      * Invoke the creation of startup dialog window.
      */
     static public void invokeStartupDialog() {
-        boolean showDialog = true;
-        AutopsyPropFile apf = AutopsyPropFile.getInstance();
-        String temp = apf.getProperty(propStartup);
-        if (temp != null) {
-            showDialog = !temp.equals("false");
-        } else {
-          apf.setProperty(propStartup, "true");
-        }
-        
-        if (showDialog) {
-            StartupWindow.getInstance().open();
-        }
+        StartupWindow.getInstance().open();
     }
 
 

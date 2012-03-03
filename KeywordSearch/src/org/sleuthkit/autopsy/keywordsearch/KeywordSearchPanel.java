@@ -159,6 +159,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         settingsLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/search-icon.png"))); // NOI18N
         settingsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.settingsLabel.text")); // NOI18N
         settingsLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 2, 1, 2));
+        settingsLabel.setEnabled(false);
         settingsLabel.setMaximumSize(new java.awt.Dimension(23, 20));
         settingsLabel.setMinimumSize(new java.awt.Dimension(23, 20));
         settingsLabel.setPreferredSize(new java.awt.Dimension(23, 20));

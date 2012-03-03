@@ -23,16 +23,10 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 
 /**
  *
@@ -62,7 +56,6 @@ public class CueBannerPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        startupCheckBox = new javax.swing.JCheckBox();
         closeButton = new javax.swing.JButton();
         logoPanel = new javax.swing.JPanel();
         autopsyLogo = new javax.swing.JLabel();
@@ -78,14 +71,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
         openLabel = new javax.swing.JLabel();
         openRecentLabel = new javax.swing.JLabel();
 
-        startupCheckBox.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.startupCheckBox.text")); // NOI18N
-
         closeButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.closeButton.text")); // NOI18N
-        closeButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                closeButtonActionPerformed(evt);
-            }
-        });
 
         logoPanel.setBackground(new java.awt.Color(255, 255, 255));
 
@@ -112,7 +98,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
         welcomeLabel.setFont(new java.awt.Font("Tahoma", 1, 18));
         welcomeLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.welcomeLabel.text")); // NOI18N
 
-        autopsyLabel.setFont(new java.awt.Font("Tahoma", 1, 32)); // NOI18N
+        autopsyLabel.setFont(new java.awt.Font("Tahoma", 1, 32));
         autopsyLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.autopsyLabel.text")); // NOI18N
 
         newCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/new-icon.png"))); // NOI18N
@@ -216,10 +202,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(startupCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 345, Short.MAX_VALUE)
-                        .addComponent(closeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(closeButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(logoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -234,9 +217,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
                     .addComponent(editorPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(logoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(20, 20, 20)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(closeButton)
-                    .addComponent(startupCheckBox))
+                .addComponent(closeButton)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -279,13 +260,6 @@ public class CueBannerPanel extends javax.swing.JPanel {
         recentCasesWindow.setVisible(true);
     }//GEN-LAST:event_openRecentButtonActionPerformed
 
-    private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
-        if(this.startupCheckBox.isSelected()){
-            // update the properties
-            AutopsyPropFile.getInstance().setProperty(Case.propStartup, "false");
-        }
-    }//GEN-LAST:event_closeButtonActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel autopsyLabel;
@@ -299,7 +273,6 @@ public class CueBannerPanel extends javax.swing.JPanel {
     private javax.swing.JLabel openLabel;
     private javax.swing.JButton openRecentButton;
     private javax.swing.JLabel openRecentLabel;
-    private javax.swing.JCheckBox startupCheckBox;
     private javax.swing.JLabel welcomeLabel;
     // End of variables declaration//GEN-END:variables
 
