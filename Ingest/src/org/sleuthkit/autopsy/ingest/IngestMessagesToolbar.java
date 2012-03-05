@@ -55,6 +55,7 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-icon-16.png"))); // NOI18N
         ingestMessagesButton.setText(org.openide.util.NbBundle.getMessage(IngestMessagesToolbar.class, "IngestMessagesToolbar.ingestMessagesButton.text")); // NOI18N
         ingestMessagesButton.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagesToolbar.class, "IngestMessagesToolbar.ingestMessagesButton.toolTipText")); // NOI18N
+        ingestMessagesButton.setEnabled(false);
         ingestMessagesButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         ingestMessagesButton.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
         ingestMessagesButton.setMargin(new java.awt.Insets(2, 0, 2, 2));
@@ -72,7 +73,7 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(30, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(ingestMessagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(10, 10, 10))
         );
