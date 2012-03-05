@@ -145,7 +145,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         searchBoxPanel.setBorder(new javax.swing.border.LineBorder(java.awt.Color.lightGray, 1, true));
         searchBoxPanel.setPreferredSize(new java.awt.Dimension(255, 18));
 
-        searchBox.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        searchBox.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         searchBox.setForeground(java.awt.Color.lightGray);
         searchBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.searchBox.text")); // NOI18N
         searchBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 3, 4, 1));
@@ -180,8 +180,8 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         );
         searchBoxPanelLayout.setVerticalGroup(
             searchBoxPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(settingsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addComponent(searchBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(searchBox)
+            .addComponent(settingsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 22, Short.MAX_VALUE)
         );
 
         listsButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.listsButton.text")); // NOI18N
@@ -201,17 +201,17 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(listsButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(searchBoxPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 245, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(2, 2, 2))
+                .addGap(9, 9, 9))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(listsButton)
-            .addComponent(searchBoxPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(searchBoxPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
+            .addComponent(listsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
