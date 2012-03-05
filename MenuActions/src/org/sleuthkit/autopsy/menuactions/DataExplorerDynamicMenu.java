@@ -44,8 +44,11 @@ public class DataExplorerDynamicMenu extends JMenuItem implements DynamicMenuCon
         int totalItem = dataExplorers.size();
         JComponent[] comps = new JComponent[totalItem];
         
+        
         int i = 0;
         for(DataExplorer dx : dataExplorers){
+            if (! dx.hasMenuOpenAction())
+                continue;
             TopComponent explorerWin = dx.getTopComponent();
             JMenuItem item = new JMenuItem(explorerWin.getName());
             item.addActionListener(new OpenTopComponentAction(explorerWin));
@@ -58,7 +61,7 @@ public class DataExplorerDynamicMenu extends JMenuItem implements DynamicMenuCon
             }
 
             comps[i++] = item;
-        }
+        } 
 
         return comps;
     }

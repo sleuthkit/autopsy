@@ -348,4 +348,9 @@ public final class FileSearchTopComponent extends TopComponent implements DataEx
     public TopComponent getTopComponent() {
         return this;
     }
+    
+    @Override
+    public boolean hasMenuOpenAction() {
+        return true;
+    }
 }

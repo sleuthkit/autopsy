@@ -35,5 +35,7 @@ public interface DataExplorer extends PropertyChangeListener {
      * @return the DataExplorer's TopComponent
      */
     public TopComponent getTopComponent();
+    
+    public boolean hasMenuOpenAction();
 
 }

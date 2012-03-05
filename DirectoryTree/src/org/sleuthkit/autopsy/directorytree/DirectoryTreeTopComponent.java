@@ -709,6 +709,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     @Override
+    public boolean hasMenuOpenAction() {
+        return false;
+    }
+    
+    
+
+    @Override
     public void viewArtifact(final BlackboardArtifact art) {
         BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(art.getArtifactTypeID());
         Children rootChilds = em.getRootContext().getChildren();

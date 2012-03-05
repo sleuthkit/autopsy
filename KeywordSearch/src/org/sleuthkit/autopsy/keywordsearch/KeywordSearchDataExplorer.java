@@ -109,6 +109,11 @@ public class KeywordSearchDataExplorer implements DataExplorer {
     public org.openide.windows.TopComponent getTopComponent() {
         return this.tc;
     }
+    
+    @Override
+    public boolean hasMenuOpenAction() {
+        return false;
+    }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
