@@ -99,9 +99,9 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         for (int i = 0; i < keywordsTable.getColumnCount(); i++) {
             column = keywordsTable.getColumnModel().getColumn(i);
             if (i == 0) {
-                column.setPreferredWidth(((int) (rightWidth * 0.84)));
+                column.setPreferredWidth(((int) (rightWidth * 0.78)));
             } else {
-                column.setPreferredWidth(((int) (rightWidth * 0.15)));
+                column.setPreferredWidth(((int) (rightWidth * 0.20)));
                 column.setCellRenderer(new RightCheckBoxRenderer());
             }
         }

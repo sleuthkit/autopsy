@@ -120,14 +120,11 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         newListButton = new javax.swing.JButton();
         importButton = new javax.swing.JButton();
 
-        setBackground(new java.awt.Color(204, 204, 204));
         setMinimumSize(new java.awt.Dimension(200, 0));
         setPreferredSize(new java.awt.Dimension(200, 297));
 
-        jScrollPane1.setBackground(new java.awt.Color(204, 204, 204));
         jScrollPane1.setPreferredSize(new java.awt.Dimension(200, 402));
 
-        listsTable.setBackground(new java.awt.Color(204, 204, 204));
         listsTable.setModel(tableModel);
         listsTable.setShowHorizontalLines(false);
         listsTable.setShowVerticalLines(false);
