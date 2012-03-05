@@ -18,13 +18,16 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.awt.Color;
+import java.awt.Insets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.BorderFactory;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
+import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
-import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 
@@ -47,7 +50,11 @@ public class Installer extends ModuleInstall {
             }
         });
 
-         //setupLAF();
+        Logger logger = Logger.getLogger(Installer.class.getName());
+        //setupLAF();
+        //UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
+        //UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
+        //UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
     }
 
     private void setupLAF() {
@@ -56,8 +63,8 @@ public class Installer extends ModuleInstall {
         //UIManager.put("nimbusBase", new Color());
         //UIManager.put("nimbusBlueGrey", new Color());
         //UIManager.put("control", new Color());
-        
-        
+
+
         Logger logger = Logger.getLogger(Installer.class.getName());
         //use Nimbus if available
         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels() ) {
