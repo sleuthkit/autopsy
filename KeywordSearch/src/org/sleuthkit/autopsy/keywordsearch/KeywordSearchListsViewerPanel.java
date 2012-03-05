@@ -307,10 +307,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
     
     private void searchAction(ActionEvent e) {
-        if (filesIndexed == 0)
-            return;
-
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+       setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         try {
             search();

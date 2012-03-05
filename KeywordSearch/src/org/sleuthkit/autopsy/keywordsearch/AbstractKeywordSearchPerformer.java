@@ -73,6 +73,10 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
 
     @Override
     public void search() {
+        if (filesIndexed == 0) {
+            KeywordSearchUtil.displayDialog("Keyword Search Error", "No files are indexed, please index an image before searching", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+            return;
+        }
         KeywordSearchQueryManager man = null;
         if (isMultiwordQuery()) {
             final List<Keyword> keywords = getQueryList();
