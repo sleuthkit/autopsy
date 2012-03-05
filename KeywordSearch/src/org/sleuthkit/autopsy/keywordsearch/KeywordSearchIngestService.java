@@ -579,7 +579,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             detailsSb.append("</tr><tr>");
                             
                             //hit
-                            detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
+                            detailsSb.append("<td>").append(StringEscapeUtils.escapeHtml(attr.getValueString())).append("</td>");
                             
                              //preview
                             attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
