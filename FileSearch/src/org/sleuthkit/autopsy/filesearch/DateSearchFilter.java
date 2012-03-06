@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.Component;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.DateFormat;
@@ -191,6 +192,11 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         }
 
         return timeZones;
+    }
+
+    @Override
+    public void addActionListener(ActionListener l) {
+        getComponent().addActionListener(l);
     }
 
     /**

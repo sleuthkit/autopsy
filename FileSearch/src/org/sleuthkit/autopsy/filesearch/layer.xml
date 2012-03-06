@@ -1,40 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
-    <folder name="Actions">
-        <folder name="Window">
-            <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.instance">
-                <attr name="component" methodvalue="org.sleuthkit.autopsy.filesearch.FileSearchTopComponent.findInstance"/>
-                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.filesearch.Bundle#CTL_FileSearchAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-            </file>
-        </folder>
-    </folder>
-    <folder name="Menu">
-        <folder name="Window"/>
-    </folder>
     <folder name="Services">
         <folder name="JavaHelp">
             <file name="filesearch-helpset.xml" url="filesearch-helpset.xml">
                 <attr name="position" intvalue="3662"/>
             </file>
         </folder>
-        <file name="org-sleuthkit-autopsy-filesearch-FileSearchTopComponent.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.filesearch.FileSearchTopComponent.getDefault"/>
-            <attr name="position" intvalue="200"/>
-        </file>
-    </folder>
-    <folder name="Windows2">
-        <folder name="Components">
-            <file name="FileSearchTopComponent.settings" url="FileSearchTopComponentSettings.xml"/>
-        </folder>
-
-        <!-- Not letting NetBeans manage docking for us at all. It's all handled in CoreComponentInterfaces:CoreComponentControl
-        <folder name="Modes">
-            <folder name="explorer">
-                <file name="FileSearchTopComponent.wstcref" url="FileSearchTopComponentWstcref.xml"/>
-            </folder>
-        </folder> -->
     </folder>
 </filesystem>

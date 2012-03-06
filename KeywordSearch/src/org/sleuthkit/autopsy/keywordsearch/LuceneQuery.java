@@ -164,10 +164,10 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         //get listname
         String listName = "";
-        KeywordSearchList list = KeywordSearchListsXML.getCurrent().getListWithKeyword(query);
-        if (list != null) {
-            listName = list.getName();
-        }
+        //KeywordSearchList list = KeywordSearchListsXML.getCurrent().getListWithKeyword(query);
+        //if (list != null) {
+        //    listName = list.getName();
+        //}
         final String theListName = listName;
 
         Node rootNode = new KeywordSearchNode(matches, query);

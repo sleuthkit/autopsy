@@ -155,4 +155,8 @@ class NameSearchPanel extends javax.swing.JPanel {
     private javax.swing.JTextField searchTextField;
     private javax.swing.JMenuItem selectAllMenuItem;
     // End of variables declaration//GEN-END:variables
+
+    void addActionListener(ActionListener l) {
+        searchTextField.addActionListener(l);
+    }
 }

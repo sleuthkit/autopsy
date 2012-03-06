@@ -186,6 +186,28 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         return properties;
        
     }
+    
+    Set<Property> propertiesAcc = new LinkedHashSet<Property>();
+    /**
+     * Gets regular Bean property set properties from all children and, recursively, subchildren of Node.
+     * Note: won't work out the box for lazy load - you need to set all children props for the parent by hand
+     * @param parent Node with at least one child to get properties from
+     */
+    private void getAllChildPropertyHeadersRec(Node parent, int rows) {
+        for(int i = 0; i < Math.min(rows, parent.getChildren().getNodesCount()); i++){
+            Node child = parent.getChildren().getNodeAt(i);
+            for (PropertySet ps : child.getPropertySets()) {
+                    //if (ps.getName().equals(Sheet.PROPERTIES)) {
+                        //return ps.getProperties();
+                        final Property [] props = ps.getProperties();
+                        final int propsNum = props.length;
+                        for (int j = 0; j< propsNum; ++j)
+                            propertiesAcc.add(props[j]);
+                    //}
+                }
+            getAllChildPropertyHeadersRec(child, rows);
+        }
+    }
 
     @Override
     public void setNode(Node selectedNode) {
@@ -215,7 +237,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 OutlineView ov = ((OutlineView) this.tableScrollPanel);
 
-                List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(getAllChildPropertyHeaders(selectedNode)));
+                propertiesAcc.clear();
+                Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
+                this.getAllChildPropertyHeadersRec(selectedNode, 100);
+                List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(propertiesAcc.toArray(new Property[propertiesAcc.size()])));
+                //List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(getAllChildPropertyHeaders(selectedNode)));
                 if(tempProps.size() > 0)
                     tempProps.remove(0);
 
@@ -374,6 +400,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         // Get maximum width of column data
         for (int i = 0; i < table.length; i++) {
+            if(index >= table[i].length)
+                continue;
             String test = table[i][index].toString();
             colWidth = Math.max(colWidth, metrics.stringWidth(test));
         }

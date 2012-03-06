@@ -29,7 +29,7 @@ public class SearchFilters implements AutopsyVisitableItem{
 
     SleuthkitCase skCase;
 
-    public enum FileSearchFilter implements AutopsyVisitableItem {
+    public enum FileSearchFilter implements AutopsyVisitableItem,SearchFilterInterface {
         TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", "Images", Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff")),
         TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", "Videos",
             Arrays.asList(".aaf", ".3gp", ".asf", ".avi", ".m1v", ".m2v", ".m4v",
@@ -57,18 +57,68 @@ public class SearchFilters implements AutopsyVisitableItem{
             return v.visit(this);
         }
 
+        @Override
         public String getName(){
             return this.name;
         }
 
+        @Override
         public int getId(){
             return this.id;
         }
 
+        @Override
         public String getDisplayName(){
             return this.displayName;
         }
 
+        @Override
+        public List<String> getFilter(){
+            return this.filter;
+        }
+    }
+    
+    public enum DocumentFilter implements AutopsyVisitableItem,SearchFilterInterface {
+        AUT_DOC_HTML(0, "AUT_DOC_HTML", "HTML", Arrays.asList(".htm", ".html")),
+        AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE", "Office", Arrays.asList(".doc", ".docx", 
+                ".odt", ".xls", ".xlsx", ".ppt", ".pptx")),
+        AUT_DOC_PDF(2, "AUT_DOC_PDF", "PDF", Arrays.asList(".pdf")),
+        AUT_DOC_TXT(3, "AUT_DOC_TXT", "Plain Text", Arrays.asList(".txt")),
+        AUT_DOC_RTF(4, "AUT_DOC_RTF", "Rich Text", Arrays.asList(".rtf"));
+
+        int id;
+        String name;
+        String displayName;
+        List<String> filter;
+
+        private DocumentFilter(int id, String name, String displayName, List<String> filter){
+            this.id = id;
+            this.name = name;
+            this.displayName = displayName;
+            this.filter = filter;
+        }
+
+        @Override
+        public <T> T accept(AutopsyItemVisitor<T> v) {
+            return v.visit(this);
+        }
+
+        @Override
+        public String getName(){
+            return this.name;
+        }
+
+        @Override
+        public int getId(){
+            return this.id;
+        }
+
+        @Override
+        public String getDisplayName(){
+            return this.displayName;
+        }
+
+        @Override
         public List<String> getFilter(){
             return this.filter;
         }
@@ -85,5 +135,15 @@ public class SearchFilters implements AutopsyVisitableItem{
 
     public SleuthkitCase getSleuthkitCase(){
         return this.skCase;
+    }
+    
+    interface SearchFilterInterface {
+        public String getName();
+
+        public int getId();
+
+        public String getDisplayName();
+
+        public List<String> getFilter();
     }
 }

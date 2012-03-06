@@ -59,6 +59,8 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         setTitle(title); // set the title
         this.isMain = isMain;
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.valueOf(isMain)); // set option to close compoment in GUI
+        putClientProperty(TopComponent.PROP_MAXIMIZATION_DISABLED, true);
+        putClientProperty(TopComponent.PROP_DRAGGING_DISABLED, true);
 
         this.dataResultTabbedPanel.addChangeListener(this);
     }

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
+import java.awt.event.ActionListener;
 import javax.swing.JComboBox;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 
@@ -62,5 +63,10 @@ class SizeSearchFilter extends AbstractFileSearchFilter<SizeSearchPanel> {
         } else {
             throw new IllegalArgumentException();
         }
+    }
+
+    @Override
+    public void addActionListener(ActionListener l) {
+        getComponent().addActionListener(l);
     }
 }

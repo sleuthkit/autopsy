@@ -43,10 +43,10 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 class FileSearchFilterChildren extends ChildFactory<Content> {
     
     SleuthkitCase skCase;
-    FileSearchFilter filter;
+    SearchFilters.SearchFilterInterface filter;
     Logger logger = Logger.getLogger(FileSearchFilterChildren.class.getName());
 
-    public FileSearchFilterChildren(FileSearchFilter filter, SleuthkitCase skCase) {
+    public FileSearchFilterChildren(SearchFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
         this.filter = filter;
         this.skCase = skCase;
     }

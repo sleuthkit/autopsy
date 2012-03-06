@@ -216,8 +216,6 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchBoxActionPerformed
-        if (filesIndexed == 0)
-            return;
         getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             search();

@@ -31,16 +31,16 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class FileSearchFilterNode extends AbstractNode implements DisplayableItemNode{
     
-    FileSearchFilter filter;
+    SearchFilters.SearchFilterInterface filter;
     SleuthkitCase skCase;
 
-    FileSearchFilterNode(FileSearchFilter filter, SleuthkitCase skCase) {
+    FileSearchFilterNode(SearchFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
         super(Children.create(new FileSearchFilterChildren(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
         super.setName(filter.getName());
         super.setDisplayName(filter.getDisplayName());
         this.filter = filter;
         this.skCase = skCase;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/filter-icon.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png");
     }
 
     @Override

@@ -56,6 +56,7 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
+import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.RecentFiles;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.autopsy.datamodel.SearchFilters;
@@ -330,6 +331,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     List<Object> items = new ArrayList<Object>();
                     items.addAll(currentCase.getRootObjects());
                     items.add(new ExtractedContent(currentCase.getSleuthkitCase()));
+                    items.add(new KeywordHits(currentCase.getSleuthkitCase()));
                     items.add(new SearchFilters(currentCase.getSleuthkitCase()));
                     items.add(new RecentFiles(currentCase.getSleuthkitCase()));
                     contentChildren = new RootContentChildren(items);

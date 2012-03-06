@@ -80,7 +80,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     }
     
     private void customizeComponents() {
-        ingestLabel.setVisible(false);
         listsTable.setTableHeader(null);
         listsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         //customize column witdhs
@@ -105,6 +104,24 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
                 column.setCellRenderer(new RightCheckBoxRenderer());
             }
         }
+        
+        KeywordSearch.changeSupport.addPropertyChangeListener(KeywordSearch.NUM_FILES_CHANGE_EVT,
+                new PropertyChangeListener() {
+
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                        String changed = evt.getPropertyName();
+                        Object oldValue = evt.getOldValue();
+                        Object newValue = evt.getNewValue();
+
+                        if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
+                            int newFilesIndexed = ((Integer) newValue).intValue();
+                            if(!ingestRunning){
+                                ingestIndexLabel.setText("Files Indexed: " + newFilesIndexed);
+                            }
+                        }
+                    }
+                });
         
         loader = KeywordSearchListsXML.getCurrent();
         loader.addPropertyChangeListener(new PropertyChangeListener() {
@@ -157,9 +174,9 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         };
         
         if(IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault()))
-            initIngest(0);
+            initIngest(true);
         else
-            initIngest(1);
+            initIngest(false);
         
         IngestManager.addPropertyChangeListener(new PropertyChangeListener() {
 
@@ -169,13 +186,13 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
                 Object oldValue = evt.getOldValue();
                 if(changed.equals(IngestManager.SERVICE_COMPLETED_EVT) &&
                         ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME))
-                    initIngest(1);
+                    initIngest(false);
                 else if(changed.equals(IngestManager.SERVICE_STARTED_EVT) &&
                         ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME))
-                    initIngest(0);
+                    initIngest(true);
                 else if(changed.equals(IngestManager.SERVICE_STOPPED_EVT) &&
                         ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME))
-                    initIngest(1);
+                    initIngest(false);
             }
             
         });
@@ -187,27 +204,25 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
      * case 0: ingest running
      * case 1: ingest not running
      */
-    private void initIngest(int running) {
+    private void initIngest(boolean running) {
         ActionListener[] current = searchAddButton.getActionListeners();
-        for(int i = 0; i < current.length; i++) {
-            if(current[i].equals(ingestListener) || current[i].equals(searchListener))
+        for (int i = 0; i < current.length; i++) {
+            if (current[i].equals(ingestListener) || current[i].equals(searchListener)) {
                 searchAddButton.removeActionListener(current[i]);
+            }
         }
-        switch (running) {
-            case 0:
-                ingestRunning = true;
-                searchAddButton.setText("Add to Ingest");
-                searchAddButton.addActionListener(ingestListener);
-                listsTableModel.resync();
-                ingestLabel.setVisible(true);
-                break;
-            case 1:
-                ingestRunning = false;
-                searchAddButton.setText("Search");
-                searchAddButton.addActionListener(searchListener);
-                listsTableModel.resync();
-                ingestLabel.setVisible(false);
-                break;
+        if (running) {
+            ingestRunning = true;
+            searchAddButton.setText("Add to Ingest");
+            searchAddButton.addActionListener(ingestListener);
+            listsTableModel.resync();
+            ingestIndexLabel.setText("Ingest is ongoing. Results will appear as the index is populated.");
+        } else {
+            ingestRunning = false;
+            searchAddButton.setText("Search");
+            searchAddButton.addActionListener(searchListener);
+            listsTableModel.resync();
+            ingestIndexLabel.setText("Files Indexed: " + filesIndexed);
         }
     }
 
@@ -227,7 +242,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         keywordsTable = new javax.swing.JTable();
         manageListsButton = new javax.swing.JButton();
         searchAddButton = new javax.swing.JButton();
-        ingestLabel = new javax.swing.JLabel();
+        ingestIndexLabel = new javax.swing.JLabel();
 
         leftPane.setMinimumSize(new java.awt.Dimension(150, 23));
 
@@ -257,8 +272,8 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
         searchAddButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.searchAddButton.text")); // NOI18N
 
-        ingestLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
-        ingestLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.ingestLabel.text")); // NOI18N
+        ingestIndexLabel.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        ingestIndexLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.ingestIndexLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -273,15 +288,15 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
                 .addContainerGap())
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(ingestLabel)
-                .addContainerGap(109, Short.MAX_VALUE))
+                .addComponent(ingestIndexLabel)
+                .addContainerGap(327, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 268, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
-                .addComponent(ingestLabel)
+                .addComponent(ingestIndexLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(manageListsButton)
@@ -295,7 +310,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     }//GEN-LAST:event_manageListsButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel ingestLabel;
+    private javax.swing.JLabel ingestIndexLabel;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JTable keywordsTable;
     private javax.swing.JScrollPane leftPane;
@@ -307,10 +322,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
     
     private void searchAction(ActionEvent e) {
-        if (filesIndexed == 0)
-            return;
-
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+       setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         try {
             search();

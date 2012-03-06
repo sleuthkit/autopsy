@@ -29,22 +29,30 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  *
  * @author dfickling
  */
-class SearchFiltersChildren extends ChildFactory<SearchFilters.FileSearchFilter> {
+class SearchFiltersChildren extends ChildFactory<SearchFilters.SearchFilterInterface> {
     
     SleuthkitCase skCase;
+    boolean root;
 
-    public SearchFiltersChildren(SleuthkitCase skCase) {
+    public SearchFiltersChildren(SleuthkitCase skCase, boolean root) {
         this.skCase = skCase;
+        this.root = root;
     }
 
     @Override
-    protected boolean createKeys(List<FileSearchFilter> list) {
-        list.addAll(Arrays.asList(FileSearchFilter.values()));
+    protected boolean createKeys(List<SearchFilters.SearchFilterInterface> list) {
+        if(root)
+            list.addAll(Arrays.asList(FileSearchFilter.values()));
+        else
+            list.addAll(Arrays.asList(SearchFilters.DocumentFilter.values()));
         return true;
     }
     
     @Override
-    protected Node createNodeForKey(FileSearchFilter key){
+    protected Node createNodeForKey(SearchFilters.SearchFilterInterface key){
+        if(key.getName().equals(SearchFilters.FileSearchFilter.TSK_DOCUMENT_FILTER.getName())){
+            return new SearchFiltersNode(skCase, false);
+        }
         return new FileSearchFilterNode(key, skCase);
     }
     
