@@ -161,4 +161,8 @@ class SizeSearchPanel extends javax.swing.JPanel {
     private javax.swing.JFormattedTextField sizeTextField;
     private javax.swing.JComboBox sizeUnitComboBox;
     // End of variables declaration//GEN-END:variables
+
+    void addActionListener(ActionListener l) {
+        sizeTextField.addActionListener(l);
+    }
 }

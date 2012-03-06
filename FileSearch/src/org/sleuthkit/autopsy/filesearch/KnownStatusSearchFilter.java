@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
+import java.awt.event.ActionListener;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
@@ -72,5 +73,9 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
      */
     private String predicateHelper(FileKnown knownStatus) {
         return "known is " + knownStatus.toLong();
+    }
+
+    @Override
+    public void addActionListener(ActionListener l) {
     }
 }

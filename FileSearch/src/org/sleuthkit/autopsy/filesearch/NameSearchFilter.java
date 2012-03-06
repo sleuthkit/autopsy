@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
+import java.awt.event.ActionListener;
 import org.sleuthkit.autopsy.filesearch.FileSearchFilter.FilterValidationException;
 
 /**
@@ -53,5 +54,10 @@ class NameSearchFilter extends AbstractFileSearchFilter<NameSearchPanel> {
         //TODO: escaping might not be enough, would ideally be part of a prepared statement
 
         return "name like '%" + keyword + "%'";
+    }
+
+    @Override
+    public void addActionListener(ActionListener l) {
+        getComponent().addActionListener(l);
     }
 }

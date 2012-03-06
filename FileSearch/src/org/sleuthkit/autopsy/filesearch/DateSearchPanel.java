@@ -363,4 +363,9 @@ class DateSearchPanel extends javax.swing.JPanel {
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JComboBox timeZoneComboBox;
     // End of variables declaration//GEN-END:variables
+
+    void addActionListener(ActionListener l) {
+        dateFromTextField.addActionListener(l);
+        dateToTextField.addActionListener(l);
+    }
 }

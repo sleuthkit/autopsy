@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
+import java.awt.event.ActionListener;
 import javax.swing.JComponent;
 
 /**
@@ -45,6 +46,11 @@ interface FileSearchFilter {
      * invalid state
      */
     String getPredicate() throws FilterValidationException;
+    
+    /**
+     * Add an action listener to the fields of this panel
+     */
+    void addActionListener(ActionListener l);
 
     /**
      * Thrown if a filter's inputs are invalid

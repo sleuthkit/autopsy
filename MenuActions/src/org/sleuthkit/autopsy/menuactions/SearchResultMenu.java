@@ -27,7 +27,7 @@ import javax.swing.JMenuItem;
 import org.openide.awt.DynamicMenuContent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
-import org.sleuthkit.autopsy.filesearch.FileSearchTopComponent;
+import org.sleuthkit.autopsy.filesearch.FileSearchPanel;
 
 /**
  * Menu item lists DataResult tabs.
@@ -39,7 +39,7 @@ public class SearchResultMenu extends JMenuItem implements DynamicMenuContent {
 
     @Override
     public JComponent[] getMenuPresenters() {
-        List<DataResultTopComponent> searchResults = FileSearchTopComponent.getFileSearchResultList();
+        List<DataResultTopComponent> searchResults = FileSearchPanel.getFileSearchResultList();
         DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();
         DataResultTopComponent directoryListing = directoryTree.getDirectoryListing();
 
