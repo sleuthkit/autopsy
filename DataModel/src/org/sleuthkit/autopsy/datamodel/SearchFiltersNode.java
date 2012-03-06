@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -31,17 +32,37 @@ public class SearchFiltersNode extends AbstractNode implements DisplayableItemNo
     
     SleuthkitCase skCase;
 
-    SearchFiltersNode(SleuthkitCase skCase) {
-        super(Children.create(new SearchFiltersChildren(skCase), true), Lookups.singleton("Search Filters"));
-        super.setName("File Types");
-        super.setDisplayName("File Types");
+    SearchFiltersNode(SleuthkitCase skCase, boolean root) {
+        super(Children.create(new SearchFiltersChildren(skCase, root), true), Lookups.singleton(root ? "File Types" : "Documents"));
+        if(root){
+            super.setName("File Types");
+            super.setDisplayName("File Types");
+        } else {
+            super.setName("Documents");
+            super.setDisplayName("Documents");
+        }
         this.skCase = skCase;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/filter-icon.png");
-}
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png");
+    }
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
        return v.visit(this);
     }
-    
+
+    @Override
+    protected Sheet createSheet() {
+        Sheet s = super.createSheet();
+        Sheet.Set ss = s.get(Sheet.PROPERTIES);
+        if (ss == null) {
+            ss = Sheet.createPropertiesSet();
+            s.put(ss);
+        }
+
+        ss.put(new NodeProperty("Search Filter",
+                "Search Filter",
+                "no description",
+                getName()));
+        return s;
+    }
 }

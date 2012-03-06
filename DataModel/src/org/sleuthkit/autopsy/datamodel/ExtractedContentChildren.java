@@ -41,6 +41,7 @@ public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.AR
     @Override
     protected boolean createKeys(List<BlackboardArtifact.ARTIFACT_TYPE> list) {
         list.addAll(Arrays.asList(BlackboardArtifact.ARTIFACT_TYPE.values()));
+        list.remove(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
         return true;
     }
     
