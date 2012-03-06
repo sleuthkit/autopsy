@@ -103,18 +103,17 @@ public class KeywordSearchListsXML {
         List<Keyword> phones = new ArrayList<Keyword>();
         phones.add(new Keyword("[(]{0,1}\\d\\d\\d[)]{0,1}[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d", false));
         //phones.add(new Keyword("\\d{8,10}", false));
-        phones.add(new Keyword("phone|fax", false));
         //IP address
         List<Keyword> ips = new ArrayList<Keyword>();
         ips.add(new Keyword("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])", false));
         //email
         List<Keyword> emails = new ArrayList<Keyword>();
-        emails.add(new Keyword("[e\\-]{0,2}mail", false));
         emails.add(new Keyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", false));
         //URL
         List<Keyword> urls = new ArrayList<Keyword>();
-        urls.add(new Keyword("ftp|sftp|ssh|http|https|www", false));
-        
+        urls.add(new Keyword("http://|https://|www\\.", false));
+        urls.add(new Keyword("ftp://|sftp://", false));
+        urls.add(new Keyword("ssh://", false));
         
         addList("Phone Numbers", phones, false, true);
         addList("IP Addresses", ips, false, true);
