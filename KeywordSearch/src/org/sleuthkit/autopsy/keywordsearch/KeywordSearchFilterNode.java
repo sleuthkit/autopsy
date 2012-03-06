@@ -18,12 +18,10 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.response.QueryResponse;
+import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
@@ -31,8 +29,12 @@ import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
-import org.sleuthkit.autopsy.keywordsearch.Server.Core;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.File;
 
 /**
  * Filter Node to add a "Snippet" property containing the first snippet of
@@ -98,5 +100,43 @@ class KeywordSearchFilterNode extends FilterNode {
         }
 
         return propertySets;
+    }
+    
+    /**
+     * Right click action for the nodes that we want to pass to the directory
+     * table and the output view.
+     *
+     * @param popup
+     * @return actions
+     */
+    @Override
+    public Action[] getActions(boolean popup) {
+
+        List<Action> actions = new ArrayList<Action>();
+        
+        Content content = this.getOriginal().getLookup().lookup(Content.class);
+        actions.addAll(content.accept(new GetPopupActionsContentVisitor()));
+        
+        //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
+
+        return actions.toArray(new Action[actions.size()]);
+    }
+    
+    
+    private class GetPopupActionsContentVisitor extends ContentVisitor.Default<List<Action>> {
+        
+        @Override
+        public List<Action> visit(File f) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
+            actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
+            actions.add(new ExtractAction("Extract File", getOriginal()));
+            return actions;
+        }
+        @Override
+        protected List<Action> defaultVisit(Content c) {
+            return Collections.EMPTY_LIST;
+        }
+        
     }
 }

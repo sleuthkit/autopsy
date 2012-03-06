@@ -34,11 +34,11 @@ import org.sleuthkit.datamodel.Content;
 /**
  * Opens new ContentViewer pane in a detached window
  */
-class NewWindowViewAction extends AbstractAction{
+public class NewWindowViewAction extends AbstractAction{
 
     private Node contentNode ;
 
-    NewWindowViewAction(String title, Node contentNode){
+    public NewWindowViewAction(String title, Node contentNode){
         super(title);
         this.contentNode = contentNode;
     }
@@ -47,10 +47,17 @@ class NewWindowViewAction extends AbstractAction{
     public void actionPerformed(ActionEvent e) {
         Log.noteAction(this.getClass());
         
-        String[] filePaths = ContentUtils.getDisplayPath((contentNode).getLookup().lookup(Content.class));
-        String filePath = DataConversion.getformattedPath(filePaths, 0);
+        String name = "DataContent";
+        Content c = contentNode.getLookup().lookup(Content.class);
+        if (c != null) {
+            String[] filePaths = ContentUtils.getDisplayPath(c);
+            name = DataConversion.getformattedPath(filePaths, 0);
+        }
+        String s = contentNode.getLookup().lookup(String.class);
+        if (s != null)
+            name = s;
 
-        DataContentTopComponent dctc = DataContentTopComponent.createUndocked(filePath, this.contentNode);
+        DataContentTopComponent dctc = DataContentTopComponent.createUndocked(name, this.contentNode);
 
         Mode m = WindowManager.getDefault().findMode("output");
         m.dockInto(dctc);
