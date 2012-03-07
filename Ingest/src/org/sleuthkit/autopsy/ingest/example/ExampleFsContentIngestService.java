@@ -47,7 +47,7 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     }
 
     @Override
-    public void process(FsContent fsContent) {
+    public ProcessResult process(FsContent fsContent) {
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
 
         //service specific FsContent processing code here
@@ -56,7 +56,7 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
         } catch (InterruptedException e) {
         }
 
-
+        return ProcessResult.OK;
     }
 
     @Override

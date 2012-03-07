@@ -71,6 +71,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private Map<Keyword, List<FsContent>> currentResults;
     private volatile int messageID = 0;
     private volatile boolean finalRun = false;
+    private final String hashDBServiceName = "Hash Lookup";
     private SleuthkitCase caseHandle = null;
     // TODO: use a more robust method than checking file extension to determine
     // whether to try a file
@@ -96,7 +97,14 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     }
 
     @Override
-    public void process(FsContent fsContent) {
+    public ProcessResult process(FsContent fsContent) {
+        //check if we should skip this file according to HashDb service
+        //if so do not index it, also postpone indexing and keyword search threads to later
+        IngestServiceFsContent.ProcessResult hashDBResult = managerProxy.getFsContentServiceResult(hashDBServiceName);
+        if (hashDBResult == IngestServiceFsContent.ProcessResult.COND_STOP) {
+            return ProcessResult.OK;
+        }
+        
         //check if time to commit and previous search is not running
         //commiting while searching causes performance issues
         if (commitIndex && searcherDone) {
@@ -113,12 +121,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             }
         }
         indexer.indexFile(fsContent);
-
+        return ProcessResult.OK;
+        
     }
 
     @Override
     public void complete() {
-        logger.log(Level.INFO, "complete()");
+        //logger.log(Level.INFO, "complete()");
         runTimer = false;
 
         //handle case if previous search running

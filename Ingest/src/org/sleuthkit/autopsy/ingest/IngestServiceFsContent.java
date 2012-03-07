@@ -26,11 +26,18 @@ import org.sleuthkit.datamodel.FsContent;
  */
 public interface IngestServiceFsContent extends IngestServiceAbstract {
 
+    public enum ProcessResult {
+        UNKNOWN, //values unknown for the (service,last file)
+        OK, //subsequent service continues processing the file
+        STOP, //subsequent service stops processing the file unconditionally
+        COND_STOP //subsequent service decides whether to stop processing the file
+    };
+    
     /**
      * notification from manager to process file / directory.
      * Service may choose to perform an action or enqueue processing of a group of FsContents.
      * The service notifies viewers via IngestManager.postMessage()
      * and may also write results to the black-board as it is processing
      */
-    public void process(FsContent fsContent);
+    public ProcessResult process(FsContent fsContent);
 }

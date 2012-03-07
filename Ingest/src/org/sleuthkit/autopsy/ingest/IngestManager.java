@@ -72,6 +72,8 @@ public class IngestManager {
     //services
     final Collection<IngestServiceImage> imageServices = enumerateImageServices();
     final Collection<IngestServiceFsContent> fsContentServices = enumerateFsContentServices();
+    // service return values
+    private final Map<String, IngestServiceFsContent.ProcessResult> fsContentServiceResults = new HashMap<String, IngestServiceFsContent.ProcessResult>();
     //manager proxy
     final IngestManagerProxy managerProxy = new IngestManagerProxy(this);
     //notifications
@@ -120,6 +122,16 @@ public class IngestManager {
 
     public static synchronized void fireServiceDataEvent(ServiceDataEvent serviceDataEvent) {
         pcs.firePropertyChange(SERVICE_HAS_DATA_EVT, serviceDataEvent, null);
+    }
+
+    IngestServiceFsContent.ProcessResult getFsContentServiceResult(String serviceName) {
+        synchronized (fsContentServiceResults) {
+            if (fsContentServiceResults.containsKey(serviceName)) {
+                return fsContentServiceResults.get(serviceName);
+            } else {
+                return IngestServiceFsContent.ProcessResult.UNKNOWN;
+            }
+        }
     }
 
     /**
@@ -1028,12 +1040,29 @@ public class IngestManager {
             //process fscontents queue
             while (hasNextFsContent()) {
                 QueueUnit<FsContent, IngestServiceFsContent> unit = getNextFsContent();
+                //clear return values from services for last file
+                synchronized (fsContentServiceResults) {
+                    fsContentServiceResults.clear();
+                }
+
                 for (IngestServiceFsContent service : unit.services) {
                     if (isCancelled()) {
                         return null;
                     }
+
                     try {
-                        service.process(unit.content);
+                        IngestServiceFsContent.ProcessResult result = service.process(unit.content);
+                        //handle unconditional stop
+                        if (result == IngestServiceFsContent.ProcessResult.STOP) {
+                            break;
+                            //will skip other services and start to process next file
+                        }
+
+                        //store the result for subsequent services for this file
+                        synchronized (fsContentServiceResults) {
+                            fsContentServiceResults.put(service.getName(), result);
+                        }
+
                     } catch (Exception e) {
                         logger.log(Level.INFO, "Exception from service: " + service.getName(), e);
                         stats.addError(service);
@@ -1050,7 +1079,7 @@ public class IngestManager {
                 }
                 progress.progress(unit.content.getName(), ++processedFiles);
                 --numFsContents;
-            }
+            } //end of this fsContent
             logger.log(Level.INFO, "Done background processing");
             return null;
         }
