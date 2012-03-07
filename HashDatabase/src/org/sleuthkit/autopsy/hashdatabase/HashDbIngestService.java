@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Hash;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
 public class HashDbIngestService implements IngestServiceFsContent {
@@ -128,14 +129,16 @@ public class HashDbIngestService implements IngestServiceFsContent {
      * Process the given FsContent object
      * 
      * @param fsContent the object to be processed
+     * @return ProcessResult OK if file is unknown and should be processed further, otherwise STOP_COND if file is known
      */
     @Override
-    public void process(FsContent fsContent) {
+    public ProcessResult process(FsContent fsContent) {
+        ProcessResult ret = ProcessResult.UNKNOWN;
         if (process) {
             String name = fsContent.getName();
             try {
                 String status = skCase.lookupFileMd5(fsContent);
-                if (status.equals("known bad")) {
+                if (status.equals(TskData.FileKnown.BAD.getName())) {
                     BlackboardArtifact badFile = fsContent.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
                     BlackboardAttribute att1 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), NAME, "", fsContent.getName());
                     badFile.addAttribute(att1);
@@ -146,12 +149,20 @@ public class HashDbIngestService implements IngestServiceFsContent {
                     badFile.addAttribute(att3);
                     managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, "", null, badFile));
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent(NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
+                    ret = ProcessResult.COND_STOP;
+                }
+                else if (status.equals(TskData.FileKnown.KNOWN.getName())) {
+                    ret = ProcessResult.COND_STOP;
+                }
+                else {
+                    ret = ProcessResult.OK;
                 }
             } catch (TskException ex) {
                 // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
                 logger.log(Level.INFO, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
             }
         }
+        return ret;
     }
 
     @Override
