@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -55,7 +56,7 @@ import org.sleuthkit.datamodel.FsContent;
  * responsible for assembling nodes and columns in the right way
  * and performing lazy queries as needed
  */
-public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
+public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
     //common properties (superset of all Node properties) to be displayed as columns
     //these are merged with FsContentPropertyType defined properties
@@ -88,20 +89,19 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
             public String toString() {
                 return "Context";
             }
-        },
-    }
+        },}
     private Presentation presentation;
     private List<Keyword> queries;
-    private Collection<KeyValue> things;
+    private Collection<KeyValueQuery> things;
     private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
-    KeywordSearchResultFactory(List<Keyword> queries, Collection<KeyValue> things, Presentation presentation) {
+    KeywordSearchResultFactory(List<Keyword> queries, Collection<KeyValueQuery> things, Presentation presentation) {
         this.queries = queries;
         this.things = things;
         this.presentation = presentation;
     }
 
-    KeywordSearchResultFactory(String query, Collection<KeyValue> things, Presentation presentation) {
+    KeywordSearchResultFactory(String query, Collection<KeyValueQuery> things, Presentation presentation) {
         queries = new ArrayList<Keyword>();
         queries.add(new Keyword(query, false));
         this.presentation = presentation;
@@ -140,26 +140,30 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
     }
 
     @Override
-    protected boolean createKeys(List<KeyValue> toPopulate) {
+    protected boolean createKeys(List<KeyValueQuery> toPopulate) {
         int id = 0;
         if (presentation == Presentation.DETAIL) {
+            Iterator<KeyValueQuery> it = things.iterator();
             for (Keyword keyword : queries) {
                 Map<String, Object> map = new LinkedHashMap<String, Object>();
                 final String query = keyword.getQuery();
                 initCommonProperties(map);
                 setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
                 setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!keyword.isLiteral()));
-                toPopulate.add(new KeyValue(query, map, ++id));
+                KeyValueQuery kvq = null;
+                if (it.hasNext()) {
+                    kvq = it.next();
+                }
+                toPopulate.add(new KeyValueQuery(query, map, ++id, kvq.getQuery()));
             }
         } else {
-            for (KeyValue thing : things) {
+            for (KeyValueQuery thing : things) {
                 //Map<String, Object> map = new LinkedHashMap<String, Object>();
                 Map<String, Object> map = thing.getMap();
                 initCommonProperties(map);
                 final String query = thing.getName();
                 setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
-                KeyValueQuery thingQuery = (KeyValueQuery) thing;
-                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thingQuery.getQuery().isEscaped()));
+                setCommonProperty(map, CommonPropertyTypes.REGEX, Boolean.valueOf(!thing.getQuery().isEscaped()));
                 //toPopulate.add(new KeyValue(query, map, ++id));
                 toPopulate.add(thing);
             }
@@ -169,8 +173,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
     }
 
     @Override
-    protected Node createNodeForKey(KeyValue thing) {
-        ChildFactory<KeyValue> childFactory = null;
+    protected Node createNodeForKey(KeyValueQuery thing) {
+        ChildFactory<KeyValueQuery> childFactory = null;
 
         if (presentation == Presentation.COLLAPSE) {
             childFactory = new ResultCollapsedChildFactory(thing);
@@ -197,16 +201,16 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
      * the node produced is a child node
      * The factory actually executes query.
      */
-    class ResultCollapsedChildFactory extends ChildFactory<KeyValue> {
+    class ResultCollapsedChildFactory extends ChildFactory<KeyValueQuery> {
 
-        KeyValue queryThing;
+        KeyValueQuery queryThing;
 
-        ResultCollapsedChildFactory(KeyValue queryThing) {
+        ResultCollapsedChildFactory(KeyValueQuery queryThing) {
             this.queryThing = queryThing;
         }
 
         @Override
-        protected boolean createKeys(List<KeyValue> toPopulate) {
+        protected boolean createKeys(List<KeyValueQuery> toPopulate) {
             //final String origQuery = queryThing.getName();
             final KeyValueQuery queryThingQuery = (KeyValueQuery) queryThing;
             final KeywordSearchQuery tcq = queryThingQuery.getQuery();
@@ -268,7 +272,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                     final String snippet = LuceneQuery.querySnippet(tcq.getQueryString(), f.getId());
                     setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
                 }
-                toPopulate.add(new KeyValueContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped));
+                toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq));
 
                 //write to bb
                 final boolean sendDataEvent = (cur == numFsContents - 1 ? true : false); //send a single bulk notification after the last write
@@ -292,17 +296,17 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
         }
 
         @Override
-        protected Node createNodeForKey(KeyValue thing) {
+        protected Node createNodeForKey(KeyValueQuery thing) {
             //return new KeyValueNode(thing, Children.LEAF);
             //return new KeyValueNode(thing, Children.create(new ResultFilesChildFactory(thing), true));
-            final KeyValueContent thingContent = (KeyValueContent) thing;
+            final KeyValueQueryContent thingContent = (KeyValueQueryContent) thing;
             final Content content = thingContent.getContent();
-            final String query = thingContent.getQuery();
+            final String queryStr = thingContent.getQueryStr();
 
             Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
-            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query);
-            return new KeywordSearchFilterNode(highlights, kvNode, query);
+            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr);
+            return new KeywordSearchFilterNode(highlights, kvNode, queryStr);
 
         }
     }
@@ -310,21 +314,21 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
     /**
      * factory produces top level result nodes showing *exact* regex match result
      */
-    class ResulTermsMatchesChildFactory extends ChildFactory<KeyValue> {
+    class ResulTermsMatchesChildFactory extends ChildFactory<KeyValueQuery> {
 
-        Collection<KeyValue> things;
+        Collection<KeyValueQuery> things;
 
-        ResulTermsMatchesChildFactory(Collection<KeyValue> things) {
+        ResulTermsMatchesChildFactory(Collection<KeyValueQuery> things) {
             this.things = things;
         }
 
         @Override
-        protected boolean createKeys(List<KeyValue> toPopulate) {
+        protected boolean createKeys(List<KeyValueQuery> toPopulate) {
             return toPopulate.addAll(things);
         }
 
         @Override
-        protected Node createNodeForKey(KeyValue thing) {
+        protected Node createNodeForKey(KeyValueQuery thing) {
             //return new KeyValueNode(thing, Children.LEAF);
             return new KeyValueNode(thing, Children.create(new ResultFilesChildFactory(thing), true));
         }
@@ -335,16 +339,16 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
          * To implement exact regex match detail view, we need to extract files content
          * returned by Lucene and further narrow down by applying a Java regex
          */
-        class ResultFilesChildFactory extends ChildFactory<KeyValue> {
+        class ResultFilesChildFactory extends ChildFactory<KeyValueQuery> {
 
-            private KeyValue thing;
+            private KeyValueQuery thing;
 
-            ResultFilesChildFactory(KeyValue thing) {
+            ResultFilesChildFactory(KeyValueQuery thing) {
                 this.thing = thing;
             }
 
             @Override
-            protected boolean createKeys(List<KeyValue> toPopulate) {
+            protected boolean createKeys(List<KeyValueQuery> toPopulate) {
                 //use Lucene query to get files with regular expression match result
                 final String keywordQuery = thing.getName();
                 LuceneQuery filesQuery = new LuceneQuery(keywordQuery);
@@ -356,21 +360,41 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                 uniqueMatches.addAll(matches);
 
                 int resID = 0;
-                for (FsContent f : uniqueMatches) {
+                int cur = 0;
+                final KeywordSearchQuery origQuery = thing.getQuery();
+                final int numFsContents = uniqueMatches.size();
+                final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
+                for (final FsContent f : uniqueMatches) {
                     Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                     AbstractFsContentNode.fillPropertyMap(resMap, (File) f);
-                    toPopulate.add(new KeyValueContent(f.getName(), resMap, ++resID, f, keywordQuery));
-                    //writeToBlackBoard(f);
+                    toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, keywordQuery, thing.getQuery()));
+
+                    //write to bb
+                    final boolean sendDataEvent = (cur == numFsContents - 1 ? true : false); //send a single bulk notification after the last write
+                    new Thread() {
+
+                        @Override
+                        public void run() {
+                            Collection<KeywordWriteResult> written = origQuery.writeToBlackBoard(f, "");
+                            for (KeywordWriteResult w : written) {
+                                na.add(w.getArtifact());
+                            }
+                            if (sendDataEvent == true) {
+                                IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+                            }
+                        }
+                    }.start();
+                    cur++;
                 }
 
                 return true;
             }
 
             @Override
-            protected Node createNodeForKey(KeyValue thing) {
-                final KeyValueContent thingContent = (KeyValueContent) thing;
+            protected Node createNodeForKey(KeyValueQuery thing) {
+                final KeyValueQueryContent thingContent = (KeyValueQueryContent) thing;
                 final Content content = thingContent.getContent();
-                final String query = thingContent.getQuery();
+                final String query = thingContent.getQueryStr();
 
                 final String contentStr = KeywordSearch.getServer().getCore().getSolrContent(content);
 
@@ -381,7 +405,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
                 if (postprocess) {
                     if (contentStr != null) {//if not null, some error getting from Solr, handle it by not filtering out
                         //perform java regex to validate match from Solr
-                        String origQuery = thingContent.getQuery();
+                        String origQuery = thingContent.getQueryStr();
 
                         //since query is a match result, we can assume literal pattern
                         origQuery = Pattern.quote(origQuery);
@@ -405,25 +429,26 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValue> {
     }
 
     /*
-     * custom KeyValue that also stores retrieved Content and query string used
+     * custom KeyValue that also stores retrieved Content and query used
      */
-    class KeyValueContent extends KeyValue {
+    class KeyValueQueryContent extends KeyValueQuery {
 
         private Content content;
-        private String query;
+        private String queryStr;
+        private KeywordSearchQuery query;
 
         Content getContent() {
             return content;
         }
 
-        String getQuery() {
-            return query;
+        String getQueryStr() {
+            return queryStr;
         }
 
-        public KeyValueContent(String name, Map<String, Object> map, int id, Content content, String query) {
-            super(name, map, id);
+        public KeyValueQueryContent(String name, Map<String, Object> map, int id, Content content, String queryStr, KeywordSearchQuery query) {
+            super(name, map, id, query);
             this.content = content;
-            this.query = query;
+            this.queryStr = queryStr;
         }
     }
 }
