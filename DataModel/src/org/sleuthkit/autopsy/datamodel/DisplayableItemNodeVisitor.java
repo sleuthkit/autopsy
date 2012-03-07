@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsMultiLevelNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsSetNode;
 
@@ -51,6 +52,8 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(KeywordHitsRootNode khrn);
     
     T visit(KeywordHitsSetNode khsn);
+    
+    T visit(KeywordHitsMultiLevelNode khmln);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -129,6 +132,11 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(KeywordHitsSetNode khsn) {
             return defaultVisit(khsn);
+        }
+        
+        @Override
+        public T visit(KeywordHitsMultiLevelNode khmln) {
+            return defaultVisit(khmln);
         }
     }
 }
