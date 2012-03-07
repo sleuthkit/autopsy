@@ -234,6 +234,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             super.setName(name);
             super.setDisplayName(name + " (" +map.size() + ")");
             this.name = name;
+            this.map = map;
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword-search-icon.png");
         }
         
