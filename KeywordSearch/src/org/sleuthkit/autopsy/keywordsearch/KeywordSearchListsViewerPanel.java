@@ -33,8 +33,6 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Logger;
 import javax.swing.JCheckBox;
 import javax.swing.JTable;
@@ -373,7 +371,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         //data
 
         private KeywordSearchListsXML listsHandle = KeywordSearchListsXML.getCurrent();
-        private Set<ListTableEntry> listData = new TreeSet<ListTableEntry>();
+        private List<ListTableEntry> listData = new ArrayList<ListTableEntry>();
 
         @Override
         public int getColumnCount() {
@@ -530,7 +528,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     
     private class KeywordsTableModel extends AbstractTableModel {
 
-        Set<KeywordTableEntry> listData = new TreeSet<KeywordTableEntry>();
+        List<KeywordTableEntry> listData = new ArrayList<KeywordTableEntry>();
         
         @Override
         public int getRowCount() {
