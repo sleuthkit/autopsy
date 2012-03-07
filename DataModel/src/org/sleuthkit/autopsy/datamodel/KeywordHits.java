@@ -219,20 +219,21 @@ public class KeywordHits implements AutopsyVisitableItem {
         @Override
         protected Node createNodeForKey(String key) {
             if(key.equals(SIMPLE_LITERAL_SEARCH) || key.equals(SIMPLE_REGEX_SEARCH)){
-                return new KeywordHitsMultiLevelNode(key);
+                return new KeywordHitsMultiLevelNode(key, artifactMaps.get(key));
             }else
-                return new KeywordHitsSetNode(key, listMap);
+                return new KeywordHitsSetNode(key, listMap.get(key));
         }
     }
     
     public class KeywordHitsMultiLevelNode extends AbstractNode implements DisplayableItemNode {
 
-        String key;
-        public KeywordHitsMultiLevelNode(String key) {
-            super(Children.create(new KeywordHitsMultiLevelChildren(key), true), Lookups.singleton(key));
-            super.setName(key);
-            super.setDisplayName(key + " (" + artifactMaps.get(key).size() + ")");
-            this.key = key;
+        String name;
+        Map<String, Set<Long>> map;
+        public KeywordHitsMultiLevelNode(String name, Map<String, Set<Long>> map) {
+            super(Children.create(new KeywordHitsMultiLevelChildren(map), true), Lookups.singleton(name));
+            super.setName(name);
+            super.setDisplayName(name + " (" +map.size() + ")");
+            this.name = name;
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword-search-icon.png");
         }
         
@@ -248,13 +249,13 @@ public class KeywordHits implements AutopsyVisitableItem {
             ss.put(new NodeProperty("List Name",
                     "List Name",
                     "no description",
-                    key));
+                    name));
             
             
             ss.put(new NodeProperty("Number of Children",
                     "Number of Children",
                     "no description",
-                    artifactMaps.get(key).size()));
+                    map.size()));
             
             return s;
         }
@@ -268,35 +269,35 @@ public class KeywordHits implements AutopsyVisitableItem {
     
     class KeywordHitsMultiLevelChildren extends ChildFactory<String> {
 
-        String key;
+        Map<String, Set<Long>> map;
         
-        KeywordHitsMultiLevelChildren(String key) {
+        KeywordHitsMultiLevelChildren(Map<String, Set<Long>> map) {
             super();
-            this.key = key;
+            this.map = map;
         }
 
         @Override
         protected boolean createKeys(List<String> list) {
-            list.addAll(artifactMaps.get(this.key).keySet());
+            list.addAll(map.keySet());
             return true;
         }
 
         @Override
         protected Node createNodeForKey(String key) {
-            return new KeywordHitsSetNode(key, artifactMaps.get(this.key));
+            return new KeywordHitsSetNode(key, map.get(key));
         }
     }
     
     public class KeywordHitsSetNode extends AbstractNode implements DisplayableItemNode {
 
         String setName;
-        Map<String, Set<Long>> parent;
-        public KeywordHitsSetNode(String child, Map<String, Set<Long>> parent) {
-            super(Children.create(new KeywordHitsSetChildren(child, parent), true), Lookups.singleton(child));
-            super.setName(child);
-            super.setDisplayName(child + " (" + parent.get(child).size() + ")");
-            setName = child;
-            this.parent = parent;
+        Set<Long> artifacts;
+        public KeywordHitsSetNode(String name, Set<Long> artifacts) {
+            super(Children.create(new KeywordHitsSetChildren(name, artifacts), true), Lookups.singleton(name));
+            super.setName(name);
+            super.setDisplayName(name + " (" + artifacts.size() + ")");
+            setName = name;
+            this.artifacts = artifacts;
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword-search-icon.png");
         }
 
@@ -323,7 +324,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             ss.put(new NodeProperty("Number of Hits",
                     "Number of Hits",
                     "no description",
-                    parent.get(setName).size()));
+                    artifacts.size()));
             
             return s;
         }
@@ -332,16 +333,16 @@ public class KeywordHits implements AutopsyVisitableItem {
     class KeywordHitsSetChildren extends ChildFactory<BlackboardArtifact> {
 
         String setName;
-        Map<String, Set<Long>> parent;
-        KeywordHitsSetChildren(String child, Map<String, Set<Long>> parent) {
+        Set<Long> artifacts;
+        KeywordHitsSetChildren(String child, Set<Long> artifacts) {
             super();
             this.setName = child;
-            this.parent = parent;
+            this.artifacts = artifacts;
         }
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
-            for (long l : parent.get(setName)) {
+            for (long l :artifacts) {
                 try {
                     //TODO: bulk artifact gettings
                     list.add(skCase.getBlackboardArtifact(l));
