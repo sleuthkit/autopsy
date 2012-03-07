@@ -128,7 +128,7 @@ class KeywordSearchFilterNode extends FilterNode {
         @Override
         public List<Action> visit(File f) {
             List<Action> actions = new ArrayList<Action>();
-            actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
+            actions.add(new NewWindowViewAction("View in New Window", KeywordSearchFilterNode.this));
             actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
             actions.add(new ExtractAction("Extract File", getOriginal()));
             return actions;

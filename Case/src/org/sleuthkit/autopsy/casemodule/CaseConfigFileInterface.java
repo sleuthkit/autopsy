@@ -35,6 +35,10 @@ interface CaseConfigFileInterface {
     // all the get and set methods
     public String getCaseName() throws Exception; // get the case name
     public void setCaseName(String caseName) throws Exception; // set the case name
+    public int getCaseNumber() throws Exception; // get the case number
+    public void setCaseNumber(int caseNumber) throws Exception; // set the case number
+    public String getCaseExaminer() throws Exception; // get the examiner
+    public void setCaseExaminer(String examiner) throws Exception; // set the examiner
 
     // public void getXXX(); // methods to get the case attributes
     // public void setXXX(); // methods to set the case attributes

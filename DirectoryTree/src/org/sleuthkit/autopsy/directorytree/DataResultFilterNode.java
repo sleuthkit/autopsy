@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
+import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsMultiLevelNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
@@ -224,6 +225,11 @@ public class DataResultFilterNode extends FilterNode{
         @Override
         public AbstractAction visit(KeywordHitsSetNode khsn) {
             return openChild(khsn);
+        }
+        
+        @Override
+        public AbstractAction visit(KeywordHitsMultiLevelNode khmln) {
+            return openChild(khmln);
         }
         
         @Override

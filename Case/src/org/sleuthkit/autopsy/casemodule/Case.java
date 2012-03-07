@@ -63,6 +63,20 @@ public class Case {
      */
     public static final String CASE_NAME = "caseName";
     /**
+     * Property name that indicates the number of the current case has changed.
+     * Fired with the case number is changed.
+     * The value is an int: the number of the case.
+     * -1 is used for no case number set.
+     */
+    public static final String CASE_NUMBER = "caseNumber";
+    /**
+     * Property name that indicates the examiner of the current case has changed.
+     * Fired with the case examiner is changed.
+     * The value is a String: the name of the examiner.
+     * The empty string ("") is used for no examiner set.
+     */
+    public static final String CASE_EXAMINER = "caseExaminer";
+    /**
      * Property name that indicates a new image has been added to the current
      * case. The new value is the newly-added instance of Image, and the old
      * value is always null.
@@ -94,6 +108,8 @@ public class Case {
 
     
     private String name;
+    private int number;
+    private String examiner;
     private String configFilePath;
     private XMLCaseManagement xmlcm;
     private SleuthkitCase db;
@@ -106,8 +122,10 @@ public class Case {
     /**
      * Constructor for the Case class
      */
-    private Case(String name, String configFilePath, XMLCaseManagement xmlcm, SleuthkitCase db) {
+    private Case(String name, int number, String examiner, String configFilePath, XMLCaseManagement xmlcm, SleuthkitCase db) {
         this.name = name;
+        this.number = number;
+        this.examiner = examiner;
         this.configFilePath = configFilePath;
         this.xmlcm = xmlcm;
         this.db = db;
@@ -165,20 +183,22 @@ public class Case {
      * 
      * @param caseDir  the base directory where the configuration file is saved
      * @param caseName  the name of case
+     * @param caseNumber the case number
+     * @param examiner the examiner for this case
      */
-    static void create(String caseDir, String caseName) throws Exception {
+    static void create(String caseDir, String caseName, int caseNumber, String examiner) throws Exception {
         Log.get(Case.class).log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[] {caseDir, caseName});
 
         String configFilePath = caseDir + File.separator + caseName + ".aut";
         
         XMLCaseManagement xmlcm = new XMLCaseManagement();
-        xmlcm.create(caseDir, caseName); // create a new XML config file
+        xmlcm.create(caseDir, caseName, examiner, caseNumber); // create a new XML config file
         xmlcm.writeFile();
         
         String dbPath = caseDir + File.separator + "autopsy.db";
         SleuthkitCase db = SleuthkitCase.newCase(dbPath);
 
-        Case newCase = new Case(caseName, configFilePath, xmlcm, db);
+        Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
         
         changeCase(newCase);
     }
@@ -199,6 +219,8 @@ public class Case {
             xmlcm.writeFile(); // write any changes to the config file
 
             String caseName =  xmlcm.getCaseName();
+            int caseNumber = xmlcm.getCaseNumber();
+            String examiner = xmlcm.getCaseExaminer();
             // if the caseName is "", case / config file can't be opened
             if (caseName.equals("")) {
                 throw new Exception("Case name is blank.");
@@ -208,7 +230,7 @@ public class Case {
             String dbPath = caseDir + File.separator + "autopsy.db";
             SleuthkitCase db = SleuthkitCase.openCase(dbPath);
             
-            Case openedCase = new Case(caseName, configFilePath, xmlcm, db);
+            Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
             
             changeCase(openedCase);
 
@@ -307,6 +329,40 @@ public class Case {
             throw new Exception("Error while trying to update the case name.", e);
         }
     }
+    
+    /**
+     * Updates the case examiner
+     * 
+     * @param oldExaminer   the old examiner
+     * @param newExaminer   the new examiner
+     */
+    void updateExaminer(String oldExaminer, String newExaminer) throws Exception {
+        try {
+            xmlcm.setCaseExaminer(newExaminer); // set the examiner
+            examiner = newExaminer;
+            
+            pcs.firePropertyChange(CASE_EXAMINER, oldExaminer, newExaminer);
+        } catch (Exception e) {
+            throw new Exception("Error while trying to update the examiner.", e);
+        }
+    }
+    
+    /**
+     * Updates the case number
+     * 
+     * @param oldCaseNumber the old case number
+     * @param newCaseNumber the new case number
+     */
+    void updateCaseNumber(int oldCaseNumber, int newCaseNumber) throws Exception {
+        try {
+            xmlcm.setCaseNumber(newCaseNumber); // set the case number
+            number = newCaseNumber;
+            
+            pcs.firePropertyChange(CASE_NUMBER, oldCaseNumber, newCaseNumber);
+        } catch (Exception e) {
+            throw new Exception("Error while trying to update the case number.", e);
+        }
+    }
 
 // Not dealing with removing images for now.
 //    /**
@@ -399,6 +455,22 @@ public class Case {
      */
     public String getName() {
         return name;
+    }
+    
+    /**
+     * Gets the case number
+     * @return number
+     */
+    public int getNumber() {
+        return number;
+    }
+    
+    /**
+     * Gets the Examiner name
+     * @return examiner
+     */
+    public String getExaminer() {
+        return examiner;
     }
 
     /**

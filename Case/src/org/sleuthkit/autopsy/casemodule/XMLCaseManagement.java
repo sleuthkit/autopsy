@@ -51,6 +51,8 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
 
     // general metadata about the case file
     final static String NAME = "Name";
+    final static String NUMBER = "Number";
+    final static String EXAMINER = "Examiner";
     final static String CREATED_DATE_NAME = "CreatedDate";
     final static String MODIFIED_DATE_NAME = "ModifiedDate";
     final static String SCHEMA_VERSION_NAME = "SchemaVersion";
@@ -92,6 +94,8 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
     private DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
     private String caseDirPath;     // case directory path
     private String caseName;        // case name
+    private int caseNumber;         // case number
+    private String examiner;        // examiner name
     private String schemaVersion = "1.0";
     private String autopsySavedVersion;
     
@@ -140,12 +144,78 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
     }
     
     /**
+     * Sets the case number on the XML configuration file
+     *
+     * @param givenCaseNumber  the new case number to be set
+     */
+    @Override
+    public void setCaseNumber(int givenCaseNumber) throws Exception {
+        // change this to change the xml file if needed
+        Element nameElement = (Element) getCaseElement().getElementsByTagName(NUMBER).item(0);
+        nameElement.setTextContent(String.valueOf(givenCaseNumber));
+        doc.normalize();
+
+        // edit the modified data
+        String newDate = dateFormat.format(new Date());
+        Element rootEl = getRootElement();
+        rootEl.getElementsByTagName(MODIFIED_DATE_NAME).item(0).setTextContent(newDate);
+
+        try {
+            writeFile();
+        } catch (Exception ex) {
+            throw new Exception("Cannot update the case name in the XML config file.", ex);
+        }
+    }
+    
+    /**
+     * Sets the examiner on the XML configuration file
+     *
+     * @param givenExaminer  the new examiner to be set
+     */
+    @Override
+    public void setCaseExaminer(String givenExaminer) throws Exception {
+        // change this to change the xml file if needed
+        Element nameElement = (Element) getCaseElement().getElementsByTagName(EXAMINER).item(0);
+        nameElement.setTextContent(givenExaminer);
+        doc.normalize();
+
+        // edit the modified data
+        String newDate = dateFormat.format(new Date());
+        Element rootEl = getRootElement();
+        rootEl.getElementsByTagName(MODIFIED_DATE_NAME).item(0).setTextContent(newDate);
+
+        try {
+            writeFile();
+        } catch (Exception ex) {
+            throw new Exception("Cannot update the case name in the XML config file.", ex);
+        }
+    }
+    
+    /**
      * Sets the case name internally (on local variable in this class)
      * 
      * @param givenCaseName  the new case name
      */
     private void setName(String givenCaseName){
         caseName = givenCaseName; // change this to change the xml file if needed
+    }
+    
+    /**
+     * Sets the case number internally (on local variable in this class)
+     * 
+     * @param givenCaseNumber  the new case number
+     */
+    private void setNumber(int givenCaseNumber){
+        caseNumber = givenCaseNumber; // change this to change the xml file if needed
+    }
+    
+    /**
+     * Sets the examiner name internally (on local variable in this class)
+     * 
+     * @param givenExaminer  the new examiner
+     */
+    private void setExaminer(String givenExaminer){
+        examiner = givenExaminer; // change this to change the xml file if needed
     }
     
     /**
@@ -161,6 +231,44 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
         else{
             Element nameElement = (Element) getCaseElement().getElementsByTagName(NAME).item(0);
             String result = nameElement.getTextContent();
+            return result;
+        }
+    }
+    
+    /**
+     * Gets the case Number from the document handler
+     *
+     * @return caseNumber  the case number from the document handler
+     */
+    @Override
+    public int getCaseNumber(){
+        if(doc == null){
+            return 0;
+        }
+        else{
+            Element numberElement = (Element) getCaseElement().getElementsByTagName(NUMBER).item(0);
+            String result = "-1";
+            if(numberElement != null)
+                result = numberElement.getTextContent();
+            return Integer.valueOf(result);
+        }
+    }
+    
+    /**
+     * Gets the examiner from the document handler
+     *
+     * @return examiner  the examiner from the document handler
+     */
+    @Override
+    public String getCaseExaminer(){
+        if(doc == null){
+            return "";
+        }
+        else{
+            Element examinerElement = (Element) getCaseElement().getElementsByTagName(EXAMINER).item(0);
+            String result = "";
+            if(examinerElement != null)
+                result = examinerElement.getTextContent();
             return result;
         }
     }
@@ -540,12 +648,14 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
      * @param parentPath  the name of the parent of the case directory.
      * @param caseName    the name of the config file to be located in the case directory
      */
-    protected void create(String dirPath, String caseName) throws Exception {
+    protected void create(String dirPath, String caseName, String examiner, int caseNumber) throws Exception {
         clear(); // clear the previous data
 
         // set the case Name and Directory and the parent directory
         setCaseDirPath(dirPath);
         setName(caseName);
+        setExaminer(examiner);
+        setNumber(caseNumber);
         DocumentBuilder docBuilder;
         DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 
@@ -587,6 +697,14 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
         Element nameElement = doc.createElement(NAME); // <Name> ... </Name>
         nameElement.appendChild(doc.createTextNode(caseName));
         caseElement.appendChild(nameElement);
+        
+        Element numberElement = doc.createElement(NUMBER); // <Number> ... </Number>
+        numberElement.appendChild(doc.createTextNode(String.valueOf(caseNumber)));
+        caseElement.appendChild(numberElement);
+        
+        Element examinerElement = doc.createElement(EXAMINER); // <Examiner> ... </Examiner>
+        examinerElement.appendChild(doc.createTextNode(examiner));
+        caseElement.appendChild(examinerElement);
 
         Element exportElement = doc.createElement(EXPORT_FOLDER_NAME); // <ExportFolder> ... </ExportFolder>
         exportElement.appendChild(doc.createTextNode(EXPORT_FOLDER_RELPATH));
@@ -745,6 +863,8 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
         doc = null;
         caseDirPath = "";
         caseName = "";
+        caseNumber = -1;
+        examiner = "";
     }
 
     /**

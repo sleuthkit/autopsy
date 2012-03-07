@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
 import java.awt.Dialog;
+import java.io.File;
 import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -90,6 +91,9 @@ public final class NewCaseWizardAction extends CallableSystemAction {
 
         // if Cancel button is pressed
         if (isCancelled) {
+            String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory");
+            if(createdDirectory != null)
+                Case.deleteCaseDirectory(new File(createdDirectory));
             // if there's case opened, close the case
             if (Case.existsCurrentCase()) {
                 // close the previous case if there's any
@@ -107,7 +111,8 @@ public final class NewCaseWizardAction extends CallableSystemAction {
     private WizardDescriptor.Panel[] getPanels() {
         if (panels == null) {
             panels = new WizardDescriptor.Panel[]{
-                        new NewCaseWizardPanel1()
+                        new NewCaseWizardPanel1(),
+                        new NewCaseWizardPanel2()
                     };
             String[] steps = new String[panels.length];
             for (int i = 0; i < panels.length; i++) {

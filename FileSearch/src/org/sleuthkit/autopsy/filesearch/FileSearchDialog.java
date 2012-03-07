@@ -38,7 +38,7 @@ public class FileSearchDialog extends javax.swing.JDialog {
 
     /** Creates new form FileSearchDialog */
     public FileSearchDialog() {
-        super(new JFrame("File Search"), true);
+        super(new JFrame("File Search"), "File Search", true);
         initComponents();
 
         setResizable(false);

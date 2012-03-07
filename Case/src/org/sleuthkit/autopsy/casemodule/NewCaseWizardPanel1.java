@@ -50,7 +50,9 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
      */
     private NewCaseVisualPanel1 component;
     private Boolean isFinish = false;
+    private static String createdDirectory;
     private static final String PROP_BASECASE = "LBL_BaseCase_PATH";
+    private static final Logger logger = Logger.getLogger(NewCaseWizardPanel1.class.getName());
 
     /**
      * Get the visual component for the panel. In this template, the component
@@ -182,6 +184,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     public void storeSettings(WizardDescriptor settings) {
         settings.putProperty("caseName", getComponent().getCaseName());
         settings.putProperty("caseParentDir", getComponent().getCaseParentDir());
+        settings.putProperty("createdDirectory", createdDirectory);
         AutopsyPropFile.getInstance().setProperty(PROP_BASECASE, getComponent().getCaseParentDir());
     }
 
@@ -270,6 +273,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
             validationError(errorMsg);
         } // the new case directory is successfully created
         else {
+            createdDirectory = caseDirPath;
             // try to close Startup window if there's one
             try {
                 StartupWindow.getInstance().close();
@@ -278,7 +282,6 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
 
             }
 
-            Case.create(caseDirPath, caseName); // create a new Case
         }
     }
 }
