@@ -315,7 +315,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
      */
     private void publishNodes(List<Term> terms) {
 
-        Collection<KeyValue> things = new ArrayList<KeyValue>();
+        Collection<KeyValueQuery> things = new ArrayList<KeyValueQuery>();
 
         Iterator<Term> it = terms.iterator();
         int termID = 0;
@@ -327,7 +327,8 @@ public class TermComponentQuery implements KeywordSearchQuery {
             final String match = term.getTerm();
             KeywordSearchResultFactory.setCommonProperty(kvs, KeywordSearchResultFactory.CommonPropertyTypes.MATCH, match);
             //setCommonProperty(kvs, CommonPropertyTypes.MATCH_RANK, Long.toString(matches));
-            things.add(new KeyValue(match, kvs, ++termID));
+            //things.add(new KeyValue(match, kvs, ++termID));
+            things.add(new KeyValueQuery(match, kvs, ++termID, this));
             //totalMatches += matches;
         }
 

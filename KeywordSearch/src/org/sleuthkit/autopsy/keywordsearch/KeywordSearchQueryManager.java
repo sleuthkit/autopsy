@@ -112,7 +112,7 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
             }
         } else {
             //Collapsed view
-            Collection<KeyValue> things = new ArrayList<KeyValue>();
+            Collection<KeyValueQuery> things = new ArrayList<KeyValueQuery>();
             int queryID = 0;
             for (KeywordSearchQuery q : queryDelegates) {
                 Map<String, Object> kvs = new LinkedHashMap<String, Object>();
