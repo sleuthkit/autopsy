@@ -34,37 +34,51 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="casePropLabel" pref="440" max="32767" attributes="0"/>
-                          <Component id="genInfoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="casePropLabel" pref="440" max="32767" attributes="0"/>
+                  <Component id="genInfoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="imgInfoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="imagesTableScrollPane" alignment="0" pref="440" max="32767" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace min="-2" pref="181" max="-2" attributes="0"/>
+                      <Component id="OKButton" min="-2" pref="78" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <Group type="103" groupAlignment="1" attributes="0">
+                          <Group type="102" alignment="1" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="caseNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="caseNumberLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="caseNameTextField" pref="246" max="32767" attributes="1"/>
+                                  <Component id="caseNumberTextField" alignment="0" pref="246" max="32767" attributes="1"/>
+                              </Group>
+                          </Group>
+                          <Group type="102" attributes="0">
+                              <Component id="examinerLabel" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="45" max="-2" attributes="0"/>
+                              <Component id="examinerTextField" pref="246" max="32767" attributes="1"/>
+                          </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="caseDirLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="crDateLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="caseNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jScrollPane2" pref="246" max="32767" attributes="0"/>
-                                  <Component id="caseNameTextField" alignment="0" pref="246" max="32767" attributes="1"/>
                                   <Component id="crDateTextField" alignment="0" pref="246" max="32767" attributes="1"/>
                               </Group>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                  <Component id="updateCaseNameButton" max="32767" attributes="1"/>
-                                  <Component id="deleteCaseButton" alignment="0" max="32767" attributes="1"/>
-                              </Group>
                           </Group>
-                          <Component id="imgInfoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="imagesTableScrollPane" alignment="0" pref="440" max="32767" attributes="0"/>
                       </Group>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="-2" pref="191" max="-2" attributes="0"/>
-                      <Component id="OKButton" min="-2" pref="78" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="updateCaseNameButton" min="-2" max="-2" attributes="1"/>
+                          <Component id="deleteCaseButton" alignment="0" max="32767" attributes="1"/>
+                      </Group>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -86,12 +100,22 @@
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="caseNumberLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="caseNumberTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace type="separate" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="examinerLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="examinerTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace pref="19" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="crDateLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="crDateTextField" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="caseDirLabel" min="-2" max="-2" attributes="0"/>
                           <Component id="jScrollPane2" min="-2" pref="40" max="-2" attributes="0"/>
@@ -105,7 +129,7 @@
               <Component id="imagesTableScrollPane" min="-2" pref="170" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="OKButton" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="17" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -249,6 +273,36 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteCaseButtonActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="caseNumberLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.caseNumberLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="examinerLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.examinerLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="caseNumberTextField">
+      <Properties>
+        <Property name="editable" type="boolean" value="false"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.caseNumberTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JTextField" name="examinerTextField">
+      <Properties>
+        <Property name="editable" type="boolean" value="false"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CasePropertiesForm.examinerTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

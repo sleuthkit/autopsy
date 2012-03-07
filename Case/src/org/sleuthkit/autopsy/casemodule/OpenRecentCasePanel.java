@@ -99,8 +99,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                     CueBannerPanel.closeOpenRecentCasesWindow();
                 }
                 catch(Exception ex){
-                    // no need to show the error message to the user.
-                    //TODO: But maybe put the error message in the log in the future.
+                    Logger.getLogger(OpenRecentCasePanel.class.getName()).log(Level.WARNING, "Error: couldn't open case.", ex);
                 }
 
                 // Open the recent cases
