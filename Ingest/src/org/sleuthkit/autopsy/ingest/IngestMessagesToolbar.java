@@ -67,6 +67,8 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         setMaximumSize(new java.awt.Dimension(32767, 25));
         setPreferredSize(new java.awt.Dimension(80, 25));
 
+        ingestMessagesButton.setFocusPainted(false);
+        ingestMessagesButton.setContentAreaFilled(false);
         ingestMessagesButton.setFont(new java.awt.Font("Tahoma", 0, 10));
         ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-icon-25.png")));
         ingestMessagesButton.setToolTipText("Ingest Messages");
