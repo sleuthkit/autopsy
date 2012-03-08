@@ -614,8 +614,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
                     continue;
                 }
                 b.append(details);
-                //b.append("<hr />");
                 b.append("<br />");
+                b.append("<hr />");
             }
 
             return b.toString();
