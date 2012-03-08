@@ -80,7 +80,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         "gz", "tgz", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt",
         "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
         "pst", "xml", "class"};
-   
 
     public enum IngestStatus {
 
@@ -104,7 +103,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         if (hashDBResult == IngestServiceFsContent.ProcessResult.COND_STOP) {
             return ProcessResult.OK;
         }
-        
+
         //check if time to commit and previous search is not running
         //commiting while searching causes performance issues
         if (commitIndex && searcherDone) {
@@ -122,7 +121,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
         indexer.indexFile(fsContent);
         return ProcessResult.OK;
-        
+
     }
 
     @Override
@@ -231,27 +230,27 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public boolean hasSimpleConfiguration() {
         return true;
     }
-    
+
     @Override
     public boolean hasAdvancedConfiguration() {
         return true;
     }
-    
+
     @Override
     public javax.swing.JPanel getSimpleConfiguration() {
         return new KeywordSearchIngestSimplePanel();
     }
-    
+
     @Override
     public javax.swing.JPanel getAdvancedConfiguration() {
         return KeywordSearchConfigurationPanel.getDefault();
     }
-    
+
     @Override
     public void saveAdvancedConfiguration() {
         KeywordSearchConfigurationPanel.getDefault().editListPanel.save();
     }
-    
+
     @Override
     public void saveSimpleConfiguration() {
     }
@@ -567,7 +566,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             StringBuilder detailsSb = new StringBuilder();
                             //final int hitFiles = newResults.size();
 
-                            subjectSb.append("Keyword hit: ").append("<");
+                            if (!query.isLiteral()) {
+                                subjectSb.append("RegExp hit: ");
+                            } else {
+                                subjectSb.append("Keyword hit: ");
+                            }
+                            subjectSb.append("<");
                             String uniqueKey = null;
                             BlackboardAttribute attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
                             if (attr != null) {
@@ -580,37 +584,49 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             //String uniqueKey = queryStr;
 
                             //details
-                            //title
-                            detailsSb.append("<table border='1' width='200'><tr><th>Keyword hit</th><th>Preview</th>");
-                            detailsSb.append("<th>File</th><th>List</th>");
-                            if (! query.isLiteral())
-                                detailsSb.append("<th>Regex</th>");
-                            detailsSb.append("</tr><tr>");
-                            
+                            detailsSb.append("<table border='0' cellpadding='4' width='280'>");
                             //hit
+                            detailsSb.append("<tr>");
+                            detailsSb.append("<th>Keyword hit</th>");
                             detailsSb.append("<td>").append(StringEscapeUtils.escapeHtml(attr.getValueString())).append("</td>");
-                            
-                             //preview
+                            detailsSb.append("</tr>");
+
+                            //preview
                             attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
                             if (attr != null) {
+                                detailsSb.append("<tr>");
+                                detailsSb.append("<th>Preview</th>");
                                 detailsSb.append("<td>").append(StringEscapeUtils.escapeHtml(attr.getValueString())).append("</td>");
+                                detailsSb.append("</tr>");
+
                             }
-                            
+
                             //file
+                            detailsSb.append("<tr>");
+                            detailsSb.append("<th>File</th>");
                             detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
-                            
+                            detailsSb.append("</tr>");
+
+
                             //list
                             attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID());
+                            detailsSb.append("<tr>");
+                            detailsSb.append("<th>List</th>");
                             detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
-                            
+                            detailsSb.append("</tr>");
+
                             //regex
                             if (!query.isLiteral()) {
                                 attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
                                 if (attr != null) {
+                                    detailsSb.append("<tr>");
+                                    detailsSb.append("<th>List</th>");
                                     detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
+                                    detailsSb.append("</tr>");
+
                                 }
                             }
-                            detailsSb.append("</tr></table>");
+                            detailsSb.append("</table>");
 
                             managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, res.getArtifact()));
                         }
