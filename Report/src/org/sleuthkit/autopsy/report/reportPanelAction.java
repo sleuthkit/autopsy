@@ -11,9 +11,9 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -24,11 +24,15 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  */
 public class reportPanelAction {
      private static final String ACTION_NAME = "Report Preview";
-     
-     public reportPanelAction(ArrayList<Integer> reportlist){
+     private String viewReport = "";
+     public reportPanelAction(){
+        
+     }
+         
+     public void reportGenerate(ArrayList<Integer> reportlist, final reportFilter rr){
          try {
             // Generate the reports and create the hashmap
-         HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap();
+        final HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap();
          report bbreport = new report();
          //see what reports we need to run and run them
              if(reportlist.contains(1)){Results.putAll(bbreport.getGenInfo());}
@@ -41,17 +45,48 @@ public class reportPanelAction {
             // if(reportlist.contains(7)){Results.putAll(bbreport.getGenInfo());}
              if(reportlist.contains(9)){Results.putAll(bbreport.getKeywordHit());}
              if(reportlist.contains(10)){Results.putAll(bbreport.getHashHit());}
-         
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                 rr.progBarCount(2*Results.size());
+                 }});
+            
          //Turn our results into the appropriate xml/html reports
          //TODO: add a way for users to select what they will run when
-         reportXML xmlReport = new reportXML(Results);
-         reportHTML htmlReport = new reportHTML(Results);
+             Thread xmlthread = new Thread(new Runnable()
+                {
+                   public void run()
+                   { 
+                    reportXML xmlReport = new reportXML(Results, rr); 
+                   }
+                });
+              Thread htmlthread = new Thread(new Runnable()
+                {
+                   public void run()
+                   { 
+                    reportHTML htmlReport = new reportHTML(Results,rr);
+                    viewReport = htmlReport.formatted_Report.toString();
+                   }
+                });
+
+        // start our threads
+        xmlthread.start();
+        htmlthread.start();
+        
+            // display the window
+            
             // create the popUp window for it
+         if(reportFilter.cancel == false){
+                         
             final JFrame frame = new JFrame(ACTION_NAME);
             final JDialog popUpWindow = new JDialog(frame, ACTION_NAME, true); // to make the popUp Window to be modal
-
-            // initialize panel with loaded settings
-            final reportPanel panel = new reportPanel(htmlReport.formatted_Report.toString());
+            
+            xmlthread.join();
+            // initialize panel with loaded settings   
+            htmlthread.join(); 
+            reportPanel panel = new reportPanel(viewReport);    
+            
+              
+           
              panel.setjButton1ActionListener(new ActionListener() {
 
                             @Override
@@ -63,19 +98,17 @@ public class reportPanelAction {
             popUpWindow.add(panel);
             popUpWindow.pack();
             popUpWindow.setResizable(false);
-
+        
             // set the location of the popUp Window on the center of the screen
             Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
             double w = popUpWindow.getSize().getWidth();
             double h = popUpWindow.getSize().getHeight();
             popUpWindow.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
-
-            // display the window
+         
             popUpWindow.setVisible(true);
-            
+            rr.progBarDone();
             // add the command to close the window to the button on the Case Properties form / panel
-           
-            
+         }
         } catch (Exception ex) {
             Log.get(reportFilterAction.class).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
         }
