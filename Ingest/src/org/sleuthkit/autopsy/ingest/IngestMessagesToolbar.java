@@ -16,11 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.ingest;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javax.swing.JButton;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -30,6 +35,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
  * 
  */
 public class IngestMessagesToolbar extends javax.swing.JPanel {
+
+    private IngestMessagesButton ingestMessagesButton = new IngestMessagesButton();
 
     /** Creates new form IngestMessagesToolbar */
     public IngestMessagesToolbar() {
@@ -46,78 +53,73 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        ingestMessagesButton = new javax.swing.JButton();
-
+        setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagesToolbar.class, "IngestMessagesToolbar.toolTipText")); // NOI18N
         setMaximumSize(new java.awt.Dimension(32767, 25));
-        setPreferredSize(new java.awt.Dimension(80, 23));
-
-        ingestMessagesButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
-        ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-icon-16.png"))); // NOI18N
-        ingestMessagesButton.setText(org.openide.util.NbBundle.getMessage(IngestMessagesToolbar.class, "IngestMessagesToolbar.ingestMessagesButton.text")); // NOI18N
-        ingestMessagesButton.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessagesToolbar.class, "IngestMessagesToolbar.ingestMessagesButton.toolTipText")); // NOI18N
-        ingestMessagesButton.setEnabled(false);
-        ingestMessagesButton.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        ingestMessagesButton.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
-        ingestMessagesButton.setMargin(new java.awt.Insets(2, 0, 2, 2));
-        ingestMessagesButton.setMaximumSize(new java.awt.Dimension(65, 23));
-        ingestMessagesButton.setMinimumSize(new java.awt.Dimension(65, 23));
-        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(65, 23));
-        ingestMessagesButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ingestMessagesButtonActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(ingestMessagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(ingestMessagesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        );
+        setPreferredSize(new java.awt.Dimension(80, 25));
+        setLayout(new java.awt.BorderLayout());
     }// </editor-fold>//GEN-END:initComponents
 
-    private void ingestMessagesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ingestMessagesButtonActionPerformed
-       showIngestMessages();
-    }//GEN-LAST:event_ingestMessagesButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton ingestMessagesButton;
     // End of variables declaration//GEN-END:variables
+    private void customizeButton() {
+        ingestMessagesButton = new IngestMessagesButton();
 
+        setMaximumSize(new java.awt.Dimension(32767, 25));
+        setPreferredSize(new java.awt.Dimension(80, 25));
+
+        ingestMessagesButton.setFont(new java.awt.Font("Tahoma", 0, 10));
+        ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-icon-25.png")));
+        ingestMessagesButton.setToolTipText("Ingest Messages");
+        ingestMessagesButton.setBorder(null);
+        ingestMessagesButton.setBorderPainted(false);
+        ingestMessagesButton.setEnabled(false);
+        ingestMessagesButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        ingestMessagesButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        ingestMessagesButton.setMaximumSize(new java.awt.Dimension(44, 26));
+        ingestMessagesButton.setMinimumSize(new java.awt.Dimension(44, 26));
+        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(44, 26));
+        ingestMessagesButton.addActionListener(new java.awt.event.ActionListener() {
+
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                showIngestMessages();
+            }
+        });
+        this.add(ingestMessagesButton, BorderLayout.CENTER);
+    }
 
     private void customizeComponents() {
+
+        customizeButton();
         
+        this.setBorder(null);
+
         IngestMessagePanel.addPropertyChangeSupportListener(new PropertyChangeListener() {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                final int numberMessages = (Integer)evt.getNewValue();
-                ingestMessagesButton.setText(Integer.toString(numberMessages));
+                final int numberMessages = (Integer) evt.getNewValue();
+                //ingestMessagesButton.setText(Integer.toString(numberMessages));
+                //repaint button
+                ingestMessagesButton.setMessages(numberMessages);
+                ingestMessagesButton.repaint();
             }
-            
         });
-        
+
         Case.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if(evt.getPropertyName().equals(Case.CASE_CURRENT_CASE))
+                if (evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)) {
                     setEnabled(evt.getNewValue() != null);
+                }
             }
-            
         });
     }
 
     private void showIngestMessages() {
         IngestMessageTopComponent tc = IngestMessageTopComponent.findInstance();
-       
+
         Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom");
         if (mode != null) {
             //TopComponent[] tcs = mode.getTopComponents();
@@ -126,10 +128,35 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
             //tc.requestActive();   
         }
     }
-    
+
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
         ingestMessagesButton.setEnabled(enabled);
+    }
+
+    private static class IngestMessagesButton extends JButton {
+
+        private static final Font messagesFont = new java.awt.Font("Tahoma", 0, 9);
+        private int messages = 0;
+
+        @Override
+        public void paint(Graphics g) {           
+            super.paint(g);
+
+            //paint text
+            String messageStr = Integer.toString(messages);
+            final int len = messageStr.length();
+            g.setFont(messagesFont);
+            g.setColor(Color.BLUE);
+            int x = getSize().width - len * 5 - 1;
+            if (x<0)
+                x = 0;
+            g.drawString(messageStr, x, 10);      
+        }
+
+        void setMessages(int messages) {
+            this.messages = messages;
+        }
     }
 }
