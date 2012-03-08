@@ -144,6 +144,8 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         public void paint(Graphics g) {           
             super.paint(g);
 
+            if (messages == 0)
+                return;
             //paint text
             String messageStr = Integer.toString(messages);
             final int len = messageStr.length();
