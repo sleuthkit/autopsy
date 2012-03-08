@@ -111,7 +111,7 @@ public class KeywordSearchListsXML {
         emails.add(new Keyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", false));
         //URL
         List<Keyword> urls = new ArrayList<Keyword>();
-        urls.add(new Keyword("http://|https://|www\\.", false));
+        urls.add(new Keyword("http://|https://|^www\\.", false));
         urls.add(new Keyword("ftp://|sftp://", false));
         urls.add(new Keyword("ssh://", false));
         
