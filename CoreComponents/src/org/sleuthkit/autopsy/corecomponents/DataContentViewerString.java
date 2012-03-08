@@ -365,9 +365,9 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             return false;
         }
         File file = node.getLookup().lookup(File.class);
-        if(file != null && file.getSize() == 0)
-            return false;
-        return true;
+        if(file != null && file.getSize() != 0)
+            return true;
+        return false;
     }
     
     @Override
