@@ -47,6 +47,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     private Component component = null;
     
     private Image newImage = null;
+    private boolean ingested = false;
 
     /**
      * Get the visual component for the panel. In this template, the component
@@ -166,9 +167,10 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         
         final boolean cancelled = settings.getValue() == WizardDescriptor.CANCEL_OPTION || settings.getValue() == WizardDescriptor.CLOSED_OPTION;
         //start / enqueue ingest if next/finish pressed
-        if (! cancelled && newImage != null) {
+        if (! cancelled && newImage != null && ! ingested) {
             ingestConfig.setImage(newImage);
             ingestConfig.start();
+            ingested = true;
         }       
     }
     
