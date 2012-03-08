@@ -77,9 +77,9 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         ingestMessagesButton.setEnabled(false);
         ingestMessagesButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         ingestMessagesButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        ingestMessagesButton.setMaximumSize(new java.awt.Dimension(44, 26));
-        ingestMessagesButton.setMinimumSize(new java.awt.Dimension(44, 26));
-        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(44, 26));
+        ingestMessagesButton.setMaximumSize(new java.awt.Dimension(44, 25));
+        ingestMessagesButton.setMinimumSize(new java.awt.Dimension(44, 25));
+        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(44, 25));
         ingestMessagesButton.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
