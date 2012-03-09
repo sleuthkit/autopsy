@@ -620,7 +620,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                 attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
                                 if (attr != null) {
                                     detailsSb.append("<tr>");
-                                    detailsSb.append("<th>List</th>");
+                                    detailsSb.append("<th>RegEx</th>");
                                     detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
                                     detailsSb.append("</tr>");
 
