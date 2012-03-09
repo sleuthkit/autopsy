@@ -62,7 +62,9 @@ import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.autopsy.datamodel.SearchFilters;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * Top component which displays something.
@@ -715,17 +717,38 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         return false;
     }
     
-    
-
-    @Override
+        @Override
     public void viewArtifact(final BlackboardArtifact art) {
         BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(art.getArtifactTypeID());
         Children rootChilds = em.getRootContext().getChildren();
-        Node extractedContent = rootChilds.findChild(ExtractedContentNode.EXTRACTED_NAME);
-        Children extractedChilds = extractedContent.getChildren();
-        Node typeNode = extractedChilds.findChild(type.getLabel());
+        Node treeNode = null;
+        if (type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
+            Node keywordRootNode = rootChilds.findChild(type.getLabel());
+            Children keywordRootChilds = keywordRootNode.getChildren();
+            try {
+                String listName = null;
+                String keywordName = null;
+                List<BlackboardAttribute> attributes = art.getAttributes();
+                for(BlackboardAttribute att : attributes) {
+                    int typeId = att.getAttributeTypeID();
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID())
+                        listName = att.getValueString();
+                    else if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) 
+                        keywordName = att.getValueString();
+                }
+                Node listNode = keywordRootChilds.findChild(listName);
+                Children listChildren = listNode.getChildren();
+                treeNode = listChildren.findChild(keywordName);
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Error retrieving attributes", ex);
+            }
+        } else {
+            Node extractedContent = rootChilds.findChild(ExtractedContentNode.EXTRACTED_NAME);
+            Children extractedChilds = extractedContent.getChildren();
+            treeNode = extractedChilds.findChild(type.getLabel());
+        }
         try {
-            em.setExploredContextAndSelection(typeNode, new Node[]{typeNode});
+            em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
         } catch (PropertyVetoException ex) {
             logger.log(Level.WARNING, "Property Veto: ", ex);
         }
