@@ -69,16 +69,16 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
 
         ingestMessagesButton.setFocusPainted(false);
         ingestMessagesButton.setContentAreaFilled(false);
-        ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-icon-25-2.png")));
+        ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-bw-25.png")));
         ingestMessagesButton.setToolTipText("Ingest Messages");
         ingestMessagesButton.setBorder(null);
         ingestMessagesButton.setBorderPainted(false);
         ingestMessagesButton.setEnabled(false);
         ingestMessagesButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         ingestMessagesButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        ingestMessagesButton.setMaximumSize(new java.awt.Dimension(36, 24));
-        ingestMessagesButton.setMinimumSize(new java.awt.Dimension(36, 24));
-        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(36, 24));
+        ingestMessagesButton.setMaximumSize(new java.awt.Dimension(38, 24));
+        ingestMessagesButton.setMinimumSize(new java.awt.Dimension(38, 24));
+        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(38, 24));
         ingestMessagesButton.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
