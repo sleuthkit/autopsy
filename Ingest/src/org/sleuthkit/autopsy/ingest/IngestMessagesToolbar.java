@@ -69,17 +69,16 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
 
         ingestMessagesButton.setFocusPainted(false);
         ingestMessagesButton.setContentAreaFilled(false);
-        ingestMessagesButton.setFont(new java.awt.Font("Tahoma", 0, 10));
-        ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-icon-25.png")));
+        ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-icon-25-2.png")));
         ingestMessagesButton.setToolTipText("Ingest Messages");
         ingestMessagesButton.setBorder(null);
         ingestMessagesButton.setBorderPainted(false);
         ingestMessagesButton.setEnabled(false);
         ingestMessagesButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         ingestMessagesButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        ingestMessagesButton.setMaximumSize(new java.awt.Dimension(44, 25));
-        ingestMessagesButton.setMinimumSize(new java.awt.Dimension(44, 25));
-        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(44, 25));
+        ingestMessagesButton.setMaximumSize(new java.awt.Dimension(36, 24));
+        ingestMessagesButton.setMinimumSize(new java.awt.Dimension(36, 24));
+        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(36, 24));
         ingestMessagesButton.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -139,6 +138,7 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
 
     private static class IngestMessagesButton extends JButton {
 
+
         private static final int fontSize = 9;
         private static final Font messagesFont = new java.awt.Font("Tahoma", Font.PLAIN, fontSize);
         private int messages = 0;
@@ -146,7 +146,7 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         @Override
         public void paint(Graphics g) {           
             super.paint(g);
-
+            
             if (messages == 0)
                 return;
             //paint text
@@ -161,7 +161,7 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
             g.setColor(Color.WHITE);
             g.fillRect(x, 1, dx, fontSize);
             g.setColor(Color.BLUE);
-            g.drawString(messageStr, x, fontSize);      
+            g.drawString(messageStr, x, fontSize - 1);      
         }
 
         void setMessages(int messages) {
