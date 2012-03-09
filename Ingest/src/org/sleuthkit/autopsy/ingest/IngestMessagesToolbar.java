@@ -76,9 +76,9 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
         ingestMessagesButton.setEnabled(false);
         ingestMessagesButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         ingestMessagesButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        ingestMessagesButton.setMaximumSize(new java.awt.Dimension(44, 24));
-        ingestMessagesButton.setMinimumSize(new java.awt.Dimension(44, 24));
-        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(44, 24));
+        ingestMessagesButton.setMaximumSize(new java.awt.Dimension(36, 24));
+        ingestMessagesButton.setMinimumSize(new java.awt.Dimension(36, 24));
+        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(36, 24));
         ingestMessagesButton.addActionListener(new java.awt.event.ActionListener() {
 
             @Override
@@ -138,24 +138,30 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
 
     private static class IngestMessagesButton extends JButton {
 
-        private static final Font messagesFont = new java.awt.Font("Tahoma", 0, 10);
+
+        private static final int fontSize = 9;
+        private static final Font messagesFont = new java.awt.Font("Tahoma", Font.PLAIN, fontSize);
         private int messages = 0;
 
         @Override
         public void paint(Graphics g) {           
             super.paint(g);
-    
+            
             if (messages == 0)
                 return;
             //paint text
             String messageStr = Integer.toString(messages);
             final int len = messageStr.length();
             g.setFont(messagesFont);
-            g.setColor(Color.BLUE);
-            int x = getSize().width - len * 6 - 1;
+            
+            int dx = len * 5 + 1;
+            int x = getSize().width - dx;
             if (x<0)
                 x = 0;
-            g.drawString(messageStr, x, 9);      
+            g.setColor(Color.WHITE);
+            g.fillRect(x, 1, dx, fontSize);
+            g.setColor(Color.BLUE);
+            g.drawString(messageStr, x, fontSize - 1);      
         }
 
         void setMessages(int messages) {
