@@ -52,9 +52,9 @@ public class Installer extends ModuleInstall {
 
         Logger logger = Logger.getLogger(Installer.class.getName());
         //setupLAF();
-        //UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
-        //UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
-        //UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
+        UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
+        UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
+        UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
     }
 
     private void setupLAF() {
