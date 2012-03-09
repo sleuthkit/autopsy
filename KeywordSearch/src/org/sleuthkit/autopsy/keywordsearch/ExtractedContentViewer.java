@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -107,6 +108,16 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         // first source will be the default displayed
         setPanel(sources);
+        // If node has been selected before, return to the previous position
+        // using invokeLater to wait for ComboBox selection to complete
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                MarkupSource source = panel.getSelectedSource();
+                if(source != null)
+                    panel.scrollToAnchor(source.getAnchorPrefix() + Long.toString(find.getCurrentIndexI(source)));
+            }
+        });
     }
 
     @Override
