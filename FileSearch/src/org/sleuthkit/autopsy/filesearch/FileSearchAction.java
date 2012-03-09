@@ -19,12 +19,33 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import org.openide.util.HelpCtx;
+import org.openide.util.actions.CallableSystemAction;
 
-public final class FileSearchAction implements ActionListener {
+public final class FileSearchAction extends CallableSystemAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
         new FileSearchDialog().setVisible(true);
+    }
+
+    @Override
+    public void performAction() {
+        new FileSearchDialog().setVisible(true);
+    }
+
+    @Override
+    public String getName() {
+        return "File Search";
+    }
+
+    @Override
+    public HelpCtx getHelpCtx() {
+        return HelpCtx.DEFAULT_HELP;
+    }
+    
+    @Override
+    protected boolean asynchronous() {
+        return false;
     }
 }
