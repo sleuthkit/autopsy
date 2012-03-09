@@ -245,6 +245,9 @@ public class ExtractIE { // implements BrowserActivity {
                                       if(url.length > 1)
                                       {
                                        user = url[0];
+                                       user = user.replace("Visited:", "");
+                                       user = user.replace(":(.*?):", "");
+                                       user = user.replace(":Host:", "");
                                        realurl = url[1];
                                        realurl = realurl.replace("Visited:", "");
                                        realurl = realurl.replace(":(.*?):", "");
