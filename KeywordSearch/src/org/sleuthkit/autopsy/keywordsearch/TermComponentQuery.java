@@ -169,7 +169,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
             //snippet
             String snippet = null;
             try {
-                snippet = LuceneQuery.querySnippet(regexMatch, newFsHit.getId());
+                snippet = LuceneQuery.querySnippet(KeywordSearchUtil.escapeLuceneQuery(regexMatch, true, false), newFsHit.getId());
             } catch (Exception e) {
                 logger.log(Level.INFO, "Error querying snippet: " + regexMatch, e);
                 continue;
