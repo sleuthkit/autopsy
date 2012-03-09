@@ -100,8 +100,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         //check if we should skip this file according to HashDb service
         //if so do not index it, also postpone indexing and keyword search threads to later
         IngestServiceFsContent.ProcessResult hashDBResult = managerProxy.getFsContentServiceResult(hashDBServiceName);
+        //logger.log(Level.INFO, "hashdb result: " + hashDBResult + "file: " + fsContent.getName());
         if (hashDBResult == IngestServiceFsContent.ProcessResult.COND_STOP) {
             return ProcessResult.OK;
+        }
+        else if (hashDBResult == IngestServiceFsContent.ProcessResult.ERROR) {
+            //notify depending service that keyword search (would) encountered error for this file
+            return ProcessResult.ERROR;
         }
 
         //check if time to commit and previous search is not running

@@ -30,7 +30,8 @@ public interface IngestServiceFsContent extends IngestServiceAbstract {
         UNKNOWN, //values unknown for the (service,last file)
         OK, //subsequent service continues processing the file
         STOP, //subsequent service stops processing the file unconditionally
-        COND_STOP //subsequent service decides whether to stop processing the file
+        COND_STOP, //subsequent service decides whether to stop processing the file
+        ERROR //error encountered processing the file, hint for the depending service to skip processing the file
     };
     
     /**

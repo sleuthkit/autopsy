@@ -28,10 +28,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -70,8 +69,8 @@ public class IngestManager {
     private List<IngestImageThread> imageIngesters;
     private SwingWorker queueWorker;
     //services
-    final Collection<IngestServiceImage> imageServices = enumerateImageServices();
-    final Collection<IngestServiceFsContent> fsContentServices = enumerateFsContentServices();
+    final List<IngestServiceImage> imageServices = enumerateImageServices();
+    final List<IngestServiceFsContent> fsContentServices = enumerateFsContentServices();
     // service return values
     private final Map<String, IngestServiceFsContent.ProcessResult> fsContentServiceResults = new HashMap<String, IngestServiceFsContent.ProcessResult>();
     //manager proxy
@@ -139,7 +138,7 @@ public class IngestManager {
      * @param services services to execute on every image
      * @param images images to execute services on
      */
-    void execute(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
+    void execute(final List<IngestServiceAbstract> services, final List<Image> images) {
         logger.log(Level.INFO, "Will enqueue number of images: " + images.size());
 
         if (!isIngestRunning()) {
@@ -161,8 +160,8 @@ public class IngestManager {
      * @param services services to execute on the image
      * @param image image to execute services on
      */
-    void execute(final Collection<IngestServiceAbstract> services, final Image image) {
-        Collection<Image> images = new ArrayList<Image>();
+    void execute(final List<IngestServiceAbstract> services, final Image image) {
+        List<Image> images = new ArrayList<Image>();
         images.add(image);
         logger.log(Level.INFO, "Will enqueue image: " + image.getName());
         execute(services, images);
@@ -440,17 +439,23 @@ public class IngestManager {
     }
 
     /**
-     * helper to return all image services managed (using Lookup API)
+     * helper to return all image services managed (using Lookup API) sorted in Lookup position order
      */
-    public static Collection<IngestServiceImage> enumerateImageServices() {
-        return (Collection<IngestServiceImage>) Lookup.getDefault().lookupAll(IngestServiceImage.class);
+    public static List<IngestServiceImage> enumerateImageServices() {
+        List<IngestServiceImage> ret = new ArrayList();
+        for (IngestServiceImage list : Lookup.getDefault().lookupAll(IngestServiceImage.class))
+            ret.add(list);
+        return ret;
     }
 
     /**
-     * helper to return all file/dir services managed (using Lookup API)
+     * helper to return all file/dir services managed (using Lookup API) sorted in Lookup position order
      */
-    public static Collection<IngestServiceFsContent> enumerateFsContentServices() {
-        return (Collection<IngestServiceFsContent>) Lookup.getDefault().lookupAll(IngestServiceFsContent.class);
+    public static List<IngestServiceFsContent> enumerateFsContentServices() {
+        List<IngestServiceFsContent> ret = new ArrayList();
+        for (IngestServiceFsContent list : Lookup.getDefault().lookupAll(IngestServiceFsContent.class))
+            ret.add(list);
+        return ret;
     }
 
     /**
@@ -667,7 +672,7 @@ public class IngestManager {
             }
         }
 
-        void enqueue(FsContent fsContent, Collection<IngestServiceFsContent> services) {
+        void enqueue(FsContent fsContent, List<IngestServiceFsContent> services) {
             QueueUnit<FsContent, IngestServiceFsContent> found = findFsContent(fsContent);
 
             if (found != null) {
@@ -747,6 +752,15 @@ public class IngestManager {
         public synchronized String toString() {
             return "FsContentQueue, size: " + Integer.toString(fsContentUnits.size());
         }
+        
+        public String printQueue() {
+            StringBuilder sb = new StringBuilder();
+            for (QueueUnit<FsContent, IngestServiceFsContent> u : fsContentUnits) {
+                sb.append(u.toString());
+                sb.append("\n");
+            }
+            return sb.toString();
+        }
     }
 
     /**
@@ -772,7 +786,7 @@ public class IngestManager {
             }
         }
 
-        void enqueue(Image image, Collection<IngestServiceImage> services) {
+        void enqueue(Image image, List<IngestServiceImage> services) {
             QueueUnit<Image, IngestServiceImage> found = findImage(image);
 
             if (found != null) {
@@ -839,24 +853,24 @@ public class IngestManager {
     private class QueueUnit<T, S> {
 
         T content;
-        Set<S> services;
+        LinkedHashSet<S> services; //ordering matters (Lookup order)
 
         QueueUnit(T content, S service) {
             this.content = content;
-            this.services = new HashSet<S>();
+            this.services = new LinkedHashSet<S>();
             add(service);
         }
 
-        QueueUnit(T content, Collection<S> services) {
+        QueueUnit(T content, List<S> services) {
             this.content = content;
-            this.services = new HashSet<S>();
+            this.services = new LinkedHashSet<S>();
             addAll(services);
         }
 
         //merge services with the current collection of services per image
         //this assumes singleton instances of every service type for correct merge
         //in case of multiple instances, they need to be handled correctly after dequeue()
-        final void addAll(Collection<S> services) {
+        final void addAll(List<S> services) {
             this.services.addAll(services);
         }
 
@@ -890,6 +904,18 @@ public class IngestManager {
             hash = 37 * hash + (this.content != null ? this.content.hashCode() : 0);
             hash = 37 * hash + (this.services != null ? this.services.hashCode() : 0);
             return hash;
+        }
+        
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("content: ");
+            sb.append(content.toString());
+            sb.append("\nservices: ");
+            for (S service : services) {
+                sb.append(service.toString()).append(" ");
+            }
+            return sb.toString();
         }
     }
 
@@ -1138,11 +1164,11 @@ public class IngestManager {
     /* Thread that adds image/file and service pairs to queues */
     private class EnqueueWorker extends SwingWorker {
 
-        Collection<IngestServiceAbstract> services;
-        final Collection<Image> images;
+        List<IngestServiceAbstract> services;
+        final List<Image> images;
         int total;
 
-        EnqueueWorker(final Collection<IngestServiceAbstract> services, final Collection<Image> images) {
+        EnqueueWorker(final List<IngestServiceAbstract> services, final List<Image> images) {
             this.services = services;
             this.images = images;
         }
@@ -1195,7 +1221,7 @@ public class IngestManager {
             }
         }
 
-        private void queueAll(Collection<IngestServiceAbstract> services, final Collection<Image> images) {
+        private void queueAll(List<IngestServiceAbstract> services, final List<Image> images) {
             int processed = 0;
             for (Image image : images) {
                 final String imageName = image.getName();
@@ -1230,6 +1256,9 @@ public class IngestManager {
                     progress.progress(serviceName + " " + imageName, ++processed);
                 }
             }
+            
+            //logger.log(Level.INFO, fsContentQueue.printQueue());
+            
             progress.progress("Sorting files", processed);
             sortFsContents();
         }
