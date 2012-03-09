@@ -57,7 +57,7 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
 
         String query = "SELECT * FROM tsk_files WHERE fs_obj_id = " + fs.getId()
                 + " AND (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getMetaType()
-                + ") AND (known != " + FileKnown.KNOWN.toLong() + ") AND (size > 0)";
+                + ") AND (size > 0)";
         try {
             ResultSet rs = sc.runQuery(query);
             List<FsContent> contents = sc.resultSetToFsContents(rs);
