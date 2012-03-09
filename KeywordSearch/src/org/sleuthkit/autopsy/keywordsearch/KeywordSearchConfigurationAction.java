@@ -18,8 +18,11 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
+import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 
 /**
  *
@@ -31,7 +34,17 @@ class KeywordSearchConfigurationAction extends CallableSystemAction{
 
     @Override
     public void performAction() {
-        new KeywordSearchConfigurationDialog(ACTION_NAME).setVisible(true);
+        final KeywordSearchConfigurationPanel panel = KeywordSearchConfigurationPanel.getDefault();
+        final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog();
+        dialog.addApplyButtonListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panel.save();
+                dialog.close();
+            }
+        });
+        dialog.display(panel);
     }
 
     @Override

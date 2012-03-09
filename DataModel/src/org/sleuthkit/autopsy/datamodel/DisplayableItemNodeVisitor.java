@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsMultiLevelNode;
+import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
+import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsSetNode;
 
 /**
  * Visitor pattern for DisplayableItemNodes
@@ -51,9 +51,9 @@ public interface DisplayableItemNodeVisitor<T> {
     
     T visit(KeywordHitsRootNode khrn);
     
-    T visit(KeywordHitsSetNode khsn);
+    T visit(KeywordHitsListNode khsn);
     
-    T visit(KeywordHitsMultiLevelNode khmln);
+    T visit(KeywordHitsKeywordNode khmln);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -130,12 +130,12 @@ public interface DisplayableItemNodeVisitor<T> {
         }
         
         @Override
-        public T visit(KeywordHitsSetNode khsn) {
+        public T visit(KeywordHitsListNode khsn) {
             return defaultVisit(khsn);
         }
         
         @Override
-        public T visit(KeywordHitsMultiLevelNode khmln) {
+        public T visit(KeywordHitsKeywordNode khmln) {
             return defaultVisit(khmln);
         }
     }

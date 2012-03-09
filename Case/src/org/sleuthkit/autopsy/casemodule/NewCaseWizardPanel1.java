@@ -169,6 +169,10 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
         NewCaseVisualPanel1 component = getComponent();
         String lastBaseDirectory = AutopsyPropFile.getInstance().getProperty(PROP_BASECASE);
         component.getCaseParentDirTextField().setText(lastBaseDirectory);
+        String createdDirectory = (String) settings.getProperty("createdDirectory");
+        if(createdDirectory != null && !createdDirectory.equals("")) {
+            Case.deleteCaseDirectory(new File(createdDirectory));
+        }
     }
 
     /**
