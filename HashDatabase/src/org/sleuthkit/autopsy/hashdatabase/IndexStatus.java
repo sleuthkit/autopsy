@@ -36,7 +36,7 @@ enum IndexStatus {
     /**
      * The index exists but the database does not.
      */
-    NO_DB("Index does not have database."),
+    NO_DB("Only an index exists."),
     /**
      * The database exists but the index does not.
      */

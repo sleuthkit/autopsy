@@ -39,12 +39,13 @@ class HashDbMgmtPanel extends javax.swing.JPanel {
     private HashDbSettings settings;
     private static HashDbMgmtPanel instance;
     // text of panel for each database
-    private static final String INTRO_TEXT1 = "Hash lookups are conducted when ingest is run.";
-    private static final String INTRO_TEXT2 = "Lookup results can be found using the File Search feature.";
+    private static final String INTRO_TEXT1 = "File hashes can be looked up in a database with the Hash Lookup ingest module.";
+    private static final String INTRO_TEXT2 = "Known bad can be found in the results tree.";
     private static final String NSRL_NAME = "NIST NSRL Database";
     private static final String NSRL_DESC = "Hashes that are known good and bad.";
     private static final String KNOWN_BAD_NAME = "Known Bad Database";
     private static final String KNOWN_BAD_DESC = "Hashes that are known bad.";
+    private static final String HASH_DATABASE_TITLE = "Hash Database Configuration";
     private JLabel introText1;
     private JLabel introText2;
     private HashDbPanel NSRLPanel;
@@ -57,6 +58,7 @@ class HashDbMgmtPanel extends javax.swing.JPanel {
     HashDbMgmtPanel(HashDbSettings settings) {
         this.settings = settings;
 
+        this.setName(HASH_DATABASE_TITLE);
         initComponents();
     }
     
