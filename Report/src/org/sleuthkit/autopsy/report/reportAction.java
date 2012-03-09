@@ -9,12 +9,12 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.SwingWorker;
 import org.openide.awt.ActionRegistration;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -23,7 +23,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Log;
 
 @ActionID(category = "Tools",
@@ -39,17 +38,6 @@ public final class reportAction extends CallableSystemAction implements Presente
     private static final String ACTION_NAME = "Report Filter";
     
     public reportAction() {
-        setEnabled(false);
-        Case.addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if(evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)){
-                    setEnabled(evt.getNewValue() != null);
-                }
-            }
-            
-        });
         // set action of the toolbar button
         toolbarButton.addActionListener(new ActionListener() {
 
@@ -70,14 +58,14 @@ public final class reportAction extends CallableSystemAction implements Presente
             final JDialog popUpWindow = new JDialog(frame, ACTION_NAME, true); // to make the popUp Window to be modal
 
             // initialize panel with loaded settings
-            final reportFilter panel = new reportFilter();
-             panel.setjButton1ActionListener(new ActionListener() {
-
+            final reportFilter panel = new reportFilter();   
+             panel.setjButton2ActionListener(new ActionListener() {
                             @Override
                             public void actionPerformed(ActionEvent e) {
-                                popUpWindow.dispose();
+                                  popUpWindow.dispose();
                             }
                         });
+             
             // add the panel to the popup window
             popUpWindow.add(panel);
             popUpWindow.pack();
@@ -91,7 +79,6 @@ public final class reportAction extends CallableSystemAction implements Presente
 
             // display the window
             popUpWindow.setVisible(true);
-            
             // add the command to close the window to the button on the Case Properties form / panel
            
             

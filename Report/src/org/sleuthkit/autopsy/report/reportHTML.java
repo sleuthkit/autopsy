@@ -10,19 +10,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.Volume;
 
 /**
  *
@@ -32,9 +25,8 @@ public class reportHTML {
     
     //Declare our publically accessible formatted report, this will change everytime they run a report
     public StringBuilder formatted_Report = new StringBuilder();
-    
-    
-public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> report){
+
+public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> report, reportFilter rr){
             
             
         try{
@@ -66,26 +58,37 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
              StringBuilder nodeInstalled =  new StringBuilder("<h3>Installed Programs</h3>");
              StringBuilder nodeKeyword =  new StringBuilder("<h3>Keyword Search Hits</h3>");
              StringBuilder nodeHash =  new StringBuilder("<h3>Hashset Hits</h3>");
-             
+            
              for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
+                 if(reportFilter.cancel == true){
+                     break;
+                 }
+                 int cc = 0;
                 StringBuilder artifact = new StringBuilder("<p>Artifact");
                 Long objId = entry.getKey().getObjectID();
-                Content cont = skCase.getContentById(objId);
-                Long filesize = cont.getSize();
-                artifact.append(" ID: " + objId.toString());
-                artifact.append("<br /> Name: <strong>").append(cont.accept(new NameVisitor())).append("</strong>");
-                artifact.append("<br />Path: ").append(cont.accept(new PathVisitor()));
+                //Content file = skCase.getContentById(objId);
+                FsContent file = skCase.getFsContentById(objId);
+               // File file = cfile
+              //  File file = cfile.
+                Long filesize = file.getSize();
+                artifact.append(" ID: ").append(objId.toString());
+                artifact.append("<br /> Name: <strong>").append(file.getName().toString()).append("</strong>");
+                artifact.append("<br />Path: ").append(file.getParentPath());
                 artifact.append("<br /> Size: ").append(filesize.toString());
                 artifact.append("</p><ul style=\"list-style-type: none;\">");
                 
                     // Get all the attributes for this guy
                      for (BlackboardAttribute tempatt : entry.getValue())
                          {
+                              if(reportFilter.cancel == true){
+                                 break;
+                                 }
                           StringBuilder attribute = new StringBuilder("<li style=\"list-style-type: none;\">Type:  ").append(tempatt.getAttributeTypeDisplayName()).append("</li>");
                           attribute.append("<li style=\"list-style-type: none;\">Value:  ").append(tempatt.getValueString()).append("</li>");
                           attribute.append("<li style=\"list-style-type: none;\"> Context:  ").append(tempatt.getContext()).append("</li>");
-                    
+                          
                           artifact.append(attribute);
+                          cc++;
                          }
                     artifact.append("</ul>");
                     if(entry.getKey().getArtifactTypeID() == 1){  
@@ -120,6 +123,8 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                     if(entry.getKey().getArtifactTypeID() == 10){
                          nodeHash.append(artifact);
                     } 
+                    cc++;
+                     rr.progBarSet(cc);
              }
             //Add them back in order
             formatted_Report.append(nodeGen);
@@ -133,57 +138,15 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             formatted_Report.append(nodeKeyword);
             formatted_Report.append(nodeHash); 
             //end of master loop
+            
                 formatted_Report.append("</div></div></body></html>");
             }
             catch(Exception e)
             {
-                Logger.getLogger(reportHTML.class.getName()).log(Level.INFO, "Exception occurred", e);
+
+              //  Logger.getLogger(reportHTML.class.getName()).log(Level.INFO, "Exception occurred", e);
             }
         }
 
-    private class NameVisitor extends ContentVisitor.Default<String> {
-
-        @Override
-        protected String defaultVisit(Content cntnt) {
-            throw new UnsupportedOperationException("Not supported for " + cntnt.toString());
-        }
-
-        @Override
-        public String visit(Directory dir) {
-            return dir.getName();
-        }
-
-        @Override
-        public String visit(Image img) {
-            return img.getName();
-        }
-
-        @Override
-        public String visit(File fil) {
-            return fil.getName();
-        }
-    }
     
-    private class PathVisitor extends ContentVisitor.Default<String> {
-        
-        @Override
-        protected String defaultVisit(Content cntnt) {
-            throw new UnsupportedOperationException("Not supported for " + cntnt.toString());
-        }
-        
-        @Override
-        public String visit(Directory dir) {
-            return dir.getParentPath();
-        }
-
-        @Override
-        public String visit(Image img) {
-            return img.getName();
-        }
-
-        @Override
-        public String visit(File fil) {
-            return fil.getParentPath();
-        }
-    }
 }
