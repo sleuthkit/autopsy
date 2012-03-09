@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 public class reportXML {
     
-    public reportXML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> report){
+    public reportXML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> report, reportFilter rr){
         try{
          Case currentCase = Case.getCurrentCase(); // get the most updated case
          SleuthkitCase skCase = currentCase.getSleuthkitCase();
@@ -39,7 +39,7 @@ public class reportXML {
          Element root = new Element("Case");
          Document xmldoc = new Document(root);
          DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
+         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
          Date date = new Date();
          String datetime = datetimeFormat.format(date);
          String datenotime = dateFormat.format(date);
@@ -63,6 +63,10 @@ public class reportXML {
          Element nodeKeyword = new Element("Keyword-Search-Hits");
          Element nodeHash = new Element("Hashset-Hits");
          for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
+              if(reportFilter.cancel == true){
+                         break;
+                        }
+              int cc = 0;
             Element artifact = new Element("Artifact");
             Long objId = entry.getKey().getObjectID();
             Content cont = skCase.getContentById(objId);
@@ -74,12 +78,16 @@ public class reportXML {
             // Get all the attributes for this guy
              for (BlackboardAttribute tempatt : entry.getValue())
                  {
+                      if(reportFilter.cancel == true){
+                         break;
+                        }
                   Element attribute = new Element("Attribute").setAttribute("Type",tempatt.getAttributeTypeDisplayName());
                   Element value = new Element("Value").setText(tempatt.getValueString());
                   attribute.addContent(value);
                   Element context = new Element("Context").setText(tempatt.getContext());
                   attribute.addContent(context);
                   artifact.addContent(attribute);
+                  cc++;
                  }
              
             if(entry.getKey().getArtifactTypeID() == 1){
@@ -119,7 +127,8 @@ public class reportXML {
             if(entry.getKey().getArtifactTypeID() == 10){
                  nodeHash.addContent(artifact);
             } 
-        
+            cc++;
+           rr.progBarSet(cc);
             //end of master loop
         }
          
@@ -136,7 +145,7 @@ public class reportXML {
             root.addContent(nodeHash); 
          
             try {
-                  FileOutputStream out = new FileOutputStream(currentCase.getTempDirectory()+"/" + caseName + "-" + datenotime + ".xml");
+                  FileOutputStream out = new FileOutputStream(currentCase.getCaseDirectory()+"/Temp/" + caseName + "-" + datenotime + ".xml");
                   XMLOutputter serializer = new XMLOutputter();
                   serializer.output(xmldoc, out);
                   out.flush();

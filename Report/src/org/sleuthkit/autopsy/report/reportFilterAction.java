@@ -19,16 +19,13 @@
 
 package org.sleuthkit.autopsy.report;
 
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import org.openide.util.HelpCtx;
-import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
@@ -45,11 +42,12 @@ class reportFilterAction {
         Log.noteAction(this.getClass());
 
         try {
-            
+
             // create the popUp window for it
+              Container cpane;  
             final JFrame frame = new JFrame(ACTION_NAME);
             final JDialog popUpWindow = new JDialog(frame, ACTION_NAME, true); // to make the popUp Window to be modal
-
+            cpane = frame.getContentPane();  
             // initialize panel with loaded settings
             final reportFilter panel = new reportFilter();
 
@@ -66,7 +64,7 @@ class reportFilterAction {
 
             // display the window
             popUpWindow.setVisible(true);
-            
+                 
             
         } catch (Exception ex) {
             Log.get(reportFilterAction.class).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
