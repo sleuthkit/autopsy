@@ -20,6 +20,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -55,6 +56,8 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
             while (j < Regfiles.size())
             {
                 boolean Success;
+                Content orgFS = Regfiles.get(j);
+                long orgId = orgFS.getId();
                 String temps = currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName().toString();
                 ContentUtils.writeToFile(Regfiles.get(j), new File(currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName()));
                 File regFile = new File(temps);
@@ -62,7 +65,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                  String txtPath = executeRegRip(temps, j);
                  if(txtPath.length() > 0)
                  {
-                    Success = parseReg(txtPath);
+                    Success = parseReg(txtPath,orgId);
                  }
                  else
                  {
@@ -102,6 +105,10 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
 
        try
        {
+           String rrpath = System.getProperty("user.dir");
+                rrpath = rrpath.substring(0, rrpath.length()-14);
+                rrpath = rrpath + "thirdparty\\rr\\";
+                
             if(regFilePath.toLowerCase().contains("system"))
                 {
                     type = "system";
@@ -126,13 +133,8 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                 {
                     type = "security";
                 }
-                
-                String rrpath = System.getProperty("user.dir");
-                rrpath = rrpath.substring(0, rrpath.length()-14);
-                rrpath = rrpath + "thirdparty\\rr\\";
-                
-                String command = rrpath + "rip.exe -r " + regFilePath +" -f " + type + " >> " + txtPath;
 
+                String command = rrpath + "rip.exe -r " + regFilePath +" -f " + type + " >> " + txtPath;
                 JavaSystemCaller.Exec.execute(command);
                
 
@@ -147,7 +149,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
     }
   
    
-     private boolean parseReg(String regRecord)
+     private boolean parseReg(String regRecord, long orgId)
     {
         Case currentCase = Case.getCurrentCase(); // get the most updated case
         SleuthkitCase tempDb = currentCase.getSleuthkitCase();
@@ -163,7 +165,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                }
                else
                {
-                BlackboardArtifact bbart = tempDb.getRootObjects().get(0).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);  
+                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);  
                    if(tempresult.contains("Username"))
                    {
                     Pattern p = Pattern.compile("Username\\[.*?\\]"); 
