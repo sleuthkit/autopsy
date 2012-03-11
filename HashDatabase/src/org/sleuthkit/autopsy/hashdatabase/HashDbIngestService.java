@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -134,24 +135,30 @@ public class HashDbIngestService implements IngestServiceFsContent {
     @Override
     public ProcessResult process(FsContent fsContent) {
         ProcessResult ret = ProcessResult.UNKNOWN;
+        process = true;
+        if(fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
+            ret = ProcessResult.COND_STOP;
+            process = false;
+        }
         if (process) {
             String name = fsContent.getName();
             try {
-                String status = skCase.lookupFileMd5(fsContent);
-                if (status.equals(TskData.FileKnown.BAD.getName())) {
+                String md5Hash = Hash.calculateMd5(fsContent);
+                TskData.FileKnown status = skCase.lookupMd5(md5Hash);
+                boolean changed = skCase.setKnown(fsContent, status);
+                if (status.equals(TskData.FileKnown.BAD)) {
                     BlackboardArtifact badFile = fsContent.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
                     BlackboardAttribute att1 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), NAME, "", fsContent.getName());
                     badFile.addAttribute(att1);
                     BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID(), NAME, "Known Bad", knownBadDbPath != null ? knownBadDbPath : "");
                     badFile.addAttribute(att2);
-                    //TODO: Shouldn't be calculating the hash twice.
-                    BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), NAME, "", Hash.calculateMd5(fsContent));
+                    BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), NAME, "", md5Hash);
                     badFile.addAttribute(att3);
                     managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, "", null, badFile));
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent(NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
                     ret = ProcessResult.COND_STOP;
                 }
-                else if (status.equals(TskData.FileKnown.KNOWN.getName())) {
+                else if (status.equals(TskData.FileKnown.KNOWN)) {
                     ret = ProcessResult.COND_STOP;
                 }
                 else {
@@ -160,6 +167,14 @@ public class HashDbIngestService implements IngestServiceFsContent {
             } catch (TskException ex) {
                 // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
                 logger.log(Level.INFO, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
+                ret = ProcessResult.ERROR;
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "Error updating file known status in database", ex);
+                ret = ProcessResult.ERROR;
+            } catch (IOException ex) {
+                // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
+                logger.log(Level.INFO, "Error reading file", ex);
+                ret = ProcessResult.ERROR;
             }
         }
         return ret;
