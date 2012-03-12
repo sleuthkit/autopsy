@@ -25,6 +25,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.sleuthkit.autopsy.datamodel.HighlightLookup;
 import org.sleuthkit.autopsy.keywordsearch.Server.Core;
 import org.sleuthkit.datamodel.Content;
 
@@ -32,7 +33,7 @@ import org.sleuthkit.datamodel.Content;
  * Gets extracted content from Solr with the parts that match the query
  * highlighted
  */
-class HighlightedMatchesSource implements MarkupSource {
+class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
 
     private static final Logger logger = Logger.getLogger(HighlightedMatchesSource.class.getName());
     private static final String HIGHLIGHT_PRE = "<span style=\"background:yellow\">";
@@ -130,5 +131,18 @@ class HighlightedMatchesSource implements MarkupSource {
 
         this.numberHits = count;
         return buf.toString();
+    }
+
+    private static HighlightLookup instance = null;
+    
+    public static synchronized HighlightLookup getDefault() {
+        if(instance == null)
+            instance = new HighlightedMatchesSource(null, null);
+        return instance;
+    }
+
+    @Override
+    public HighlightLookup createInstance(Content c, String s) {
+        return new HighlightedMatchesSource(c, s);
     }
 }

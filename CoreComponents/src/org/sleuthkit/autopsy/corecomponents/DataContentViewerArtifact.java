@@ -212,20 +212,23 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     @Override
     public void setNode(Node selectedNode) {
-         if (selectedNode != null) {
+        if (selectedNode != null) {
             Lookup lookup = selectedNode.getLookup();
             Content content = lookup.lookup(Content.class);
+            BlackboardArtifact artifact = lookup.lookup(BlackboardArtifact.class);
             if (content != null) {
                 try {
                     this.setDataView(content.getAllArtifacts(), 1);
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Couldn't get artifacts: ", ex);
                 }
-                return;
             }
+            if (artifact != null) {
+                this.setSelectedArtifact(artifact);
+            }
+        } else {
+            this.setDataView(new ArrayList<BlackboardArtifact>(), 1);
         }
-
-        this.setDataView(new ArrayList<BlackboardArtifact>(), 1);
     }
 
     @Override
@@ -300,7 +303,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     @Override
     public boolean isPreferred(Node node, boolean isSupported) {
-        return node.getLookup().lookup(ArtifactStringContent.class) != null;
+        return node.getLookup().lookup(BlackboardArtifact.class) != null;
     }
 
     private void customizeComponents(){
@@ -346,5 +349,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         setComponentsVisibility(true);
         outputViewPane.moveCaretPosition(0);
         this.setCursor(null);
+    }
+    
+    private void setSelectedArtifact(BlackboardArtifact artifact) {
+        if(artifacts.contains(artifact)) {
+            int index = artifacts.indexOf(artifact);
+            setDataView(artifacts, index+1);
+        }
     }
 }
