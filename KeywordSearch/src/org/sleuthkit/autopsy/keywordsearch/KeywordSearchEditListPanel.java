@@ -367,8 +367,8 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                         .addGap(10, 10, 10)
                         .addComponent(chRegex)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(selectorsCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(44, Short.MAX_VALUE))
+                        .addComponent(selectorsCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
         addKeywordPanelLayout.setVerticalGroup(
             addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
