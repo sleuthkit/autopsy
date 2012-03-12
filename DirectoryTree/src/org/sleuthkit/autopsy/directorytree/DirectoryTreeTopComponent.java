@@ -567,6 +567,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     logger.log(Level.WARNING, "Error resetting node", ex);
                 }
             }
+            final Node[] oldNodes = (Node[])oldValue;
+            final Node[] newNodes = (Node[])newValue;
             // Some lock that prevents certain Node operations is set during the
             // ExplorerManager selection-change, so we must handle changes after the
             // selection-change event is processed.
@@ -610,7 +612,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         }
 
                         // set the directory listing to be active
-                        //dataResult.requestActive();
+                        if(oldNodes != null && newNodes != null &&
+                           (oldNodes.length == newNodes.length)) {
+                            boolean sameNodes = true;
+                            for(int i = 0; i < oldNodes.length; i++) {
+                                sameNodes = sameNodes && oldNodes[i].getName().equals(newNodes[i].getName());
+                            }
+                            if(!sameNodes)
+                                dataResult.requestActive();
+                        }
                     } finally {
                         DirectoryTreeTopComponent.this.setCursor(null);
                     }
