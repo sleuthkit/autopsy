@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +45,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -65,10 +65,12 @@ public class TermComponentQuery implements KeywordSearchQuery {
     private String queryEscaped;
     private boolean isEscaped;
     private List<Term> terms;
+    private Keyword keywordQuery = null;
 
-    public TermComponentQuery(String query) {
-        this.termsQuery = query;
-        this.queryEscaped = query;
+    public TermComponentQuery(Keyword keywordQuery) {
+        this.keywordQuery = keywordQuery;
+        this.termsQuery = keywordQuery.getQuery();
+        this.queryEscaped = termsQuery;
         isEscaped = false;
         terms = null;
     }
@@ -192,20 +194,16 @@ public class TermComponentQuery implements KeywordSearchQuery {
                 continue;
             }
 
-            try {
-                //regex keyword
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", termsQuery));
-                //regex match
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", regexMatch));
-                //list
-                if (listName == null) {
-                    listName = "";
-                }
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID(), MODULE_NAME, "", listName));
-
-            } catch (Exception e) {
-                logger.log(Level.INFO, "Error adding bb attribute", e);
+            //regex keyword
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", termsQuery));
+            //regex match
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", regexMatch));
+            //list
+            if (listName == null) {
+                listName = "";
             }
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID(), MODULE_NAME, "", listName));
+
 
             try {
                 //first try to add attr not in bulk so we can catch sql exception and encode the string
@@ -217,10 +215,19 @@ public class TermComponentQuery implements KeywordSearchQuery {
                     //escape in case of garbage so that sql accepts it
                     snippet = URLEncoder.encode(snippet, "UTF-8");
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
-                } catch (Exception e2) {
+                } catch (UnsupportedEncodingException e2) {
                     logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
                 }
             }
+
+            //selector
+            if (keywordQuery != null) {
+                BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
+                if (selType != null) {
+                    attributes.add(new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", regexMatch));
+                }
+            }
+
             try {
                 bba.addAttributes(attributes);
                 writeResult.add(attributes);
@@ -335,7 +342,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
         Node rootNode = null;
         if (things.size() > 0) {
             Children childThingNodes =
-                    Children.create(new KeywordSearchResultFactory(termsQuery, things, Presentation.DETAIL), true);
+                    Children.create(new KeywordSearchResultFactory(new Keyword(termsQuery, false), things, Presentation.DETAIL), true);
 
             rootNode = new AbstractNode(childThingNodes);
         } else {

@@ -101,9 +101,9 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         this.presentation = presentation;
     }
 
-    KeywordSearchResultFactory(String query, Collection<KeyValueQuery> things, Presentation presentation) {
+    KeywordSearchResultFactory(Keyword query, Collection<KeyValueQuery> things, Presentation presentation) {
         queries = new ArrayList<Keyword>();
-        queries.add(new Keyword(query, false));
+        queries.add(query);
         this.presentation = presentation;
         this.things = things;
     }

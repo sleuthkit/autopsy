@@ -80,13 +80,13 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
             KeywordSearchQuery del = null;
             switch (queryType) {
                 case WORD:
-                    del = new LuceneQuery(query.getQuery());
+                    del = new LuceneQuery(query);
                     break;
                 case REGEX:
                     if (query.isLiteral()) {
-                        del = new LuceneQuery(query.getQuery());
+                        del = new LuceneQuery(query);
                     } else {
-                        del = new TermComponentQuery(query.getQuery());
+                        del = new TermComponentQuery(query);
                     }
                     break;
                 default:
@@ -217,50 +217,3 @@ class KeyValueQuery extends KeyValue {
     }
 }
 
-/**
- * representation of Keyword input from user
- */
-class Keyword {
-
-    private String query;
-    private boolean isLiteral;
-
-    Keyword(String query, boolean isLiteral) {
-        this.query = query;
-        this.isLiteral = isLiteral;
-    }
-
-    String getQuery() {
-        return query;
-    }
-
-    boolean isLiteral() {
-        return isLiteral;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final Keyword other = (Keyword) obj;
-        if ((this.query == null) ? (other.query != null) : !this.query.equals(other.query)) {
-            return false;
-        }
-        if (this.isLiteral != other.isLiteral) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 17 * hash + (this.query != null ? this.query.hashCode() : 0);
-        hash = 17 * hash + (this.isLiteral ? 1 : 0);
-        return hash;
-    }
-}

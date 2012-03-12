@@ -49,6 +49,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -68,6 +69,7 @@ public class KeywordSearchListsXML {
     private static final String LIST_USE_FOR_INGEST = "use_for_ingest";
     private static final String KEYWORD_EL = "keyword";
     private static final String KEYWORD_LITERAL_ATTR = "literal";
+    private static final String KEYWORD_SELECTOR_ATTR = "selector";
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private static final String ENCODING = "UTF-8";
@@ -108,12 +110,12 @@ public class KeywordSearchListsXML {
         ips.add(new Keyword("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])", false));
         //email
         List<Keyword> emails = new ArrayList<Keyword>();
-        emails.add(new Keyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", false));
+        emails.add(new Keyword("[A-Z0-9._%-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL));
         //URL
         List<Keyword> urls = new ArrayList<Keyword>();
-        urls.add(new Keyword("http://|https://|^www\\.", false));
-        urls.add(new Keyword("ftp://|sftp://", false));
-        urls.add(new Keyword("ssh://", false));
+        urls.add(new Keyword("http://|https://|^www\\.", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
+        urls.add(new Keyword("ftp://|sftp://", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
+        urls.add(new Keyword("ssh://", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
         
         addList("Phone Numbers", phones, true, true);
         addList("IP Addresses", ips, true, true);
@@ -356,6 +358,10 @@ public class KeywordSearchListsXML {
                     Element keywordEl = doc.createElement(KEYWORD_EL);
                     String literal = keyword.isLiteral()?"true":"false";
                     keywordEl.setAttribute(KEYWORD_LITERAL_ATTR, literal);
+                    BlackboardAttribute.ATTRIBUTE_TYPE selectorType = keyword.getType();
+                    if (selectorType != null) {
+                        keywordEl.setAttribute(KEYWORD_SELECTOR_ATTR, selectorType.getLabel());
+                    }
                     keywordEl.setTextContent(keyword.getQuery());
                     listEl.appendChild(keywordEl);
                 }
@@ -405,8 +411,14 @@ public class KeywordSearchListsXML {
                     Element wordEl = (Element) wordsNList.item(j);
                     String literal = wordEl.getAttribute(KEYWORD_LITERAL_ATTR);
                     boolean isLiteral = literal.equals("true");
-                    words.add(new Keyword(wordEl.getTextContent(), isLiteral));
-
+                    Keyword keyword = new Keyword(wordEl.getTextContent(), isLiteral);
+                    String selector = wordEl.getAttribute(KEYWORD_SELECTOR_ATTR);
+                    if (! selector.equals("")) {
+                        BlackboardAttribute.ATTRIBUTE_TYPE selectorType = BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(selector);
+                        keyword.setType(selectorType);
+                    }
+                    words.add(keyword);
+                    
                 }
                 theLists.put(name, list);
             }

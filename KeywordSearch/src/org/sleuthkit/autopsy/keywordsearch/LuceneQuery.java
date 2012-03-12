@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -57,10 +58,16 @@ public class LuceneQuery implements KeywordSearchQuery {
     private String query; //original unescaped query
     private String queryEscaped;
     private boolean isEscaped;
+    private Keyword keywordQuery = null;
 
-    public LuceneQuery(String query) {
-        this.query = query;
-        this.queryEscaped = query;
+    public LuceneQuery(Keyword keywordQuery) {
+        this(keywordQuery.getQuery());
+        this.keywordQuery = keywordQuery;
+    }
+
+    public LuceneQuery(String queryStr) {
+        this.query = queryStr;
+        this.queryEscaped = queryStr;
         isEscaped = false;
     }
 
@@ -156,7 +163,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         final List<FsContent> matches = performQuery();
 
         String pathText = "Keyword query: " + query;
-        
+
         if (matches.isEmpty()) {
             KeywordSearchUtil.displayDialog("Keyword Search", "No results for keyword: " + query, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             return;
@@ -233,24 +240,27 @@ public class LuceneQuery implements KeywordSearchQuery {
                     //escape in case of garbage so that sql accepts it
                     snippet = URLEncoder.encode(snippet, "UTF-8");
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
-                } catch (Exception e2) {
+                } catch (UnsupportedEncodingException e2) {
                     logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
                 }
             }
         }
-        try {
-            //keyword
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", query));
-            //list
-            //list
-            if (listName == null) {
-                listName = "";
+        //keyword
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", query));
+        //list
+        if (listName == null) {
+            listName = "";
+        }
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID(), MODULE_NAME, "", listName));
+        //bogus - workaround the dir tree table issue
+        //attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
+
+        //selector
+        if (keywordQuery != null) {
+            BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
+            if (selType != null) {
+                attributes.add(new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", query));
             }
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID(), MODULE_NAME, "", listName));
-            //bogus 
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
-        } catch (Exception e) {
-            logger.log(Level.INFO, "Error adding bb attribute", e);
         }
 
         try {

@@ -506,11 +506,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             progress.start(keywords.size());
             int numSearched = 0;
 
-            for (Keyword query : keywords) {
+            for (Keyword keywordQuery : keywords) {
                 if (this.isCancelled()) {
                     return null;
                 }
-                final String queryStr = query.getQuery();
+                final String queryStr = keywordQuery.getQuery();
                 final String listName = keywordToList.get(queryStr);
 
                 //logger.log(Level.INFO, "Searching: " + queryStr);
@@ -519,11 +519,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
                 KeywordSearchQuery del = null;
 
-                if (query.isLiteral()) {
-                    del = new LuceneQuery(queryStr);
+                if (keywordQuery.isLiteral()) {
+                    del = new LuceneQuery(keywordQuery);
                     del.escape();
                 } else {
-                    del = new TermComponentQuery(queryStr);
+                    del = new TermComponentQuery(keywordQuery);
                 }
 
                 List<FsContent> queryResult = null;
@@ -531,16 +531,16 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 try {
                     queryResult = del.performQuery();
                 } catch (Exception e) {
-                    logger.log(Level.INFO, "Error performing query: " + query.getQuery(), e);
+                    logger.log(Level.INFO, "Error performing query: " + keywordQuery.getQuery(), e);
                     continue;
                 }
 
                 //calculate new results but substracting results already obtained in this run
                 List<FsContent> newResults = new ArrayList<FsContent>();
 
-                List<FsContent> curResults = currentResults.get(query);
+                List<FsContent> curResults = currentResults.get(keywordQuery);
                 if (curResults == null) {
-                    currentResults.put(query, queryResult);
+                    currentResults.put(keywordQuery, queryResult);
                     newResults = queryResult;
                 } else {
                     for (FsContent res : queryResult) {
@@ -571,7 +571,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             StringBuilder detailsSb = new StringBuilder();
                             //final int hitFiles = newResults.size();
 
-                            if (!query.isLiteral()) {
+                            if (!keywordQuery.isLiteral()) {
                                 subjectSb.append("RegExp hit: ");
                             } else {
                                 subjectSb.append("Keyword hit: ");
@@ -621,7 +621,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             detailsSb.append("</tr>");
 
                             //regex
-                            if (!query.isLiteral()) {
+                            if (!keywordQuery.isLiteral()) {
                                 attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
                                 if (attr != null) {
                                     detailsSb.append("<tr>");
