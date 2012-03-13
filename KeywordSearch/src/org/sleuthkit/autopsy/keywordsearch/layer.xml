@@ -23,6 +23,11 @@
             </file>-->
     </folder>
     <folder name="Services">
+        <file name="org-sleuthkit-autopsy-keywordsearch-HighlightedMatchesSource.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.datamodel.HighlightLookup"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.keywordsearch.HighlightedMatchesSource.getDefault"/>
+            <attr name="position" intvalue="250"/>
+        </file>
         <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchIngestService.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceFsContent"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestService.getDefault"/>

@@ -34,6 +34,8 @@ import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.sleuthkit.autopsy.datamodel.HighlightLookup;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -159,13 +161,14 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         Collection<? extends MarkupSource> sources = node.getLookup().lookupAll(MarkupSource.class);
+        HighlightLookup highlight = node.getLookup().lookup(HighlightLookup.class);
 
-        return !sources.isEmpty() || solrHasContent(node);
+        return !sources.isEmpty() || highlight != null || solrHasContent(node);
     }
 
     @Override
     public boolean isPreferred(Node node, boolean isSupported) {
-        return isSupported;
+        return isSupported && node.getLookup().lookup(BlackboardArtifact.class) == null;
     }
 
     /**

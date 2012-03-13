@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,6 +37,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SleuthkitItemVisitor;
+import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -44,14 +49,16 @@ import org.sleuthkit.datamodel.TskException;
 public class BlackboardArtifactNode extends AbstractNode implements DisplayableItemNode{
     
     BlackboardArtifact artifact;
+    Content associated;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
 
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
-        super(Children.LEAF, Lookups.singleton(getAssociatedContent(artifact)));
-        //super(Children.LEAF, Lookups.singleton(new ArtifactStringContent(artifact)));
+        super(Children.LEAF, getLookups(artifact));
+        
         this.artifact = artifact;
+        this.associated = getAssociatedContent(artifact);
         this.setName(Long.toString(artifact.getArtifactID()));
-        this.setDisplayName(artifact.getDisplayName());
+        this.setDisplayName(associated.accept(new NameVisitor()));
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/artifact-icon.png");
         
     }
@@ -69,10 +76,10 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         Map<Integer, Object> map = new LinkedHashMap<Integer, Object>();
         fillPropertyMap(map, artifact);
         
-        ss.put(new NodeProperty("Artifact Name",
-                                "Artifact Name",
+        ss.put(new NodeProperty("File Name",
+                                "File Name",
                                 "no description",
-                                artifact.getDisplayName()));
+                                associated.accept(new NameVisitor())));
         
         ATTRIBUTE_TYPE[] attributeTypes = ATTRIBUTE_TYPE.values();
         for(Map.Entry<Integer, Object> entry : map.entrySet()){
@@ -133,7 +140,20 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         throw new IllegalArgumentException("Couldn't get file from database");
     }
     
-    public static Content getAssociatedContent(BlackboardArtifact artifact){
+    private static Lookup getLookups(BlackboardArtifact artifact) {
+        Content content = getAssociatedContent(artifact);
+        HighlightLookup highlight = getHighlightLookup(artifact, content);
+        List<Object> forLookup = new ArrayList<Object>();
+        forLookup.add(artifact);
+        if(content != null)
+            forLookup.add(content);
+        if(highlight != null)
+            forLookup.add(highlight);
+        
+        return Lookups.fixed(forLookup.toArray(new Object[forLookup.size()]));
+    }
+    
+    private static Content getAssociatedContent(BlackboardArtifact artifact){
         try {
             return artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
         } catch (SQLException ex) {
@@ -143,10 +163,53 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         }
         throw new IllegalArgumentException("Couldn't get file from database");
     }
+    
+    private static HighlightLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
+        Lookup lookup = Lookup.getDefault();
+        HighlightLookup highlightFactory = lookup.lookup(HighlightLookup.class);
+        try {
+            List<BlackboardAttribute> attributes = artifact.getAttributes();
+            String keyword = null;
+            for (BlackboardAttribute att : attributes) {
+                if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
+                    keyword = att.getValueString();
+                }
+            }
+            if (keyword != null) {
+                return highlightFactory.createInstance(content, keyword);
+            }
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex);
+        }
+        return null;
+    }
 
     public Node getContentNode() {
-        return getAssociatedContent().accept(new AbstractContentChildren.CreateSleuthkitNodeVisitor());
+        return associated.accept(new AbstractContentChildren.CreateSleuthkitNodeVisitor());
     }
     
+    private class NameVisitor extends SleuthkitItemVisitor.Default<String> {
+        
+        @Override
+        public String visit(Image img) {
+            return img.getName();
+        }
+        
+        @Override
+        public String visit(Directory d) {
+            return d.getName();
+        }
+        
+        @Override
+        public String visit(File f) {
+            return f.getName();
+        }
+
+        @Override
+        protected String defaultVisit(SleuthkitVisitableItem svi) {
+            return "n/a";
+        }
+        
+    }
     
 }
