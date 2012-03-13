@@ -31,7 +31,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -321,7 +321,6 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 return;
             }
         }
-
         this.setDataView(null, 0, true);
     }
 
@@ -374,8 +373,8 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         if(node == null) {
             return false;
         }
-        File file = node.getLookup().lookup(File.class);
-        if(file != null && file.getSize() != 0)
+        FsContent fsContent = node.getLookup().lookup(FsContent.class);
+        if(fsContent != null && fsContent.getSize() != 0)
             return true;
         return false;
     }
