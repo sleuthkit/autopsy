@@ -49,31 +49,39 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
     @Override
     protected Node copyNode(Node arg0) {
-        return new DirectoryTreeFilterNode(arg0);
+        return new DirectoryTreeFilterNode(arg0, true);
+    }
+
+    protected Node copyNode(Node arg0, boolean createChildren) {
+        return new DirectoryTreeFilterNode(arg0, createChildren);
     }
 
     @Override
     protected Node[] createNodes(Node arg0) {
-        
+
         //TODO: ContentNode fix - replace with ContentVisitor
-        
+
         // filter out the FileNode and the "." and ".." directories
-        if (arg0 != null && 
-                (arg0 instanceof ImageNode ||
-                 arg0 instanceof VolumeNode || 
-                (arg0 instanceof DirectoryNode
-                        && !((DirectoryNode) arg0).getDisplayName().equals(".")
-                        && !((DirectoryNode) arg0).getDisplayName().equals("..")) ||
-                arg0 instanceof ArtifactTypeNode ||
-                arg0 instanceof ExtractedContentNode ||
-                arg0 instanceof FileSearchFilterNode ||
-                arg0 instanceof SearchFiltersNode ||
-                arg0 instanceof RecentFilesNode ||
-                arg0 instanceof RecentFilesFilterNode ||
-                arg0 instanceof KeywordHitsRootNode ||
-                arg0 instanceof KeywordHitsListNode ||
-                arg0 instanceof KeywordHitsKeywordNode)) {
+        if (arg0 != null
+                && (arg0 instanceof ImageNode
+                || arg0 instanceof VolumeNode
+                || (arg0 instanceof DirectoryNode
+                && !((DirectoryNode) arg0).getDisplayName().equals(".")
+                && !((DirectoryNode) arg0).getDisplayName().equals(".."))
+                || arg0 instanceof ExtractedContentNode
+                //|| arg0 instanceof FileSearchFilterNode
+                || arg0 instanceof SearchFiltersNode
+                || arg0 instanceof RecentFilesNode
+                || arg0 instanceof KeywordHitsRootNode
+                || arg0 instanceof KeywordHitsListNode)) {
             return new Node[]{this.copyNode(arg0)};
+        } else if (arg0 != null
+                && (arg0 instanceof KeywordHitsKeywordNode
+                || arg0 instanceof ArtifactTypeNode 
+                || arg0 instanceof RecentFilesFilterNode
+                || arg0 instanceof FileSearchFilterNode
+                )) {
+            return new Node[]{this.copyNode(arg0, false)};
         } else {
             return new Node[]{};
         }
@@ -86,7 +94,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
      * @param arg        the node
      * @return children  the children
      */
-    public static Children createInstance(Node arg) {
-        return new DirectoryTreeFilterChildren(arg);
+    public static Children createInstance(Node arg, boolean createChildren) {
+        if (createChildren) {
+            return new DirectoryTreeFilterChildren(arg);
+        } else {
+            return Children.LEAF;
+        }
     }
 }

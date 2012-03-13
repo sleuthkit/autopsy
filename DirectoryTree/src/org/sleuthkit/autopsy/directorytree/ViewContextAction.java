@@ -69,7 +69,7 @@ class ViewContextAction extends AbstractAction {
                 ReverseHierarchyVisitor vtor = new ReverseHierarchyVisitor();
                 List<Content> hierarchy = node.getAssociatedContent().accept(vtor);
                 Collections.reverse(hierarchy);
-                Node generated = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(hierarchy)));
+                Node generated = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(hierarchy)), true);
                 Children genChilds = generated.getChildren();
 
                 final DirectoryTreeTopComponent directoryTree = DirectoryTreeTopComponent.findInstance();

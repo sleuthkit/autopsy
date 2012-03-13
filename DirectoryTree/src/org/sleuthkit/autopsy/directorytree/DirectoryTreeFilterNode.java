@@ -41,9 +41,9 @@ class DirectoryTreeFilterNode extends FilterNode {
 
     private static final Action collapseAll = new CollapseAction("Collapse All");
 
-    /** the constructor */
-    DirectoryTreeFilterNode(Node arg) {
-        super(arg, DirectoryTreeFilterChildren.createInstance(arg),
+    /** the constructor */    
+    DirectoryTreeFilterNode(Node arg, boolean createChildren) {
+        super(arg, DirectoryTreeFilterChildren.createInstance(arg, createChildren),
                 new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
                 arg.getLookup()));
     }
