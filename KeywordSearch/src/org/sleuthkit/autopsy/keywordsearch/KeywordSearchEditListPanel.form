@@ -191,10 +191,10 @@
                               <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                               <Component id="chRegex" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="selectorsCombo" min="-2" pref="100" max="-2" attributes="0"/>
+                              <Component id="selectorsCombo" min="-2" pref="126" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace pref="44" max="32767" attributes="0"/>
+                      <EmptySpace pref="18" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>

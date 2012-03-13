@@ -367,8 +367,8 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                         .addGap(10, 10, 10)
                         .addComponent(chRegex)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(selectorsCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(44, Short.MAX_VALUE))
+                        .addComponent(selectorsCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
         addKeywordPanelLayout.setVerticalGroup(
             addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -786,7 +786,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
         List<Keyword> getSelectedKeywords(int[] selected) {
             List<Keyword> ret = new ArrayList<Keyword>();
-            Keyword[] in = keywordData.toArray(new Keyword[0]);
+            Keyword[] in = keywordData.toArray(new Keyword[keywordData.size()]);
             for (int i = 0; i < selected.length; i++) {
                 ret.add(in[selected[i]]);
             }
@@ -832,9 +832,9 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         //delete selected from handle, events are fired from the handle
         void deleteSelected(int[] selected) {
             List<TableEntry> toDel = new ArrayList<TableEntry>();
-            Keyword[] in = keywordData.toArray(new Keyword[0]);
+            TableEntry [] in = keywordData.toArray(new TableEntry[keywordData.size()]);
             for (int i = 0; i < selected.length; i++) {
-                Keyword word = in[selected[i]];
+                Keyword word = in[selected[i]].keyword;
                 toDel.add(new TableEntry(word));
             }
             for (TableEntry del : toDel) {
