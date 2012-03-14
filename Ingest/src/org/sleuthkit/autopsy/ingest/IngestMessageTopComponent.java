@@ -272,9 +272,6 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     @Override
     public Action[] getActions() {
         //disable TC toolbar actions
-        ArrayList actions = new ArrayList();
-        Action[] retVal = new Action[actions.size()];
-        actions.toArray(retVal);
-        return retVal;
+        return new Action[0];
     }
 }

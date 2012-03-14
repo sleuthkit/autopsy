@@ -442,7 +442,7 @@ public class IngestManager {
      * helper to return all image services managed (using Lookup API) sorted in Lookup position order
      */
     public static List<IngestServiceImage> enumerateImageServices() {
-        List<IngestServiceImage> ret = new ArrayList();
+        List<IngestServiceImage> ret = new ArrayList<IngestServiceImage>();
         for (IngestServiceImage list : Lookup.getDefault().lookupAll(IngestServiceImage.class))
             ret.add(list);
         return ret;
@@ -452,7 +452,7 @@ public class IngestManager {
      * helper to return all file/dir services managed (using Lookup API) sorted in Lookup position order
      */
     public static List<IngestServiceFsContent> enumerateFsContentServices() {
-        List<IngestServiceFsContent> ret = new ArrayList();
+        List<IngestServiceFsContent> ret = new ArrayList<IngestServiceFsContent>();
         for (IngestServiceFsContent list : Lookup.getDefault().lookupAll(IngestServiceFsContent.class))
             ret.add(list);
         return ret;
@@ -589,9 +589,9 @@ public class IngestManager {
 
             LOW, MEDIUM, HIGH
         };
-        static final List<Pattern> lowPriorityPaths = new ArrayList();
-        static final List<Pattern> mediumPriorityPaths = new ArrayList();
-        static final List<Pattern> highPriorityPaths = new ArrayList();
+        static final List<Pattern> lowPriorityPaths = new ArrayList<Pattern>();
+        static final List<Pattern> mediumPriorityPaths = new ArrayList<Pattern>();
+        static final List<Pattern> highPriorityPaths = new ArrayList<Pattern>();
 
         static {
             lowPriorityPaths.add(Pattern.compile("^\\/Windows", Pattern.CASE_INSENSITIVE));

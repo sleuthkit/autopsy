@@ -587,8 +587,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
         //add all messages from another group
         void add(IngestMessageGroup group) {
 
-            IngestMessage first = messages.get(0);
-            IngestMessage firstG = group.messages.get(0);
+            //IngestMessage first = messages.get(0);
+            //IngestMessage firstG = group.messages.get(0);
             //make sure uniqness agrees
             /*
             if (!firstG.getSource().equals(first.getSource())

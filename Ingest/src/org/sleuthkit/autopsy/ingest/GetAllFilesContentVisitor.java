@@ -69,7 +69,7 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
             return contents;
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Couldn't get all files in FileSystem", ex);
-            return Collections.EMPTY_SET;
+            return Collections.emptySet();
         }
     }
 }
