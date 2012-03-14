@@ -293,6 +293,6 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
 
     @Override
     protected List<? extends Action> defaultVisit(Content di) {
-        return Collections.EMPTY_LIST;
+        return new ArrayList<Action>();
     }
 }

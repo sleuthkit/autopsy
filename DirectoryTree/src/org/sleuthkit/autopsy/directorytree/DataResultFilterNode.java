@@ -175,7 +175,7 @@ public class DataResultFilterNode extends FilterNode{
         
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
-            return Collections.EMPTY_LIST;
+            return new ArrayList<Action>();
         }
         
     }
