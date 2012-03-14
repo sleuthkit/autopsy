@@ -528,7 +528,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
             fireTableDataChanged();
         }
 
-        class TableEntry implements Comparable {
+        class TableEntry implements Comparable<TableEntry> {
 
             IngestMessageGroup messageGroup;
             boolean visited;
@@ -539,11 +539,11 @@ class IngestMessagePanel extends javax.swing.JPanel {
             }
 
             @Override
-            public int compareTo(Object o) {
+            public int compareTo(TableEntry o) {
                 if (chronoSort == true) {
-                    return this.messageGroup.getDatePosted().compareTo(((TableEntry) o).messageGroup.getDatePosted());
+                    return this.messageGroup.getDatePosted().compareTo(o.messageGroup.getDatePosted());
                 } else {
-                    return messageGroup.count - ((TableEntry) o).messageGroup.count;
+                    return messageGroup.count - o.messageGroup.count;
                 }
             }
         }

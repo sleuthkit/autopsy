@@ -641,12 +641,10 @@ public class IngestManager {
     private class FsContentQueue {
 
         final List<QueueUnit<FsContent, IngestServiceFsContent>> fsContentUnits = new ArrayList<QueueUnit<FsContent, IngestServiceFsContent>>();
-        final Comparator sorter = new Comparator() {
+        final Comparator<QueueUnit<FsContent, IngestServiceFsContent>> sorter = new Comparator<QueueUnit<FsContent, IngestServiceFsContent>>() {
 
             @Override
-            public int compare(Object o1, Object o2) {
-                final QueueUnit<FsContent, IngestServiceFsContent> q1 = (QueueUnit<FsContent, IngestServiceFsContent>) o1;
-                final QueueUnit<FsContent, IngestServiceFsContent> q2 = (QueueUnit<FsContent, IngestServiceFsContent>) o2;
+            public int compare(QueueUnit<FsContent, IngestServiceFsContent> q1, QueueUnit<FsContent, IngestServiceFsContent> q2) {
                 FsContentPriotity.Priority p1 = FsContentPriotity.getPriority(q1.content);
                 FsContentPriotity.Priority p2 = FsContentPriotity.getPriority(q2.content);
                 if (p1 == p2) {
