@@ -39,6 +39,6 @@ class ContentChildren extends AbstractContentChildren {
 
     @Override
     protected void removeNotify() {
-        setKeys(Collections.EMPTY_SET);
+        setKeys(Collections.emptySet());
     }
 }

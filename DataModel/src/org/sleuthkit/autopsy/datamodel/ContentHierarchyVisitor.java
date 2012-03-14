@@ -38,7 +38,7 @@ public class ContentHierarchyVisitor extends ContentVisitor.Default<List<? exten
             children = parent.getChildren();
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error getting Content children.", ex);
-            children = Collections.EMPTY_LIST;
+            children = Collections.emptyList();
         }
 
         for (Content c : children) {
