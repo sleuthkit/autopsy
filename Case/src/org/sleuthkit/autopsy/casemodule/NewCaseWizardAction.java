@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.Log;
  */
 public final class NewCaseWizardAction extends CallableSystemAction {
 
-    private WizardDescriptor.Panel[] panels;
+    private WizardDescriptor.Panel<WizardDescriptor>[] panels;
 
     @Override
     public void performAction() {
@@ -108,7 +108,7 @@ public final class NewCaseWizardAction extends CallableSystemAction {
      * Initialize panels representing individual wizard's steps and sets
      * various properties for them influencing wizard appearance.
      */
-    private WizardDescriptor.Panel[] getPanels() {
+    private WizardDescriptor.Panel<WizardDescriptor>[] getPanels() {
         if (panels == null) {
             panels = new WizardDescriptor.Panel[]{
                         new NewCaseWizardPanel1(),

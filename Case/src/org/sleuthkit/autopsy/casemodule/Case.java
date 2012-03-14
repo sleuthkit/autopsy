@@ -16,11 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Frame;
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
@@ -42,7 +40,6 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
-import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
@@ -52,9 +49,9 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
  */
 public class Case {
     // change the CTL_MainWindow_Title in Bundle.properties as well if you change this value
+
     private static final String autopsyVer = "3.0.0b2"; // current version of autopsy. Change it when the version is changed
     private static final String appName = "Autopsy " + autopsyVer;
-
     /**
      * Property name that indicates the name of the current case has changed.
      * Fired with the case is renamed, and when the current case is
@@ -101,21 +98,14 @@ public class Case {
      * startup
      */
     public static final String propStartup = "LBL_StartupDialog";
-
     // pcs is initialized in CaseListener constructor
-    private static PropertyChangeSupport pcs;
-    private static PropertyChangeListener caseListener = new CaseListener();
-
-    
+    private static final PropertyChangeSupport pcs = new PropertyChangeSupport(Case.class);
     private String name;
     private int number;
     private String examiner;
     private String configFilePath;
     private XMLCaseManagement xmlcm;
     private SleuthkitCase db;
-
-
-
     // Track the current case (only set with changeCase() method)
     private static Case currentCase = null;
 
@@ -145,8 +135,6 @@ public class Case {
         }
     }
 
-
-
     /**
      * Updates the current case to the given case and fires off
      * the appropriate property-change
@@ -158,26 +146,32 @@ public class Case {
         Case.currentCase = null;
 
         String oldCaseName = oldCase != null ? oldCase.name : "";
+
         pcs.firePropertyChange(CASE_CURRENT_CASE, oldCase, null);
+        doCaseChange(null);
+
         pcs.firePropertyChange(CASE_NAME, oldCaseName, "");
+        doCaseNameChange("");
+
+
 
         if (newCase != null) {
             currentCase = newCase;
 
             pcs.firePropertyChange(CASE_CURRENT_CASE, null, currentCase);
-            // TODO: This will fire off a bunch of stuff in CaseListener.propertyChange() that should probably be migrated into here
-            
+            doCaseChange(currentCase);
+
             pcs.firePropertyChange(CASE_NAME, "", currentCase.name);
+            doCaseNameChange(currentCase.name);
+
             RecentCases.getInstance().addRecentCase(currentCase.name, currentCase.configFilePath); // update the recent cases
         }
     }
 
-    
-    
     AddImageProcess makeAddImageProcess(String timezone) {
         return this.db.makeAddImageProcess(timezone);
     }
-    
+
     /**
      * Creates a new case (create the XML config file and the directory)
      * 
@@ -187,19 +181,19 @@ public class Case {
      * @param examiner the examiner for this case
      */
     static void create(String caseDir, String caseName, int caseNumber, String examiner) throws Exception {
-        Log.get(Case.class).log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[] {caseDir, caseName});
+        Log.get(Case.class).log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName});
 
         String configFilePath = caseDir + File.separator + caseName + ".aut";
-        
+
         XMLCaseManagement xmlcm = new XMLCaseManagement();
         xmlcm.create(caseDir, caseName, examiner, caseNumber); // create a new XML config file
         xmlcm.writeFile();
-        
+
         String dbPath = caseDir + File.separator + "autopsy.db";
         SleuthkitCase db = SleuthkitCase.newCase(dbPath);
 
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
-        
+
         changeCase(newCase);
     }
 
@@ -209,7 +203,7 @@ public class Case {
      * @param configFilePath  the path of the configuration file that's opened
      * @throws Exception
      */
-     static void open(String configFilePath) throws Exception {
+    static void open(String configFilePath) throws Exception {
         Log.get(Case.class).log(Level.INFO, "Opening case.\nconfigFilePath: {0}", configFilePath);
 
         try {
@@ -218,20 +212,20 @@ public class Case {
             xmlcm.open(configFilePath); // open and load the config file to the document handler in the XML class
             xmlcm.writeFile(); // write any changes to the config file
 
-            String caseName =  xmlcm.getCaseName();
+            String caseName = xmlcm.getCaseName();
             int caseNumber = xmlcm.getCaseNumber();
             String examiner = xmlcm.getCaseExaminer();
             // if the caseName is "", case / config file can't be opened
             if (caseName.equals("")) {
                 throw new Exception("Case name is blank.");
             }
-            
+
             String caseDir = xmlcm.getCaseDirectory();
             String dbPath = caseDir + File.separator + "autopsy.db";
             SleuthkitCase db = SleuthkitCase.openCase(dbPath);
-            
+
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
-            
+
             changeCase(openedCase);
 
         } catch (Exception ex) {
@@ -257,13 +251,14 @@ public class Case {
             xmlcm.writeFile(); // write any changes to the config file
             Image newImage = db.getImageById(imgId);
             pcs.firePropertyChange(CASE_ADD_IMAGE, null, newImage); // the new value is the instance of the image
+            doAddImage();
             return newImage;
         } catch (Exception ex) {
             // throw an error here
             throw ex;
         }
     }
-    
+
     /**
      * Get the underlying SleuthkitCase instance from the Sleuth Kit bindings
      * library.
@@ -292,12 +287,12 @@ public class Case {
      */
     boolean deleteCase(File caseDir) {
         Log.get(this.getClass()).log(Level.FINE, "Deleting case.\ncaseDir: {0}", caseDir);
-        
+
         try {
-            
+
             xmlcm.close(); // close the xmlcm
             boolean result = deleteCaseDirectory(caseDir); // delete the directory
-            
+
             RecentCases.getInstance().removeRecentCase(this.name, this.configFilePath); // remove it from the recent case
             Case.changeCase(null);
             return result;
@@ -325,11 +320,13 @@ public class Case {
             RecentCases.getInstance().updateRecentCase(oldCaseName, oldPath, newCaseName, newPath); // update the recent case
 
             pcs.firePropertyChange(CASE_NAME, oldCaseName, newCaseName);
+            doCaseNameChange(newCaseName);
+
         } catch (Exception e) {
             throw new Exception("Error while trying to update the case name.", e);
         }
     }
-    
+
     /**
      * Updates the case examiner
      * 
@@ -340,13 +337,13 @@ public class Case {
         try {
             xmlcm.setCaseExaminer(newExaminer); // set the examiner
             examiner = newExaminer;
-            
+
             pcs.firePropertyChange(CASE_EXAMINER, oldExaminer, newExaminer);
         } catch (Exception e) {
             throw new Exception("Error while trying to update the examiner.", e);
         }
     }
-    
+
     /**
      * Updates the case number
      * 
@@ -357,7 +354,7 @@ public class Case {
         try {
             xmlcm.setCaseNumber(newCaseNumber); // set the case number
             number = newCaseNumber;
-            
+
             pcs.firePropertyChange(CASE_NUMBER, oldCaseNumber, newCaseNumber);
         } catch (Exception e) {
             throw new Exception("Error while trying to update the case number.", e);
@@ -404,8 +401,6 @@ public class Case {
 //            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Couldn't remove image.", new Exception("Couldn't find the image in this case."));
 //        }
 //    }
-    
-
     /**
      * Checks whether there is a current case open.
      *
@@ -456,7 +451,7 @@ public class Case {
     public String getName() {
         return name;
     }
-    
+
     /**
      * Gets the case number
      * @return number
@@ -464,7 +459,7 @@ public class Case {
     public int getNumber() {
         return number;
     }
-    
+
     /**
      * Gets the Examiner name
      * @return examiner
@@ -509,7 +504,6 @@ public class Case {
         }
     }
 
-
     /**
      * get the PropertyChangeSupport of this class
      * @return PropertyChangeSupport
@@ -517,12 +511,11 @@ public class Case {
     public static PropertyChangeSupport getPropertyChangeSupport() {
         return pcs;
     }
-    
-    
+
     String[] getImagePaths(int imgID) {
         return xmlcm.getImageSet(imgID);
     }
-    
+
     /**
      * get all the image id in this case
      * @return imageIDs
@@ -542,7 +535,7 @@ public class Case {
     public int getRootObjectsCount() {
         return getRootObjects().size();
     }
-    
+
     /**
      * Get the data model Content objects in the root of this case's hierarchy.
      * @return a list of the root objects
@@ -717,24 +710,29 @@ public class Case {
         StartupWindow.getInstance().open();
     }
 
-
-
     /**
      * Call if there are no images in the case. Displays
      * a dialog offering to add one.
      */
     private static void noRootObjectsNotification() {
-        NotifyDescriptor nd = new NotifyDescriptor(
+        final NotifyDescriptor nd = new NotifyDescriptor(
                 "This case contains no images. Would you like to add one?",
                 "No images in case", NotifyDescriptor.YES_NO_OPTION,
                 NotifyDescriptor.INFORMATION_MESSAGE,
                 null,
                 NotifyDescriptor.YES_OPTION);
-        if (DialogDisplayer.getDefault().notify(nd) == NotifyDescriptor.YES_OPTION) {
-            Lookup.getDefault().lookup(AddImageAction.class).actionPerformed(null);
-        }
-    }
 
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                if (DialogDisplayer.getDefault().notify(nd) == NotifyDescriptor.YES_OPTION) {
+                    final AddImageAction action = Lookup.getDefault().lookup(AddImageAction.class);
+                    action.actionPerformed(null);
+                }
+            }
+        });
+    }
 
     /**
      * Checks if a String is a valid case name
@@ -743,10 +741,10 @@ public class Case {
      */
     static public boolean isValidName(String caseName) {
         return !(caseName.contains("\\") || caseName.contains("/") || caseName.contains(":")
-                    || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
-                    || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
+                || caseName.contains("*") || caseName.contains("?") || caseName.contains("\"")
+                || caseName.contains("<") || caseName.contains(">") || caseName.contains("|"));
     }
-    
+
     static private void clearTempFolder() {
         File tempFolder = new File(currentCase.getTempDirectory());
         if (tempFolder.isDirectory()) {
@@ -763,89 +761,66 @@ public class Case {
         }
     }
 
-    private static class CaseListener implements PropertyChangeListener {
+    //case change helper
+    private static void doCaseChange(Case toChangeTo) {
+        if (toChangeTo != null) { // new case is open
 
-        CaseListener() {
-            pcs = new PropertyChangeSupport(this);
-            pcs.addPropertyChangeListener(this);
-        }
+            // clear the temp folder when the case is created / opened
+            Case.clearTempFolder();
 
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            String changed = evt.getPropertyName();
-            Object oldValue = evt.getOldValue();
-            Object newValue = evt.getNewValue();
+            // enable these menus
+            CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+            CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+            CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+            CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
 
-            if (changed.equals(Case.CASE_CURRENT_CASE)) {
-                if (newValue != null) { // new case is open
-                    Case newCase = (Case) newValue;
-
-                    // clear the temp folder when the case is created / opened
-                    Case.clearTempFolder();
-
-                    // enable these menus
-                    CallableSystemAction.get(AddImageAction.class).setEnabled(true);
-                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
-                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true); // Delete Case menu
-
-                    if (newCase.getRootObjectsCount() > 0) {
-                        // open all top components
-                        CoreComponentControl.openCoreWindows();
-                    } else {
-                        // close all top components
-                        CoreComponentControl.closeCoreWindows();
-                        // prompt user to add an image
-                        SwingUtilities.invokeLater(new Runnable() {
-                            public void run() {
-                                Case.noRootObjectsNotification();
-                            }
-                        });
-                    }
-                } else { // case is closed
-                    // disable these menus
-                    CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
-                    CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
-                    CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
-                    CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
-
-                    // close all top components
-                    CoreComponentControl.closeCoreWindows();
-
-                    Frame f = WindowManager.getDefault().getMainWindow();
-                    f.setTitle(Case.getAppName()); // set the window name to just application name
-                }
-
-            }
-
-            // changed in the case name
-            if (changed.equals(Case.CASE_NAME)) {
-                String oldCaseName = oldValue.toString();
-                String newCaseName = newValue.toString();
-
-                // update case name
-                if (!newCaseName.equals("")) {
-                    Frame f = WindowManager.getDefault().getMainWindow();
-                    f.setTitle(newCaseName + " - " + Case.getAppName()); // set the window name to the new value
-                }
-            }
-
-            // if the image is added to the case
-            if (changed.equals(Case.CASE_ADD_IMAGE)) {
+            if (toChangeTo.getRootObjectsCount() > 0) {
                 // open all top components
                 CoreComponentControl.openCoreWindows();
+            } else {
+                // close all top components
+                CoreComponentControl.closeCoreWindows();
+                // prompt user to add an image
+                Case.noRootObjectsNotification();
             }
+        } else { // case is closed
+            // disable these menus
+            CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
+            CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
+            CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
+            CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
 
-            // if the image is removed from the case
-            if (changed.equals(Case.CASE_DEL_IMAGE)) {
-                // no more image left in this case
-                if (currentCase.getRootObjectsCount() == 0) {
-                    // close all top components
-                    CoreComponentControl.closeCoreWindows();
-                }
+            // close all top components
+            CoreComponentControl.closeCoreWindows();
 
-            }
+            Frame f = WindowManager.getDefault().getMainWindow();
+            f.setTitle(Case.getAppName()); // set the window name to just application name
+        }
 
+
+    }
+
+    //case name change helper
+    private static void doCaseNameChange(String newCaseName) {
+        // update case name
+        if (!newCaseName.equals("")) {
+            Frame f = WindowManager.getDefault().getMainWindow();
+            f.setTitle(newCaseName + " - " + Case.getAppName()); // set the window name to the new value
+        }
+    }
+
+    //add image helper
+    private void doAddImage() {
+        // open all top components
+        CoreComponentControl.openCoreWindows();
+    }
+
+    //delete image helper
+    private void doDeleteImage() {
+        // no more image left in this case
+        if (currentCase.getRootObjectsCount() == 0) {
+            // close all top components
+            CoreComponentControl.closeCoreWindows();
         }
     }
 }

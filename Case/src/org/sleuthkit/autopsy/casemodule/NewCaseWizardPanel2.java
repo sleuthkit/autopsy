@@ -22,12 +22,12 @@ package org.sleuthkit.autopsy.casemodule;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 
 /**
@@ -179,9 +179,23 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
         if(!currentComponent.getCaseNumber().equals("")) {
             caseNumber = Integer.valueOf(currentComponent.getCaseNumber());
         }
-        String examiner = currentComponent.getExaminer();
+        final String examiner = currentComponent.getExaminer();
+        final int CASE_NUMBER = caseNumber;
         try {
-            Case.create(createdDirectory, caseName, caseNumber, examiner);
+            SwingUtilities.invokeLater(new Runnable(){
+
+                @Override
+                public void run() {
+                    try {
+                        Case.create(createdDirectory, caseName, CASE_NUMBER, examiner);
+                    } catch (Exception ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                }
+            
+        });
+        
+            //Case.create(createdDirectory, caseName, caseNumber, examiner);
         } catch(Exception ex) {
             throw new WizardValidationException(this.getComponent(), "Error creating case", null);
         }

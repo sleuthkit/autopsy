@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
@@ -33,6 +34,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.openide.util.ChangeSupport;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -127,20 +129,21 @@ public final class AddImageAction extends CallableSystemAction implements Presen
      * Closes the current dialog and wizard, and opens a new one. Used in the
      * "Add another image" action on the last panel
      */
-    public void restart() {
+    void restart() {
         // Simulate clicking finish for the current dialog
         wizardDescriptor.setValue(WizardDescriptor.FINISH_OPTION);
         dialog.setVisible(false);
 
         // let the previous call to AddImageAction.actionPerformed() finish up
         // after the wizard, this will run when its it's done
-        SwingUtilities.invokeLater(new Runnable() {
-
+        final Runnable r = new Runnable()  {
             @Override
             public void run() {
                 actionPerformed(null);
             }
-        });
+        };
+        
+        SwingUtilities.invokeLater(r);
     }
     
     public interface IndexImageTask {
