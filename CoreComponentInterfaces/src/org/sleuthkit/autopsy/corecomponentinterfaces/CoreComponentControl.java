@@ -63,7 +63,7 @@ public class CoreComponentControl {
      */
     public static void closeCoreWindows() {
         WindowManager wm = WindowManager.getDefault();
-        Iterator<Mode> iter = (Iterator<Mode>) wm.getModes().iterator();
+        Iterator<? extends Mode> iter = wm.getModes().iterator();
 
         while (iter.hasNext()) {
             Mode mode = iter.next();
