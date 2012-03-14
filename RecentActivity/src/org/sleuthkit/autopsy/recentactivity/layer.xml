@@ -5,7 +5,7 @@
         <file name="org-sleuthkit-autopsy-recentactivity-RAImageIngestService.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceImage"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.recentactivity.RAImageIngestService.getDefault"/>
-            <attr name="position" intvalue="1000"/>
+            <attr name="position" intvalue="100"/>
         </file>
         </folder>
 </filesystem>

@@ -6,7 +6,7 @@
         <file name="org-sleuthkit-autopsy-ingest-IngestDialogPanel.instance">
         <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.casemodule.IngestConfigurator"/>
         <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.IngestDialogPanel.getDefault"/>
-        <attr name="position" intvalue="100"/> 
+        <attr name="position" intvalue="50"/> 
         </file>
     
 <!--    <file name="org-sleuthkit-autopsy-ingest-IngestMessageTopComponent.instance">
