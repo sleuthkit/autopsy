@@ -53,6 +53,9 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
         this.solrQuery = solrQuery;
         this.solrCore = solrCore;
     }
+    
+    //constructor for dummy singleton factory instance for Lookup
+    private HighlightedMatchesSource() {}
 
     @Override
     public String getMarkup() {
@@ -133,15 +136,19 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
         return buf.toString();
     }
 
+    //dummy instance for Lookup only
     private static HighlightLookup instance = null;
     
+    //getter of the singleton dummy instance solely for Lookup purpose
+    //this instance does not actually work with Solr
     public static synchronized HighlightLookup getDefault() {
         if(instance == null)
-            instance = new HighlightedMatchesSource(null, null);
+            instance = new HighlightedMatchesSource();
         return instance;
     }
 
     @Override
+    //factory method, i.e. invoked on dummy (Lookup) instance
     public HighlightLookup createInstance(Content c, String s) {
         return new HighlightedMatchesSource(c, s);
     }
