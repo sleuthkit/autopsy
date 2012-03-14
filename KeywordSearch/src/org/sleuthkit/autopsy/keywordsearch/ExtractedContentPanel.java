@@ -91,7 +91,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         });
         
 
-        setSources(Collections.EMPTY_LIST);
+        setSources(new ArrayList<MarkupSource>());
         
         extractedTextPane.setComponentPopupMenu(rightClickMenu);
         ActionListener actList = new ActionListener(){

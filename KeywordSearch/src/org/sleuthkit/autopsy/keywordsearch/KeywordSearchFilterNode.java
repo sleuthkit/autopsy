@@ -58,11 +58,11 @@ class KeywordSearchFilterNode extends FilterNode {
 
     Property<String> getSnippetProperty() {
 
-        Property<String> prop = new PropertySupport.ReadOnly("snippet",
+        Property<String> prop = new PropertySupport.ReadOnly<String>("snippet",
                 String.class, "Context", "Snippet of matching content.") {
 
             @Override
-            public Object getValue() {
+            public String getValue() {
                 return getSnippet();
             }
         };
@@ -135,7 +135,7 @@ class KeywordSearchFilterNode extends FilterNode {
         }
         @Override
         protected List<Action> defaultVisit(Content c) {
-            return Collections.EMPTY_LIST;
+            return new ArrayList<Action>();
         }
         
     }
