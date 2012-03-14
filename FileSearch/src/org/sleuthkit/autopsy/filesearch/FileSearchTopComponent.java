@@ -61,7 +61,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 // Registered as a service provider for DataExplorer in layer.xml
 public final class FileSearchTopComponent extends TopComponent implements DataExplorer {
 
-    private List<FilterArea> filterAreas = new ArrayList();
+    private List<FilterArea> filterAreas = new ArrayList<FilterArea>();
     private JButton searchButton;
     private static FileSearchTopComponent instance;
     private PropertyChangeSupport pcs;

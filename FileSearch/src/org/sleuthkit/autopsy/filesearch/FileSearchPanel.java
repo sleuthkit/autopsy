@@ -62,7 +62,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class FileSearchPanel extends javax.swing.JPanel {
     
-    private List<FilterArea> filterAreas = new ArrayList();
+    private List<FilterArea> filterAreas = new ArrayList<FilterArea>();
     private JButton searchButton;
     private PropertyChangeListener listener;
     private static ArrayList<DataResultTopComponent> searchResults = new ArrayList<DataResultTopComponent>();
