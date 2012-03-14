@@ -67,7 +67,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
      * notification from manager that brand new processing should be initiated.
      * Service loads its configuration and performs initialization
      * 
-     * @param IngestManager handle to the manager to postMessage() to
+     * @param managerProxy handle to the manager to postMessage() to
      */
     @Override
     public void init(IngestManagerProxy managerProxy) {
@@ -148,17 +148,34 @@ public class HashDbIngestService implements IngestServiceFsContent {
                 boolean changed = skCase.setKnown(fsContent, status);
                 if (status.equals(TskData.FileKnown.BAD)) {
                     BlackboardArtifact badFile = fsContent.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
-                    BlackboardAttribute att1 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), NAME, "", fsContent.getName());
-                    badFile.addAttribute(att1);
                     BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID(), NAME, "Known Bad", knownBadDbPath != null ? knownBadDbPath : "");
                     badFile.addAttribute(att2);
                     BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), NAME, "", md5Hash);
                     badFile.addAttribute(att3);
-                    managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, "", null, badFile));
+                    StringBuilder detailsSb = new StringBuilder();
+                    //details
+                    detailsSb.append("<table border='0' cellpadding='4' width='280'>");
+                    //hit
+                    detailsSb.append("<tr>");
+                    detailsSb.append("<th>File Name</th>");
+                    detailsSb.append("<td>").append(name).append("</td>");
+                    detailsSb.append("</tr>");
+
+                    detailsSb.append("<tr>");
+                    detailsSb.append("<th>MD5 Hash</th>");
+                    detailsSb.append("<td>").append(md5Hash).append("</td>");
+                    detailsSb.append("</tr>");
+
+                    detailsSb.append("<tr>");
+                    detailsSb.append("<th>Hashset Name</th>");
+                    detailsSb.append("<td>").append(knownBadDbPath).append("</td>");
+                    detailsSb.append("</tr>");
+                    
+                    detailsSb.append("</table>");
+                    managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, detailsSb.toString(), name, badFile));
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent(NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
                     ret = ProcessResult.COND_STOP;
-                }
-                else if (status.equals(TskData.FileKnown.KNOWN)) {
+                } else if (status.equals(TskData.FileKnown.KNOWN)) {
                     ret = ProcessResult.COND_STOP;
                 }
                 else {
