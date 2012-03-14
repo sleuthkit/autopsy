@@ -46,10 +46,10 @@ public abstract class AbstractDataResultViewer extends JPanel implements
         String changed = evt.getPropertyName();
 
         // change that should affect view
-        if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)
-                || changed.equals(ExplorerManager.PROP_NODE_CHANGE)
-                || changed.equals(ExplorerManager.PROP_EXPLORED_CONTEXT)
-                || changed.equals(ExplorerManager.PROP_ROOT_CONTEXT)) {
+        if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                //|| changed.equals(ExplorerManager.PROP_NODE_CHANGE)
+                //|| changed.equals(ExplorerManager.PROP_EXPLORED_CONTEXT)
+                //|| changed.equals(ExplorerManager.PROP_ROOT_CONTEXT)) {
 
             // change the cursor to "waiting cursor" for this operation
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
