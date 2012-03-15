@@ -154,6 +154,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
     public Collection<Term> getTerms() {
         return terms;
     }
+   
 
     @Override
     public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
@@ -171,7 +172,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
             //snippet
             String snippet = null;
             try {
-                snippet = LuceneQuery.querySnippet(KeywordSearchUtil.escapeLuceneQuery(regexMatch, true, false), newFsHit.getId());
+                snippet = LuceneQuery.querySnippet(KeywordSearchUtil.escapeLuceneQuery(regexMatch, true, false), newFsHit.getId(), true);
             } catch (Exception e) {
                 logger.log(Level.INFO, "Error querying snippet: " + regexMatch, e);
                 continue;
@@ -194,8 +195,9 @@ public class TermComponentQuery implements KeywordSearchQuery {
                 continue;
             }
 
-            //regex keyword
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", termsQuery));
+            //regex keyword, escape and store
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", KeywordSearchUtil.escapeForBlackBoard(termsQuery)));
+
             //regex match
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", regexMatch));
             //list
@@ -204,27 +206,16 @@ public class TermComponentQuery implements KeywordSearchQuery {
             }
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID(), MODULE_NAME, "", listName));
 
+            //preview
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", KeywordSearchUtil.escapeForBlackBoard(snippet)));
 
-            try {
-                //first try to add attr not in bulk so we can catch sql exception and encode the string
-                BlackboardAttribute attr = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet);
-                bba.addAttribute(attr);
-                writeResult.add(attr);
-            } catch (Exception e) {
-                try {
-                    //escape in case of garbage so that sql accepts it
-                    snippet = URLEncoder.encode(snippet, "UTF-8");
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
-                } catch (UnsupportedEncodingException e2) {
-                    logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
-                }
-            }
 
             //selector
             if (keywordQuery != null) {
                 BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
                 if (selType != null) {
-                    attributes.add(new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", regexMatch));
+                    BlackboardAttribute selAttr = new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", regexMatch);
+                    attributes.add(selAttr);
                 }
             }
 

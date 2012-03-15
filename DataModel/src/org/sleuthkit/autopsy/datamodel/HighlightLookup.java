@@ -25,5 +25,5 @@ import org.sleuthkit.datamodel.Content;
  * @author dfickling
  */
 public interface HighlightLookup {
-    public HighlightLookup createInstance(Content c, String s);
+    public HighlightLookup createInstance(Content c, String s, boolean isRegex);
 }

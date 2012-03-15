@@ -42,7 +42,7 @@ class KeywordSearchNode extends AbstractNode {
                 // to the lookup
                 int i = 0;
                 for (Node original : originalNodes) {
-                    HighlightedMatchesSource markup = new HighlightedMatchesSource((Content)key, solrQuery);
+                    HighlightedMatchesSource markup = new HighlightedMatchesSource((Content)key, solrQuery, false);
                     filterNodes[i++] = new KeywordSearchFilterNode(markup, original, solrQuery);
                 }
 

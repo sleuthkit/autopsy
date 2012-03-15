@@ -36,36 +36,59 @@ import org.sleuthkit.datamodel.Content;
 class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
 
     private static final Logger logger = Logger.getLogger(HighlightedMatchesSource.class.getName());
-    private static final String HIGHLIGHT_PRE = "<span style=\"background:yellow\">";
+    private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>";
     private static final String HIGHLIGHT_POST = "</span>";
     private static final String ANCHOR_PREFIX = HighlightedMatchesSource.class.getName() + "_";
     private Content content;
     private String solrQuery;
     private Core solrCore;
     private int numberHits;
+    private boolean isRegex = false;
 
-    HighlightedMatchesSource(Content content, String solrQuery) {
-        this(content, solrQuery, KeywordSearch.getServer().getCore());
+    
+    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex) {
+        this(content, solrQuery, KeywordSearch.getServer().getCore(), isRegex);
     }
 
-    HighlightedMatchesSource(Content content, String solrQuery, Core solrCore) {
+    HighlightedMatchesSource(Content content, String solrQuery, Core solrCore, boolean isRegex) {
         this.content = content;
         this.solrQuery = solrQuery;
         this.solrCore = solrCore;
+        this.isRegex = isRegex;
     }
     
     //constructor for dummy singleton factory instance for Lookup
     private HighlightedMatchesSource() {}
 
-    @Override
+    
     public String getMarkup() {
+        String highLightField = null;
+        
+        String highlightQuery = solrQuery;
+        
+        if (isRegex) {
+            highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
+            //escape special lucene chars if not already escaped (if not a compound query)
+            //TODO a better way to mark it a compound highlight query
+            final String findSubstr = LuceneQuery.HIGHLIGHT_FIELD_REGEX + ":";
+            if (! highlightQuery.contains(findSubstr)) {
+                highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery, true, false);
+            }
+        }
+        else { 
+            highLightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
+            //escape special lucene chars always for literal queries query
+            highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery, true, false);
+        }
 
         SolrQuery q = new SolrQuery();
-        final String queryEscaped = KeywordSearchUtil.escapeLuceneQuery(solrQuery, true, false);
 
-        q.setQuery(queryEscaped);
+        if (isRegex)
+            q.setQuery(highLightField + ":" + highlightQuery); 
+        else q.setQuery(highlightQuery); //use default field, simplifies query
+        
         q.addFilterQuery("id:" + content.getId());
-        q.addHighlightField("content"); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
+        q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
         q.setHighlightSimplePre(HIGHLIGHT_PRE);
         q.setHighlightSimplePost(HIGHLIGHT_POST);
         q.setHighlightFragsize(0); // don't fragment the highlight
@@ -75,11 +98,11 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
             long contentID = content.getId();
             Map<String, List<String>> responseHighlightID = responseHighlight.get(Long.toString(contentID));
-            final String NO_MATCHES = "<span style=\"background:red\">No matches in content.</span>";
+            final String NO_MATCHES = "<span style='background:red'>No matches in content.</span>";
             if (responseHighlightID == null) {
                 return NO_MATCHES;
             }
-            List<String> contentHighlights = responseHighlightID.get("content");
+            List<String> contentHighlights = responseHighlightID.get(highLightField);
             if (contentHighlights == null) {
                 return NO_MATCHES;
             } else {
@@ -121,8 +144,8 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
 
         final String searchToken = HIGHLIGHT_PRE;
         final int indexSearchTokLen = searchToken.length();
-        final String insertPre = "<a name=\"" + ANCHOR_PREFIX;
-        final String insertPost = "\"></a>";
+        final String insertPre = "<a name='" + ANCHOR_PREFIX;
+        final String insertPost = "'></a>";
         int count = 0;
         while ((index = buf.indexOf(searchToken, searchOffset)) >= 0) {
             String insertString = insertPre + Integer.toString(count) + insertPost;
@@ -149,7 +172,7 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
 
     @Override
     //factory method, i.e. invoked on dummy (Lookup) instance
-    public HighlightLookup createInstance(Content c, String s) {
-        return new HighlightedMatchesSource(c, s);
+    public HighlightLookup createInstance(Content c, String s, boolean isRegex) {
+        return new HighlightedMatchesSource(c, s, isRegex);
     }
 }

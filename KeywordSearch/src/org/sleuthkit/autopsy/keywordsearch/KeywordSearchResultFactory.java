@@ -40,7 +40,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
-import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
@@ -89,7 +88,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             public String toString() {
                 return "Context";
             }
-        },}
+        },
+    }
     private Presentation presentation;
     private List<Keyword> queries;
     private Collection<KeyValueQuery> things;
@@ -229,21 +229,33 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
             if (literal_query) {
                 //literal, treat as non-regex, non-term component query
-                highlightQueryEscaped = tcq.getEscapedQueryString();
+                highlightQueryEscaped = tcq.getQueryString();
             } else {
                 //construct a Solr query using aggregated terms to get highlighting
                 //the query is executed later on demand
                 StringBuilder highlightQuery = new StringBuilder();
                 Collection<Term> terms = tcq.getTerms();
-                final int lastTerm = terms.size() - 1;
-                int curTerm = 0;
-                for (Term term : terms) {
-                    final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
-                    if (!termS.contains("*")) {
-                        highlightQuery.append(termS);
-                        if (lastTerm != curTerm) {
-                            highlightQuery.append(" "); //acts as OR ||
+
+                if (terms.size() == 1) {
+                    //simple case, no need to process subqueries and do special escaping
+                    Term term = terms.iterator().next();
+                    highlightQuery.append(term.getTerm());
+                } else {
+                    final int lastTerm = terms.size() - 1;
+                    int curTerm = 0;
+                    for (Term term : terms) {
+                        //escape subqueries, they shouldn't be escaped again later
+                        final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
+                        if (!termS.contains("*")) {
+                            highlightQuery.append(termS);
+                            if (lastTerm != curTerm) {
+                                highlightQuery.append(" "); //acts as OR ||
+                                //force white-space separated index and stored content
+                                //in each term after first. First term taken case by HighlightedMatchesSource
+                                highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":");
+                            }
                         }
+                        ++curTerm;
                     }
                 }
                 //String highlightQueryEscaped = KeywordSearchUtil.escapeLuceneQuery(highlightQuery.toString());
@@ -269,7 +281,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 AbstractFsContentNode.fillPropertyMap(resMap, f);
                 setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
                 if (literal_query) {
-                    final String snippet = LuceneQuery.querySnippet(tcq.getQueryString(), f.getId());
+                    final String snippet = LuceneQuery.querySnippet(tcq.getEscapedQueryString(), f.getId(), !literal_query);
                     setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
                 }
                 toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq));
@@ -305,7 +317,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
             Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
-            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr);
+            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr, !thingContent.getQuery().isEscaped());
             return new KeywordSearchFilterNode(highlights, kvNode, queryStr);
 
         }
@@ -419,7 +431,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 if (matchFound) {
                     Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
                     //wrap in KeywordSearchFilterNode for the markup content
-                    HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query);
+                    HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query, !thingContent.getQuery().isEscaped());
                     return new KeywordSearchFilterNode(highlights, kvNode, query);
                 } else {
                     return null;

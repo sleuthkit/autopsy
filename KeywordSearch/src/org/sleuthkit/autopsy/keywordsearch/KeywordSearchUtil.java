@@ -127,4 +127,18 @@ public class KeywordSearchUtil {
             return false;
         }
     }
+    
+    //TODO escaping should be handled by blackboard
+    public static String escapeForBlackBoard(String text) {
+        try {
+            text = text.replaceAll("\\\\", URLEncoder.encode("\\", "UTF-8"));
+            text = text.replaceAll("'", URLEncoder.encode("'", "UTF-8"));
+            text = text.replaceAll("=", URLEncoder.encode("=", "UTF-8"));
+            text = text.replaceAll("\\?", URLEncoder.encode("?", "UTF-8"));
+            text = text.replaceAll(">", URLEncoder.encode(">", "UTF-8"));
+            text = text.replaceAll("<", URLEncoder.encode("<", "UTF-8"));
+        } catch (UnsupportedEncodingException ex) {
+        }
+        return text;
+    }
 }

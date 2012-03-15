@@ -170,13 +170,18 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         try {
             List<BlackboardAttribute> attributes = artifact.getAttributes();
             String keyword = null;
+            String regexp = null;
             for (BlackboardAttribute att : attributes) {
                 if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                     keyword = att.getValueString();
                 }
+                else if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
+                    regexp = att.getValueString();
+                }
             }
             if (keyword != null) {
-                return highlightFactory.createInstance(content, keyword);
+                boolean isRegexp = (regexp != null && ! regexp.equals(""));
+                return highlightFactory.createInstance(content, keyword, isRegexp);
             }
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex);

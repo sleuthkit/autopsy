@@ -52,7 +52,7 @@ class KeywordSearchFilterNode extends FilterNode {
 
     String getSnippet() {
         final Content content = this.getOriginal().getLookup().lookup(Content.class);
-        final String snippet = LuceneQuery.querySnippet(solrQuery, content.getId());
+        final String snippet = LuceneQuery.querySnippet(solrQuery, content.getId(), false);
         return snippet;
     }
 

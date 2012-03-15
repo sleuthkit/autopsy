@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -59,6 +57,11 @@ public class LuceneQuery implements KeywordSearchQuery {
     private String queryEscaped;
     private boolean isEscaped;
     private Keyword keywordQuery = null;
+    //use different highlight Solr fields for regex and literal search
+    static final String HIGHLIGHT_FIELD_LITERAL = "content";
+    //TODO change to content_ws and in Solr schema to stored="true" to improve regex highlight matching
+    static final String HIGHLIGHT_FIELD_REGEX = "content";
+    //static final String HIGHLIGHT_FIELD_REGEX = "content_ws";
 
     public LuceneQuery(Keyword keywordQuery) {
         this(keywordQuery.getQuery());
@@ -177,7 +180,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         //}
         final String theListName = listName;
 
-        Node rootNode = new KeywordSearchNode(matches, query);
+        Node rootNode = new KeywordSearchNode(matches, queryEscaped);
         Node filteredRootNode = new TableFilterNode(rootNode, true);
 
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, filteredRootNode, matches.size());
@@ -225,25 +228,12 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         String snippet = null;
         try {
-            snippet = LuceneQuery.querySnippet(query, newFsHit.getId());
+            snippet = LuceneQuery.querySnippet(queryEscaped, newFsHit.getId(), false);
         } catch (Exception e) {
             logger.log(Level.INFO, "Error querying snippet: " + query, e);
         }
         if (snippet != null) {
-            //first try to add attr not in bulk so we can catch sql exception and encode the string
-            try {
-                BlackboardAttribute attr = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet);
-                bba.addAttribute(attr);
-                writeResult.add(attr);
-            } catch (Exception e1) {
-                try {
-                    //escape in case of garbage so that sql accepts it
-                    snippet = URLEncoder.encode(snippet, "UTF-8");
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
-                } catch (UnsupportedEncodingException e2) {
-                    logger.log(Level.INFO, "Error adding bb snippet attribute", e2);
-                }
-            }
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", KeywordSearchUtil.escapeForBlackBoard(snippet)));
         }
         //keyword
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", query));
@@ -272,16 +262,34 @@ public class LuceneQuery implements KeywordSearchQuery {
         return writeResults;
     }
 
-    public static String querySnippet(String query, long contentID) {
+    /**
+     * return snippet preview context
+     * @param query the keyword query for text to highlight. Lucene special cahrs should already be escaped.
+     * @param contentID content id associated with the file
+     * @param isRegex whether the query is a regular expression (different Solr fields are then used to generate the preview)
+     * @return 
+     */
+    public static String querySnippet(String query, long contentID, boolean isRegex) {
         final int SNIPPET_LENGTH = 45;
 
         final Server.Core solrCore = KeywordSearch.getServer().getCore();
 
+        String highlightField = null;
+        if (isRegex) {
+            highlightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
+        } else {
+            highlightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
+        }
 
         SolrQuery q = new SolrQuery();
-        q.setQuery(query);
+
+        if (isRegex) {
+            q.setQuery(highlightField + ":" + query);
+        } else {
+            q.setQuery(query); //simply query/escaping and use default field
+        }
         q.addFilterQuery("id:" + contentID);
-        q.addHighlightField("content");
+        q.addHighlightField(highlightField);
         q.setHighlightSimplePre("&laquo;");
         q.setHighlightSimplePost("&raquo;");
         q.setHighlightSnippets(1);
@@ -294,7 +302,7 @@ public class LuceneQuery implements KeywordSearchQuery {
             if (responseHighlightID == null) {
                 return "";
             }
-            List<String> contentHighlights = responseHighlightID.get("content");
+            List<String> contentHighlights = responseHighlightID.get(highlightField);
             if (contentHighlights == null) {
                 return "";
             } else {
