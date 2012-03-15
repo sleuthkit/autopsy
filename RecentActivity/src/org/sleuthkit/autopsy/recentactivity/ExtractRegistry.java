@@ -76,7 +76,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
              if(Success)
              {
                 //Delete dat file since it was succcessfully by Pasco
-                regFile.delete();
+                //regFile.delete();
              }
                 j++;
                 
