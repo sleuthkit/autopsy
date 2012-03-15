@@ -108,7 +108,7 @@ public final class NewCaseWizardAction extends CallableSystemAction {
      * Initialize panels representing individual wizard's steps and sets
      * various properties for them influencing wizard appearance.
      */
-    private WizardDescriptor.Panel<WizardDescriptor>[] getPanels() {
+    private WizardDescriptor.Panel[] getPanels() {
         if (panels == null) {
             panels = new WizardDescriptor.Panel[]{
                         new NewCaseWizardPanel1(),

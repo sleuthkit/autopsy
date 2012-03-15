@@ -129,17 +129,6 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         return v.visit(this);
     }
     
-    public Content getAssociatedContent(){
-        try {
-            return artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "SQL query threw exception", ex);
-        } catch (TskException ex) {
-            logger.log(Level.WARNING, "Getting file failed", ex);
-        }
-        throw new IllegalArgumentException("Couldn't get file from database");
-    }
-    
     private static Lookup getLookups(BlackboardArtifact artifact) {
         Content content = getAssociatedContent(artifact);
         HighlightLookup highlight = getHighlightLookup(artifact, content);
@@ -165,6 +154,8 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     }
     
     private static HighlightLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
+        if(artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())
+            return null;
         Lookup lookup = Lookup.getDefault();
         HighlightLookup highlightFactory = lookup.lookup(HighlightLookup.class);
         try {

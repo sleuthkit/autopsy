@@ -31,7 +31,7 @@
         <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchIngestService.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceFsContent"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestService.getDefault"/>
-            <attr name="position" intvalue="1000"/>
+            <attr name="position" intvalue="300"/>
         </file>
         <!--<file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchDataExplorer.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer"/>

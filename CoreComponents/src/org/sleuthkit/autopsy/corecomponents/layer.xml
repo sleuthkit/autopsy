@@ -25,6 +25,7 @@
             <file name="org-netbeans-core-actions-AboutAction.shadow_hidden"/>
             <file name="org-sleuthkit-autopsy-corecomponents-CustomAboutAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Help/org-sleuthkit-autopsy-corecomponents-CustomAboutAction.instance"/>
+                <attr name="position" intvalue="3000"/>
             </file>
         </folder>
         <folder name="Window"/>
