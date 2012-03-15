@@ -240,18 +240,30 @@ public class ExtractIE { // implements BrowserActivity {
                                         String[] lineBuff = line.split("\\t");
                                         PASCO_RESULTS_LUT = new HashMap<String, Object>();
                                         String url[] = lineBuff[1].split("@",2);
+                                        String ddtime = lineBuff[2];
+                                        String actime = lineBuff[3];
                                         String user = "";
                                         String realurl = "";
                                       if(url.length > 1)
                                       {
                                        user = url[0];
                                        user = user.replace("Visited:", "");
-                                       user = user.replace(":(.*?):", "");
                                        user = user.replace(":Host:", "");
+                                       user = user.replaceAll("(:)(.*?)(:)", "");
+                                       user = user.trim();
                                        realurl = url[1];
                                        realurl = realurl.replace("Visited:", "");
-                                       realurl = realurl.replace(":(.*?):", "");
+                                       realurl = realurl.replaceAll(":(.*?):", "");
                                        realurl = realurl.replace(":Host:", "");
+                                       realurl = realurl.trim();
+                                      }
+                                      if(!ddtime.isEmpty()){
+                                          ddtime = ddtime.replace("T"," ");
+                                          ddtime = ddtime.substring(ddtime.length()-4);
+                                      }
+                                        if(!actime.isEmpty()){
+                                          actime = actime.replace("z"," ");
+                                          actime = actime.substring(0,actime.length()-5);
                                       }
                                        
                                         // TODO: Need to fix this so we have the right obj_id
@@ -259,11 +271,11 @@ public class ExtractIE { // implements BrowserActivity {
                                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", realurl));
                                        
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "", lineBuff[3]));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "", actime));
                                         
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", "", "None"));
                                    
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "", lineBuff[2]));
+                                     //   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "", ddtime));
                                        
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Internet Explorer"));
                                         
