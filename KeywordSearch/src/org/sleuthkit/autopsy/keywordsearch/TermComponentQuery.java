@@ -162,13 +162,14 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
 
-        //get case-insensitive term matches
-        Map<String, Void> caseInsMatches = new HashMap<String, Void>();
+        //get unique term matches, all cases
+        Map<String, Void> matches = new HashMap<String, Void>();
         for (Term term : terms) {
-            caseInsMatches.put(term.getTerm().toLowerCase(), null);
+            //caseInsMatches.put(term.getTerm().toLowerCase(), null);
+            matches.put(term.getTerm(), null);
         }
 
-        for (String regexMatch : caseInsMatches.keySet()) {
+        for (String regexMatch : matches.keySet()) {
             //snippet
             String snippet = null;
             try {
