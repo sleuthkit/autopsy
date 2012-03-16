@@ -9,12 +9,12 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.SwingWorker;
 import org.openide.awt.ActionRegistration;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -23,6 +23,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Log;
 
 @ActionID(category = "Tools",
@@ -35,9 +36,20 @@ id = "org.sleuthkit.autopsy.report.reportAction")
 public final class reportAction extends CallableSystemAction implements Presenter.Toolbar{
     
     private JButton toolbarButton = new JButton();
-    private static final String ACTION_NAME = "Report Filter";
+    private static final String ACTION_NAME = "Report";
     
     public reportAction() {
+        setEnabled(false);
+        Case.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if(evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)){
+                    setEnabled(evt.getNewValue() != null);
+                }
+            }
+            
+        });
         // set action of the toolbar button
         toolbarButton.addActionListener(new ActionListener() {
 
