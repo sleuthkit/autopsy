@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 public class reportXML {
-    
+    public static Document xmldoc = new Document();
     public reportXML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> report, reportFilter rr){
         try{
          Case currentCase = Case.getCurrentCase(); // get the most updated case
@@ -37,7 +37,7 @@ public class reportXML {
          Integer imagecount = currentCase.getImageIDs().length;
          Integer filesystemcount = currentCase.getRootObjectsCount();
          Element root = new Element("Case");
-         Document xmldoc = new Document(root);
+         xmldoc = new Document(root);
          DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
          DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
          Date date = new Date();
@@ -145,7 +145,7 @@ public class reportXML {
             root.addContent(nodeHash); 
          
             try {
-                  FileOutputStream out = new FileOutputStream(currentCase.getCaseDirectory()+"/Temp/" + caseName + "-" + datenotime + ".xml");
+                  FileOutputStream out = new FileOutputStream(currentCase.getCaseDirectory()+"/Reports/" + caseName + "-" + datenotime + ".xml");
                   XMLOutputter serializer = new XMLOutputter();
                   serializer.output(xmldoc, out);
                   out.flush();

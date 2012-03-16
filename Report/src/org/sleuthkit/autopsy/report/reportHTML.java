@@ -175,7 +175,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             
                 formatted_Report.append("</div></div></body></html>");
                 
-                  htmlPath = currentCase.getCaseDirectory()+"/Temp/" + caseName + "-" + datenotime + ".html";
+                  htmlPath = currentCase.getCaseDirectory()+"/Reports/" + caseName + "-" + datenotime + ".html";
                    BufferedWriter out = new BufferedWriter(new FileWriter(htmlPath));
                    out.write(formatted_Report.toString());
                    
