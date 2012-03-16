@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import javax.swing.Action;
+import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskData;
 
@@ -44,8 +45,12 @@ public class FileNode extends AbstractFsContentNode<File> {
      * @param file underlying Content
      */
     public FileNode(File file) {
-        super(file);
-
+        this(file, true);
+    }
+    
+    public FileNode(File file, boolean hideParentPath) {
+        super(file, hideParentPath);
+        
         // set name, display name, and icon
         String fileName = nameForFile(file);
         this.setDisplayName(fileName);

@@ -100,12 +100,7 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
             
             @Override
             public FileNode visit(File f){
-                return new FileNode(f);
-            }
-            
-            @Override
-            public DirectoryNode visit(Directory d) {
-                return new DirectoryNode(d);
+                return new FileNode(f, false);
             }
 
             @Override

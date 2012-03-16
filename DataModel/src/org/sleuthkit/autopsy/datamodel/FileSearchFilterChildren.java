@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.datamodel.SearchFilters.FileSearchFilter;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -71,7 +72,7 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
         try {
             ResultSet rs = skCase.runQuery(createQuery());
             for(FsContent c : skCase.resultSetToFsContents(rs)){
-                if(!c.getName().equals(".") && !c.getName().equals("..")){
+                if(c.isFile()){
                     list.add(c);
                 }
             }
@@ -92,12 +93,7 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
             
             @Override
             public FileNode visit(File f){
-                return new FileNode(f);
-            }
-            
-            @Override
-            public DirectoryNode visit(Directory d) {
-                return new DirectoryNode(d);
+                return new FileNode(f, false);
             }
 
             @Override

@@ -34,6 +34,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
@@ -119,7 +120,8 @@ public class DataResultFilterNode extends FilterNode{
                 newPs.setShortDescription(ps.getShortDescription());
 
                 newPs.put(ps.getProperties());
-                newPs.remove(FsContentPropertyType.LOCATION.toString() );
+                if(newPs.remove(AbstractFsContentNode.HIDE_PARENT) != null)
+                    newPs.remove(FsContentPropertyType.LOCATION.toString() );
                 propertySets[i] = newPs;
             }
         }

@@ -159,10 +159,18 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
                 return "Known";
             }
         },
-    }
+            }
+    
+    private boolean hideParentPath;
+    public static final String HIDE_PARENT = "hide_parent";
 
     AbstractFsContentNode(T fsContent) {
+        this(fsContent, true);
+    }
+    
+    AbstractFsContentNode(T fsContent, boolean hideParentPath) {
         super(fsContent);
+        this.hideParentPath = hideParentPath;
     }
 
     @Override
@@ -185,6 +193,9 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
             final String propString = propType.toString();
             ss.put(new NodeProperty(propString, propString, NO_DESCR, map.get(propString)));
         }
+        if(hideParentPath) {
+            ss.put(new NodeProperty(HIDE_PARENT, HIDE_PARENT, HIDE_PARENT, HIDE_PARENT));
+        }
 
         return s;
     }
@@ -196,7 +207,7 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
      */
     public static void fillPropertyMap(Map<String, Object> map, FsContent content) {
         map.put(FsContentPropertyType.NAME.toString(), content.getName());
-        map.put(FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0));
+        map.put(FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
         map.put(FsContentPropertyType.MOD_TIME.toString(), content.getMtimeAsDate());
         map.put(FsContentPropertyType.CHANGED_TIME.toString(), content.getCtimeAsDate());
         map.put(FsContentPropertyType.ACCESS_TIME.toString(), content.getAtimeAsDate());
