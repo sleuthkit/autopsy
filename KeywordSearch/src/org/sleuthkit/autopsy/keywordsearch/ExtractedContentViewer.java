@@ -113,11 +113,13 @@ public class ExtractedContentViewer implements DataContentViewer {
         // If node has been selected before, return to the previous position
         // using invokeLater to wait for ComboBox selection to complete
         EventQueue.invokeLater(new Runnable() {
+
             @Override
             public void run() {
                 MarkupSource source = panel.getSelectedSource();
-                if(source != null)
+                if (source != null) {
                     panel.scrollToAnchor(source.getAnchorPrefix() + Long.toString(find.getCurrentIndexI(source)));
+                }
             }
         });
     }
@@ -126,7 +128,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     public String getTitle() {
         return "Text View";
     }
-    
+
     @Override
     public String getToolTip() {
         return "Displays extracted text and keyword-search results.";
@@ -189,10 +191,20 @@ public class ExtractedContentViewer implements DataContentViewer {
      */
     private boolean solrHasContent(Node node) {
         Content content = node.getLookup().lookup(Content.class);
-        if (content == null)
+        if (content == null) {
             return false;
-        
-        Server.Core solrCore = KeywordSearch.getServer().getCore();
+        }
+
+        Server.Core solrCore = null;
+        try {
+            solrCore = KeywordSearch.getServer().getCore();
+        } catch (RuntimeException e) {
+            logger.log(Level.INFO, "Could not get Solr Core", e);
+        }
+        if (solrCore == null) {
+            return false;
+        }
+
         SolrQuery q = new SolrQuery();
         q.setQuery("*:*");
         q.addFilterQuery("id:" + content.getId());
@@ -260,7 +272,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
                 //scroll
                 panel.scrollToAnchor(source.getAnchorPrefix() + Long.toString(indexVal));
-                
+
                 //update display
                 panel.updateCurrentDisplay(find.getCurrentIndexI(source) + 1);
                 panel.updateTotalDisplay(find.getCurrentIndexTotal(source));
@@ -281,7 +293,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         @Override
         public void actionPerformed(ActionEvent e) {
             MarkupSource source = panel.getSelectedSource();
-            
+
             //setup find controls
             if (source != null && source.isSearchable()) {
                 find.init(source);
