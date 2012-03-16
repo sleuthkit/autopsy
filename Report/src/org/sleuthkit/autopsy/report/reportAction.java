@@ -11,7 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.logging.Level;
+import java.io.File;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -25,6 +25,8 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Log;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @ActionID(category = "Tools",
 id = "org.sleuthkit.autopsy.report.reportAction")
@@ -37,6 +39,7 @@ public final class reportAction extends CallableSystemAction implements Presente
     
     private JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = "Report";
+     Logger logger = Logger.getLogger(reportAction.class.getName());
     
     public reportAction() {
         setEnabled(false);
@@ -50,6 +53,35 @@ public final class reportAction extends CallableSystemAction implements Presente
             }
             
         });
+        //attempt to create a report folder if a case is active
+        Case.addPropertyChangeListener(new PropertyChangeListener () {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            String changed = evt.getPropertyName();
+
+            //case has been changed
+            if (changed.equals(Case.CASE_CURRENT_CASE)) {
+            Case newCase = (Case)evt.getNewValue();
+
+                if (newCase != null) {
+                    boolean exists = (new File(newCase.getCaseDirectory() + "\\Reports")).exists();
+                    if (exists) {
+                        // report directory exists -- don't need to do anything
+                        
+                    } else {
+                        // report directory does not exist -- create it
+                        boolean reportCreate = (new File(newCase.getCaseDirectory() + "\\Reports")).mkdirs();
+                        if(!reportCreate){
+                            logger.log(Level.WARNING, "Could not create Reports directory for case. It does not exist.");
+                        }
+                    }
+                } 
+            }
+        }
+
+});
+        
         // set action of the toolbar button
         toolbarButton.addActionListener(new ActionListener() {
 
