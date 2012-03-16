@@ -40,17 +40,16 @@ my $VERSION = getVersion();
 sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
-	::logMsg("||recentdocs||");
+	#::logMsg("||recentdocs||");
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
-
 	my $key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RecentDocs";
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		#::rptMsg("RecentDocs");
 		#::rptMsg("**All values printed in MRUList\\MRUListEx order.");
-		::rptMsg($key_path);
-		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		#::rptMsg($key_path);
+		::rptMsg("<recentdocs><time>".gmtime($key->get_timestamp())."</time><artifacts>");
 # Get RecentDocs values		
 		my %rdvals = getRDValues($key);
 		if (%rdvals) {
@@ -67,14 +66,15 @@ sub pluginmain {
 			
 			my @list = split(/,/,$rdvals{$tag});
 			foreach my $i (@list) {
-				::rptMsg("  ".$i." = ".$rdvals{$i});
+				::rptMsg("<doc>".$i." = ".$rdvals{$i} . "</doc>");
 			}
-			::rptMsg("");
+			
 		}
 		else {
-			::rptMsg($key_path." has no values.");
-			::logMsg("Error: ".$key_path." has no values.");
+			#::rptMsg($key_path." has no values.");
+			#::logMsg("Error: ".$key_path." has no values.");
 		}
+		::rptMsg("</artifacts></recentdocs>");
 # Get RecentDocs subkeys' values		
 	my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
@@ -104,16 +104,16 @@ sub pluginmain {
 					::rptMsg("");
 				}
 				else {
-					::rptMsg($key_path." has no values.");
+					#::rptMsg($key_path." has no values.");
 				}
 			}
 		}
 		else {
-			::rptMsg($key_path." has no subkeys.");
+			#::rptMsg($key_path." has no subkeys.");
 		}
 	}
 	else {
-		::rptMsg($key_path." not found.");
+		#::rptMsg($key_path." not found.");
 	}
 }
 

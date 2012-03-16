@@ -6,13 +6,19 @@ package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.input.SAXBuilder;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
@@ -23,6 +29,8 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
+
+
 
 /**
  *
@@ -76,7 +84,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
              if(Success)
              {
                 //Delete dat file since it was succcessfully by Pasco
-                //regFile.delete();
+                regFile.delete();
              }
                 j++;
                 
@@ -134,7 +142,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                     type = "security";
                 }
 
-                String command = rrpath + "rip.exe -r " + regFilePath +" -f " + type + " >> " + txtPath;
+                String command = rrpath + "rip.exe -r " + regFilePath +" -f " + type + "> " + txtPath;
                 JavaSystemCaller.Exec.execute(command);
                
 
@@ -153,49 +161,53 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
     {
         Case currentCase = Case.getCurrentCase(); // get the most updated case
         SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-     
-       String[] result = regRecord.split("----------------------------------------");
-       for(String tempresult : result)
-       {
-           try{
+         try {
+           String regString = new Scanner(new File(regRecord)).useDelimiter("\\Z").next();
+           String startdoc = "<document>";
+           String result = regString.replaceAll("----------------------------------------","");
+           String enddoc = "</document>";
+           String stringdoc = startdoc + result + enddoc;
+           SAXBuilder sb = new SAXBuilder();
+           Document document = sb.build(new StringReader(stringdoc));
+           Element root = document.getRootElement();
+           List types = root.getChildren();
+           Iterator iterator = types.iterator();
+           //for(int i = 0; i < types.size(); i++)
+           //for(Element tempnode : types)
+            while (iterator.hasNext()) {
+              String time = "";
+               String context = "";
+               Element tempnode = (Element) iterator.next();
+              // Element tempnode = types.get(i);
+               context = tempnode.getName();
+               Element timenode = tempnode.getChild("time");
+                    time = timenode.getTextTrim();
+               
+               Element artroot = tempnode.getChild("artifacts");
+               List artlist = artroot.getChildren();
+            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
+              Iterator aiterator = artlist.iterator();
+               while (aiterator.hasNext()) {
+                 Element artnode = (Element) aiterator.next();
+                 String name = artnode.getAttributeValue("name");
+                 String value = artnode.getTextTrim();  
+                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
+                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
+               }
                 
-               if(tempresult.contains("not found") || tempresult.contains("no values"))
-               {
-                   
-               }
-               else
-               {
-                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);  
-                   if(tempresult.contains("Username"))
-                   {
-                    Pattern p = Pattern.compile("Username\\[.*?\\]"); 
-                    Matcher m = p.matcher(tempresult);
-                    while (m.find()) {
-                         String s = m.group(1);
-                    
-                       BlackboardAttribute bbatturl = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "RecentActivity", "Registry", s);
-                        bbart.addAttribute(bbatturl);  
-                    }             
-                   }
-
-                   if(tempresult.contains("Time["))
-                   {
-                    Pattern p = Pattern.compile("Time\\[.*?\\]"); 
-                    Matcher m = p.matcher(tempresult);
-                    while (m.find()) {
-                     String s = m.group(1);
-                     BlackboardAttribute bbattdate = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Registry", s);
-                     bbart.addAttribute(bbattdate);
-                    }
-                   
-                    }
-               }
+                
+                 
+              
+                bbart.addAttributes(bbattributes);
+            }
            }
            catch (Exception ex)
            {
+               String hi = "";
             logger.log(Level.WARNING, "Error while trying to read into a sqlite db." +  ex);      
            }
-       }
    
 
        

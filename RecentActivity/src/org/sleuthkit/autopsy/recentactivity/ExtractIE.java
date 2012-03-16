@@ -259,10 +259,10 @@ public class ExtractIE { // implements BrowserActivity {
                                       }
                                       if(!ddtime.isEmpty()){
                                           ddtime = ddtime.replace("T"," ");
-                                          ddtime = ddtime.substring(ddtime.length()-4);
+                                          ddtime = ddtime.substring(ddtime.length()-5);
                                       }
                                         if(!actime.isEmpty()){
-                                          actime = actime.replace("z"," ");
+                                          actime = actime.replace("T"," ");
                                           actime = actime.substring(0,actime.length()-5);
                                       }
                                        
