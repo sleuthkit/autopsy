@@ -715,21 +715,12 @@ public class Case {
      * a dialog offering to add one.
      */
     private static void noRootObjectsNotification() {
-        final NotifyDescriptor nd = new NotifyDescriptor(
-                "This case contains no images. Would you like to add one?",
-                "No images in case", NotifyDescriptor.YES_NO_OPTION,
-                NotifyDescriptor.INFORMATION_MESSAGE,
-                null,
-                NotifyDescriptor.YES_OPTION);
-
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
             public void run() {
-                if (DialogDisplayer.getDefault().notify(nd) == NotifyDescriptor.YES_OPTION) {
-                    final AddImageAction action = Lookup.getDefault().lookup(AddImageAction.class);
-                    action.actionPerformed(null);
-                }
+                final AddImageAction action = Lookup.getDefault().lookup(AddImageAction.class);
+                action.actionPerformed(null);
             }
         });
     }
