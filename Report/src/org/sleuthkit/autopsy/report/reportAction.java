@@ -9,12 +9,12 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
-import java.util.logging.Level;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.File;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.SwingWorker;
 import org.openide.awt.ActionRegistration;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -23,7 +23,10 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Log;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @ActionID(category = "Tools",
 id = "org.sleuthkit.autopsy.report.reportAction")
@@ -35,9 +38,50 @@ id = "org.sleuthkit.autopsy.report.reportAction")
 public final class reportAction extends CallableSystemAction implements Presenter.Toolbar{
     
     private JButton toolbarButton = new JButton();
-    private static final String ACTION_NAME = "Report Filter";
+    private static final String ACTION_NAME = "Report";
+     Logger logger = Logger.getLogger(reportAction.class.getName());
     
     public reportAction() {
+        setEnabled(false);
+        Case.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if(evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)){
+                    setEnabled(evt.getNewValue() != null);
+                }
+            }
+            
+        });
+        //attempt to create a report folder if a case is active
+        Case.addPropertyChangeListener(new PropertyChangeListener () {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            String changed = evt.getPropertyName();
+
+            //case has been changed
+            if (changed.equals(Case.CASE_CURRENT_CASE)) {
+            Case newCase = (Case)evt.getNewValue();
+
+                if (newCase != null) {
+                    boolean exists = (new File(newCase.getCaseDirectory() + "\\Reports")).exists();
+                    if (exists) {
+                        // report directory exists -- don't need to do anything
+                        
+                    } else {
+                        // report directory does not exist -- create it
+                        boolean reportCreate = (new File(newCase.getCaseDirectory() + "\\Reports")).mkdirs();
+                        if(!reportCreate){
+                            logger.log(Level.WARNING, "Could not create Reports directory for case. It does not exist.");
+                        }
+                    }
+                } 
+            }
+        }
+
+});
+        
         // set action of the toolbar button
         toolbarButton.addActionListener(new ActionListener() {
 
