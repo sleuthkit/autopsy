@@ -50,7 +50,9 @@ sub pluginmain {
 		#::rptMsg("Uninstall");
 		#::rptMsg($key_path);
 		#::rptMsg("");
-		
+		::rptMsg("<uninstall>");
+		::rptMsg("<time>".gmtime($key->get_timestamp())."</time>");
+		::rptMsg("<artifacts>");
 		my %uninst;
 		my @subkeys = $key->get_list_of_subkeys();
 	 	if (scalar(@subkeys) > 0) {
@@ -71,11 +73,11 @@ sub pluginmain {
 	 			push(@{$uninst{$lastwrite}},$display);
 	 		}
 	 		foreach my $t (reverse sort {$a <=> $b} keys %uninst) {
-				::rptMsg(gmtime($t)." (UTC)");
+				::rptMsg("<item name=\"". gmtime($t).">");
 				foreach my $item (@{$uninst{$t}}) {
-					::rptMsg("\t$item");
+					::rptMsg($item."</item>");
 				}
-				::rptMsg("");
+				#::rptMsg("");
 			}
 	 	}
 	 	else {
@@ -85,5 +87,6 @@ sub pluginmain {
 	else {
 		#::rptMsg($key_path." not found.");
 	}
+	::rptMsg("</artifacts></uninstall>");
 }
 1;

@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
+import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
@@ -39,8 +40,24 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class ExtractRegistry {
 
       public Logger logger = Logger.getLogger(this.getClass().getName());
-    
+     private String RR_PATH;
+     boolean rrFound = false;
+     
     ExtractRegistry(){
+        final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false);
+         if (rrRoot == null) {
+             logger.log(Level.SEVERE, "RegRipper not found");
+             rrFound = false;
+             return;
+         }
+         else {
+             rrFound = true;
+         }
+         
+        final String rrHome = rrRoot.getAbsolutePath();
+        logger.log(Level.INFO, "RegRipper home: " + rrHome);
+             
+        RR_PATH  = rrHome + File.separator + "rip.exe";
     }
     
     
@@ -113,9 +130,6 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
 
        try
        {
-           String rrpath = System.getProperty("user.dir");
-                rrpath = rrpath.substring(0, rrpath.length()-14);
-                rrpath = rrpath + "thirdparty\\rr\\";
                 
             if(regFilePath.toLowerCase().contains("system"))
                 {
@@ -142,7 +156,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                     type = "security";
                 }
 
-                String command = rrpath + "rip.exe -r " + regFilePath +" -f " + type + "> " + txtPath;
+                String command = RR_PATH + " -r " + regFilePath +" -f " + type + "> " + txtPath;
                 JavaSystemCaller.Exec.execute(command);
                
 
