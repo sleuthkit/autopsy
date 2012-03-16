@@ -4,7 +4,9 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -26,8 +28,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class reportHTML {
     
     //Declare our publically accessible formatted report, this will change everytime they run a report
-    public StringBuilder formatted_Report = new StringBuilder();
-
+    public static StringBuilder formatted_Report = new StringBuilder();
+    public static String htmlPath = "";
 public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> report, reportFilter rr){
             
             
@@ -35,6 +37,9 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
              Case currentCase = Case.getCurrentCase(); // get the most updated case
              SleuthkitCase skCase = currentCase.getSleuthkitCase();
              String caseName = currentCase.getName();
+             String rrpath = System.getProperty("user.dir");
+             rrpath = rrpath.substring(0, rrpath.length()-14);
+             rrpath = rrpath + "autopsy\\thirdparty\\";
              Integer imagecount = currentCase.getImageIDs().length;
              Integer filesystemcount = currentCase.getRootObjectsCount();
              DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -42,41 +47,42 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
              Date date = new Date();
              String datetime = datetimeFormat.format(date);
              String datenotime = dateFormat.format(date);
-           //  String CSS = "<replaceme>"
-          //           + "body {padding: 30px; margin: 0; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;} "
-          //           + "h1 {font-size: 26px; color: #005577; margin: 0 0 20px 0;} "
-           //          + "h2 {font-size: 20px; font-weight: normal; color: #0077aa; margin: 40px 0 10px 0; padding: 0 0 10px 0; border-bottom: 1px solid #dddddd;} "
-           //          + "h3 {font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;} "
-            //         + "p {margin: 0 0 20px 0;} table {width: 100%; padding: 0; margin: 0; border-collapse: collapse; border-bottom: 1px solid #e5e5e5;} "
-           //          + "table thead th {display: table-cell; text-align: left; padding: 8px 16px; background: #e5e5e5; color: #777;font-size: 11px;text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede;} "
-            //         + "table tr th:nth-child(1) {text-align: center; width: 60px;} table td {display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif;} "
-           //          + "table tr:nth-child(even) td {background: #f3f3f3;} "
-          //           + "table tr td:nth-child(1) {text-align: center; width: 60px; background: #f3f3f3;} "
-          //           + "table tr:nth-child(even) td:nth-child(1) {background: #eaeaea;}"
-          //           + "</replaceme>";
+             String CSS = "<style>"
+                     + "body {padding: 30px; margin: 0; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;} "
+                   + "h1 {font-size: 26px; color: #005577; margin: 0 0 20px 0;} "
+                    + "h2 {font-size: 20px; font-weight: normal; color: #0077aa; margin: 40px 0 10px 0; padding: 0 0 10px 0; border-bottom: 1px solid #dddddd;} "
+                     + "h3 {font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;} "
+                     + "p {margin: 0 0 20px 0;} table {width: 100%; padding: 0; margin: 0; border-collapse: collapse; border-bottom: 1px solid #e5e5e5;} "
+                     + "table thead th {display: table-cell; text-align: left; padding: 8px 16px; background: #e5e5e5; color: #777;font-size: 11px;text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede;} "
+                     + "table tr th:nth-child(1) {text-align: center; width: 60px;} "
+                   + "table td {display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif;} "
+                     + "table tr:nth-child(even) td {background: #f3f3f3;} "
+                   + "table tr td:nth-child(1) {text-align: center; width: 60px; background: #f3f3f3;} "
+                     + "table tr:nth-child(even) td:nth-child(1) {background: #eaeaea;}"
+                     + "</style>";
              //Add additional header information
             formatted_Report.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"><html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\" xml:lang=\"en\"><head><title>Autopsy Report for Case:").append(caseName).append("</title>");
-            
+            formatted_Report.append(CSS);
             //formatted_Report.append("<link rel=\"stylesheet\" href=\"" + rrpath + "report.css\" type=\"text/css\" />");
-            formatted_Report.append("</head><body style=\"padding: 30px; margin: 0; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;\"><div id=\"main\"><div id=\"content\">");
+            formatted_Report.append("</head><body><div id=\"main\"><div id=\"content\">");
             // Add summary information now
-          // formatted_Report.append("<style>" + CSS + "</style>");
-            formatted_Report.append("<h1 style=\"font-size: 26px; color: #005577; margin: 0 0 20px 0;\">Report for Case: ").append(caseName).append("</h1>");
-            formatted_Report.append("<h2 style=\"font-size: 20px; font-weight: normal; color: #0077aa; margin: 40px 0 10px 0; padding: 0 0 10px 0; border-bottom: 1px solid #dddddd;\">Case Summary</h2><p>HTML Report Generated by <strong>Autopsy 3</strong> on ").append(datetime).append("<br /><ul>");
+           
+            formatted_Report.append("<h1>Report for Case: ").append(caseName).append("</h1>");
+            formatted_Report.append("<h2>Case Summary</h2><p>HTML Report Generated by <strong>Autopsy 3</strong> on ").append(datetime).append("<br /><ul>");
             formatted_Report.append("<li># of Images: ").append(imagecount).append("</li>");
             formatted_Report.append("<li>FileSystems: ").append(filesystemcount).append("</li>");
-            String tableHeader = "<table><thead style=\"display: table-cell; text-align: left; padding: 8px 16px; background: #e5e5e5; color: #777;font-size: 11px;text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede; \"><tr><th style=\"text-align: center; width: 60px; \">Artifact ID</th><th style=\"text-align: center; width: 60px; \">Name</th><th style=\"text-align: center; width: 60px; \">Size</th><th style=\"text-align: center; width: 60px; \">Attribute</th><th style=\"text-align: center; width: 60px; \">Value</th></tr></thead><tbody>";
-             StringBuilder nodeGen = new StringBuilder("<h3 style=\"font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;\">General Information</h3>" + tableHeader);
-             StringBuilder nodeWebBookmark =  new StringBuilder("<h3 style=\"font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;\">Web Bookmarks</h3>" + tableHeader);
-             StringBuilder nodeWebCookie =  new StringBuilder("<h3 style=\"font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;\">Web Cookies</h3>" + tableHeader);
-             StringBuilder nodeWebHistory =  new StringBuilder("<h3 style=\"font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;\">Web History</h3>" + tableHeader);
-             StringBuilder nodeWebDownload =  new StringBuilder("<h3 style=\"font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;\">Web Downloads</h3>" + tableHeader);
-             StringBuilder nodeRecentObjects =  new StringBuilder("<h3 style=\"font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;\">Recent Documents</h3>" + tableHeader);
-             StringBuilder nodeTrackPoint =  new StringBuilder("<h3 style=\"font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;\">Track Points</h3>" + tableHeader);
-             StringBuilder nodeInstalled =  new StringBuilder("<h3 style=\"font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;\">Installed Programs</h3>" + tableHeader);
-             StringBuilder nodeKeyword =  new StringBuilder("<h3 style=\"font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;\">Keyword Search Hits</h3>" + tableHeader);
-             StringBuilder nodeHash =  new StringBuilder("<h3 style=\"font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;\">Hashset Hits</h3>" + tableHeader);
-            int pp = 0;
+            String tableHeader = "<table><thead><tr><th>Artifact ID</th><th>Name</th><th>Size</th><th>Attribute</th><th>Value</th></tr></thead><tbody>";
+             StringBuilder nodeGen = new StringBuilder("<h3>General Information</h3>" + tableHeader);
+             StringBuilder nodeWebBookmark =  new StringBuilder("<h3>Web Bookmarks</h3>" + tableHeader);
+             StringBuilder nodeWebCookie =  new StringBuilder("<h3>Web Cookies</h3>" + tableHeader);
+             StringBuilder nodeWebHistory =  new StringBuilder("<h3>Web History</h3>" + tableHeader);
+             StringBuilder nodeWebDownload =  new StringBuilder("<h3>Web Downloads</h3>" + tableHeader);
+             StringBuilder nodeRecentObjects =  new StringBuilder("<h3>Recent Documents</h3>" + tableHeader);
+             StringBuilder nodeTrackPoint =  new StringBuilder("<h3>Track Points</h3>" + tableHeader);
+             StringBuilder nodeInstalled =  new StringBuilder("<h3>Installed Programs</h3>" + tableHeader);
+             StringBuilder nodeKeyword =  new StringBuilder("<h3>Keyword Search Hits</h3>" + tableHeader);
+             StringBuilder nodeHash =  new StringBuilder("<h3>Hashset Hits</h3>" + tableHeader);
+            
              for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
                  if(reportFilter.cancel == true){
                      break;
@@ -86,7 +92,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                 Long objId = entry.getKey().getObjectID();
                 //Content file = skCase.getContentById(objId);
                 FsContent file = skCase.getFsContentById(objId);
-                String tdcolor = "";
+           
                 Long filesize = file.getSize();
                 
                
@@ -94,31 +100,19 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                     // Get all the attributes for this guy
                      for (BlackboardAttribute tempatt : entry.getValue())
                          {
-                             
                               if(reportFilter.cancel == true){
                                  break;
                                  }
-                              if(pp > 0)
-                              {
-                                 pp = 0;
-                                 tdcolor = "background: #eaeaea;";
-                              }
-                              else
-                              {
-                                 tdcolor = "";
-                                 pp = 1;
-                              }
-                          artifact.append("<tr><td style=\"display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif; " + tdcolor + " \">").append(objId.toString());
-                           artifact.append("</td><td style=\"display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif;" + tdcolor + " \"><strong>").append(file.getName().toString()).append("</strong></td>");
+                          artifact.append("<tr><td>").append(objId.toString());
+                           artifact.append("</td><td><strong>").append(file.getName().toString()).append("</strong></td>");
                             //artifact.append("Path: ").append(file.getParentPath());
-                            artifact.append("<td style=\"display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif;" + tdcolor + " \">").append(filesize.toString()).append("</td>");    
-                          StringBuilder attribute = new StringBuilder("<td style=\"display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif; " + tdcolor + " \">").append(tempatt.getAttributeTypeDisplayName()).append("</td>");
-                          attribute.append("<td style=\"display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif;" + tdcolor + " \">").append(tempatt.getValueString()).append("</td></tr>");
+                            artifact.append("<td>").append(filesize.toString()).append("</td>");    
+                          StringBuilder attribute = new StringBuilder("<td>").append(tempatt.getAttributeTypeDisplayName()).append("</td>");
+                          attribute.append("<td>").append(tempatt.getValueString()).append("</td></tr>");
                           //attribute.append("<li style=\"list-style-type: none;\"> Context:  ").append(tempatt.getContext()).append("</li>");
                           
                           artifact.append(attribute);
                           cc++;
-                          
                          }
                     //artifact.append("</tr>");
                     if(entry.getKey().getArtifactTypeID() == 1){  
@@ -180,7 +174,15 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             //end of master loop
             
                 formatted_Report.append("</div></div></body></html>");
-            }
+                
+                  htmlPath = currentCase.getCaseDirectory()+"/Temp/" + caseName + "-" + datenotime + ".html";
+                   BufferedWriter out = new BufferedWriter(new FileWriter(htmlPath));
+                   out.write(formatted_Report.toString());
+                   
+                  out.flush();
+                  out.close();
+           
+        }
             catch(Exception e)
             {
 

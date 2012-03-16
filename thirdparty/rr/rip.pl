@@ -99,7 +99,7 @@ if ($config{file}) {
 		#logMsg("Parsed Plugins file.");
 	}
 	else {
-		logMsg("Plugins file not parsed.");
+		#logMsg("Plugins file not parsed.");
 		exit;
 	}
 	foreach my $i (sort {$a <=> $b} keys %plugins) {
@@ -111,7 +111,7 @@ if ($config{file}) {
 			logMsg("Error in ".$plugins{$i}.": ".$@);
 		}
 		#logMsg($plugins{$i}." complete.");
-		#rptMsg("-" x 40);
+		
 	}
 }
 

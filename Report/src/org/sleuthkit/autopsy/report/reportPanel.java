@@ -124,7 +124,7 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         path = reportUtils.changeExtension(path, ".html");
          try {
                   FileOutputStream out = new FileOutputStream(path);
-                  out.write(jEditorPane1.getText().getBytes());
+                  out.write(reportHTML.formatted_Report.toString().getBytes());
                   out.flush();
                   out.close();
                   
