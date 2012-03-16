@@ -154,7 +154,6 @@ public class TermComponentQuery implements KeywordSearchQuery {
     public Collection<Term> getTerms() {
         return terms;
     }
-   
 
     @Override
     public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
@@ -247,53 +246,47 @@ public class TermComponentQuery implements KeywordSearchQuery {
         //get unique match result files
 
 
-        //combine the terms into single Solr query to get files
+        //combine the terms into multiple aggregate Solr queries to get files
         //it's much more efficient and should yield the same file IDs as per match queries
         //requires http POST query method due to potentially large query size
         StringBuilder filesQueryB = new StringBuilder();
         final int lastTerm = terms.size() - 1;
         int curTerm = 0;
+        List<String> fileQueries = new ArrayList<String>();
+        int curNumQueries = 0;
         for (Term term : terms) {
             final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
-            //final String termS = term.getTerm();
             if (!termS.contains("*")) {
                 filesQueryB.append(TERMS_SEARCH_FIELD).append(":").append(termS);
                 if (curTerm != lastTerm) {
                     filesQueryB.append(" "); //acts as OR ||
                 }
             }
+            if (curNumQueries == 100 || curTerm + 1 == lastTerm) { //max aggregate query size due to Solr limitation
+                fileQueries.add(filesQueryB.toString());
+                filesQueryB = new StringBuilder();
+                curNumQueries = 0;
+            } else {
+                ++curNumQueries;
+            }
             ++curTerm;
         }
-        List<FsContent> uniqueMatches = new ArrayList<FsContent>();
+        Map<FsContent, Void> uniqueMatches = new HashMap<FsContent, Void>();
 
-        if (!terms.isEmpty()) {
-            LuceneQuery filesQuery = new LuceneQuery(filesQueryB.toString());
-            //filesQuery.escape();
+        for (String query : fileQueries) {
+            LuceneQuery filesQuery = new LuceneQuery(query);
             try {
-                uniqueMatches = filesQuery.performQuery();
+                List<FsContent> subResults = filesQuery.performQuery();
+                for (FsContent res : subResults) {
+                    uniqueMatches.put(res, null);
+                }
             } catch (RuntimeException e) {
                 logger.log(Level.SEVERE, "Error executing Solr query,", e);
             }
         }
 
 
-        //result postprocessing
-        //filter out non-matching files using the original query (whether literal or not)
-        boolean postprocess = false;
-        if (postprocess) {
-            for (FsContent f : uniqueMatches) {
-                Pattern p = Pattern.compile(queryEscaped, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-                final String contentStr = KeywordSearch.getServer().getCore().getSolrContent(f);
-                Matcher m = p.matcher(contentStr);
-                if (m.find()) {
-                    results.add(f);
-                }
-            }
-        } else {
-            results.addAll(uniqueMatches);
-        }
-
-
+        results.addAll(uniqueMatches.keySet());
 
         return results;
     }
