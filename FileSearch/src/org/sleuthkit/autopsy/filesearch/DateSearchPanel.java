@@ -137,12 +137,12 @@ class DateSearchPanel extends javax.swing.JPanel {
         jLabel3 = new javax.swing.JLabel();
         dateFromTextField = new JFormattedTextField(this.dateFormat);
         jLabel2 = new javax.swing.JLabel();
-        dateFromButtonCalendar = new org.sourceforge.jcalendarbutton.JCalendarButton();
         modifiedCheckBox = new javax.swing.JCheckBox();
         changedCheckBox = new javax.swing.JCheckBox();
         accessedCheckBox = new javax.swing.JCheckBox();
         createdCheckBox = new javax.swing.JCheckBox();
-        dateToButtonCalendar = new org.sourceforge.jcalendarbutton.JCalendarButton();
+        dateFromButtonCalendar = new org.jbundle.thin.base.screen.jcalendarbutton.JCalendarButton();
+        dateToButtonCalendar = new org.jbundle.thin.base.screen.jcalendarbutton.JCalendarButton();
 
         cutMenuItem.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.cutMenuItem.text")); // NOI18N
         rightClickMenu.add(cutMenuItem);
@@ -180,13 +180,6 @@ class DateSearchPanel extends javax.swing.JPanel {
 
         jLabel2.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.jLabel2.text")); // NOI18N
 
-        dateFromButtonCalendar.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.dateFromButtonCalendar.text")); // NOI18N
-        dateFromButtonCalendar.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-            public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                dateFromPopupChanged(evt);
-            }
-        });
-
         modifiedCheckBox.setSelected(true);
         modifiedCheckBox.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.modifiedCheckBox.text")); // NOI18N
 
@@ -198,6 +191,13 @@ class DateSearchPanel extends javax.swing.JPanel {
 
         createdCheckBox.setSelected(true);
         createdCheckBox.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.createdCheckBox.text")); // NOI18N
+
+        dateFromButtonCalendar.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.dateFromButtonCalendar.text")); // NOI18N
+        dateFromButtonCalendar.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                dateFromPopupChanged(evt);
+            }
+        });
 
         dateToButtonCalendar.setText(org.openide.util.NbBundle.getMessage(DateSearchPanel.class, "DateSearchPanel.dateToButtonCalendar.text")); // NOI18N
         dateToButtonCalendar.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
@@ -250,14 +250,11 @@ class DateSearchPanel extends javax.swing.JPanel {
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(dateCheckBox)
                         .addComponent(dateFromTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel1)
-                            .addComponent(dateToTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(dateToButtonCalendar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGap(1, 1, 1))
-                        .addComponent(dateFromButtonCalendar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(dateToButtonCalendar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel1)
+                        .addComponent(dateToTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(dateFromButtonCalendar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(4, 4, 4)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
@@ -275,7 +272,8 @@ class DateSearchPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel3))
+                .addComponent(jLabel3)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -349,9 +347,9 @@ class DateSearchPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox createdCheckBox;
     private javax.swing.JMenuItem cutMenuItem;
     private javax.swing.JCheckBox dateCheckBox;
-    private org.sourceforge.jcalendarbutton.JCalendarButton dateFromButtonCalendar;
+    private org.jbundle.thin.base.screen.jcalendarbutton.JCalendarButton dateFromButtonCalendar;
     private javax.swing.JFormattedTextField dateFromTextField;
-    private org.sourceforge.jcalendarbutton.JCalendarButton dateToButtonCalendar;
+    private org.jbundle.thin.base.screen.jcalendarbutton.JCalendarButton dateToButtonCalendar;
     private javax.swing.JFormattedTextField dateToTextField;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
