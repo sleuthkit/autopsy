@@ -714,7 +714,7 @@ public class Case {
      * Call if there are no images in the case. Displays
      * a dialog offering to add one.
      */
-    private static void noRootObjectsNotification() {
+    private static void runAddImageAction() {
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
@@ -772,7 +772,7 @@ public class Case {
                 // close all top components
                 CoreComponentControl.closeCoreWindows();
                 // prompt user to add an image
-                Case.noRootObjectsNotification();
+                Case.runAddImageAction();
             }
         } else { // case is closed
             // disable these menus
