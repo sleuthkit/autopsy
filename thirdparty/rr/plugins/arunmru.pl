@@ -43,9 +43,12 @@ sub pluginmain {
 	my $key;
 	if ($key = $root_key->get_subkey($key_path)) {
 		#::rptMsg("RunMru");
-		::rptMsg($key_path);
-		#::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
+		#::rptMsg($key_path);
+		
 		my @vals = $key->get_list_of_values();
+		::rptMsg("<runMRU>");
+		::rptMsg("<time>".gmtime($key->get_timestamp())."</time>");
+		::rptMsg("<artifacts>");
 		my %runvals;
 		my $mru;
 		if (scalar(@vals) > 0) {
@@ -53,20 +56,22 @@ sub pluginmain {
 				$runvals{$v->get_name()} = $v->get_data() unless ($v->get_name() =~ m/^MRUList/i);
 				$mru = $v->get_data() if ($v->get_name() =~ m/^MRUList/i);
 			}
-			::rptMsg("MRUList = ".$mru);
+			::rptMsg("<MRUList>".$mru."</MRUList>");
 			foreach my $r (sort keys %runvals) {
-				::rptMsg($r."   ".$runvals{$r});
+				::rptMsg("<MRU>".$r."   ".$runvals{$r}."</MRU>");
 			}
 		}
 		else {
-			::rptMsg($key_path." has no values.");
-			::logMsg($key_path." has no values.");
+			#::rptMsg($key_path." has no values.");
+			#::logMsg($key_path." has no values.");
 		}
+		::rptMsg("</artifacts>");
 	}
 	else {
-		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
+		#::rptMsg($key_path." not found.");
+		#::logMsg($key_path." not found.");
 	}
+	::rptMsg("</runMRU>");
 }
 
 1;

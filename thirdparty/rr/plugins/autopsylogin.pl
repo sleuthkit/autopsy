@@ -10,7 +10,7 @@
 #
 # copyright 2008 H. Carvey
 #-----------------------------------------------------------
-package autopsy;
+package autopsylogin;
 use strict;
 
 my %config = (hive          => "NTUSER\.DAT",
@@ -34,7 +34,7 @@ my $VERSION = getVersion();
 sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
-	::logMsg("||logonusername||");
+	#::logMsg("||logonusername||");
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 	
@@ -47,21 +47,23 @@ sub pluginmain {
 		if (scalar(@vals) > 0) {
 			#::rptMsg("Logon User Name");
 			#::rptMsg($key_path);
-			::rptMsg("Time[".gmtime($key->get_timestamp())."]");
+			::rptMsg("<logon>");
+			::rptMsg("<time>".gmtime($key->get_timestamp())."</time><artifacts>");
 			foreach my $v (@vals) {
 				if ($v->get_name() eq $logon_name) {
-					::rptMsg($logon_name."[".$v->get_data() ."]");
+					::rptMsg("<user name=\"".$logon_name."\"> ".$v->get_data() ."</user>");
 				}
 			}
+			::rptMsg("</artifacts></logon>");
 		}
 		else {
-			::rptMsg($key_path." has no values.");
-			::logMsg($key_path." has no values.");
+			#::rptMsg($key_path." has no values.");
+			#::logMsg($key_path." has no values.");
 		}
 	}
 	else {
-		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
+		#::rptMsg($key_path." not found.");
+		#::logMsg($key_path." not found.");
 	}
 }
 
