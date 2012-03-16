@@ -97,7 +97,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             }
         }
 
-        long toDate = Date.parse(DATE_FORMAT.format(Calendar.getInstance().getTime())); // get today's date
+        long toDate = 0;
         String endDateValue = panel.getDateToTextField().getText();
         Calendar endDate = null;
         try {
