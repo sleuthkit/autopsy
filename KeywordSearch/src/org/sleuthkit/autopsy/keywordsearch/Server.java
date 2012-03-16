@@ -148,7 +148,7 @@ class Server {
      * (probably before the server is ready) and doesn't check whether it was
      * successful.
      */
-    void start() {
+    synchronized void start() {
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
         try {
             Process start = Runtime.getRuntime().exec("java -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar", null, solrFolder);
@@ -169,7 +169,7 @@ class Server {
      * before returning.
      * @return  true if the stop command finished successfully, else false
      */
-    boolean stop() {
+    synchronized boolean stop() {
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
             Process stop = Runtime.getRuntime().exec("java -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar --stop", null, solrFolder);
@@ -186,7 +186,7 @@ class Server {
      * Tests if there's a Solr server running by sending it a core-status request.
      * @return false if the request failed with a connection error, otherwise true
      */
-    boolean isRunning() {
+    synchronized boolean isRunning() {
 
         try {
             // making a status request here instead of just doing solrServer.ping(), because
@@ -214,7 +214,7 @@ class Server {
     /**** Convenience methods for use while we only open one case at a time ****/
     private Core currentCore = null;
 
-    void openCore() {
+    synchronized void openCore() {
         if (currentCore != null) {
             throw new RuntimeException("Already an open Core!");
         }
@@ -222,16 +222,16 @@ class Server {
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
     }
 
-    void closeCore() {
+    synchronized void closeCore() {
         if (currentCore == null) {
-            throw new RuntimeException("No currently open Core!");
+            return;
         }
         currentCore.close();
         currentCore = null;
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
     }
 
-    Core getCore() {
+    synchronized Core getCore() {
         if (currentCore == null) {
             throw new RuntimeException("No currently open Core!");
         }
@@ -244,7 +244,7 @@ class Server {
      * @param c
      * @return 
      */
-    Core openCore(Case c) {
+    synchronized Core openCore(Case c) {
         String sep = File.separator;
         String dataDir = c.getCaseDirectory() + sep + "keywordsearch" + sep + "data";
         return this.openCore(DEFAULT_CORE_NAME, new File(dataDir));
@@ -256,7 +256,7 @@ class Server {
      * @param dataDir directory to load/store the core data from/to
      * @return new core
      */
-    Core openCore(String coreName, File dataDir) {
+    private Core openCore(String coreName, File dataDir) {
         try {
             if (!dataDir.exists()) {
                 dataDir.mkdirs();
@@ -299,21 +299,21 @@ class Server {
             return new Ingester(this.solrCore);
         }
 
-        public QueryResponse query(SolrQuery sq) throws SolrServerException {
+        public synchronized QueryResponse query(SolrQuery sq) throws SolrServerException {
             return solrCore.query(sq);
         }
         
-        public QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws SolrServerException {
+        public synchronized QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws SolrServerException {
             return solrCore.query(sq, method);
         }
         
 
-        public TermsResponse queryTerms(SolrQuery sq) throws SolrServerException {
+        public synchronized TermsResponse queryTerms(SolrQuery sq) throws SolrServerException {
             QueryResponse qres = solrCore.query(sq);
             return qres.getTermsResponse();
         }
 
-        public String getSolrContent(final Content content) {
+        public synchronized String getSolrContent(final Content content) {
             final SolrQuery q = new SolrQuery();
             q.setQuery("*:*");
             q.addFilterQuery("id:" + content.getId());
@@ -326,7 +326,7 @@ class Server {
             }
         }
 
-        void close() {
+        synchronized void close() {
             try {
                 CoreAdminRequest.unloadCore(this.name, solrServer);
             } catch (SolrServerException ex) {
@@ -342,7 +342,7 @@ class Server {
          * @return int representing number of indexed files
          * @throws SolrServerException 
          */
-        public int queryNumIndexedFiles() throws SolrServerException {
+        public synchronized int queryNumIndexedFiles() throws SolrServerException {
             SolrQuery q = new SolrQuery("*:*");
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
