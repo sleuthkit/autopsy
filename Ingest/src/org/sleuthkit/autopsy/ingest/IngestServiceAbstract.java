@@ -19,12 +19,15 @@
 
 package org.sleuthkit.autopsy.ingest;
 
+import java.beans.PropertyChangeListener;
+
 /**
  * Base interface for ingest services
  */
 public interface IngestServiceAbstract {
     
     public enum ServiceType {Image, FsContent};
+    public static final String BCKGRND_JOBS_COMPLETED_EVT = "BCKGRND_JOBS_COMPLETED_EVT";
 
     /**
      * notification from manager that brand new processing should be initiated.
@@ -65,6 +68,16 @@ public interface IngestServiceAbstract {
      * false if all work has been done, or if background threads are not used by this service
      */
     public boolean hasBackgroundJobsRunning();
+    
+    /**
+     * Register listener to notify when all background jobs have completed and the service 
+     * has truly finished.  The service should first check if it has threads running, and then register the listener, all in atomic operation.
+     * The event fired off should be BCKGRND_JOBS_COMPLETED_EVT, with the instance of IngestServiceAbstract in the newValue parameter.
+     * 
+     * @param l listener
+     * @return true if listener registered, false otherwise (i.e. no background jobs were running)
+     */
+    public boolean backgroundJobsCompleteListener(PropertyChangeListener l);
     
     
     /**

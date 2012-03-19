@@ -18,12 +18,12 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -160,6 +160,12 @@ public final class RAImageIngestService implements IngestServiceImage {
     
     @Override
     public boolean hasBackgroundJobsRunning() {
+        return false;
+    }
+    
+    
+    @Override
+    public boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
         return false;
     }
 }

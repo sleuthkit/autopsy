@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.ingest.example;
 
+import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JPanel;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -114,6 +114,11 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     
     @Override
     public boolean hasBackgroundJobsRunning() {
+        return false;
+    }
+    
+    @Override
+    public boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
         return false;
     }
     

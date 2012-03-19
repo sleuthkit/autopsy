@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -38,6 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
+import org.sleuthkit.autopsy.ingest.IngestServiceAbstract;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
@@ -68,11 +70,15 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private Indexer indexer;
     private SwingWorker searcher;
     private volatile boolean searcherDone = true;
+    private static PropertyChangeSupport pcs = null;
     private Map<Keyword, List<FsContent>> currentResults;
     private volatile int messageID = 0;
+    private boolean processedFiles;
     private volatile boolean finalRun = false;
+    private volatile boolean finalRunComplete = false;
     private final String hashDBServiceName = "Hash Lookup";
     private SleuthkitCase caseHandle = null;
+  
     // TODO: use a more robust method than checking file extension to determine
     // whether to try a file
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
@@ -108,6 +114,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             //notify depending service that keyword search (would) encountered error for this file
             return ProcessResult.ERROR;
         }
+        
+        if (processedFiles == false)
+            processedFiles = true;
 
         //check if time to commit and previous search is not running
         //commiting while searching causes performance issues
@@ -151,11 +160,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         updateKeywords();
         //run one last search as there are probably some new files committed
-        if (keywords != null && !keywords.isEmpty()) {
+        if (keywords != null && !keywords.isEmpty() && processedFiles == true) {
             finalRun = true;
             searcher = new Searcher(keywords);
             searcher.execute();
         } else {
+            finalRunComplete = true;
             managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
         }
         //postSummary();
@@ -191,6 +201,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
 
         this.managerProxy = managerProxy;
+        
+        //this deregisters previously registered listeners at every init()
+        pcs = new PropertyChangeSupport(KeywordSearchIngestService.class);
 
         final Server.Core solrCore = KeywordSearch.getServer().getCore();
         ingester = solrCore.getIngester();
@@ -209,7 +222,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             managerProxy.postMessage(IngestMessage.createWarningMessage(++messageID, instance, "No keywords in keyword list.", "Only indexing will be done and and keyword search will be skipped (it can be executed later again as ingest or using toolbar search feature)."));
         }
 
+        processedFiles = false;
         finalRun = false;
+        finalRunComplete = false;
         searcherDone = true; //make sure to start the initial searcher
         //keeps track of all results per run not to repeat reporting the same hits
         currentResults = new HashMap<Keyword, List<FsContent>>();
@@ -270,6 +285,17 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         //no need to check timer thread
 
+    }
+    
+    @Override
+    public synchronized boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
+        if (finalRunComplete == true)
+            return false;
+        else {
+            pcs.addPropertyChangeListener(l);
+            return true;
+        }
+       
     }
 
     private void commit() {
@@ -468,11 +494,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             if (fsContent.getSize() < MAX_STRING_EXTRACT_SIZE) {
                 if (!extractAndIngest(fsContent)) {
                     logger.log(Level.INFO, "Failed to extract strings and ingest, file '" + fsContent.getName() + "' (id: " + fsContent.getId() + ").");
+                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                 } else {
                     ingestStatus.put(fsContent.getId(), IngestStatus.EXTRACTED_INGESTED);
                 }
             } else {
-                ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+                //ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
             }
         }
     }
@@ -499,6 +526,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
                 @Override
                 public boolean cancel() {
+                    finalRunComplete = true;
                     return Searcher.this.cancel(true);
                 }
             });
@@ -655,9 +683,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
             //logger.log(Level.INFO, "Finished search");
             if (finalRun) {
+                finalRunComplete = true;
                 keywords.clear();
                 keywordLists.clear();
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
+                pcs.firePropertyChange(IngestServiceAbstract.BCKGRND_JOBS_COMPLETED_EVT, null, KeywordSearchIngestService.this);
             }
         }
     }

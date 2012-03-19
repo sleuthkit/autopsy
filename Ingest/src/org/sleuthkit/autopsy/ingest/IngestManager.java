@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.DateFormat;
@@ -139,7 +140,7 @@ public class IngestManager {
      * @param images images to execute services on
      */
     void execute(final List<IngestServiceAbstract> services, final List<Image> images) {
-        logger.log(Level.INFO, "Will enqueue number of images: " + images.size());
+        logger.log(Level.INFO, "Will enqueue number of images: " + images.size() + " to " + services.size() + " services.");
 
         if (!isIngestRunning()) {
             ui.clearMessages();
@@ -443,8 +444,9 @@ public class IngestManager {
      */
     public static List<IngestServiceImage> enumerateImageServices() {
         List<IngestServiceImage> ret = new ArrayList<IngestServiceImage>();
-        for (IngestServiceImage list : Lookup.getDefault().lookupAll(IngestServiceImage.class))
+        for (IngestServiceImage list : Lookup.getDefault().lookupAll(IngestServiceImage.class)) {
             ret.add(list);
+        }
         return ret;
     }
 
@@ -453,8 +455,9 @@ public class IngestManager {
      */
     public static List<IngestServiceFsContent> enumerateFsContentServices() {
         List<IngestServiceFsContent> ret = new ArrayList<IngestServiceFsContent>();
-        for (IngestServiceFsContent list : Lookup.getDefault().lookupAll(IngestServiceFsContent.class))
+        for (IngestServiceFsContent list : Lookup.getDefault().lookupAll(IngestServiceFsContent.class)) {
             ret.add(list);
+        }
         return ret;
     }
 
@@ -750,7 +753,7 @@ public class IngestManager {
         public synchronized String toString() {
             return "FsContentQueue, size: " + Integer.toString(fsContentUnits.size());
         }
-        
+
         public String printQueue() {
             StringBuilder sb = new StringBuilder();
             for (QueueUnit<FsContent, IngestServiceFsContent> u : fsContentUnits) {
@@ -903,7 +906,7 @@ public class IngestManager {
             hash = 37 * hash + (this.services != null ? this.services.hashCode() : 0);
             return hash;
         }
-        
+
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
@@ -1134,16 +1137,61 @@ public class IngestManager {
                 handleInterruption();
                 logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
             } finally {
-                stats.end();
+                //stats.end();
                 progress.finish();
 
                 if (!this.isCancelled()) {
-                    logger.log(Level.INFO, "Summary Report: " + stats.toString());
-                    ui.displayReport(stats.toHtmlString());
+                    //logger.log(Level.INFO, "Summary Report: " + stats.toString());
+                    //ui.displayReport(stats.toHtmlString());
+                    new FsServicesComplete(stats);
                 }
                 initMainProgress(0);
             }
 
+        }
+
+        /**
+         * Ensures that all background threads are done
+         * then finalize the stats and show dialog
+         */
+        private class FsServicesComplete {
+
+            private IngestManagerStats stats; //ongoing stats
+            private List<IngestServiceAbstract> running = new ArrayList<IngestServiceAbstract>();
+
+            FsServicesComplete(IngestManagerStats stats) {
+                this.stats = stats;
+
+                for (IngestServiceAbstract s : fsContentServices) {
+                    if (s.backgroundJobsCompleteListener(new PropertyChangeListener() {
+
+                        @Override
+                        public void propertyChange(PropertyChangeEvent evt) {
+                            if (evt.getPropertyName().equals(IngestServiceAbstract.BCKGRND_JOBS_COMPLETED_EVT)) {
+                                IngestServiceAbstract service = (IngestServiceAbstract) evt.getNewValue();
+                                running.remove(service);
+                                if (running.isEmpty()) {
+                                    showStats();
+                                }
+                            }
+                        }
+                    })) {
+                        running.add(s);
+                    }
+                }
+
+                //no listeners registered since no services running any longer
+                if (running.isEmpty()) {
+                    showStats();
+                }
+
+            }
+
+            void showStats() {
+                stats.end();
+                logger.log(Level.INFO, "Summary Report: " + stats.toString());
+                ui.displayReport(stats.toHtmlString());
+            }
         }
 
         private void handleInterruption() {
@@ -1254,9 +1302,9 @@ public class IngestManager {
                     progress.progress(serviceName + " " + imageName, ++processed);
                 }
             }
-            
+
             //logger.log(Level.INFO, fsContentQueue.printQueue());
-            
+
             progress.progress("Sorting files", processed);
             sortFsContents();
         }

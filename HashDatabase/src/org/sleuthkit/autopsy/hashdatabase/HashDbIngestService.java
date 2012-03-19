@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -204,6 +205,11 @@ public class HashDbIngestService implements IngestServiceFsContent {
     
     @Override
     public boolean hasBackgroundJobsRunning() {
+        return false;
+    }
+    
+    @Override
+    public boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
         return false;
     }
     

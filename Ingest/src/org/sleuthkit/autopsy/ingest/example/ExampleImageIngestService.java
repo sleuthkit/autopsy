@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest.example;
 
+import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
@@ -144,6 +145,11 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     
     @Override
     public boolean hasBackgroundJobsRunning() {
+        return false;
+    }
+    
+    @Override
+    public boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
         return false;
     }
     
