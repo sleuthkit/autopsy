@@ -844,7 +844,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
         }
 
-        class TableEntry implements Comparable {
+        class TableEntry implements Comparable<TableEntry> {
 
             Keyword keyword;
 
@@ -853,12 +853,12 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             }
 
             @Override
-            public int compareTo(Object o) {
-                int keywords = this.keyword.getQuery().compareTo(((TableEntry) o).keyword.getQuery());
+            public int compareTo(TableEntry te) {
+                int keywords = this.keyword.getQuery().compareTo(te.keyword.getQuery());
                 if (keywords != 0) {
                     return keywords;
                 } else {
-                    return Boolean.valueOf(keyword.isLiteral()).compareTo(((TableEntry) o).keyword.isLiteral());
+                    return Boolean.valueOf(keyword.isLiteral()).compareTo(te.keyword.isLiteral());
                 }
             }
         }

@@ -506,7 +506,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         }
 
         //single model entry
-        private class ListTableEntry implements Comparable {
+        private class ListTableEntry implements Comparable<ListTableEntry> {
 
             String name;
             Boolean selected;
@@ -520,8 +520,8 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             }
 
             @Override
-            public int compareTo(Object o) {
-                return this.name.compareTo(((ListTableEntry) o).name);
+            public int compareTo(ListTableEntry e) {
+                return this.name.compareTo(e.name);
             }
         }
     }
@@ -606,7 +606,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         }
         
         //single model entry
-        private class KeywordTableEntry implements Comparable {
+        private class KeywordTableEntry implements Comparable<KeywordTableEntry> {
 
             String name;
             Boolean regex;
@@ -617,8 +617,8 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             }
 
             @Override
-            public int compareTo(Object o) {
-                return this.name.compareTo(((KeywordTableEntry) o).name);
+            public int compareTo(KeywordTableEntry e) {
+                return this.name.compareTo(e.name);
             }
         }
     }

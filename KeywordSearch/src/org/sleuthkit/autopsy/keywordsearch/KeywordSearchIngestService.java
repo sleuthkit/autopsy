@@ -68,7 +68,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     //private final Object lock = new Object();
     private Thread timer;
     private Indexer indexer;
-    private SwingWorker searcher;
+    private Searcher searcher;
     private volatile boolean searcherDone = true;
     private static PropertyChangeSupport pcs = null;
     private Map<Keyword, List<FsContent>> currentResults;
@@ -504,7 +504,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
     }
 
-    private class Searcher extends SwingWorker {
+    private class Searcher extends SwingWorker<Object,Void> {
 
         private List<Keyword> keywords;
         private ProgressHandle progress;

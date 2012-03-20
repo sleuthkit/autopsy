@@ -298,7 +298,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         logger.log(Level.INFO, "Executing TermsComponent query: " + q.toString());
 
-        final SwingWorker worker = new TermsQueryWorker(q);
+        final SwingWorker<List<Term>, Void> worker = new TermsQueryWorker(q);
         worker.execute();
     }
 

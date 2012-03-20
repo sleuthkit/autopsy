@@ -396,7 +396,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         }
 
         //single model entry
-        class TableEntry implements Comparable {
+        class TableEntry implements Comparable<TableEntry> {
 
             String name;
 
@@ -405,8 +405,8 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
             }
 
             @Override
-            public int compareTo(Object o) {
-                return this.name.compareTo(((TableEntry) o).name);
+            public int compareTo(TableEntry te) {
+                return this.name.compareTo(te.name);
             }
         }
     }
