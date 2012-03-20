@@ -64,18 +64,25 @@ public interface IngestServiceAbstract {
      /**
      * A service can manage and use additional threads to perform some work in the background.
      * This method provides insight to the manager if the service has truly completed its work or not.
+     *
+     * 
      * @return true if any background threads/workers managed by this service are still running
-     * false if all work has been done, or if background threads are not used by this service
+     * false if all work has been done, or if background threads are not managed by this service
      */
     public boolean hasBackgroundJobsRunning();
     
     /**
-     * Register listener to notify when all background jobs have completed and the service 
-     * has truly finished.  The service should first check if it has threads running, and then register the listener, all in atomic operation.
-     * The event fired off should be BCKGRND_JOBS_COMPLETED_EVT, with the instance of IngestServiceAbstract in the newValue parameter.
+     * Register listener to notify when all background jobs managed by this service have completed and the service 
+     * has truly finished.  The service should first check if it has threads running, and then register the listener, all in a single atomic, synchronized operation, and return the result of the registration.
+     * Do not register the listener if the background threads are not running and will not run during this service invocation.
+     * If the service does use background threads it is required to implement this method properly and ensure the event is fired when the service-managed threads complete (are finished or cancelled)
+     * The event fired off should be IngestServiceAbstract.BCKGRND_JOBS_COMPLETED_EVT, with the instance of IngestServiceAbstract in the newValue parameter.
+     * The listeners should be reset at service init() - listeners are expected to register again as needed during the new service run.
+     * Typical use case is for ingest manager to try to register the listener for every service when the queue has been consumed,
+     * for a precise indication when all work is truly done.
      * 
      * @param l listener
-     * @return true if listener registered, false otherwise (i.e. no background jobs were running)
+     * @return true if listener registered, false otherwise (i.e. no background jobs were running, or the service does not manage additional threads)
      */
     public boolean backgroundJobsCompleteListener(PropertyChangeListener l);
     

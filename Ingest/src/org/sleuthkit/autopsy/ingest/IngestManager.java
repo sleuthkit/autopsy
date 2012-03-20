@@ -960,14 +960,10 @@ public class IngestManager {
         public String toHtmlString() {
             StringBuilder sb = new StringBuilder();
             sb.append("<html>");
-            if (startTime != null) {
-                sb.append("Start time: ").append(dateFormatter.format(startTime)).append("<br />");
-            }
-            if (endTime != null) {
-                sb.append("End time: ").append(dateFormatter.format(endTime)).append("<br />");
-            }
-            sb.append("Total ingest time: ").append(getTotalTimeString()).append("<br />");
+            
+            sb.append("Ingest time: ").append(getTotalTimeString()).append("<br />");
             sb.append("Total errors: ").append(errorsTotal).append("<br />");
+            /*
             if (errorsTotal > 0) {
                 sb.append("Errors per service:");
                 for (IngestServiceAbstract service : errors.keySet()) {
@@ -975,6 +971,8 @@ public class IngestManager {
                     sb.append("\t").append(service.getName()).append(": ").append(errorsService).append("<br />");
                 }
             }
+             * */
+            
             sb.append("</html>");
             return sb.toString();
         }

@@ -229,8 +229,8 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     @Override
     public void displayReport(String ingestReport) {
 
-        Object[] options = {"Generate Report",
-            "Cancel"};
+        Object[] options = {"OK",
+            "Generate Report"};
         final int choice = JOptionPane.showOptionDialog(null,
                 ingestReport,
                 "Ingest Report",
@@ -244,7 +244,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
         Action reportAction = null;
         
         //find action by name from action lookup, without introducing cyclic dependency
-        if (choice == JOptionPane.YES_OPTION) {
+        if (choice == JOptionPane.NO_OPTION) {
             List<? extends Action> actions = Utilities.actionsForPath("Toolbars/File");
             for (Action a : actions) {
                 //separators are null actions
