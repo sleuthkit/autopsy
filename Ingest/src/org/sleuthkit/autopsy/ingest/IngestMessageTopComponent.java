@@ -20,13 +20,15 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -103,22 +105,22 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
         if (manager == null) {
             manager = IngestManager.getDefault();
         }
-        
+
     }
 
     @Override
     public void componentClosed() {
         //logger.log(Level.INFO, "CLOSED");
         super.componentClosed();
-        
+
         /*
         Mode mode = WindowManager.getDefault().findMode("dockedBottom");
         if (mode != null) {
-            mode.dockInto(this);
-            this.open();
+        mode.dockInto(this);
+        this.open();
         }
          * */
-         
+
         //this.close();
     }
 
@@ -126,7 +128,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     protected void componentShowing() {
         //logger.log(Level.INFO, "SHOWING");
         super.componentShowing();
-        
+
         Mode mode = WindowManager.getDefault().findMode("floatingLeftBottom");
         if (mode != null) {
             TopComponent[] tcs = mode.getTopComponents();
@@ -138,7 +140,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
             }
             mode.dockInto(this);
             this.open();
-        }                
+        }
     }
 
     @Override
@@ -151,7 +153,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     @Override
     protected void componentActivated() {
         //logger.log(Level.INFO, "ACTIVATED");
-        super.componentActivated();   
+        super.componentActivated();
     }
 
     @Override
@@ -226,11 +228,40 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
      */
     @Override
     public void displayReport(String ingestReport) {
-        JOptionPane.showMessageDialog(
-                null,
+
+        Object[] options = {"Generate Report",
+            "Cancel"};
+        final int choice = JOptionPane.showOptionDialog(null,
                 ingestReport,
-                "File Ingest Summary",
-                JOptionPane.INFORMATION_MESSAGE);
+                "Ingest Report",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                options,
+                options[0]);
+
+        final String reportActionName = "org.sleuthkit.autopsy.report.reportAction";
+        Action reportAction = null;
+        
+        //find action by name from action lookup, without introducing cyclic dependency
+        if (choice == JOptionPane.YES_OPTION) {
+            List<? extends Action> actions = Utilities.actionsForPath("Toolbars/File");
+            for (Action a : actions) {
+                //separators are null actions
+                if (a != null) {
+                    if (a.getClass().getCanonicalName().equals(reportActionName)) {
+                        reportAction = a;
+                        break;
+                    }
+                }
+            }
+            
+            if (reportAction == null)
+                logger.log(Level.SEVERE, "Could not locate Action: " + reportActionName);
+            else reportAction.actionPerformed(null);
+        
+        }
+
     }
 
     /**
@@ -261,7 +292,6 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
         ingestDialog.setImage(image);
         ingestDialog.display();    
          */
-
     }
 
     @Override
