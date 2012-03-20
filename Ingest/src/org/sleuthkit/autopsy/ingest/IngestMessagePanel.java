@@ -555,7 +555,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         static Color VERY_HIGH_PRI_COLOR = new Color(164, 164, 202); //for a single message in a group
         static Color HIGH_PRI_COLOR = new Color(180, 180, 211);
-        static Color MED_PRI_COLOR = new Color(199, 199, 202);
+        static Color MED_PRI_COLOR = new Color(199, 199, 222);
         static Color LOW_PRI_COLOR = new Color(221, 221, 235);
         private List<IngestMessage> messages;
         private int count;
