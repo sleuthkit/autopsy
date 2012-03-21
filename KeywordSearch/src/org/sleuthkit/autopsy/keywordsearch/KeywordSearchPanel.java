@@ -50,6 +50,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
     private static final Logger logger = Logger.getLogger(KeywordSearchPanel.class.getName());
     private KeywordPropertyChangeListener listener;
     private boolean active = false;
+    private boolean entered = false;
 
     /** Creates new form KeywordSearchPanel */
     public KeywordSearchPanel() {
@@ -71,6 +72,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
                 if (searchBox.getText().equals("Search...")) {
                     searchBox.setText("");
                     searchBox.setForeground(Color.BLACK);
+                    entered = true;
                 }
             }
             @Override
@@ -118,6 +120,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         searchBox.setText("Search...");
         searchBox.setForeground(Color.LIGHT_GRAY);
         regExCheckboxMenuItem.setEnabled(true);
+        entered = false;
     }
 
     /** This method is called from within the constructor to
@@ -135,6 +138,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         searchBoxPanel = new javax.swing.JPanel();
         searchBox = new javax.swing.JTextField();
         settingsLabel = new javax.swing.JLabel();
+        searchButton = new javax.swing.JLabel();
         listsButton = new javax.swing.JButton();
 
         regExCheckboxMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.regExCheckboxMenuItem.text")); // NOI18N
@@ -156,7 +160,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
             }
         });
 
-        settingsLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/search-icon.png"))); // NOI18N
+        settingsLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon.png"))); // NOI18N
         settingsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.settingsLabel.text")); // NOI18N
         settingsLabel.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 2, 1, 2));
         settingsLabel.setEnabled(false);
@@ -164,8 +168,27 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         settingsLabel.setMinimumSize(new java.awt.Dimension(23, 20));
         settingsLabel.setPreferredSize(new java.awt.Dimension(23, 20));
         settingsLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                settingsLabelMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                settingsLabelMouseExited(evt);
+            }
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 settingsLabelMousePressed(evt);
+            }
+        });
+
+        searchButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/search-icon.png"))); // NOI18N
+        searchButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.searchButton.text")); // NOI18N
+        searchButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 2, 1, 2));
+        searchButton.setEnabled(false);
+        searchButton.setMaximumSize(new java.awt.Dimension(23, 20));
+        searchButton.setMinimumSize(new java.awt.Dimension(23, 20));
+        searchButton.setPreferredSize(new java.awt.Dimension(23, 20));
+        searchButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                searchButtonMousePressed(evt);
             }
         });
 
@@ -174,18 +197,28 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         searchBoxPanelLayout.setHorizontalGroup(
             searchBoxPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(searchBoxPanelLayout.createSequentialGroup()
-                .addComponent(settingsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(settingsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 9, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(searchBox, javax.swing.GroupLayout.DEFAULT_SIZE, 216, Short.MAX_VALUE))
+                .addComponent(searchBox, javax.swing.GroupLayout.DEFAULT_SIZE, 202, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(searchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         searchBoxPanelLayout.setVerticalGroup(
             searchBoxPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(searchBox)
-            .addComponent(settingsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 22, Short.MAX_VALUE)
+            .addGroup(searchBoxPanelLayout.createSequentialGroup()
+                .addGroup(searchBoxPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(searchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(settingsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(searchBox, javax.swing.GroupLayout.PREFERRED_SIZE, 20, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
+        listsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/watchbutton-icon.png"))); // NOI18N
         listsButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.listsButton.text")); // NOI18N
+        listsButton.setContentAreaFilled(false);
         listsButton.setEnabled(false);
+        listsButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/watchbutton-icon-rollover.png"))); // NOI18N
+        listsButton.setRolloverSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/watchbutton-icon-pressed.png"))); // NOI18N
         listsButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 listsButtonMousePressed(evt);
@@ -202,20 +235,23 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(listsButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(searchBoxPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 245, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(9, 9, 9))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 18, Short.MAX_VALUE)
+                .addComponent(searchBoxPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(searchBoxPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
-            .addComponent(listsButton, javax.swing.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE)
+            .addComponent(searchBoxPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(listsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchBoxActionPerformed
+        if(!entered)
+            return;
         getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             search();
@@ -236,12 +272,25 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         // TODO add your handling code here:
     }//GEN-LAST:event_listsButtonActionPerformed
 
+    private void searchButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_searchButtonMousePressed
+        searchBoxActionPerformed(null);
+    }//GEN-LAST:event_searchButtonMousePressed
+
+    private void settingsLabelMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_settingsLabelMouseEntered
+        settingsLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon-rollover.png")));
+    }//GEN-LAST:event_settingsLabelMouseEntered
+
+    private void settingsLabelMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_settingsLabelMouseExited
+        settingsLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon.png")));
+    }//GEN-LAST:event_settingsLabelMouseExited
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton listsButton;
     private javax.swing.JPopupMenu listsMenu;
     private javax.swing.JCheckBoxMenuItem regExCheckboxMenuItem;
     private javax.swing.JTextField searchBox;
     private javax.swing.JPanel searchBoxPanel;
+    private javax.swing.JLabel searchButton;
     private javax.swing.JLabel settingsLabel;
     private javax.swing.JPopupMenu settingsMenu;
     // End of variables declaration//GEN-END:variables
@@ -304,6 +353,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
             regExCheckboxMenuItem.setEnabled(enabled);
             settingsLabel.setEnabled(enabled);
             listsButton.setEnabled(enabled);
+            searchButton.setEnabled(enabled);
             active = enabled;
         }
     }
