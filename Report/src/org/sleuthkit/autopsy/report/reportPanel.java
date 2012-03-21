@@ -44,6 +44,8 @@ public class reportPanel extends javax.swing.JPanel {
         jButton1 = new javax.swing.JButton();
         saveReport = new javax.swing.JButton();
 
+        setFocusTraversalPolicyProvider(true);
+
         jEditorPane1.setContentType(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.jEditorPane1.contentType")); // NOI18N
         jEditorPane1.setEditable(false);
         jScrollPane1.setViewportView(jEditorPane1);

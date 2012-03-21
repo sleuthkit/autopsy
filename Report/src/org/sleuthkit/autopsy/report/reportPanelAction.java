@@ -97,7 +97,7 @@ public class reportPanelAction {
             // add the panel to the popup window
             popUpWindow.add(panel);
             popUpWindow.pack();
-            popUpWindow.setResizable(false);
+            popUpWindow.setResizable(true);
         
             // set the location of the popUp Window on the center of the screen
             Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
@@ -107,7 +107,7 @@ public class reportPanelAction {
          
             popUpWindow.setVisible(true);
             rr.progBarDone();
-            // add the command to close the window to the button on the Case Properties form / panel
+           
          }
         } catch (Exception ex) {
             Log.get(reportFilterAction.class).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
