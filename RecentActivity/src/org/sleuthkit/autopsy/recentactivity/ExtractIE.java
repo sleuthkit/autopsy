@@ -292,9 +292,7 @@ public class ExtractIE { // implements BrowserActivity {
                                         PASCO_RESULTS_LIST.add(PASCO_RESULTS_LUT);
                                     } catch (TskException ex) {
                                         Exceptions.printStackTrace(ex);
-                                    } catch (SQLException ex) {
-                                        logger.log(Level.WARNING, "Couldn't find file with id: " + artObjId, ex);
-                                    }
+                                    } 
                                 }
 
                             }

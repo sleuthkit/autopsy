@@ -38,8 +38,8 @@ public class reportXML {
          String caseName = currentCase.getName();
          Integer imagecount = currentCase.getImageIDs().length;
          Integer filesystemcount = currentCase.getRootObjectsCount();
-         Integer totalfiles = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG);
-         Integer totaldirs = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR);
+         Integer totalfiles = 0; //skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG);
+         Integer totaldirs = 0; //skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR);
          Element root = new Element("Case");
          xmldoc = new Document(root);
          DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
