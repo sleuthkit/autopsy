@@ -89,8 +89,8 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
              SleuthkitCase skCase = currentCase.getSleuthkitCase();
              String caseName = currentCase.getName();
              Integer imagecount = currentCase.getImageIDs().length;
-             Integer totalfiles = 0; //skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG);
-             Integer totaldirs = 0; //skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR);
+             Integer totalfiles = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG);
+             Integer totaldirs = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR);
              int reportsize = report.size();
              Integer filesystemcount = currentCase.getRootObjectsCount();
              DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
