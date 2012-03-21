@@ -31,6 +31,8 @@ public class Chrome {
            + "datetime(urls.last_visit_time/1000000-11644473600,'unixepoch','localtime') as last_visit_time, urls.hidden, visits.visit_time, visits.from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
    public static final String chcookiequery = "select name, value, host, expires_utc, datetime(last_access_utc/1000000-11644473600,'unixepoch','localtime') as last_access_utc, creation_utc from cookies";
    public static final String chbookmarkquery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count, datetime(urls.last_visit_time/1000000-11644473600,'unixepoch','localtime') as urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
+   public static final String chdownloadquery = "select full_path, url, start_time, received_bytes  from `downloads`";
+   public static final String chloginquery = "select origin_url, username_value, signon_realm from `logins`";
    private final Logger logger = Logger.getLogger(this.getClass().getName());
    public int ChromeCount = 0;
     
@@ -82,7 +84,7 @@ public class Chrome {
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","",temprs.getString("url")));
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Accessed",temprs.getString("last_visit_time")));
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),"RecentActivity","",temprs.getString("from_visit")));
-                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),"RecentActivity","",((temprs.getString("title") != null) ? temprs.getString("title") : "No Title")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),"RecentActivity","",((temprs.getString("title") != null) ? temprs.getString("title") : "")));
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
                       bbart.addAttributes(bbattributes);
                      
@@ -144,7 +146,7 @@ public class Chrome {
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", temprs.getString("host")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),"RecentActivity", "Last Visited",temprs.getString("access_utc")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),"RecentActivity", "",temprs.getString("value")));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","Title",((temprs.getString("name") != null) ? temprs.getString("name") : "No name")));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","Title",((temprs.getString("name") != null) ? temprs.getString("name") : "")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
                      bbart.addAttributes(bbattributes);
                    } 
@@ -202,8 +204,132 @@ public class Chrome {
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",temprs.getString("last_visit_time")));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("url") != null) ? temprs.getString("url") : "No URL")));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "No Title")));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("url") != null) ? temprs.getString("url") : "")));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "")));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
+                     bbart.addAttributes(bbattributes);
+                      
+                   } 
+                   tempdbconnect.closeConnection();
+                   temprs.close();
+                    
+                 }
+                 catch (Exception ex)
+                 {
+                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex);      
+                 }
+                j++;
+                dbFile.delete();
+            }
+        }
+        catch (SQLException ex) 
+        {
+           logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
+        }
+        catch(IOException ioex)
+        {   
+            logger.log(Level.WARNING, "Error while trying to write to the file system.", ioex);
+        } 
+         
+          //Downloads section
+          // This gets the downloads info
+         try 
+         {   
+            Case currentCase = Case.getCurrentCase(); // get the most updated case
+            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+            List<FsContent> FFSqlitedb;  
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' and parent_path LIKE '%Chrome%' and fs_obj_id = '" + image + "'");
+            FFSqlitedb = tempDb.resultSetToFsContents(rs);
+            rs.close();
+            rs.getStatement().close();  
+            
+            int j = 0;
+     
+            while (j < FFSqlitedb.size())
+            {
+                String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                String connectionString = "jdbc:sqlite:" + temps;
+                ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                File dbFile = new File(temps);
+                if (controller.isCancelled() ) {
+                 dbFile.delete();
+                 break;
+                }  
+                 try
+                {
+                   dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connectionString);
+                   ResultSet temprs = tempdbconnect.executeQry(chdownloadquery);  
+                   while(temprs.next()) 
+                   {
+                      BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD); 
+                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",temprs.getString("start_time")));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("url") != null) ? temprs.getString("url") : "")));
+                     //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "")));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", "", temprs.getString("full_path")));
+                     
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
+                     bbart.addAttributes(bbattributes);
+                      
+                   } 
+                   tempdbconnect.closeConnection();
+                   temprs.close();
+                    
+                 }
+                 catch (Exception ex)
+                 {
+                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex);      
+                 }
+                j++;
+                dbFile.delete();
+            }
+        }
+        catch (SQLException ex) 
+        {
+           logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
+        }
+        catch(IOException ioex)
+        {   
+            logger.log(Level.WARNING, "Error while trying to write to the file system.", ioex);
+        } 
+         
+          //Login/Password section
+          // This gets the user info
+         try 
+         {   
+            Case currentCase = Case.getCurrentCase(); // get the most updated case
+            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+            List<FsContent> FFSqlitedb;  
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'signons.sqlite' and parent_path LIKE '%Chrome%' and fs_obj_id = '" + image + "'");
+            FFSqlitedb = tempDb.resultSetToFsContents(rs);
+            rs.close();
+            rs.getStatement().close();  
+            
+            int j = 0;
+     
+            while (j < FFSqlitedb.size())
+            {
+                String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                String connectionString = "jdbc:sqlite:" + temps;
+                ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                File dbFile = new File(temps);
+                if (controller.isCancelled() ) {
+                 dbFile.delete();
+                 break;
+                }  
+                 try
+                {
+                   dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connectionString);
+                   ResultSet temprs = tempdbconnect.executeQry(chloginquery);  
+                   while(temprs.next()) 
+                   {
+                      BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY); 
+                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                     //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",temprs.getString("start_time")));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("origin_url") != null) ? temprs.getString("origin_url") : "")));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "RecentActivity","", ((temprs.getString("username_value") != null) ? temprs.getString("username_value").replaceAll("'", "''") : "")));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", "", temprs.getString("signon_realm")));
+                     
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
                      bbart.addAttributes(bbattributes);
                       
