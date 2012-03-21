@@ -129,17 +129,17 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             formatted_Report.append("<li># of Files: ").append(totalfiles.toString()).append("</li>");
             formatted_Report.append("<li># of Dirs: ").append(totaldirs.toString()).append("</li>");
             formatted_Report.append("<li># of Artifacts: ").append(reportsize).append("</li>");
-            String tableHeader = "<table><thead><tr><th>Artifact ID</th><th>Name</th><th>Size</th>";
+            String tableHeader = "<table><thead><tr>";
              StringBuilder nodeGen = new StringBuilder("<h3>General Information (").append(countGen).append(")</h3>").append(tableHeader).append("<th>Attribute</th><th>Value</th></tr></thead><tbody>");
              StringBuilder nodeWebBookmark =  new StringBuilder("<h3>Web Bookmarks (").append(countWebBookmark).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Title</th><th>Program</th></tr></thead><tbody>");
              StringBuilder nodeWebCookie =  new StringBuilder("<h3>Web Cookies (").append(countWebCookie).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Date</th><th>Name</th><th>Value</th><th>Program</th></tr></thead><tbody>");
              StringBuilder nodeWebHistory =  new StringBuilder("<h3>Web History (").append(countWebHistory).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Date</th><th>Referrer</th><th>Title</th><th>Program</th></tr></thead><tbody>");
-             StringBuilder nodeWebDownload =  new StringBuilder("<h3>Web Downloads (").append(countWebDownload).append(")</h3>").append(tableHeader).append("<th>Attribute</th><th>Value</th></tr></thead><tbody>");
-             StringBuilder nodeRecentObjects =  new StringBuilder("<h3>Recent Documents (").append(countRecentObjects).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Path</th></tr></thead><tbody>");
-             StringBuilder nodeTrackPoint =  new StringBuilder("<h3>Track Points (").append(countTrackPoint).append(")</h3>").append(tableHeader).append("<th>Attribute</th><th>Value</th></tr></thead><tbody>");
-             StringBuilder nodeInstalled =  new StringBuilder("<h3>Installed Programs (").append(countInstalled).append(")</h3>").append(tableHeader).append("<th>Attribute</th><th>Value</th></tr></thead><tbody>");
+             StringBuilder nodeWebDownload =  new StringBuilder("<h3>Web Downloads (").append(countWebDownload).append(")</h3>").append(tableHeader).append("<th>File</th><th>Source</th><th>Time</th><th>Program</th></tr></thead><tbody>");
+             StringBuilder nodeRecentObjects =  new StringBuilder("<h3>Recent Documents (").append(countRecentObjects).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Name</th><th>Path</th></tr></thead><tbody>");
+             StringBuilder nodeTrackPoint =  new StringBuilder("<h3>Track Points (").append(countTrackPoint).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Attribute</th><th>Value</th></tr></thead><tbody>");
+             StringBuilder nodeInstalled =  new StringBuilder("<h3>Installed Programs (").append(countInstalled).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Attribute</th><th>Value</th></tr></thead><tbody>");
              StringBuilder nodeKeyword =  new StringBuilder("<h3>Keyword Search Hits (").append(countKeyword).append(")</h3>");
-             StringBuilder nodeHash =  new StringBuilder("<h3>Hashset Hits (").append(countHash).append(")</h3>").append(tableHeader).append("<th>File Name</th><th>Hashset Name</th></tr></thead><tbody>");
+             StringBuilder nodeHash =  new StringBuilder("<h3>Hashset Hits (").append(countHash).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Hashset Name</th></tr></thead><tbody>");
             
              for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
                  if(reportFilter.cancel == true){
@@ -152,9 +152,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                 FsContent file = skCase.getFsContentById(objId);
            
                 Long filesize = file.getSize();
-                 artifact.append("<tr><td>").append(objId.toString());
-                 artifact.append("</td><td><strong>").append(file.getName().toString()).append("</strong></td>");
-                 artifact.append("<td>").append(filesize.toString()).append("</td>");  
+                
                  
                  TreeMap<Integer, String> attributes = new TreeMap<Integer,String>();
                     // Get all the attributes, line them up to be added.
@@ -177,14 +175,14 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                         nodeGen.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 2){
-                        artifact.append("<td>").append(attributes.get(1)).append("</td>");
+                        artifact.append("<tr><td>").append(attributes.get(1)).append("</td>");
                         artifact.append("<td>").append(attributes.get(3)).append("</td>");
                         artifact.append("<td>").append(attributes.get(4)).append("</td>");
                         artifact.append("</tr>");
                         nodeWebBookmark.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 3){
-                        artifact.append("<td>").append(attributes.get(1)).append("</td>");
+                        artifact.append("<tr><td>").append(attributes.get(1)).append("</td>");
                         artifact.append("<td>").append(attributes.get(2)).append("</td>");
                         artifact.append("<td>").append(attributes.get(3)).append("</td>");
                         artifact.append("<td>").append(attributes.get(6)).append("</td>");
@@ -193,7 +191,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                         nodeWebCookie.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 4){
-                        artifact.append("<td>").append(attributes.get(1)).append("</td>");
+                        artifact.append("<tr><td>").append(attributes.get(1)).append("</td>");
                         artifact.append("<td>").append(attributes.get(2)).append("</td>");
                         artifact.append("<td>").append(attributes.get(32)).append("</td>");
                         artifact.append("<td>").append(attributes.get(3)).append("</td>");
@@ -202,22 +200,31 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                         nodeWebHistory.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 5){
-                        
+                         artifact.append("<tr><td>").append(attributes.get(8)).append("</td>");
+                         artifact.append("<td>").append(attributes.get(1)).append("</td>");  
+                         artifact.append("<td>").append(attributes.get(2)).append("</td>");  
+                         artifact.append("<td>").append(attributes.get(4)).append("</td>");   
                          artifact.append("</tr>");
                          nodeWebDownload.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 6){
-                        
+                         artifact.append("<tr><td>").append(objId.toString());
+                         artifact.append("</td><td><strong>").append(file.getName().toString()).append("</strong></td>");
+                         artifact.append("<td>").append(filesize.toString()).append("</td>");  
                          artifact.append("</tr>");
                          nodeRecentObjects.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 7){
-                        
+                         artifact.append("<tr><td>").append(objId.toString());
+                         artifact.append("</td><td><strong>").append(file.getName().toString()).append("</strong></td>");
+                         artifact.append("<td>").append(filesize.toString()).append("</td>");  
                          artifact.append("</tr>");
                          nodeTrackPoint.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 8){
-                        
+                         artifact.append("<tr><td>").append(objId.toString());
+                         artifact.append("</td><td><strong>").append(file.getName().toString()).append("</strong></td>");
+                         artifact.append("<td>").append(filesize.toString()).append("</td>");  
                          artifact.append("</tr>");
                          nodeInstalled.append(artifact);
                     }
@@ -229,8 +236,10 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                      //    nodeKeyword.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 10){
-                        
-                         artifact.append("<td>").append(attributes.get(31)).append("</td>");
+                         artifact.append("<tr><td>").append(objId.toString());
+                         artifact.append("</td><td><strong>").append(file.getName().toString()).append("</strong></td>");
+                         artifact.append("<td>").append(filesize.toString()).append("</td>");  
+                         //artifact.append("<td>").append(attributes.get(31)).append("</td>");
                          artifact.append("<td>").append(attributes.get(30)).append("</td>");
                          artifact.append("</tr>");
                          nodeHash.append(artifact);
@@ -239,8 +248,8 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                      rr.progBarSet(cc);
              }
             //Add them back in order
-            formatted_Report.append(nodeGen);
-            formatted_Report.append("</tbody></table>");
+            //formatted_Report.append(nodeGen);
+           // formatted_Report.append("</tbody></table>");
             formatted_Report.append(nodeWebBookmark);
             formatted_Report.append("</tbody></table>");
             formatted_Report.append(nodeWebCookie);
@@ -251,8 +260,8 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             formatted_Report.append("</tbody></table>");
             formatted_Report.append(nodeRecentObjects);
             formatted_Report.append("</tbody></table>");
-            formatted_Report.append(nodeTrackPoint);
-            formatted_Report.append("</tbody></table>");
+           // formatted_Report.append(nodeTrackPoint);
+            //formatted_Report.append("</tbody></table>");
             formatted_Report.append(nodeInstalled);
             formatted_Report.append("</tbody></table>");           
             formatted_Report.append(nodeKeyword);

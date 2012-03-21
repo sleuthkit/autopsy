@@ -7,6 +7,9 @@
     <Component class="javax.swing.JOptionPane" name="jOptionPane1">
     </Component>
   </NonVisualComponents>
+  <Properties>
+    <Property name="focusTraversalPolicyProvider" type="boolean" value="true"/>
+  </Properties>
   <AccessibilityProperties>
     <Property name="AccessibleContext.accessibleName" type="java.lang.String" value=""/>
     <Property name="AccessibleContext.accessibleParent" type="javax.accessibility.Accessible" editor="org.netbeans.modules.form.RADVisualComponent$AccessibleParentEditor">
