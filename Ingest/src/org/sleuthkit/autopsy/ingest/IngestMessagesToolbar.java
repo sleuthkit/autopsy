@@ -154,14 +154,15 @@ public class IngestMessagesToolbar extends javax.swing.JPanel {
             final int len = messageStr.length();
             g.setFont(messagesFont);
             
-            int dx = len * 5 + 1;
+            int dx = len * 5 + 5;
             int x = getSize().width - dx;
             if (x<0)
                 x = 0;
+            g.setColor(Color.GRAY);
+            //g.fillRect(x, 1, dx, fontSize);
+            g.fillRoundRect(x, 1, dx, fontSize, 2, 2);
             g.setColor(Color.WHITE);
-            g.fillRect(x, 1, dx, fontSize);
-            g.setColor(Color.BLUE);
-            g.drawString(messageStr, x, fontSize - 1);      
+            g.drawString(messageStr, x+2, fontSize);      
         }
 
         void setMessages(int messages) {
