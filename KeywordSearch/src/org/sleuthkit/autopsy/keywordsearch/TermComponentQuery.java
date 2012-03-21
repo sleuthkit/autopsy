@@ -199,7 +199,8 @@ public class TermComponentQuery implements KeywordSearchQuery {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", KeywordSearchUtil.escapeForBlackBoard(termsQuery)));
 
             //regex match
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", regexMatch));
+            final String regexMatchEscaped = KeywordSearchUtil.escapeForBlackBoard(regexMatch);
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", regexMatchEscaped));
             //list
             if (listName == null) {
                 listName = "";
@@ -214,7 +215,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
             if (keywordQuery != null) {
                 BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
                 if (selType != null) {
-                    BlackboardAttribute selAttr = new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", regexMatch);
+                    BlackboardAttribute selAttr = new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", regexMatchEscaped);
                     attributes.add(selAttr);
                 }
             }
@@ -297,7 +298,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         logger.log(Level.INFO, "Executing TermsComponent query: " + q.toString());
 
-        final SwingWorker worker = new TermsQueryWorker(q);
+        final SwingWorker<List<Term>, Void> worker = new TermsQueryWorker(q);
         worker.execute();
     }
 

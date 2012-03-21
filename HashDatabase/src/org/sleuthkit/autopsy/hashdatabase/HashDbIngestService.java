@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -185,9 +186,6 @@ public class HashDbIngestService implements IngestServiceFsContent {
                 // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
                 logger.log(Level.INFO, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
                 ret = ProcessResult.ERROR;
-            } catch (SQLException ex) {
-                logger.log(Level.WARNING, "Error updating file known status in database", ex);
-                ret = ProcessResult.ERROR;
             } catch (IOException ex) {
                 // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
                 logger.log(Level.INFO, "Error reading file", ex);
@@ -204,6 +202,11 @@ public class HashDbIngestService implements IngestServiceFsContent {
     
     @Override
     public boolean hasBackgroundJobsRunning() {
+        return false;
+    }
+    
+    @Override
+    public boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
         return false;
     }
     

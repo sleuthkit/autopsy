@@ -10,9 +10,11 @@
  */
 package org.sleuthkit.autopsy.report;
 import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-import javax.swing.filechooser.FileFilter;
+import org.jdom.output.XMLOutputter;
 
 /**
  *
@@ -41,6 +43,8 @@ public class reportPanel extends javax.swing.JPanel {
         jEditorPane1 = new javax.swing.JEditorPane();
         jButton1 = new javax.swing.JButton();
         saveReport = new javax.swing.JButton();
+
+        setFocusTraversalPolicyProvider(true);
 
         jEditorPane1.setContentType(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.jEditorPane1.contentType")); // NOI18N
         jEditorPane1.setEditable(false);
@@ -121,13 +125,19 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     
     private void exportReport(String path){
         
-        path = reportUtils.changeExtension(path, ".html");
+       String htmlpath = reportUtils.changeExtension(path, ".html");
+       String xmlpath = reportUtils.changeExtension(path, ".xml");
          try {
-                  FileOutputStream out = new FileOutputStream(path);
+                  FileOutputStream out = new FileOutputStream(htmlpath);
                   out.write(reportHTML.formatted_Report.toString().getBytes());
                   out.flush();
                   out.close();
                   
+                  FileOutputStream xmlout = new FileOutputStream(xmlpath);
+                  XMLOutputter serializer = new XMLOutputter();
+                  serializer.output(reportXML.xmldoc, xmlout);
+                  xmlout.flush();
+                  xmlout.close();
                    jOptionPane1.showMessageDialog(this, "Report has been successfully saved!");
                 }
             catch (IOException e) {

@@ -18,12 +18,13 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.beans.PropertyChangeListener;
+import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JPanel;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -80,7 +81,28 @@ public final class RAImageIngestService implements IngestServiceImage {
 
         try {
             //do the work for(FileSystem img : imageFS )
+            try{
+           ResultSet artset = sCurrentCase.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
+               int artcount = 0; 
+           while (artset.next()){
+              artcount++;
+              }
+       
+         //  artset.beforeFirst();
+               if(artcount > 0)
+               {
 
+               }
+               else
+               {
+                   int artint = sCurrentCase.addArtifactType("TSK_SYS_INFO", "System Information"); 
+               }
+           
+            }
+            catch(Exception e)
+            {
+              
+            }
             ext.extractToBlackboard(controller, fsIds);
 
 
@@ -160,6 +182,12 @@ public final class RAImageIngestService implements IngestServiceImage {
     
     @Override
     public boolean hasBackgroundJobsRunning() {
+        return false;
+    }
+    
+    
+    @Override
+    public boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
         return false;
     }
 }
