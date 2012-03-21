@@ -145,8 +145,6 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     private static Content getAssociatedContent(BlackboardArtifact artifact){
         try {
             return artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "SQL query threw exception", ex);
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Getting file failed", ex);
         }
