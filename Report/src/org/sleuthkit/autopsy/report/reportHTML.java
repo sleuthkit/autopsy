@@ -134,7 +134,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
              StringBuilder nodeWebBookmark =  new StringBuilder("<h3>Web Bookmarks (").append(countWebBookmark).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Title</th><th>Program</th></tr></thead><tbody>");
              StringBuilder nodeWebCookie =  new StringBuilder("<h3>Web Cookies (").append(countWebCookie).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Date</th><th>Name</th><th>Value</th><th>Program</th></tr></thead><tbody>");
              StringBuilder nodeWebHistory =  new StringBuilder("<h3>Web History (").append(countWebHistory).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Date</th><th>Referrer</th><th>Title</th><th>Program</th></tr></thead><tbody>");
-             StringBuilder nodeWebDownload =  new StringBuilder("<h3>Web Downloads (").append(countWebDownload).append(")</h3>").append(tableHeader).append("<th>Attribute</th><th>Value</th></tr></thead><tbody>");
+             StringBuilder nodeWebDownload =  new StringBuilder("<h3>Web Downloads (").append(countWebDownload).append(")</h3>").append(tableHeader).append("<th>File</th><th>Source</th><th>Time</th><th>Program</th></tr></thead><tbody>");
              StringBuilder nodeRecentObjects =  new StringBuilder("<h3>Recent Documents (").append(countRecentObjects).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Name</th><th>Path</th></tr></thead><tbody>");
              StringBuilder nodeTrackPoint =  new StringBuilder("<h3>Track Points (").append(countTrackPoint).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Attribute</th><th>Value</th></tr></thead><tbody>");
              StringBuilder nodeInstalled =  new StringBuilder("<h3>Installed Programs (").append(countInstalled).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Attribute</th><th>Value</th></tr></thead><tbody>");
@@ -175,14 +175,14 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                         nodeGen.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 2){
-                        artifact.append("<td>").append(attributes.get(1)).append("</td>");
+                        artifact.append("<tr><td>").append(attributes.get(1)).append("</td>");
                         artifact.append("<td>").append(attributes.get(3)).append("</td>");
                         artifact.append("<td>").append(attributes.get(4)).append("</td>");
                         artifact.append("</tr>");
                         nodeWebBookmark.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 3){
-                        artifact.append("<td>").append(attributes.get(1)).append("</td>");
+                        artifact.append("<tr><td>").append(attributes.get(1)).append("</td>");
                         artifact.append("<td>").append(attributes.get(2)).append("</td>");
                         artifact.append("<td>").append(attributes.get(3)).append("</td>");
                         artifact.append("<td>").append(attributes.get(6)).append("</td>");
@@ -191,7 +191,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                         nodeWebCookie.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 4){
-                        artifact.append("<td>").append(attributes.get(1)).append("</td>");
+                        artifact.append("<tr><td>").append(attributes.get(1)).append("</td>");
                         artifact.append("<td>").append(attributes.get(2)).append("</td>");
                         artifact.append("<td>").append(attributes.get(32)).append("</td>");
                         artifact.append("<td>").append(attributes.get(3)).append("</td>");
@@ -200,9 +200,10 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                         nodeWebHistory.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 5){
-                         artifact.append("<tr><td>").append(objId.toString());
-                         artifact.append("</td><td><strong>").append(file.getName().toString()).append("</strong></td>");
-                         artifact.append("<td>").append(filesize.toString()).append("</td>");  
+                         artifact.append("<tr><td>").append(attributes.get(8)).append("</td>");
+                         artifact.append("<td>").append(attributes.get(1)).append("</td>");  
+                         artifact.append("<td>").append(attributes.get(2)).append("</td>");  
+                         artifact.append("<td>").append(attributes.get(4)).append("</td>");   
                          artifact.append("</tr>");
                          nodeWebDownload.append(artifact);
                     }
