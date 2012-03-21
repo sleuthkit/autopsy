@@ -19,6 +19,7 @@ import org.jdom.Document.*;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -27,6 +28,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskData;
 public class reportXML {
     public static Document xmldoc = new Document();
     public reportXML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> report, reportFilter rr){
@@ -36,6 +38,8 @@ public class reportXML {
          String caseName = currentCase.getName();
          Integer imagecount = currentCase.getImageIDs().length;
          Integer filesystemcount = currentCase.getRootObjectsCount();
+         Integer totalfiles = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG);
+         Integer totaldirs = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR);
          Element root = new Element("Case");
          xmldoc = new Document(root);
          DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -47,9 +51,15 @@ public class reportXML {
          root.addContent(comment);
          //Create summary node involving how many of each type
          Element summary = new Element("Summary");
+          if(IngestManager.getDefault().isIngestRunning())
+            {
+              summary.addContent(new Element("Warning").setText("Report was run before ingest services completed!"));
+            }
          summary.addContent(new Element("Name").setText(caseName));
          summary.addContent(new Element("Total-Images").setText(imagecount.toString()));
          summary.addContent(new Element("Total-FileSystems").setText(filesystemcount.toString()));
+         summary.addContent(new Element("Total-Files").setText(totalfiles.toString()));
+         summary.addContent(new Element("Total-Directories").setText(totaldirs.toString()));
          root.addContent(summary);
          //generate the nodes for each of the types so we can use them later
          Element nodeGen = new Element("General-Information");
