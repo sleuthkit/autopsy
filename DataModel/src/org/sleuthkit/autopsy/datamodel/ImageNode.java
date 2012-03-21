@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import javax.swing.Action;
-import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.Image;
 
@@ -51,17 +50,6 @@ public class ImageNode extends AbstractContentNode<Image> {
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg");
     }
 
-    @Override
-    public Cookie getCookie(Class clazz) {
-        Children ch = getChildren();
-
-        if (clazz.isInstance(ch)) {
-            return (Cookie) ch;
-        }
-
-        return super.getCookie(clazz);
-    }
-
     /**
      * Right click action for this node
      *
@@ -84,7 +72,7 @@ public class ImageNode extends AbstractContentNode<Image> {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty("Name", "Name", "no description", ""));
+        ss.put(new NodeProperty("Name", "Name", "no description", getName()));
         // @@@ add more properties here...
 
         return s;

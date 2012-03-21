@@ -27,12 +27,15 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
+import org.sleuthkit.autopsy.datamodel.ImagesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
+import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
+import org.sleuthkit.autopsy.datamodel.ViewsNode;
 
 /**
  * This class wraps around nodes that are displayed in the directory tree and 
@@ -73,7 +76,10 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 || arg0 instanceof SearchFiltersNode
                 || arg0 instanceof RecentFilesNode
                 || arg0 instanceof KeywordHitsRootNode
-                || arg0 instanceof KeywordHitsListNode)) {
+                || arg0 instanceof KeywordHitsListNode
+                || arg0 instanceof ImagesNode
+                || arg0 instanceof ViewsNode
+                || arg0 instanceof ResultsNode)) {
             return new Node[]{this.copyNode(arg0)};
         } else if (arg0 != null
                 && (arg0 instanceof KeywordHitsKeywordNode

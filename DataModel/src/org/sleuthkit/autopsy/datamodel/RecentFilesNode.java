@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -29,12 +30,13 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class RecentFilesNode extends AbstractNode implements DisplayableItemNode{
     
+    private static final String NAME = "Recent Files";
     SleuthkitCase skCase;
 
     RecentFilesNode(SleuthkitCase skCase) {
-        super(Children.create(new RecentFilesChildren(skCase), true), Lookups.singleton("Recent Files"));
-        super.setName("Recent Files");
-        super.setDisplayName("Recent Files");
+        super(Children.create(new RecentFilesChildren(skCase), true), Lookups.singleton(NAME));
+        super.setName(NAME);
+        super.setDisplayName(NAME);
         this.skCase = skCase;
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent-icon.png");
 }
@@ -44,4 +46,19 @@ public class RecentFilesNode extends AbstractNode implements DisplayableItemNode
         return v.visit(this);
     }
     
+    @Override
+    protected Sheet createSheet() {
+        Sheet s = super.createSheet();
+        Sheet.Set ss = s.get(Sheet.PROPERTIES);
+        if (ss == null) {
+            ss = Sheet.createPropertiesSet();
+            s.put(ss);
+        }
+
+        ss.put(new NodeProperty("Name",
+                "Name",
+                "no description",
+                NAME));
+        return s;
+    }
 }

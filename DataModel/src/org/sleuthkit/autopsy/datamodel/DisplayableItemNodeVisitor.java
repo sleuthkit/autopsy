@@ -28,32 +28,22 @@ import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
 public interface DisplayableItemNodeVisitor<T> {
 
     T visit(DirectoryNode dn);
-
     T visit(FileNode fn);
-
     T visit(ImageNode in);
-
     T visit(VolumeNode vn);
-
     T visit(BlackboardArtifactNode ban);
-
     T visit(ArtifactTypeNode atn);
-
     T visit(ExtractedContentNode ecn);
-
     T visit(FileSearchFilterNode fsfn);
-
     T visit(SearchFiltersNode sfn);
-    
     T visit(RecentFilesNode rfn);
-    
     T visit(RecentFilesFilterNode rffn);
-    
     T visit(KeywordHitsRootNode khrn);
-    
     T visit(KeywordHitsListNode khsn);
-    
     T visit(KeywordHitsKeywordNode khmln);
+    T visit(ViewsNode vn);
+    T visit(ResultsNode rn);
+    T visit(ImagesNode in);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -137,6 +127,21 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(KeywordHitsKeywordNode khmln) {
             return defaultVisit(khmln);
+        }
+        
+        @Override
+        public T visit(ViewsNode vn) {
+            return defaultVisit(vn);
+        }
+        
+        @Override
+        public T visit(ResultsNode rn) {
+            return defaultVisit(rn);
+        }
+        
+        @Override
+        public T visit(ImagesNode in) {
+            return defaultVisit(in);
         }
     }
 }

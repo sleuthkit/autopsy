@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
@@ -40,12 +39,15 @@ import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
+import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
+import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
 import org.sleuthkit.datamodel.Content;
 
@@ -185,8 +187,28 @@ public class DataResultFilterNode extends FilterNode{
     private class GetPreferredActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<AbstractAction>{
         
         @Override
+        public AbstractAction visit(ImageNode in){
+            return openChild(in);
+        }
+        
+        @Override
         public AbstractAction visit(VolumeNode vn){
             return openChild(vn);
+        }
+        
+        @Override
+        public AbstractAction visit(ExtractedContentNode ecn) {
+            return openChild(ecn);
+        }
+        
+        @Override
+        public AbstractAction visit(KeywordHitsRootNode khrn) {
+            return openChild(khrn);
+        }
+        
+        @Override
+        public AbstractAction visit(RecentFilesNode rfn) {
+            return openChild(rfn);
         }
         
         @Override

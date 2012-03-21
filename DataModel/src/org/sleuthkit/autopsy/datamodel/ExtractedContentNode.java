@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -29,17 +30,33 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class ExtractedContentNode extends AbstractNode implements DisplayableItemNode{
     
-    public static final String EXTRACTED_NAME = "Extracted Content";
+    public static final String NAME = "Extracted Content";
     
     public ExtractedContentNode(SleuthkitCase skCase){
-        super(Children.create(new ExtractedContentChildren(skCase), true), Lookups.singleton(EXTRACTED_NAME));
-        super.setName(EXTRACTED_NAME);
-        super.setDisplayName(EXTRACTED_NAME);
+        super(Children.create(new ExtractedContentChildren(skCase), true), Lookups.singleton(NAME));
+        super.setName(NAME);
+        super.setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/artifact-icon.png");
     }
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
+    }
+    
+    @Override
+    protected Sheet createSheet() {
+        Sheet s = super.createSheet();
+        Sheet.Set ss = s.get(Sheet.PROPERTIES);
+        if (ss == null) {
+            ss = Sheet.createPropertiesSet();
+            s.put(ss);
+        }
+
+        ss.put(new NodeProperty("Name",
+                "Name",
+                "no description",
+                NAME));
+        return s;
     }
 }

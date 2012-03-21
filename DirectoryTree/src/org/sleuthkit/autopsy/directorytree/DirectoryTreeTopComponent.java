@@ -50,16 +50,16 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
-import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
+import org.sleuthkit.autopsy.datamodel.Images;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
-import org.sleuthkit.autopsy.datamodel.RecentFiles;
+import org.sleuthkit.autopsy.datamodel.Results;
+import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
-import org.sleuthkit.autopsy.datamodel.SearchFilters;
+import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -331,11 +331,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 } else {
                     // if there's at least one image, load the image and open the top component
                     List<Object> items = new ArrayList<Object>();
-                    items.addAll(currentCase.getRootObjects());
-                    items.add(new ExtractedContent(currentCase.getSleuthkitCase()));
-                    items.add(new KeywordHits(currentCase.getSleuthkitCase()));
-                    items.add(new SearchFilters(currentCase.getSleuthkitCase()));
-                    items.add(new RecentFiles(currentCase.getSleuthkitCase()));
+                    items.add(new Images(currentCase.getSleuthkitCase()));
+                    items.add(new Views(currentCase.getSleuthkitCase()));
+                    items.add(new Results(currentCase.getSleuthkitCase()));
                     contentChildren = new RootContentChildren(items);
                     Node root = new AbstractNode(contentChildren) {
 
@@ -378,10 +376,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     Children childNodes = em.getRootContext().getChildren();
                     TreeView tree = getTree();
 
-                    // expand until image node
-                    for (Node child : childNodes.getNodes()) {
-                        tree.expandNode(child);
-                    }
+                    Node results = childNodes.findChild(ResultsNode.NAME);
+                    tree.expandNode(results);
+
+                    Children resultsChilds = results.getChildren();
+                    tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
+                    tree.expandNode(resultsChilds.findChild(ExtractedContentNode.NAME));
 
                     // if the dataResult is not opened
                     if (!dataResult.isOpened()) {
@@ -698,10 +698,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 Children dirChilds = em.getRootContext().getChildren();
                 TreeView tree = getTree();
 
-                // expand all root trees node
-                for (Node child : dirChilds.getNodes()) {
-                    tree.expandNode(child);
-                }
+                Node results = dirChilds.findChild(ResultsNode.NAME);
+                tree.expandNode(results);
+
+                Children resultsChilds = results.getChildren();
+                tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
+                tree.expandNode(resultsChilds.findChild(ExtractedContentNode.NAME));
+
                 try {
                     Node newSelection = NodeOp.findPath(em.getRootContext(), path);
                     resetHistoryListAndButtons();
@@ -732,8 +735,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(art.getArtifactTypeID());
         Children rootChilds = em.getRootContext().getChildren();
         Node treeNode = null;
+        Node resultsNode = rootChilds.findChild(ResultsNode.NAME);
+        Children resultsChilds = resultsNode.getChildren();
         if (type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
-            Node keywordRootNode = rootChilds.findChild(type.getLabel());
+            Node keywordRootNode = resultsChilds.findChild(type.getLabel());
             Children keywordRootChilds = keywordRootNode.getChildren();
             try {
                 String listName = null;
@@ -753,7 +758,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 logger.log(Level.WARNING, "Error retrieving attributes", ex);
             }
         } else {
-            Node extractedContent = rootChilds.findChild(ExtractedContentNode.EXTRACTED_NAME);
+            Node extractedContent = resultsChilds.findChild(ExtractedContentNode.NAME);
             Children extractedChilds = extractedContent.getChildren();
             treeNode = extractedChilds.findChild(type.getLabel());
         }

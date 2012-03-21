@@ -31,6 +31,9 @@ public interface AutopsyItemVisitor<T> {
     T visit(RecentFiles rf);
     T visit(RecentFiles.RecentFilesFilter rff);
     T visit(KeywordHits kf);
+    T visit(Images i);
+    T visit(Views v);
+    T visit(Results r);
     
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
@@ -69,6 +72,21 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(KeywordHits kh) {
             return defaultVisit(kh);
+        }
+        
+        @Override
+        public T visit(Images i) {
+            return defaultVisit(i);
+        }
+        
+        @Override
+        public T visit(Views v) {
+            return defaultVisit(v);
+        }
+        
+        @Override
+        public T visit(Results r) {
+            return defaultVisit(r);
         }
     }
 }

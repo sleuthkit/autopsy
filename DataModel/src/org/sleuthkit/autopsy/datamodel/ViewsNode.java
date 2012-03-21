@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.Arrays;
 import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -28,30 +28,22 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  *
  * @author dfickling
  */
-public class SearchFiltersNode extends AbstractNode implements DisplayableItemNode {
+public class ViewsNode extends AbstractNode implements DisplayableItemNode {
+    
+    public static final String NAME = "Views";
 
-    private static final String FNAME = "File Types";
-    private static final String DNAME = "Documents";
-    SleuthkitCase skCase;
-
-    SearchFiltersNode(SleuthkitCase skCase, boolean root) {
-        super(Children.create(new SearchFiltersChildren(skCase, root), true), Lookups.singleton(root ? FNAME : DNAME));
-        if (root) {
-            super.setName(FNAME);
-            super.setDisplayName(FNAME);
-        } else {
-            super.setName(DNAME);
-            super.setDisplayName(DNAME);
-        }
-        this.skCase = skCase;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png");
+    public ViewsNode(SleuthkitCase sleuthkitCase) {
+        super(new RootContentChildren(Arrays.asList(new SearchFilters(sleuthkitCase), new RecentFiles(sleuthkitCase))), Lookups.singleton(NAME));
+        setName(NAME);
+        setDisplayName(NAME);
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
     }
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-
+    
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
@@ -64,7 +56,7 @@ public class SearchFiltersNode extends AbstractNode implements DisplayableItemNo
         ss.put(new NodeProperty("Name",
                 "Name",
                 "no description",
-                getName()));
+                NAME));
         return s;
     }
 }

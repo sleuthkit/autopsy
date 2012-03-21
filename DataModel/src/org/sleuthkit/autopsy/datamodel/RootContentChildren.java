@@ -44,7 +44,7 @@ public class RootContentChildren extends AbstractContentChildren {
     
     @Override
     protected void removeNotify() {
-        setKeys(Collections.EMPTY_SET);
+        setKeys(Collections.<Object>emptySet());
     }
     
     public void refreshKeys() {

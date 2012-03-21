@@ -21,13 +21,14 @@ package org.sleuthkit.autopsy.datamodel;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Parent of all Blackboard Artifacts to be displayed
+ *
+ * @author dfickling
  */
-public class ExtractedContent implements AutopsyVisitableItem{
-
-    SleuthkitCase skCase;
-
-    public ExtractedContent(SleuthkitCase skCase){
+public class Images implements AutopsyVisitableItem{
+    
+    private SleuthkitCase skCase;
+    
+    public Images(SleuthkitCase skCase) {
         this.skCase = skCase;
     }
 

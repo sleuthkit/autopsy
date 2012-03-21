@@ -49,6 +49,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     private SleuthkitCase skCase;
     private static final Logger logger = Logger.getLogger(KeywordHits.class.getName());
     private static final String KEYWORD_HITS = "Keyword Hits";
+    public static final String NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel();
     public static final String SIMPLE_LITERAL_SEARCH = "Single Literal Keyword Search";
     public static final String SIMPLE_REGEX_SEARCH = "Single Regular Expression Search";
     
@@ -148,7 +149,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         public KeywordHitsRootNode() {
             super(Children.create(new KeywordHitsRootChildren(), true), Lookups.singleton(KEYWORD_HITS));
-            super.setName(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel());
+            super.setName(NAME);
             super.setDisplayName(KEYWORD_HITS);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword-search-icon.png");
             //long start = System.currentTimeMillis();
@@ -172,8 +173,8 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty(KEYWORD_HITS,
-                    KEYWORD_HITS,
+            ss.put(new NodeProperty("Name",
+                    "Name",
                     "no description",
                     getName()));
             

@@ -62,7 +62,7 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
     }
     
     private String createQuery(){
-        String query = "select * from tsk_files where ";
+        String query = "select * from tsk_files where known <> 1 and (";
         long lowerLimit = prevDay.getTimeInMillis()/1000;
         prevDay.add(Calendar.DATE, 1);
         prevDay.add(Calendar.MILLISECOND, -1);
@@ -70,7 +70,7 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
         query += "(crtime between " + lowerLimit + " and " + upperLimit + ") or ";
         query += "(ctime between " + lowerLimit + " and " + upperLimit + ") or ";
         query += "(atime between " + lowerLimit + " and " + upperLimit + ") or ";
-        query += "(mtime between " + lowerLimit + " and " + upperLimit + ")";
+        query += "(mtime between " + lowerLimit + " and " + upperLimit + "))";
         return query;
     }
     

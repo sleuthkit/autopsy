@@ -32,8 +32,8 @@ public class SearchFilters implements AutopsyVisitableItem{
     public enum FileSearchFilter implements AutopsyVisitableItem,SearchFilterInterface {
         TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", "Images", Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff")),
         TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", "Videos",
-            Arrays.asList(".aaf", ".3gp", ".asf", ".avi", ".m1v", ".m2v", ".m4v",
-            ".mov", ".mpeg", ".mpg", ".mpe", ".mp4", ".rm", ".wmv", ".mpv")),
+            Arrays.asList(".aaf", ".3gp", ".asf", ".avi", ".m1v", ".m2v", ".m4v", ".mp4",
+            ".mov", ".mpeg", ".mpg", ".mpe", ".mp4", ".rm", ".wmv", ".mpv", ".flv", ".swf")),
         TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", "Audio", 
             Arrays.asList(".aiff", ".aif", ".flac", ".wav", ".m4a", ".ape", ".wma", ".mp2",
             ".mp1", ".mp3", ".aac", ".mp4", ".m4p", ".m1a", ".m2a", ".m4r", ".mpa",
