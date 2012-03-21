@@ -44,8 +44,6 @@ public class reportPanel extends javax.swing.JPanel {
         jButton1 = new javax.swing.JButton();
         saveReport = new javax.swing.JButton();
 
-        setFocusTraversalPolicyProvider(true);
-
         jEditorPane1.setContentType(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.jEditorPane1.contentType")); // NOI18N
         jEditorPane1.setEditable(false);
         jScrollPane1.setViewportView(jEditorPane1);
@@ -79,12 +77,12 @@ public class reportPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 599, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 547, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(saveReport))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         getAccessibleContext().setAccessibleName("");
