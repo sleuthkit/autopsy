@@ -22,4 +22,5 @@ public interface reportInterface{
     public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getRecentObject();
     public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getHashHit();
     public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getKeywordHit();
+    public String getGroupedKeywordHit();
 }

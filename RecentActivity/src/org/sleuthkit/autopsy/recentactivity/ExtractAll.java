@@ -14,7 +14,7 @@ import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 public class ExtractAll {
     
        void ExtractAll(){
-            
+              
         }
        
 

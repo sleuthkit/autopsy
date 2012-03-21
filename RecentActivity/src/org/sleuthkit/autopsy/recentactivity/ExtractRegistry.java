@@ -42,7 +42,7 @@ public class ExtractRegistry {
       public Logger logger = Logger.getLogger(this.getClass().getName());
      private String RR_PATH;
      boolean rrFound = false;
-     
+     private int sysid;
     ExtractRegistry(){
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false);
          if (rrRoot == null) {
@@ -53,7 +53,18 @@ public class ExtractRegistry {
          else {
              rrFound = true;
          }
-         
+         try{
+              Case currentCase = Case.getCurrentCase(); // get the most updated case
+              SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+               ResultSet artset = tempDb.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
+                  
+                   while (artset.next()){
+                       sysid = artset.getInt("artifact_type_id");
+                      }
+         }
+         catch(Exception e){
+             
+         }
         final String rrHome = rrRoot.getAbsolutePath();
         logger.log(Level.INFO, "RegRipper home: " + rrHome);
              
@@ -175,7 +186,9 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
     {
         Case currentCase = Case.getCurrentCase(); // get the most updated case
         SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+        
          try {
+           
            String regString = new Scanner(new File(regRecord)).useDelimiter("\\Z").next();
            String startdoc = "<document>";
            String result = regString.replaceAll("----------------------------------------","");
@@ -199,7 +212,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                
                Element artroot = tempnode.getChild("artifacts");
                List artlist = artroot.getChildren();
-            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+               
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
               Iterator aiterator = artlist.iterator();
@@ -210,16 +223,27 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
                }
-                
-                
-                 
-              
+                if("recentdocs".equals(context)){
+               BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                 bbart.addAttributes(bbattributes);
+                 }
+               else if("runMRU".equals(context)){
+                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                 bbart.addAttributes(bbattributes);
+    
+                }
+               else
+               {   
+                 
+                   BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
+                    bbart.addAttributes(bbattributes);
+               }  
+               
             }
            }
            catch (Exception ex)
            {
-               String hi = "";
+            
             logger.log(Level.WARNING, "Error while trying to read into a sqlite db." +  ex);      
            }
    
