@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Log;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.ImageIcon;
 
 @ActionID(category = "Tools",
 id = "org.sleuthkit.autopsy.report.reportAction")
@@ -153,8 +154,8 @@ public final class reportAction extends CallableSystemAction implements Presente
      */
     @Override
     public Component getToolbarPresenter() {
-        //ImageIcon icon = new ImageIcon(getClass().getResource("close-icon.png"));
-        //toolbarButton.setIcon(icon);
+        ImageIcon icon = new ImageIcon(getClass().getResource("btn_icon_generate_report.png"));
+        toolbarButton.setIcon(icon);
         toolbarButton.setText("Generate Report");
         return toolbarButton;
     }

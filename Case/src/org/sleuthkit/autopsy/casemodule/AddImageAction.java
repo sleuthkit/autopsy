@@ -23,10 +23,10 @@ import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -34,7 +34,6 @@ import javax.swing.event.ChangeListener;
 import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.openide.util.ChangeSupport;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -184,8 +183,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
      */
     @Override
     public Component getToolbarPresenter() {
-        //ImageIcon icon = new ImageIcon(getClass().getResource("addImage-icon.png"));
-        //toolbarButton.setIcon(icon);
+        ImageIcon icon = new ImageIcon(getClass().getResource("btn_icon_add_image.png"));
+        toolbarButton.setIcon(icon);
         toolbarButton.setText(this.getName());
         return toolbarButton;
     }

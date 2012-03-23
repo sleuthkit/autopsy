@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
@@ -120,8 +121,8 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
      */
     @Override
     public Component getToolbarPresenter() {
-        //ImageIcon icon = new ImageIcon(getClass().getResource("close-icon.png"));
-        //toolbarButton.setIcon(icon);
+        ImageIcon icon = new ImageIcon(getClass().getResource("btn_icon_close_case.png"));
+        toolbarButton.setIcon(icon);
         toolbarButton.setText(this.getName());
         return toolbarButton;
     }
