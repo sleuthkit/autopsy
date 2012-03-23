@@ -91,6 +91,7 @@ public class reportFilter extends javax.swing.JPanel {
 
         progBar.setEnabled(false);
         progBar.setName(""); // NOI18N
+        progBar.setPreferredSize(new java.awt.Dimension(146, 23));
 
         cancelButton.setText(org.openide.util.NbBundle.getMessage(reportFilter.class, "reportFilter.cancelButton.text")); // NOI18N
         cancelButton.setActionCommand(org.openide.util.NbBundle.getMessage(reportFilter.class, "reportFilter.cancelButton.actionCommand")); // NOI18N
@@ -144,10 +145,10 @@ public class reportFilter extends javax.swing.JPanel {
                 .addComponent(jCheckBox3)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(progBar, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(progBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
