@@ -118,7 +118,7 @@ public class ExtractIE { // implements BrowserActivity {
             String allFS = new String();
             for(String img : image)
             {
-               allFS += " and fs_obj_id = '" + img + "'";
+               allFS += " AND fs_obj_id = '" + img + "'";
             }
             ResultSet rs = tempDb.runQuery(indexDatQueryStr + allFS);
             FsContentCollection = tempDb.resultSetToFsContents(rs);
@@ -161,6 +161,10 @@ public class ExtractIE { // implements BrowserActivity {
         } catch (Exception ioex) {
             logger.log(Level.SEVERE, "Error while trying to write index.dat files.", ioex);
         }
+        
+        //bookmarks
+        
+        //cookies
     }
 
     //Simple wrapper to JavaSystemCaller.Exec() to execute pasco2 jar
@@ -273,7 +277,7 @@ public class ExtractIE { // implements BrowserActivity {
                                        
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "", actime));
                                         
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", "", "None"));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", "", ""));
                                    
                                      //   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "", ddtime));
                                        

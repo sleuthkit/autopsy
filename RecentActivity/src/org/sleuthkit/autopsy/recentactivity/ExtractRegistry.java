@@ -81,7 +81,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
              String allFS = new String();
             for(String img : image)
             {
-               allFS += " and fs_obj_id = '" + img + "'";
+               allFS += " AND fs_obj_id = '" + img + "'";
             }
             List<FsContent> Regfiles;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where lower(name) = 'ntuser.dat' OR lower(parent_path) LIKE '%/system32/config%' and (name = 'system' OR name = 'software' OR name = 'SECURITY' OR name = 'SAM' OR name = 'default')" + allFS);

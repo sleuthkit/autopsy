@@ -31,7 +31,7 @@ public class Firefox {
     private static final String ffquery = "SELECT moz_historyvisits.id,url,title,visit_count,datetime(moz_historyvisits.visit_date/1000000,'unixepoch','localtime') as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
     private static final String ffcookiequery = "SELECT name,value,host,expiry,datetime(moz_cookies.lastAccessed/1000000,'unixepoch','localtime') as lastAccessed,creationTime FROM moz_cookies";
     private static final String ffbookmarkquery = "SELECT fk, moz_bookmarks.title, url FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id";
-    private static final String ffdownloadquery = "select target, source, startTime, maxBytes  from `moz_downloads`";
+    private static final String ffdownloadquery = "select target, source, startTime, maxBytes  from moz_downloads";
     
     public Logger logger = Logger.getLogger(this.getClass().getName());
 
@@ -50,7 +50,7 @@ public class Firefox {
             String allFS = new String();
             for(String img : image)
             {
-               allFS += " and fs_obj_id = '" + img + "'";
+               allFS += " AND fs_obj_id = '" + img + "'";
             }        
             List<FsContent> FFSqlitedb;  
 
@@ -87,8 +87,8 @@ public class Firefox {
                    {    
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                        Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","",temprs.getString("url")));
-                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",temprs.getString("visit_date")));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","",((temprs.getString("url") != null) ? temprs.getString("url") : "")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",((temprs.getString("visit_date") != null) ? temprs.getString("visit_date") : "")));
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),"RecentActivity","",((temprs.getString("ref") != null) ? temprs.getString("ref") : "")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),"RecentActivity","",((temprs.getString("title") != null) ? temprs.getString("title") : "")));
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","FireFox"));
@@ -96,25 +96,38 @@ public class Firefox {
                       
                    }
                    temprs.close(); 
-                   ResultSet tempbm = tempdbconnect.executeQry(ffbookmarkquery);  
-                   while(tempbm.next()) 
-                   {
-                      BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","",((temprs.getString("url") != null) ? temprs.getString("url") : "")));
-                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "")));
-                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","FireFox")); 
-                     bbart.addAttributes(bbattributes);
-                   } 
-                   tempbm.close();
                    tempdbconnect.closeConnection();
-                   
  
                  }
                  catch (Exception ex)
                  {
                     logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex);      
                  }
+                
+                   try
+                {
+                   
+                   
+                    dbconnect tempdbconnect2 = new dbconnect("org.sqlite.JDBC",connectionString);
+                   ResultSet tempbm = tempdbconnect2.executeQry(ffbookmarkquery);  
+                   while(tempbm.next()) 
+                   {
+                      BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
+                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","",((tempbm.getString("url") != null) ? tempbm.getString("url") : "")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((tempbm.getString("title") != null) ? tempbm.getString("title").replaceAll("'", "''") : "")));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","FireFox")); 
+                     bbart.addAttributes(bbattributes);
+                   } 
+                   tempbm.close();
+                   tempdbconnect2.closeConnection();
+                 }
+                 catch (Exception ex)
+                 {
+                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex);      
+                 }
+                
+              
                 j++;
                 dbFile.delete();
             }
@@ -138,7 +151,7 @@ public class Firefox {
             String allFS = new String();
             for(String img : image)
             {
-               allFS += " and fs_obj_id = '" + img + "'";
+               allFS += " AND fs_obj_id = '" + img + "'";
             }
             List<FsContent> FFSqlitedb;  
 
@@ -202,8 +215,13 @@ public class Firefox {
          {   
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+             String allFS = new String();
+            for(String img : image)
+            {
+               allFS += " AND fs_obj_id = '" + img + "'";
+            }
             List<FsContent> FFSqlitedb;  
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'downloads.sqlite' and parent_path LIKE '%Firefox%' and fs_obj_id = '" + image + "'");
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'downloads.sqlite' and parent_path LIKE '%Firefox%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             rs.close();
             rs.getStatement().close();  
@@ -233,7 +251,7 @@ public class Firefox {
                      //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", "", temprs.getString("target")));
                      
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","FireFox"));
                      bbart.addAttributes(bbattributes);
                       
                    } 

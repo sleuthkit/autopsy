@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  */
 public class reportPanelAction {
      private static final String ACTION_NAME = "Report Preview";
-     private String viewReport = "";
+     private StringBuilder viewReport = new StringBuilder();
      public reportPanelAction(){
         
      }
@@ -64,7 +64,7 @@ public class reportPanelAction {
                    public void run()
                    { 
                     reportHTML htmlReport = new reportHTML(Results,rr);
-                    viewReport = htmlReport.formatted_Report.toString();
+                    viewReport.append(reportHTML.unformatted_header.toString());
                    }
                 });
 
@@ -83,7 +83,7 @@ public class reportPanelAction {
             xmlthread.join();
             // initialize panel with loaded settings   
             htmlthread.join(); 
-            reportPanel panel = new reportPanel(viewReport);    
+            reportPanel panel = new reportPanel(viewReport.toString());    
             
               
            
@@ -97,7 +97,7 @@ public class reportPanelAction {
             // add the panel to the popup window
             popUpWindow.add(panel);
             
-            popUpWindow.setResizable(true);
+            popUpWindow.setResizable(false);
             popUpWindow.pack();
             // set the location of the popUp Window on the center of the screen
             Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
