@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * File content viewer capable of displaying some image formats.
  */
-@ServiceProvider(service = DataContentViewer.class)
+//@ServiceProvider(service = DataContentViewer.class)
 public class DataContentViewerPicture extends javax.swing.JPanel implements DataContentViewer {
 
     // for error handling
