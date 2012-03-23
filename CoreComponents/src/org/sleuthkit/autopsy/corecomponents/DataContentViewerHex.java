@@ -125,16 +125,20 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
             pageLabel.setPreferredSize(new java.awt.Dimension(33, 14));
 
-            prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/arrow_left.gif"))); // NOI18N
+            prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
             prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.prevPageButton.text")); // NOI18N
+            prevPageButton.setContentAreaFilled(false);
+            prevPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
             prevPageButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     prevPageButtonActionPerformed(evt);
                 }
             });
 
-            nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/arrow_right.gif"))); // NOI18N
+            nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
             nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.nextPageButton.text")); // NOI18N
+            nextPageButton.setContentAreaFilled(false);
+            nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
             nextPageButton.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     nextPageButtonActionPerformed(evt);

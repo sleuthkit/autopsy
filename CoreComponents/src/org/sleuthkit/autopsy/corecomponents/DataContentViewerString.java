@@ -119,8 +119,10 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
         pageLabel.setPreferredSize(new java.awt.Dimension(33, 14));
 
-        nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/arrow_right.gif"))); // NOI18N
+        nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
         nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.nextPageButton.text")); // NOI18N
+        nextPageButton.setContentAreaFilled(false);
+        nextPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
         nextPageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 nextPageButtonActionPerformed(evt);
@@ -132,8 +134,10 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
         pageLabel2.setPreferredSize(new java.awt.Dimension(29, 14));
 
-        prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/arrow_left.gif"))); // NOI18N
+        prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
         prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.prevPageButton.text")); // NOI18N
+        prevPageButton.setContentAreaFilled(false);
+        prevPageButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
         prevPageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 prevPageButtonActionPerformed(evt);
