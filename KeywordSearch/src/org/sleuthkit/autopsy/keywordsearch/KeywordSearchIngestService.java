@@ -57,8 +57,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public static final String MODULE_NAME = "Keyword Search";
     private static KeywordSearchIngestService instance = null;
     private IngestManagerProxy managerProxy;
-    private static final long MAX_STRING_EXTRACT_SIZE = 10 * (1 << 10) * (1 << 10);
-    private static final long MAX_INDEX_SIZE = 200 * (1 << 10) * (1 << 10);
+    private static final long MAX_STRING_EXTRACT_SIZE = 10 * (1 << 10); // * (1 << 10);
+    private static final long MAX_INDEX_SIZE = 100 * (1 << 10) * (1 << 10);
     private Ingester ingester;
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runTimer = false;
@@ -499,7 +499,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     ingestStatus.put(fsContent.getId(), IngestStatus.EXTRACTED_INGESTED);
                 }
             } else {
-                //ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+                ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
             }
         }
     }
