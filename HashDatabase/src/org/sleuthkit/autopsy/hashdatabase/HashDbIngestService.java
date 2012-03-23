@@ -138,7 +138,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
         ProcessResult ret = ProcessResult.UNKNOWN;
         process = true;
         if(fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
-            ret = ProcessResult.COND_STOP;
+            ret = ProcessResult.OK;
             process = false;
         }
         if (process) {
@@ -175,7 +175,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
                     detailsSb.append("</table>");
                     managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, detailsSb.toString(), name, badFile));
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent(NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
-                    ret = ProcessResult.COND_STOP;
+                    ret = ProcessResult.OK;
                 } else if (status.equals(TskData.FileKnown.KNOWN)) {
                     ret = ProcessResult.COND_STOP;
                 }
