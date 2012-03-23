@@ -195,12 +195,9 @@ public class TermComponentQuery implements KeywordSearchQuery {
                 continue;
             }
 
-            //regex keyword, escape and store
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", KeywordSearchUtil.escapeForBlackBoard(termsQuery)));
 
             //regex match
-            final String regexMatchEscaped = KeywordSearchUtil.escapeForBlackBoard(regexMatch);
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", regexMatchEscaped));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", regexMatch));
             //list
             if (listName == null) {
                 listName = "";
@@ -208,17 +205,20 @@ public class TermComponentQuery implements KeywordSearchQuery {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID(), MODULE_NAME, "", listName));
 
             //preview
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", KeywordSearchUtil.escapeForBlackBoard(snippet)));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
 
+            //regex keyword
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", termsQuery));
 
-            //selector
+            //selector TODO move to general info artifact
+            /*
             if (keywordQuery != null) {
                 BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
                 if (selType != null) {
-                    BlackboardAttribute selAttr = new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", regexMatchEscaped);
+                    BlackboardAttribute selAttr = new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", regexMatch);
                     attributes.add(selAttr);
                 }
-            }
+            } */
 
             try {
                 bba.addAttributes(attributes);
