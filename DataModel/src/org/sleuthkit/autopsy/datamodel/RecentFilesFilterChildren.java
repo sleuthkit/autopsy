@@ -69,7 +69,7 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
         long upperLimit = prevDay.getTimeInMillis()/1000;
         query += "(crtime between " + lowerLimit + " and " + upperLimit + ") or ";
         query += "(ctime between " + lowerLimit + " and " + upperLimit + ") or ";
-        query += "(atime between " + lowerLimit + " and " + upperLimit + ") or ";
+        //query += "(atime between " + lowerLimit + " and " + upperLimit + ") or ";
         query += "(mtime between " + lowerLimit + " and " + upperLimit + "))";
         return query;
     }

@@ -68,9 +68,10 @@ public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFil
         long maxc = runTimeQuery(query);
         query = createMaxQuery("mtime");
         long maxm = runTimeQuery(query);
-        query = createMaxQuery("atime");
-        long maxa = runTimeQuery(query);
-        return Math.max(maxcr, Math.max(maxc, Math.max(maxm, maxa)));
+        //query = createMaxQuery("atime");
+        //long maxa = runTimeQuery(query);
+        //return Math.max(maxcr, Math.max(maxc, Math.max(maxm, maxa)));
+        return Math.max(maxcr, Math.max(maxc, maxm));
     }
     
     private String createMaxQuery(String attr){
