@@ -129,7 +129,7 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
        String xmlpath = reportUtils.changeExtension(path, ".xml");
          try {
                   FileOutputStream out = new FileOutputStream(htmlpath);
-                  out.write(reportHTML.formatted_Report.toString().getBytes());
+                  out.write(reportHTML.formatted_header.toString().getBytes());
                   out.flush();
                   out.close();
                   

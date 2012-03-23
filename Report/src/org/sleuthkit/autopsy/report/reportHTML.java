@@ -31,6 +31,8 @@ public class reportHTML {
     
     //Declare our publically accessible formatted report, this will change everytime they run a report
     public static StringBuilder formatted_Report = new StringBuilder();
+    public static StringBuilder unformatted_header = new StringBuilder();
+    public static StringBuilder formatted_header = new StringBuilder();
     public static String htmlPath = "";
 public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> report, reportFilter rr){
     
@@ -83,7 +85,6 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
     }
             
         try{
-            
              String ingestwarning = "<h2 style=\"color: red;\">Warning, this report was run before ingest services completed!</h2>";
              Case currentCase = Case.getCurrentCase(); // get the most updated case
              SleuthkitCase skCase = currentCase.getSleuthkitCase();
@@ -108,12 +109,28 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                      + "table tr th:nth-child(1) {text-align: center; width: 60px;} "
                    + "table td {display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif;} "
                      + "table tr:nth-child(even) td {background: #f3f3f3;} "
-                   + "table tr td:nth-child(1) {text-align: center; width: 60px; background: #f3f3f3;} "
+                   + "table tr td:nth-child(1) {text-align: left; width: 60px; background: #f3f3f3;} "
                      + "table tr:nth-child(even) td:nth-child(1) {background: #eaeaea;}"
                      + "</style>";
              //Add additional header information
-            formatted_Report.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"><html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\" xml:lang=\"en\"><head><title>Autopsy Report for Case:").append(caseName).append("</title>");
-            formatted_Report.append(CSS);
+           String header = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"><html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\" xml:lang=\"en\"><head><title>Autopsy Report for Case: " + caseName + "</title>";
+           formatted_header.append(header);  
+           formatted_header.append(CSS);
+           
+           //do for unformatted
+            String simpleCSS = "<style>"
+                     + "body {padding: 30px; margin: 0; background: #FFFFFF; color: #535353;} "
+                   + "h1 {font-size: 26px; color: #005577; margin: 0 0 20px 0;} "
+                    + "h2 {font-size: 20px; font-weight: normal; color: #0077aa; margin: 40px 0 10px 0; padding: 0 0 10px 0; border-bottom: 1px solid #dddddd;} "
+                     + "h3 {font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;} "
+                     + "p {margin: 0 0 20px 0;} table {width: 100%; padding: 0; margin: 0; border-collapse: collapse; border-bottom: 1px solid #e5e5e5;} "
+                     + "table thead th {display: table-cell; text-align: left; padding: 4px 8px; background: #e5e5e5; color: #777;font-size: 11px; width: 80px; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede;} "
+                     + "table tr th {text-align: left; width: 80px;} "
+                   + "table td {width: 100px; font-size: 8px; display: table-cell; padding: 4px 8px;} "
+                   + "table tr {text-align: left; width: 60px; background: #f3f3f3;} "
+                     + "</style>";
+           unformatted_header.append(header);
+           unformatted_header.append(simpleCSS);
             //formatted_Report.append("<link rel=\"stylesheet\" href=\"" + rrpath + "report.css\" type=\"text/css\" />");
             formatted_Report.append("</head><body><div id=\"main\"><div id=\"content\">");
             // Add summary information now
@@ -135,7 +152,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
              StringBuilder nodeWebCookie =  new StringBuilder("<h3>Web Cookies (").append(countWebCookie).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Date</th><th>Name</th><th>Value</th><th>Program</th></tr></thead><tbody>");
              StringBuilder nodeWebHistory =  new StringBuilder("<h3>Web History (").append(countWebHistory).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Date</th><th>Referrer</th><th>Title</th><th>Program</th></tr></thead><tbody>");
              StringBuilder nodeWebDownload =  new StringBuilder("<h3>Web Downloads (").append(countWebDownload).append(")</h3>").append(tableHeader).append("<th>File</th><th>Source</th><th>Time</th><th>Program</th></tr></thead><tbody>");
-             StringBuilder nodeRecentObjects =  new StringBuilder("<h3>Recent Documents (").append(countRecentObjects).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Name</th><th>Path</th></tr></thead><tbody>");
+             StringBuilder nodeRecentObjects =  new StringBuilder("<h3>Recent Documents (").append(countRecentObjects).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Path</th><th>Size</th></tr></thead><tbody>");
              StringBuilder nodeTrackPoint =  new StringBuilder("<h3>Track Points (").append(countTrackPoint).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Attribute</th><th>Value</th></tr></thead><tbody>");
              StringBuilder nodeInstalled =  new StringBuilder("<h3>Installed Programs (").append(countInstalled).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Attribute</th><th>Value</th></tr></thead><tbody>");
              StringBuilder nodeKeyword =  new StringBuilder("<h3>Keyword Search Hits (").append(countKeyword).append(")</h3>");
@@ -164,6 +181,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                           
                          int type = tempatt.getAttributeTypeID();
                          String value = tempatt.getValueString();
+                         value = reportUtils.insertPeriodically(value, "<br>", 30);
                           attributes.put(type, value);
                           cc++;
                          }
@@ -277,10 +295,11 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             //end of master loop
             
                 formatted_Report.append("</div></div></body></html>");
-                
+                formatted_header.append(formatted_Report);
+                unformatted_header.append(formatted_Report);
                   htmlPath = currentCase.getCaseDirectory()+"/Reports/" + caseName + "-" + datenotime + ".html";
                    BufferedWriter out = new BufferedWriter(new FileWriter(htmlPath));
-                   out.write(formatted_Report.toString());
+                   out.write(formatted_header.toString());
                    
                   out.flush();
                   out.close();
