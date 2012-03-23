@@ -59,6 +59,8 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
     private static Logger logger = Logger.getLogger(KeywordSearchEditListPanel.class.getName());
     private KeywordTableModel tableModel;
     private String currentKeywordList;
+
+    
     private boolean ingestRunning;
     private boolean locked;
     private static KeywordSearchEditListPanel instance = null;
@@ -76,6 +78,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         }
         return instance;
     }
+    
 
     private void customizeComponents() {
         locked = false;
@@ -109,7 +112,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
         final ListSelectionModel lsm = keywordTable.getSelectionModel();
         lsm.addListSelectionListener(new ListSelectionListener() {
-
+   
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (lsm.isSelectionEmpty() || locked) {
@@ -148,6 +151,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         });
 
         //loadDefaultKeywords();
+        
 
         initButtons();
 
@@ -649,7 +653,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
-
+        //respond to list selection changes in KeywordSearchListManagementPanel
         ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
         if (!listSelectionModel.isSelectionEmpty()) {
             int index = listSelectionModel.getMinSelectionIndex();
@@ -667,7 +671,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             tableModel.resync(currentKeywordList);
             initButtons();
         } else {
-            currentKeywordList = null;
             tableModel.deleteAll();
             initButtons();
         }
