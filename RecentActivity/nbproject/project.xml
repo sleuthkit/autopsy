@@ -191,6 +191,10 @@
                 <binary-origin>release/modules/ext/sqlite-jdbc-3.7.6.3-20110609.081603-3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/gson-2.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gson-2.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jdom-1.1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jdom-1.1.2.jar</binary-origin>
             </class-path-extension>
