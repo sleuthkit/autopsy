@@ -4,9 +4,14 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -111,8 +116,8 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
              //Now fetch the results, parse them and the delete the files.
              if(Success)
              {
-                //Delete dat file since it was succcessfully by Pasco
-                regFile.delete();
+                //Delete dat file since it was succcessful
+               regFile.delete();
              }
                 j++;
                 
@@ -144,11 +149,11 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                 
             if(regFilePath.toLowerCase().contains("system"))
                 {
-                    type = "system";
+                    type = "1system";
                 }
                 if(regFilePath.toLowerCase().contains("software"))
                 {
-                    type = "software";
+                    type = "1software";
                 }
                 if(regFilePath.toLowerCase().contains("ntuser"))
                 {
@@ -156,15 +161,15 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                 }
                 if(regFilePath.toLowerCase().contains("default"))
                 {
-                    type = "default";
+                    type = "1default";
                 }
                 if(regFilePath.toLowerCase().contains("sam"))
                 {
-                    type = "sam";
+                    type = "1sam";
                 }
                 if(regFilePath.toLowerCase().contains("security"))
                 {
-                    type = "security";
+                    type = "1security";
                 }
 
                 String command = RR_PATH + " -r " + regFilePath +" -f " + type + "> " + txtPath;
@@ -188,8 +193,10 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
         SleuthkitCase tempDb = currentCase.getSleuthkitCase();
         
          try {
-           
-           String regString = new Scanner(new File(regRecord)).useDelimiter("\\Z").next();
+             File regfile = new File(regRecord);
+          
+           BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(regfile)));
+           String regString = new Scanner(input).useDelimiter("\\Z").next();
            String startdoc = "<document>";
            String result = regString.replaceAll("----------------------------------------","");
            String enddoc = "</document>";
@@ -212,18 +219,21 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                
                Element artroot = tempnode.getChild("artifacts");
                List artlist = artroot.getChildren();
-               
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
+            if(artlist.isEmpty()){   
+            }
+            else{
+            
               Iterator aiterator = artlist.iterator();
                while (aiterator.hasNext()) {
                  Element artnode = (Element) aiterator.next();
                  String name = artnode.getAttributeValue("name");
                  String value = artnode.getTextTrim();  
+                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
                   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
+      
                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
-               }
-                if("recentdocs".equals(context)){
+                   if("recentdocs".equals(context)){
                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                 bbart.addAttributes(bbattributes);
                  }
@@ -238,13 +248,16 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                    BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
                     bbart.addAttributes(bbattributes);
                }  
+               }
+              
                
+            }
             }
            }
            catch (Exception ex)
            {
             
-            logger.log(Level.WARNING, "Error while trying to read into a sqlite db." +  ex);      
+            logger.log(Level.WARNING, "Error while trying to read into a registry file." +  ex);      
            }
    
 

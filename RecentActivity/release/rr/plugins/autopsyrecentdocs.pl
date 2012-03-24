@@ -66,7 +66,7 @@ sub pluginmain {
 			
 			my @list = split(/,/,$rdvals{$tag});
 			foreach my $i (@list) {
-				::rptMsg("<doc>".$i." = ".$rdvals{$i} . "</doc>");
+				::rptMsg("<doc name=\"Windows\">".$rdvals{$i} . "</doc>");
 			}
 			
 		}
@@ -79,8 +79,8 @@ sub pluginmain {
 	my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
 			foreach my $s (@subkeys) {
-				::rptMsg($key_path."\\".$s->get_name());
-				::rptMsg("LastWrite Time ".gmtime($s->get_timestamp())." (UTC)");
+				#::rptMsg($key_path."\\".$s->get_name());
+				#::rptMsg("LastWrite Time ".gmtime($s->get_timestamp())." (UTC)");
 				
 				my %rdvals = getRDValues($s);
 				if (%rdvals) {
@@ -96,12 +96,12 @@ sub pluginmain {
 					}
 			
 					my @list = split(/,/,$rdvals{$tag});
-					::rptMsg($tag." = ".$rdvals{$tag});
+					#::rptMsg($tag." = ".$rdvals{$tag});
 					foreach my $i (@list) {
-						::rptMsg("  ".$i." = ".$rdvals{$i});
+						#::rptMsg("".$rdvals{$i});
 					}
 					
-					::rptMsg("");
+					#::rptMsg("");
 				}
 				else {
 					#::rptMsg($key_path." has no values.");

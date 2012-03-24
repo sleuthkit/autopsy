@@ -3,6 +3,7 @@
  * and open the template in the editor.
  */
 package org.sleuthkit.autopsy.recentactivity;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -210,61 +211,33 @@ public class Chrome {
                  dbFile.delete();
                  break;
                 }  
-                 try
+                try
                 {
                     
                     final JsonParser parser = new JsonParser();
                      JsonElement jsonElement = parser.parse(new FileReader(temps));
-                     JsonObject jsonBookmarks = jsonElement.getAsJsonObject();
+                    JsonObject test = jsonElement.getAsJsonObject();
+                    JsonObject whatever = test.get("roots").getAsJsonObject();
+                    JsonObject whatever2 = whatever.get("bookmark_bar").getAsJsonObject();
+                    JsonArray whatever3 = whatever2.getAsJsonArray("children");
+                    
+ //                    JsonArray results = parser.parse(new FileReader(temps)).getAsJsonObject().getAsJsonArray("roots").getAsJsonObject().getAsJsonArray("bookmark_bar").get(0).getAsJsonObject().getAsJsonArray("children");
+                     for (JsonElement result : whatever3) {
+                                            
+                                            JsonObject address = result.getAsJsonObject();
+                                            String url = address.get("url").getAsString();
+                                            String name = address.get("name").getAsString();
+                                            String date = address.get("date_added").getAsString();                   
 
-                    for ( Entry<String, JsonElement> entry : jsonBookmarks.entrySet()) {
-                        String key = entry.getKey();
-                        JsonElement value = entry.getValue();
-                        if(key.contains("roots"))
-                        {
-                            JsonObject jsonRoots = value.getAsJsonObject();
-                             for ( Entry<String, JsonElement> roots : jsonRoots.entrySet()) {
-                                   if(roots.getKey().contains("bookmark_bar")){
-                                        JsonObject jsonChildren = roots.getValue().getAsJsonObject();
-                                          for ( Entry<String, JsonElement> children : jsonChildren.entrySet()) {
-                                                JsonObject bookmarks = children.getValue().getAsJsonObject();
-                                                for (Entry<String, JsonElement> recs : bookmarks.entrySet()) {
-                                                JsonObject rec = recs.getValue().getAsJsonObject();
-                                               
-                                                String url = rec.get("url").getAsString();
-                                                String name = rec.get("name").getAsString();
-                                                String date = rec.get("date_added").getAsString();
-                                            }
-                                      }
-                                 
-                             }
-                            
-                        }
-                     
-//                     BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
-//                     Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-//                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",""));
-//                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",""));
-//                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","",""));
-//                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
-//                     bbart.addAttributes(bbattributes);
-                        }
+                    BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
+                     Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",date));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",url));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","",name));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
+                     bbart.addAttributes(bbattributes);     
                     }
-//                   dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connectionString);
-//                   ResultSet temprs = tempdbconnect.executeQry(chbookmarkquery);  
-//                   while(temprs.next()) 
-//                   {
-//                      BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
-//                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-//                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",temprs.getString("last_visit_time")));
-//                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("url") != null) ? temprs.getString("url") : "")));
-//                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "")));
-//                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
-//                     bbart.addAttributes(bbattributes);
-//                      
-//                   } 
-//                   tempdbconnect.closeConnection();
-//                   temprs.close();
+
                     
                  }
                  catch (Exception ex)

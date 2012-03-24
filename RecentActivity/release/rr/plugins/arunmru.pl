@@ -66,12 +66,13 @@ sub pluginmain {
 			#::logMsg($key_path." has no values.");
 		}
 		::rptMsg("</artifacts>");
+		::rptMsg("</runMRU>");
 	}
 	else {
 		#::rptMsg($key_path." not found.");
 		#::logMsg($key_path." not found.");
 	}
-	::rptMsg("</runMRU>");
+	
 }
 
 1;
