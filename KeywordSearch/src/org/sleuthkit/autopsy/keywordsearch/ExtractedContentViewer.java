@@ -199,7 +199,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         try {
             solrCore = KeywordSearch.getServer().getCore();
         } catch (RuntimeException e) {
-            logger.log(Level.INFO, "Could not get Solr Core", e);
+            logger.log(Level.INFO, "Could not get Solr Core");
         }
         if (solrCore == null) {
             return false;
