@@ -196,6 +196,27 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getHashHit() {
     
     return reportMap;
 }
+@Override
+public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getInstalledProg() {
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap();
+    Case currentCase = Case.getCurrentCase(); // get the most updated case
+    SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+    try
+    {
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(8);
+        for (BlackboardArtifact artifact : bbart)
+            {
+                ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
+               reportMap.put(artifact, attributes);    
+            }
+    }
+    catch (Exception e)
+    {
+        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+    }
+    
+    return reportMap;
+}
 
 @Override
 public String getGroupedKeywordHit() {
