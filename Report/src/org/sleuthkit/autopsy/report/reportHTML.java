@@ -169,7 +169,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
              StringBuilder nodeWebDownload =  new StringBuilder("<h3>Web Downloads (").append(countWebDownload).append(")</h3>").append(tableHeader).append("<th>File</th><th>Source</th><th>Time</th><th>Program</th></tr></thead><tbody>");
              StringBuilder nodeRecentObjects =  new StringBuilder("<h3>Recent Documents (").append(countRecentObjects).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Path</th><th>Size</th></tr></thead><tbody>");
              StringBuilder nodeTrackPoint =  new StringBuilder("<h3>Track Points (").append(countTrackPoint).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Attribute</th><th>Value</th></tr></thead><tbody>");
-             StringBuilder nodeInstalled =  new StringBuilder("<h3>Installed Programs (").append(countInstalled).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Attribute</th><th>Value</th></tr></thead><tbody>");
+             StringBuilder nodeInstalled =  new StringBuilder("<h3>Installed Programs (").append(countInstalled).append(")</h3>").append(tableHeader).append("<th>Program Name</th><th>Install Date/Time</th></tr></thead><tbody>");
              StringBuilder nodeKeyword =  new StringBuilder("<h3>Keyword Search Hits (").append(countKeyword).append(")</h3>");
              StringBuilder nodeHash =  new StringBuilder("<h3>Hashset Hits (").append(countHash).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Size</th><th>Hashset Name</th></tr></thead><tbody>");
              int alt = 0;
@@ -279,9 +279,8 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                          nodeTrackPoint.append(artifact);
                     }
                     if(entry.getKey().getArtifactTypeID() == 8){
-                         artifact.append("<tr").append(altRow).append("><td>").append(objId.toString());
-                         artifact.append("</td><td><strong>").append(file.getName().toString()).append("</strong></td>");
-                         artifact.append("<td>").append(filesize.toString()).append("</td>");  
+                        artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(4)).append("</strong></td>");
+                         artifact.append("<td>").append(attributes.get(2)).append("</td>");  
                          artifact.append("</tr>");
                          nodeInstalled.append(artifact);
                     }
