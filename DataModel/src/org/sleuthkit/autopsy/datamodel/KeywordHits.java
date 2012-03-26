@@ -151,7 +151,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             super(Children.create(new KeywordHitsRootChildren(), true), Lookups.singleton(KEYWORD_HITS));
             super.setName(NAME);
             super.setDisplayName(KEYWORD_HITS);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword-search-icon.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png");
             //long start = System.currentTimeMillis();
             initArtifacts();
             initMaps();
@@ -205,7 +205,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             super(Children.create(new KeywordHitsListChildren(children), true), Lookups.singleton(name));
             super.setName(name);
             super.setDisplayName(name + " (" +children.size() + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword-search-icon.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png");
             this.name = name;
             this.children = children;
         }
@@ -269,7 +269,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             super(Children.create(new KeywordHitsKeywordChildren(children), true), Lookups.singleton(name));
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword-search-icon.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png");
             this.name = name;
             this.children = children;
         }

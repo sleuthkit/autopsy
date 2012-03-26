@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,7 +39,6 @@ import org.sleuthkit.datamodel.TskException;
 public class HashsetHits implements AutopsyVisitableItem {
     
     private static final String HASHSET_HITS = "Hashset Hits";
-    public static final String NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getLabel();
     private static final Logger logger = Logger.getLogger(HashsetHits.class.getName());
     
     private SleuthkitCase skCase;
@@ -56,9 +56,15 @@ public class HashsetHits implements AutopsyVisitableItem {
 
         public HashsetHitsRootNode() {
             super(Children.create(new HashsetHitsRootChildren(), true), Lookups.singleton(HASHSET_HITS));
-            super.setName(NAME);
-            super.setDisplayName(HASHSET_HITS);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword-search-icon.png");
+            super.setName(HASHSET_HITS);
+            List<BlackboardArtifact> arts = new ArrayList<BlackboardArtifact>();
+            try {
+                arts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID());
+            } catch (TskException ex) {
+                logger.log(Level.INFO, "Error retrieving artifacts", ex);
+            }
+            super.setDisplayName(HASHSET_HITS + " (" + arts.size() + ")");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png");
         }
         
         @Override

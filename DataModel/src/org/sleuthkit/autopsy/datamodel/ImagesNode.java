@@ -36,7 +36,7 @@ public class ImagesNode extends AbstractNode implements DisplayableItemNode {
         super(new RootContentChildren(images), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png");
     }
 
     @Override

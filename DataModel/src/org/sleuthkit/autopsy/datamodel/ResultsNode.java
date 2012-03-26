@@ -38,7 +38,7 @@ public class ResultsNode extends AbstractNode implements DisplayableItemNode {
                 new HashsetHits(sleuthkitCase))), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/results.png");
     }
 
     @Override

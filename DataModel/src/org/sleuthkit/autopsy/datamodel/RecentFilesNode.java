@@ -38,7 +38,7 @@ public class RecentFilesNode extends AbstractNode implements DisplayableItemNode
         super.setName(NAME);
         super.setDisplayName(NAME);
         this.skCase = skCase;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent-icon.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png");
 }
 
     @Override

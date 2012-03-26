@@ -44,7 +44,7 @@ public class SearchFiltersNode extends AbstractNode implements DisplayableItemNo
             super.setDisplayName(DNAME);
         }
         this.skCase = skCase;
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
     }
 
     @Override
