@@ -128,6 +128,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             return;
         }
         File file = selectedNode.getLookup().lookup(File.class);
+        resetVideo();
         setDataView(file);
         boolean isVid = isVid(file.getName());
         pauseButton.setVisible(isVid);
@@ -193,8 +194,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
     
     private void resetVideo() {
-        if(pipe != null)
+        if(pipe != null) {
             pipe.stop();
+            pipe.dispose();
+        }
         pipe = new Pipeline("main pipeline");
         videoComponent = new VideoComponent();
         videoPanel.removeAll();
