@@ -153,7 +153,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                 }
                 if(regFilePath.toLowerCase().contains("software"))
                 {
-                    type = "1software";
+                    type = "autopsysoftware";
                 }
                 if(regFilePath.toLowerCase().contains("ntuser"))
                 {
@@ -199,8 +199,8 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
            InputStreamReader fstreamReader = new InputStreamReader(fstream, "UTF-8");
            BufferedReader input = new BufferedReader(fstreamReader);
            //logger.log(Level.INFO, "using encoding " + fstreamReader.getEncoding());
-                   
            String regString = new Scanner(input).useDelimiter("\\Z").next();
+           regfile.delete();
            String startdoc = "<document>";
            String result = regString.replaceAll("----------------------------------------","");
            String enddoc = "</document>";
@@ -223,6 +223,8 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                
                Element artroot = tempnode.getChild("artifacts");
                List artlist = artroot.getChildren();
+               String winver = "";
+               String installdate = "";
             if(artlist.isEmpty()){   
             }
             else{
@@ -233,19 +235,52 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                  String name = artnode.getAttributeValue("name");
                  String value = artnode.getTextTrim();  
                  Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
+                
+                   if("recentdocs".equals(context)){
+                       
+               BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
                   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
       
                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
-                   if("recentdocs".equals(context)){
-               BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                 bbart.addAttributes(bbattributes);
                  }
                else if("runMRU".equals(context)){
                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
+                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
+      
+                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
+                bbart.addAttributes(bbattributes);
+               }
+                 else if("uninstall".equals(context)){
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
+                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, value));
+      
+                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, name));
+                     BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                  bbart.addAttributes(bbattributes);
-    
                 }
+                 else if("WinVersion".equals(context)){
+                     
+                     if(name.contains("ProductName"))
+                     {
+                         winver = value;
+                     }
+                     if(name.contains("CSDVersion")){
+                         winver = winver + " " + value;
+                     }
+                     if(name.contains("InstallDate"))
+                     {
+                      installdate = value;
+                     
+                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, winver));
+      
+                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, installdate));
+                     BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
+                       bbart.addAttributes(bbattributes);
+                    }
+                 }
                else
                {   
                  

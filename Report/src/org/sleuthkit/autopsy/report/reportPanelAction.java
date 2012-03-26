@@ -42,7 +42,7 @@ public class reportPanelAction {
              if(reportlist.contains(5)){Results.putAll(bbreport.getWebDownload());}
              if(reportlist.contains(6)){Results.putAll(bbreport.getRecentObject());}
             // if(reportlist.contains(7)){Results.putAll(bbreport.getGenInfo());}
-            // if(reportlist.contains(7)){Results.putAll(bbreport.getGenInfo());}
+             if(reportlist.contains(8)){Results.putAll(bbreport.getInstalledProg());}
              if(reportlist.contains(9)){Results.putAll(bbreport.getKeywordHit());}
              if(reportlist.contains(10)){Results.putAll(bbreport.getHashHit());}
               SwingUtilities.invokeLater(new Runnable() {
@@ -97,7 +97,7 @@ public class reportPanelAction {
             // add the panel to the popup window
             popUpWindow.add(panel);
             
-            popUpWindow.setResizable(false);
+            popUpWindow.setResizable(true);
             popUpWindow.pack();
             // set the location of the popUp Window on the center of the screen
             Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();

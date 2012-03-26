@@ -104,6 +104,6 @@ sub pluginmain {
 		#::rptMsg($key_path." not found.");
 		#::logMsg($key_path." not found.");
 	}
-	::rptMsg("</artifacts></shellfolders>");
+	::rptMsg("</artifacts></WinVersion>");
 }
 1;
