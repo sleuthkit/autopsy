@@ -199,8 +199,8 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
            InputStreamReader fstreamReader = new InputStreamReader(fstream, "UTF-8");
            BufferedReader input = new BufferedReader(fstreamReader);
            //logger.log(Level.INFO, "using encoding " + fstreamReader.getEncoding());
-           //regfile.delete();
            String regString = new Scanner(input).useDelimiter("\\Z").next();
+           regfile.delete();
            String startdoc = "<document>";
            String result = regString.replaceAll("----------------------------------------","");
            String enddoc = "</document>";
