@@ -5,6 +5,6 @@
         <folder name="Edit"/>
     </folder>
     <folder name="Toolbars">
-        <folder name="File"/>
+         <folder name="QuickSearch_hidden"/>
     </folder>
 </filesystem>

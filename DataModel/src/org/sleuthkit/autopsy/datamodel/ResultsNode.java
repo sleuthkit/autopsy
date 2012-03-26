@@ -33,10 +33,12 @@ public class ResultsNode extends AbstractNode implements DisplayableItemNode {
     public static final String NAME = "Results";
 
     public ResultsNode(SleuthkitCase sleuthkitCase) {
-        super(new RootContentChildren(Arrays.asList(new ExtractedContent(sleuthkitCase), new KeywordHits(sleuthkitCase))), Lookups.singleton(NAME));
+        super(new RootContentChildren(Arrays.asList(new ExtractedContent(sleuthkitCase),
+                new KeywordHits(sleuthkitCase),
+                new HashsetHits(sleuthkitCase))), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/results.png");
     }
 
     @Override

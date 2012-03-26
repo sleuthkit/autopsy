@@ -31,6 +31,9 @@ public class reportPanelAction {
          
      public void reportGenerate(ArrayList<Integer> reportlist, final reportFilter rr){
          try {
+             //Clear any old reports in the string
+             viewReport.setLength(0);
+             done = false;
             // Generate the reports and create the hashmap
         final HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap();
          report bbreport = new report();
@@ -49,7 +52,6 @@ public class reportPanelAction {
                 public void run() {
                  rr.progBarCount(2*Results.size());
                  }});
-            
          //Turn our results into the appropriate xml/html reports
          //TODO: add a way for users to select what they will run when
              Thread xmlthread = new Thread(new Runnable()
@@ -80,11 +82,12 @@ public class reportPanelAction {
             final JFrame frame = new JFrame(ACTION_NAME);
             final JDialog popUpWindow = new JDialog(frame, ACTION_NAME, true); // to make the popUp Window to be modal
             
-            xmlthread.join();
+            
             // initialize panel with loaded settings   
             htmlthread.join(); 
-            reportPanel panel = new reportPanel(viewReport.toString());    
-            
+            //Set the temporary label to let the user know its done and is waiting on the report
+            rr.progBarText();
+            reportPanel panel = new reportPanel(viewReport.toString());
               
            
              panel.setjButton1ActionListener(new ActionListener() {
@@ -104,8 +107,9 @@ public class reportPanelAction {
             double w = popUpWindow.getSize().getWidth();
             double h = popUpWindow.getSize().getHeight();
             popUpWindow.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
-         
+            
             popUpWindow.setVisible(true);
+            xmlthread.join();
             rr.progBarDone();
            
          }

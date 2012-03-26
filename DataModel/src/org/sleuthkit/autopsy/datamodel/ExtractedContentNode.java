@@ -36,7 +36,7 @@ public class ExtractedContentNode extends AbstractNode implements DisplayableIte
         super(Children.create(new ExtractedContentChildren(skCase), true), Lookups.singleton(NAME));
         super.setName(NAME);
         super.setDisplayName(NAME);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/artifact-icon.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/extracted_content.png");
     }
 
     @Override

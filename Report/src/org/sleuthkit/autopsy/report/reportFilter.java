@@ -245,6 +245,10 @@ public void progBarDone(){
    jButton2.doClick();
 }
 
+public void progBarText(){
+    progBar.setString("Populating Report - Please wait...");
+}
+
 public void progBarCount(int count){
     progBar.setMaximum(count);
 }

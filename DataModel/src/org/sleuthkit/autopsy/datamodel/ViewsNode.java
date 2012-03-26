@@ -36,7 +36,7 @@ public class ViewsNode extends AbstractNode implements DisplayableItemNode {
         super(new RootContentChildren(Arrays.asList(new SearchFilters(sleuthkitCase), new RecentFiles(sleuthkitCase))), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/views.png");
     }
 
     @Override
