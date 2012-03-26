@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.DefaultListSelectionModel;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -755,8 +755,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         @Override
         public void valueChanged(ListSelectionEvent e) {
-            DefaultListSelectionModel selModel = (DefaultListSelectionModel) e.getSource();
-            if (!selModel.getValueIsAdjusting()) {
+            ListSelectionModel selModel = (ListSelectionModel) e.getSource();
+            if (selModel.isSelectionEmpty() || selModel.getValueIsAdjusting())
+                return;
+            
                 final int minIndex = selModel.getMinSelectionIndex();
                 final int maxIndex = selModel.getMaxSelectionIndex();
                 int selected = -1;
@@ -775,9 +777,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
                         mainPanel.showDetails(selected);
                     }
                 }
-
-
-            }
+            
         }
     }
 }
