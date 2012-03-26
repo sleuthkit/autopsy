@@ -73,9 +73,9 @@ sub pluginmain {
 	 			push(@{$uninst{$lastwrite}},$display);
 	 		}
 	 		foreach my $t (reverse sort {$a <=> $b} keys %uninst) {
-				::rptMsg("<item name=\"". gmtime($t).">");
+				#::rptMsg("<item name=\"". gmtime($t)."\">");
 				foreach my $item (@{$uninst{$t}}) {
-					::rptMsg($item."</item>");
+					::rptMsg("<item name=\"". gmtime($t)."\">" .$item."</item>");
 				}
 				#::rptMsg("");
 			}
