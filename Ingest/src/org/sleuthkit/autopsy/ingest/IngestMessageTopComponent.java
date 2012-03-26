@@ -75,6 +75,13 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
         return getDefault();
     }
 
+    @Override
+    protected String preferredID() {
+        return PREFERRED_ID;
+    }
+    
+    
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is

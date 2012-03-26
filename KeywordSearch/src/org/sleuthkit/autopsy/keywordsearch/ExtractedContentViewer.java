@@ -202,6 +202,9 @@ public class ExtractedContentViewer implements DataContentViewer {
         } catch (RuntimeException e) {
             logger.log(Level.INFO, "Could not get Solr Core", e);
         }
+        catch (Exception e) {
+            logger.log(Level.INFO, "Could not get Solr Core", e);
+        }
         if (solrCore == null) {
             return false;
         }
