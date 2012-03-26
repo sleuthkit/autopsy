@@ -44,6 +44,7 @@ public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.AR
         list.remove(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
         list.remove(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
         list.remove(BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT);
+        list.remove(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
         return true;
     }
     

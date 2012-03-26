@@ -141,6 +141,11 @@ abstract class AbstractContentChildren extends Keys<Object> {
         }
         
         @Override
+        public AbstractNode visit(HashsetHits hh) {
+            return hh.new HashsetHitsRootNode();
+        }
+        
+        @Override
         public AbstractNode visit(Images i) {
             try {
                 return new ImagesNode(i.getSleuthkitCase().getRootObjects());

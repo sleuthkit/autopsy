@@ -27,6 +27,7 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
+import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.ImagesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
@@ -86,6 +87,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 || arg0 instanceof ArtifactTypeNode 
                 || arg0 instanceof RecentFilesFilterNode
                 || arg0 instanceof FileSearchFilterNode
+                || arg0 instanceof HashsetHitsRootNode
                 )) {
             return new Node[]{this.copyNode(arg0, false)};
         } else {

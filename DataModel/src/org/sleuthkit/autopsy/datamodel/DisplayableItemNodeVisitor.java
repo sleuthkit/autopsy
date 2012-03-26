@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
@@ -41,6 +42,7 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(KeywordHitsRootNode khrn);
     T visit(KeywordHitsListNode khsn);
     T visit(KeywordHitsKeywordNode khmln);
+    T visit(HashsetHitsRootNode hhrn);
     T visit(ViewsNode vn);
     T visit(ResultsNode rn);
     T visit(ImagesNode in);
@@ -142,6 +144,11 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(ImagesNode in) {
             return defaultVisit(in);
+        }
+        
+        @Override
+        public T visit(HashsetHitsRootNode hhrn) {
+            return defaultVisit(hhrn);
         }
     }
 }
