@@ -97,7 +97,7 @@ public class reportPanelAction {
             // add the panel to the popup window
             popUpWindow.add(panel);
             
-            popUpWindow.setResizable(false);
+            popUpWindow.setResizable(true);
             popUpWindow.pack();
             // set the location of the popUp Window on the center of the screen
             Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
