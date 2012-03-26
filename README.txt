@@ -20,6 +20,10 @@ Autopsy requires the Java Runtime Environment (JRE) to be installed. A 32-bit ve
 You can download Java from here:
     http://java.com/en/download/index.jsp 
 
+Before running Autopsy, you will have to install GStreamer and add the GStreamer 'lib' folder to the PATH environment variable
+GStreamer builds for Windows are available at http://code.google.com/p/ossbuild/downloads/list
+
+
 You should be able to simply open the Autopsy ZIP file and run the autopsy.exe program located in the 'bin' folder.
 
 
@@ -29,6 +33,8 @@ The primary development of Autopsy 3 has been done at Basis Technology. The foll
 * Anthony Lawrence
 * James Antonius
 * Peter Martel
+* Adam Malinowski
+* Dick Fickling
 
 
 FEEDBACK
