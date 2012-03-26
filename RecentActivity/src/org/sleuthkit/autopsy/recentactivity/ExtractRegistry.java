@@ -196,8 +196,8 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
              File regfile = new File(regRecord);
           
            BufferedReader input = new BufferedReader(new InputStreamReader(new FileInputStream(regfile)));
-           regfile.delete();
            String regString = new Scanner(input).useDelimiter("\\Z").next();
+           regfile.delete();
            String startdoc = "<document>";
            String result = regString.replaceAll("----------------------------------------","");
            String enddoc = "</document>";
