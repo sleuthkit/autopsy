@@ -20,11 +20,13 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.datamodel.HighlightLookup;
 import org.sleuthkit.autopsy.keywordsearch.Server.Core;
 import org.sleuthkit.datamodel.Content;
@@ -47,7 +49,15 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
 
     
     HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex) {
-        this(content, solrQuery, KeywordSearch.getServer().getCore(), isRegex);
+        this.content = content;
+        this.solrQuery = solrQuery;
+        this.isRegex = isRegex;
+        
+        try {
+            this.solrCore = KeywordSearch.getServer().getCore();
+        } catch (SolrServerException ex) {
+            logger.log(Level.INFO, "Could not get Solr core", ex);
+        }
     }
 
     HighlightedMatchesSource(Content content, String solrQuery, Core solrCore, boolean isRegex) {

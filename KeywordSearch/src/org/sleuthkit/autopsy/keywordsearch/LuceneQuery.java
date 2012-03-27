@@ -37,6 +37,7 @@ import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -108,12 +109,23 @@ public class LuceneQuery implements KeywordSearchQuery {
      */
     @Override
     public List<FsContent> performQuery() throws RuntimeException {
+
         List<FsContent> matches = new ArrayList<FsContent>();
 
         boolean allMatchesFetched = false;
         final int ROWS_PER_FETCH = 10000;
 
-        Server.Core solrCore = KeywordSearch.getServer().getCore();
+        Server.Core solrCore = null;
+
+        try {
+            solrCore = KeywordSearch.getServer().getCore();
+        } catch (SolrServerException e) {
+            logger.log(Level.INFO, "Could not get Solr core", e);
+        }
+        
+        if (solrCore == null) {
+            return matches;
+        }
 
         SolrQuery q = new SolrQuery();
 
@@ -165,12 +177,9 @@ public class LuceneQuery implements KeywordSearchQuery {
         Map<String, List<FsContent>> results = new HashMap<String, List<FsContent>>();
         //in case of single term literal query there is only 1 term, so delegate to performQuery()
         results.put(query, performQuery());
-        
+
         return results;
     }
-    
-    
-    
 
     @Override
     public void execute() {
@@ -225,12 +234,11 @@ public class LuceneQuery implements KeywordSearchQuery {
     public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
         List<KeywordWriteResult> ret = new ArrayList<KeywordWriteResult>();
         KeywordWriteResult written = writeToBlackBoard(query, newFsHit, listName);
-        if (written != null)
+        if (written != null) {
             ret.add(written);
+        }
         return ret;
     }
-    
-    
 
     @Override
     public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) {
@@ -294,7 +302,15 @@ public class LuceneQuery implements KeywordSearchQuery {
     public static String querySnippet(String query, long contentID, boolean isRegex) {
         final int SNIPPET_LENGTH = 45;
 
-        final Server.Core solrCore = KeywordSearch.getServer().getCore();
+        Server.Core solrCore = null;
+        try {
+            solrCore = KeywordSearch.getServer().getCore();
+        } catch (SolrServerException ex) {
+            logger.log(Level.INFO, "Could not get Solr core", ex);
+        }
+        
+        if (solrCore == null)
+            return "";
 
         String highlightField = null;
         if (isRegex) {

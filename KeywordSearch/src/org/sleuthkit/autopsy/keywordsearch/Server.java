@@ -231,9 +231,9 @@ class Server {
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
     }
 
-    synchronized Core getCore() {
+    synchronized Core getCore() throws SolrServerException {
         if (currentCore == null) {
-            throw new RuntimeException("No currently open Core!");
+            throw new SolrServerException("No currently open Core!");
         }
         return currentCore;
     }

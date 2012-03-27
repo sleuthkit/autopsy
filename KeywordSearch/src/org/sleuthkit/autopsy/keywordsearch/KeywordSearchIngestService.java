@@ -60,7 +60,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private IngestManagerProxy managerProxy;
     private static final long MAX_STRING_EXTRACT_SIZE = 1 * (1 << 10); // * (1 << 10); TODO increase
     private static final long MAX_INDEX_SIZE = 100 * (1 << 10) * (1 << 10);
-    private Ingester ingester;
+    private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runTimer = false;
     private List<Keyword> keywords; //keywords to search
@@ -79,6 +79,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private volatile boolean finalRunComplete = false;
     private final String hashDBServiceName = "Hash Lookup";
     private SleuthkitCase caseHandle = null;
+    boolean initialized = false;
     // TODO: use a more robust method than checking file extension to determine
     // whether to try a file
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
@@ -89,7 +90,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,
+    };
     private Map<Long, IngestStatus> ingestStatus;
     private Map<String, List<FsContent>> reportedHits; //already reported hits
 
@@ -102,6 +104,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     @Override
     public ProcessResult process(FsContent fsContent) {
+        
+        if (initialized == false)
+            //error initializing indexing/Solr
+            return ProcessResult.OK;
+        
         //check if we should skip this file according to HashDb service
         //if so do not index it, also postpone indexing and keyword search threads to later
         IngestServiceFsContent.ProcessResult hashDBResult = managerProxy.getFsContentServiceResult(hashDBServiceName);
@@ -132,6 +139,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 searcher.execute();
             }
         }
+        
         indexer.indexFile(fsContent);
         return ProcessResult.OK;
 
@@ -139,6 +147,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     @Override
     public void complete() {
+        if (initialized == false)
+            return;
+        
         //logger.log(Level.INFO, "complete()");
         runTimer = false;
 
@@ -173,7 +184,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
-
+        
         //stop timer
         runTimer = false;
         //stop searcher
@@ -192,7 +203,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public String getName() {
         return MODULE_NAME;
     }
-    
+
     @Override
     public String getDescription() {
         return MODULE_DESCRIPTION;
@@ -201,6 +212,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     @Override
     public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init()");
+        initialized = false;
 
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
 
@@ -209,7 +221,15 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         //this deregisters previously registered listeners at every init()
         pcs = new PropertyChangeSupport(KeywordSearchIngestService.class);
 
-        final Server.Core solrCore = KeywordSearch.getServer().getCore();
+        Server.Core solrCore = null;
+        try {
+            solrCore = KeywordSearch.getServer().getCore();
+        } catch (SolrServerException ex) {
+            logger.log(Level.INFO, "Could not get Solr core", ex);
+            managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "Error initializing.", "Keyword indexing and search cannot proceed. Try restarting the application."));
+            return;
+        }
+
         ingester = solrCore.getIngester();
 
         ingestStatus = new HashMap<Long, IngestStatus>();
@@ -240,6 +260,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         timer = new CommitTimer(commitIntervalMs);
         runTimer = true;
+        
+        initialized = true;
+        
         timer.start();
 
         managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Started"));
@@ -303,8 +326,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     }
 
     private void commit() {
-        ingester.commit();
-
+        if (initialized)
+            ingester.commit();
     }
 
     private void postIndexSummary() {

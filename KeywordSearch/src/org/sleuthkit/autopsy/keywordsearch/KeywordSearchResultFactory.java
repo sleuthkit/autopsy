@@ -26,10 +26,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.SwingUtilities;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -43,6 +45,7 @@ import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
+import org.sleuthkit.autopsy.keywordsearch.Server.Core;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -408,7 +411,16 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 final Content content = thingContent.getContent();
                 final String query = thingContent.getQueryStr();
 
-                final String contentStr = KeywordSearch.getServer().getCore().getSolrContent(content);
+                Core core = null;
+                try {
+                    core = KeywordSearch.getServer().getCore();
+                } catch (SolrServerException ex) {
+                    logger.log(Level.INFO, "Could not get Solr core", ex);
+                }
+                if (core == null)
+                    return null;
+                
+                final String contentStr = core.getSolrContent(content);
 
                 //postprocess
                 //make sure Solr result contains a match (this gets rid of large number of false positives)

@@ -124,10 +124,9 @@ public class TermComponentQuery implements KeywordSearchQuery {
      * execute query and return terms, helper method
      */
     protected List<Term> executeQuery(SolrQuery q) {
-        Server.Core solrCore = KeywordSearch.getServer().getCore();
-
         List<Term> termsCol = null;
         try {
+            Server.Core solrCore = KeywordSearch.getServer().getCore();
             TermsResponse tr = solrCore.queryTerms(q);
             termsCol = tr.getTerms(TERMS_SEARCH_FIELD);
             return termsCol;
