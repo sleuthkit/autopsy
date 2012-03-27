@@ -101,7 +101,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
         autopsyLabel.setFont(new java.awt.Font("Tahoma", 1, 32));
         autopsyLabel.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.autopsyLabel.text")); // NOI18N
 
-        newCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/new-icon.png"))); // NOI18N
+        newCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_create_new_case.png"))); // NOI18N
         newCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.newCaseButton.text")); // NOI18N
         newCaseButton.setBorder(null);
         newCaseButton.setBorderPainted(false);
@@ -113,7 +113,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        openCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/open-icon.png"))); // NOI18N
+        openCaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"))); // NOI18N
         openCaseButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openCaseButton.text")); // NOI18N
         openCaseButton.setBorder(null);
         openCaseButton.setBorderPainted(false);
@@ -126,7 +126,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
             }
         });
 
-        openRecentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/open-recent-icon.png"))); // NOI18N
+        openRecentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/casemodule/btn_icon_open_recent.png"))); // NOI18N
         openRecentButton.setText(org.openide.util.NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.openRecentButton.text")); // NOI18N
         openRecentButton.setBorder(null);
         openRecentButton.setBorderPainted(false);

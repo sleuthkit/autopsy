@@ -183,7 +183,7 @@
         <Component class="javax.swing.JButton" name="newCaseButton">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/org/sleuthkit/autopsy/casemodule/new-icon.png"/>
+              <Image iconType="3" name="/org/sleuthkit/autopsy/casemodule/btn_icon_create_new_case.png"/>
             </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.newCaseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -204,7 +204,7 @@
         <Component class="javax.swing.JButton" name="openCaseButton">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/org/sleuthkit/autopsy/casemodule/open-icon.png"/>
+              <Image iconType="3" name="/org/sleuthkit/autopsy/casemodule/btn_icon_open_existing.png"/>
             </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.openCaseButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -228,7 +228,7 @@
         <Component class="javax.swing.JButton" name="openRecentButton">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/org/sleuthkit/autopsy/casemodule/open-recent-icon.png"/>
+              <Image iconType="3" name="/org/sleuthkit/autopsy/casemodule/btn_icon_open_recent.png"/>
             </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="CueBannerPanel.openRecentButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
