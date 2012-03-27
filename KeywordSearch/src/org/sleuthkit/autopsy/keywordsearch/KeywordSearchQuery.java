@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.datamodel.FsContent;
 
@@ -34,9 +35,19 @@ public interface KeywordSearchQuery {
     
     /**
      * execute query and return results without publishing them
+     * return results for all matching terms
+     * 
      * @return 
      */
     public List<FsContent> performQuery();
+    
+    /**
+     * execute query and return results without publishing them
+     * return results per term
+     * 
+     * @return 
+     */
+    public Map<String,List<FsContent>> performQueryPerTerm();
     
     
     /**
@@ -80,6 +91,16 @@ public interface KeywordSearchQuery {
      * @return collection of results (with cached bb artifacts/attributes) created and written
      */
     public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName);
+    
+    /**
+     * write results to blackboard per single term and file hit
+     * this method is useful if something else should keep track of partial results to write
+     * @param termHit term for only which to write results
+     * @param newFsHit fscontent for which to write results for this hit
+     * @param listName listname
+     * @return collection of results (with cached bb artifacts/attributes) created and written
+     */
+    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName);
        
 }
 

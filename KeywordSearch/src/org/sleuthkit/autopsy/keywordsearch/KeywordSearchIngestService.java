@@ -57,7 +57,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public static final String MODULE_NAME = "Keyword Search";
     private static KeywordSearchIngestService instance = null;
     private IngestManagerProxy managerProxy;
-    private static final long MAX_STRING_EXTRACT_SIZE = 10 * (1 << 10); // * (1 << 10);
+    private static final long MAX_STRING_EXTRACT_SIZE = 1 * (1 << 10); // * (1 << 10); TODO increase
     private static final long MAX_INDEX_SIZE = 100 * (1 << 10) * (1 << 10);
     private Ingester ingester;
     private volatile boolean commitIndex = false; //whether to commit index next time
@@ -78,7 +78,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private volatile boolean finalRunComplete = false;
     private final String hashDBServiceName = "Hash Lookup";
     private SleuthkitCase caseHandle = null;
-  
     // TODO: use a more robust method than checking file extension to determine
     // whether to try a file
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
@@ -89,8 +88,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,
-    };
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
     private Map<Long, IngestStatus> ingestStatus;
     private Map<String, List<FsContent>> reportedHits; //already reported hits
 
@@ -109,14 +107,14 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         //logger.log(Level.INFO, "hashdb result: " + hashDBResult + "file: " + fsContent.getName());
         if (hashDBResult == IngestServiceFsContent.ProcessResult.COND_STOP) {
             return ProcessResult.OK;
-        }
-        else if (hashDBResult == IngestServiceFsContent.ProcessResult.ERROR) {
+        } else if (hashDBResult == IngestServiceFsContent.ProcessResult.ERROR) {
             //notify depending service that keyword search (would) encountered error for this file
             return ProcessResult.ERROR;
         }
-        
-        if (processedFiles == false)
+
+        if (processedFiles == false) {
             processedFiles = true;
+        }
 
         //check if time to commit and previous search is not running
         //commiting while searching causes performance issues
@@ -201,7 +199,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
 
         this.managerProxy = managerProxy;
-        
+
         //this deregisters previously registered listeners at every init()
         pcs = new PropertyChangeSupport(KeywordSearchIngestService.class);
 
@@ -286,16 +284,16 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         //no need to check timer thread
 
     }
-    
+
     @Override
     public synchronized boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
-        if (finalRunComplete == true)
+        if (finalRunComplete == true) {
             return false;
-        else {
+        } else {
             pcs.addPropertyChangeListener(l);
             return true;
         }
-       
+
     }
 
     private void commit() {
@@ -504,7 +502,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
     }
 
-    private class Searcher extends SwingWorker<Object,Void> {
+    private class Searcher extends SwingWorker<Object, Void> {
 
         private List<Keyword> keywords;
         private ProgressHandle progress;
@@ -547,52 +545,69 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
                 KeywordSearchQuery del = null;
 
-                if (keywordQuery.isLiteral()) {
+                boolean isRegex = !keywordQuery.isLiteral();
+                if (!isRegex) {
                     del = new LuceneQuery(keywordQuery);
                     del.escape();
                 } else {
                     del = new TermComponentQuery(keywordQuery);
                 }
 
-                List<FsContent> queryResult = null;
+                Map<String, List<FsContent>> queryResult = null;
 
                 try {
-                    queryResult = del.performQuery();
+                    queryResult = del.performQueryPerTerm();
                 } catch (Exception e) {
                     logger.log(Level.INFO, "Error performing query: " + keywordQuery.getQuery(), e);
                     continue;
                 }
 
                 //calculate new results but substracting results already obtained in this run
-                List<FsContent> newResults = new ArrayList<FsContent>();
+                Map<Keyword, List<FsContent>> newResults = new HashMap<Keyword, List<FsContent>>();
 
-                List<FsContent> curResults = currentResults.get(keywordQuery);
-                if (curResults == null) {
-                    currentResults.put(keywordQuery, queryResult);
-                    newResults = queryResult;
-                } else {
-                    for (FsContent res : queryResult) {
-                        if (!curResults.contains(res)) {
-                            //add to new results
-                            newResults.add(res);
+                for (String termResult : queryResult.keySet()) {
+                    List<FsContent> queryTermResults = queryResult.get(termResult);
+                    Keyword termResultK = new Keyword(termResult, !isRegex);
+                    List<FsContent> curTermResults = currentResults.get(termResultK);
+                    if (curTermResults == null) {
+                        currentResults.put(termResultK, queryTermResults);
+                        newResults.put(termResultK, queryTermResults);
+                    } else {
+                        //some fscontent hits already exist for this keyword
+                        for (FsContent res : queryTermResults) {
+                            if (!curTermResults.contains(res)) {
+                                //add to new results
+                                List<FsContent> newResultsFs = newResults.get(termResultK);
+                                if (newResultsFs == null) {
+                                    newResultsFs = new ArrayList<FsContent>();
+                                    newResults.put(termResultK, newResultsFs);
+                                }
+                                newResultsFs.add(res);
+                                curTermResults.add(res);
+                            }
                         }
                     }
-                    //update current result with new ones
-                    curResults.addAll(newResults);
 
                 }
+
 
                 if (!newResults.isEmpty()) {
 
                     //write results to BB
                     Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>(); //new artifacts to report
-                    for (FsContent hitFile : newResults) {
-                        if (this.isCancelled()) {
-                            return null;
-                        }
-                        Collection<KeywordWriteResult> written = del.writeToBlackBoard(hitFile, listName);
-                        for (KeywordWriteResult res : written) {
-                            newArtifacts.add(res.getArtifact());
+                    for (final Keyword hitTerm : newResults.keySet()) {
+                        List<FsContent> fsContentHits = newResults.get(hitTerm);
+                        for (final FsContent hitFile : fsContentHits) {
+                            if (this.isCancelled()) {
+                                return null;
+                            }
+                            KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, listName);
+                            if (written == null) {
+                                logger.log(Level.INFO, "BB artifact for keyword not written: " + hitTerm.toString());
+                                continue;
+                            }
+
+                            newArtifacts.add(written.getArtifact());
 
                             //generate a data message for each artifact
                             StringBuilder subjectSb = new StringBuilder();
@@ -606,7 +621,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             }
                             subjectSb.append("<");
                             String uniqueKey = null;
-                            BlackboardAttribute attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
+                            BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
                             if (attr != null) {
                                 final String keyword = attr.getValueString();
                                 subjectSb.append(keyword);
@@ -625,7 +640,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             detailsSb.append("</tr>");
 
                             //preview
-                            attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
+                            attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
                             if (attr != null) {
                                 detailsSb.append("<tr>");
                                 detailsSb.append("<th>Preview</th>");
@@ -642,7 +657,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
 
                             //list
-                            attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID());
+                            attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID());
                             detailsSb.append("<tr>");
                             detailsSb.append("<th>List</th>");
                             detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
@@ -650,7 +665,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
                             //regex
                             if (!keywordQuery.isLiteral()) {
-                                attr = res.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
+                                attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
                                 if (attr != null) {
                                     detailsSb.append("<tr>");
                                     detailsSb.append("<th>RegEx</th>");
@@ -661,9 +676,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             }
                             detailsSb.append("</table>");
 
-                            managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, res.getArtifact()));
-                        }
-                    } //for each file hit
+                            managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+
+                        } //for each term hit
+                    }//for each file hit
 
                     //update artifact browser
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));

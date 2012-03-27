@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -59,9 +60,8 @@ public class LuceneQuery implements KeywordSearchQuery {
     private Keyword keywordQuery = null;
     //use different highlight Solr fields for regex and literal search
     static final String HIGHLIGHT_FIELD_LITERAL = "content";
-    //TODO change to content_ws and in Solr schema to stored="true" to improve regex highlight matching
-    static final String HIGHLIGHT_FIELD_REGEX = "content";
-    //static final String HIGHLIGHT_FIELD_REGEX = "content_ws";
+    //static final String HIGHLIGHT_FIELD_REGEX = "content";
+    static final String HIGHLIGHT_FIELD_REGEX = "content_ws";
 
     public LuceneQuery(Keyword keywordQuery) {
         this(keywordQuery.getQuery());
@@ -161,6 +161,18 @@ public class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
+    public Map<String, List<FsContent>> performQueryPerTerm() {
+        Map<String, List<FsContent>> results = new HashMap<String, List<FsContent>>();
+        //in case of single term literal query there is only 1 term, so delegate to performQuery()
+        results.put(query, performQuery());
+        
+        return results;
+    }
+    
+    
+    
+
+    @Override
     public void execute() {
         escape();
         final List<FsContent> matches = performQuery();
@@ -211,19 +223,28 @@ public class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
+        List<KeywordWriteResult> ret = new ArrayList<KeywordWriteResult>();
+        KeywordWriteResult written = writeToBlackBoard(query, newFsHit, listName);
+        if (written != null)
+            ret.add(written);
+        return ret;
+    }
+    
+    
+
+    @Override
+    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
 
-        Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
         KeywordWriteResult writeResult = null;
         Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
         BlackboardArtifact bba = null;
         try {
             bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
             writeResult = new KeywordWriteResult(bba);
-            writeResults.add(writeResult);
         } catch (Exception e) {
             logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
-            return writeResults;
+            return null;
         }
 
         String snippet = null;
@@ -236,7 +257,7 @@ public class LuceneQuery implements KeywordSearchQuery {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", KeywordSearchUtil.escapeForBlackBoard(snippet)));
         }
         //keyword
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", query));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", termHit));
         //list
         if (listName == null) {
             listName = "";
@@ -249,17 +270,18 @@ public class LuceneQuery implements KeywordSearchQuery {
         if (keywordQuery != null) {
             BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
             if (selType != null) {
-                attributes.add(new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", query));
+                attributes.add(new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", termHit));
             }
         }
 
         try {
             bba.addAttributes(attributes); //write out to bb
             writeResult.add(attributes);
+            return writeResult;
         } catch (TskException e) {
             logger.log(Level.INFO, "Error adding bb attributes to artifact", e);
         }
-        return writeResults;
+        return null;
     }
 
     /**

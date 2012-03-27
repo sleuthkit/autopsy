@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 import org.sleuthkit.datamodel.FsContent;
 
+
 /**
  * Query manager responsible for running appropriate queries and displaying results
  * for single, multi keyword queries, with detailed or collapsed results
@@ -143,9 +144,15 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
 
     @Override
     public List<FsContent> performQuery() {
-        //not done here
-        return null;
+        throw new UnsupportedOperationException("performQuery() unsupported");
     }
+
+    @Override
+    public Map<String, List<FsContent>> performQueryPerTerm() {
+        throw new UnsupportedOperationException("performQueryPerTerm() unsupported");
+    }
+    
+    
 
     @Override
     public boolean validate() {
@@ -192,14 +199,16 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
     
     @Override
     public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {     
-        Collection<KeywordWriteResult> ret = new ArrayList<KeywordWriteResult>();
-         for (KeywordSearchQuery q : queryDelegates) {
-            ret.addAll(q.writeToBlackBoard(newFsHit, listName));
-        }
-        return ret;
+        throw new UnsupportedOperationException("writeToBlackBoard() unsupported by manager");
     }
-}
 
+    @Override
+    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) {
+        throw new UnsupportedOperationException("writeToBlackBoard() unsupported by manager");
+    }
+    
+    
+}
 /**
  * custom KeyValue that also stores query object  to execute
  */

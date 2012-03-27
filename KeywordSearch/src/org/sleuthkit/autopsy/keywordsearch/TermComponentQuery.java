@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,7 +28,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import javax.swing.SwingWorker;
@@ -156,9 +153,73 @@ public class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
+    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
 
+        //snippet
+        String snippet = null;
+        try {
+            snippet = LuceneQuery.querySnippet(KeywordSearchUtil.escapeLuceneQuery(termHit, true, false), newFsHit.getId(), true);
+        } catch (Exception e) {
+            logger.log(Level.INFO, "Error querying snippet: " + termHit, e);
+            return null;
+        }
+
+        if (snippet == null || snippet.equals("")) {
+            return null;
+        }
+
+        //there is match actually in this file, create artifact only then
+        BlackboardArtifact bba = null;
+        KeywordWriteResult writeResult = null;
+        Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
+        try {
+            bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+            writeResult = new KeywordWriteResult(bba);
+        } catch (Exception e) {
+            logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
+            return null;
+        }
+
+
+        //regex match
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", termHit));
+        //list
+        if (listName == null) {
+            listName = "";
+        }
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID(), MODULE_NAME, "", listName));
+
+        //preview
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+
+        //regex keyword
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", termsQuery));
+
+        //selector TODO move to general info artifact
+            /*
+        if (keywordQuery != null) {
+        BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
+        if (selType != null) {
+        BlackboardAttribute selAttr = new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", regexMatch);
+        attributes.add(selAttr);
+        }
+        } */
+
+        try {
+            bba.addAttributes(attributes);
+            writeResult.add(attributes);
+            return writeResult;
+        } catch (TskException e) {
+            logger.log(Level.INFO, "Error adding bb attributes for terms search artifact", e);
+        }
+        
+        return null;
+
+    }
+
+    @Override
+    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
         Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
 
         //get unique term matches, all cases
@@ -169,68 +230,44 @@ public class TermComponentQuery implements KeywordSearchQuery {
         }
 
         for (String regexMatch : matches.keySet()) {
-            //snippet
-            String snippet = null;
-            try {
-                snippet = LuceneQuery.querySnippet(KeywordSearchUtil.escapeLuceneQuery(regexMatch, true, false), newFsHit.getId(), true);
-            } catch (Exception e) {
-                logger.log(Level.INFO, "Error querying snippet: " + regexMatch, e);
-                continue;
-            }
-
-            if (snippet == null || snippet.equals("")) {
-                continue;
-            }
-
-            //there is match actually in this file, create artifact only then
-            BlackboardArtifact bba = null;
-            KeywordWriteResult writeResult = null;
-            Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
-            try {
-                bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-                writeResult = new KeywordWriteResult(bba);
-                writeResults.add(writeResult);
-            } catch (Exception e) {
-                logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
-                continue;
-            }
-
-
-            //regex match
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", regexMatch));
-            //list
-            if (listName == null) {
-                listName = "";
-            }
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID(), MODULE_NAME, "", listName));
-
-            //preview
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
-
-            //regex keyword
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", termsQuery));
-
-            //selector TODO move to general info artifact
-            /*
-            if (keywordQuery != null) {
-                BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
-                if (selType != null) {
-                    BlackboardAttribute selAttr = new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", regexMatch);
-                    attributes.add(selAttr);
-                }
-            } */
-
-            try {
-                bba.addAttributes(attributes);
-                writeResult.add(attributes);
-            } catch (TskException e) {
-                logger.log(Level.INFO, "Error adding bb attributes for terms search artifact", e);
-            }
-
-
+            KeywordWriteResult written = writeToBlackBoard(regexMatch, newFsHit, listName);
+            if (written != null)
+                writeResults.add(written);
         } //for each term
 
         return writeResults;
+    }
+
+    @Override
+    public Map<String, List<FsContent>> performQueryPerTerm() {
+        Map<String, List<FsContent>> results = new HashMap<String, List<FsContent>>();
+
+        final SolrQuery q = createQuery();
+        terms = executeQuery(q);
+
+
+        for (Term term : terms) {
+            final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
+            if (termS.contains("*")) {
+                continue;
+            }
+
+            StringBuilder filesQueryB = new StringBuilder();
+            filesQueryB.append(TERMS_SEARCH_FIELD).append(":").append(termS);
+            final String queryStr = filesQueryB.toString();
+
+            LuceneQuery filesQuery = new LuceneQuery(queryStr);
+            try {
+                List<FsContent> subResults = filesQuery.performQuery();
+                results.put(term.getTerm(), subResults);
+            } catch (RuntimeException e) {
+                logger.log(Level.SEVERE, "Error executing Solr query,", e);
+            }
+
+        }
+
+
+        return results;
     }
 
     /**
