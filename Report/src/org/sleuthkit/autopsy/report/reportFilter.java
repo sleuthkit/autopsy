@@ -95,6 +95,7 @@ public class reportFilter extends javax.swing.JPanel {
         progBar.setEnabled(false);
         progBar.setName(""); // NOI18N
         progBar.setPreferredSize(new java.awt.Dimension(146, 15));
+        progBar.setString(org.openide.util.NbBundle.getMessage(reportFilter.class, "reportFilter.progBar.string")); // NOI18N
         progBar.setStringPainted(true);
 
         cancelButton.setText(org.openide.util.NbBundle.getMessage(reportFilter.class, "reportFilter.cancelButton.text")); // NOI18N
@@ -236,6 +237,14 @@ public void progBarSet(int cc)
        int start = progBar.getValue();
        int end = start + count;
        progBar.setValue(end);
+       progBar.setString(null);
+       progBar.setString(progBar.getString());
+       progBar.setStringPainted(true);
+       if(progBar.getPercentComplete() == 1.0){
+           progBar.setString("Populating Report - Please wait...");
+           progBar.setStringPainted(true);
+           progBar.setIndeterminate(true);
+       }
                }});
 }
 
@@ -244,14 +253,28 @@ public void progBarDone(){
    progBar.setValue(max);
    jButton2.doClick();
 }
-
-public void progBarText(){
-    progBar.setString("Populating Report - Please wait...");
+public void progBarStartText(){
     progBar.setIndeterminate(true);
+    progBar.setString("Querying Database for Report Results...");
+}
+public void progBarText(){
+    
+    progBar.setString("Populating Report - Please wait..."); 
+    progBar.setStringPainted(true);
+    progBar.repaint();
+    progBar.setIndeterminate(true);
+      
 }
 
 public void progBarCount(int count){
+    progBar.setIndeterminate(false);
+    progBar.setString(null);
+    progBar.setMinimum(0);
     progBar.setMaximum(count);
+    progBar.setValue(0);
+    //Double bper = progBar.getPercentComplete();
+    progBar.setString(progBar.getString());
+    
 }
 
 public void setjButton1ActionListener(ActionListener e){
