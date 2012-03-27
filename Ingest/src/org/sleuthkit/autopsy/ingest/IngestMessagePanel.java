@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -50,6 +51,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 class IngestMessagePanel extends javax.swing.JPanel {
 
     private MessageTableModel tableModel;
+    private MessageTableRenderer renderer;
     private IngestMessageMainPanel mainPanel;
     private static Font visitedFont = new Font("Arial", Font.PLAIN, 11);
     private static Font notVisitedFont = new Font("Arial", Font.BOLD, 11);
@@ -199,7 +201,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         messageTable.getParent().setBackground(messageTable.getBackground());
 
-        MessageTableRenderer renderer = new MessageTableRenderer();
+        renderer = new MessageTableRenderer();
         for (int i = 0; i < 3; i++) {
             TableColumn column = messageTable.getColumnModel().getColumn(i);
             //column.setCellRenderer(new MessageTableRenderer());
@@ -262,6 +264,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private void setVisited(int rowNumber) {
         final int origMsgGroups = tableModel.getNumberUnreadGroups();
         tableModel.setVisited(rowNumber);
+        renderer.setSelected(rowNumber);
         lastRowSelected = rowNumber;
         messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, tableModel.getNumberUnreadGroups());
     }
@@ -689,6 +692,13 @@ class IngestMessagePanel extends javax.swing.JPanel {
      * tooltips that show entire query string, disable selection borders
      */
     private class MessageTableRenderer extends DefaultTableCellRenderer {
+        
+        //custom selection tracking
+        private int selected = -1;
+        
+        void setSelected(int row) {
+            this.selected = row;
+        }
 
         @Override
         public Component getTableCellRendererComponent(
@@ -711,7 +721,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
             }
 
 
-            if (!isSelected) {
+            //if (!isSelected) {
+            if (selected != row) {
                 final IngestMessageGroup messageGroup = tableModel.getMessageGroup(row);
                 MessageType mt = messageGroup.getMessageType();
                 if (mt == MessageType.ERROR) {
@@ -768,14 +779,17 @@ class IngestMessagePanel extends javax.swing.JPanel {
                         break;
                     }
                 }
+                selModel.clearSelection();
                 if (selected != -1) {
                     setVisited(selected);
+                    messageTable.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                     //check if has details
                     IngestMessageGroup m = getMessageGroup(selected);
                     String details = m.getDetails();
                     if (details != null && !details.equals("")) {
                         mainPanel.showDetails(selected);
                     }
+                    messageTable.setCursor(null);
                 }
             
         }
