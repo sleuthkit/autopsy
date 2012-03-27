@@ -15,6 +15,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URL;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import org.jdom.output.XMLOutputter;
 
 /**
@@ -102,7 +105,19 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     public void setjButton1ActionListener(ActionListener e){
        jButton1.addActionListener(e);
     }
-
+    public void getLink(HyperlinkEvent evt){
+        try{
+         
+         String str = evt.getDescription();
+         jEditorPane1.scrollToReference(str.substring(1));
+        }
+        catch(Exception e){
+            String whater = "";
+        }
+    }
+    public void setjEditorPane1EventListener(HyperlinkListener evt){
+        jEditorPane1.addHyperlinkListener(evt);
+    }
     
     private void setReportWindow(String report)
     {
