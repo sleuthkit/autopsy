@@ -33,7 +33,8 @@ public class reportPanelAction {
          try {
              //Clear any old reports in the string
              viewReport.setLength(0);
-             //done = false;
+
+             
             // Generate the reports and create the hashmap
         final HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap();
          report bbreport = new report();
@@ -49,6 +50,7 @@ public class reportPanelAction {
              if(reportlist.contains(9)){Results.putAll(bbreport.getKeywordHit());}
              if(reportlist.contains(10)){Results.putAll(bbreport.getHashHit());}
               SwingUtilities.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                  rr.progBarCount(2*Results.size());
                  }});
@@ -56,6 +58,7 @@ public class reportPanelAction {
          //TODO: add a way for users to select what they will run when
              Thread xmlthread = new Thread(new Runnable()
                 {
+                @Override
                    public void run()
                    { 
                     reportXML xmlReport = new reportXML(Results, rr); 
@@ -63,6 +66,7 @@ public class reportPanelAction {
                 });
               Thread htmlthread = new Thread(new Runnable()
                 {
+                @Override
                    public void run()
                    { 
                     reportHTML htmlReport = new reportHTML(Results,rr);
@@ -88,7 +92,7 @@ public class reportPanelAction {
             //Set the temporary label to let the user know its done and is waiting on the report
             rr.progBarText();
             reportPanel panel = new reportPanel(viewReport.toString());
-              
+            
            
              panel.setjButton1ActionListener(new ActionListener() {
 

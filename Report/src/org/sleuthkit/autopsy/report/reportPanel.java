@@ -12,8 +12,9 @@ package org.sleuthkit.autopsy.report;
 import java.awt.event.ActionListener;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import org.jdom.output.XMLOutputter;
 
 /**
@@ -126,8 +127,10 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
        String htmlpath = reportUtils.changeExtension(path, ".html");
        String xmlpath = reportUtils.changeExtension(path, ".xml");
          try {
-                  FileOutputStream out = new FileOutputStream(htmlpath);
-                  out.write(reportHTML.formatted_header.toString().getBytes());
+                   Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(htmlpath), "UTF-8"));
+                   
+                 // FileOutputStream out = new FileOutputStream(htmlpath);
+                  out.write(reportHTML.formatted_header.toString());
                   out.flush();
                   out.close();
                   
