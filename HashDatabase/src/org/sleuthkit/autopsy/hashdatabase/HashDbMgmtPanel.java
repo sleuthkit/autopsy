@@ -71,6 +71,7 @@ class HashDbMgmtPanel extends javax.swing.JPanel {
             }
         return instance;
     }
+    
 
     /**
      * Checks if indexes exist for all defined databases
