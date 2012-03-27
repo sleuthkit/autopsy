@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -212,7 +211,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
     
     @Override
     public boolean hasSimpleConfiguration() {
-        return false;
+        return true;
     }
 
     @Override
@@ -222,7 +221,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
 
     @Override
     public javax.swing.JPanel getSimpleConfiguration() {
-        return null;
+        return new HashDbSimplePanel();
     }
 
     @Override
