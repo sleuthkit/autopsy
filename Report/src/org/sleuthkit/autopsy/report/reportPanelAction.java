@@ -39,6 +39,12 @@ public class reportPanelAction {
         final HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap();
          report bbreport = new report();
          //see what reports we need to run and run them
+         //Set progress bar to move while doing this
+             SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                 rr.progBarStartText();
+                 }});
              if(reportlist.contains(1)){Results.putAll(bbreport.getGenInfo());}
              if(reportlist.contains(2)){Results.putAll(bbreport.getWebBookmark());}
              if(reportlist.contains(3)){Results.putAll(bbreport.getWebCookie());}
@@ -111,10 +117,10 @@ public class reportPanelAction {
             double w = popUpWindow.getSize().getWidth();
             double h = popUpWindow.getSize().getHeight();
             popUpWindow.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
-            
+            rr.progBarDone();
             popUpWindow.setVisible(true);
             xmlthread.join();
-            rr.progBarDone();
+            
            
          }
         } catch (Exception ex) {
