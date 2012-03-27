@@ -60,7 +60,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         pauseButton = new javax.swing.JButton();
         videoPanel = new javax.swing.JPanel();
-        timeLabel = new javax.swing.JLabel();
 
         pauseButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerMedia.class, "DataContentViewerMedia.pauseButton.text")); // NOI18N
         pauseButton.addActionListener(new java.awt.event.ActionListener() {
@@ -80,8 +79,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             .addGap(0, 242, Short.MAX_VALUE)
         );
 
-        timeLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerMedia.class, "DataContentViewerMedia.timeLabel.text")); // NOI18N
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -89,18 +86,14 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(pauseButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(timeLabel)
-                .addContainerGap())
+                .addGap(240, 240, 240))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(pauseButton)
-                    .addComponent(timeLabel)))
+                .addComponent(pauseButton))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -116,7 +109,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton pauseButton;
-    private javax.swing.JLabel timeLabel;
     private javax.swing.JPanel videoPanel;
     // End of variables declaration//GEN-END:variables
 
@@ -132,7 +124,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         setDataView(file);
         boolean isVid = isVid(file.getName());
         pauseButton.setVisible(isVid);
-        timeLabel.setVisible(isVid);
     }
 
     private void setDataView(File file) {
@@ -141,7 +132,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         InputStream is = new ReadContentInputStream(file);
         source = new InputStreamSrc(new BufferedInputStream(is), "input file");
         pipe.add(source);
-        timeLabel.setText(pipe.queryDuration().toString());
         
         source.link(decodeBin);
 
