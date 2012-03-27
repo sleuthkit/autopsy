@@ -101,6 +101,11 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     public String getName() {
         return "Example Image Service";
     }
+    
+    @Override
+    public String getDescription() {
+        return "Example Image Service description";
+    }
 
     @Override
     public void init(IngestManagerProxy managerProxy) {

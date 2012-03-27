@@ -52,8 +52,15 @@ public interface IngestServiceAbstract {
     /**
      * get specific name of the service
      * should be unique across services, a user-friendly name of the service shown in GUI
+     * @return unique service name
      */
     public String getName();
+    
+    /**
+     * get user-friendly description of the service
+     * @return service description
+     */
+    public String getDescription();
     
     /**
      * 

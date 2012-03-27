@@ -130,6 +130,11 @@ public final class RAImageIngestService implements IngestServiceImage {
     public String getName() {
         return "Recent Activity";
     }
+    
+    @Override
+    public String getDescription() {
+        return "Extracts recent user activity, such as Internet browsing, recently used documents and installed programs.";
+    }
 
     @Override
     public void init(IngestManagerProxy managerProxy) {

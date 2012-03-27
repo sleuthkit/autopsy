@@ -42,7 +42,8 @@ import org.sleuthkit.datamodel.TskException;
 public class HashDbIngestService implements IngestServiceFsContent {
 
     private static HashDbIngestService instance = null;
-    private final static String NAME = "Hash Lookup";
+    public final static String MODULE_NAME = "Hash Lookup";
+    public final static String MODULE_DESCRIPTION = "Identifies known and notables files using supplied hash databases, such as a standard NSRL database.";
     private static final Logger logger = Logger.getLogger(HashDbIngestService.class.getName());
     private IngestManagerProxy managerProxy;
     private SleuthkitCase skCase;
@@ -123,7 +124,12 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public String getName() {
-        return NAME;
+        return MODULE_NAME;
+    }
+    
+    @Override
+    public String getDescription() {
+        return MODULE_DESCRIPTION;
     }
 
     /**
@@ -148,9 +154,9 @@ public class HashDbIngestService implements IngestServiceFsContent {
                 boolean changed = skCase.setKnown(fsContent, status);
                 if (status.equals(TskData.FileKnown.BAD)) {
                     BlackboardArtifact badFile = fsContent.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
-                    BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID(), NAME, "Known Bad", knownBadDbPath != null ? knownBadDbPath : "");
+                    BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID(), MODULE_NAME, "Known Bad", knownBadDbPath != null ? knownBadDbPath : "");
                     badFile.addAttribute(att2);
-                    BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), NAME, "", md5Hash);
+                    BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), MODULE_NAME, "", md5Hash);
                     badFile.addAttribute(att3);
                     StringBuilder detailsSb = new StringBuilder();
                     //details
@@ -173,7 +179,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
                     
                     detailsSb.append("</table>");
                     managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found " + status + " file: " + name, detailsSb.toString(), name + md5Hash, badFile));
-                    IngestManager.fireServiceDataEvent(new ServiceDataEvent(NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
                     ret = ProcessResult.OK;
                 } else if (status.equals(TskData.FileKnown.KNOWN)) {
                     ret = ProcessResult.COND_STOP;

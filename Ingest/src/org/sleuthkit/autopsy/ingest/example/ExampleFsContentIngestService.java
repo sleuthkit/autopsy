@@ -73,6 +73,13 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
     }
 
     @Override
+    public String getDescription() {
+        return "Example FsContent Service description";
+    }
+    
+    
+
+    @Override
     public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init()");
         this.managerProxy = managerProxy;
