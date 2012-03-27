@@ -247,6 +247,7 @@ public void progBarDone(){
 
 public void progBarText(){
     progBar.setString("Populating Report - Please wait...");
+    progBar.setIndeterminate(true);
 }
 
 public void progBarCount(int count){

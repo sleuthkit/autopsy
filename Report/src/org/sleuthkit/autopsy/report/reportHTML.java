@@ -5,7 +5,9 @@
 package org.sleuthkit.autopsy.report;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -103,7 +105,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
              Date date = new Date();
              String datetime = datetimeFormat.format(date);
              String datenotime = dateFormat.format(date);
-             String CSS = "<style>"
+             String CSS = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"><style>"
                      + "body {padding: 30px; margin: 0; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;} "
                    + "h1 {font-size: 26px; color: #005577; margin: 0 0 20px 0;} "
                     + "h2 {font-size: 20px; font-weight: normal; color: #0077aa; margin: 40px 0 10px 0; padding: 0 0 10px 0; border-bottom: 1px solid #dddddd;} "
@@ -337,7 +339,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                 formatted_header.append(formatted_Report);
                 unformatted_header.append(formatted_Report);
                   htmlPath = currentCase.getCaseDirectory()+"/Reports/" + caseName + "-" + datenotime + ".html";
-                   BufferedWriter out = new BufferedWriter(new FileWriter(htmlPath));
+                  Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(htmlPath), "UTF-8"));
                    out.write(formatted_header.toString());
                    
                   out.flush();
