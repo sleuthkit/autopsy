@@ -648,7 +648,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             } else {
                                 subjectSb.append("Keyword hit: ");
                             }
-                            subjectSb.append("<");
+                            //subjectSb.append("<");
                             String uniqueKey = null;
                             BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
                             if (attr != null) {
@@ -657,7 +657,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                 uniqueKey = keyword.toLowerCase();
                             }
 
-                            subjectSb.append(">");
+                            //subjectSb.append(">");
                             //String uniqueKey = queryStr;
 
                             //details

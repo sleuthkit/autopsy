@@ -179,7 +179,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
                     
                     detailsSb.append("</table>");
 
-                    managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Found notable file: " + name, detailsSb.toString(), name+md5Hash, badFile));
+                    managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Notable: " + name, detailsSb.toString(), name+md5Hash, badFile));
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
                     ret = ProcessResult.OK;
                 } else if (status.equals(TskData.FileKnown.KNOWN)) {

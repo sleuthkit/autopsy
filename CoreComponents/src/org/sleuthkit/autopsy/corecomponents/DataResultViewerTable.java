@@ -332,6 +332,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         for (int i = 0; i < maxRows; i++) {
             PropertySet[] props = node.getChildren().getNodeAt(i).getPropertySets();
+            if (props.length == 0) //rare special case
+                continue;
             Property[] property = props[0].getProperties();
             objs[i] = new Object[property.length];
 

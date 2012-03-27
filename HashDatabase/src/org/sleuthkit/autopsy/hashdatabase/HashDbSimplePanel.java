@@ -87,16 +87,12 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         knownValLabel = new javax.swing.JLabel();
         notableValLabel = new javax.swing.JLabel();
 
-        knownLabel.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         knownLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.knownLabel.text")); // NOI18N
 
-        notableLabel.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         notableLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.notableLabel.text")); // NOI18N
 
-        knownValLabel.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         knownValLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.knownValLabel.text")); // NOI18N
 
-        notableValLabel.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         notableValLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.notableValLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -112,22 +108,22 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
                         .addComponent(knownValLabel))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(notableLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(notableValLabel)))
-                .addContainerGap(18, Short.MAX_VALUE))
+                .addContainerGap(42, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(knownValLabel)
-                    .addComponent(knownLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(knownLabel)
+                    .addComponent(knownValLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(notableValLabel)
                     .addComponent(notableLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
