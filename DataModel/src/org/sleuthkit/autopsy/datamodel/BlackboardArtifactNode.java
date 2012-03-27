@@ -59,7 +59,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         this.associated = getAssociatedContent(artifact);
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName(associated.accept(new NameVisitor()));
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/artifact-icon.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID())));
         
     }
     
@@ -204,6 +204,24 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
             return "n/a";
         }
         
+    }
+    
+    private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
+        switch(type) {
+            case TSK_WEB_BOOKMARK:
+                return "bookmarks.png";
+            case TSK_WEB_COOKIE:
+                return "cookies.png";
+            case TSK_WEB_HISTORY:
+                return "history.png";
+            case TSK_WEB_DOWNLOAD:
+                return "downloads.png";
+            case TSK_INSTALLED_PROG:
+                return "programs.png";
+            case TSK_RECENT_OBJECT:
+                return "recent_docs.png";
+        }
+        return "artifact-icon.png";
     }
     
 }

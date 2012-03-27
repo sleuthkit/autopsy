@@ -40,11 +40,12 @@ public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.AR
 
     @Override
     protected boolean createKeys(List<BlackboardArtifact.ARTIFACT_TYPE> list) {
-        list.addAll(Arrays.asList(BlackboardArtifact.ARTIFACT_TYPE.values()));
-        list.remove(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-        list.remove(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
-        list.remove(BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT);
-        list.remove(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
+        list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
+        list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
+        list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
+        list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
+        list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+        list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG);
         return true;
     }
     
