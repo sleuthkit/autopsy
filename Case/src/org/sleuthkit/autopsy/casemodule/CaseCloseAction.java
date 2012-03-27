@@ -83,7 +83,7 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
                 }
             });
         } catch (Exception ex) {
-            Logger.getLogger(CaseCloseAction.class.getName()).log(Level.SEVERE, "Error closing case.", ex);
+            Logger.getLogger(CaseCloseAction.class.getName()).log(Level.INFO, "Error closing case.", ex);
         }
     }
 
