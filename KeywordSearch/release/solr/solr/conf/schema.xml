@@ -534,7 +534,7 @@
    
    <!-- field with white-space tokenized words for TermsComponent regex search (useful for fast search of IP addresses, URLs, certain phone numbers)
 		also be useful for Lucene based queries containing special characters-->
-   <field name="content_ws" type="text_ws" indexed="true" stored="true" multiValued="true"/> 
+   <field name="content_ws" type="text_ws" indexed="true" stored="false" multiValued="true"/> 
 	
    <!-- Uncommenting the following will create a "timestamp" field using
         a default value of "NOW" to indicate when each document was indexed.

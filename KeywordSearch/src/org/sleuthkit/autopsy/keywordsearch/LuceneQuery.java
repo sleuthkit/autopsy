@@ -60,8 +60,8 @@ public class LuceneQuery implements KeywordSearchQuery {
     private Keyword keywordQuery = null;
     //use different highlight Solr fields for regex and literal search
     static final String HIGHLIGHT_FIELD_LITERAL = "content";
-    //static final String HIGHLIGHT_FIELD_REGEX = "content";
-    static final String HIGHLIGHT_FIELD_REGEX = "content_ws";
+    static final String HIGHLIGHT_FIELD_REGEX = "content";
+    //static final String HIGHLIGHT_FIELD_REGEX = "content_ws";
 
     public LuceneQuery(Keyword keywordQuery) {
         this(keywordQuery.getQuery());
