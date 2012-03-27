@@ -33,7 +33,7 @@ public class reportPanelAction {
          try {
              //Clear any old reports in the string
              viewReport.setLength(0);
-             done = false;
+             //done = false;
             // Generate the reports and create the hashmap
         final HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap();
          report bbreport = new report();
