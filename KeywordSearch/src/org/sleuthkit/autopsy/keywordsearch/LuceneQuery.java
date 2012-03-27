@@ -62,6 +62,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     //use different highlight Solr fields for regex and literal search
     static final String HIGHLIGHT_FIELD_LITERAL = "content";
     static final String HIGHLIGHT_FIELD_REGEX = "content";
+    //TODO use content_ws stored="true" in solr schema for perfect highlight hits
     //static final String HIGHLIGHT_FIELD_REGEX = "content_ws";
 
     public LuceneQuery(Keyword keywordQuery) {
@@ -322,9 +323,9 @@ public class LuceneQuery implements KeywordSearchQuery {
         SolrQuery q = new SolrQuery();
 
         if (isRegex) {
-            q.setQuery(highlightField + ":" + query);
+            q.setQuery(highlightField + ":" + "\"" + query + "\"");
         } else {
-            q.setQuery(query); //simply query/escaping and use default field
+            q.setQuery("\"" + query + "\""); //simplify query/escaping and use default field
         }
         q.addFilterQuery("id:" + contentID);
         q.addHighlightField(highlightField);

@@ -71,6 +71,7 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
     private HighlightedMatchesSource() {}
 
     
+    @Override
     public String getMarkup() {
         String highLightField = null;
         
@@ -93,9 +94,13 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
 
         SolrQuery q = new SolrQuery();
 
-        if (isRegex)
-            q.setQuery(highLightField + ":" + highlightQuery); 
-        else q.setQuery(highlightQuery); //use default field, simplifies query
+         if (isRegex)
+            q.setQuery(highLightField + ":" + "\"" + highlightQuery + "\""); 
+        else q.setQuery("\"" + highlightQuery + "\""); //use default field, simplifies query
+        
+        //if (isRegex)
+          //  q.setQuery(highLightField + ":" + highlightQuery); 
+        //else q.setQuery(highlightQuery); //use default field, simplifies query
         
         q.addFilterQuery("id:" + content.getId());
         q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
