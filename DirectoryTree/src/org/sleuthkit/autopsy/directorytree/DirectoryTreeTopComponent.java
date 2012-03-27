@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.autopsy.datamodel.Views;
+import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -401,6 +402,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
                     tree.expandNode(resultsChilds.findChild(ExtractedContentNode.NAME));
 
+
+                    Node views = childNodes.findChild(ViewsNode.NAME);
+                    Children viewsChilds = views.getChildren();
+                    for (Node n : viewsChilds.getNodes()) {
+                        tree.expandNode(n);
+                    }
+                    
+                    tree.collapseNode(views);
+
                     // if the dataResult is not opened
                     if (!dataResult.isOpened()) {
                         dataResult.open(); // open the data result top component as well when the directory tree is opened
@@ -722,6 +732,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 Children resultsChilds = results.getChildren();
                 tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
                 tree.expandNode(resultsChilds.findChild(ExtractedContentNode.NAME));
+                
+                Node views = dirChilds.findChild(ViewsNode.NAME);
+                Children viewsChilds = views.getChildren();
+                for(Node n : viewsChilds.getNodes()) {
+                    tree.expandNode(n);
+                }
+
+                tree.collapseNode(views);
 
                 try {
                     Node newSelection = NodeOp.findPath(em.getRootContext(), path);
