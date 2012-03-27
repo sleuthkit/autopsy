@@ -31,7 +31,7 @@ public class Firefox {
     private static final String ffquery = "SELECT moz_historyvisits.id,url,title,visit_count,datetime(moz_historyvisits.visit_date/1000000,'unixepoch','localtime') as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
     private static final String ffcookiequery = "SELECT name,value,host,expiry,datetime(moz_cookies.lastAccessed/1000000,'unixepoch','localtime') as lastAccessed,creationTime FROM moz_cookies";
     private static final String ffbookmarkquery = "SELECT fk, moz_bookmarks.title, url FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id";
-    private static final String ffdownloadquery = "select target, source, startTime, maxBytes  from moz_downloads";
+    private static final String ffdownloadquery = "select target, source, datetime(startTime/1000000,'unixepoch','localtime') as startTime, maxBytes  from moz_downloads";
     
     public Logger logger = Logger.getLogger(this.getClass().getName());
 
