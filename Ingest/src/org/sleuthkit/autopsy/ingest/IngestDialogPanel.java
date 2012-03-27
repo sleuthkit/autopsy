@@ -16,10 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.ingest;
 
+import java.awt.Color;
+import java.awt.Component;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
@@ -30,34 +30,34 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
+import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
+import org.sleuthkit.autopsy.ingest.IngestMessagePanel.IngestMessageGroup;
 import org.sleuthkit.datamodel.Image;
 
 /**
  * main configuration panel for all ingest services, reusable JPanel component
  */
 public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfigurator {
-    
+
     private IngestManager manager = null;
     private List<IngestServiceAbstract> services;
     private IngestServiceAbstract currentService;
     private Map<String, Boolean> serviceStates;
     private ServicesTableModel tableModel;
     private static final Logger logger = Logger.getLogger(IngestDialogPanel.class.getName());
-
-    
     // The image that's just been added to the database
-     private Image image;
-     
+    private Image image;
     private static IngestDialogPanel instance = null;
 
     /** Creates new form IngestDialogPanel */
@@ -68,15 +68,15 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         initComponents();
         customizeComponents();
     }
-    
+
     synchronized static IngestDialogPanel getDefault() {
         if (instance == null) {
             instance = new IngestDialogPanel();
         }
         return instance;
     }
-    
-    private void customizeComponents(){
+
+    private void customizeComponents() {
         servicesTable.setModel(tableModel);
         this.manager = IngestManager.getDefault();
         Collection<IngestServiceImage> imageServices = IngestManager.enumerateImageServices();
@@ -87,29 +87,32 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         for (final IngestServiceFsContent service : fsServices) {
             addService(service);
         }
-        
+
         if (manager.isIngestRunning()) {
             freqSlider.setEnabled(false);
-        }
-        else {
+        } else {
             freqSlider.setEnabled(true);
         }
         freqSlider.setValue(manager.getUpdateFrequency());
-        
+
         freqSlider.addChangeListener(new ChangeListener() {
 
             @Override
             public void stateChanged(ChangeEvent e) {
-               int val = freqSlider.getValue();
-               if (val<2)
-                   freqSlider.setValue(2);
+                int val = freqSlider.getValue();
+                if (val < 2) {
+                    freqSlider.setValue(2);
+                }
             }
-            
         });
-        
-        
+
+
         servicesTable.setTableHeader(null);
         servicesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        //custom renderer for tooltips
+
+        ServiceTableRenderer renderer = new ServiceTableRenderer();
         //customize column witdhs
         final int width = servicesScrollPane.getPreferredSize().width;
         TableColumn column = null;
@@ -118,10 +121,11 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             if (i == 0) {
                 column.setPreferredWidth(((int) (width * 0.15)));
             } else {
+                column.setCellRenderer(renderer);
                 column.setPreferredWidth(((int) (width * 0.84)));
             }
         }
-        
+
         servicesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
             @Override
@@ -137,20 +141,19 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                     currentService = null;
                 }
             }
-            
         });
-        
+
     }
 
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-        if (manager.isIngestRunning())
+        if (manager.isIngestRunning()) {
             freqSlider.setEnabled(false);
-        else freqSlider.setEnabled(true);
+        } else {
+            freqSlider.setEnabled(true);
+        }
     }
-
-    
 
     private void addService(IngestServiceAbstract service) {
         final String serviceName = service.getName();
@@ -289,11 +292,9 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 currentService.saveAdvancedConfiguration();
                 reloadSimpleConfiguration();
             }
-            
         });
         dialog.display(currentService.getAdvancedConfiguration());
     }//GEN-LAST:event_advancedButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
     private javax.swing.JSlider freqSlider;
@@ -321,13 +322,13 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             String name = services.get(rowIndex).getName();
-            if(columnIndex == 0) {
+            if (columnIndex == 0) {
                 return serviceStates.get(name);
-            }else {
+            } else {
                 return name;
             }
         }
-        
+
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             return columnIndex == 0;
@@ -335,18 +336,18 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            if(columnIndex == 0){
-                serviceStates.put((String)getValueAt(rowIndex, 1), (Boolean) aValue);
-                    
+            if (columnIndex == 0) {
+                serviceStates.put((String) getValueAt(rowIndex, 1), (Boolean) aValue);
+
             }
         }
-        
+
         @Override
         public Class getColumnClass(int c) {
             return getValueAt(0, c).getClass();
         }
     }
-    
+
     List<IngestServiceAbstract> getServicesToStart() {
         List<IngestServiceAbstract> servicesToStart = new ArrayList<IngestServiceAbstract>();
         for (IngestServiceAbstract service : services) {
@@ -357,11 +358,11 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         }
         return servicesToStart;
     }
-    
+
     boolean freqSliderEnabled() {
         return freqSlider.isEnabled();
     }
-    
+
     int sliderValue() {
         return freqSlider.getValue();
     }
@@ -390,7 +391,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     public JPanel getIngestConfigPanel() {
         return this;
     }
-    
+
     @Override
     public void setImage(Image image) {
         this.image = image;
@@ -408,6 +409,33 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         //update ingest freq. refresh
         if (freqSlider.isEnabled()) {
             manager.setUpdateFrequency(freqSlider.getValue());
+        }
+    }
+
+    /**
+     * Custom cell renderer for tooltips with service description
+     */
+    private class ServiceTableRenderer extends DefaultTableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(
+                JTable table, Object value,
+                boolean isSelected, boolean hasFocus,
+                int row, int column) {
+
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+            if (column == 1) {
+                //String serviceName = (String) table.getModel().getValueAt(row, column);
+                IngestServiceAbstract service = services.get(row);
+                String serviceDescr = service.getDescription();
+                setToolTipText(serviceDescr);
+            }
+
+
+
+
+            return this;
         }
     }
 }

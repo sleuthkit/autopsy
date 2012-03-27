@@ -609,7 +609,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             }
                             KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, listName);
                             if (written == null) {
-                                logger.log(Level.INFO, "BB artifact for keyword not written: " + hitTerm.toString());
+                                //logger.log(Level.INFO, "BB artifact for keyword not written: " + hitTerm.toString());
                                 continue;
                             }
 
