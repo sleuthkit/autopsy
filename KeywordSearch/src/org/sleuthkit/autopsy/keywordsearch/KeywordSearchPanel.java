@@ -35,6 +35,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
@@ -113,6 +114,33 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
             
         });
         
+        searchBox.setComponentPopupMenu(rightClickMenu);
+        ActionListener actList = new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JMenuItem jmi = (JMenuItem) e.getSource();
+                if (jmi.equals(cutMenuItem)) {
+                    searchBox.cut();
+                } else if (jmi.equals(copyMenuItem)) {
+                    searchBox.copy();
+                } else if (jmi.equals(pasteMenuItem)) {
+                    if (searchBox.getText().equals("Search...")) {
+                        searchBox.setText("");
+                        searchBox.setForeground(Color.BLACK);
+                        entered = true;
+                    }
+                    searchBox.paste();
+                } else if (jmi.equals(selectAllMenuItem)) {
+                    searchBox.selectAll();
+                }
+            }
+        };
+        cutMenuItem.addActionListener(actList);
+        copyMenuItem.addActionListener(actList);
+        pasteMenuItem.addActionListener(actList);
+        selectAllMenuItem.addActionListener(actList);
+        
     }
     
     private void resetSearchBox() {
@@ -135,6 +163,11 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         settingsMenu = new javax.swing.JPopupMenu();
         regExCheckboxMenuItem = new javax.swing.JCheckBoxMenuItem();
         listsMenu = new javax.swing.JPopupMenu();
+        rightClickMenu = new javax.swing.JPopupMenu();
+        cutMenuItem = new javax.swing.JMenuItem();
+        copyMenuItem = new javax.swing.JMenuItem();
+        pasteMenuItem = new javax.swing.JMenuItem();
+        selectAllMenuItem = new javax.swing.JMenuItem();
         searchBoxPanel = new javax.swing.JPanel();
         searchBox = new javax.swing.JTextField();
         settingsLabel = new javax.swing.JLabel();
@@ -144,12 +177,24 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         regExCheckboxMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.regExCheckboxMenuItem.text")); // NOI18N
         settingsMenu.add(regExCheckboxMenuItem);
 
+        cutMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.cutMenuItem.text")); // NOI18N
+        rightClickMenu.add(cutMenuItem);
+
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.copyMenuItem.text")); // NOI18N
+        rightClickMenu.add(copyMenuItem);
+
+        pasteMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.pasteMenuItem.text")); // NOI18N
+        rightClickMenu.add(pasteMenuItem);
+
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.selectAllMenuItem.text")); // NOI18N
+        rightClickMenu.add(selectAllMenuItem);
+
         setOpaque(false);
 
         searchBoxPanel.setBorder(new javax.swing.border.LineBorder(java.awt.Color.lightGray, 1, true));
         searchBoxPanel.setPreferredSize(new java.awt.Dimension(255, 18));
 
-        searchBox.setFont(new java.awt.Font("Tahoma", 0, 14));
+        searchBox.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         searchBox.setForeground(java.awt.Color.lightGray);
         searchBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.searchBox.text")); // NOI18N
         searchBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 3, 4, 1));
@@ -283,12 +328,17 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
     }//GEN-LAST:event_settingsLabelMouseExited
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem copyMenuItem;
+    private javax.swing.JMenuItem cutMenuItem;
     private javax.swing.JButton listsButton;
     private javax.swing.JPopupMenu listsMenu;
+    private javax.swing.JMenuItem pasteMenuItem;
     private javax.swing.JCheckBoxMenuItem regExCheckboxMenuItem;
+    private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JTextField searchBox;
     private javax.swing.JPanel searchBoxPanel;
     private javax.swing.JLabel searchButton;
+    private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JLabel settingsLabel;
     private javax.swing.JPopupMenu settingsMenu;
     // End of variables declaration//GEN-END:variables

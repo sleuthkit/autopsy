@@ -19,18 +19,27 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
+// ATTENTION MR. PROGRAMMER:
+// DO NOT COMMIT THIS CODE. IT IS NOT FOR PUBLIC CONSUMPTION
+// THANK YOU
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestDialog;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * This class sets the actions for the nodes in the directory tree and creates
@@ -41,7 +50,7 @@ class DirectoryTreeFilterNode extends FilterNode {
 
     private static final Action collapseAll = new CollapseAction("Collapse All");
 
-    /** the constructor */    
+    /** the constructor */
     DirectoryTreeFilterNode(Node arg, boolean createChildren) {
         super(arg, DirectoryTreeFilterChildren.createInstance(arg, createChildren),
                 new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
@@ -81,7 +90,7 @@ class DirectoryTreeFilterNode extends FilterNode {
                 });
             }
         }
-
+        actions.add(new DeleteArtifactsAndAttributes());
         return actions.toArray(new Action[actions.size()]);
     }
 
@@ -91,6 +100,36 @@ class DirectoryTreeFilterNode extends FilterNode {
         actions.addAll(ShowDetailActionVisitor.getActions(c));
 
         return actions;
+    }
+
+    // ATTENTION MR. PROGRAMMER:
+    // DO NOT COMMIT THIS CODE. IT IS NOT FOR PUBLIC CONSUMPTION
+    // THANK YOU
+    private class DeleteArtifactsAndAttributes extends AbstractAction {
+
+        DeleteArtifactsAndAttributes() {
+            super("Delete Artifacts and Attributes");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            try {
+                String query = "delete from blackboard_artifacts";
+                skCase.runQuery(query);
+            } catch (SQLException ex) {
+                Logger.getLogger(DirectoryTreeFilterNode.class.getName()).log(Level.INFO, "No resultset returned from query 1");
+            }
+            try {
+                String query = "delete from blackboard_attributes";
+                skCase.runQuery(query);
+            } catch (SQLException ex) {
+                Logger.getLogger(DirectoryTreeFilterNode.class.getName()).log(Level.INFO, "No resultset returned from query 2");
+            }
+
+            IngestManager.fireServiceEvent(IngestManager.SERVICE_HAS_DATA_EVT, NAME);
+
+        }
     }
 }
 
