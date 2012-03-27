@@ -50,7 +50,7 @@ public class RecentFilesFilterNode extends AbstractNode implements DisplayableIt
                 prevDay.get(Calendar.DATE) + ", " +
                 prevDay.get(Calendar.YEAR);
         this.setShortDescription(tooltip);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent-icon.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png");
     }
 
     @Override
