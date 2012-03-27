@@ -8,12 +8,15 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -96,7 +99,7 @@ public class reportPanelAction {
             htmlthread.join(); 
             //Set the temporary label to let the user know its done and is waiting on the report
             rr.progBarText();
-            reportPanel panel = new reportPanel(viewReport.toString());
+           final reportPanel panel = new reportPanel(viewReport.toString());
             
            
              panel.setjButton1ActionListener(new ActionListener() {
@@ -106,6 +109,19 @@ public class reportPanelAction {
                                 popUpWindow.dispose();
                             }
                         });
+             panel.setjEditorPane1EventListener(new HyperlinkListener(){
+                 @Override
+                public void hyperlinkUpdate(HyperlinkEvent hev) {
+                     try {
+                    if (hev.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
+                    
+                    panel.getLink(hev);
+                    }
+                catch (Exception e) {
+                // Exceptions thrown...............
+                }
+                }
+             });
             // add the panel to the popup window
             popUpWindow.add(panel);
             
