@@ -60,7 +60,7 @@ public final class NewCaseWizardAction extends CallableSystemAction {
                     Case.getCurrentCase().closeCase(); // close the current case
                     newCaseAction(); // start the new case creation process
                 } catch (Exception ex) {
-                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.SEVERE, "Error closing case.", ex);
+                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.INFO, "Error closing case.", ex);
                 }
             }
         } else {
