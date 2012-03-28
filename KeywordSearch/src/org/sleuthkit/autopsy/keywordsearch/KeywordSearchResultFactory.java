@@ -299,7 +299,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                         for (KeywordWriteResult w : written) {
                             na.add(w.getArtifact());
                         }
-                        if (sendDataEvent == true) {
+                        if (sendDataEvent == true && ! na.isEmpty()) {
                             IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
                         }
                     }
@@ -394,7 +394,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                             for (KeywordWriteResult w : written) {
                                 na.add(w.getArtifact());
                             }
-                            if (sendDataEvent == true) {
+                            if (sendDataEvent == true && ! na.isEmpty() ) {
                                 IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
                             }
                         }

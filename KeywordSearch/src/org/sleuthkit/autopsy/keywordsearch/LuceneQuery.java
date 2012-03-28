@@ -62,6 +62,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     //use different highlight Solr fields for regex and literal search
     static final String HIGHLIGHT_FIELD_LITERAL = "content";
     static final String HIGHLIGHT_FIELD_REGEX = "content";
+    //TODO use content_ws stored="true" in solr schema for perfect highlight hits
     //static final String HIGHLIGHT_FIELD_REGEX = "content_ws";
 
     public LuceneQuery(Keyword keywordQuery) {
@@ -220,7 +221,8 @@ public class LuceneQuery implements KeywordSearchQuery {
                     }
                 }
                 //notify bb viewers
-                IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+                if (! na.isEmpty())
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
             }
         }.start();
     }
@@ -260,6 +262,7 @@ public class LuceneQuery implements KeywordSearchQuery {
             snippet = LuceneQuery.querySnippet(queryEscaped, newFsHit.getId(), false);
         } catch (Exception e) {
             logger.log(Level.INFO, "Error querying snippet: " + query, e);
+            return null;
         }
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", KeywordSearchUtil.escapeForBlackBoard(snippet)));
@@ -322,9 +325,9 @@ public class LuceneQuery implements KeywordSearchQuery {
         SolrQuery q = new SolrQuery();
 
         if (isRegex) {
-            q.setQuery(highlightField + ":" + query);
+            q.setQuery(highlightField + ":" + "\"" + query + "\"");
         } else {
-            q.setQuery(query); //simply query/escaping and use default field
+            q.setQuery("\"" + query + "\""); //simplify query/escaping and use default field
         }
         q.addFilterQuery("id:" + contentID);
         q.addHighlightField(highlightField);

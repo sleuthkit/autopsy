@@ -41,6 +41,7 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>";
     private static final String HIGHLIGHT_POST = "</span>";
     private static final String ANCHOR_PREFIX = HighlightedMatchesSource.class.getName() + "_";
+    private static final String NO_MATCHES = "<span style='background:red'>No matches in content.</span>";
     private Content content;
     private String solrQuery;
     private Core solrCore;
@@ -71,7 +72,11 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
     private HighlightedMatchesSource() {}
 
     
+    @Override
     public String getMarkup() {
+        if (solrCore == null)
+            return NO_MATCHES;
+        
         String highLightField = null;
         
         String highlightQuery = solrQuery;
@@ -93,9 +98,13 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
 
         SolrQuery q = new SolrQuery();
 
-        if (isRegex)
-            q.setQuery(highLightField + ":" + highlightQuery); 
-        else q.setQuery(highlightQuery); //use default field, simplifies query
+         if (isRegex)
+            q.setQuery(highLightField + ":" + "\"" + highlightQuery + "\""); 
+        else q.setQuery("\"" + highlightQuery + "\""); //use default field, simplifies query
+        
+        //if (isRegex)
+          //  q.setQuery(highLightField + ":" + highlightQuery); 
+        //else q.setQuery(highlightQuery); //use default field, simplifies query
         
         q.addFilterQuery("id:" + content.getId());
         q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
@@ -108,7 +117,6 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
             long contentID = content.getId();
             Map<String, List<String>> responseHighlightID = responseHighlight.get(Long.toString(contentID));
-            final String NO_MATCHES = "<span style='background:red'>No matches in content.</span>";
             if (responseHighlightID == null) {
                 return NO_MATCHES;
             }
