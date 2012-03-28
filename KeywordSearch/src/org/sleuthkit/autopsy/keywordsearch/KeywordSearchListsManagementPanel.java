@@ -363,7 +363,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
             fireTableDataChanged();
         }
 
-        //resync single model entry from handle, then update table
+        //resync single model entry from handle
         void resync(String listName) {
             TableEntry found = null;
             for (TableEntry e : listData) {
@@ -376,7 +376,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
                 listData.remove(found);
                 addList(listsHandle.getList(listName));
             }
-            fireTableDataChanged();
         }
 
         //add list to the model

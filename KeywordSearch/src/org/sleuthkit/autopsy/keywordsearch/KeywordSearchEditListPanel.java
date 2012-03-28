@@ -671,6 +671,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             tableModel.resync(currentKeywordList);
             initButtons();
         } else {
+            currentKeywordList = null;
             tableModel.deleteAll();
             initButtons();
         }
