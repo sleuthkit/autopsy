@@ -155,13 +155,27 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             formatted_Report.append("<li># of Artifacts: ").append(reportsize).append("</li></ul>");
             
             formatted_Report.append("<br /><table><thead><tr><th>Section</th><th>Count</th></tr></thead><tbody>");
+            if(countWebBookmark > 0){
             formatted_Report.append("<tr><td><a href=\"#bookmark\">Web Bookmarks</a></td><td>").append(countWebBookmark).append("</td></tr>");
+            }
+            if(countWebHistory > 0){
             formatted_Report.append("<tr><td><a href=\"#history\">Web History</a></td><td>").append(countWebHistory).append("</td></tr>");
+            }
+            if(countWebDownload > 0){
             formatted_Report.append("<tr><td><a href=\"#download\">Web Downloads</a></td><td>").append(countWebDownload).append("</td></tr>");
+            }
+            if(countRecentObjects > 0){
             formatted_Report.append("<tr><td><a href=\"#recent\">Recent Documents</a></td><td>").append(countRecentObjects).append("</td></tr>");
+            }
+            if(countInstalled > 0){
             formatted_Report.append("<tr><td><a href=\"#installed\">Installed Programs</a></td><td>").append(countInstalled).append("</td></tr>");
+            }
+            if(countKeyword > 0){
             formatted_Report.append("<tr><td><a href=\"#keyword\">Keyword Hits</a></td><td>").append(countKeyword).append("</td></tr>");
+            }
+            if(countHash > 0){
             formatted_Report.append("<tr><td><a href=\"#hash\">Hash Hits</a></td><td>").append(countHash).append("</td></tr>");
+            }
              formatted_Report.append("</tbody></table><br />");
             String tableHeader = "<table><thead><tr>";
              StringBuilder nodeGen = new StringBuilder("<h3>General Information (").append(countGen).append(")</h3>").append(tableHeader).append("<th>Attribute</th><th>Value</th></tr></thead><tbody>");
@@ -308,31 +322,43 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             //Add them back in order
             //formatted_Report.append(nodeGen);
            // formatted_Report.append("</tbody></table>");
-            
+            if(countWebBookmark > 0){
             formatted_Report.append(nodeWebBookmark);
             formatted_Report.append("</tbody></table>");
+            }
+            if(countWebCookie > 0){
             formatted_Report.append(nodeWebCookie);
             formatted_Report.append("</tbody></table>");
+            }
+            if(countWebHistory > 0){
             formatted_Report.append(nodeWebHistory);
             formatted_Report.append("</tbody></table>");
+            }
+            if(countWebDownload > 0){
             formatted_Report.append(nodeWebDownload);
             formatted_Report.append("</tbody></table>");
+            }
+            if(countRecentObjects > 0){
             formatted_Report.append(nodeRecentObjects);
             formatted_Report.append("</tbody></table>");
+            }
            // formatted_Report.append(nodeTrackPoint);
             //formatted_Report.append("</tbody></table>");
+            if(countInstalled > 0){
             formatted_Report.append(nodeInstalled);
-            formatted_Report.append("</tbody></table>");           
-            formatted_Report.append(nodeKeyword);
+            formatted_Report.append("</tbody></table>"); 
+            }
             if(countKeyword > 0){
+            formatted_Report.append(nodeKeyword);
             report keywords = new report();
             formatted_Report.append(keywords.getGroupedKeywordHit());
             // "<table><thead><tr><th>Artifact ID</th><th>Name</th><th>Size</th>
            // formatted_Report.append("</tbody></table>");
             }
-            
+            if(countHash > 0){
             formatted_Report.append(nodeHash); 
             formatted_Report.append("</tbody></table>");
+            }
             //end of master loop
             
                 formatted_Report.append("</div></div></body></html>");
