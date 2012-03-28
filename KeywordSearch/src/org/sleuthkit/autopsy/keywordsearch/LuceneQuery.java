@@ -221,7 +221,8 @@ public class LuceneQuery implements KeywordSearchQuery {
                     }
                 }
                 //notify bb viewers
-                IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+                if (! na.isEmpty())
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
             }
         }.start();
     }
@@ -261,6 +262,7 @@ public class LuceneQuery implements KeywordSearchQuery {
             snippet = LuceneQuery.querySnippet(queryEscaped, newFsHit.getId(), false);
         } catch (Exception e) {
             logger.log(Level.INFO, "Error querying snippet: " + query, e);
+            return null;
         }
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", KeywordSearchUtil.escapeForBlackBoard(snippet)));

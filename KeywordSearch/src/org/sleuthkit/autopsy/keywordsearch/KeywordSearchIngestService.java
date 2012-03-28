@@ -711,7 +711,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     }//for each file hit
 
                     //update artifact browser
-                    IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+                    if (! newArtifacts.isEmpty())
+                        IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                 }
                 progress.progress(queryStr, ++numSearched);
             }
