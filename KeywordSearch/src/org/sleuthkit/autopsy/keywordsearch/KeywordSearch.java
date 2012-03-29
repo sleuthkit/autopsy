@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
@@ -61,13 +63,24 @@ class KeywordSearch {
             Object oldValue = evt.getOldValue();
             Object newValue = evt.getNewValue();
 
+            final Logger logger = Logger.getLogger(CaseChangeListener.class.getName());
             if (changed.equals(Case.CASE_CURRENT_CASE)) {
                 if (newValue != null) {
                     // new case is open
-                    SERVER.openCore();
+                    try {
+                        SERVER.openCore();
+                    }
+                    catch (Exception e) {
+                        logger.log(Level.WARNING, "Could not open core.");
+                    }
                 } else if (oldValue != null) {
                     // a case was closed
-                    SERVER.closeCore();
+                    try {
+                        SERVER.closeCore();
+                    }
+                    catch (Exception e) {
+                        logger.log(Level.WARNING, "Could not close core.");
+                    }
                 }
             }
         }
