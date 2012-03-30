@@ -327,7 +327,9 @@ public class LuceneQuery implements KeywordSearchQuery {
         if (isRegex) {
             q.setQuery(highlightField + ":" + "\"" + query + "\"");
         } else {
-            q.setQuery("\"" + query + "\""); //simplify query/escaping and use default field
+            //simplify query/escaping and use default field
+            //quote only if user supplies quotes
+            q.setQuery(query); 
         }
         q.addFilterQuery("id:" + contentID);
         q.addHighlightField(highlightField);

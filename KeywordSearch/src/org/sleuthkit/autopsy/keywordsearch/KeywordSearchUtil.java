@@ -68,15 +68,31 @@ public class KeywordSearchUtil {
      */
     public static String escapeLuceneQuery(String query, boolean escapeLuceneChars, boolean encode) {
         String queryEscaped = null;
-        String inputString = query;
+        String inputString = query.trim();
+
+        if (inputString.length() == 0) {
+            return inputString;
+        }
 
         if (escapeLuceneChars == true) {
             final String ESCAPE_CHARS = "/+-&|!(){}[]^\"~*?:\\";
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < inputString.length(); ++i) {
-                char c = inputString.charAt(i);
+            final int length = inputString.length();
+
+            //see if the quoery is quoted
+            boolean quotedQuery = false;
+            if (length > 1 && inputString.charAt(0) == '"' && inputString.charAt(length - 1) == '"') {
+                quotedQuery = true;
+            }
+
+            for (int i = 0; i < length; ++i) {
+                final char c = inputString.charAt(i);
+
                 if (ESCAPE_CHARS.contains(Character.toString(c))) {
-                    sb.append("\\");
+                    //escape if not outter quotes
+                    if (quotedQuery == false || (i > 0 && i < length - 1)) {
+                        sb.append("\\");
+                    }
                 }
                 sb.append(c);
             }

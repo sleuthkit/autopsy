@@ -79,7 +79,8 @@ public class reportPanelAction {
                    public void run()
                    { 
                     reportHTML htmlReport = new reportHTML(Results,rr);
-                    viewReport.append(reportHTML.unformatted_header.toString());
+                    BrowserControl.openUrl(htmlReport.htmlPath);
+                   // viewReport.append(reportHTML.unformatted_header.toString());
                    }
                 });
 
@@ -134,6 +135,7 @@ public class reportPanelAction {
             double h = popUpWindow.getSize().getHeight();
             popUpWindow.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
             rr.progBarDone();
+            panel.setFinishedReportText();
             popUpWindow.setVisible(true);
             xmlthread.join();
             
