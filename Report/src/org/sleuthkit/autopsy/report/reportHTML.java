@@ -363,7 +363,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             
                 formatted_Report.append("</div></div></body></html>");
                 formatted_header.append(formatted_Report);
-                unformatted_header.append(formatted_Report);
+               // unformatted_header.append(formatted_Report);
                   htmlPath = currentCase.getCaseDirectory()+"/Reports/" + caseName + "-" + datenotime + ".html";
                   Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(htmlPath), "UTF-8"));
                    out.write(formatted_header.toString());

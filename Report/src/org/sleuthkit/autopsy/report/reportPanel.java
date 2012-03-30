@@ -15,7 +15,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import org.jdom.output.XMLOutputter;
@@ -43,14 +45,9 @@ public class reportPanel extends javax.swing.JPanel {
 
         jFileChooser1 = new javax.swing.JFileChooser();
         jOptionPane1 = new javax.swing.JOptionPane();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jEditorPane1 = new javax.swing.JEditorPane();
         jButton1 = new javax.swing.JButton();
         saveReport = new javax.swing.JButton();
-
-        jEditorPane1.setContentType(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.jEditorPane1.contentType")); // NOI18N
-        jEditorPane1.setEditable(false);
-        jScrollPane1.setViewportView(jEditorPane1);
+        jLabel1 = new javax.swing.JLabel();
 
         jButton1.setText(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.jButton1.text")); // NOI18N
 
@@ -62,6 +59,8 @@ public class reportPanel extends javax.swing.JPanel {
             }
         });
 
+        jLabel1.setText(org.openide.util.NbBundle.getMessage(reportPanel.class, "reportPanel.jLabel1.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -69,20 +68,19 @@ public class reportPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 863, Short.MAX_VALUE)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(320, 320, 320)
                         .addComponent(jButton1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 391, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 128, Short.MAX_VALUE)
                         .addComponent(saveReport)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 547, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton1)
                     .addComponent(saveReport))
@@ -109,20 +107,27 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         try{
          
          String str = evt.getDescription();
-         jEditorPane1.scrollToReference(str.substring(1));
+       //  jEditorPane1.scrollToReference(str.substring(1));
         }
         catch(Exception e){
             String whater = "";
         }
     }
     public void setjEditorPane1EventListener(HyperlinkListener evt){
-        jEditorPane1.addHyperlinkListener(evt);
+       // jEditorPane1.addHyperlinkListener(evt);
     }
     
     private void setReportWindow(String report)
     {
-        jEditorPane1.setText(report);
-        jEditorPane1.setCaretPosition(0);
+     //   jEditorPane1.setText(report);
+     //   jEditorPane1.setCaretPosition(0);
+    }
+    
+    public void setFinishedReportText(){
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        String reportText = "Report was sucessfully generated at " + dateFormat.format(date) + ".";
+        jLabel1.setText(reportText);
     }
     
     
@@ -163,10 +168,9 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
-    private javax.swing.JEditorPane jEditorPane1;
     private javax.swing.JFileChooser jFileChooser1;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JOptionPane jOptionPane1;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton saveReport;
     // End of variables declaration//GEN-END:variables
 
