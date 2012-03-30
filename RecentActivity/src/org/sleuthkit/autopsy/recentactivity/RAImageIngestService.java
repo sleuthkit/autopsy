@@ -117,9 +117,6 @@ public final class RAImageIngestService implements IngestServiceImage {
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete() " + this.toString());
-        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
-        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
-        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Completed");
         managerProxy.postMessage(msg);
 

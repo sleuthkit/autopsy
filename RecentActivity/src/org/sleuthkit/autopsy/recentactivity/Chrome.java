@@ -18,8 +18,9 @@ import java.util.*;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Map.Entry;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -107,6 +108,7 @@ public class Chrome {
                 j++;
                dbFile.delete();
             }
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY)); 
         }
         catch (SQLException ex) 
         {
@@ -172,6 +174,7 @@ public class Chrome {
                 j++;
                 dbFile.delete();
             }
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE)); 
         }
         catch (SQLException ex) 
         {
@@ -236,7 +239,7 @@ public class Chrome {
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","",name));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
                      bbart.addAttributes(bbattributes);     
-                    }
+                    } 
 
                     
                  }
@@ -247,6 +250,7 @@ public class Chrome {
                 j++;
                 dbFile.delete();
             }
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
         }
         catch (SQLException ex) 
         {
@@ -305,6 +309,7 @@ public class Chrome {
                    } 
                    tempdbconnect.closeConnection();
                    temprs.close();
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD)); 
                     
                  }
                  catch (Exception ex)
@@ -381,6 +386,7 @@ public class Chrome {
                 j++;
                 dbFile.delete();
             }
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY)); 
         }
         catch (SQLException ex) 
         {

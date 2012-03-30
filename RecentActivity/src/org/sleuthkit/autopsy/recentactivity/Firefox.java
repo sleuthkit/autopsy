@@ -17,6 +17,8 @@ import java.util.*;
 import java.io.File;
 import java.io.IOException;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -131,6 +133,8 @@ public class Firefox {
                 j++;
                 dbFile.delete();
             }
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY)); 
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK)); 
         }
         catch (SQLException ex) 
         {
@@ -198,6 +202,7 @@ public class Firefox {
                 j++;
                 dbFile.delete();
             }
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE)); 
         }
         catch (SQLException ex) 
         {
@@ -266,6 +271,7 @@ public class Firefox {
                 j++;
                 dbFile.delete();
             }
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD)); 
         }
         catch (SQLException ex) 
         {

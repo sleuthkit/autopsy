@@ -62,6 +62,7 @@ import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -673,7 +674,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
 
         if (changed.equals(IngestManager.SERVICE_HAS_DATA_EVT)) {
-            refreshTree();
+            final ServiceDataEvent event = (ServiceDataEvent) oldValue;
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    refreshTree(event.getArtifactType());
+                }
+            }
+            );
         }
     }
 
@@ -710,47 +718,49 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     /**
      * Refreshes the nodes in the tree to reflect updates in the database
-     * 
+     * should be called in the gui thread
      */
-    public void refreshTree() {
+    private void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE type) {
+
+        Node selected = getSelectedNode();
+        final String[] path = NodeOp.createPath(selected, em.getRootContext());
+
+        //TODO: instead, we should choose a specific key to refresh? Maybe?
+        //contentChildren.refreshKeys();
+
+        Children dirChilds = em.getRootContext().getChildren();
+
+        Node results = dirChilds.findChild(ResultsNode.NAME);
+
+        OriginalNode original = results.getLookup().lookup(OriginalNode.class);
+        ResultsNode resultsNode = (ResultsNode) original.getNode();
+        RootContentChildren resultsNodeChilds = (RootContentChildren) resultsNode.getChildren();
+        resultsNodeChilds.refreshKeys(type);
+
+        final TreeView tree = getTree();
+
+        tree.expandNode(results);
+
+        Children resultsChilds = results.getChildren();
+        tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
+        tree.expandNode(resultsChilds.findChild(ExtractedContentNode.NAME));
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
             public void run() {
-                Node selected = getSelectedNode();
-                String[] path = NodeOp.createPath(selected, em.getRootContext());
 
-                //TODO: instead, we should choose a specific key to refresh? Maybe?
-                contentChildren.refreshKeys();
-
-                Children dirChilds = em.getRootContext().getChildren();
-                TreeView tree = getTree();
-
-                Node results = dirChilds.findChild(ResultsNode.NAME);
-                tree.expandNode(results);
-
-                Children resultsChilds = results.getChildren();
-                tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
-                tree.expandNode(resultsChilds.findChild(ExtractedContentNode.NAME));
-                
-                Node views = dirChilds.findChild(ViewsNode.NAME);
-                Children viewsChilds = views.getChildren();
-                for(Node n : viewsChilds.getNodes()) {
-                    tree.expandNode(n);
-                }
-
-                tree.collapseNode(views);
-
-                try {
-                    Node newSelection = NodeOp.findPath(em.getRootContext(), path);
-                    resetHistoryListAndButtons();
-                    tree.expandNode(newSelection);
-                    em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
-                    // We need to set the selection, which will refresh dataresult and get rid of the oob exception
-                } catch (NodeNotFoundException ex) {
-                    logger.log(Level.WARNING, "Node not found", ex);
-                } catch (PropertyVetoException ex) {
-                    logger.log(Level.WARNING, "Property Veto", ex);
+                if (path.length > 0 && path[0].equals(ResultsNode.NAME)) {
+                    try {
+                        Node newSelection = NodeOp.findPath(em.getRootContext(), path);
+                        resetHistoryListAndButtons();
+                        tree.expandNode(newSelection);
+                        em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                        // We need to set the selection, which will refresh dataresult and get rid of the oob exception
+                    } catch (NodeNotFoundException ex) {
+                        logger.log(Level.WARNING, "Node not found", ex);
+                    } catch (PropertyVetoException ex) {
+                        logger.log(Level.WARNING, "Property Veto", ex);
+                    }
                 }
             }
         });

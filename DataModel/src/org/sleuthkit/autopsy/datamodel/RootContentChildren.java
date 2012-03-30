@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.logging.Logger;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Children implementation for the root node of a ContentNode tree. Accepts a
@@ -47,9 +49,22 @@ public class RootContentChildren extends AbstractContentChildren {
         setKeys(Collections.<Object>emptySet());
     }
     
-    public void refreshKeys() {
+    public void refreshKeys(BlackboardArtifact.ARTIFACT_TYPE type) {
         for(Object o : contentKeys){
-            this.refreshKey(o);
+            switch(type) {
+                case TSK_HASHSET_HIT:
+                    if(o instanceof HashsetHits)
+                        this.refreshKey(o);
+                    break;
+                case TSK_KEYWORD_HIT:
+                    if(o instanceof KeywordHits)
+                        this.refreshKey(o);
+                    break;
+                default:
+                    if(o instanceof ExtractedContent)
+                        this.refreshKey(o);
+                    break;
+            }
         }
     }
 }
