@@ -161,16 +161,23 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         },
             }
     
-    private boolean hideParentPath;
+    private boolean directoryBrowseMode;
     public static final String HIDE_PARENT = "hide_parent";
 
     AbstractFsContentNode(T fsContent) {
         this(fsContent, true);
     }
     
-    AbstractFsContentNode(T fsContent, boolean hideParentPath) {
+    // The param 'directoryBrowseMode' refers to how the user caused this node
+    // to be created: if by browsing the image contents, it is true. If by
+    // selecting a file filter (e.g. 'type' or 'recent'), it is false
+    AbstractFsContentNode(T fsContent, boolean directoryBrowseMode) {
         super(fsContent);
-        this.hideParentPath = hideParentPath;
+        this.directoryBrowseMode = directoryBrowseMode;
+    }
+    
+    public boolean getDirectoryBrowseMode() {
+        return directoryBrowseMode;
     }
 
     @Override
@@ -193,7 +200,7 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
             final String propString = propType.toString();
             ss.put(new NodeProperty(propString, propString, NO_DESCR, map.get(propString)));
         }
-        if(hideParentPath) {
+        if(directoryBrowseMode) {
             ss.put(new NodeProperty(HIDE_PARENT, HIDE_PARENT, HIDE_PARENT, HIDE_PARENT));
         }
 

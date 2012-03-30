@@ -20,24 +20,25 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
-import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * View the content associated with the given BlackboardArtifactNode
  */
 class ViewAssociatedContentAction extends AbstractAction {
 
-    private BlackboardArtifactNode node;
+    private Content content;
 
-    public ViewAssociatedContentAction(String title, Node node) {
+    public ViewAssociatedContentAction(String title, BlackboardArtifactNode node) {
         super(title);
-        this.node = (BlackboardArtifactNode) node;
+        this.content = node.getLookup().lookup(Content.class);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        DataContentTopComponent.getDefault().setNode(node.getContentNode());
+        DataContentTopComponent.getDefault().setNode(content.accept(new RootContentChildren.CreateSleuthkitNodeVisitor()));
     }
 }

@@ -137,7 +137,7 @@ public class DataResultFilterNode extends FilterNode{
         @Override
         public List<Action> visit(ImageNode img) {
             List<Action> actions = new ArrayList<Action>();
-            actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
+            actions.add(new NewWindowViewAction("View in New Window", img));
             actions.addAll(ShowDetailActionVisitor.getActions(img.getLookup().lookup(Content.class)));
             return actions;
         }
@@ -145,9 +145,9 @@ public class DataResultFilterNode extends FilterNode{
         @Override
         public List<Action> visit(VolumeNode vol) {
             List<Action> actions = new ArrayList<Action>();
-            actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
+            actions.add(new NewWindowViewAction("View in New Window", vol));
             actions.addAll(ShowDetailActionVisitor.getActions(vol.getLookup().lookup(Content.class)));
-            actions.add(new ChangeViewAction("View", 0, getOriginal()));
+            actions.add(new ChangeViewAction("View", 0, vol));
             
             return actions;
         }
@@ -155,26 +155,30 @@ public class DataResultFilterNode extends FilterNode{
         @Override
         public List<Action> visit(DirectoryNode dir) {
             List<Action> actions = new ArrayList<Action>();
-            actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
-            actions.add(new ChangeViewAction("View", 0, getOriginal()));
-            actions.add(new ExtractAction("Extract Directory", getOriginal()));
+            actions.add(new NewWindowViewAction("View in New Window", dir));
+            actions.add(new ChangeViewAction("View", 0, dir));
+            actions.add(new ExtractAction("Extract Directory", dir));
+            if(!dir.getDirectoryBrowseMode())
+                actions.add(new ViewContextAction("View in Parent Directory", dir));
             return actions;
         }
         
         @Override
         public List<Action> visit(FileNode f) {
             List<Action> actions = new ArrayList<Action>();
-            actions.add(new NewWindowViewAction("View in New Window", getOriginal()));
-            actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
-            actions.add(new ExtractAction("Extract File", getOriginal()));
+            actions.add(new NewWindowViewAction("View in New Window", f));
+            actions.add(new ExternalViewerAction("Open in External Viewer", f));
+            actions.add(new ExtractAction("Extract File", f));
+            if(!f.getDirectoryBrowseMode())
+                actions.add(new ViewContextAction("View in Parent Directory", f));
             return actions;
         }
         
         @Override
         public List<Action> visit(BlackboardArtifactNode ba) {
             List<Action> actions = new ArrayList<Action>();
-            actions.add(new ViewAssociatedContentAction("View Associated Content", getOriginal()));
-            actions.add(new ViewContextAction("View in Directory", getOriginal()));
+            //actions.add(new ViewAssociatedContentAction("View Associated Content", ba));
+            actions.add(new ViewContextAction("View in Directory", ba));
             return actions;
         }
         
@@ -219,7 +223,7 @@ public class DataResultFilterNode extends FilterNode{
         
         @Override
         public AbstractAction visit(BlackboardArtifactNode ban){
-            return new ViewContextAction("View in Directory", getOriginal());
+            return new ViewContextAction("View in Directory", ban);
         }
         
         @Override

@@ -37,13 +37,17 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
     static String nameForDirectory(Directory d) {
         return d.getName();
     }
+    
+    public DirectoryNode(Directory dir) {
+        this(dir, true);
+    }
 
     /**
      * 
      * @param dir Underlying Content instance
      */
-    public DirectoryNode(Directory dir) {
-        super(dir);
+    public DirectoryNode(Directory dir, boolean directoryBrowseMode) {
+        super(dir, directoryBrowseMode);
 
         // set name, display name, and icon
         String dirName = nameForDirectory(dir);
