@@ -33,6 +33,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.ImagesNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
@@ -53,12 +54,17 @@ import org.sleuthkit.datamodel.VolumeSystem;
  */
 class ViewContextAction extends AbstractAction {
 
-    private BlackboardArtifactNode node;
+    private Content content;
     private static final Logger logger = Logger.getLogger(ViewContextAction.class.getName());
 
-    public ViewContextAction(String title, Node node) {
+    public ViewContextAction(String title, BlackboardArtifactNode node) {
         super(title);
-        this.node = (BlackboardArtifactNode) node;
+        this.content = node.getLookup().lookup(Content.class);
+    }
+    
+    public ViewContextAction(String title, AbstractFsContentNode node) {
+        super(title);
+        this.content = node.getLookup().lookup(Content.class);
     }
 
     @Override
@@ -68,8 +74,7 @@ class ViewContextAction extends AbstractAction {
             @Override
             public void run() {
                 ReverseHierarchyVisitor vtor = new ReverseHierarchyVisitor();
-                Content c = node.getLookup().lookup(Content.class);
-                List<Content> hierarchy = c.accept(vtor);
+                List<Content> hierarchy = content.accept(vtor);
                 Collections.reverse(hierarchy);
                 Node generated = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(hierarchy)), true);
                 Children genChilds = generated.getChildren();
@@ -115,7 +120,7 @@ class ViewContextAction extends AbstractAction {
                         DataResultTopComponent dataResult = directoryTree.getDirectoryListing();
                         Node resultRoot = dataResult.getRootNode();
                         Children resultChilds = resultRoot.getChildren();
-                        Node generated = node.getContentNode();
+                        Node generated = content.accept(new RootContentChildren.CreateSleuthkitNodeVisitor());
                         for (int i = 0; i < resultChilds.getNodesCount(); i++) {
                             Node current = resultChilds.getNodeAt(i);
                             if (generated.getName().equals(current.getName())) {

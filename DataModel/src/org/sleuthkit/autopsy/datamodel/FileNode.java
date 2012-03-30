@@ -48,8 +48,8 @@ public class FileNode extends AbstractFsContentNode<File> {
         this(file, true);
     }
     
-    public FileNode(File file, boolean hideParentPath) {
-        super(file, hideParentPath);
+    public FileNode(File file, boolean directoryBrowseMode) {
+        super(file, directoryBrowseMode);
         
         // set name, display name, and icon
         String fileName = nameForFile(file);

@@ -177,10 +177,6 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         }
         return null;
     }
-
-    public Node getContentNode() {
-        return associated.accept(new AbstractContentChildren.CreateSleuthkitNodeVisitor());
-    }
     
     private class NameVisitor extends SleuthkitItemVisitor.Default<String> {
         

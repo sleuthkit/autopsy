@@ -27,6 +27,8 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.FsContent;
 
 
@@ -45,13 +47,13 @@ class SearchChildren extends Children.Keys<FsContent> {
     protected Node[] createNodes(FsContent t) {
         Node[] node = new Node[1];
             if(t.isDir()){
-                node[0] = new DataResultFilterNode(new DirectoryNode((Directory) t));
+                node[0] = new DataResultFilterNode(new DirectoryNode((Directory) t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
 
                 //node[0] = new DirectoryNode((Directory)t);
                 return node;
             }
             else{
-                node[0] = new DataResultFilterNode(new FileNode((File)t));
+                node[0] = new DataResultFilterNode(new FileNode((File)t, false), DirectoryTreeTopComponent.findInstance().getExplorerManager());
                 //node[0] = new FileNode((File)t);
                 return node;
             }

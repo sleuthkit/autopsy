@@ -67,7 +67,7 @@ abstract class AbstractContentChildren extends Keys<Object> {
     /**
      * Creates appropriate Node for each sub-class of Content
      */
-    static class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<AbstractContentNode> {
+    public static class CreateSleuthkitNodeVisitor extends SleuthkitItemVisitor.Default<AbstractContentNode> {
         
         @Override
         public AbstractContentNode visit(Directory drctr) {
