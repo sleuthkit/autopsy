@@ -100,7 +100,11 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
 
          if (isRegex)
             q.setQuery(highLightField + ":" + "\"" + highlightQuery + "\""); 
-        else q.setQuery("\"" + highlightQuery + "\""); //use default field, simplifies query
+        else {
+             //use default field, simplifies query
+             //quote only if user supplies quotes
+             q.setQuery(highlightQuery);
+         } 
         
         //if (isRegex)
           //  q.setQuery(highLightField + ":" + highlightQuery); 
