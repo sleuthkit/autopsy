@@ -201,7 +201,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
         // check if case Name contain one of this following symbol:
         //  \ / : * ? " < > |
         if (!Case.isValidName(caseName)) {
-            String errorMsg = "The Case Name cannot contain any of this following symbol: \\ / : * ? \" < > |";
+            String errorMsg = "The Case Name cannot contain any of the following symbols: \\ / : * ? \" < > |";
             validationError(errorMsg);
         } else {
             // check if the directory exist
@@ -216,7 +216,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                     // when the base directory doesn't exist
                     if (!baseDir.exists()) {
                         // get confirmation to create directory
-                        String confMsg = "The base directory \'" + caseParentDir + "\' doesn't exist. \n \n Do you want to make that directory?";
+                        String confMsg = "The base directory \'" + caseParentDir + "\' doesn't exist. \n \n Do you want to create that directory?";
                         NotifyDescriptor d2 = new NotifyDescriptor.Confirmation(confMsg, "Create directory", NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
                         d2.setValue(NotifyDescriptor.NO_OPTION);
 

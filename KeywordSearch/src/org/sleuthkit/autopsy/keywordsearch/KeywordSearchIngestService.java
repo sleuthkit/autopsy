@@ -55,7 +55,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestService.class.getName());
     public static final String MODULE_NAME = "Keyword Search";
-    public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in a watch lists.";
+    public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
     private static KeywordSearchIngestService instance = null;
     private IngestManagerProxy managerProxy;
     private static final long MAX_STRING_EXTRACT_SIZE = 1 * (1 << 10); // * (1 << 10); TODO increase
