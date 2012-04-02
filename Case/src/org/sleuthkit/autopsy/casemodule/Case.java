@@ -101,7 +101,7 @@ public class Case {
     // pcs is initialized in CaseListener constructor
     private static final PropertyChangeSupport pcs = new PropertyChangeSupport(Case.class);
     private String name;
-    private int number;
+    private String number;
     private String examiner;
     private String configFilePath;
     private XMLCaseManagement xmlcm;
@@ -112,7 +112,7 @@ public class Case {
     /**
      * Constructor for the Case class
      */
-    private Case(String name, int number, String examiner, String configFilePath, XMLCaseManagement xmlcm, SleuthkitCase db) {
+    private Case(String name, String number, String examiner, String configFilePath, XMLCaseManagement xmlcm, SleuthkitCase db) {
         this.name = name;
         this.number = number;
         this.examiner = examiner;
@@ -180,7 +180,7 @@ public class Case {
      * @param caseNumber the case number
      * @param examiner the examiner for this case
      */
-    static void create(String caseDir, String caseName, int caseNumber, String examiner) throws Exception {
+    static void create(String caseDir, String caseName, String caseNumber, String examiner) throws Exception {
         Log.get(Case.class).log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName});
 
         String configFilePath = caseDir + File.separator + caseName + ".aut";
@@ -213,7 +213,7 @@ public class Case {
             xmlcm.writeFile(); // write any changes to the config file
 
             String caseName = xmlcm.getCaseName();
-            int caseNumber = xmlcm.getCaseNumber();
+            String caseNumber = xmlcm.getCaseNumber();
             String examiner = xmlcm.getCaseExaminer();
             // if the caseName is "", case / config file can't be opened
             if (caseName.equals("")) {
@@ -350,7 +350,7 @@ public class Case {
      * @param oldCaseNumber the old case number
      * @param newCaseNumber the new case number
      */
-    void updateCaseNumber(int oldCaseNumber, int newCaseNumber) throws Exception {
+    void updateCaseNumber(String oldCaseNumber, String newCaseNumber) throws Exception {
         try {
             xmlcm.setCaseNumber(newCaseNumber); // set the case number
             number = newCaseNumber;
@@ -456,7 +456,7 @@ public class Case {
      * Gets the case number
      * @return number
      */
-    public int getNumber() {
+    public String getNumber() {
         return number;
     }
 

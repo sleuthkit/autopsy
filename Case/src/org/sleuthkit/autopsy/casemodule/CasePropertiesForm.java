@@ -78,8 +78,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
     CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Integer,String[]> imgPaths) {
         initComponents();
         caseNameTextField.setText(currentCase.getName());
-        if(currentCase.getNumber() != -1)
-            caseNumberTextField.setText(String.valueOf(currentCase.getNumber()));
+        caseNumberTextField.setText(currentCase.getNumber());
         examinerTextField.setText(currentCase.getExaminer());
         crDateTextField.setText(crDate);
         caseDirTextArea.setText(caseDir);

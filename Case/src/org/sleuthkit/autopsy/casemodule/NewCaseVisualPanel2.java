@@ -122,17 +122,6 @@ public class NewCaseVisualPanel2 extends javax.swing.JPanel {
         return examinerTextField.getText();
     }
 
-    boolean validInputs() {
-        if(caseNumberTextField.getText().equals(""))
-            return true;
-        try {
-            Integer.valueOf(caseNumberTextField.getText());
-            return true;
-        } catch (NumberFormatException ex) {
-            return false;
-        }
-    }
-
     
 
 }

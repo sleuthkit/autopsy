@@ -94,7 +94,7 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
     private DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
     private String caseDirPath;     // case directory path
     private String caseName;        // case name
-    private int caseNumber;         // case number
+    private String caseNumber;         // case number
     private String examiner;        // examiner name
     private String schemaVersion = "1.0";
     private String autopsySavedVersion;
@@ -149,7 +149,7 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
      * @param givenCaseNumber  the new case number to be set
      */
     @Override
-    public void setCaseNumber(int givenCaseNumber) throws Exception {
+    public void setCaseNumber(String givenCaseNumber) throws Exception {
         // change this to change the xml file if needed
         Element nameElement = (Element) getCaseElement().getElementsByTagName(NUMBER).item(0);
         nameElement.setTextContent(String.valueOf(givenCaseNumber));
@@ -205,7 +205,7 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
      * 
      * @param givenCaseNumber  the new case number
      */
-    private void setNumber(int givenCaseNumber){
+    private void setNumber(String givenCaseNumber){
         caseNumber = givenCaseNumber; // change this to change the xml file if needed
     }
     
@@ -241,16 +241,16 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
      * @return caseNumber  the case number from the document handler
      */
     @Override
-    public int getCaseNumber(){
+    public String getCaseNumber(){
         if(doc == null){
-            return 0;
+            return "";
         }
         else{
             Element numberElement = (Element) getCaseElement().getElementsByTagName(NUMBER).item(0);
             String result = "-1";
             if(numberElement != null)
                 result = numberElement.getTextContent();
-            return Integer.valueOf(result);
+            return result;
         }
     }
     
@@ -648,7 +648,7 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
      * @param parentPath  the name of the parent of the case directory.
      * @param caseName    the name of the config file to be located in the case directory
      */
-    protected void create(String dirPath, String caseName, String examiner, int caseNumber) throws Exception {
+    protected void create(String dirPath, String caseName, String examiner, String caseNumber) throws Exception {
         clear(); // clear the previous data
 
         // set the case Name and Directory and the parent directory
@@ -863,7 +863,7 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
         doc = null;
         caseDirPath = "";
         caseName = "";
-        caseNumber = -1;
+        caseNumber = "";
         examiner = "";
     }
 

@@ -170,24 +170,17 @@ class NewCaseWizardPanel2 implements WizardDescriptor.ValidatingPanel<WizardDesc
 
     @Override
     public void validate() throws WizardValidationException {
-        if (!getComponent().validInputs()) {
-            throw new WizardValidationException(this.getComponent(), "Please enter a valid case number", null);
-        }
         
         NewCaseVisualPanel2 currentComponent = getComponent();
-        int caseNumber = -1;
-        if(!currentComponent.getCaseNumber().equals("")) {
-            caseNumber = Integer.valueOf(currentComponent.getCaseNumber());
-        }
+        final String caseNumber = currentComponent.getCaseNumber();
         final String examiner = currentComponent.getExaminer();
-        final int CASE_NUMBER = caseNumber;
         try {
             SwingUtilities.invokeLater(new Runnable(){
 
                 @Override
                 public void run() {
                     try {
-                        Case.create(createdDirectory, caseName, CASE_NUMBER, examiner);
+                        Case.create(createdDirectory, caseName, caseNumber, examiner);
                     } catch (Exception ex) {
                         Exceptions.printStackTrace(ex);
                     }
