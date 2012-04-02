@@ -143,13 +143,8 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
     }
 
     @Override
-    public List<FsContent> performQuery() {
+    public Map<String, List<FsContent>> performQuery() {
         throw new UnsupportedOperationException("performQuery() unsupported");
-    }
-
-    @Override
-    public Map<String, List<FsContent>> performQueryPerTerm() {
-        throw new UnsupportedOperationException("performQueryPerTerm() unsupported");
     }
     
     

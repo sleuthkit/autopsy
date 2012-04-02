@@ -91,8 +91,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             public String toString() {
                 return "Context";
             }
-        },
-    }
+        },}
     private Presentation presentation;
     private List<Keyword> queries;
     private Collection<KeyValueQuery> things;
@@ -224,8 +223,11 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             }
 
             //execute the query and get fscontents matching
-            List<FsContent> fsContents = tcq.performQuery();
-
+            Map<String, List<FsContent>> tcqRes = tcq.performQuery();
+            List<FsContent> fsContents = new ArrayList<FsContent>();
+            for (String key : tcqRes.keySet()) {
+                fsContents.addAll(tcqRes.get(key));
+            }
 
             String highlightQueryEscaped = null;
             final boolean literal_query = tcq.isEscaped();
@@ -284,7 +286,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 AbstractFsContentNode.fillPropertyMap(resMap, f);
                 setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
                 if (literal_query) {
-                    final String snippet = LuceneQuery.querySnippet(tcq.getEscapedQueryString(), f.getId(), !literal_query);
+                    final String snippet = LuceneQuery.querySnippet(tcq.getEscapedQueryString(), f.getId(), false, true);
                     setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
                 }
                 toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq));
@@ -299,7 +301,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                         for (KeywordWriteResult w : written) {
                             na.add(w.getArtifact());
                         }
-                        if (sendDataEvent == true && ! na.isEmpty()) {
+                        if (sendDataEvent == true && !na.isEmpty()) {
                             IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
                         }
                     }
@@ -320,7 +322,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
             Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
-            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr, !thingContent.getQuery().isEscaped());
+            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr, !thingContent.getQuery().isEscaped(), false);
             return new KeywordSearchFilterNode(highlights, kvNode, queryStr);
 
         }
@@ -368,7 +370,12 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 final String keywordQuery = thing.getName();
                 LuceneQuery filesQuery = new LuceneQuery(keywordQuery);
                 filesQuery.escape();
-                List<FsContent> matches = filesQuery.performQuery();
+
+                Map<String, List<FsContent>> matchesRes = filesQuery.performQuery();
+                List<FsContent> matches = new ArrayList<FsContent>();
+                for (String key : matchesRes.keySet()) {
+                    matches.addAll(matchesRes.get(key));
+                }
 
                 //get unique match result files
                 Set<FsContent> uniqueMatches = new LinkedHashSet<FsContent>();
@@ -394,7 +401,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                             for (KeywordWriteResult w : written) {
                                 na.add(w.getArtifact());
                             }
-                            if (sendDataEvent == true && ! na.isEmpty() ) {
+                            if (sendDataEvent == true && !na.isEmpty()) {
                                 IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
                             }
                         }
@@ -417,37 +424,15 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 } catch (SolrServerException ex) {
                     logger.log(Level.INFO, "Could not get Solr core", ex);
                 }
-                if (core == null)
-                    return null;
-                
-                final String contentStr = core.getSolrContent(content);
-
-                //postprocess
-                //make sure Solr result contains a match (this gets rid of large number of false positives)
-                final boolean postprocess = false;
-                boolean matchFound = true;
-                if (postprocess) {
-                    if (contentStr != null) {//if not null, some error getting from Solr, handle it by not filtering out
-                        //perform java regex to validate match from Solr
-                        String origQuery = thingContent.getQueryStr();
-
-                        //since query is a match result, we can assume literal pattern
-                        origQuery = Pattern.quote(origQuery);
-                        Pattern p = Pattern.compile(origQuery, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-
-                        Matcher m = p.matcher(contentStr);
-                        matchFound = m.find();
-                    }
-                }
-
-                if (matchFound) {
-                    Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
-                    //wrap in KeywordSearchFilterNode for the markup content
-                    HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query, !thingContent.getQuery().isEscaped());
-                    return new KeywordSearchFilterNode(highlights, kvNode, query);
-                } else {
+                if (core == null) {
                     return null;
                 }
+
+
+                Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
+                //wrap in KeywordSearchFilterNode for the markup content
+                HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query, !thingContent.getQuery().isEscaped());
+                return new KeywordSearchFilterNode(highlights, kvNode, query);
             }
         }
     }

@@ -585,7 +585,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 Map<String, List<FsContent>> queryResult = null;
 
                 try {
-                    queryResult = del.performQueryPerTerm();
+                    queryResult = del.performQuery();
                 } catch (Exception e) {
                     logger.log(Level.INFO, "Error performing query: " + keywordQuery.getQuery(), e);
                     continue;
