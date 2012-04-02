@@ -58,7 +58,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
     private static KeywordSearchIngestService instance = null;
     private IngestManagerProxy managerProxy;
-    private static final long MAX_STRING_EXTRACT_SIZE = 1 * (1 << 10); // * (1 << 10); TODO increase
+    private static final long MAX_STRING_EXTRACT_SIZE = 1 * (1 << 10) * (1 << 10);
     private static final long MAX_INDEX_SIZE = 100 * (1 << 10) * (1 << 10);
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
