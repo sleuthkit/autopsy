@@ -30,7 +30,8 @@ import org.sleuthkit.datamodel.TskException;
 public class OutputViewPanel extends javax.swing.JPanel {
 
     private static long currentOffset = 0;
-    private static long pageLength = 10240;
+    private static final long pageLength = 10240;
+    private final byte[] data = new byte [(int)pageLength];
     private static int currentPage = 1;
     private int outputType;
     private Content dataSource;
@@ -183,18 +184,14 @@ public class OutputViewPanel extends javax.swing.JPanel {
     public void setDataView(Content dataSource, long offset, boolean reset, int outputType) {
         try {
             this.dataSource = dataSource;
-            byte[] data;
 
-            if (dataSource.getSize() > 0) {
-                data = dataSource.read(offset, pageLength); // read the data
-            } else {
-                // empty file
-                data = null;
-            }
+            int bytesRead = 0;
+            if (!reset && dataSource.getSize() > 0) {
+                bytesRead = dataSource.read(data, offset, pageLength); // read the data
+            } 
 
             // I set the -1 to for empty node or directory
             if (reset) {
-                data = null;
                 filePathLabel.setText("");
             }
 
@@ -202,8 +199,8 @@ public class OutputViewPanel extends javax.swing.JPanel {
             String text = "";
             Boolean setVisible = false;
 
-            if (data != null) {
-                text = DataConversion.getString(data, 4);
+            if (bytesRead > 0) {
+                text = DataConversion.getString(data, bytesRead, 4);
                 setVisible = true;
             }
 
@@ -223,7 +220,8 @@ public class OutputViewPanel extends javax.swing.JPanel {
 
             // type 1 = hex view
             if (outputType == 1) {
-                outputViewPane.setText(DataConversion.byteArrayToHex(data, pageLength, offset, outputViewPane.getFont()));
+                int showLength = bytesRead<pageLength?bytesRead:(int)pageLength;
+                outputViewPane.setText(DataConversion.byteArrayToHex(data, showLength, offset, outputViewPane.getFont()));
                 outputViewPane.moveCaretPosition(0);
             }
             // type 2 = string view

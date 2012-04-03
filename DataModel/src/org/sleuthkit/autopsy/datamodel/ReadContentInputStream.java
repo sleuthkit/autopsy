@@ -68,14 +68,12 @@ class ReadContentInputStream extends InputStream {
             int lenToRead = (int) Math.min(len, length - position);
         
             try {
-                byte[] buff = content.read(position, lenToRead);
-                int lenRead = buff.length;
+                int lenRead = content.read(b, position, lenToRead);
 
-                if (lenRead == 0) {
-                    // TSK could not read the whole file, ending partway
+                if (lenRead == -1) {
+                    // error
                     return -1;
                 } else {
-                    System.arraycopy(buff, 0, b, off, lenRead);
                     position += lenRead;
                     return lenRead;
                 }

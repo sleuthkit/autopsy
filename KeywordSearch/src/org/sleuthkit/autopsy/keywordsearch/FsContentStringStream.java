@@ -73,8 +73,13 @@ public class FsContentStringStream implements ContentStream {
     public void convert() throws TskException {
         //read entire content and extract strings
         long contentLen = content.getSize();
-        byte [] data = content.read(0, contentLen);
-        convertedString = DataConversion.getString(data, MIN_ASCII_CHARS);
+        
+        //TODO this needs to be memory-optimized,
+        //convert to string in chunks, without reading entire content
+        byte [] data = new byte[(int)contentLen];
+        final int bytesRead = content.read(data, 0, contentLen);
+        
+        convertedString = DataConversion.getString(data, bytesRead, MIN_ASCII_CHARS);
         
         //convert the extracted string back to byte stream with the same encoding
         try {

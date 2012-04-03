@@ -64,7 +64,7 @@ abstract class AbstractContentNode<T extends Content> extends AbstractNode imple
      * @return        the bytes
      * @throws TskException
      */
-    public byte[] read(long offset, long len) throws TskException {
-        return content.read(offset, len);
+    public int read(byte[] buf, long offset, long len) throws TskException {
+        return content.read(buf, offset, len);
     }
 }

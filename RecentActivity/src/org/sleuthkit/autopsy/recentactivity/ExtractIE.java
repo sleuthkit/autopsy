@@ -108,7 +108,8 @@ public class ExtractIE { // implements BrowserActivity {
                  break;
                 }  
                 Content fav = Favorite;
-                byte[] t = fav.read(0, fav.getSize());
+                byte[] t = new byte[(int) fav.getSize()];
+                final int bytesRead = fav.read(t, 0, fav.getSize());
                 String bookmarkString = new String(t);
                 String re1=".*?";	// Non-greedy match on filler
                 String re2="((?:http|https)(?::\\/{2}[\\w]+)(?:[\\/|\\.]?)(?:[^\\s\"]*))";	// HTTP URL 1
@@ -166,7 +167,8 @@ public class ExtractIE { // implements BrowserActivity {
                  break;
                 }  
                 Content fav = Cookie;
-                byte[] t = fav.read(0, fav.getSize());
+                byte[] t = new byte[(int) fav.getSize()];
+                final int bytesRead = fav.read(t, 0, fav.getSize());
                 String cookieString = new String(t);
                 
                String[] values = cookieString.split("\n");  

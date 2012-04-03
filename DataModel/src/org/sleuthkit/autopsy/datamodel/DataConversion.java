@@ -26,11 +26,11 @@ import java.util.Arrays;
  */
 public class DataConversion {
 
-    public static String byteArrayToHex(byte[] array, long length, long offset, Font font) {
+    public static String byteArrayToHex(byte[] array, int length, long offset, Font font) {
         if (array == null) {
             return "";
         } else {
-            String base = new String(array);
+            String base = new String(array, 0, length);
 
             StringBuilder buff = new StringBuilder();
             int count = 0;
@@ -44,9 +44,12 @@ public class DataConversion {
             //double hexMax = Math.pow(16, hex.length());
             double hexMax = Math.pow(16, 6);
             while (count < base.length() - extra) {
-                buff.append("0x" + Long.toHexString((long) (offset + count + hexMax)).substring(1) + ": ");
+                buff.append("0x");
+                buff.append(Long.toHexString((long) (offset + count + hexMax)).substring(1));
+                buff.append(": ");
                 for (int i = 0; i < 16; i++) {
-                    buff.append(Integer.toHexString((((int) base.charAt(count + i)) & 0xff) + 256).substring(1).toUpperCase() + "  ");
+                    buff.append(Integer.toHexString((((int) base.charAt(count + i)) & 0xff) + 256).substring(1).toUpperCase());
+                    buff.append("  ");
                     if (i == 7) {
                         buff.append("  ");
                     }
@@ -117,11 +120,12 @@ public class DataConversion {
      *  -- When looking for Unicode strings, they evaluate each two byte sequence and look for four or more printable characters…
      *
      * @param args          the bytes that the string read from
+     * @param len           length of text in the buffer to convert, starting at position 0
      * @param parameter     the "length" parameter for the string
      *
      * @author jantonius
      */
-    public static String getString(byte[] args, int parameter) {
+    public static String getString(byte[] args, int len, int parameter) {
 
         /*
         // these encoding might be needed for later
@@ -141,7 +145,7 @@ public class DataConversion {
 
         final char NL = (char) 10; // ASCII char for new line
         final String NLS = Character.toString(NL);
-        for (int i = 0; i < args.length; i++) {
+        for (int i = 0; i < len; i++) {
             char curChar = (char) args[i];
             int curCharInt = (int) curChar;
 
