@@ -94,15 +94,18 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
                     // read the byte of the image file
                     
                     Content content = selectedNode.getLookup().lookup(Content.class);
-                    byte[] dataSource = content.read(0, content.getSize());
+                    byte[] dataSource = new byte[(int) content.getSize()];
+                    int bytesRead = content.read(dataSource, 0, content.getSize());
 
                     // create the input stream for the content
-                    InputStream is = new ByteArrayInputStream(dataSource);
+                    if (bytesRead > 0) {
+                        InputStream is = new ByteArrayInputStream(dataSource);
 
-                    Image image = ImageIO.read(is); // create the image
+                        Image image = ImageIO.read(is); // create the image
 
-                    if (image!= null)
-                        this.picLabel.setIcon(new javax.swing.ImageIcon(image)); // show the file
+                        if (image!= null)
+                            this.picLabel.setIcon(new javax.swing.ImageIcon(image)); // show the file
+                    }
 
 
                 } catch (TskException ex) {

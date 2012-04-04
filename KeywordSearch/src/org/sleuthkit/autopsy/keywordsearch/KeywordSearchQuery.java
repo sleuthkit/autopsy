@@ -39,16 +39,9 @@ public interface KeywordSearchQuery {
      * 
      * @return 
      */
-    public List<FsContent> performQuery();
+    public Map<String,List<FsContent>> performQuery();
     
-    /**
-     * execute query and return results without publishing them
-     * return results per term
-     * 
-     * @return 
-     */
-    public Map<String,List<FsContent>> performQueryPerTerm();
-    
+  
     
     /**
      * execute the query and publish results

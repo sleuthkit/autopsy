@@ -158,7 +158,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
         //snippet
         String snippet = null;
         try {
-            snippet = LuceneQuery.querySnippet(KeywordSearchUtil.escapeLuceneQuery(termHit, true, false), newFsHit.getId(), true);
+            snippet = LuceneQuery.querySnippet(KeywordSearchUtil.escapeLuceneQuery(termHit, true, false), newFsHit.getId(), true, true);
         } catch (Exception e) {
             logger.log(Level.INFO, "Error querying snippet: " + termHit, e);
             return null;
@@ -238,7 +238,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public Map<String, List<FsContent>> performQueryPerTerm() {
+    public Map<String, List<FsContent>> performQuery() {
         Map<String, List<FsContent>> results = new HashMap<String, List<FsContent>>();
 
         final SolrQuery q = createQuery();
@@ -257,8 +257,12 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
             LuceneQuery filesQuery = new LuceneQuery(queryStr);
             try {
-                List<FsContent> subResults = filesQuery.performQuery();
-                results.put(term.getTerm(), subResults);
+                Map<String,List<FsContent>> subResults = filesQuery.performQuery();
+                List<FsContent>filesResults = new ArrayList<FsContent>();
+                for (String key : subResults.keySet()) {
+                    filesResults.addAll(subResults.get(key));
+                }
+                results.put(term.getTerm(), filesResults);
             } catch (RuntimeException e) {
                 logger.log(Level.SEVERE, "Error executing Solr query,", e);
             }
@@ -269,65 +273,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
         return results;
     }
 
-    /**
-     * return collapsed matches with all files for the query
-     * without per match breakdown
-     */
-    @Override
-    public List<FsContent> performQuery() {
-        List<FsContent> results = new ArrayList<FsContent>();
-
-        final SolrQuery q = createQuery();
-        terms = executeQuery(q);
-
-        //get unique match result files
-
-
-        //combine the terms into multiple aggregate Solr queries to get files
-        //it's much more efficient and should yield the same file IDs as per match queries
-        //requires http POST query method due to potentially large query size
-        StringBuilder filesQueryB = new StringBuilder();
-        final int lastTerm = terms.size() - 1;
-        int curTerm = 0;
-        List<String> fileQueries = new ArrayList<String>();
-        int curNumQueries = 0;
-        for (Term term : terms) {
-            final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
-            if (!termS.contains("*")) {
-                filesQueryB.append(TERMS_SEARCH_FIELD).append(":").append(termS);
-                if (curTerm != lastTerm) {
-                    filesQueryB.append(" "); //acts as OR ||
-                }
-            }
-            if (curNumQueries == 100 || curTerm + 1 == lastTerm) { //max aggregate query size due to Solr limitation
-                fileQueries.add(filesQueryB.toString());
-                filesQueryB = new StringBuilder();
-                curNumQueries = 0;
-            } else {
-                ++curNumQueries;
-            }
-            ++curTerm;
-        }
-        Map<FsContent, Void> uniqueMatches = new HashMap<FsContent, Void>();
-
-        for (String query : fileQueries) {
-            LuceneQuery filesQuery = new LuceneQuery(query);
-            try {
-                List<FsContent> subResults = filesQuery.performQuery();
-                for (FsContent res : subResults) {
-                    uniqueMatches.put(res, null);
-                }
-            } catch (RuntimeException e) {
-                logger.log(Level.SEVERE, "Error executing Solr query,", e);
-            }
-        }
-
-
-        results.addAll(uniqueMatches.keySet());
-
-        return results;
-    }
-
+   
     @Override
     public void execute() {
         SolrQuery q = createQuery();

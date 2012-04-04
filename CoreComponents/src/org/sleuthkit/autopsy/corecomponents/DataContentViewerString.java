@@ -42,7 +42,8 @@ import org.sleuthkit.datamodel.TskException;
 public class DataContentViewerString extends javax.swing.JPanel implements DataContentViewer {
 
     private static long currentOffset = 0;
-    private static long pageLength = 10240;
+    private static final long pageLength = 10240;
+    private final byte[] data = new byte[(int)pageLength];
     private static int currentPage = 1;
     private Content dataSource;
     // for error handling
@@ -247,26 +248,19 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         try {
             try {
                 this.dataSource = dataSource;
-                byte[] data;
 
+                int bytesRead = 0;
                 if (!reset && dataSource.getSize() > 0) {
-                    data = dataSource.read(offset, pageLength); // read the data
-                } else {
-                    // empty file
-                    data = null;
-                }
+                    bytesRead = dataSource.read(data, offset, pageLength); // read the data
+                } 
 
-                // I set the -1 to for empty node or directory
-                if (reset) {
-                    data = null;
-                }
 
                 // set the data on the bottom and show it
                 String text = "";
                 Boolean setVisible = false;
 
-                if (data != null) {
-                    text = DataConversion.getString(data, 4);
+                if (bytesRead > 0) {
+                    text = DataConversion.getString(data, bytesRead, 4);
                     setVisible = true;
                 }
 

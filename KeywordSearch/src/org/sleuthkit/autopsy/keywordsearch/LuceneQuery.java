@@ -102,82 +102,13 @@ public class LuceneQuery implements KeywordSearchQuery {
         return null;
     }
 
-    /**
-     * Just perform the query and return result without updating the GUI
-     * This utility is used in this class, can be potentially reused by other classes
-     * @param query
-     * @return matches List
-     */
-    @Override
-    public List<FsContent> performQuery() throws RuntimeException {
-
-        List<FsContent> matches = new ArrayList<FsContent>();
-
-        boolean allMatchesFetched = false;
-        final int ROWS_PER_FETCH = 10000;
-
-        Server.Core solrCore = null;
-
-        try {
-            solrCore = KeywordSearch.getServer().getCore();
-        } catch (SolrServerException e) {
-            logger.log(Level.INFO, "Could not get Solr core", e);
-        }
-        
-        if (solrCore == null) {
-            return matches;
-        }
-
-        SolrQuery q = new SolrQuery();
-
-        q.setQuery(queryEscaped);
-        q.setRows(ROWS_PER_FETCH);
-        q.setFields("id");
-
-        for (int start = 0; !allMatchesFetched; start = start + ROWS_PER_FETCH) {
-
-            q.setStart(start);
-
-            try {
-                QueryResponse response = solrCore.query(q, METHOD.POST);
-                SolrDocumentList resultList = response.getResults();
-                long results = resultList.getNumFound();
-
-                allMatchesFetched = start + ROWS_PER_FETCH >= results;
-
-                for (SolrDocument resultDoc : resultList) {
-                    long id = Long.parseLong((String) resultDoc.getFieldValue("id"));
-
-                    SleuthkitCase sc = Case.getCurrentCase().getSleuthkitCase();
-
-                    // TODO: has to be a better way to get files. Also, need to 
-                    // check that we actually get 1 hit for each id
-                    ResultSet rs = sc.runQuery("select * from tsk_files where obj_id=" + id);
-                    matches.addAll(sc.resultSetToFsContents(rs));
-                    final Statement s = rs.getStatement();
-                    rs.close();
-                    if (s != null) {
-                        s.close();
-                    }
-                }
-
-            } catch (SolrServerException ex) {
-                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query.substring(0, Math.min(query.length() - 1, 200)), ex);
-                throw new RuntimeException(ex);
-                // TODO: handle bad query strings, among other issues
-            } catch (SQLException ex) {
-                logger.log(Level.WARNING, "Error interpreting results from Lucene Solr Query: " + query, ex);
-            }
-
-        }
-        return matches;
-    }
+    
 
     @Override
-    public Map<String, List<FsContent>> performQueryPerTerm() {
+    public Map<String, List<FsContent>> performQuery() {
         Map<String, List<FsContent>> results = new HashMap<String, List<FsContent>>();
-        //in case of single term literal query there is only 1 term, so delegate to performQuery()
-        results.put(query, performQuery());
+        //in case of single term literal query there is only 1 term
+        results.put(query, performLuceneQuery());
 
         return results;
     }
@@ -185,7 +116,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     @Override
     public void execute() {
         escape();
-        final List<FsContent> matches = performQuery();
+        final List<FsContent> matches = performLuceneQuery();
 
         String pathText = "Keyword query: " + query;
 
@@ -259,7 +190,7 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         String snippet = null;
         try {
-            snippet = LuceneQuery.querySnippet(queryEscaped, newFsHit.getId(), false);
+            snippet = LuceneQuery.querySnippet(queryEscaped, newFsHit.getId(), false, true);
         } catch (Exception e) {
             logger.log(Level.INFO, "Error querying snippet: " + query, e);
             return null;
@@ -295,14 +226,86 @@ public class LuceneQuery implements KeywordSearchQuery {
         return null;
     }
 
+    
+    /**
+     * Just perform the query and return result without updating the GUI
+     * This utility is used in this class, can be potentially reused by other classes
+     * @param query
+     * @return matches List
+     */
+    private List<FsContent> performLuceneQuery() throws RuntimeException {
+
+        List<FsContent> matches = new ArrayList<FsContent>();
+
+        boolean allMatchesFetched = false;
+        final int ROWS_PER_FETCH = 10000;
+
+        Server.Core solrCore = null;
+
+        try {
+            solrCore = KeywordSearch.getServer().getCore();
+        } catch (SolrServerException e) {
+            logger.log(Level.INFO, "Could not get Solr core", e);
+        }
+        
+        if (solrCore == null) {
+            return matches;
+        }
+
+        SolrQuery q = new SolrQuery();
+
+        q.setQuery(queryEscaped);
+        q.setRows(ROWS_PER_FETCH);
+        q.setFields("id");
+
+        for (int start = 0; !allMatchesFetched; start = start + ROWS_PER_FETCH) {
+
+            q.setStart(start);
+
+            try {
+                QueryResponse response = solrCore.query(q, METHOD.POST);
+                SolrDocumentList resultList = response.getResults();
+                long results = resultList.getNumFound();
+
+                allMatchesFetched = start + ROWS_PER_FETCH >= results;
+
+                for (SolrDocument resultDoc : resultList) {
+                    long id = Long.parseLong((String) resultDoc.getFieldValue("id"));
+
+                    SleuthkitCase sc = Case.getCurrentCase().getSleuthkitCase();
+
+                    // TODO: has to be a better way to get files. Also, need to 
+                    // check that we actually get 1 hit for each id
+                    ResultSet rs = sc.runQuery("select * from tsk_files where obj_id=" + id);
+                    matches.addAll(sc.resultSetToFsContents(rs));
+                    final Statement s = rs.getStatement();
+                    rs.close();
+                    if (s != null) {
+                        s.close();
+                    }
+                }
+
+            } catch (SolrServerException ex) {
+                logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query.substring(0, Math.min(query.length() - 1, 200)), ex);
+                throw new RuntimeException(ex);
+                // TODO: handle bad query strings, among other issues
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "Error interpreting results from Lucene Solr Query: " + query, ex);
+            }
+
+        }
+        return matches;
+    }
+    
     /**
      * return snippet preview context
      * @param query the keyword query for text to highlight. Lucene special cahrs should already be escaped.
      * @param contentID content id associated with the file
      * @param isRegex whether the query is a regular expression (different Solr fields are then used to generate the preview)
+     * @param group whether the query should look for all terms grouped together in the query order, or not
      * @return 
      */
-    public static String querySnippet(String query, long contentID, boolean isRegex) {
+    public static String querySnippet(String query, long contentID, boolean isRegex, boolean group) {
         final int SNIPPET_LENGTH = 45;
 
         Server.Core solrCore = null;
@@ -325,9 +328,19 @@ public class LuceneQuery implements KeywordSearchQuery {
         SolrQuery q = new SolrQuery();
 
         if (isRegex) {
-            q.setQuery(highlightField + ":" + "\"" + query + "\"");
+            StringBuilder sb = new StringBuilder();
+            sb.append(highlightField).append(":");
+            if (group)
+                sb.append("\"");
+            sb.append(query);
+            if (group)
+                sb.append("\"");
+            
+            q.setQuery(sb.toString());
         } else {
-            q.setQuery("\"" + query + "\""); //simplify query/escaping and use default field
+            //simplify query/escaping and use default field
+            //quote only if user supplies quotes
+            q.setQuery(query); 
         }
         q.addFilterQuery("id:" + contentID);
         q.addHighlightField(highlightField);

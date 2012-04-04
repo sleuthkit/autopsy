@@ -26,7 +26,6 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.datamodel.HighlightLookup;
 import org.sleuthkit.autopsy.keywordsearch.Server.Core;
 import org.sleuthkit.datamodel.Content;
@@ -35,7 +34,7 @@ import org.sleuthkit.datamodel.Content;
  * Gets extracted content from Solr with the parts that match the query
  * highlighted
  */
-class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
+class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     private static final Logger logger = Logger.getLogger(HighlightedMatchesSource.class.getName());
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>";
@@ -47,13 +46,14 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
     private Core solrCore;
     private int numberHits;
     private boolean isRegex = false;
+    private boolean group = true;
 
-    
     HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex) {
         this.content = content;
         this.solrQuery = solrQuery;
         this.isRegex = isRegex;
-        
+        this.group = true;
+
         try {
             this.solrCore = KeywordSearch.getServer().getCore();
         } catch (SolrServerException ex) {
@@ -61,36 +61,34 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
         }
     }
 
-    HighlightedMatchesSource(Content content, String solrQuery, Core solrCore, boolean isRegex) {
-        this.content = content;
-        this.solrQuery = solrQuery;
-        this.solrCore = solrCore;
-        this.isRegex = isRegex;
+    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, boolean group) {
+        this(content, solrQuery, isRegex);
+        this.group = group;
     }
-    
-    //constructor for dummy singleton factory instance for Lookup
-    private HighlightedMatchesSource() {}
 
-    
+    //constructor for dummy singleton factory instance for Lookup
+    private HighlightedMatchesSource() {
+    }
+
     @Override
     public String getMarkup() {
-        if (solrCore == null)
+        if (solrCore == null) {
             return NO_MATCHES;
-        
+        }
+
         String highLightField = null;
-        
+
         String highlightQuery = solrQuery;
-        
+
         if (isRegex) {
             highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
             //escape special lucene chars if not already escaped (if not a compound query)
             //TODO a better way to mark it a compound highlight query
             final String findSubstr = LuceneQuery.HIGHLIGHT_FIELD_REGEX + ":";
-            if (! highlightQuery.contains(findSubstr)) {
+            if (!highlightQuery.contains(findSubstr)) {
                 highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery, true, false);
             }
-        }
-        else { 
+        } else {
             highLightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
             //escape special lucene chars always for literal queries query
             highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery, true, false);
@@ -98,14 +96,27 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
 
         SolrQuery q = new SolrQuery();
 
-         if (isRegex)
-            q.setQuery(highLightField + ":" + "\"" + highlightQuery + "\""); 
-        else q.setQuery("\"" + highlightQuery + "\""); //use default field, simplifies query
-        
+        if (isRegex) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(highLightField).append(":");
+            if (group) {
+                sb.append("\"");
+            }
+            sb.append(highlightQuery);
+            if (group) {
+                sb.append("\"");
+            }
+            q.setQuery(sb.toString());
+        } else {
+            //use default field, simplifies query
+            //quote only if user supplies quotes
+            q.setQuery(highlightQuery);
+        }
+
         //if (isRegex)
-          //  q.setQuery(highLightField + ":" + highlightQuery); 
+        //  q.setQuery(highLightField + ":" + highlightQuery); 
         //else q.setQuery(highlightQuery); //use default field, simplifies query
-        
+
         q.addFilterQuery("id:" + content.getId());
         q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
         q.setHighlightSimplePre(HIGHLIGHT_PRE);
@@ -176,15 +187,15 @@ class HighlightedMatchesSource implements MarkupSource,HighlightLookup {
         this.numberHits = count;
         return buf.toString();
     }
-
     //dummy instance for Lookup only
     private static HighlightLookup instance = null;
-    
+
     //getter of the singleton dummy instance solely for Lookup purpose
     //this instance does not actually work with Solr
     public static synchronized HighlightLookup getDefault() {
-        if(instance == null)
+        if (instance == null) {
             instance = new HighlightedMatchesSource();
+        }
         return instance;
     }
 

@@ -86,7 +86,12 @@ class ThumbnailViewNode extends FilterNode {
     }
 
     static private Image generateIcon(Content content) throws TskException {
-        byte[] data = content.read(0, content.getSize());
+        byte[] data = new byte[(int)content.getSize()];
+        int bytesRead = content.read(data, 0, content.getSize());
+        
+        if (bytesRead < 1)
+            return null;
+        
         Image result = Toolkit.getDefaultToolkit().createImage(data);
 
         // scale the image

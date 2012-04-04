@@ -41,7 +41,8 @@ import org.sleuthkit.datamodel.TskException;
 public class DataContentViewerHex extends javax.swing.JPanel implements DataContentViewer {
 
     private static long currentOffset = 0;
-    private static long pageLength = 10240;
+    private static final long pageLength = 10240;
+    private final byte[] data = new byte[(int)pageLength];
     private static int currentPage = 1;
     private Content dataSource;
     // for error handling
@@ -263,24 +264,16 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         try {
             try {
                 this.dataSource = dataSource;
-                byte[] data;
 
+                int bytesRead =0;
                 if (!reset && dataSource.getSize() > 0) {
-                    data = dataSource.read(offset, pageLength); // read the data
-                } else {
-                    // empty file
-                    data = null;
-                }
-
-                // I set the -1 to for empty node or directory
-                if (reset) {
-                    data = null;
-                }
+                    bytesRead = dataSource.read(data, offset, pageLength); // read the data
+                } 
 
                 // set the data on the bottom and show it
                 Boolean setVisible = false;
 
-                if (data != null) {
+                if (bytesRead > 0) {
                     setVisible = true;
                 }
 
@@ -305,7 +298,8 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                     setComponentsVisibility(true); // shows the components that not needed
 
                     // set the output view
-                    outputViewPane.setText(DataConversion.byteArrayToHex(data, pageLength, offset, outputViewPane.getFont()));
+                    int showLength = bytesRead<pageLength?bytesRead:(int)pageLength;
+                    outputViewPane.setText(DataConversion.byteArrayToHex(data, showLength, offset, outputViewPane.getFont()));
                 } else {
                     // reset or hide the labels
                     totalPageLabel.setText("");

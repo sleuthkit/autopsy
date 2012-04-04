@@ -33,6 +33,7 @@ import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.ContentStream;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Handles indexing files on a Solr core.
