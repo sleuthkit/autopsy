@@ -149,7 +149,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                 
             if(regFilePath.toLowerCase().contains("system"))
                 {
-                    type = "1system";
+                    type = "autopsysystem";
                 }
                 if(regFilePath.toLowerCase().contains("software"))
                 {

@@ -28,6 +28,8 @@ import java.sql.ResultSet;
 
 //Util Imports
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -121,13 +123,14 @@ public class ExtractIE { // implements BrowserActivity {
                 }
                 String name = Favorite.getName();
                 String datetime = Favorite.getCrtimeAsDate();
-                
+                String domain = Util.extractDomain(url);
                 BlackboardArtifact bbart = Favorite.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",datetime));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",url));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","",name));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Internet Explorer"));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                      bbart.addAttributes(bbattributes);
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK)); 
                 
@@ -174,7 +177,7 @@ public class ExtractIE { // implements BrowserActivity {
                 String value = values[1];
                 String name = values[0];
                 String datetime = Cookie.getCrtimeAsDate();
-                
+               String domain = Util.extractDomain(url);
                   BlackboardArtifact bbart = Cookie.newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", url));
@@ -182,6 +185,7 @@ public class ExtractIE { // implements BrowserActivity {
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),"RecentActivity", "",value));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","Title",(name != null) ? name : ""));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Internet Explorer"));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                      bbart.addAttributes(bbattributes);
                 
             }
@@ -366,6 +370,7 @@ public class ExtractIE { // implements BrowserActivity {
                                         String actime = lineBuff[3];
                                         String user = "";
                                         String realurl = "";
+                                        String domain = "";
                                       if(url.length > 1)
                                       {
                                        user = url[0];
@@ -378,14 +383,20 @@ public class ExtractIE { // implements BrowserActivity {
                                        realurl = realurl.replaceAll(":(.*?):", "");
                                        realurl = realurl.replace(":Host:", "");
                                        realurl = realurl.trim();
+                                       domain = Util.extractDomain(realurl);
                                       }
                                       if(!ddtime.isEmpty()){
                                           ddtime = ddtime.replace("T"," ");
                                           ddtime = ddtime.substring(ddtime.length()-5);
                                       }
                                         if(!actime.isEmpty()){
-                                          actime = actime.replace("T"," ");
-                                          actime = actime.substring(0,actime.length()-5);
+                                        try{
+                                        Long epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(actime).getTime();
+                                        actime = epochtime.toString();
+                                        }
+                                        catch(ParseException e){
+                                              logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e.getMessage());
+                                        }
                                       }
                                        
                                         // TODO: Need to fix this so we have the right obj_id
@@ -400,7 +411,7 @@ public class ExtractIE { // implements BrowserActivity {
                                      //   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "", ddtime));
                                        
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Internet Explorer"));
-                                        
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(),"RecentActivity","",user));
                                         bbart.addAttributes(bbattributes);
 

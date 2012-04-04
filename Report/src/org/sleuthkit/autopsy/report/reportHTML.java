@@ -158,6 +158,9 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             if(countWebBookmark > 0){
             formatted_Report.append("<tr><td><a href=\"#bookmark\">Web Bookmarks</a></td><td>").append(countWebBookmark).append("</td></tr>");
             }
+             if(countWebCookie > 0){
+            formatted_Report.append("<tr><td><a href=\"#cookie\">Web Cookies</a></td><td>").append(countWebCookie).append("</td></tr>");
+            }
             if(countWebHistory > 0){
             formatted_Report.append("<tr><td><a href=\"#history\">Web History</a></td><td>").append(countWebHistory).append("</td></tr>");
             }
@@ -230,6 +233,9 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                          int type = tempatt.getAttributeTypeID();
                          if(tempatt.getValueString() == null || tempatt.getValueString() == "null"){
                          
+                         }
+                         else if(type == 2){
+                             value  = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date (tempatt.getValueString()*1000));
                          }
                          else
                          {

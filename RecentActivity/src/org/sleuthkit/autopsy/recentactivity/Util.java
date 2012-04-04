@@ -16,6 +16,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.apache.commons.lang.NullArgumentException;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -86,5 +89,17 @@ public static boolean imgpathexists(String path){
             }
         }    
 
+    }
+
+public static String extractDomain(String value){
+    if (value == null) throw new NullArgumentException("domains to extract");
+        String result = "";
+        String domainPattern = "[a-z0-9\\-\\.]+\\.(com|org|net|mil|edu|(co\\.[a-z].))";
+        Pattern p = Pattern.compile(domainPattern,Pattern.CASE_INSENSITIVE);
+        Matcher m = p.matcher(value);
+        while (m.find()) {
+        result = value.substring(m.start(0),m.end(0));
+        }
+    return result;
     }
 }
