@@ -21,10 +21,12 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -258,11 +260,11 @@ public class TermComponentQuery implements KeywordSearchQuery {
             LuceneQuery filesQuery = new LuceneQuery(queryStr);
             try {
                 Map<String,List<FsContent>> subResults = filesQuery.performQuery();
-                List<FsContent>filesResults = new ArrayList<FsContent>();
+                Set<FsContent>filesResults = new HashSet<FsContent>();
                 for (String key : subResults.keySet()) {
                     filesResults.addAll(subResults.get(key));
                 }
-                results.put(term.getTerm(), filesResults);
+                results.put(term.getTerm(), new ArrayList(filesResults));
             } catch (RuntimeException e) {
                 logger.log(Level.SEVERE, "Error executing Solr query,", e);
             }
