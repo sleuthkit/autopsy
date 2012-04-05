@@ -219,26 +219,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
     }
 
-    @Override
-    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
-        Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
-
-        //get unique term matches, all cases
-        Set<String> matches = new HashSet<String>();
-        for (Term term : terms) {
-            //caseInsMatches.put(term.getTerm().toLowerCase(), null);
-            matches.add(term.getTerm());
-        }
-
-        for (String regexMatch : matches) {
-            KeywordWriteResult written = writeToBlackBoard(regexMatch, newFsHit, listName);
-            if (written != null)
-                writeResults.add(written);
-        } //for each term
-
-        return writeResults;
-    }
-
+  
     @Override
     public Map<String, List<FsContent>> performQuery() {
         Map<String, List<FsContent>> results = new HashMap<String, List<FsContent>>();

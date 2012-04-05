@@ -163,8 +163,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         return query != null && !query.equals("");
     }
 
-    @Override
-    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
+    private Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
         List<KeywordWriteResult> ret = new ArrayList<KeywordWriteResult>();
         KeywordWriteResult written = writeToBlackBoard(query, newFsHit, listName);
         if (written != null) {

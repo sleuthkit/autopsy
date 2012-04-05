@@ -241,18 +241,17 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 //construct a Solr query using aggregated terms to get highlighting
                 //the query is executed later on demand
                 StringBuilder highlightQuery = new StringBuilder();
-                Collection<Term> terms = tcq.getTerms();
 
-                if (terms.size() == 1) {
+                if (tcqRes.keySet().size() == 1) {
                     //simple case, no need to process subqueries and do special escaping
-                    Term term = terms.iterator().next();
-                    highlightQuery.append(term.getTerm());
+                    String term = tcqRes.keySet().iterator().next();
+                    highlightQuery.append(term);
                 } else {
-                    final int lastTerm = terms.size() - 1;
+                    final int lastTerm = tcqRes.keySet().size() - 1;
                     int curTerm = 0;
-                    for (Term term : terms) {
+                    for (String term : tcqRes.keySet()) {
                         //escape subqueries, they shouldn't be escaped again later
-                        final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
+                        final String termS = KeywordSearchUtil.escapeLuceneQuery(term, true, false);
                         if (!termS.contains("*")) {
                             highlightQuery.append(termS);
                             if (lastTerm != curTerm) {
@@ -292,7 +291,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq));
             }
             //write to bb
-            new ResultWriter(fsContents, tcq, theListName).execute();
+            new ResultWriter(tcqRes, tcq, theListName).execute();
 
 
             return true;
@@ -378,7 +377,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
                 }
                 //write to bb
-                new ResultWriter(uniqueMatches, origQuery, "").execute();
+                new ResultWriter(matchesRes, origQuery, "").execute();
 
                 return true;
             }
@@ -427,16 +426,15 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
      */
     static class ResultWriter extends SwingWorker {
 
-        private static List<ResultWriter>writers = new ArrayList<ResultWriter>();
-        
+        private static List<ResultWriter> writers = new ArrayList<ResultWriter>();
         private ProgressHandle progress;
         private KeywordSearchQuery query;
         private String listName;
-        private Set<FsContent> fsContents;
+        private Map<String, List<FsContent>> hits;
         final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
 
-        ResultWriter(Set<FsContent> fsContents, KeywordSearchQuery query, String listName) {
-            this.fsContents = fsContents;
+        ResultWriter(Map<String, List<FsContent>> hits, KeywordSearchQuery query, String listName) {
+            this.hits = hits;
             this.query = query;
             this.listName = listName;
         }
@@ -447,7 +445,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             deregisterWriter(this);
             progress.finish();
 
-            if (! this.isCancelled() && !na.isEmpty()) {
+            if (!this.isCancelled() && !na.isEmpty()) {
                 IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
             }
         }
@@ -456,7 +454,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         protected Object doInBackground() throws Exception {
             registerWriter(this);
             final String queryStr = query.getQueryString();
-            final String queryDisp = queryStr.length()>20?queryStr.substring(0,19) + " ..." : queryStr;
+            final String queryDisp = queryStr.length() > 20 ? queryStr.substring(0, 19) + " ..." : queryStr;
             progress = ProgressHandleFactory.createHandle("Saving results: " + queryDisp, new Cancellable() {
 
                 @Override
@@ -465,38 +463,39 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 }
             });
 
-            progress.start(fsContents.size());
+            progress.start(hits.keySet().size());
             int processedFiles = 0;
-            for (final FsContent f : fsContents) {
+            for (final String hit : hits.keySet()) {
+                progress.progress(hit, ++processedFiles);
                 if (this.isCancelled()) {
                     break;
                 }
-                Collection<KeywordWriteResult> written = query.writeToBlackBoard(f, listName);
-                for (KeywordWriteResult w : written) {
-                    na.add(w.getArtifact());
+                for (FsContent f : hits.get(hit)) {
+                    KeywordWriteResult written = query.writeToBlackBoard(hit, f, listName);
+                    if (written != null)
+                        na.add(written.getArtifact());
                 }
-                progress.progress(f.getName(), ++processedFiles);
+
             }
 
 
 
             return null;
         }
-        
+
         private static synchronized void registerWriter(ResultWriter writer) {
             writers.add(writer);
         }
-        
+
         private static synchronized void deregisterWriter(ResultWriter writer) {
             writers.remove(writer);
         }
-        
+
         static synchronized void stopAllWriters() {
             for (ResultWriter w : writers) {
                 w.cancel(true);
                 writers.remove(w);
             }
         }
-        
     }
 }

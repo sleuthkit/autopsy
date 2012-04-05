@@ -78,14 +78,6 @@ public interface KeywordSearchQuery {
     public Collection<Term>getTerms();
     
     /**
-     * write search results to blackboard
-     * @param newFsHit new fscontent hit associated with the result to write to bb
-     * @param listname list name with the keyword query, or null
-     * @return collection of results (with cached bb artifacts/attributes) created and written
-     */
-    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName);
-    
-    /**
      * write results to blackboard per single term and file hit
      * this method is useful if something else should keep track of partial results to write
      * @param termHit term for only which to write results

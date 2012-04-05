@@ -192,10 +192,6 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
         return null;
     }
     
-    @Override
-    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {     
-        throw new UnsupportedOperationException("writeToBlackBoard() unsupported by manager");
-    }
 
     @Override
     public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) {
