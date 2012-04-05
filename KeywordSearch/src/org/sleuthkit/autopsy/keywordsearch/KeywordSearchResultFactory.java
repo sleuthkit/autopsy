@@ -223,7 +223,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
             //execute the query and get fscontents matching
             Map<String, List<FsContent>> tcqRes = tcq.performQuery();
-            Set<FsContent> fsContents = new HashSet<FsContent>();
+            final Set<FsContent> fsContents = new HashSet<FsContent>();
             for (String key : tcqRes.keySet()) {
                 fsContents.addAll(tcqRes.get(key));
             }
@@ -276,9 +276,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             final String theListName = listName;
 
             int resID = 0;
-            final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
-            final int numFsContents = fsContents.size();
-            int cur = 0;
+
             for (final FsContent f : fsContents) {
                 //get unique match result files
                 Map<String, Object> resMap = new LinkedHashMap<String, Object>();
@@ -289,24 +287,25 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                     setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
                 }
                 toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq));
+            }
+            //write to bb
+            new Thread() {
 
-                //write to bb
-                final boolean sendDataEvent = (cur == numFsContents - 1 ? true : false); //send a single bulk notification after the last write
-                new Thread() {
-
-                    @Override
-                    public void run() {
+                @Override
+                public void run() {
+                    final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
+                    for (final FsContent f : fsContents) {
                         Collection<KeywordWriteResult> written = tcq.writeToBlackBoard(f, theListName);
                         for (KeywordWriteResult w : written) {
                             na.add(w.getArtifact());
                         }
-                        if (sendDataEvent == true && !na.isEmpty()) {
-                            IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
-                        }
+
                     }
-                }.start();
-                cur++;
-            }
+                    if (!na.isEmpty()) {
+                        IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+                    }
+                }
+            }.start();
 
             return true;
         }
@@ -377,36 +376,37 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 }
 
                 //get unique match result files
-                Set<FsContent> uniqueMatches = new LinkedHashSet<FsContent>();
+                final Set<FsContent> uniqueMatches = new LinkedHashSet<FsContent>();
                 uniqueMatches.addAll(matches);
 
                 int resID = 0;
-                int cur = 0;
+
                 final KeywordSearchQuery origQuery = thing.getQuery();
-                final int numFsContents = uniqueMatches.size();
-                final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
+
                 for (final FsContent f : uniqueMatches) {
                     Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                     AbstractFsContentNode.fillPropertyMap(resMap, (File) f);
                     toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, keywordQuery, thing.getQuery()));
 
-                    //write to bb
-                    final boolean sendDataEvent = (cur == numFsContents - 1 ? true : false); //send a single bulk notification after the last write
-                    new Thread() {
+                }
+                //write to bb
+                new Thread() {
 
-                        @Override
-                        public void run() {
+                    @Override
+                    public void run() {
+                        final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
+                        for (final FsContent f : uniqueMatches) {
                             Collection<KeywordWriteResult> written = origQuery.writeToBlackBoard(f, "");
                             for (KeywordWriteResult w : written) {
                                 na.add(w.getArtifact());
                             }
-                            if (sendDataEvent == true && !na.isEmpty()) {
-                                IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
-                            }
                         }
-                    }.start();
-                    cur++;
-                }
+                        if (!na.isEmpty()) {
+                            IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+                        }
+                    }
+                }.start();
+
 
                 return true;
             }
@@ -416,17 +416,6 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 final KeyValueQueryContent thingContent = (KeyValueQueryContent) thing;
                 final Content content = thingContent.getContent();
                 final String query = thingContent.getQueryStr();
-
-                Core core = null;
-                try {
-                    core = KeywordSearch.getServer().getCore();
-                } catch (SolrServerException ex) {
-                    logger.log(Level.INFO, "Could not get Solr core", ex);
-                }
-                if (core == null) {
-                    return null;
-                }
-
 
                 Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
                 //wrap in KeywordSearchFilterNode for the markup content
