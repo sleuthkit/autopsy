@@ -71,7 +71,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private Indexer indexer;
     private Searcher searcher;
     private volatile boolean searcherDone = true;
-    private static PropertyChangeSupport pcs = null;
     private Map<Keyword, List<FsContent>> currentResults;
     private volatile int messageID = 0;
     private boolean processedFiles;
@@ -218,9 +217,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         this.managerProxy = managerProxy;
 
-        //this deregisters previously registered listeners at every init()
-        pcs = new PropertyChangeSupport(KeywordSearchIngestService.class);
-
         Server.Core solrCore = null;
         try {
             solrCore = KeywordSearch.getServer().getCore();
@@ -314,16 +310,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     }
 
-    @Override
-    public synchronized boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
-        if (finalRunComplete == true) {
-            return false;
-        } else {
-            pcs.addPropertyChangeListener(l);
-            return true;
-        }
-
-    }
 
     private void commit() {
         if (initialized)
@@ -733,7 +719,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 keywords.clear();
                 keywordLists.clear();
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
-                pcs.firePropertyChange(IngestServiceAbstract.BCKGRND_JOBS_COMPLETED_EVT, null, KeywordSearchIngestService.this);
             }
         }
     }

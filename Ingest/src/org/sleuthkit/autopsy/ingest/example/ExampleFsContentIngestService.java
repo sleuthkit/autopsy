@@ -124,10 +124,6 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
         return false;
     }
     
-    @Override
-    public boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
-        return false;
-    }
     
     @Override
     public void saveAdvancedConfiguration() {

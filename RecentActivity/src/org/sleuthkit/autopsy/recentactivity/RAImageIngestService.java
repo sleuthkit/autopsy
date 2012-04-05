@@ -187,9 +187,4 @@ public final class RAImageIngestService implements IngestServiceImage {
         return false;
     }
     
-    
-    @Override
-    public boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
-        return false;
-    }
 }

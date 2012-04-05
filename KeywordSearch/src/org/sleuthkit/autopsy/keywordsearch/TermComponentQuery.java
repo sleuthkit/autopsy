@@ -242,7 +242,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
                 for (String key : subResults.keySet()) {
                     filesResults.addAll(subResults.get(key));
                 }
-                results.put(term.getTerm(), new ArrayList(filesResults));
+                results.put(term.getTerm(), new ArrayList<FsContent>(filesResults));
             } catch (RuntimeException e) {
                 logger.log(Level.SEVERE, "Error executing Solr query,", e);
             }
