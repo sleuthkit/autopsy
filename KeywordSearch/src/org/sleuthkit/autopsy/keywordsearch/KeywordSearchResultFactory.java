@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -28,8 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.swing.SwingUtilities;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
@@ -224,7 +223,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
             //execute the query and get fscontents matching
             Map<String, List<FsContent>> tcqRes = tcq.performQuery();
-            List<FsContent> fsContents = new ArrayList<FsContent>();
+            Set<FsContent> fsContents = new HashSet<FsContent>();
             for (String key : tcqRes.keySet()) {
                 fsContents.addAll(tcqRes.get(key));
             }
@@ -372,7 +371,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 filesQuery.escape();
 
                 Map<String, List<FsContent>> matchesRes = filesQuery.performQuery();
-                List<FsContent> matches = new ArrayList<FsContent>();
+                Set<FsContent> matches = new HashSet<FsContent>();
                 for (String key : matchesRes.keySet()) {
                     matches.addAll(matchesRes.get(key));
                 }

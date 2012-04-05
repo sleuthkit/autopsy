@@ -19,8 +19,11 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.Cursor;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javax.swing.JMenuItem;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.ingest.IngestMessagePanel.IngestMessageGroup;
@@ -62,6 +65,22 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
             }
             
         });
+        
+        
+        //right click
+        messageDetailsPane.setComponentPopupMenu(rightClickMenu);
+        ActionListener actList = new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent e){
+                JMenuItem jmi = (JMenuItem) e.getSource();
+                if(jmi.equals(copyMenuItem))
+                    messageDetailsPane.copy();
+                else if(jmi.equals(selectAllMenuItem))
+                    messageDetailsPane.selectAll();
+            }
+        };
+        copyMenuItem.addActionListener(actList);
+        selectAllMenuItem.addActionListener(actList);
     }
 
     /** This method is called from within the constructor to
@@ -73,11 +92,20 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        rightClickMenu = new javax.swing.JPopupMenu();
+        copyMenuItem = new javax.swing.JMenuItem();
+        selectAllMenuItem = new javax.swing.JMenuItem();
         backButton = new javax.swing.JButton();
         viewContentButton = new javax.swing.JButton();
         viewArtifactButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         messageDetailsPane = new javax.swing.JTextPane();
+
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.copyMenuItem.text")); // NOI18N
+        rightClickMenu.add(copyMenuItem);
+
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.selectAllMenuItem.text")); // NOI18N
+        rightClickMenu.add(selectAllMenuItem);
 
         backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/arrow_left.gif"))); // NOI18N
         backButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.backButton.text")); // NOI18N
@@ -156,8 +184,11 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_backButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
+    private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextPane messageDetailsPane;
+    private javax.swing.JPopupMenu rightClickMenu;
+    private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JButton viewArtifactButton;
     private javax.swing.JButton viewContentButton;
     // End of variables declaration//GEN-END:variables
