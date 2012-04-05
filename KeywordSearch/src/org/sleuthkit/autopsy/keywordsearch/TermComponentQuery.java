@@ -224,13 +224,13 @@ public class TermComponentQuery implements KeywordSearchQuery {
         Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
 
         //get unique term matches, all cases
-        Map<String, Void> matches = new HashMap<String, Void>();
+        Set<String> matches = new HashSet<String>();
         for (Term term : terms) {
             //caseInsMatches.put(term.getTerm().toLowerCase(), null);
-            matches.put(term.getTerm(), null);
+            matches.add(term.getTerm());
         }
 
-        for (String regexMatch : matches.keySet()) {
+        for (String regexMatch : matches) {
             KeywordWriteResult written = writeToBlackBoard(regexMatch, newFsHit, listName);
             if (written != null)
                 writeResults.add(written);

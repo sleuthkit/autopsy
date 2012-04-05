@@ -27,14 +27,17 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
-import org.apache.solr.client.solrj.SolrServerException;
+import javax.swing.SwingWorker;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -44,7 +47,6 @@ import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
-import org.sleuthkit.autopsy.keywordsearch.Server.Core;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -90,7 +92,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             public String toString() {
                 return "Context";
             }
-        },}
+        },
+    }
     private Presentation presentation;
     private List<Keyword> queries;
     private Collection<KeyValueQuery> things;
@@ -289,23 +292,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq));
             }
             //write to bb
-            new Thread() {
+            new ResultWriter(fsContents, tcq, theListName).execute();
 
-                @Override
-                public void run() {
-                    final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
-                    for (final FsContent f : fsContents) {
-                        Collection<KeywordWriteResult> written = tcq.writeToBlackBoard(f, theListName);
-                        for (KeywordWriteResult w : written) {
-                            na.add(w.getArtifact());
-                        }
-
-                    }
-                    if (!na.isEmpty()) {
-                        IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
-                    }
-                }
-            }.start();
 
             return true;
         }
@@ -390,23 +378,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
                 }
                 //write to bb
-                new Thread() {
-
-                    @Override
-                    public void run() {
-                        final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
-                        for (final FsContent f : uniqueMatches) {
-                            Collection<KeywordWriteResult> written = origQuery.writeToBlackBoard(f, "");
-                            for (KeywordWriteResult w : written) {
-                                na.add(w.getArtifact());
-                            }
-                        }
-                        if (!na.isEmpty()) {
-                            IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
-                        }
-                    }
-                }.start();
-
+                new ResultWriter(uniqueMatches, origQuery, "").execute();
 
                 return true;
             }
@@ -447,5 +419,84 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             this.content = content;
             this.queryStr = queryStr;
         }
+    }
+
+    /**
+     * worker for writing results to bb, with progress bar, cancellation, 
+     * and central registry of workers to be stopped when case is closed
+     */
+    static class ResultWriter extends SwingWorker {
+
+        private static List<ResultWriter>writers = new ArrayList<ResultWriter>();
+        
+        private ProgressHandle progress;
+        private KeywordSearchQuery query;
+        private String listName;
+        private Set<FsContent> fsContents;
+        final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
+
+        ResultWriter(Set<FsContent> fsContents, KeywordSearchQuery query, String listName) {
+            this.fsContents = fsContents;
+            this.query = query;
+            this.listName = listName;
+        }
+
+        @Override
+        protected void done() {
+            super.done();
+            deregisterWriter(this);
+            progress.finish();
+
+            if (! this.isCancelled() && !na.isEmpty()) {
+                IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+            }
+        }
+
+        @Override
+        protected Object doInBackground() throws Exception {
+            registerWriter(this);
+            final String queryStr = query.getQueryString();
+            final String queryDisp = queryStr.length()>20?queryStr.substring(0,19) + " ..." : queryStr;
+            progress = ProgressHandleFactory.createHandle("Saving results: " + queryDisp, new Cancellable() {
+
+                @Override
+                public boolean cancel() {
+                    return ResultWriter.this.cancel(true);
+                }
+            });
+
+            progress.start(fsContents.size());
+            int processedFiles = 0;
+            for (final FsContent f : fsContents) {
+                if (this.isCancelled()) {
+                    break;
+                }
+                Collection<KeywordWriteResult> written = query.writeToBlackBoard(f, listName);
+                for (KeywordWriteResult w : written) {
+                    na.add(w.getArtifact());
+                }
+                progress.progress(f.getName(), ++processedFiles);
+            }
+
+
+
+            return null;
+        }
+        
+        private static synchronized void registerWriter(ResultWriter writer) {
+            writers.add(writer);
+        }
+        
+        private static synchronized void deregisterWriter(ResultWriter writer) {
+            writers.remove(writer);
+        }
+        
+        static synchronized void stopAllWriters() {
+            for (ResultWriter w : writers) {
+                w.cancel(true);
+                writers.remove(w);
+            }
+        }
+        
     }
 }

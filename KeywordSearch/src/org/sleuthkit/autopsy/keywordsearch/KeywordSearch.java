@@ -24,6 +24,7 @@ import java.beans.PropertyChangeSupport;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWriter;
 
 /**
  * Static class to track singletons for KeywordSearch module
@@ -76,6 +77,8 @@ class KeywordSearch {
                 } else if (oldValue != null) {
                     // a case was closed
                     try {
+                        ResultWriter.stopAllWriters();
+                        Thread.sleep(2000);
                         SERVER.closeCore();
                     }
                     catch (Exception e) {
