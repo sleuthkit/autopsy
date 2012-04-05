@@ -230,10 +230,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         for (Term term : terms) {
             final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
-            if (termS.contains("*")) {
-                continue;
-            }
-
+            
             StringBuilder filesQueryB = new StringBuilder();
             filesQueryB.append(TERMS_SEARCH_FIELD).append(":").append(termS);
             final String queryStr = filesQueryB.toString();

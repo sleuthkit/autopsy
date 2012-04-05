@@ -27,6 +27,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -92,8 +93,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             public String toString() {
                 return "Context";
             }
-        },
-    }
+        },}
     private Presentation presentation;
     private List<Keyword> queries;
     private Collection<KeyValueQuery> things;
@@ -231,9 +231,37 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 fsContents.addAll(tcqRes.get(key));
             }
 
-            String highlightQueryEscaped = null;
+            //get listname
+            String listName = "";
+            KeywordSearchList list = KeywordSearchListsXML.getCurrent().getListWithKeyword(tcq.getQueryString());
+            if (list != null) {
+                listName = list.getName();
+            }
+
             final boolean literal_query = tcq.isEscaped();
 
+            int resID = 0;
+            for (final FsContent f : fsContents) {
+                //get unique match result files
+                Map<String, Object> resMap = new LinkedHashMap<String, Object>();
+                AbstractFsContentNode.fillPropertyMap(resMap, f);
+                setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
+                if (literal_query) {
+                    final String snippet = LuceneQuery.querySnippet(tcq.getEscapedQueryString(), f.getId(), false, true);
+                    setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
+                }
+                final String highlightQueryEscaped = getHighlightQuery(tcq, literal_query, tcqRes, f);
+                toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq));
+            }
+            //write to bb
+            new ResultWriter(tcqRes, tcq, listName).execute();
+
+
+            return true;
+        }
+
+        private String getHighlightQuery(KeywordSearchQuery tcq, boolean literal_query, Map<String, List<FsContent>> tcqRes, FsContent f) {
+            String highlightQueryEscaped = null;
             if (literal_query) {
                 //literal, treat as non-regex, non-term component query
                 highlightQueryEscaped = tcq.getQueryString();
@@ -247,20 +275,29 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                     String term = tcqRes.keySet().iterator().next();
                     highlightQuery.append(term);
                 } else {
-                    final int lastTerm = tcqRes.keySet().size() - 1;
-                    int curTerm = 0;
+                    //find terms for this file hit
+                    List<String> hitTerms = new ArrayList<String>();
                     for (String term : tcqRes.keySet()) {
+                        if (tcqRes.get(term).contains(f)) {
+                            hitTerms.add(term);
+                        }
+                    }
+
+                    final int lastTerm = hitTerms.size() - 1;
+                    int curTerm = 0;
+                    for (String term : hitTerms) {
                         //escape subqueries, they shouldn't be escaped again later
                         final String termS = KeywordSearchUtil.escapeLuceneQuery(term, true, false);
-                        if (!termS.contains("*")) {
-                            highlightQuery.append(termS);
-                            if (lastTerm != curTerm) {
-                                highlightQuery.append(" "); //acts as OR ||
-                                //force white-space separated index and stored content
-                                //in each term after first. First term taken case by HighlightedMatchesSource
-                                highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":");
-                            }
+                        highlightQuery.append("\"");
+                        highlightQuery.append(termS);
+                        highlightQuery.append("\"");
+                        if (lastTerm != curTerm) {
+                            highlightQuery.append(" "); //acts as OR ||
+                            //force white-space separated index and stored content
+                            //in each term after first. First term taken case by HighlightedMatchesSource
+                            highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":");
                         }
+
                         ++curTerm;
                     }
                 }
@@ -268,33 +305,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 highlightQueryEscaped = highlightQuery.toString();
             }
 
-
-            //get listname
-            String listName = "";
-            KeywordSearchList list = KeywordSearchListsXML.getCurrent().getListWithKeyword(tcq.getQueryString());
-            if (list != null) {
-                listName = list.getName();
-            }
-            final String theListName = listName;
-
-            int resID = 0;
-
-            for (final FsContent f : fsContents) {
-                //get unique match result files
-                Map<String, Object> resMap = new LinkedHashMap<String, Object>();
-                AbstractFsContentNode.fillPropertyMap(resMap, f);
-                setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
-                if (literal_query) {
-                    final String snippet = LuceneQuery.querySnippet(tcq.getEscapedQueryString(), f.getId(), false, true);
-                    setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
-                }
-                toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq));
-            }
-            //write to bb
-            new ResultWriter(tcqRes, tcq, theListName).execute();
-
-
-            return true;
+            return highlightQueryEscaped;
         }
 
         @Override
@@ -454,7 +465,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         protected Object doInBackground() throws Exception {
             registerWriter(this);
             final String queryStr = query.getQueryString();
-            final String queryDisp = queryStr.length() > 20 ? queryStr.substring(0, 19) + " ..." : queryStr;
+            final String queryDisp = queryStr.length() > 40 ? queryStr.substring(0, 39) + " ..." : queryStr;
             progress = ProgressHandleFactory.createHandle("Saving results: " + queryDisp, new Cancellable() {
 
                 @Override
@@ -472,8 +483,9 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 }
                 for (FsContent f : hits.get(hit)) {
                     KeywordWriteResult written = query.writeToBlackBoard(hit, f, listName);
-                    if (written != null)
+                    if (written != null) {
                         na.add(written.getArtifact());
+                    }
                 }
 
             }
