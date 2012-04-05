@@ -191,7 +191,7 @@ public class Firefox {
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", "", temprs.getString("value")));
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","Title",((temprs.getString("name") != null) ? temprs.getString("name") : "")));
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","FireFox"));
-                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",Util.extractDomain(temprs.getString("host"))));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",temprs.getString("host")));
                        bbart.addAttributes(bbattributes);
                       
                    } 

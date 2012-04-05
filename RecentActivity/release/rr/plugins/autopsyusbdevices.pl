@@ -7,7 +7,7 @@
 #
 # copyright 2010 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
-package usbdevices;
+package autopsyusbdevices;
 use strict;
 
 my %config = (hive          => "System",
@@ -98,11 +98,11 @@ sub pluginmain {
 			}
 		}
 		else {
-			::rptMsg($key_path." has no subkeys.");
+			#::rptMsg($key_path." has no subkeys.");
 		}
 	}
 	else {
-		::rptMsg($key_path." not found.");
+		#::rptMsg($key_path." not found.");
 	}
 }
 1;

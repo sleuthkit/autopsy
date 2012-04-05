@@ -203,6 +203,66 @@ public class ExtractIE { // implements BrowserActivity {
             logger.log(Level.WARNING, "Error while trying to retrieve files from the TSK .", ioex);
         }
         
+       
+           //Recent Documents section
+          // This gets the recent object info
+         try 
+        {   
+            Case currentCase = Case.getCurrentCase(); // get the most updated case
+            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+            String allFS = new String();
+            for(String img : image)
+            {
+               allFS += " AND fs_obj_id = '" + img + "'";
+            }
+            List<FsContent> RecentList;  
+
+            ResultSet rs = tempDb.runQuery(recentQuery + allFS);
+            RecentList = tempDb.resultSetToFsContents(rs);   
+            rs.close();
+            rs.getStatement().close();  
+            
+            for(FsContent Recent : RecentList)
+            {
+                if (controller.isCancelled() ) {
+                 break;
+                }  
+                Content fav = Recent;
+                byte[] t = new byte[(int) fav.getSize()];
+                final int bytesRead = fav.read(t, 0, fav.getSize());
+                String bookmarkString = new String(t);
+                String re1=".*?";	// Non-greedy match on filler
+                String re2="((?:http|https)(?::\\/{2}[\\w]+)(?:[\\/|\\.]?)(?:[^\\s\"]*))";	// HTTP URL 1
+                String url = "";
+                Pattern p = Pattern.compile(re1+re2,Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+                Matcher m = p.matcher(bookmarkString);
+                if (m.find())
+                {
+                     url = m.group(1);
+                }
+            
+                String name = Recent.getName();
+                String datetime = Recent.getCrtimeAsDate();
+                BlackboardArtifact bbart = Recent.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",datetime));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","",name));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Windows"));
+                     bbart.addAttributes(bbattributes);
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT)); 
+                
+            }
+        }
+        catch(TskException ex)
+        {
+            logger.log(Level.WARNING, "Error while trying to retrieve content from the TSK .", ex);
+        }
+        catch(SQLException ioex)
+        {   
+            logger.log(Level.WARNING, "Error while trying to retrieve files from the TSK .", ioex);
+        }
+        
+         
     }
 
     //@Override

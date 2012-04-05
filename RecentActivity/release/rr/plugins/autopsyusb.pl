@@ -6,7 +6,7 @@
 #
 # copyright 2008 H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
-package usb;
+package autopsyusb;
 use strict;
 
 my %config = (hive          => "System",
@@ -45,7 +45,7 @@ sub pluginmain {
 		$ccs = "ControlSet00".$current;
 	}
 	else {
-		::rptMsg($key_path." not found.");
+		#::rptMsg($key_path." not found.");
 		return;
 	}
 	
@@ -58,7 +58,8 @@ sub pluginmain {
 	
 	my $key_path = $ccs."\\Enum\\USB";
 	my $key;
-	if ($key = $root_key->get_subkey($key_path)) {
+		if ($key = $root_key->get_subkey($key_path)) {
+		::rptMsg("<usb><time>N/A</time><artifacts>");
 
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {
@@ -93,19 +94,20 @@ sub pluginmain {
 						};
 
 
-						::rptMsg($str);
+						::rptMsg("<device name=\"" . $sn_lw. "\" dev=\"" . $dev_class . "\" >" . $serial .  "</device>");
 					}
 				}
 			}
 		}
 		else {
 			::rptMsg($key_path." has no subkeys.");
-			::logMsg($key_path." has no subkeys.");
+			#::logMsg($key_path." has no subkeys.");
 		}
+		::rptMsg("</artifacts></usb>");
 	}
 	else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
+		#::logMsg($key_path." not found.");
 	}
 }
 1;

@@ -83,11 +83,20 @@ public class reportPanelAction {
                    // viewReport.append(reportHTML.unformatted_header.toString());
                    }
                 });
+                Thread xlsthread = new Thread(new Runnable()
+                {
+                @Override
+                   public void run()
+                   { 
+                    reportXLS xlsReport = new reportXLS(Results,rr);
+               //     BrowserControl.openUrl(xlsReport.xlsPath);
+                   }
+                });
 
         // start our threads
         xmlthread.start();
         htmlthread.start();
-        
+        xlsthread.start();
             // display the window
             
             // create the popUp window for it
@@ -138,6 +147,7 @@ public class reportPanelAction {
             panel.setFinishedReportText();
             popUpWindow.setVisible(true);
             xmlthread.join();
+            xlsthread.join();
             
            
          }

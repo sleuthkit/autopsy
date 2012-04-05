@@ -172,7 +172,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                     type = "1security";
                 }
 
-                String command = RR_PATH + " -r " + regFilePath +" -f " + type + "> " + txtPath;
+                String command = RR_PATH + " -r " + regFilePath +" -f " + type + " > " + txtPath + " 2> NUL";
                 JavaSystemCaller.Exec.execute(command);
                
 
@@ -243,12 +243,13 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
                bbart.addAttributes(bbattributes);
                }
-               else if("runMRU".equals(context)){
-                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
+               else if("usb".equals(context)){
+                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, name));
+                String dev = artnode.getAttributeValue("dev");
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", context, dev));
       
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", context, value));
                 bbart.addAttributes(bbattributes);
                }
                else if("uninstall".equals(context)){
