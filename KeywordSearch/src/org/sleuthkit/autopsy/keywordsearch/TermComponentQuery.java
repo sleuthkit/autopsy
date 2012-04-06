@@ -219,26 +219,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
     }
 
-    @Override
-    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
-        Collection<KeywordWriteResult> writeResults = new ArrayList<KeywordWriteResult>();
-
-        //get unique term matches, all cases
-        Set<String> matches = new HashSet<String>();
-        for (Term term : terms) {
-            //caseInsMatches.put(term.getTerm().toLowerCase(), null);
-            matches.add(term.getTerm());
-        }
-
-        for (String regexMatch : matches) {
-            KeywordWriteResult written = writeToBlackBoard(regexMatch, newFsHit, listName);
-            if (written != null)
-                writeResults.add(written);
-        } //for each term
-
-        return writeResults;
-    }
-
+  
     @Override
     public Map<String, List<FsContent>> performQuery() {
         Map<String, List<FsContent>> results = new HashMap<String, List<FsContent>>();
@@ -249,10 +230,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         for (Term term : terms) {
             final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
-            if (termS.contains("*")) {
-                continue;
-            }
-
+            
             StringBuilder filesQueryB = new StringBuilder();
             filesQueryB.append(TERMS_SEARCH_FIELD).append(":").append(termS);
             final String queryStr = filesQueryB.toString();
@@ -264,7 +242,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
                 for (String key : subResults.keySet()) {
                     filesResults.addAll(subResults.get(key));
                 }
-                results.put(term.getTerm(), new ArrayList(filesResults));
+                results.put(term.getTerm(), new ArrayList<FsContent>(filesResults));
             } catch (RuntimeException e) {
                 logger.log(Level.SEVERE, "Error executing Solr query,", e);
             }

@@ -141,7 +141,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                 return "<pre>" + highlightedContent + "</pre>";
             }
         } catch (SolrServerException ex) {
-            throw new RuntimeException(ex);
+            logger.log(Level.INFO, "Could not query markup. ", ex);
+            return "";
         }
     }
 

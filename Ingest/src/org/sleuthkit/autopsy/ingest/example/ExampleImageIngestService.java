@@ -153,10 +153,6 @@ public final class ExampleImageIngestService implements IngestServiceImage {
         return false;
     }
     
-    @Override
-    public boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
-        return false;
-    }
     
     @Override
     public void saveAdvancedConfiguration() {

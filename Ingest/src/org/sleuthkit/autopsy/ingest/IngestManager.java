@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.DateFormat;
@@ -554,15 +553,7 @@ public class IngestManager {
         return ret;
     }
 
-    private void initMainProgress(final int maximum) {
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                ui.initProgress(maximum);
-            }
-        });
-    }
+    
 
     //image worker to remove itself when complete or interrupted
     void removeImageIngestWorker(IngestImageThread worker) {
@@ -927,7 +918,6 @@ public class IngestManager {
             int numFsContents = getNumFsContents();
             progress.switchToDeterminate(numFsContents);
             int processedFiles = 0;
-            initMainProgress(numFsContents);
             //process fscontents queue
             while (hasNextFsContent()) {
                 Map.Entry<FsContent, List<IngestServiceFsContent>> unit = getNextFsContent();
@@ -965,8 +955,6 @@ public class IngestManager {
                     numFsContents = newFsContents + processedFiles + 1;
                     progress.switchToIndeterminate();
                     progress.switchToDeterminate(numFsContents);
-                    initMainProgress(numFsContents);
-
                 }
                 progress.progress(unit.getKey().getName(), ++processedFiles);
                 --numFsContents;
@@ -1001,62 +989,18 @@ public class IngestManager {
                 handleInterruption();
                 logger.log(Level.SEVERE, "Fatal error during ingest.", ex);
             } finally {
-                //stats.end();
+                stats.end();
                 progress.finish();
 
                 if (!this.isCancelled()) {
                     //logger.log(Level.INFO, "Summary Report: " + stats.toString());
                     //ui.displayReport(stats.toHtmlString());
-                    new FsServicesComplete(stats);
+                    IngestManager.this.postMessage(IngestMessage.createManagerMessage("File Ingest Complete", stats.toHtmlString()));
                 }
-                initMainProgress(0);
             }
 
         }
 
-        /**
-         * Ensures that all background threads are done
-         * then finalize the stats and show dialog
-         */
-        private class FsServicesComplete {
-
-            private IngestManagerStats stats; //ongoing stats
-            private List<IngestServiceAbstract> running = new ArrayList<IngestServiceAbstract>();
-
-            FsServicesComplete(IngestManagerStats stats) {
-                this.stats = stats;
-
-                for (IngestServiceAbstract s : fsContentServices) {
-                    if (s.backgroundJobsCompleteListener(new PropertyChangeListener() {
-
-                        @Override
-                        public void propertyChange(PropertyChangeEvent evt) {
-                            if (evt.getPropertyName().equals(IngestServiceAbstract.BCKGRND_JOBS_COMPLETED_EVT)) {
-                                IngestServiceAbstract service = (IngestServiceAbstract) evt.getNewValue();
-                                running.remove(service);
-                                if (running.isEmpty()) {
-                                    showStats();
-                                }
-                            }
-                        }
-                    })) {
-                        running.add(s);
-                    }
-                }
-
-                //no listeners registered since no services running any longer
-                if (running.isEmpty()) {
-                    showStats();
-                }
-
-            }
-
-            void showStats() {
-                stats.end();
-                logger.log(Level.INFO, "Summary Report: " + stats.toString());
-                ui.displayReport(stats.toHtmlString());
-            }
-        }
 
         private void handleInterruption() {
             for (IngestServiceFsContent s : fsContentServices) {
@@ -1065,9 +1009,6 @@ public class IngestManager {
             }
             //empty queues
             emptyFsContents();
-
-            //reset main progress bar
-            initMainProgress(0);
         }
     }
 

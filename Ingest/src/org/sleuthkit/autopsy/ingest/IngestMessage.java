@@ -44,6 +44,7 @@ public class IngestMessage {
     private BlackboardArtifact data;
     private Date datePosted;
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static int managerMessageId = 0;
 
     private IngestMessage(long ID, MessageType messageType, IngestServiceAbstract source, String subject, String detailsHtml, String uniqueKey) {
         this.ID = ID;
@@ -236,7 +237,7 @@ public class IngestMessage {
         return im;
     }
 
-    static IngestMessage createManagerMessage(String subject) {
-        return new IngestMessage(0, MessageType.INFO, null, subject, null, null);
+    static IngestMessage createManagerMessage(String subject, String detailsHtml) {
+        return new IngestMessage(++managerMessageId, MessageType.INFO, null, subject, detailsHtml, null);
     }
 }

@@ -211,10 +211,6 @@ public class HashDbIngestService implements IngestServiceFsContent {
         return false;
     }
     
-    @Override
-    public boolean backgroundJobsCompleteListener(PropertyChangeListener l) {
-        return false;
-    }
     
     @Override
     public boolean hasSimpleConfiguration() {

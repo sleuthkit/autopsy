@@ -427,6 +427,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
                         for (int i = 1; i < uniqueGroupsCount; ++i) {
                             messageGroup.add(uniqGroups.get(i));
                         }
+                        //add the new msg
+                        messageGroup.add(m);
                         //remove merged groups
                         uniqGroups.clear();
                         uniqGroups.add(messageGroup);

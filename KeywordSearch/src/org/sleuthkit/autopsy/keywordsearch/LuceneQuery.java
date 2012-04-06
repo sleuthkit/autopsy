@@ -24,8 +24,10 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -37,13 +39,13 @@ import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWriter;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -116,8 +118,12 @@ public class LuceneQuery implements KeywordSearchQuery {
     @Override
     public void execute() {
         escape();
-        final List<FsContent> matches = performLuceneQuery();
-
+        Set<FsContent>fsMatches = new HashSet<FsContent>();
+        final Map<String, List<FsContent>> matches = performQuery();
+        for (String key : matches.keySet()) {
+            fsMatches.addAll(matches.get(key));
+        }
+     
         String pathText = "Keyword query: " + query;
 
         if (matches.isEmpty()) {
@@ -127,35 +133,16 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         //get listname
         String listName = "";
-        //KeywordSearchList list = KeywordSearchListsXML.getCurrent().getListWithKeyword(query);
-        //if (list != null) {
-        //    listName = list.getName();
-        //}
-        final String theListName = listName;
-
-        Node rootNode = new KeywordSearchNode(matches, queryEscaped);
+        
+        Node rootNode = new KeywordSearchNode(new ArrayList<FsContent>(fsMatches), queryEscaped);
         Node filteredRootNode = new TableFilterNode(rootNode, true);
 
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, filteredRootNode, matches.size());
         searchResultWin.requestActive(); // make it the active top component
 
         //write to bb
-        new Thread() {
-
-            @Override
-            public void run() {
-                Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
-                for (FsContent newHit : matches) {
-                    Collection<KeywordWriteResult> written = writeToBlackBoard(newHit, theListName);
-                    for (KeywordWriteResult w : written) {
-                        na.add(w.getArtifact());
-                    }
-                }
-                //notify bb viewers
-                if (! na.isEmpty())
-                    IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
-            }
-        }.start();
+        new ResultWriter(matches, this, listName).execute();
+ 
     }
 
     @Override
@@ -163,8 +150,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         return query != null && !query.equals("");
     }
 
-    @Override
-    public Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
+    private Collection<KeywordWriteResult> writeToBlackBoard(FsContent newFsHit, String listName) {
         List<KeywordWriteResult> ret = new ArrayList<KeywordWriteResult>();
         KeywordWriteResult written = writeToBlackBoard(query, newFsHit, listName);
         if (written != null) {
@@ -196,7 +182,7 @@ public class LuceneQuery implements KeywordSearchQuery {
             return null;
         }
         if (snippet != null) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", KeywordSearchUtil.escapeForBlackBoard(snippet)));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
         }
         //keyword
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", termHit));

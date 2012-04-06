@@ -29,8 +29,6 @@ public interface IngestUI {
     void clearMessages();
     void restoreMessages();
     void displayIngestDialog(final Image image);
-    void initProgress(final int maximum);
-    void updateProgress(final int progress);
     void displayReport(final String report);
     
 }
