@@ -18,8 +18,9 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
-import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.Lookups;
@@ -101,7 +101,9 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     public static void fillPropertyMap(Map<Integer, Object> map, BlackboardArtifact artifact) {
         try {
             for(BlackboardAttribute attribute : artifact.getAttributes()){
-                switch(attribute.getValueType()){
+                if(attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID())
+                    continue;
+                else switch(attribute.getValueType()){
                     case STRING:
                         map.put(attribute.getAttributeTypeID(), attribute.getValueString());
                         break;
@@ -109,7 +111,12 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
                         map.put(attribute.getAttributeTypeID(), attribute.getValueInt());
                         break;
                     case LONG:
-                        map.put(attribute.getAttributeTypeID(), attribute.getValueLong());
+                        if(attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID() ||
+                                attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
+                            SimpleDateFormat formatter = new SimpleDateFormat("MM-dd-yyyy HH:mm");
+                            map.put(attribute.getAttributeTypeID(), formatter.format(new Date(attribute.getValueLong())));
+                        } else
+                            map.put(attribute.getAttributeTypeID(), attribute.getValueLong());
                         break;
                     case DOUBLE:
                         map.put(attribute.getAttributeTypeID(), attribute.getValueDouble());

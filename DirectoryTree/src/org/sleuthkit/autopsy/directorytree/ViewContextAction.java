@@ -66,6 +66,11 @@ class ViewContextAction extends AbstractAction {
         super(title);
         this.content = node.getLookup().lookup(Content.class);
     }
+    
+    public ViewContextAction(String title, Content content) {
+        super(title);
+        this.content = content;
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {

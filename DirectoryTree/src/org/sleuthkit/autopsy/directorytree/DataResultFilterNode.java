@@ -50,7 +50,10 @@ import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskException;
 
 
 /**
@@ -178,13 +181,38 @@ public class DataResultFilterNode extends FilterNode{
         public List<Action> visit(BlackboardArtifactNode ba) {
             List<Action> actions = new ArrayList<Action>();
             //actions.add(new ViewAssociatedContentAction("View Associated Content", ba));
-            actions.add(new ViewContextAction("View in Directory", ba));
+            actions.add(new ViewContextAction("View Source in Directory", ba));
+            Content c = findLinked(ba);
+            if(c != null)
+                actions.add(new ViewContextAction("View Linked in Directory", c));
             return actions;
         }
         
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             return new ArrayList<Action>();
+        }
+        
+        private Content findLinked(BlackboardArtifactNode ba) {
+            BlackboardArtifact art = ba.getLookup().lookup(BlackboardArtifact.class);
+            Content c = null;
+            try {
+                for(BlackboardAttribute attr : art.getAttributes()) {
+                    if(attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                        switch(attr.getValueType()) {
+                            case INTEGER:
+                                c = art.getSleuthkitCase().getContentById(attr.getValueInt());
+                                break;
+                            case LONG:
+                                c = art.getSleuthkitCase().getContentById(attr.getValueLong());
+                                break;
+                        }
+                    }
+                }
+            } catch(TskException ex) {
+                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error getting linked file");
+            }
+            return c;
         }
         
     }
