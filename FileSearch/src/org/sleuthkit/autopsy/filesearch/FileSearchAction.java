@@ -19,11 +19,31 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 public final class FileSearchAction extends CallableSystemAction {
 
+    FileSearchAction() {
+        super();
+        setEnabled(false);
+        
+        Case.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if(evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)){
+                    setEnabled(evt.getNewValue() != null);
+                }
+            }
+            
+        });
+    }
+    
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         new FileSearchDialog().setVisible(true);
