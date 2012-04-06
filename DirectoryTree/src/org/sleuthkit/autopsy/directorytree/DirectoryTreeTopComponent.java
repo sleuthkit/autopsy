@@ -680,8 +680,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 public void run() {
                     refreshTree(event.getArtifactType());
                 }
-            }
-            );
+            });
+        }
+        
+        if (changed.equals(IngestManager.SERVICE_COMPLETED_EVT)) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    refreshTree();
+                }
+            });
         }
     }
 
@@ -720,7 +728,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refreshes the nodes in the tree to reflect updates in the database
      * should be called in the gui thread
      */
-    private void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE type) {
+    private void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
 
         Node selected = getSelectedNode();
         final String[] path = NodeOp.createPath(selected, em.getRootContext());
@@ -735,7 +743,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         OriginalNode original = results.getLookup().lookup(OriginalNode.class);
         ResultsNode resultsNode = (ResultsNode) original.getNode();
         RootContentChildren resultsNodeChilds = (RootContentChildren) resultsNode.getChildren();
-        resultsNodeChilds.refreshKeys(type);
+        resultsNodeChilds.refreshKeys(types);
 
         final TreeView tree = getTree();
 
@@ -776,13 +784,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         return false;
     }
     
-        @Override
+    @Override
     public void viewArtifact(final BlackboardArtifact art) {
         BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromID(art.getArtifactTypeID());
         Children rootChilds = em.getRootContext().getChildren();
         Node treeNode = null;
         Node resultsNode = rootChilds.findChild(ResultsNode.NAME);
-        logger.info(type.getDisplayName());
         Children resultsChilds = resultsNode.getChildren();
         if (type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT)) {
             treeNode = resultsChilds.findChild(type.getLabel());

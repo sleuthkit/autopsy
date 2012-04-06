@@ -49,21 +49,31 @@ public class RootContentChildren extends AbstractContentChildren {
         setKeys(Collections.<Object>emptySet());
     }
     
-    public void refreshKeys(BlackboardArtifact.ARTIFACT_TYPE type) {
-        for(Object o : contentKeys){
-            switch(type) {
-                case TSK_HASHSET_HIT:
-                    if(o instanceof HashsetHits)
-                        this.refreshKey(o);
-                    break;
-                case TSK_KEYWORD_HIT:
-                    if(o instanceof KeywordHits)
-                        this.refreshKey(o);
-                    break;
-                default:
-                    if(o instanceof ExtractedContent)
-                        this.refreshKey(o);
-                    break;
+    public void refreshKeys(BlackboardArtifact.ARTIFACT_TYPE... types) {
+        for (Object o : contentKeys) {
+            for (BlackboardArtifact.ARTIFACT_TYPE type : types) {
+                switch (type) {
+                    case TSK_HASHSET_HIT:
+                        if (o instanceof HashsetHits)
+                            this.refreshKey(o);
+                        break;
+                    case TSK_KEYWORD_HIT:
+                        if (o instanceof KeywordHits)
+                            this.refreshKey(o);
+                        break;
+                    default:
+                        if (o instanceof ExtractedContent)
+                            this.refreshKey(o);
+                        break;
+                }
+            }
+            if (types.length == 0) {
+                if (o instanceof HashsetHits)
+                    this.refreshKey(o);
+                else if (o instanceof KeywordHits)
+                    this.refreshKey(o);
+                else if (o instanceof ExtractedContent)
+                    this.refreshKey(o);
             }
         }
     }
