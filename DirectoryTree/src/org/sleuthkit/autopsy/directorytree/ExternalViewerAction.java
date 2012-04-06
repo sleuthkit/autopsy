@@ -39,18 +39,31 @@ public class ExternalViewerAction extends AbstractAction {
 
     private final static Logger logger = Logger.getLogger(ExternalViewerAction.class.getName());
     private org.sleuthkit.datamodel.File fileObject;
+    final static String[] EXECUTABLE_EXT = {".exe", ".dll", ".com", ".bat", ".msi", ".reg", ".scr"};
 
     public ExternalViewerAction(String title, Node fileNode) {
         super(title);
         this.fileObject = fileNode.getLookup().lookup(org.sleuthkit.datamodel.File.class);
-        
+
         long size = fileObject.getSize();
         String fileName = fileObject.getName();
         int extPos = fileName.lastIndexOf('.');
-        
+
+        boolean isExecutable = false;
+        if (extPos != -1) {
+            String extension = fileName.substring(extPos, fileName.length()).toLowerCase();
+            for (int i = 0; i < EXECUTABLE_EXT.length; ++i) {
+                if (EXECUTABLE_EXT[i].equals(extension)) {
+                    isExecutable = true;
+                    break;
+                }
+            }
+        }
+
         // no point opening a file if it's empty, and java doesn't know how to
         // find an application for files without an extension
-        if (!(size > 0) || extPos == -1) {
+        // or if file is executable (for security reasons)
+        if (!(size > 0) || extPos == -1 || isExecutable) {
             this.setEnabled(false);
         }
     }
