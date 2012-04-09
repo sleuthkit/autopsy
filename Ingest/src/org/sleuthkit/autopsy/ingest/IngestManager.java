@@ -927,21 +927,22 @@ public class IngestManager {
                 }
 
                 final FsContent fileToProcess = unit.getKey();
+                
+                progress.progress(fileToProcess.getName(), processedFiles);
+
+                if ((fileToProcess.getMeta_flags() & TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getMetaFlag()) != 0) {
+                    //skip unallocated files, processing certain unalloc files may cause some modules to hang
+                    //TODO unallocated space and files are a future feature
+                    ++processedFiles;
+                    --numFsContents;
+                    continue;
+                }
 
                 for (IngestServiceFsContent service : unit.getValue()) {
                     if (isCancelled()) {
                         return null;
                     }
 
-                    progress.progress(fileToProcess.getName(), processedFiles);
-
-                    if ((fileToProcess.getMeta_flags() & TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getMetaFlag()) != 0) {
-                        //skip unallocated files, processing certain unalloc files may cause some modules to hang
-                        //TODO unallocated space and files are a future feature
-                        progress.progress(unit.getKey().getName(), ++processedFiles);
-                        --numFsContents;
-                        continue;
-                    }
 
                     try {
                         IngestServiceFsContent.ProcessResult result = service.process(fileToProcess);
@@ -968,7 +969,7 @@ public class IngestManager {
                     progress.switchToIndeterminate();
                     progress.switchToDeterminate(numFsContents);
                 }
-                progress.progress(fileToProcess.getName(), ++processedFiles);
+                ++processedFiles;
                 --numFsContents;
             } //end of this fsContent
             logger.log(Level.INFO, "Done background processing");
