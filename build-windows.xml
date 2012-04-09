@@ -9,7 +9,7 @@
         <!-- Need a way to specify Debug versus release -->
         <copy file="${env.TSK_HOME}/win32/release/libtsk_jni.dll" tofile="${basedir}/DataModel/release/modules/lib/libtsk_jni.dll"/>
         <copy file="${env.LIBEWF_HOME}/msvscpp/Release/libewf.dll" tofile="${basedir}/DataModel/release/modules/lib/libewf.dll"/> 
-        <copy file="${env.LIBEWF_HOME}/msvscpp/zlib/zlib1.dll" tofile="${basedir}/DataModel/release/modules/lib/zlib1.dll"/>
+        <copy file="${env.LIBEWF_HOME}/msvscpp/Release/zlib.dll" tofile="${basedir}/DataModel/release/modules/lib/zlib.dll"/>
     </target>
     
     <target name="copyExternalLibs">
