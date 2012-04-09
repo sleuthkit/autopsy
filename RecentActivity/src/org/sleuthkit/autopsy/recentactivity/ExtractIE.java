@@ -46,6 +46,7 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -228,26 +229,34 @@ public class ExtractIE { // implements BrowserActivity {
                  break;
                 }  
                 Content fav = Recent;
-                byte[] t = new byte[(int) fav.getSize()];
-                final int bytesRead = fav.read(t, 0, fav.getSize());
-                String bookmarkString = new String(t);
-                String re1=".*?";	// Non-greedy match on filler
-                String re2="((?:http|https)(?::\\/{2}[\\w]+)(?:[\\/|\\.]?)(?:[^\\s\"]*))";	// HTTP URL 1
-                String url = "";
-                Pattern p = Pattern.compile(re1+re2,Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-                Matcher m = p.matcher(bookmarkString);
-                if (m.find())
-                {
-                     url = m.group(1);
+                
+                 byte[] t = new byte[(int) fav.getSize()];
+
+                int bytesRead = 0;
+                if (fav.getSize() > 0) {
+                    bytesRead = fav.read(t, 0, fav.getSize()); // read the data
+                } 
+
+
+                // set the data on the bottom and show it
+                
+               String recentString = new String();
+
+                if (bytesRead > 0) {
+                   recentString = DataConversion.getString(t, bytesRead, 4);
                 }
-            
-                String name = Recent.getName();
+                
+                
+                String path = Util.getPath(recentString);
+                String name = Util.getFileName(path);
                 String datetime = Recent.getCrtimeAsDate();
-                BlackboardArtifact bbart = Recent.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
+                BlackboardArtifact bbart = Recent.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT); 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",datetime));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),"RecentActivity","Last Visited",path));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","",name));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Windows"));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),"RecentActivity","",Util.findID(path)));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),"RecentActivity","Date Created",datetime));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Windows Explorer"));
                      bbart.addAttributes(bbattributes);
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT)); 
                 
@@ -360,18 +369,17 @@ public class ExtractIE { // implements BrowserActivity {
         boolean success = true;
 
         try {
-            List<String> command = new ArrayList<String>();
+            StringBuilder command = new StringBuilder();
 
-            command.add("-cp");
-            command.add("\"" + PASCO_LIB_PATH + "\"");
-            command.add(" isi.pasco2.Main");
-            command.add(" -T history");
-            command.add("\"" + indexFilePath + "\"");
-            command.add(" > \"" + PASCO_RESULTS_PATH + "\\pasco2Result." + Integer.toString(fileIndex) + ".txt\"");
+            command.append(" -cp");
+            command.append(" \"" + PASCO_LIB_PATH + "\"");
+            command.append(" isi.pasco2.Main");
+            command.append(" -T history");
+            command.append(" \"" + indexFilePath + "\"");
+            command.append(" > \"" + PASCO_RESULTS_PATH + "\\pasco2Result." + Integer.toString(fileIndex) + ".txt\"");
            // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
-            String[] cmd = command.toArray(new String[0]);
-
-            JavaSystemCaller.Exec.execute("java", cmd);
+            String cmd = command.toString();
+             JavaSystemCaller.Exec.execute("\"java "+cmd+ "\"");
 
         } catch (Exception e) {
             success = false;

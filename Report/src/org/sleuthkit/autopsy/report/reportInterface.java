@@ -24,4 +24,5 @@ public interface reportInterface{
     public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getKeywordHit();
     public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getInstalledProg();
     public String getGroupedKeywordHit();
+    public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getDevices();
 }

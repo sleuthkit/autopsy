@@ -8,10 +8,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.nio.charset.Charset;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -21,6 +19,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -172,8 +171,8 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                     type = "1security";
                 }
 
-                String command = RR_PATH + " -r " + regFilePath +" -f " + type + " > " + txtPath + " 2> NUL";
-                JavaSystemCaller.Exec.execute(command);
+                String command = "\"" + RR_PATH + "\" -r \"" + regFilePath +"\" -f " + type + " > \"" + txtPath + "\" 2> NUL";
+                JavaSystemCaller.Exec.execute("\""+command + "\"");
                
 
        }
@@ -203,6 +202,10 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
            regfile.delete();
            String startdoc = "<document>";
            String result = regString.replaceAll("----------------------------------------","");
+           result = result.replaceAll("\\n", "");
+           result = result.replaceAll("\\r","");
+           result = result.replaceAll("'","&apos;");
+           result = result.replaceAll("&", "&amp;");
            String enddoc = "</document>";
            String stringdoc = startdoc + result + enddoc;
            SAXBuilder sb = new SAXBuilder();
@@ -237,11 +240,11 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                  Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                 
                if("recentdocs".equals(context)){        
-               BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
-               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
-               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
-               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
-               bbart.addAttributes(bbattributes);
+//               BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+//               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
+//               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
+//               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
+//               bbart.addAttributes(bbattributes);
                }
                else if("usb".equals(context)){
                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
@@ -295,7 +298,8 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
            catch (Exception ex)
            {
             
-            logger.log(Level.WARNING, "Error while trying to read into a registry file." +  ex);      
+            logger.log(Level.WARNING, "Error while trying to read into a registry file." +  ex);    
+            String sadafd = "";
            }
    
 

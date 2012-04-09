@@ -196,11 +196,13 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     if(jCheckBox4.isSelected())
     {
         filters.add(10);
+       
     }
     if(jCheckBox5.isSelected())
     {
         filters.add(6);
-        filters.add(8);
+        filters.add(8); 
+        filters.add(11);
     }
    getReports();
 }//GEN-LAST:event_jButton1ActionPerformed

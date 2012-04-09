@@ -72,6 +72,7 @@ public class reportXML {
          Element nodeInstalled = new Element("Installed-Programfiles");
          Element nodeKeyword = new Element("Keyword-Search-Hits");
          Element nodeHash = new Element("Hashset-Hits");
+         Element nodeDevice = new Element("Attached-Devices");
          for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
               if(reportFilter.cancel == true){
                          break;
@@ -137,6 +138,9 @@ public class reportXML {
             if(entry.getKey().getArtifactTypeID() == 10){
                  nodeHash.addContent(artifact);
             } 
+             if(entry.getKey().getArtifactTypeID() == 11){
+                 nodeDevice.addContent(artifact);
+            } 
             cc++;
            rr.progBarSet(cc);
             //end of master loop
@@ -153,6 +157,7 @@ public class reportXML {
             root.addContent(nodeInstalled);
             root.addContent(nodeKeyword);
             root.addContent(nodeHash); 
+            root.addContent(nodeDevice);
          
             try {
                   FileOutputStream out = new FileOutputStream(currentCase.getCaseDirectory()+"/Reports/" + caseName + "-" + datenotime + ".xml");

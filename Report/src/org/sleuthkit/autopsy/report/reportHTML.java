@@ -55,6 +55,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
       int countInstalled = 0;
       int countKeyword = 0;
       int countHash = 0;
+      int countDevice = 0;
       for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
                     if(entry.getKey().getArtifactTypeID() == 1){  
                         countGen++;
@@ -87,6 +88,9 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                     }
                     if(entry.getKey().getArtifactTypeID() == 10){
                          countHash++;
+                    } 
+                     if(entry.getKey().getArtifactTypeID() == 11){
+                         countDevice++;
                     } 
     }
             
@@ -179,6 +183,9 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             if(countHash > 0){
             formatted_Report.append("<tr><td><a href=\"#hash\">Hash Hits</a></td><td>").append(countHash).append("</td></tr>");
             }
+            if(countDevice > 0){
+            formatted_Report.append("<tr><td><a href=\"#device\">Attached Devices</a></td><td>").append(countDevice).append("</td></tr>");
+            }
              formatted_Report.append("</tbody></table><br />");
             String tableHeader = "<table><thead><tr>";
              StringBuilder nodeGen = new StringBuilder("<h3>General Information (").append(countGen).append(")</h3>").append(tableHeader).append("<th>Attribute</th><th>Value</th></tr></thead><tbody>");
@@ -186,11 +193,13 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
              StringBuilder nodeWebCookie =  new StringBuilder("<h3><a name=\"cookie\">Web Cookies (").append(countWebCookie).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Date</th><th>Name</th><th>Value</th><th>Program</th></tr></thead><tbody>");
              StringBuilder nodeWebHistory =  new StringBuilder("<h3><a name=\"history\">Web History (").append(countWebHistory).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Date</th><th>Referrer</th><th>Title</th><th>Program</th></tr></thead><tbody>");
              StringBuilder nodeWebDownload =  new StringBuilder("<h3><a name=\"download\">Web Downloads (").append(countWebDownload).append(")</h3>").append(tableHeader).append("<th>File</th><th>Source</th><th>Time</th><th>Program</th></tr></thead><tbody>");
-             StringBuilder nodeRecentObjects =  new StringBuilder("<h3><a name=\"recent\">Recent Documents (").append(countRecentObjects).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Path</th><th>Size</th></tr></thead><tbody>");
+             StringBuilder nodeRecentObjects =  new StringBuilder("<h3><a name=\"recent\">Recent Documents (").append(countRecentObjects).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Path</th><th>Related Shortcut</th></tr></thead><tbody>");
              StringBuilder nodeTrackPoint =  new StringBuilder("<h3><a name=\"track\">Track Points (").append(countTrackPoint).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Attribute</th><th>Value</th></tr></thead><tbody>");
              StringBuilder nodeInstalled =  new StringBuilder("<h3><a name=\"installed\">Installed Programs (").append(countInstalled).append(")</h3>").append(tableHeader).append("<th>Program Name</th><th>Install Date/Time</th></tr></thead><tbody>");
              StringBuilder nodeKeyword =  new StringBuilder("<h3><a name=\"keyword\">Keyword Search Hits (").append(countKeyword).append(")</h3>");
              StringBuilder nodeHash =  new StringBuilder("<h3><a name=\"hash\">Hashset Hit (").append(countHash).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Size</th><th>Hashset Name</th></tr></thead><tbody>");
+             StringBuilder nodeDevice =  new StringBuilder("<h3><a name=\"device\">Attached Devices (").append(countHash).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Serial #</th><th>Time</th></tr></thead><tbody>");
+             
              int alt = 0;
              String altRow = "";
              for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
@@ -287,9 +296,9 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                     }
                     if(entry.getKey().getArtifactTypeID() == 6){
                          //artifact.append("<tr><td>").append(objId.toString());
-                      artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(6)).append("</strong></td>");
-                         artifact.append("<td>").append(attributes.get(5)).append("</td>");  
-                         artifact.append("<td>").append(filesize.toString()).append("</td>");  
+                      artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(3)).append("</strong></td>");
+                         artifact.append("<td>").append(attributes.get(36)).append("</td>");  
+                         artifact.append("<td>").append(file.getName()).append("</td>");  
                          artifact.append("</tr>");
                          nodeRecentObjects.append(artifact);
                     }
@@ -322,6 +331,13 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                          artifact.append("</tr>");
                          nodeHash.append(artifact);
                     } 
+                    if(entry.getKey().getArtifactTypeID() == 11){
+                        artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(18)).append("</strong></td>");
+                        artifact.append("<td>").append(attributes.get(20)).append("</td>");  
+                         artifact.append("<td>").append(attributes.get(2)).append("</td>");  
+                         artifact.append("</tr>");
+                         nodeDevice.append(artifact);
+                    }
                     cc++;
                      rr.progBarSet(cc);
              }
@@ -363,6 +379,10 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             }
             if(countHash > 0){
             formatted_Report.append(nodeHash); 
+            formatted_Report.append("</tbody></table>");
+            }
+            if(countDevice > 0){
+            formatted_Report.append(nodeDevice); 
             formatted_Report.append("</tbody></table>");
             }
             //end of master loop

@@ -16,8 +16,11 @@ import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 //import org.apache.commons.lang.NullArgumentException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -26,7 +29,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * @author Alex
  */
 public class Util {
-public Logger logger = Logger.getLogger(this.getClass().getName());    
+private Logger logger = Logger.getLogger(this.getClass().getName());    
     
   private Util(){
       
@@ -108,5 +111,71 @@ public static String extractDomain(String value){
         }
         
     return result;
+    }
+
+public static String getFileName(String value){
+    String filename = "";
+    String filematch = "^([a-zA-Z]\\:)(\\\\[^\\\\/:*?<>\"|]*(?<!\\[ \\]))*(\\.[a-zA-Z]{2,6})$";
+
+    Pattern p = Pattern.compile(filematch,Pattern.CASE_INSENSITIVE | Pattern.DOTALL | Pattern.COMMENTS);
+    Matcher m = p.matcher(value);
+    if (m.find())
+    {
+         filename = m.group(1);
+        
+    }
+    int lastPos = value.lastIndexOf('\\');  
+    filename = (lastPos < 0) ? value :  value.substring(lastPos + 1);
+    return filename.toString();
+    }
+
+public static String getPath(String txt){
+    String path = "";
+
+     //String drive ="([a-z]:\\\\(?:[-\\w\\.\\d]+\\\\)*(?:[-\\w\\.\\d]+)?)";	// Windows drive
+    String drive = "([a-z]:\\\\\\S.+)";
+    Pattern p = Pattern.compile(drive,Pattern.CASE_INSENSITIVE | Pattern.COMMENTS);
+    Matcher m = p.matcher(txt);
+    if (m.find())
+    {
+        path = m.group(1);
+        
+    }else{
+    
+         String network ="(\\\\(?:\\\\[^:\\s?*\"<>|]+)+)";	// Windows network
+
+        Pattern p2 = Pattern.compile(network,Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+        Matcher m2 = p2.matcher(txt);
+        if (m2.find())
+        {
+            path = m2.group(1);
+        }
+    }
+    return path;
+    }
+
+public static long findID(String path) {
+        String parent_path = path.replace('\\', '/'); // fix Chrome paths
+        parent_path = parent_path.substring(2); // remove drive letter (e.g., 'C:')
+        int index = parent_path.lastIndexOf('/');
+        String name = parent_path.substring(++index);
+        parent_path = parent_path.substring(0, index);
+        String query = "select * from tsk_files where parent_path like \"" + parent_path + "\" AND name like \"" + name + "\"";
+        Case currentCase = Case.getCurrentCase();
+        SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+        try {
+            ResultSet rs = tempDb.runQuery(query);
+            List<FsContent> results = tempDb.resultSetToFsContents(rs);
+            Statement s = rs.getStatement();
+            rs.close();
+            if (s != null)
+                s.close();
+            if(results.size() > 0) {
+                return results.get(0).getId();
+            }
+        } catch (Exception ex) {
+        //    logger.log(Level.WARNING, "Error retrieving content from DB", ex);
+        }
+        return -1;
     }
 }

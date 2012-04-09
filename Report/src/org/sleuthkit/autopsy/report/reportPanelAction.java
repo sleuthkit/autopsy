@@ -58,6 +58,7 @@ public class reportPanelAction {
              if(reportlist.contains(8)){Results.putAll(bbreport.getInstalledProg());}
              if(reportlist.contains(9)){Results.putAll(bbreport.getKeywordHit());}
              if(reportlist.contains(10)){Results.putAll(bbreport.getHashHit());}
+              if(reportlist.contains(11)){Results.putAll(bbreport.getDevices());}
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
