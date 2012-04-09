@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -476,7 +474,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             boolean ingestible = false;
             final String fileName = fsContent.getName();
             for (String ext : ingestibleExtensions) {
-                if (fileName.endsWith(ext)) {
+                if (fileName.toLowerCase().endsWith(ext)) {
                     ingestible = true;
                     break;
                 }

@@ -46,6 +46,7 @@ import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * IngestManager sets up and manages ingest services
@@ -931,8 +932,17 @@ public class IngestManager {
                         return null;
                     }
 
+                    final FsContent fileToProcess = unit.getKey();
+                    if ( (fileToProcess.getMeta_flags() & TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getMetaFlag() ) != 0) {
+                        //skip unallocated files, processing certain unalloc files may cause some modules to hang
+                        //TODO unallocated space and files are a future feature
+                        progress.progress(unit.getKey().getName(), ++processedFiles);
+                        --numFsContents;
+                        continue;
+                    }
+                    
                     try {
-                        IngestServiceFsContent.ProcessResult result = service.process(unit.getKey());
+                        IngestServiceFsContent.ProcessResult result = service.process(fileToProcess);
                         //handle unconditional stop
                         if (result == IngestServiceFsContent.ProcessResult.STOP) {
                             break;
