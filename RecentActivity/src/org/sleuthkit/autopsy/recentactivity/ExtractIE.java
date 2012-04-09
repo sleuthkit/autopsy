@@ -91,9 +91,12 @@ public class ExtractIE { // implements BrowserActivity {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             List<FsContent> FavoriteList;  
 
@@ -150,9 +153,12 @@ public class ExtractIE { // implements BrowserActivity {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             List<FsContent> CookiesList;  
 
@@ -172,9 +178,9 @@ public class ExtractIE { // implements BrowserActivity {
                 String cookieString = new String(t);
                 
                String[] values = cookieString.split("\n");  
-                String url = values[2];
-                String value = values[1];
-                String name = values[0];
+                String url = values.length > 2 ? values[2] : "";
+                String value = values.length > 1 ? values[1] : "";
+                String name = values.length > 0 ? values[0] : "";
                 String datetime = Cookie.getCrtimeAsDate();
                 
                   BlackboardArtifact bbart = Cookie.newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
@@ -236,10 +242,14 @@ public class ExtractIE { // implements BrowserActivity {
             Collection<FsContent> FsContentCollection;
             tempDb = currentCase.getSleuthkitCase();
             String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
+            logger.info(allFS);
             ResultSet rs = tempDb.runQuery(indexDatQueryStr + allFS);
             FsContentCollection = tempDb.resultSetToFsContents(rs);
             rs.close();
