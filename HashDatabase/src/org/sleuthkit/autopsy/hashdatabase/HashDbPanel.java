@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.TskException;
 
@@ -66,6 +68,10 @@ class HashDbPanel extends javax.swing.JPanel {
 
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        String[] EXTENSION = new String[] { "txt", "idx", "hash", "Hash" };
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                "Hash Database File", EXTENSION);
+        fc.setFileFilter(filter);
         fc.setMultiSelectionEnabled(false);
 
         this.initComponents();
