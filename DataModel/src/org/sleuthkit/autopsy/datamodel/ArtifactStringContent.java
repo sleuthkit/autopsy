@@ -52,11 +52,11 @@ public class ArtifactStringContent implements StringContent {
             buffer.append("p {font-family:Arial;font-size:10pt;}");
             buffer.append("</style>");
             buffer.append("</head>");
+            buffer.append("<h4>");
+            buffer.append(wrapped.getDisplayName());
+            buffer.append("</h4>");
             buffer.append("<table border='0'>");
             buffer.append("<tr>");
-            buffer.append("<th>Attribute Type</th>");
-            buffer.append("<th>Value</th>");
-            buffer.append("<th>Context</th>");
             buffer.append("</tr>");
             for (BlackboardAttribute attr : wrapped.getAttributes()) {
                 buffer.append("<tr><td>");
@@ -81,10 +81,10 @@ public class ArtifactStringContent implements StringContent {
                         break;
 
                 }
-                buffer.append("</td>");
-                buffer.append("<td>");
                 if (!"".equals(attr.getContext())) {
+                    buffer.append(" (");
                     buffer.append(attr.getContext());
+                    buffer.append(")");
                 }
                 buffer.append("</td>");
                 buffer.append("</tr>");

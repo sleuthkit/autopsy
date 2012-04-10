@@ -94,7 +94,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         jPanel1.setPreferredSize(new java.awt.Dimension(622, 424));
 
         outputViewPane.setEditable(false);
-        outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11));
+        outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
         outputViewPane.setPreferredSize(new java.awt.Dimension(700, 400));
         jScrollPane1.setViewportView(outputViewPane);
 
@@ -244,12 +244,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
 
     @Override
     public String getTitle() {
-        return "Artifact View";
+        return "Result View";
     }
 
     @Override
     public String getToolTip() {
-        return "Displays Blackboard Artifacts associated with the file";
+        return "Displays Results associated with the file";
     }
 
     @Override
@@ -307,7 +307,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                 int size = content.getAllArtifacts().size();
                 return size > 0;
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Couldn't get All blackboard Artifacts", ex);
+                logger.log(Level.WARNING, "Couldn't get All Blackboard Artifacts", ex);
             }
         }
         return false;

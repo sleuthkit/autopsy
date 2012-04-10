@@ -249,7 +249,6 @@ public class ExtractIE { // implements BrowserActivity {
                 if(i == image.size()-1)
                     allFS += ")";
             }
-            logger.info(allFS);
             ResultSet rs = tempDb.runQuery(indexDatQueryStr + allFS);
             FsContentCollection = tempDb.resultSetToFsContents(rs);
             rs.close();
