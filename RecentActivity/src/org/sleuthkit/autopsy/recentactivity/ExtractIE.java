@@ -218,9 +218,12 @@ public class ExtractIE { // implements BrowserActivity {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             List<FsContent> RecentList;  
 
@@ -265,13 +268,10 @@ public class ExtractIE { // implements BrowserActivity {
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),"RecentActivity","Date Created",datetime));
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Windows Explorer"));
                      bbart.addAttributes(bbattributes);
-                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT)); 
-                
+                    
             }
-        }
-        catch(IOException E)
-        {
-            
+            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT)); 
+                
         }
         catch(TskException ex)
         {

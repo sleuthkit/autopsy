@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * @author Alex
  */
 public class Util {
-private Logger logger = Logger.getLogger(this.getClass().getName());    
+private static Logger logger = Logger.getLogger(Util.class.getName());    
     
   private Util(){
       
@@ -156,7 +156,8 @@ public static String getPath(String txt){
 
 public static long findID(String path) {
         String parent_path = path.replace('\\', '/'); // fix Chrome paths
-        parent_path = parent_path.substring(2); // remove drive letter (e.g., 'C:')
+        if(parent_path.length() > 2 && parent_path.charAt(1) == ':')
+            parent_path = parent_path.substring(2); // remove drive letter (e.g., 'C:')
         int index = parent_path.lastIndexOf('/');
         String name = parent_path.substring(++index);
         parent_path = parent_path.substring(0, index);

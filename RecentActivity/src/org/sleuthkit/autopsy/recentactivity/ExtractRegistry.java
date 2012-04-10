@@ -83,9 +83,12 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
              String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             List<FsContent> Regfiles;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where lower(name) = 'ntuser.dat' OR lower(parent_path) LIKE '%/system32/config%' and (name = 'system' OR name = 'software' OR name = 'SECURITY' OR name = 'SAM' OR name = 'default')" + allFS);

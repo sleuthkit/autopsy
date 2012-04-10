@@ -56,9 +56,12 @@ public class Chrome {
             List<FsContent> FFSqlitedb;  
             Map<String, Object> kvs = new LinkedHashMap<String, Object>(); 
             String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' AND parent_path LIKE '%Chrome%'" + allFS);
@@ -127,9 +130,12 @@ public class Chrome {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
              String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             List<FsContent> FFSqlitedb;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%Cookies%' and parent_path LIKE '%Chrome%'" + allFS);
@@ -195,9 +201,12 @@ public class Chrome {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
              String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             List<FsContent> FFSqlitedb;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'Bookmarks' and parent_path LIKE '%Chrome%'" + allFS);
@@ -273,9 +282,12 @@ public class Chrome {
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             List<FsContent> FFSqlitedb;  
              String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' and parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
@@ -341,9 +353,12 @@ public class Chrome {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
              String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             List<FsContent> FFSqlitedb;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'signons.sqlite' and parent_path LIKE '%Chrome%'" + allFS);

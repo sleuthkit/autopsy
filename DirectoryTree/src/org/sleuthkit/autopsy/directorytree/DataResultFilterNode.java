@@ -221,16 +221,20 @@ public class DataResultFilterNode extends FilterNode{
                     if(attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
                         switch(attr.getValueType()) {
                             case INTEGER:
-                                c = art.getSleuthkitCase().getContentById(attr.getValueInt());
+                                int i = attr.getValueInt();
+                                if(i != -1)
+                                    c = art.getSleuthkitCase().getContentById(i);
                                 break;
                             case LONG:
-                                c = art.getSleuthkitCase().getContentById(attr.getValueLong());
+                                long l = attr.getValueLong();
+                                if(l != -1)
+                                    c = art.getSleuthkitCase().getContentById(l);
                                 break;
                         }
                     }
                 }
             } catch(TskException ex) {
-                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error getting linked file");
+                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error getting linked file", ex);
             }
             return c;
         }
