@@ -146,6 +146,7 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         
        String htmlpath = reportUtils.changeExtension(path, ".html");
        String xmlpath = reportUtils.changeExtension(path, ".xml");
+       String xlspath = reportUtils.changeExtension(path, ".xlsx");
          try {
                    Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(htmlpath), "UTF-8"));
                    
@@ -153,6 +154,11 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
                   out.write(reportHTML.formatted_header.toString());
                   out.flush();
                   out.close();
+                  
+                  //xls report
+                   FileOutputStream fos = new FileOutputStream(xlspath);
+                   reportXLS.wb.write(fos);
+                   fos.close();
                   
                   FileOutputStream xmlout = new FileOutputStream(xmlpath);
                   XMLOutputter serializer = new XMLOutputter();

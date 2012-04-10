@@ -58,6 +58,7 @@ public class reportPanelAction {
              if(reportlist.contains(8)){Results.putAll(bbreport.getInstalledProg());}
              if(reportlist.contains(9)){Results.putAll(bbreport.getKeywordHit());}
              if(reportlist.contains(10)){Results.putAll(bbreport.getHashHit());}
+              if(reportlist.contains(11)){Results.putAll(bbreport.getDevices());}
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -83,11 +84,20 @@ public class reportPanelAction {
                    // viewReport.append(reportHTML.unformatted_header.toString());
                    }
                 });
+                Thread xlsthread = new Thread(new Runnable()
+                {
+                @Override
+                   public void run()
+                   { 
+                    reportXLS xlsReport = new reportXLS(Results,rr);
+               //    BrowserControl.openUrl(xlsReport.xlsPath);
+                   }
+                });
 
         // start our threads
         xmlthread.start();
         htmlthread.start();
-        
+        xlsthread.start();
             // display the window
             
             // create the popUp window for it
@@ -138,6 +148,7 @@ public class reportPanelAction {
             panel.setFinishedReportText();
             popUpWindow.setVisible(true);
             xmlthread.join();
+            xlsthread.join();
             
            
          }
