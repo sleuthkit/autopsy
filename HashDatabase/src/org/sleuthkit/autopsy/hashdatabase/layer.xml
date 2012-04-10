@@ -14,10 +14,6 @@
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-hashdatabase-HashDbMgmtAction.instance"/>
                 <attr name="position" intvalue="1000"/>
             </file>
-            <file name="SeparatorAfterHashDatabaseSettings.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="1001"/>
-            </file>
             <file name="Separator1.instance_hidden"/>
             <file name="Separator3.instance_hidden"/>
             <file name="org-netbeans-modules-autoupdate-ui-actions-PluginManagerAction.shadow_hidden"/>

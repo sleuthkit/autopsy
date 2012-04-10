@@ -10,7 +10,6 @@
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-reportAction.instance"/>
                 <attr name="position" intvalue="650"/>
             </file>
-            <file name="org-sleuthkit-autopsy-report-reportFilterAction.shadow_hidden"/>
         </folder>
     </folder>
     
