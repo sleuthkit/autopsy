@@ -297,7 +297,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                     if(entry.getKey().getArtifactTypeID() == 6){
                          //artifact.append("<tr><td>").append(objId.toString());
                       artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(3)).append("</strong></td>");
-                         artifact.append("<td>").append(attributes.get(36)).append("</td>");  
+                         artifact.append("<td>").append(attributes.get(8)).append("</td>");  
                          artifact.append("<td>").append(file.getName()).append("</td>");  
                          artifact.append("</tr>");
                          nodeRecentObjects.append(artifact);

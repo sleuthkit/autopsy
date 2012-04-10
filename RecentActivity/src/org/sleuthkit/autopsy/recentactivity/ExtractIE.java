@@ -239,11 +239,12 @@ public class ExtractIE { // implements BrowserActivity {
 
 
                 // set the data on the bottom and show it
-                
-               String recentString = new String();
+               
+                 String recentString = new String();
+               
 
                 if (bytesRead > 0) {
-                   recentString = DataConversion.getString(t, bytesRead, 4);
+                 recentString =  DataConversion.getString(t, bytesRead, 4);
                 }
                 
                 
@@ -261,6 +262,10 @@ public class ExtractIE { // implements BrowserActivity {
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT)); 
                 
             }
+        }
+        catch(IOException E)
+        {
+            
         }
         catch(TskException ex)
         {
