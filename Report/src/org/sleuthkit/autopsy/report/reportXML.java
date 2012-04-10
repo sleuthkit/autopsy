@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.jdom.Comment;
 import org.jdom.Document;
 import org.jdom.Document.*;
@@ -72,6 +74,9 @@ public class reportXML {
          Element nodeInstalled = new Element("Installed-Programfiles");
          Element nodeKeyword = new Element("Keyword-Search-Hits");
          Element nodeHash = new Element("Hashset-Hits");
+         Element nodeDevice = new Element("Attached-Devices");
+         //remove bytes
+         Pattern INVALID_XML_CHARS = Pattern.compile("[^\\u0009\\u000A\\u000D\\u0020-\\uD7FF\\uE000-\\uFFFD\uD800\uDC00-\uDBFF\uDFFF]");
          for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
               if(reportFilter.cancel == true){
                          break;
@@ -92,9 +97,11 @@ public class reportXML {
                          break;
                         }
                   Element attribute = new Element("Attribute").setAttribute("Type",tempatt.getAttributeTypeDisplayName());
-                  Element value = new Element("Value").setText(tempatt.getValueString());
+                  String tempvalue = tempatt.getValueString();
+                 //INVALID_XML_CHARS.matcher(tempvalue).replaceAll("");
+                  Element value = new Element("Value").setText(tempvalue);
                   attribute.addContent(value);
-                  Element context = new Element("Context").setText(tempatt.getContext());
+                  Element context = new Element("Context").setText(StringEscapeUtils.escapeXml(tempatt.getContext()));
                   attribute.addContent(context);
                   artifact.addContent(attribute);
                   cc++;
@@ -137,6 +144,9 @@ public class reportXML {
             if(entry.getKey().getArtifactTypeID() == 10){
                  nodeHash.addContent(artifact);
             } 
+             if(entry.getKey().getArtifactTypeID() == 11){
+                 nodeDevice.addContent(artifact);
+            } 
             cc++;
            rr.progBarSet(cc);
             //end of master loop
@@ -153,6 +163,7 @@ public class reportXML {
             root.addContent(nodeInstalled);
             root.addContent(nodeKeyword);
             root.addContent(nodeHash); 
+            root.addContent(nodeDevice);
          
             try {
                   FileOutputStream out = new FileOutputStream(currentCase.getCaseDirectory()+"/Reports/" + caseName + "-" + datenotime + ".xml");
