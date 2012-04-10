@@ -930,14 +930,6 @@ public class IngestManager {
                 
                 progress.progress(fileToProcess.getName(), processedFiles);
 
-                if ((fileToProcess.getMeta_flags() & TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getMetaFlag()) != 0) {
-                    //skip unallocated files, processing certain unalloc files may cause some modules to hang
-                    //TODO unallocated space and files are a future feature
-                    ++processedFiles;
-                    --numFsContents;
-                    continue;
-                }
-
                 for (IngestServiceFsContent service : unit.getValue()) {
                     if (isCancelled()) {
                         return null;
