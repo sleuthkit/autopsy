@@ -13,10 +13,8 @@ If case cannot be cleanly closed, try closing the application.
 Ingest:
 - Ingest may fail and cause unexpected behavior if "Add image" action is performed while ingest is running on previously added image.
 
-Hash DB:
-- Hash DB module does not currently search unallocated space and unallocated/deleted files,
 
 Keyword search module:
-- Keyword search module does not currently search unallocated space and unallocated/deleted files,
+- Keyword search module does not currently search unallocated space,
 - Keyword search maximum size of files to be indexed and searched is 100MB,
 - Keyword search maximum size of unknown files to be searched (using string extraction) is 1MB.
