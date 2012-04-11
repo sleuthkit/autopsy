@@ -13,7 +13,7 @@ needed even if you have a 64-bit system).
 
 3) Download and install Netbeans IDE 7.0.1 (http://netbeans.org/)
 
-4) Download and build the release version of Libewf 20120304 (note that TSK will fail with Libewf 1 and the new alpha versions).  All you need is the dll file. 
+4) Download and build the release version of Libewf2 (20120304 or later).  All you need is the dll file.  Note that you will get a launching error if you use libewf 1.
 - http://sourceforge.net/projects/libewf/
 
 5) Set LIBEWF_HOME environment variable to root directory of LIBEWF
@@ -55,5 +55,5 @@ rebuild both the dll and the JAR file.
 
 ---------------
 Brian Carrier
-11/9/2011
+4/6/2012
 carrier <at> sleuthkit <dot> org

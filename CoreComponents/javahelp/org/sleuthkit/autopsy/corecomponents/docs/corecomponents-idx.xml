@@ -11,8 +11,6 @@ and open the template in the editor.
     <indexitem text="About Data Explorers" target="org.sleuthkit.autopsy.corecomponents.dataexplorer-about"/>
 
     <indexitem text="About Directory Tree" target="org.sleuthkit.autopsy.directorytree.about"/>
-    <indexitem text="How to Open Directory Tree" target="org.sleuthkit.autopsy.directorytree.open-directorytree"/>
-    <indexitem text="How to Use Directory Tree" target="org.sleuthkit.autopsy.directorytree.how-to-use-directorytree"/>
     <indexitem text="Image Details Window" target="org.sleuthkit.autopsy.directorytree.image-details"/>
     <indexitem text="Volume Details Window" target="org.sleuthkit.autopsy.directorytree.volume-details"/>
     <indexitem text="File System Details Window" target="org.sleuthkit.autopsy.directorytree.filesystem-details"/>
@@ -27,5 +25,6 @@ and open the template in the editor.
 
     <indexitem text="Hex Content Viewer" target="org.sleuthkit.autopsy.corecomponents.hex-content-viewer"/>
     <indexitem text="String Content Viewer" target="org.sleuthkit.autopsy.corecomponents.string-content-viewer"/>
-    <indexitem text="Picture Content Viewer" target="org.sleuthkit.autopsy.corecomponents.picture-content-viewer"/>
+	<indexitem text="Text Content Viewer" target="org.sleuthkit.autopsy.corecomponents.text-content-viewer"/>
+    <indexitem text="Media Content Viewer" target="org.sleuthkit.autopsy.corecomponents.picture-content-viewer"/>
 </index>

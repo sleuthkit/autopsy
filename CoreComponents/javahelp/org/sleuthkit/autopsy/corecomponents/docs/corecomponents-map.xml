@@ -6,8 +6,6 @@ and open the template in the editor.
 <!DOCTYPE map PUBLIC "-//Sun Microsystems Inc.//DTD JavaHelp Map Version 2.0//EN" "http://java.sun.com/products/javahelp/map_2_0.dtd">
 <map version="2.0">
     <mapID target="org.sleuthkit.autopsy.directorytree.about" url="nbdocs:/org/sleuthkit/autopsy/directorytree/docs/directorytree-about.html"/>
-    <mapID target="org.sleuthkit.autopsy.directorytree.open-directorytree" url="nbdocs:/org/sleuthkit/autopsy/directorytree/docs/open-directorytree.html"/>
-    <mapID target="org.sleuthkit.autopsy.directorytree.how-to-use-directorytree" url="nbdocs:/org/sleuthkit/autopsy/directorytree/docs/how-to-use-directorytree.html"/>
     <mapID target="org.sleuthkit.autopsy.directorytree.image-details" url="nbdocs:/org/sleuthkit/autopsy/directorytree/docs/image-details.html"/>
     <mapID target="org.sleuthkit.autopsy.directorytree.volume-details" url="nbdocs:/org/sleuthkit/autopsy/directorytree/docs/volume-details.html"/>
     <mapID target="org.sleuthkit.autopsy.directorytree.filesystem-details" url="nbdocs:/org/sleuthkit/autopsy/directorytree/docs/filesystem-details.html"/>
@@ -24,5 +22,6 @@ and open the template in the editor.
     <mapID target="org.sleuthkit.autopsy.corecomponents.thumbnail-results-viewer" url="thumbnail-results-viewer.html"/>
     <mapID target="org.sleuthkit.autopsy.corecomponents.hex-content-viewer" url="hex-content-viewer.html"/>
     <mapID target="org.sleuthkit.autopsy.corecomponents.string-content-viewer" url="string-content-viewer.html"/>
+	<mapID target="org.sleuthkit.autopsy.corecomponents.text-content-viewer" url="text-content-viewer.html"/>
     <mapID target="org.sleuthkit.autopsy.corecomponents.picture-content-viewer" url="picture-content-viewer.html"/>
 </map>

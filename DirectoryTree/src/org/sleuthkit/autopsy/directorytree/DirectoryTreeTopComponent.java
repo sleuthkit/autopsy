@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Action;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeSelectionModel;
@@ -620,12 +621,19 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             }
                             Node originNode = origin.getNode();
 
-                            //int count = originNode.getChildren().getNodesCount(true);
-                            //if (count > 1000) {
-                            //    DirectoryTreeTopComponent.this.setCursor(null);
-                            //    JOptionPane.showMessageDialog(caller, "Note: The selected directory contains " + count + " child files and folders. It may take some time to display them.\n\nAlso note that in the current version of Autopsy this will also make certain functions very slow (thumbnail view in particular, should be fixed in a future version)", "Large Data", JOptionPane.INFORMATION_MESSAGE);
-                            //    DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                            //}
+                            int count = originNode.getChildren().getNodesCount(true);
+                            if (count > 1000) {
+                                DirectoryTreeTopComponent.this.setCursor(null);
+                                int choice = JOptionPane.showConfirmDialog(caller, "Note: The selected location contains " + count + " items.\n" +
+                                "It may take some time to display them.\n\n" +
+                                "Also note that there is a limitation in " + Case.getAppName() + " that will make certain functions very slow,\n" +
+                                "thumbnail view in particular (which should be fixed in a future version).\n" +
+                                "Do you want to continue loading these objects?");
+                                if(choice != JOptionPane.OK_OPTION) {
+                                    return;
+                                }
+                                DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                            }
                             DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                             //set node, wrap in filter node first to filter out children
                             Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
