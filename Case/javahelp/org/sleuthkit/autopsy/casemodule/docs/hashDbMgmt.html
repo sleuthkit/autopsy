@@ -11,40 +11,37 @@
 	The Hash Database Management window is where you can set and update your hash database information. Hash databases are used to identify files that are 'known'. 
 	<ul>
 	<li>Known good files are those that can be safely ignored.  This set of files frequently includes standard OS and application files. </li>
-	<li>Known bad files are those that should raise awareness.  This set will vary depending on the type of investigation, but common examples include contraband images and malware.</li>
+	<li>Known bad (also called notable) files are those that should raise awareness.  This set will vary depending on the type of investigation, but common examples include contraband images and malware.</li>
 	</ul>
         </p>
 
-	<p>Autopsy allows for a single known bad hash database to be set and the <a href="http://www.nsrl.nist.gov">NIST NSRL</a>.  Before they can be used, an index of them must exist.  
-	The index can be directly copied in or it can be created within Autopsy.  When you select the database from within this window, it will tell you if the index needs to be created. Autopsy 
-	uses the hash database management system from The Sleuth Kit. You can manually create an index using the 'hfind' command line tool.</p>
+	<h2>Notable / Known Bad Hashsets</h2>
+	<p>Autopsy allows for a single known bad hash database to be set.  Future versions will support multiple hash sets. Autopsy supports three formats:
+	<ul>
+	  <li>EnCase: An EnCase hashset file. </li>
+	  <li>MD5sum: Output from running the md5, md5sum, or md5deep program on a set of files.</li
+	  <li>HashKeeper: Hashkeeper hashsets (Must be merged into a single file).</li>
+	</ul>
 
-	<p>Note that the NSRL contains hashes of 'known files' that may be good or bad depending on your perspective and investigation type. For example, the existence of a piece of financial software
-	may be interesting to your investigation and that software could be in the NSRL. Therefore, Autopsy treats files that are found in the NSRL as simplyi 'known' and does not specify good or bad. </p>
+	<h2>NIST NSRL</h2>
+	<p>Autopsy can use the <a href="http://www.nsrl.nist.gov">NIST NSRL</a> to detect 'known files'.  Note that the NSRL contains hashes of 'known files' that may be good or bad depending on your perspective and investigation type. For example, the existence of a piece of financial software
+	may be interesting to your investigation and that software could be in the NSRL. Therefore, Autopsy treats files that are found in the NSRL as simplyi 'known' and does not specify good or bad. Ingest modules have the option of ignoring files that were found in the NSRL.</p>
 
 	<p>To use the NSRL, you must concatenate all of the NSRLFile.txt files together. You can use 'cat' on a Unix system or from within Cygwin to do this.</p>
 
-        <p>The 'known bad' hash database can be in the hashkeeper, md5sum, or NSRL format.</p>
-        
-	<p>Autopsy uses hash databases when the image is added to the case.  Each file is hashed and looked up in the configured databases.  If the file is found in the NSRL, then it will be marked as 
-	'known' in the case database.  If it is found in the known bad hash database, it will be marked as 'known bad' in the case database. </p>
+	<h2>Adding Hashsets</h2>
+	<p>Autopsy needs an index of the hashset.  It can make one if you import only the hashset. When you select the database from within this window, it will tell you if the index needs to be created. Autopsy 
+	uses the hash database management system from The Sleuth Kit. You can manually create an index using the 'hfind' command line tool.</p>
 
-	<p>You can see the lookup results in a couple of places.  In the <a href="nbdocs:/org/sleuthkit/autopsy/filesearch/docs/open-filesearch.html">File Search</a> data explorer, there is an option to choose the 'known status'. From here, you can do a search to see all 'known bad' files. 
+	<p>You can also specify only the index file and not use the full hashset.  This can save space.  To do this, specify the .idx file from the Hash Database Management window. </p>
+
+	<h2>Using Hashsets</h2>
+	<p>There is an <a href="nbdocs:/org/sleuthkit/autopsy/ingest/docs/ingest-about.html">ingest module</a> that will hash the files and look them up in the hashsets.  It will flag files that were in the notable hashset and those results will be shown in the Results tree of the <a href="nbdocs:/org/sleuthkit/autopsy/directorytree/docs/directorytree-about.html">Data Explorer</a>. 
+       
+	<p>Other ingest modules are able to use the known status of a file to decide if they should ignore the file or process it.</a>
+
+	<p>You can also see the results in the <a href="nbdocs:/org/sleuthkit/autopsy/filesearch/docs/open-filesearch.html">File Search</a> window.  There is an option to choose the 'known status'. From here, you can do a search to see all 'known bad' files. 
 	From here, you can also choose to ignore all 'known' files that were found in the NSRL. You can also see the status of the file in a column when the file is listed. </p>
         
-	<p>Currently, you cannot reprocess a disk image with a new hash database after it has been added to a case.</p>
-
     </body>
 </html>
-<!--
-Tip: to create a link which will open in an external web browser, try:
-<object classid="java:org.netbeans.modules.javahelp.BrowserDisplayer">
-    <param name="content" value="http://www.netbeans.org/">
-    <param name="text" value="<html><u>http://www.netbeans.org/</u></html>">
-    <param name="textFontSize" value="medium">
-    <param name="textColor" value="blue">
-</object>
-To create a link to a help set from another module, you need to know the code name base and path, e.g.:
-<a href="nbdocs://org.netbeans.modules.usersguide/org/netbeans/modules/usersguide/configure/configure_options.html">Using the Options Window</a>
-(This link will behave sanely if that module is disabled or missing.)
--->
