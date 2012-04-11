@@ -39,7 +39,7 @@ id = "org.sleuthkit.autopsy.report.reportAction")
 public final class reportAction extends CallableSystemAction implements Presenter.Toolbar{
     
     private JButton toolbarButton = new JButton();
-    private static final String ACTION_NAME = "Report";
+    private static final String ACTION_NAME = "Generate Report";
      Logger logger = Logger.getLogger(reportAction.class.getName());
     
     public reportAction() {

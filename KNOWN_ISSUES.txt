@@ -2,10 +2,19 @@ Known issues and limitations
 
 We plan to address the following issues in future releases.
 
+General:
+- Only a single instance of the application can be started at once.  
+There is no check if another instance is already running.  Running a second instance will cause issues.
+
+Case:
+- Closing a case in certain situations (when ingest is running or processing is being done in the background) may cause stability issues.  
+If case cannot be cleanly closed, try closing the application.
+
 Ingest:
-- Ingest can fail and cause unexpected behavior if "Add image" action is performed while ingest is running.
+- Ingest may fail and cause unexpected behavior if "Add image" action is performed while ingest is running on a previously added image.
+
 
 Keyword search module:
 - Keyword search module does not currently search unallocated space,
-- Keyword search maximum size of files to be indexed and searched is 200MB,
-- Keyword search maximum size of unknown files to be searched is 10MB.
+- Keyword search maximum size of files to be indexed and searched is 100MB,
+- Keyword search maximum size of unknown types of files to be indexed and searched (using string extraction) is 1MB.

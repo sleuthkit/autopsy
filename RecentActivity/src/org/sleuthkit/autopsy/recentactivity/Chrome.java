@@ -35,9 +35,9 @@ public class Chrome {
 
    
    public static final String chquery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
-           + "datetime(urls.last_visit_time/1000000-11644473600,'unixepoch','localtime') as last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
-   public static final String chcookiequery = "select name, value, host_key, expires_utc, datetime(last_access_utc/1000000-11644473600,'unixepoch','localtime') as last_access_utc, creation_utc from cookies";
-   public static final String chbookmarkquery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count, datetime(urls.last_visit_time/1000000-11644473600,'unixepoch','localtime') as urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
+           + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
+   public static final String chcookiequery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
+   public static final String chbookmarkquery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count,urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
    public static final String chdownloadquery = "select full_path, url, start_time, received_bytes from downloads";
    public static final String chloginquery = "select origin_url, username_value, signon_realm from logins";
    private final Logger logger = Logger.getLogger(this.getClass().getName());
@@ -56,9 +56,12 @@ public class Chrome {
             List<FsContent> FFSqlitedb;  
             Map<String, Object> kvs = new LinkedHashMap<String, Object>(); 
             String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' AND parent_path LIKE '%Chrome%'" + allFS);
@@ -85,7 +88,7 @@ public class Chrome {
                   
                    while(temprs.next()) 
                    {
-                     
+                       String domain = Util.extractDomain(temprs.getString("url"));
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","",temprs.getString("url")));
@@ -93,6 +96,7 @@ public class Chrome {
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(),"RecentActivity","",temprs.getString("from_visit")));
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(),"RecentActivity","",((temprs.getString("title") != null) ? temprs.getString("title") : "")));
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
+                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                       bbart.addAttributes(bbattributes);
                      
                    } 
@@ -126,9 +130,12 @@ public class Chrome {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
              String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             List<FsContent> FFSqlitedb;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%Cookies%' and parent_path LIKE '%Chrome%'" + allFS);
@@ -156,11 +163,13 @@ public class Chrome {
                    {
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                      String domain = temprs.getString("host_key");
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", temprs.getString("host_key")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),"RecentActivity", "Last Visited",temprs.getString("last_access_utc")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),"RecentActivity", "",temprs.getString("value")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","Title",((temprs.getString("name") != null) ? temprs.getString("name") : "")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                      bbart.addAttributes(bbattributes);
                    } 
                    tempdbconnect.closeConnection();
@@ -192,9 +201,12 @@ public class Chrome {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
              String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             List<FsContent> FFSqlitedb;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'Bookmarks' and parent_path LIKE '%Chrome%'" + allFS);
@@ -231,13 +243,14 @@ public class Chrome {
                                             String url = address.get("url").getAsString();
                                             String name = address.get("name").getAsString();
                                             String date = address.get("date_added").getAsString();                   
-
+                                            String domain = Util.extractDomain(url);
                     BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",date));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",url));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","",name));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                      bbart.addAttributes(bbattributes);     
                     } 
 
@@ -269,9 +282,12 @@ public class Chrome {
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             List<FsContent> FFSqlitedb;  
              String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' and parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
@@ -298,11 +314,12 @@ public class Chrome {
                    {
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD); 
                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                      String domain = Util.extractDomain(temprs.getString("url"));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",temprs.getString("start_time")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("url") != null) ? temprs.getString("url") : "")));
                      //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", "", temprs.getString("full_path")));
-                     
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
                      bbart.addAttributes(bbattributes);
                       
@@ -336,9 +353,12 @@ public class Chrome {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
              String allFS = new String();
-            for(String img : image)
-            {
-               allFS += " AND fs_obj_id = '" + img + "'";
+            for(int i = 0; i < image.size(); i++) {
+                if(i == 0)
+                    allFS += " AND (0";
+                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
+                if(i == image.size()-1)
+                    allFS += ")";
             }
             List<FsContent> FFSqlitedb;  
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'signons.sqlite' and parent_path LIKE '%Chrome%'" + allFS);
@@ -370,7 +390,7 @@ public class Chrome {
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("origin_url") != null) ? temprs.getString("origin_url") : "")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "RecentActivity","", ((temprs.getString("username_value") != null) ? temprs.getString("username_value").replaceAll("'", "''") : "")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", "", temprs.getString("signon_realm")));
-                     
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",Util.extractDomain(((temprs.getString("origin_url") != null) ? temprs.getString("origin_url") : ""))));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
                      bbart.addAttributes(bbattributes);
                       

@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.Log;
  */
 class HashDbMgmtAction extends CallableSystemAction {
 
-    private static final String ACTION_NAME = "Hash Database Management";
+    private static final String ACTION_NAME = "Hash Database Configuration";
 
     @Override
     public void performAction() {

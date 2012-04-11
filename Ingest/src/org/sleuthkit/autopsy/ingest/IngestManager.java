@@ -46,6 +46,7 @@ import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * IngestManager sets up and manages ingest services
@@ -553,8 +554,6 @@ public class IngestManager {
         return ret;
     }
 
-    
-
     //image worker to remove itself when complete or interrupted
     void removeImageIngestWorker(IngestImageThread worker) {
         //remove worker
@@ -642,7 +641,7 @@ public class IngestManager {
         void enqueue(FsContent fsContent, IngestServiceFsContent service) {
             //fsContentUnits.put(fsContent, Collections.singletonList(service));
             List<IngestServiceFsContent> services = fsContentUnits.get(fsContent);
-            if(services == null) {
+            if (services == null) {
                 services = new ArrayList<IngestServiceFsContent>();
                 fsContentUnits.put(fsContent, services);
             }
@@ -652,7 +651,7 @@ public class IngestManager {
         void enqueue(FsContent fsContent, List<IngestServiceFsContent> services) {
 
             List<IngestServiceFsContent> oldServices = fsContentUnits.get(fsContent);
-            if(oldServices == null) {
+            if (oldServices == null) {
                 oldServices = new ArrayList<IngestServiceFsContent>();
                 fsContentUnits.put(fsContent, oldServices);
             }
@@ -690,9 +689,10 @@ public class IngestManager {
          * @return true if the service is enqueued to do work
          */
         boolean hasServiceEnqueued(IngestServiceFsContent service) {
-            for(List<IngestServiceFsContent> list : fsContentUnits.values()) {
-                if(list.contains(service))
+            for (List<IngestServiceFsContent> list : fsContentUnits.values()) {
+                if (list.contains(service)) {
                     return true;
+                }
             }
             return false;
         }
@@ -705,8 +705,8 @@ public class IngestManager {
         public String printQueue() {
             StringBuilder sb = new StringBuilder();
             /*for (QueueUnit<FsContent, IngestServiceFsContent> u : fsContentUnits) {
-                sb.append(u.toString());
-                sb.append("\n");
+            sb.append(u.toString());
+            sb.append("\n");
             }*/
             return sb.toString();
         }
@@ -731,7 +731,7 @@ public class IngestManager {
 
         void enqueue(Image image, IngestServiceImage service) {
             List<IngestServiceImage> services = imageUnits.get(image);
-            if(services == null) {
+            if (services == null) {
                 services = new ArrayList<IngestServiceImage>();
                 imageUnits.put(image, services);
             }
@@ -740,7 +740,7 @@ public class IngestManager {
 
         void enqueue(Image image, List<IngestServiceImage> services) {
             List<IngestServiceImage> oldServices = imageUnits.get(image);
-            if(oldServices == null) {
+            if (oldServices == null) {
                 oldServices = new ArrayList<IngestServiceImage>();
                 imageUnits.put(image, oldServices);
             }
@@ -817,19 +817,19 @@ public class IngestManager {
         public String toHtmlString() {
             StringBuilder sb = new StringBuilder();
             sb.append("<html>");
-            
+
             sb.append("Ingest time: ").append(getTotalTimeString()).append("<br />");
             sb.append("Total errors: ").append(errorsTotal).append("<br />");
             /*
             if (errorsTotal > 0) {
-                sb.append("Errors per service:");
-                for (IngestServiceAbstract service : errors.keySet()) {
-                    final int errorsService = errors.get(service);
-                    sb.append("\t").append(service.getName()).append(": ").append(errorsService).append("<br />");
-                }
+            sb.append("Errors per service:");
+            for (IngestServiceAbstract service : errors.keySet()) {
+            final int errorsService = errors.get(service);
+            sb.append("\t").append(service.getName()).append(": ").append(errorsService).append("<br />");
+            }
             }
              * */
-            
+
             sb.append("</html>");
             return sb.toString();
         }
@@ -926,13 +926,18 @@ public class IngestManager {
                     fsContentServiceResults.clear();
                 }
 
+                final FsContent fileToProcess = unit.getKey();
+                
+                progress.progress(fileToProcess.getName(), processedFiles);
+
                 for (IngestServiceFsContent service : unit.getValue()) {
                     if (isCancelled()) {
                         return null;
                     }
 
+
                     try {
-                        IngestServiceFsContent.ProcessResult result = service.process(unit.getKey());
+                        IngestServiceFsContent.ProcessResult result = service.process(fileToProcess);
                         //handle unconditional stop
                         if (result == IngestServiceFsContent.ProcessResult.STOP) {
                             break;
@@ -956,7 +961,7 @@ public class IngestManager {
                     progress.switchToIndeterminate();
                     progress.switchToDeterminate(numFsContents);
                 }
-                progress.progress(unit.getKey().getName(), ++processedFiles);
+                ++processedFiles;
                 --numFsContents;
             } //end of this fsContent
             logger.log(Level.INFO, "Done background processing");
@@ -1000,7 +1005,6 @@ public class IngestManager {
             }
 
         }
-
 
         private void handleInterruption() {
             for (IngestServiceFsContent s : fsContentServices) {
@@ -1099,10 +1103,10 @@ public class IngestManager {
                             //addImage((IngestServiceImage) service, image);
                             break;
                         case FsContent:
-                            if(fsContents == null) {
+                            if (fsContents == null) {
                                 long start = System.currentTimeMillis();
                                 fsContents = new GetAllFilesContentVisitor().visit(image);
-                                logger.info("Get all files took " + (System.currentTimeMillis()-start) + "ms");
+                                logger.info("Get all files took " + (System.currentTimeMillis() - start) + "ms");
                             }
                             //enqueue the same singleton fscontent service
                             logger.log(Level.INFO, "Adding image " + image.getName() + " with " + fsContents.size() + " number of fsContent to service " + service.getName());
@@ -1113,8 +1117,9 @@ public class IngestManager {
                     }
                     progress.progress(serviceName + " " + imageName, ++processed);
                 }
-                if(fsContents != null)
+                if (fsContents != null) {
                     fsContents.clear();
+                }
             }
 
             //logger.log(Level.INFO, fsContentQueue.printQueue());

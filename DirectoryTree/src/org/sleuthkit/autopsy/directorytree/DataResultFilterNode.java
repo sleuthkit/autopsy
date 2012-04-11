@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskException;
 
 
@@ -158,33 +159,52 @@ public class DataResultFilterNode extends FilterNode{
         @Override
         public List<Action> visit(DirectoryNode dir) {
             List<Action> actions = new ArrayList<Action>();
+            if(!dir.getDirectoryBrowseMode()) {
+                actions.add(new ViewContextAction("View File in Directory", dir));
+                actions.add(null); // creates a menu separator
+            }
             actions.add(new NewWindowViewAction("View in New Window", dir));
-            actions.add(new ChangeViewAction("View", 0, dir));
+            actions.add(null); // creates a menu separator
             actions.add(new ExtractAction("Extract Directory", dir));
-            if(!dir.getDirectoryBrowseMode())
-                actions.add(new ViewContextAction("View in Parent Directory", dir));
             return actions;
         }
         
         @Override
         public List<Action> visit(FileNode f) {
             List<Action> actions = new ArrayList<Action>();
+            if(!f.getDirectoryBrowseMode()) {
+                actions.add(new ViewContextAction("View File in Directory", f));
+                actions.add(null); // creates a menu separator
+            }
             actions.add(new NewWindowViewAction("View in New Window", f));
             actions.add(new ExternalViewerAction("Open in External Viewer", f));
+            actions.add(null); // creates a menu separator
             actions.add(new ExtractAction("Extract File", f));
-            if(!f.getDirectoryBrowseMode())
-                actions.add(new ViewContextAction("View in Parent Directory", f));
             return actions;
         }
         
         @Override
-        public List<Action> visit(BlackboardArtifactNode ba) {
+        public List<Action> visit(BlackboardArtifactNode ban) {
             List<Action> actions = new ArrayList<Action>();
-            //actions.add(new ViewAssociatedContentAction("View Associated Content", ba));
-            actions.add(new ViewContextAction("View Source in Directory", ba));
-            Content c = findLinked(ba);
-            if(c != null)
-                actions.add(new ViewContextAction("View Linked in Directory", c));
+            BlackboardArtifact ba = ban.getLookup().lookup(BlackboardArtifact.class);
+            if(ba.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
+                    || ba.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                actions.add(new ViewContextAction("View File in Directory", ban));
+            } else {
+                Content c = findLinked(ban);
+                if (c != null) {
+                    actions.add(new ViewContextAction("View File in Directory", c));
+                }
+                actions.add(new ViewContextAction("View Source File in Directory", ban));
+            }
+            File f = ban.getLookup().lookup(File.class);
+            if(f != null) {
+                actions.add(null); // creates a menu separator
+                actions.add(new NewWindowViewAction("View in New Window", new FileNode(f)));
+                actions.add(new ExternalViewerAction("Open in External Viewer", new FileNode(f)));
+                actions.add(null); // creates a menu separator
+                actions.add(new ExtractAction("Extract File", new FileNode(f)));
+            }
             return actions;
         }
         
@@ -201,16 +221,20 @@ public class DataResultFilterNode extends FilterNode{
                     if(attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
                         switch(attr.getValueType()) {
                             case INTEGER:
-                                c = art.getSleuthkitCase().getContentById(attr.getValueInt());
+                                int i = attr.getValueInt();
+                                if(i != -1)
+                                    c = art.getSleuthkitCase().getContentById(i);
                                 break;
                             case LONG:
-                                c = art.getSleuthkitCase().getContentById(attr.getValueLong());
+                                long l = attr.getValueLong();
+                                if(l != -1)
+                                    c = art.getSleuthkitCase().getContentById(l);
                                 break;
                         }
                     }
                 }
             } catch(TskException ex) {
-                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error getting linked file");
+                Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error getting linked file", ex);
             }
             return c;
         }
