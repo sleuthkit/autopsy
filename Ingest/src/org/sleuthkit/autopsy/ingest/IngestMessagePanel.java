@@ -230,7 +230,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
             } else if (i == 1) {
                 column.setPreferredWidth(((int) (d.width * 0.09)));
             } else {
-                column.setPreferredWidth(((int) (d.width * 0.71)));
+                column.setPreferredWidth(((int) (d.width * 0.67)));
             }
         }
     }

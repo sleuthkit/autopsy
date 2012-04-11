@@ -95,11 +95,13 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         rightClickMenu = new javax.swing.JPopupMenu();
         copyMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
-        backButton = new javax.swing.JButton();
-        viewContentButton = new javax.swing.JButton();
-        viewArtifactButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         messageDetailsPane = new javax.swing.JTextPane();
+        jToolBar1 = new javax.swing.JToolBar();
+        backButton = new javax.swing.JButton();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 0));
+        viewArtifactButton = new javax.swing.JButton();
+        viewContentButton = new javax.swing.JButton();
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
@@ -107,75 +109,68 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
         selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
+        messageDetailsPane.setBackground(new java.awt.Color(221, 221, 235));
+        messageDetailsPane.setBorder(null);
+        messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
+        messageDetailsPane.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        messageDetailsPane.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.toolTipText")); // NOI18N
+        jScrollPane1.setViewportView(messageDetailsPane);
+
+        jToolBar1.setFloatable(false);
+        jToolBar1.setRollover(true);
+
         backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back.png"))); // NOI18N
         backButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.backButton.text")); // NOI18N
-        backButton.setAlignmentY(0.0F);
         backButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         backButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
         backButton.setMaximumSize(new java.awt.Dimension(23, 23));
         backButton.setMinimumSize(new java.awt.Dimension(23, 23));
         backButton.setPreferredSize(new java.awt.Dimension(23, 23));
+        backButton.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back_hover.png"))); // NOI18N
+        backButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/btn_step_back_hover.png"))); // NOI18N
         backButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 backButtonActionPerformed(evt);
             }
         });
-
-        viewContentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_dir.png"))); // NOI18N
-        viewContentButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewContentButton.text")); // NOI18N
-        viewContentButton.setAlignmentY(0.0F);
-        viewContentButton.setBorder(null);
-        viewContentButton.setIconTextGap(2);
-        viewContentButton.setMargin(new java.awt.Insets(0, 2, 0, 2));
-        viewContentButton.setPreferredSize(new java.awt.Dimension(111, 23));
-        viewContentButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                viewContentButtonActionPerformed(evt);
-            }
-        });
+        jToolBar1.add(backButton);
+        jToolBar1.add(filler1);
 
         viewArtifactButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_res.png"))); // NOI18N
         viewArtifactButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewArtifactButton.text")); // NOI18N
-        viewArtifactButton.setAlignmentY(0.0F);
-        viewArtifactButton.setBorder(null);
         viewArtifactButton.setIconTextGap(2);
-        viewArtifactButton.setMargin(new java.awt.Insets(0, 2, 0, 2));
         viewArtifactButton.setPreferredSize(new java.awt.Dimension(93, 23));
         viewArtifactButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewArtifactButtonActionPerformed(evt);
             }
         });
+        jToolBar1.add(viewArtifactButton);
 
-        messageDetailsPane.setBackground(new java.awt.Color(221, 221, 235));
-        messageDetailsPane.setBorder(null);
-        messageDetailsPane.setContentType(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.contentType")); // NOI18N
-        messageDetailsPane.setFont(new java.awt.Font("Tahoma", 0, 10));
-        messageDetailsPane.setToolTipText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.messageDetailsPane.toolTipText")); // NOI18N
-        jScrollPane1.setViewportView(messageDetailsPane);
+        viewContentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_dir.png"))); // NOI18N
+        viewContentButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewContentButton.text")); // NOI18N
+        viewContentButton.setIconTextGap(2);
+        viewContentButton.setPreferredSize(new java.awt.Dimension(111, 23));
+        viewContentButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                viewContentButtonActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(viewContentButton);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 91, Short.MAX_VALUE)
-                .addComponent(viewArtifactButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(viewContentButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
+            .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 429, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 429, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(viewContentButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(viewArtifactButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 203, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -193,7 +188,9 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
     private javax.swing.JMenuItem copyMenuItem;
+    private javax.swing.Box.Filler filler1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JToolBar jToolBar1;
     private javax.swing.JTextPane messageDetailsPane;
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
