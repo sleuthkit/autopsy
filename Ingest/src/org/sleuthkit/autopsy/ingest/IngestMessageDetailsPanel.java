@@ -121,18 +121,26 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
             }
         });
 
+        viewContentButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_dir.png"))); // NOI18N
         viewContentButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewContentButton.text")); // NOI18N
         viewContentButton.setAlignmentY(0.0F);
-        viewContentButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        viewContentButton.setBorder(null);
+        viewContentButton.setIconTextGap(2);
+        viewContentButton.setMargin(new java.awt.Insets(0, 2, 0, 2));
+        viewContentButton.setPreferredSize(new java.awt.Dimension(111, 23));
         viewContentButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewContentButtonActionPerformed(evt);
             }
         });
 
+        viewArtifactButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/goto_res.png"))); // NOI18N
         viewArtifactButton.setText(org.openide.util.NbBundle.getMessage(IngestMessageDetailsPanel.class, "IngestMessageDetailsPanel.viewArtifactButton.text")); // NOI18N
         viewArtifactButton.setAlignmentY(0.0F);
-        viewArtifactButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        viewArtifactButton.setBorder(null);
+        viewArtifactButton.setIconTextGap(2);
+        viewArtifactButton.setMargin(new java.awt.Insets(0, 2, 0, 2));
+        viewArtifactButton.setPreferredSize(new java.awt.Dimension(93, 23));
         viewArtifactButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewArtifactButtonActionPerformed(evt);
@@ -152,10 +160,10 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 147, Short.MAX_VALUE)
-                .addComponent(viewArtifactButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 91, Short.MAX_VALUE)
+                .addComponent(viewArtifactButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(viewContentButton))
+                .addComponent(viewContentButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -164,8 +172,8 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(viewContentButton)
-                        .addComponent(viewArtifactButton)))
+                        .addComponent(viewContentButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(viewArtifactButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(0, 0, 0)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 203, Short.MAX_VALUE))
         );
