@@ -12,7 +12,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import org.apache.poi.ss.usermodel.Cell;
@@ -25,6 +24,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
@@ -206,6 +206,9 @@ public class reportXLS {
                          break;
                         }
               int cc = 0;
+               Long objId = entry.getKey().getObjectID();
+              FsContent file = skCase.getFsContentById(objId);
+              Long filesize = file.getSize();
                TreeMap<Integer, String> attributes = new TreeMap<Integer,String>();
                     // Get all the attributes, line them up to be added. Place empty string placeholders for each attribute type
                  int n;
@@ -248,38 +251,71 @@ public class reportXLS {
                 temp.createCell(0).setCellValue(attributes.get(1));
                 temp.createCell(1).setCellValue(attributes.get(3));
                 temp.createCell(2).setCellValue(attributes.get(4));
-                        
-                
-               // sheetBookmark.addContent(artifact);
             }
             if(entry.getKey().getArtifactTypeID() == 3){
-                
-              //  sheetCookie.addContent(artifact);
+                 countedCookie++;
+                Row temp = sheetCookie.createRow(countedCookie);
+                temp.createCell(0).setCellValue(attributes.get(1));
+                temp.createCell(1).setCellValue(attributes.get(2));
+                temp.createCell(2).setCellValue(attributes.get(3));
+                temp.createCell(3).setCellValue(attributes.get(6));
+                temp.createCell(4).setCellValue(attributes.get(4));
             }
             if(entry.getKey().getArtifactTypeID() == 4){
-                
-               // sheetHistory.addContent(artifact);
+                countedHistory++;
+                Row temp = sheetHistory.createRow(countedHistory);
+                temp.createCell(0).setCellValue(attributes.get(1));
+                temp.createCell(1).setCellValue(attributes.get(33));
+                temp.createCell(2).setCellValue(attributes.get(32));
+                temp.createCell(3).setCellValue(attributes.get(3));
+                temp.createCell(4).setCellValue(attributes.get(4));
             }
             if(entry.getKey().getArtifactTypeID() == 5){
-                 //sheetDownload.addContent(artifact);
+                countedDownload++;
+                Row temp = sheetDownload.createRow(countedDownload);
+                temp.createCell(0).setCellValue(attributes.get(8));
+                temp.createCell(1).setCellValue(attributes.get(1));
+                temp.createCell(2).setCellValue(attributes.get(33));
+                temp.createCell(3).setCellValue(attributes.get(4));
             }
             if(entry.getKey().getArtifactTypeID() == 6){
-                // sheetRecent.addContent(artifact);
+                countedRecentObjects++;
+                Row temp = sheetRecent.createRow(countedRecentObjects);
+                temp.createCell(0).setCellValue(attributes.get(3));
+                temp.createCell(1).setCellValue(attributes.get(8));
+                temp.createCell(2).setCellValue(file.getName());
+                temp.createCell(3).setCellValue(attributes.get(4));
             }
             if(entry.getKey().getArtifactTypeID() == 7){
                 // sheetTrackpoint.addContent(artifact);
             }
             if(entry.getKey().getArtifactTypeID() == 8){
-                // sheetInstalled.addContent(artifact);
+                countedInstalled++;
+                Row temp = sheetInstalled.createRow(countedInstalled);
+                temp.createCell(0).setCellValue(attributes.get(4));
+                temp.createCell(1).setCellValue(attributes.get(2));
             }
             if(entry.getKey().getArtifactTypeID() == 9){
-               //  sheetKeyword.addContent(artifact);
+               countedKeyword++;
+                Row temp = sheetKeyword.createRow(countedKeyword);
+                temp.createCell(0).setCellValue(attributes.get(10));
+                temp.createCell(1).setCellValue(attributes.get(3));
+                temp.createCell(2).setCellValue(attributes.get(12));
+                temp.createCell(3).setCellValue(attributes.get(13));
             }
             if(entry.getKey().getArtifactTypeID() == 10){
-                // sheetHash.addContent(artifact);
+                 countedHash++;
+                Row temp = sheetHash.createRow(countedHash);
+                temp.createCell(0).setCellValue(file.getName().toString());
+                temp.createCell(1).setCellValue(filesize.toString());
+                temp.createCell(2).setCellValue(attributes.get(30));
             } 
              if(entry.getKey().getArtifactTypeID() == 11){
-               //  sheetDevice.addContent(artifact);
+                 countedDevice++;
+                Row temp = sheetDevice.createRow(countedDevice);
+                temp.createCell(0).setCellValue(attributes.get(18));
+                temp.createCell(1).setCellValue(attributes.get(20));
+                temp.createCell(2).setCellValue(attributes.get(2));
             } 
               
               
