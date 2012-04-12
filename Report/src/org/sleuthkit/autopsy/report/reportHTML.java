@@ -243,8 +243,11 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                          if(tempatt.getValueString() == null || tempatt.getValueString() == "null"){
                          
                          }
-                         else if(type == 2){
-                             value  = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date ((tempatt.getValueLong())*1000));
+                         else if(type == 2 || type == 33 ){
+                             value  = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date ((tempatt.getValueLong())));
+                             if(value == null | value == ""){
+                                 value = tempatt.getValueString();
+                             }
                          }
                          else
                          {
