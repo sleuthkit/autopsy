@@ -452,6 +452,7 @@ public class ExtractIE { // implements BrowserActivity {
                                         String url[] = lineBuff[1].split("@",2);
                                         String ddtime = lineBuff[2];
                                         String actime = lineBuff[3];
+                                        Long ftime = (long)0;
                                         String user = "";
                                         String realurl = "";
                                         String domain = "";
@@ -476,7 +477,7 @@ public class ExtractIE { // implements BrowserActivity {
                                         if(!actime.isEmpty()){
                                         try{
                                         Long epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(actime).getTime();
-                                        actime = epochtime.toString();
+                                        ftime = epochtime.longValue();
                                         }
                                         catch(ParseException e){
                                               logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e.getMessage());
@@ -488,7 +489,7 @@ public class ExtractIE { // implements BrowserActivity {
                                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", realurl));
                                        
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "", actime));
+                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "", ftime));
                                         
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", "", ""));
                                    
