@@ -101,13 +101,15 @@ public class reportXLS {
          String datetime = datetimeFormat.format(date);
          String datenotime = dateFormat.format(date);
      
+         //The first summary report page
+         Sheet sheetSummary = wbtemp.createSheet("Summary"); 
          //Generate a sheet per artifact type
-         Sheet sheetGen = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getDisplayName()); 
+       //  Sheet sheetGen = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getDisplayName()); 
          Sheet sheetHash = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName()); 
          Sheet sheetDevice = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getDisplayName()); 
          Sheet sheetInstalled = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getDisplayName()); 
          Sheet sheetKeyword = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName()); 
-         Sheet sheetTrackpoint = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getDisplayName()); 
+      //  Sheet sheetTrackpoint = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getDisplayName()); 
          Sheet sheetRecent = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getDisplayName()); 
          Sheet sheetCookie = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getDisplayName()); 
          Sheet sheetBookmark = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getDisplayName()); 
@@ -124,11 +126,33 @@ public class reportXLS {
          style.setFont(font);
          //create the rows in the worksheet for our records
          //Create first row and header
-          sheetGen.createRow(0);
-          sheetGen.getRow(0).createCell(0).setCellValue("Name");
-          sheetGen.getRow(0).createCell(1).setCellValue("Value");
-          sheetGen.getRow(0).createCell(2).setCellValue("Date/Time");
+        //  sheetGen.createRow(0);
+       //   sheetGen.getRow(0).createCell(0).setCellValue("Name");
+       //   sheetGen.getRow(0).createCell(1).setCellValue("Value");
+        //  sheetGen.getRow(0).createCell(2).setCellValue("Date/Time");
           
+          sheetSummary.createRow(0).setRowStyle(style);
+          sheetSummary.getRow(0).createCell(0).setCellValue("Summary Information");
+          sheetSummary.getRow(0).createCell(1).setCellValue(caseName);
+          //add some basic information
+          sheetSummary.createRow(1);
+          sheetSummary.getRow(1).createCell(0).setCellValue("# of Images");
+          sheetSummary.getRow(1).createCell(1).setCellValue(imagecount);
+          sheetSummary.createRow(2);
+          sheetSummary.getRow(2).createCell(0).setCellValue("Filesystems found");
+          sheetSummary.getRow(2).createCell(1).setCellValue(imagecount);
+          sheetSummary.createRow(3);
+          sheetSummary.getRow(3).createCell(0).setCellValue("# of Files");
+          sheetSummary.getRow(3).createCell(1).setCellValue(totalfiles);
+          sheetSummary.createRow(4);
+          sheetSummary.getRow(4).createCell(0).setCellValue("# of Directories");
+          sheetSummary.getRow(4).createCell(1).setCellValue(totaldirs);
+          sheetSummary.createRow(5);
+          sheetSummary.getRow(5).createCell(0).setCellValue("Date/Time");
+          sheetSummary.getRow(5).createCell(1).setCellValue(datetime);
+          
+         
+         
           sheetHash.createRow(0).setRowStyle(style);
           sheetHash.getRow(0).createCell(0).setCellValue("Name");
           sheetHash.getRow(0).createCell(1).setCellValue("Size");
@@ -181,9 +205,12 @@ public class reportXLS {
           
           for(int i = 0;i < wbtemp.getNumberOfSheets();i++){
               Sheet tempsheet = wbtemp.getSheetAt(i);
+              tempsheet.setAutobreaks(true);
+              
                for (Row temprow : tempsheet){
                  for (Cell cell : temprow) {
                    cell.setCellStyle(style);
+                   tempsheet.autoSizeColumn(cell.getColumnIndex());
                  }
                }
           }
@@ -242,7 +269,7 @@ public class reportXLS {
 
             if(entry.getKey().getArtifactTypeID() == 1){
                countedGen++;
-               Row temp = sheetGen.getRow(countedGen);
+             //  Row temp = sheetGen.getRow(countedGen);
            
             }
             if(entry.getKey().getArtifactTypeID() == 2){

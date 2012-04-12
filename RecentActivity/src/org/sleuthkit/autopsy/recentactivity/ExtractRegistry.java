@@ -198,7 +198,7 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
              File regfile = new File(regRecord);
           
            FileInputStream fstream = new FileInputStream(regfile);
-           InputStreamReader fstreamReader = new InputStreamReader(fstream, "UTF-16");
+           InputStreamReader fstreamReader = new InputStreamReader(fstream, "UTF-8");
            BufferedReader input = new BufferedReader(fstreamReader);
            //logger.log(Level.INFO, "using encoding " + fstreamReader.getEncoding());
            String regString = new Scanner(input).useDelimiter("\\Z").next();
