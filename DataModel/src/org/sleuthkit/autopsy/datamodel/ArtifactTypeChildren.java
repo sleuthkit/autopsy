@@ -44,7 +44,8 @@ class ArtifactTypeChildren extends ChildFactory<BlackboardArtifact>{
     @Override
     protected boolean createKeys(List<BlackboardArtifact> list) {
         try {
-            list.addAll(skCase.getBlackboardArtifacts(type.getTypeID()));
+            List<BlackboardArtifact> arts = skCase.getBlackboardArtifacts(type.getTypeID());
+            list.addAll(arts.subList(0, Math.min(arts.size(), getTypeLimit(type))));
         } catch (TskException ex) {
             Logger.getLogger(ArtifactTypeChildren.class.getName())
                     .log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex);
@@ -55,6 +56,17 @@ class ArtifactTypeChildren extends ChildFactory<BlackboardArtifact>{
     @Override
     protected Node createNodeForKey(BlackboardArtifact key){
         return new BlackboardArtifactNode(key);
+    }
+    
+    private static int getTypeLimit(BlackboardArtifact.ARTIFACT_TYPE type) {
+        switch(type) {
+            case TSK_WEB_HISTORY:
+                return 15000;
+            case TSK_WEB_COOKIE:
+                return 10000;
+            default:
+                return 2000;
+        }
     }
     
 }

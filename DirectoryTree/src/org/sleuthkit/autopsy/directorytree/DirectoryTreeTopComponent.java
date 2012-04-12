@@ -622,16 +622,18 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             Node originNode = origin.getNode();
 
                             int count = originNode.getChildren().getNodesCount(true);
-                            if (count > 1000) {
+                            if (count == 2000 || count == 15000 || count == 10000) {
                                 DirectoryTreeTopComponent.this.setCursor(null);
-                                int choice = JOptionPane.showConfirmDialog(caller, "Note: The selected location contains " + count + " items.\n" +
+                                /*int choice = JOptionPane.showConfirmDialog(caller, "Note: The selected location contains " + count + " items.\n" +
                                 "It may take some time to display them.\n\n" +
                                 "Also note that there is a limitation in " + Case.getAppName() + " that will make certain functions very slow,\n" +
                                 "thumbnail view in particular (which should be fixed in a future version).\n" +
                                 "Do you want to continue loading these objects?");
                                 if(choice != JOptionPane.OK_OPTION) {
-                                    return;
-                                }
+                                    return;*/
+                                JOptionPane.showMessageDialog(caller, "Note: The selected location contains more than " + count + " items.\n" +
+                                        "The number of results displayed may have been limited to preserve stability.\n" + 
+                                        "This is a limitation of " + Case.getAppName() + " that will be fixed in a future version");
                                 DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                             }
                             DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
