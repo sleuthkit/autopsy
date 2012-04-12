@@ -114,7 +114,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
                         if(attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID() ||
                                 attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
                             SimpleDateFormat formatter = new SimpleDateFormat("MM-dd-yyyy HH:mm");
-                            map.put(attribute.getAttributeTypeID(), formatter.format(new Date(attribute.getValueLong())));
+                            map.put(attribute.getAttributeTypeID(), formatter.format(new Date(attribute.getValueLong()*1000)));
                         } else
                             map.put(attribute.getAttributeTypeID(), attribute.getValueLong());
                         break;
