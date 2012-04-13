@@ -51,6 +51,8 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     BlackboardArtifact artifact;
     Content associated;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
+    
+    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");;
 
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         super(Children.LEAF, getLookups(artifact));
@@ -113,8 +115,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
                     case LONG:
                         if(attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID() ||
                                 attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
-                            SimpleDateFormat formatter = new SimpleDateFormat("MM-dd-yyyy HH:mm");
-                            map.put(attribute.getAttributeTypeID(), formatter.format(new Date(attribute.getValueLong())));
+                            map.put(attribute.getAttributeTypeID(), dateFormatter.format(new Date(attribute.getValueLong())));
                         } else
                             map.put(attribute.getAttributeTypeID(), attribute.getValueLong());
                         break;
