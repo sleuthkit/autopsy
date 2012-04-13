@@ -44,7 +44,7 @@ class HashDbMgmtPanel extends javax.swing.JPanel {
     private static final String NSRL_NAME = "NIST NSRL Database";
     private static final String NSRL_DESC = "Hashes that are known good and bad.";
     private static final String KNOWN_BAD_NAME = "Known Bad Database";
-    private static final String KNOWN_BAD_DESC = "Hashes that are known bad.";
+    private static final String KNOWN_BAD_DESC = "Hashes that are known bad (EnCase or md5sum format)";
     private static final String HASH_DATABASE_TITLE = "Hash Database Configuration";
     private JLabel introText1;
     private JLabel introText2;
