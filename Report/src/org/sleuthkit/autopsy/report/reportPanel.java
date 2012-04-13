@@ -133,7 +133,7 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     
     private void saveReportAction(){
         
-        int option = jFileChooser1.showOpenDialog(this);  
+        int option = jFileChooser1.showSaveDialog(this);
         if(option == jFileChooser1.APPROVE_OPTION){  
         if(jFileChooser1.getSelectedFile()!=null){  
         String path = jFileChooser1.getSelectedFile().toString();
