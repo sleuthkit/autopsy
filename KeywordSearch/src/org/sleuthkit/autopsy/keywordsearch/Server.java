@@ -59,6 +59,8 @@ class Server {
     private static final String DEFAULT_CORE_NAME = "coreCase";
     // TODO: DEFAULT_CORE_NAME needs to be replaced with unique names to support multiple open cases
     public static final String CORE_EVT = "CORE_EVT";
+    
+    private String javaPath = "java";
 
     public enum CORE_EVT_STATES {
 
@@ -83,6 +85,15 @@ class Server {
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false);
         instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr";
+        
+        File rootPath = solrFolder.getParentFile().getParentFile();
+        File jrePath = new File(rootPath.getAbsolutePath() + File.separator + "jre6");
+        logger.log(Level.INFO, "JREPATH: " + jrePath.getAbsolutePath());
+        if (jrePath != null && jrePath.exists() && jrePath.isDirectory()) {
+            javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java";
+        }
+        //else use system installed java
+        logger.log(Level.INFO, "JAVA BIN PATH: " + javaPath);
     }
 
     @Override
@@ -151,7 +162,7 @@ class Server {
     synchronized void start() {
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
         try {
-            Process start = Runtime.getRuntime().exec("java -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar", null, solrFolder);
+            Process start = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar", null, solrFolder);
 
             // Handle output to prevent process from blocking
             (new InputStreamPrinterThread(start.getInputStream(), "input")).start();
@@ -172,7 +183,7 @@ class Server {
     synchronized boolean stop() {
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
-            Process stop = Runtime.getRuntime().exec("java -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar --stop", null, solrFolder);
+            Process stop = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar --stop", null, solrFolder);
             return stop.waitFor() == 0;
 
         } catch (InterruptedException ex) {
