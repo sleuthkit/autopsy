@@ -60,7 +60,7 @@ public class Firefox {
             }     
             List<FsContent> FFSqlitedb;  
 
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%places.sqlite%' and parent_path LIKE '%Firefox%'" + allFS);
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%places.sqlite%' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             Statement s = rs.getStatement();
             rs.close();
@@ -168,7 +168,7 @@ public class Firefox {
             }
             List<FsContent> FFSqlitedb;  
 
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%cookies.sqlite%' and parent_path LIKE '%Firefox%'" + allFS);
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%cookies.sqlite%' and name NOT LIKE '%journal%' parent_path LIKE '%Firefox%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);   
             rs.close();
             rs.getStatement().close();  
@@ -239,7 +239,7 @@ public class Firefox {
                     allFS += ")";
             }
             List<FsContent> FFSqlitedb;  
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'downloads.sqlite' and parent_path LIKE '%Firefox%'" + allFS);
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'downloads.sqlite' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             rs.close();
             rs.getStatement().close();  
@@ -262,12 +262,14 @@ public class Firefox {
                    ResultSet temprs = tempdbconnect.executeQry(ffdownloadquery);  
                    while(temprs.next()) 
                    {
+                       
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD); 
                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",temprs.getLong("startTime")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("source") != null) ? temprs.getString("source") : "")));
                      //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "")));
                      String urldecodedtarget = URLDecoder.decode(temprs.getString("target").replaceAll("file:///", ""), "UTF-8");
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),"RecentActivity","",Util.findID(urldecodedtarget)));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", "", urldecodedtarget));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",Util.extractDomain(temprs.getString("source"))));
 
