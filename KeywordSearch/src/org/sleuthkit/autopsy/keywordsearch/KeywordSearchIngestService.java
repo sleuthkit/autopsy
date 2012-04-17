@@ -513,10 +513,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             String fileName = fsContent.getName();
             if (!stringsExtracted) {
                 if (fsContent.getSize() < MAX_STRING_EXTRACT_SIZE) {
-                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing strings: " + fileName, "Error encountered extracting string content from this file (of unsupported format).  The file will not be included in the search results."));
+                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing strings: " + fileName, "Error encountered extracting string content from this file (of unsupported format).  The file will not be included in the search results.<br />File: " + fileName));
                 }
                 else {
-                    managerProxy.postMessage(IngestMessage.createMessage(++messageID, IngestMessage.MessageType.INFO, KeywordSearchIngestService.instance, "Skipped indexing strings: " + fileName, "Skipped extracting string content from this file (of unsupported format) due to the file size.  The file will not be included in the search results."));
+                    managerProxy.postMessage(IngestMessage.createMessage(++messageID, IngestMessage.MessageType.INFO, KeywordSearchIngestService.instance, "Skipped indexing strings: " + fileName, "Skipped extracting string content from this file (of unsupported format) due to the file size.  The file will not be included in the search results.<br />File: " + fileName));
                 }
             }
 
@@ -524,9 +524,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         private void postIngestibleErrorMessage(boolean stringsExtracted, String fileName) {
             if (stringsExtracted) {
-                managerProxy.postMessage(IngestMessage.createWarningMessage(++messageID, KeywordSearchIngestService.instance, "Indexed strings only: " + fileName, "Error encountered extracting file content.  Used string extraction to index strings for partial analysis on this file."));
+                managerProxy.postMessage(IngestMessage.createWarningMessage(++messageID, KeywordSearchIngestService.instance, "Indexed strings only: " + fileName, "Error encountered extracting file content.  Used string extraction to index strings for partial analysis on this file.<br />File: " + fileName));
             } else {
-                managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing: " + fileName, "Error encountered extracting file content and strings from this file.  The file will not be included in the search results."));
+                managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing: " + fileName, "Error encountered extracting file content and strings from this file.  The file will not be included in the search results.<br />File: " + fileName));
             }
         }
 
