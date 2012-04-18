@@ -245,7 +245,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                          }
                          else if(type == 2 || type == 33 ){
                              value  = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date ((tempatt.getValueLong())));
-                             if(value == null | "".equals(value)){
+                             if(value == null || "".equals(value)){
                                  value = tempatt.getValueString();
                              }
                          }
