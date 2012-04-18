@@ -64,7 +64,7 @@ public class Chrome {
                     allFS += ")";
             }
             
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' AND parent_path LIKE '%Chrome%'" + allFS);
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' and name NOT LIKE '%journal%' AND parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             ChromeCount = FFSqlitedb.size();
               
@@ -138,7 +138,7 @@ public class Chrome {
                     allFS += ")";
             }
             List<FsContent> FFSqlitedb;  
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%Cookies%' and parent_path LIKE '%Chrome%'" + allFS);
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%Cookies%' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
              
             rs.close();
@@ -209,7 +209,7 @@ public class Chrome {
                     allFS += ")";
             }
             List<FsContent> FFSqlitedb;  
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'Bookmarks' and parent_path LIKE '%Chrome%'" + allFS);
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'Bookmarks' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             rs.close();
             rs.getStatement().close();  
@@ -289,7 +289,7 @@ public class Chrome {
                 if(i == image.size()-1)
                     allFS += ")";
             }
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' and parent_path LIKE '%Chrome%'" + allFS);
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' and name NOT LIKE '%journal%' and  parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             rs.close();
             rs.getStatement().close();  
@@ -319,6 +319,7 @@ public class Chrome {
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("url") != null) ? temprs.getString("url") : "")));
                      //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "")));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", "", temprs.getString("full_path")));
+                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),"RecentActivity","",Util.findID(temprs.getString("full_path"))));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
                      bbart.addAttributes(bbattributes);
@@ -361,7 +362,7 @@ public class Chrome {
                     allFS += ")";
             }
             List<FsContent> FFSqlitedb;  
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'signons.sqlite' and parent_path LIKE '%Chrome%'" + allFS);
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'signons.sqlite' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             rs.close();
             rs.getStatement().close();  
