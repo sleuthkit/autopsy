@@ -39,7 +39,7 @@ public class reportPanelAction {
 
              
             // Generate the reports and create the hashmap
-        final HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap();
+        final HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
          report bbreport = new report();
          //see what reports we need to run and run them
          //Set progress bar to move while doing this
@@ -80,8 +80,7 @@ public class reportPanelAction {
                    public void run()
                    { 
                     reportHTML htmlReport = new reportHTML(Results,rr);
-                    BrowserControl.openUrl(htmlReport.htmlPath);
-                   // viewReport.append(reportHTML.unformatted_header.toString());
+                   
                    }
                 });
                 Thread xlsthread = new Thread(new Runnable()

@@ -18,6 +18,8 @@ import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import org.jdom.output.XMLOutputter;
@@ -134,7 +136,7 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     private void saveReportAction(){
         
         int option = jFileChooser1.showSaveDialog(this);
-        if(option == jFileChooser1.APPROVE_OPTION){  
+        if(option == JFileChooser.APPROVE_OPTION){  
         if(jFileChooser1.getSelectedFile()!=null){  
         String path = jFileChooser1.getSelectedFile().toString();
         exportReport(path);
@@ -165,7 +167,7 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
                   serializer.output(reportXML.xmldoc, xmlout);
                   xmlout.flush();
                   xmlout.close();
-                   jOptionPane1.showMessageDialog(this, "Report has been successfully saved!");
+                   JOptionPane.showMessageDialog(this, "Report has been successfully saved!");
                 }
             catch (IOException e) {
               System.err.println(e);

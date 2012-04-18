@@ -386,11 +386,11 @@ public class ExtractIE { // implements BrowserActivity {
             StringBuilder command = new StringBuilder();
 
             command.append(" -cp");
-            command.append(" \"" + PASCO_LIB_PATH + "\"");
+            command.append(" \"").append(PASCO_LIB_PATH).append("\"");
             command.append(" isi.pasco2.Main");
             command.append(" -T history");
-            command.append(" \"" + indexFilePath + "\"");
-            command.append(" > \"" + PASCO_RESULTS_PATH + "\\pasco2Result." + Integer.toString(fileIndex) + ".txt\"");
+            command.append(" \"").append(indexFilePath).append("\"");
+            command.append(" > \"").append(PASCO_RESULTS_PATH).append("\\pasco2Result.").append(Integer.toString(fileIndex)).append(".txt\"");
            // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String cmd = command.toString();
              JavaSystemCaller.Exec.execute("\"java "+cmd+ "\"");
