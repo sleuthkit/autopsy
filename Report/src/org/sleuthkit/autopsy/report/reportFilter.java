@@ -21,7 +21,7 @@ import org.sleuthkit.datamodel.TskException;
  * @author Alex
  */
 public class reportFilter extends javax.swing.JPanel {
-  public static ArrayList<Integer> filters = new ArrayList();
+  public static ArrayList<Integer> filters = new ArrayList<Integer>();
   public final reportFilter panel = this;
   reportPanelAction rpa = new reportPanelAction();
   public static boolean cancel = false;

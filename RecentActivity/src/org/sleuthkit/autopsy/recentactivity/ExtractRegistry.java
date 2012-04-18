@@ -214,30 +214,30 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
            SAXBuilder sb = new SAXBuilder();
            Document document = sb.build(new StringReader(stringdoc));
            Element root = document.getRootElement();
-           List types = root.getChildren();
-           Iterator iterator = types.iterator();
+           List<Element> types = root.getChildren();
+           Iterator<Element> iterator = types.iterator();
            //for(int i = 0; i < types.size(); i++)
            //for(Element tempnode : types)
             while (iterator.hasNext()) {
               String time = "";
                String context = "";
-               Element tempnode = (Element) iterator.next();
+               Element tempnode = iterator.next();
               // Element tempnode = types.get(i);
                context = tempnode.getName();
                Element timenode = tempnode.getChild("time");
                     time = timenode.getTextTrim();
                
                Element artroot = tempnode.getChild("artifacts");
-               List artlist = artroot.getChildren();
+               List<Element> artlist = artroot.getChildren();
                String winver = "";
                String installdate = "";
             if(artlist.isEmpty()){   
             }
             else{
             
-              Iterator aiterator = artlist.iterator();
+              Iterator<Element> aiterator = artlist.iterator();
                while (aiterator.hasNext()) {
-                 Element artnode = (Element) aiterator.next();
+                 Element artnode = aiterator.next();
                  String name = artnode.getAttributeValue("name");
                  String value = artnode.getTextTrim();  
                  Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();

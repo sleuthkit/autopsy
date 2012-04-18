@@ -6,7 +6,6 @@ package org.sleuthkit.autopsy.report;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,7 +25,7 @@ private void report(){
 }
 @Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getGenInfo() {
-    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap();
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
@@ -48,7 +47,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getGenInfo() {
 
 @Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebHistory() {
-    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap();
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
@@ -69,7 +68,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebHistory(
 }
 @Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebCookie() {
-    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap();
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
@@ -90,7 +89,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebCookie()
 }
 @Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebBookmark() {
-    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap();
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
@@ -112,7 +111,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebBookmark
 
 @Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebDownload() {
-    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap();
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
@@ -134,7 +133,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebDownload
 
 @Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getRecentObject() {
-    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap();
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
@@ -156,7 +155,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getRecentObjec
 
 @Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getKeywordHit() {
-    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap();
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
@@ -177,7 +176,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getKeywordHit(
 }
 @Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getHashHit() {
-    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap();
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
@@ -198,7 +197,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getHashHit() {
 }
 @Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getInstalledProg() {
-    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap();
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
@@ -220,7 +219,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getInstalledPr
 
 @Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getDevices() {
-    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap();
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
@@ -243,7 +242,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getDevices() {
 @Override
 public String getGroupedKeywordHit() {
     StringBuilder table = new StringBuilder();
-    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap();
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try

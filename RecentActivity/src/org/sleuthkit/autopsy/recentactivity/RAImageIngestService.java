@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -27,13 +26,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceImage;
-import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.FileSystem;

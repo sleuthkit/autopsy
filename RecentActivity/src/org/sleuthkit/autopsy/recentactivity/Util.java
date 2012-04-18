@@ -63,7 +63,7 @@ public static String readFile(String path) throws IOException {
 public static boolean imgpathexists(String path){
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-    
+    Boolean rt = false;
     int count = 0;
     try { 
      List<FsContent> FFSqlitedb;
@@ -72,25 +72,23 @@ public static boolean imgpathexists(String path){
      count = FFSqlitedb.size();
      final Statement s = rs.getStatement();
      rs.close();
-     if (s != null)
+     if (s != null){
         s.close();
+     }
+     if(count > 0)
+            {
+            rt = true;
+            }
+        else
+            {
+            rt = false;
+            }
     }
     catch (SQLException ex) 
         {
            //logger.log(Level.WARNING, "Error while trying to contact SQLite db.", ex);
         }
-    finally {
-        
-        if(count > 0)
-            {
-            return true;
-            }
-        else
-            {
-             return false;
-            }
-        }    
-
+        return rt;   
     }
 
 public static String extractDomain(String value){

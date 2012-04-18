@@ -240,12 +240,12 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                                  }
                          String value = "";
                          int type = tempatt.getAttributeTypeID();
-                         if(tempatt.getValueString() == null || tempatt.getValueString() == "null"){
+                         if(tempatt.getValueString() == null || "null".equals(tempatt.getValueString())){
                          
                          }
                          else if(type == 2 || type == 33 ){
                              value  = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date ((tempatt.getValueLong())));
-                             if(value == null | value == ""){
+                             if(value == null | "".equals(value)){
                                  value = tempatt.getValueString();
                              }
                          }
