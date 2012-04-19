@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * list of root Content objects for the tree.
  */
 public class RootContentChildren extends AbstractContentChildren {
-    private Collection contentKeys;
+    private Collection<? extends Object> contentKeys;
     
     /**
      * @param contentKeys root Content objects for the Node tree

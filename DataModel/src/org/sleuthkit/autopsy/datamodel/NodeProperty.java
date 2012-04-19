@@ -29,7 +29,8 @@ import org.openide.nodes.PropertySupport;
 class NodeProperty extends PropertySupport.ReadOnly {
 
     private Object value;
-
+    
+    @SuppressWarnings({"unchecked"})
     NodeProperty(String name, String displayName, String desc, Object value) {
         super(name, value.getClass(), displayName, desc);
         setValue("suppressCustomEditor", Boolean.TRUE); // remove the "..." (editing) button
