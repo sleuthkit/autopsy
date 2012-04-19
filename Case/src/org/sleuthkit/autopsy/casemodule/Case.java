@@ -719,8 +719,8 @@ public class Case {
         DateFormat dfm = new SimpleDateFormat("z");
         dfm.setTimeZone(zone);
         boolean hasDaylight = zone.useDaylightTime();
-        String first = dfm.format(new Date(2010, 1, 1)).substring(0, 3); // make it only 3 letters code
-        String second = dfm.format(new Date(2011, 6, 6)).substring(0, 3); // make it only 3 letters code
+        String first = dfm.format(new GregorianCalendar(2010, 1, 1).getTime()).substring(0, 3); // make it only 3 letters code
+        String second = dfm.format(new GregorianCalendar(2011, 6, 6).getTime()).substring(0, 3); // make it only 3 letters code
         int mid = hour * -1;
         result = first + Integer.toString(mid);
         if (hasDaylight) {
