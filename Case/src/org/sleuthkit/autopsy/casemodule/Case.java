@@ -247,7 +247,7 @@ public class Case {
         try {
             imgPaths = db.getImagePaths();
         } catch (TskException ex) {
-            Logger.getLogger(Case.class.getName()).log(Level.INFO, "Error getting image paths", ex);
+            Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error getting image paths", ex);
         }
         return imgPaths;
     }
@@ -260,7 +260,7 @@ public class Case {
         try {
             imgPaths = db.getImagePaths();
         } catch (TskException ex) {
-            Logger.getLogger(Case.class.getName()).log(Level.INFO, "Error getting image paths", ex);
+            Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error getting image paths", ex);
         }
         for (Map.Entry<Long, List<String>> entry : imgPaths.entrySet()) {
             JFileChooser fc = new JFileChooser();

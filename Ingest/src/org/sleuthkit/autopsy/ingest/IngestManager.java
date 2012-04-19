@@ -950,7 +950,7 @@ public class IngestManager {
                         }
 
                     } catch (Exception e) {
-                        logger.log(Level.INFO, "Exception from service: " + service.getName(), e);
+                        logger.log(Level.WARNING, "Exception from service: " + service.getName(), e);
                         stats.addError(service);
                     }
                 }

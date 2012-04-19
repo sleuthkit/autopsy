@@ -80,7 +80,7 @@ public final class CaseOpenAction implements ActionListener {
                     StartupWindow.getInstance().close();
                 } catch (Exception ex) {
                     // no need to show the error message to the user.
-                    logger.log(Level.INFO, "Error closing startup window.", ex);
+                    logger.log(Level.WARNING, "Error closing startup window.", ex);
                 }
                 try {
                     Case.open(path); // open the case

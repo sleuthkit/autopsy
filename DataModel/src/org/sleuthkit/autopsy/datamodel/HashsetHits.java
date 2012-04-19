@@ -62,7 +62,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             try {
                 arts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID());
             } catch (TskException ex) {
-                logger.log(Level.INFO, "Error retrieving artifacts", ex);
+                logger.log(Level.WARNING, "Error retrieving artifacts", ex);
             }
             super.setDisplayName(DISPLAY_NAME + " (" + arts.size() + ")");
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png");
@@ -98,7 +98,7 @@ public class HashsetHits implements AutopsyVisitableItem {
             try {
                 list.addAll(skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()));
             } catch (TskException ex) {
-                logger.log(Level.INFO, "Error getting Blackboard Artifacts", ex);
+                logger.log(Level.WARNING, "Error getting Blackboard Artifacts", ex);
             }
             return true;
         }

@@ -349,7 +349,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         try {
             ContentUtils.writeToFile(file, tempFile);
         } catch (IOException ex) {
-            logger.log(Level.INFO, "Error buffering file", ex);
+            logger.log(Level.WARNING, "Error buffering file", ex);
         }
         return tempFile;
     }

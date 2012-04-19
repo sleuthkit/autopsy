@@ -80,7 +80,7 @@ public class IngestImageThread extends SwingWorker {
         try {
             service.process(image, controller);
         } catch (Exception e) {
-            logger.log(Level.INFO, "Exception in service: " + service.getName() + " image: " + image.getName(), e);
+            logger.log(Level.WARNING, "Exception in service: " + service.getName() + " image: " + image.getName(), e);
         }
         logger.log(Level.INFO,
                 "Done background processing");

@@ -48,7 +48,7 @@ public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNod
             this.childCount = skCase.getBlackboardArtifacts(type.getTypeID()).size();
         } catch (TskException ex) {
             Logger.getLogger(ArtifactTypeNode.class.getName())
-                    .log(Level.INFO, "Error getting child count", ex);
+                    .log(Level.WARNING, "Error getting child count", ex);
         }
         super.setDisplayName(type.getDisplayName() + " (" + childCount + ")");
         this.type = type;

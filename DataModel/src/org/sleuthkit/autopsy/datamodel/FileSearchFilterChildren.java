@@ -83,7 +83,7 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
             if (s != null)
                 s.close();
         } catch (SQLException ex) {
-            logger.log(Level.INFO, "Couldn't get search results", ex);
+            logger.log(Level.WARNING, "Couldn't get search results", ex);
         }
         return list;
         
