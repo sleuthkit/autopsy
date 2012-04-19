@@ -261,8 +261,8 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
                 return;
             }
 
-            if (writer.writeLists(toImportConfirmed)) {
-                KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword list imported", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+            if (!writer.writeLists(toImportConfirmed)) {
+                KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword list not imported", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             }
 
         }
