@@ -1,6 +1,20 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.corecomponents;
 
@@ -10,7 +24,6 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BoxLayout;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.gstreamer.*;
@@ -33,6 +46,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     private static final String[] IMAGES = new String[]{ ".jpg", ".jpeg", ".png", ".gif", ".jpe", ".bmp"};
     private static final String[] VIDEOS = new String[]{ ".mov", ".m4v", ".flv", ".mp4", ".3gp"};
+    private static final String[] AUDIOS = new String[]{ ".mp3", ".wav"};
     private static final Logger logger = Logger.getLogger(DataContentViewerMedia.class.getName());
     private VideoComponent videoComponent; 
     private PlayBin2 playbin2;
@@ -210,10 +224,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         File file = selectedNode.getLookup().lookup(File.class);
         resetVideo();
         setDataView(file);
-        boolean isVid = isVid(file.getName());
-        pauseButton.setVisible(isVid);
-        progressLabel.setVisible(isVid);
-        progressSlider.setVisible(isVid);
+        boolean isVidOrAud = containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS);
+        pauseButton.setVisible(isVidOrAud);
+        progressLabel.setVisible(isVidOrAud);
+        progressSlider.setVisible(isVidOrAud);
     }
 
     private void setDataView(File file) {
@@ -221,7 +235,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             return;
         this.currentFile = file;
         
-        if(!isVid(file.getName())) {
+        if(containsExt(file.getName(), IMAGES)) {
             java.io.File ioFile = extractFile(file);
             playbin2.setInputFile(ioFile);
             playbin2.play();
@@ -292,23 +306,19 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         }
 
         String name = file.getName().toLowerCase();
-        int extStart = name.lastIndexOf(".");
-        String ext = "";
-        if (extStart != -1) {
-            ext = name.substring(extStart, name.length());
-        }
+        
         if(file.getSize() == 0) {
             resetVideo();
             return false;
         }
         
-        if(!Arrays.asList(IMAGES).contains(ext) && !Arrays.asList(VIDEOS).contains(ext)) {
+        if(containsExt(name, IMAGES) || containsExt(name, AUDIOS) || containsExt(name, VIDEOS)) {
             resetVideo();
-            return false;
+            return true;
         }
         
         resetVideo();
-        return true;
+        return false;
     }
 
     @Override
@@ -316,13 +326,13 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         return isSupported;
     }
     
-    private static boolean isVid(String name) {
+    private static boolean containsExt(String name, String[] exts) {
         int extStart = name.lastIndexOf(".");
         String ext = "";
         if (extStart != -1) {
             ext = name.substring(extStart, name.length());
         }
-        return Arrays.asList(VIDEOS).contains(ext);
+        return Arrays.asList(exts).contains(ext);
     }
     
     private java.io.File extractFile(File file) {
