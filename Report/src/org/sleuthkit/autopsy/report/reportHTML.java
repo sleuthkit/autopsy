@@ -404,7 +404,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             catch(Exception e)
             {
 
-                Logger.getLogger(reportHTML.class.getName()).log(Level.INFO, "Exception occurred", e);
+                Logger.getLogger(reportHTML.class.getName()).log(Level.WARNING, "Exception occurred", e);
             }
         }
 

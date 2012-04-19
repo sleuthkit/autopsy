@@ -27,6 +27,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -75,7 +76,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
     
     
     /** Creates new form CasePropertiesForm */
-    CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Integer,String[]> imgPaths) {
+    CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Long, List<String>> imgPaths) {
         initComponents();
         caseNameTextField.setText(currentCase.getName());
         caseNumberTextField.setText(currentCase.getNumber());
@@ -92,8 +93,8 @@ class CasePropertiesForm extends javax.swing.JPanel{
         String[][] rows = new String[totalImages][];
         
         int i = 0;
-        for(int key : imgPaths.keySet()){
-            String path = imgPaths.get(key)[0];
+        for(long key : imgPaths.keySet()){
+            String path = imgPaths.get(key).get(0);
             String shortenPath = shrinkPath(path, 70);
             rows[i++] = new String[]{shortenPath};
         }

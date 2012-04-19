@@ -72,13 +72,13 @@ public class Installer extends ModuleInstall {
                 try {
                     UIManager.setLookAndFeel(info.getClassName());
                 } catch (ClassNotFoundException ex) {
-                    logger.log(Level.INFO, "Unable to set theme. ", ex);
+                    logger.log(Level.WARNING, "Unable to set theme. ", ex);
                 } catch (InstantiationException ex) {
-                    logger.log(Level.INFO, "Unable to set theme. ", ex);
+                    logger.log(Level.WARNING, "Unable to set theme. ", ex);
                 } catch (IllegalAccessException ex) {
-                    logger.log(Level.INFO, "Unable to set theme. ", ex);
+                    logger.log(Level.WARNING, "Unable to set theme. ", ex);
                 } catch (UnsupportedLookAndFeelException ex) {
-                    logger.log(Level.INFO, "Unable to set theme. ", ex);
+                    logger.log(Level.WARNING, "Unable to set theme. ", ex);
                 }
                 break;
             }
