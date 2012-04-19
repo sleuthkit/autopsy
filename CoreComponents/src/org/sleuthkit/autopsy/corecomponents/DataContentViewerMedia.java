@@ -5,20 +5,23 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Component;
-import java.io.BufferedInputStream;
-import java.io.InputStream;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BoxLayout;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.gstreamer.*;
-import org.gstreamer.elements.DecodeBin2;
-import org.gstreamer.io.InputStreamSrc;
+import org.gstreamer.elements.PlayBin2;
 import org.gstreamer.swing.VideoComponent;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -32,10 +35,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private static final String[] VIDEOS = new String[]{ ".mov", ".m4v", ".flv", ".mp4", ".3gp"};
     private static final Logger logger = Logger.getLogger(DataContentViewerMedia.class.getName());
     private VideoComponent videoComponent; 
-    private Pipeline pipe;
-    private Element source = null;
-    private DecodeBin2 decodeBin;
-    private Bin audioBin;
+    private PlayBin2 playbin2;
+    private File currentFile;
+    private long durationMillis = 0;
+    private boolean autoTracking = false; // true if the slider is moving automatically
     /**
      * Creates new form DataContentViewerVideo
      */
@@ -47,6 +50,21 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private void customizeComponents() {
         Gst.init();
         resetVideo();
+        progressSlider.addChangeListener(new ChangeListener() {
+
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    int time = progressSlider.getValue();
+                    if(playbin2 != null && !autoTracking) {
+                        State orig = playbin2.getState();
+                        playbin2.pause();
+                        playbin2.getState();
+                        playbin2.seek(ClockTime.fromMillis(time));
+                        playbin2.setState(orig);
+                    }
+                }
+                
+            });
     }
 
     /**
@@ -60,6 +78,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
         pauseButton = new javax.swing.JButton();
         videoPanel = new javax.swing.JPanel();
+        progressSlider = new javax.swing.JSlider();
+        progressLabel = new javax.swing.JLabel();
 
         pauseButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerMedia.class, "DataContentViewerMedia.pauseButton.text")); // NOI18N
         pauseButton.addActionListener(new java.awt.event.ActionListener() {
@@ -79,6 +99,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             .addGap(0, 242, Short.MAX_VALUE)
         );
 
+        progressLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerMedia.class, "DataContentViewerMedia.progressLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -86,29 +108,95 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(pauseButton)
-                .addGap(240, 240, 240))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(progressLabel)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pauseButton))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(pauseButton)
+                    .addComponent(progressLabel)
+                    .addComponent(progressSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void pauseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseButtonActionPerformed
-        if(pipe.isPlaying()){
-            pipe.pause();
+        if(playbin2.getState().equals(State.PLAYING)){
+            playbin2.pause();
             pauseButton.setText("►");
-        } else {
-            pipe.play();
+        } else if(playbin2.getState().equals(State.PAUSED)) {
+            playbin2.play();
             pauseButton.setText("||");
+        } else {
+            progressLabel.setText("Buffering...");
+            java.io.File ioFile = extractFile(currentFile);
+            if(ioFile == null || !ioFile.exists()) {
+                progressLabel.setText("Error buffering file");
+                return;
+            }
+            playbin2.setInputFile(ioFile);
+            playbin2.play(); // must play, then pause and get state to get duration.
+            playbin2.pause();
+            playbin2.getState();
+            String duration = playbin2.queryDuration().toString();
+            durationMillis = playbin2.queryDuration().toMillis();
+            progressSlider.setMaximum((int)durationMillis);
+            progressSlider.setMinimum(0);
+            final String finalDuration;
+            if(duration.length() == 8) {
+                finalDuration = duration.substring(3);
+                progressLabel.setText("00:00/" + duration);
+            } else {
+                finalDuration = duration;
+                progressLabel.setText("00:00:00/" + duration);
+            }
+            playbin2.play();
+            pauseButton.setText("||");
+            new Thread(new Runnable() {
+
+                @Override
+                public void run() {
+                    long positionMillis = 0;
+                    while (positionMillis < durationMillis
+                            && !playbin2.getState().equals(State.NULL)) {
+                        String position = playbin2.queryPosition().toString();
+                        positionMillis = playbin2.queryPosition().toMillis();
+                        if (position.length() == 8) {
+                            position = position.substring(3);
+                        }
+                        progressLabel.setText(position + "/" + finalDuration);
+                        autoTracking = true;
+                        progressSlider.setValue((int) positionMillis);
+                        autoTracking = false;
+                        try {
+                            Thread.sleep(20);
+                        } catch (InterruptedException ex) {
+                        }
+                    }
+                    if (finalDuration.length() == 5) {
+                        progressLabel.setText("00:00/" + finalDuration);
+                    } else {
+                        progressLabel.setText("00:00:00/" + finalDuration);
+                    }
+                    playbin2.stop();
+                    playbin2.getState();
+                    pauseButton.setText("►");
+                    progressSlider.setValue(0);
+                }
+            }).start();
         }
     }//GEN-LAST:event_pauseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton pauseButton;
+    private javax.swing.JLabel progressLabel;
+    private javax.swing.JSlider progressSlider;
     private javax.swing.JPanel videoPanel;
     // End of variables declaration//GEN-END:variables
 
@@ -124,39 +212,20 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         setDataView(file);
         boolean isVid = isVid(file.getName());
         pauseButton.setVisible(isVid);
+        progressLabel.setVisible(isVid);
+        progressSlider.setVisible(isVid);
     }
 
     private void setDataView(File file) {
         if(file == null)
             return;
-        InputStream is = new ReadContentInputStream(file);
-        source = new InputStreamSrc(new BufferedInputStream(is), "input file");
-        pipe.add(source);
+        this.currentFile = file;
         
-        source.link(decodeBin);
-
-        decodeBin.connect(new DecodeBin2.NEW_DECODED_PAD() {
-            @Override
-            public void newDecodedPad(DecodeBin2 elem, Pad pad, boolean last) {
-
-                /*
-                 * only link once
-                 */
-                if (pad.isLinked()) {
-                    return;
-                }
-                
-                Caps caps = pad.getCaps();
-                Structure struct = caps.getStructure(0);
-                if (struct.getName().startsWith("audio/")) {
-                    pad.link(audioBin.getStaticPad("sink"));
-                } else if (struct.getName().startsWith("video/")) {
-                    pad.link(videoComponent.getElement().getStaticPad("sink"));
-                }
-            }
-        });
-        if(!isVid(file.getName()))
-                pipe.play();
+        if(!isVid(file.getName())) {
+            java.io.File ioFile = extractFile(file);
+            playbin2.setInputFile(ioFile);
+            playbin2.play();
+        }
     }
 
     @Override
@@ -184,28 +253,24 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
     
     private void resetVideo() {
-        if(pipe != null) {
-            pipe.stop();
-            pipe.dispose();
+        if(playbin2 != null) {
+            playbin2.stop();
+            playbin2.getState();
+        } else {
+            playbin2 = new PlayBin2("VideoPlayer");
         }
-        pipe = new Pipeline("main pipeline");
-        videoComponent = new VideoComponent();
+        if(videoComponent != null && videoComponent.getElement() != null) {
+            videoComponent.getElement().stop();
+            videoComponent.getElement().getState();
+        } else {
+            videoComponent = new VideoComponent();
+            playbin2.setVideoSink(videoComponent.getElement());
+        }
         videoPanel.removeAll();
         videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
         videoPanel.add(videoComponent);
         videoPanel.revalidate();
         videoPanel.repaint();
-        decodeBin = (DecodeBin2) ElementFactory.make("decodebin2", "Decode Bin");
-        pipe.add(decodeBin);
-        audioBin = new Bin("Audio Bin");
-        Element conv = ElementFactory.make("audioconvert", "Audio Convert");
-        Element resample = ElementFactory.make("audioresample", "Audio Resample");
-        Element sink = ElementFactory.make("autoaudiosink", "sink");
-        audioBin.addMany(conv, resample, sink);
-        Element.linkMany(conv, resample, sink);
-        audioBin.addPad(new GhostPad("sink", conv.getStaticPad("sink")));
-        pipe.add(audioBin);
-        pipe.add(videoComponent.getElement());
     }
 
     @Override
@@ -258,5 +323,24 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             ext = name.substring(extStart, name.length());
         }
         return Arrays.asList(VIDEOS).contains(ext);
+    }
+    
+    private java.io.File extractFile(File file) {
+        // Get the temp folder path of the case
+        String tempPath = Case.getCurrentCase().getTempDirectory();
+        tempPath = tempPath + java.io.File.separator + file.getName();
+
+        // create the temporary file
+        java.io.File tempFile = new java.io.File(tempPath);
+        if (tempFile.exists()) {
+            tempFile.delete();
+        }
+        
+        try {
+            ContentUtils.writeToFile(file, tempFile);
+        } catch (IOException ex) {
+            logger.log(Level.INFO, "Error buffering file", ex);
+        }
+        return tempFile;
     }
 }
