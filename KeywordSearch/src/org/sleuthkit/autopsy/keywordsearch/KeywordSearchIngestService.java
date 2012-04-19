@@ -222,7 +222,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         try {
             solrCore = KeywordSearch.getServer().getCore();
         } catch (SolrServerException ex) {
-            logger.log(Level.INFO, "Could not get Solr core", ex);
+            logger.log(Level.WARNING, "Could not get Solr core", ex);
             managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "Error initializing.", "Keyword indexing and search cannot proceed. Try restarting the application."));
             return;
         }
@@ -357,7 +357,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 }
             });
         } catch (SolrServerException se) {
-            logger.log(Level.INFO, "Error executing Solr query to check number of indexed files: ", se);
+            logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", se);
         }
     }
 
@@ -454,11 +454,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 ingester.ingest(fscs);
                 success = true;
             } catch (TskException tskEx) {
-                logger.log(Level.INFO, "Problem extracting string from file: '" + f.getName() + "' (id: " + f.getId() + ").", tskEx);
+                logger.log(Level.WARNING, "Problem extracting string from file: '" + f.getName() + "' (id: " + f.getId() + ").", tskEx);
             } catch (IngesterException ingEx) {
-                logger.log(Level.INFO, "Ingester had a problem with extracted strings from file '" + f.getName() + "' (id: " + f.getId() + ").", ingEx);
+                logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" + f.getName() + "' (id: " + f.getId() + ").", ingEx);
             } catch (Exception ingEx) {
-                logger.log(Level.INFO, "Ingester had a problem with extracted strings from file '" + f.getName() + "' (id: " + f.getId() + ").", ingEx);
+                logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" + f.getName() + "' (id: " + f.getId() + ").", ingEx);
             }
             return success;
         }
@@ -533,7 +533,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         private boolean processNonIngestible(FsContent fsContent) {
             if (fsContent.getSize() < MAX_STRING_EXTRACT_SIZE) {
                 if (!extractAndIngest(fsContent)) {
-                    logger.log(Level.INFO, "Failed to extract strings and ingest, file '" + fsContent.getName() + "' (id: " + fsContent.getId() + ").");
+                    logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + fsContent.getName() + "' (id: " + fsContent.getId() + ").");
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     return false;
                 } else {
@@ -603,7 +603,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 try {
                     queryResult = del.performQuery();
                 } catch (Exception e) {
-                    logger.log(Level.INFO, "Error performing query: " + keywordQuery.getQuery(), e);
+                    logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e);
                     continue;
                 }
 
