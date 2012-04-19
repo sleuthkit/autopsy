@@ -29,8 +29,8 @@ interface CaseConfigFileInterface {
     public void open(String conFilePath) throws Exception;  // opens the confiuation store (XML, DB...)
     public void writeFile() throws Exception;            // writes out the configuration to store
     public void close() throws Exception;                   // close and clear the document handler
-    public int[] getImageIDs() throws Exception;            // returns a list of image IDs and names
-    public int getNextImageID() throws Exception;           // returns the next free ID to be assigned to new image, and increments the internal counter
+//    public int[] getImageIDs() throws Exception;            // returns a list of image IDs and names
+//    public int getNextImageID() throws Exception;           // returns the next free ID to be assigned to new image, and increments the internal counter
 
     // all the get and set methods
     public String getCaseName() throws Exception; // get the case name

@@ -464,48 +464,48 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
             return null; // should throw error or exception
         }
     }
-
-    /**
-     * Looks up for the Image Set Element in the document handler with the given
-     * image ID.
-     *
-     * @param id        the image ID
-     * @return element  the "ImageSet" element
-     */
-    protected Element getImageSetElement(int id){
-        if(doc != null){
-            Element result = null;
-            int totalImageSet = getImageSetCount();
-            
-            for(int i = 0; i < totalImageSet; i++){
-                Element imageSetElement = (Element)getImagesElement().getElementsByTagName(IMG_SET_NAME).item(i);
-                int imgSetID = Integer.parseInt(imageSetElement.getAttribute(IMG_SET_ID));
-                if(id == imgSetID){
-                    result = imageSetElement;
-                }
-            }
-            return result;
-        }
-        else{
-            return null; //TODO: should throw error or exception
-        }
-    }
-
-    /**
-     * Sets the ImgDb entry for corresponding image set in the document handler
-     *
-     * @param id    the image ID
-     * @param path  the image path
-     */
-    protected void setImageSetDbPath(int id, String path){
-        Element imgDbElement = (Element) getImageSetElement(id).getElementsByTagName(IMG_DB_NAME).item(0);
-        imgDbElement.setTextContent(path);
-        imgDbElement.setAttribute(RELATIVE_NAME, RELATIVE_TRUE); // depends on the path (relative or not)
-        
-        // if need to write the XML file immidiately, uncomment the code below
-        // writeFile();
-    }
-
+//
+//    /**
+//     * Looks up for the Image Set Element in the document handler with the given
+//     * image ID.
+//     *
+//     * @param id        the image ID
+//     * @return element  the "ImageSet" element
+//     */
+//    protected Element getImageSetElement(int id){
+//        if(doc != null){
+//            Element result = null;
+//            int totalImageSet = getImageSetCount();
+//            
+//            for(int i = 0; i < totalImageSet; i++){
+//                Element imageSetElement = (Element)getImagesElement().getElementsByTagName(IMG_SET_NAME).item(i);
+//                int imgSetID = Integer.parseInt(imageSetElement.getAttribute(IMG_SET_ID));
+//                if(id == imgSetID){
+//                    result = imageSetElement;
+//                }
+//            }
+//            return result;
+//        }
+//        else{
+//            return null; //TODO: should throw error or exception
+//        }
+//    }
+//
+//    /**
+//     * Sets the ImgDb entry for corresponding image set in the document handler
+//     *
+//     * @param id    the image ID
+//     * @param path  the image path
+//     */
+//    protected void setImageSetDbPath(int id, String path){
+//        Element imgDbElement = (Element) getImageSetElement(id).getElementsByTagName(IMG_DB_NAME).item(0);
+//        imgDbElement.setTextContent(path);
+//        imgDbElement.setAttribute(RELATIVE_NAME, RELATIVE_TRUE); // depends on the path (relative or not)
+//        
+//        // if need to write the XML file immidiately, uncomment the code below
+//        // writeFile();
+//    }
+//
     /**
      * Returns number of image sets in this case
      *
@@ -514,103 +514,103 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
     protected int getImageSetCount(){
         return getImagesElement().getElementsByTagName(IMG_SET_NAME).getLength();
     }
-
-    /**
-     * Returns a set of image paths of the given image ID in this case
-     *
-     * @param id           the image ID
-     * @return imagePaths  the image paths of the given imageID
-     */
-    protected String[] getImageSet(int id){
-        Element imgSetElement = getImageSetElement(id);
-        int totalImagePaths = imgSetElement.getElementsByTagName(IMG_PATH_NAME).getLength(); // or use the attribute count
-        String[] result = new String[totalImagePaths];
-
-        for(int i = 0; i < totalImagePaths; i++){
-            Element imgPathElement = (Element) imgSetElement.getElementsByTagName(IMG_PATH_NAME).item(i);
-            if(imgPathElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)){
-                result[i] = caseDirPath + File.separator + imgPathElement.getTextContent();
-            }
-            else{
-                result[i] = imgPathElement.getTextContent();
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Returns absolute path of image database of the given image ID.
-     *
-     * @param id       the image ID
-     * @return dbPath  the database path of the given image
-     */
-    protected String getImageSetDbPath(int id){
-        Element imgDbElement = (Element) getImageSetElement(id).getElementsByTagName(IMG_DB_NAME).item(0);
-        if(imgDbElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)){
-            return caseDirPath + File.separator + imgDbElement.getTextContent();
-        }
-        else{
-            return imgDbElement.getTextContent();
-        }
-    }
-
-    /**
-     * Gets the next free image ID and and increments the internal counter
-     *
-     * @return imageID  the next free image ID
-     */
-    @Override
-    public int getNextImageID(){
-        Element imgElement = getImagesElement();
-        if(imgElement == null){
-            return -1; // which indicates the error
-        }
-        else{
-            String nextID = imgElement.getAttribute(NEXT_ID_NAME);
-            int result = Integer.parseInt(nextID);
-
-            // increment the nextID
-            int incNextID = result + 1;
-            getImagesElement().setAttribute(NEXT_ID_NAME, Integer.toString(incNextID));
-
-            // write the change to the config file immediately
-            try{ 
-                writeFile();
-            }
-            catch(Exception ex){
-                // TODO: throw exception further up
-                Logger logger = Logger.getLogger(this.className);
-                logger.log(Level.WARNING, "Error while trying to write the new NextID to the config file.", ex);
-            }
-            
-            return result;
-        }
-    }
-
-    /**
-     * Returns an array of all image ID values in this case.
-     *
-     * @return imageIDs  array of all image IDs in this case
-     */
-    @Override
-    public int[] getImageIDs() {
-        int totalImageSet = getImageSetCount();
-        int[] result = new int[totalImageSet];
-
-        Element imgElement = getImagesElement();
-        for(int i = 0; i < totalImageSet; i++){
-            Element imgSetElement = (Element)imgElement.getElementsByTagName(IMG_SET_NAME).item(i);
-            result[i] = Integer.parseInt(imgSetElement.getAttribute(IMG_SET_ID));
-        }
-
-        return result;
-    }
-
-    /**
-     * Returns the HashSet of all timezone values of all images in this case.
-     *
-     * @return imageIDs  the HashSet of all timezone values
-     */
+//
+//    /**
+//     * Returns a set of image paths of the given image ID in this case
+//     *
+//     * @param id           the image ID
+//     * @return imagePaths  the image paths of the given imageID
+//     */
+//    protected String[] getImageSet(int id){
+//        Element imgSetElement = getImageSetElement(id);
+//        int totalImagePaths = imgSetElement.getElementsByTagName(IMG_PATH_NAME).getLength(); // or use the attribute count
+//        String[] result = new String[totalImagePaths];
+//
+//        for(int i = 0; i < totalImagePaths; i++){
+//            Element imgPathElement = (Element) imgSetElement.getElementsByTagName(IMG_PATH_NAME).item(i);
+//            if(imgPathElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)){
+//                result[i] = caseDirPath + File.separator + imgPathElement.getTextContent();
+//            }
+//            else{
+//                result[i] = imgPathElement.getTextContent();
+//            }
+//        }
+//        return result;
+//    }
+//
+//    /**
+//     * Returns absolute path of image database of the given image ID.
+//     *
+//     * @param id       the image ID
+//     * @return dbPath  the database path of the given image
+//     */
+//    protected String getImageSetDbPath(int id){
+//        Element imgDbElement = (Element) getImageSetElement(id).getElementsByTagName(IMG_DB_NAME).item(0);
+//        if(imgDbElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)){
+//            return caseDirPath + File.separator + imgDbElement.getTextContent();
+//        }
+//        else{
+//            return imgDbElement.getTextContent();
+//        }
+//    }
+//
+//    /**
+//     * Gets the next free image ID and and increments the internal counter
+//     *
+//     * @return imageID  the next free image ID
+//     */
+//    @Override
+//    public int getNextImageID(){
+//        Element imgElement = getImagesElement();
+//        if(imgElement == null){
+//            return -1; // which indicates the error
+//        }
+//        else{
+//            String nextID = imgElement.getAttribute(NEXT_ID_NAME);
+//            int result = Integer.parseInt(nextID);
+//
+//            // increment the nextID
+//            int incNextID = result + 1;
+//            getImagesElement().setAttribute(NEXT_ID_NAME, Integer.toString(incNextID));
+//
+//            // write the change to the config file immediately
+//            try{ 
+//                writeFile();
+//            }
+//            catch(Exception ex){
+//                // TODO: throw exception further up
+//                Logger logger = Logger.getLogger(this.className);
+//                logger.log(Level.WARNING, "Error while trying to write the new NextID to the config file.", ex);
+//            }
+//            
+//            return result;
+//        }
+//    }
+//
+//    /**
+//     * Returns an array of all image ID values in this case.
+//     *
+//     * @return imageIDs  array of all image IDs in this case
+//     */
+//    @Override
+//    public int[] getImageIDs() {
+//        int totalImageSet = getImageSetCount();
+//        int[] result = new int[totalImageSet];
+//
+//        Element imgElement = getImagesElement();
+//        for(int i = 0; i < totalImageSet; i++){
+//            Element imgSetElement = (Element)imgElement.getElementsByTagName(IMG_SET_NAME).item(i);
+//            result[i] = Integer.parseInt(imgSetElement.getAttribute(IMG_SET_ID));
+//        }
+//
+//        return result;
+//    }
+//
+//    /**
+//     * Returns the HashSet of all timezone values of all images in this case.
+//     *
+//     * @return imageIDs  the HashSet of all timezone values
+//     */
     public HashSet<TimeZone> getTimeZone() {
         HashSet<TimeZone> result = new HashSet<TimeZone>();
 
@@ -621,25 +621,25 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
             result.add(TimeZone.getTimeZone(imgSetElement.getAttribute(TIMEZONE)));
         }
 
-        return result;
+        return result; //TODO: get time zones from db
     }
-
-    /**
-     * Removes the imageSet of the given image ID.
-     *
-     * @param imgID  the image ID of the image that going to be removed
-     */
-    public void removeImageSet(int imgID) {
-            Element imgElement = getImagesElement();
-            Element selectedElement = getImageSetElement(imgID);
-            imgElement.removeChild(selectedElement); // remove the imagesetElement
-            doc.normalize();
-
-            // edit the modified data
-            String newDate = dateFormat.format(new Date());
-            Element rootEl = getRootElement();
-            rootEl.getElementsByTagName(MODIFIED_DATE_NAME).item(0).setTextContent(newDate);
-    }
+//
+//    /**
+//     * Removes the imageSet of the given image ID.
+//     *
+//     * @param imgID  the image ID of the image that going to be removed
+//     */
+//    public void removeImageSet(int imgID) {
+//            Element imgElement = getImagesElement();
+//            Element selectedElement = getImageSetElement(imgID);
+//            imgElement.removeChild(selectedElement); // remove the imagesetElement
+//            doc.normalize();
+//
+//            // edit the modified data
+//            String newDate = dateFormat.format(new Date());
+//            Element rootEl = getRootElement();
+//            rootEl.getElementsByTagName(MODIFIED_DATE_NAME).item(0).setTextContent(newDate);
+//    }
 
     /**
      * Initialize the basic values for a new case management file.
@@ -876,7 +876,7 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
      */
     protected void addImage(String[] images, long currentID, String timeZone) throws Exception {
 
-        String dbName = "image-" + currentID + ".db";
+        //String dbName = "image-" + currentID + ".db";
 
         if (doc == null) {
             throw new Exception("No case open.");
@@ -896,20 +896,20 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
             imagesElement.appendChild(imgSetElement);
 
             // add all the image Path
-            for (int i = 0; i < imgCount; i++) {
-                Element imgPathElement = doc.createElement(IMG_PATH_NAME); // <ImgPath> ... </ImgPath>
-                imgPathElement.setAttribute(IMG_PATH_ID, Integer.toString(i));
-                imgPathElement.setAttribute(RELATIVE_NAME, "false");
-                imgPathElement.appendChild(doc.createTextNode(images[i]));
-                imgSetElement.appendChild(imgPathElement);
-            }
-
-            // add the database
-            Element imgDbElement = doc.createElement(IMG_DB_NAME); // <ImgDb> ... </ImgDb>
-            imgDbElement.setAttribute(RELATIVE_NAME, "true");
-            imgDbElement.appendChild(doc.createTextNode(dbName));
-            //imgDbElement.appendChild(doc.createTextNode("image-" + currentID + ".db"));
-            imgSetElement.appendChild(imgDbElement);
+//            for (int i = 0; i < imgCount; i++) {
+//                Element imgPathElement = doc.createElement(IMG_PATH_NAME); // <ImgPath> ... </ImgPath>
+//                imgPathElement.setAttribute(IMG_PATH_ID, Integer.toString(i));
+//                imgPathElement.setAttribute(RELATIVE_NAME, "false");
+//                imgPathElement.appendChild(doc.createTextNode(images[i]));
+//                imgSetElement.appendChild(imgPathElement);
+//            }
+//
+//            // add the database
+//            Element imgDbElement = doc.createElement(IMG_DB_NAME); // <ImgDb> ... </ImgDb>
+//            imgDbElement.setAttribute(RELATIVE_NAME, "true");
+//            imgDbElement.appendChild(doc.createTextNode(dbName));
+//            //imgDbElement.appendChild(doc.createTextNode("image-" + currentID + ".db"));
+//            imgSetElement.appendChild(imgDbElement);
 
             // edit the modified data
             String newDate = dateFormat.format(new Date());
