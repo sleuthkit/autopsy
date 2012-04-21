@@ -1,6 +1,22 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ /*
+ *
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2012 42six Solutions.
+ * Contact: aebadirad <at> 42six <dot> com
+ * Project Contact/Architect: carrier <at> autopsy <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.recentactivity;
 import java.io.File;
@@ -49,15 +65,15 @@ public static String utcConvert(String utc){
 
 public static String readFile(String path) throws IOException {
   FileInputStream stream = new FileInputStream(new File(path));
-  try {
-    FileChannel fc = stream.getChannel();
-    MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
-    /* Instead of using default, pass in a decoder. */
-    return Charset.defaultCharset().decode(bb).toString();
-  }
-  finally {
-    stream.close();
-  }
+      try {
+            FileChannel fc = stream.getChannel();
+            MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+            /* Instead of using default, pass in a decoder. */
+            return Charset.defaultCharset().decode(bb).toString();
+      }
+      finally {
+            stream.close();
+      }
 }
 
 public static boolean imgpathexists(String path){
