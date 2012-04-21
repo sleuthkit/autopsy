@@ -33,11 +33,11 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.datamodel.FsContentStringStream;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstract;
 import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
@@ -448,13 +448,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         private boolean extractAndIngest(FsContent f) {
             boolean success = false;
-            FsContentStringStream fscs = new FsContentStringStream(f, FsContentStringStream.Encoding.ASCII);
+            FsContentStringContentStream fscs = new FsContentStringContentStream(f, FsContentStringStream.Encoding.ASCII);
             try {
-                fscs.convert();
                 ingester.ingest(fscs);
                 success = true;
-            } catch (TskException tskEx) {
-                logger.log(Level.WARNING, "Problem extracting string from file: '" + f.getName() + "' (id: " + f.getId() + ").", tskEx);
             } catch (IngesterException ingEx) {
                 logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" + f.getName() + "' (id: " + f.getId() + ").", ingEx);
             } catch (Exception ingEx) {
