@@ -80,10 +80,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     // TODO: use a more robust method than checking file extension to determine
     // whether to try a file
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
-    static final String[] ingestibleExtensions = {"tar", "jar", "zip", "bzip2",
-        "gz", "tgz", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt",
+    static final String[] ingestibleExtensions = {"tar", "jar", "zip", "gzip", "bzip2",
+        "gz", "tgz", "odf", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log",
         "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
-        "pst", "xml", "class"};
+        "pst", "xml", "class", "dwg"};
 
     public enum IngestStatus {
 
