@@ -95,7 +95,7 @@ public class reportPanelAction {
                    public void run()
                    { 
                     reportHTML htmlReport = new reportHTML(Results,rr);
-                   
+                    BrowserControl.openUrl(reportHTML.htmlPath);
                    }
                 });
                 Thread xlsthread = new Thread(new Runnable()
@@ -104,7 +104,7 @@ public class reportPanelAction {
                    public void run()
                    { 
                     reportXLS xlsReport = new reportXLS(Results,rr);
-               //    BrowserControl.openUrl(xlsReport.xlsPath);
+               //   
                    }
                 });
 
