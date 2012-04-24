@@ -214,7 +214,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
                 ret = ProcessResult.ERROR;
             } catch (IOException ex) {
                 // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
-                logger.log(Level.WARNING, "Error reading file", ex);
+                logger.log(Level.WARNING, "Error reading file " + name, ex);
                 managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, this, "Read Error: " + name,
                         "Error encountered while calculating the hash value for " + name + "."));
                 ret = ProcessResult.ERROR;

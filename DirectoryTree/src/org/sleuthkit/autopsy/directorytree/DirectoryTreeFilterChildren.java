@@ -18,14 +18,18 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
+import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.ImagesNode;
@@ -37,6 +41,9 @@ import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * This class wraps around nodes that are displayed in the directory tree and 
@@ -70,10 +77,9 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 && (arg0 instanceof ImageNode
                 || arg0 instanceof VolumeNode
                 || (arg0 instanceof DirectoryNode
-                && !((DirectoryNode) arg0).getDisplayName().equals(".")
-                && !((DirectoryNode) arg0).getDisplayName().equals(".."))
+                && !isDotDirectory((DirectoryNode) arg0)
+                && !isLeafDirectory((DirectoryNode) arg0))
                 || arg0 instanceof ExtractedContentNode
-                //|| arg0 instanceof FileSearchFilterNode
                 || arg0 instanceof SearchFiltersNode
                 || arg0 instanceof RecentFilesNode
                 || arg0 instanceof KeywordHitsRootNode
@@ -84,6 +90,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             return new Node[]{this.copyNode(arg0)};
         } else if (arg0 != null
                 && (arg0 instanceof KeywordHitsKeywordNode
+                || (arg0 instanceof DirectoryNode
+                && !isDotDirectory((DirectoryNode) arg0))
                 || arg0 instanceof ArtifactTypeNode 
                 || arg0 instanceof RecentFilesFilterNode
                 || arg0 instanceof FileSearchFilterNode
@@ -93,6 +101,39 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         } else {
             return new Node[]{};
         }
+    }
+
+    /**
+     * Don't show expansion button on leaves
+     * leaf: all children are (file) or (directory named "." or "..")
+     * @param node
+     * @return whether node is a leaf
+     */
+    private static boolean isLeafDirectory(DirectoryNode node) {
+        Directory dir = node.getLookup().lookup(Directory.class);
+        boolean ret = true;
+        try {
+            for (Content c : dir.getChildren()) {
+                if (c instanceof Directory && (!((Directory)c).getName().equals(".")
+                        && !((Directory)c).getName().equals(".."))) {
+                    ret = false;
+                    break;
+                }
+            }
+        } catch (TskException ex) {
+            Logger.getLogger(DirectoryTreeFilterChildren.class.getName())
+                    .log(Level.WARNING, "Error getting directory children", ex);
+            return false;
+        }
+        return ret;
+    }
+
+    /**
+     * Helper to ignore the '.' and '..' directories
+     */
+    private static boolean isDotDirectory(DirectoryNode dir) {
+        String name = dir.getDisplayName();
+        return name.equals(".") || name.equals("..");
     }
 
     /**
