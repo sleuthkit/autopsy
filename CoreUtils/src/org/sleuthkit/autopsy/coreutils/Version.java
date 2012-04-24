@@ -29,7 +29,7 @@ public class Version {
     private Version() { }
     
     public enum Type{
-        RELEASE, DEBUG;
+        RELEASE, DEVELOPMENT;
     }
     
     public static String getVersion() {
