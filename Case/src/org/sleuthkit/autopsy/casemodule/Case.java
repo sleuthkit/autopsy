@@ -45,6 +45,7 @@ import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 
@@ -52,10 +53,9 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
  * Class to store the case information
  */
 public class Case {
-    // change the CTL_MainWindow_Title in Bundle.properties as well if you change this value
 
-    private static final String autopsyVer = "3.0.0b2"; // current version of autopsy. Change it when the version is changed
-    private static final String appName = "Autopsy " + autopsyVer;
+    private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
+    private static final String appName = Version.getName() + " " + autopsyVer;
     /**
      * Property name that indicates the name of the current case has changed.
      * Fired with the case is renamed, and when the current case is
