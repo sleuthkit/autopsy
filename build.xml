@@ -91,8 +91,8 @@
     <target name="input-build-type" unless="build.type">
         <input addProperty="build.type"
             message="Enter the desired build type:"
-                validargs="DEBUG,RELEASE"
-                defaultvalue="DEBUG"/>
+                validargs="DEVELOPMENT,RELEASE"
+                defaultvalue="DEVELOPMENT"/>
     </target>
     
     <target name="input-version" unless="app.version">
