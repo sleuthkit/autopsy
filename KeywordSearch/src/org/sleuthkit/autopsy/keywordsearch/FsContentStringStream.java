@@ -1,4 +1,4 @@
-package org.sleuthkit.autopsy.coreutils;
+package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
 import java.io.InputStream;
