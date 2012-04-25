@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.netbeans.api.progress.ProgressHandle;
@@ -45,7 +48,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskException;
 
 //service provider registered in layer.xml
 public final class KeywordSearchIngestService implements IngestServiceFsContent {
@@ -59,12 +61,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private static final long MAX_INDEX_SIZE = 100 * (1 << 10) * (1 << 10);
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
-    private volatile boolean runTimer = false;
     private List<Keyword> keywords; //keywords to search
     private List<String> keywordLists; // lists currently being searched
     private Map<String, String> keywordToList; //keyword to list name mapping
     //private final Object lock = new Object();
-    private Thread timer;
+    private Timer commitTimer;
     private Indexer indexer;
     private Searcher searcher;
     private volatile boolean searcherDone = true;
@@ -149,7 +150,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
 
         //logger.log(Level.INFO, "complete()");
-        runTimer = false;
+        commitTimer.stop();
 
         //handle case if previous search running
         //cancel it, will re-run after final commit
@@ -185,7 +186,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         logger.log(Level.INFO, "stop()");
 
         //stop timer
-        runTimer = false;
+        commitTimer.stop();
         //stop searcher
         if (searcher != null) {
             searcher.cancel(true);
@@ -254,12 +255,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         final int commitIntervalMs = managerProxy.getUpdateFrequency() * 60 * 1000;
         logger.log(Level.INFO, "Using refresh interval (ms): " + commitIntervalMs);
 
-        timer = new CommitTimer(commitIntervalMs);
-        runTimer = true;
+        commitTimer = new Timer(commitIntervalMs, new CommitTimerAction() );
 
         initialized = true;
 
-        timer.start();
+        commitTimer.start();
 
         managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Started"));
     }
@@ -410,31 +410,16 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
     }
 
-    //CommitTimer wakes up every interval ms
-    //and sets a flag for indexer to commit after indexing next file
-    private class CommitTimer extends Thread {
-
-        private final Logger logger = Logger.getLogger(CommitTimer.class.getName());
-        private int interval;
-
-        CommitTimer(int interval) {
-            this.interval = interval;
-        }
+    
+    //CommitTimerAction to run by commitTimer
+    //sets a flag for indexer to commit after indexing next file
+    private class CommitTimerAction implements ActionListener {
+        private final Logger logger = Logger.getLogger(CommitTimerAction.class.getName());
 
         @Override
-        public void run() {
-            while (runTimer) {
-                try {
-                    Thread.sleep(interval);
-                    commitIndex = true;
-                    logger.log(Level.INFO, "CommitTimer awake");
-                } catch (InterruptedException e) {
-                    break;
-                }
-
-            }
-            commitIndex = false;
-            return;
+        public void actionPerformed(ActionEvent e) {
+            commitIndex = true;
+            logger.log(Level.INFO, "CommitTimer awake");
         }
     }
 
