@@ -21,6 +21,15 @@
 
 package org.sleuthkit.autopsy.report;
 
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.SleuthkitCase;
+
 /**
 * Configures which parts of report were requested
 * e.g. based on user input
@@ -31,62 +40,48 @@ requested sections
 */
 class ReportConfiguration {
 
-       //supported report artifact variables -- later maybe make this a dynamic pull and have a generic set/get method
-       boolean GenWebHistory;
-       boolean GenWebCookie;
-       boolean GenWebBookmark;
-       boolean GenWebDownload;
-       boolean GenInfo;
-       boolean GenDevices;
-       boolean GenInstalledProg;
-       boolean GenKeywordHit;
-       boolean GenHashhit;
-       boolean GenRecentObject;
+       //base data structure
+      Map<BlackboardArtifact.ARTIFACT_TYPE,Boolean> config = new EnumMap<BlackboardArtifact.ARTIFACT_TYPE,Boolean>(BlackboardArtifact.ARTIFACT_TYPE.class);
+      private final Logger logger = Logger.getLogger(this.getClass().getName());
     
     ReportConfiguration(){
+          //clear the config just incase before we get the list from the db again
+           config.clear();
+           //now lets get the list from the tsk and current case
+          Case currentCase = Case.getCurrentCase(); // get the most updated case
+          SleuthkitCase skCase = currentCase.getSleuthkitCase();
+          try{
+               ArrayList<BlackboardArtifact.ARTIFACT_TYPE> arttypes = skCase.getBlackboardArtifactTypes();
+               for(BlackboardArtifact.ARTIFACT_TYPE type : arttypes)
+               {
+                   config.put(type, Boolean.FALSE);
+               }
+         
+          }
+          catch(Exception ex)
+          {
+                logger.log(Level.WARNING, "Error while trying to retrieve list of artifact types from the TSK case .", ex);
+          }
        
     };
        //setters for generally supported report parts
-       public void setGenWebHistory(boolean value){
-           GenWebHistory = value;
-       };
-       public void setGenWebCookie(boolean value){
-           GenWebCookie = value;
-       };
-       public void setGenWebBookmark(boolean value){
-           GenWebBookmark = value;
-       };
-       public void setGenWebDownload(boolean value){
-           GenWebDownload = value;
-       };
-       public void setGenInfo(boolean value){
-           GenInfo = value;
-       };
-       public void setGenDevices(boolean value){
-           GenDevices = value;
-       };
-       public void setGenInstalledProg(boolean value){
-           GenInstalledProg = value;
-       };
-       public void setGenKeywordHit(boolean value){
-           GenKeywordHit = value;
-       };
-       public void setGenHashhit(boolean value){
-           GenHashhit = value;
-       };
-       public void setGenRecentObject(boolean value){
-           GenRecentObject = value;
+       public void setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type, Boolean value){
+           if(config.containsKey(type))
+           {
+               config.put(type, value);
+           }
        };
        
+       
        //getters for generally supported report parts
-       public boolean getGenWebHistory(){ return GenWebHistory;}
-       public boolean getGenWebCookie(){ return GenWebCookie;}
-       public boolean getGenWebBookmark(){ return GenWebBookmark;}
-       public boolean getGenWebDownload(){ return GenWebDownload;}
-       public boolean getGenInfo(){ return GenInfo;}
-       public boolean getGenDevices(){ return GenDevices;}
-       public boolean getGenInstalledProg(){ return GenInstalledProg;}
-       public boolean getGenKeywordHit(){ return GenKeywordHit;}
-       public boolean getGenHashhit(){ return GenHashhit;}
-       public boolean getGenRecentObject(){ return GenRecentObject;}
+       public boolean getGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type){ 
+           boolean value = false; 
+           if(config.containsKey(type))
+           {
+               value = config.get(type);
+           }
+           
+           return value;
+       
+       }   
 }

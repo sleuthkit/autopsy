@@ -30,26 +30,18 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * This class is the 'default' way to get artifacts/attributes from the blackboard using a reportconfiguration object. 
  */
 public class ReportGen {
-  
+   HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
   ReportGen(){
-      
+ 
   }
   
+  public void flushReport(){
+        Results.clear();
+  }
   
-  public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> generateReport(ReportConfiguration config){
-      HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
-      report bbreport = new report();
-             if(config.getGenInfo()){Results.putAll(bbreport.getGenInfo());}
-             if(config.getGenWebBookmark()){Results.putAll(bbreport.getWebBookmark());}
-             if(config.getGenWebCookie()){Results.putAll(bbreport.getWebCookie());}
-             if(config.getGenWebHistory()){Results.putAll(bbreport.getWebHistory());}
-             if(config.getGenWebDownload()){Results.putAll(bbreport.getWebDownload());}
-             if(config.getGenRecentObject()){Results.putAll(bbreport.getRecentObject());}
-            // if(reportlist.contains(7)){Results.putAll(bbreport.getGenInfo());}
-             if(config.getGenInstalledProg()){Results.putAll(bbreport.getInstalledProg());}
-             if(config.getGenKeywordHit()){Results.putAll(bbreport.getKeywordHit());}
-             if(config.getGenHashhit()){Results.putAll(bbreport.getHashHit());}
-              if(config.getGenDevices()){Results.putAll(bbreport.getDevices());}
-      return Results;
+  public void populateReport(ReportConfiguration config){  
+             flushReport();
+             report bbreport = new report();
+             Results = bbreport.getAllTypes(config);
   }
 }

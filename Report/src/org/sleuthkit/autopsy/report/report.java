@@ -23,6 +23,7 @@ package org.sleuthkit.autopsy.report;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -306,6 +307,34 @@ public String getGroupedKeywordHit() {
     
     String result = table.toString();
     return result;
+}
+
+@Override
+public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getAllTypes(ReportConfiguration config) {
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
+    Case currentCase = Case.getCurrentCase(); // get the most updated case
+    SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+    try
+    {
+        for(Map.Entry<BlackboardArtifact.ARTIFACT_TYPE, Boolean> entry : config.config.entrySet())
+        {
+            if(entry.getValue())
+            {
+             ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(entry.getKey());
+             for (BlackboardArtifact artifact : bbart)
+                 {
+                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
+                 reportMap.put(artifact, attributes);    
+                 }
+            }
+        }
+    }
+    catch (Exception e)
+    {
+        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+    }
+    
+    return reportMap;
 }
 
 }

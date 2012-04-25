@@ -24,15 +24,11 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.coreutils.Log;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  *
@@ -52,7 +48,7 @@ public class reportPanelAction {
 
              
             // Generate the reports and create the hashmap
-        ReportGen report = new ReportGen();
+       final ReportGen report = new ReportGen();
          //see what reports we need to run and run them
          //Set progress bar to move while doing this
              SwingUtilities.invokeLater(new Runnable() {
@@ -60,11 +56,11 @@ public class reportPanelAction {
                 public void run() {
                  rr.progBarStartText();
                  }});
-         final  HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = report.generateReport(reportconfig);
+              report.populateReport(reportconfig);
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                 rr.progBarCount(2*Results.size());
+                 rr.progBarCount(2*report.Results.size());
                  }});
          //Turn our results into the appropriate xml/html reports
          //TODO: add a way for users to select what they will run when
@@ -73,7 +69,7 @@ public class reportPanelAction {
                 @Override
                    public void run()
                    { 
-                    reportXML xmlReport = new reportXML(Results, rr); 
+                    reportXML xmlReport = new reportXML(report.Results, rr); 
                    }
                 });
               Thread htmlthread = new Thread(new Runnable()
@@ -81,7 +77,7 @@ public class reportPanelAction {
                 @Override
                    public void run()
                    { 
-                    reportHTML htmlReport = new reportHTML(Results,rr);
+                    reportHTML htmlReport = new reportHTML(report.Results,rr);
                     BrowserControl.openUrl(reportHTML.htmlPath);
                    }
                 });
@@ -90,7 +86,7 @@ public class reportPanelAction {
                 @Override
                    public void run()
                    { 
-                    reportXLS xlsReport = new reportXLS(Results,rr);
+                    reportXLS xlsReport = new reportXLS(report.Results,rr);
                //   
                    }
                 });

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 /**
@@ -191,10 +192,11 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     filters.clear();
     if(jCheckBox1.isSelected())
     {
-        config.setGenWebBookmark(true);
-        config.setGenWebCookie(true);
-        config.setGenWebDownload(true);
-        config.setGenWebHistory(true);
+        config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, true);
+        config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, true);
+        config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, true);
+        config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, true);
+        
         filters.add(2);
         filters.add(3);
         filters.add(4);
@@ -202,25 +204,25 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     }
     if(jCheckBox2.isSelected())
     {
-        config.setGenInfo(true);
+        config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO, true);
         filters.add(1);
     }
     if(jCheckBox3.isSelected())
     {
-        config.setGenKeywordHit(true);
+        config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, true);
         filters.add(9);
     }
     if(jCheckBox4.isSelected())
     {
-        config.setGenHashhit(true);
+        config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, true);
         filters.add(10);
        
     }
     if(jCheckBox5.isSelected())
     {
-        config.setGenRecentObject(true);
-        config.setGenInstalledProg(true);
-        config.setGenDevices(true);
+       config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT, true);
+       config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG, true);
+        config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED, true);
         filters.add(6);
         filters.add(8); 
         filters.add(11);

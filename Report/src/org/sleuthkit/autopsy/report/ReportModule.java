@@ -33,14 +33,14 @@ public interface ReportModule {
        * @return absolute file path to the report generated
        * @throws ReportModuleException if report generation failed
        */
-       public String generateReport(ReportConfiguration config) throws ReportModuleException;
+       public String generateReport() throws ReportModuleException;
 
 
        /**
        * This saves a copy of the report (current one) to another place specified by the user.
-       * 
+       * Takes the input of where the path needs to be saved, include filename and extention.
        */
-       public void save() throws ReportModuleException;
+       public void save(String Path) throws ReportModuleException;
 
        /**
        * Returns a short description of report type/file format this module generates
@@ -48,7 +48,13 @@ public interface ReportModule {
        * @return
        */
        public String getReportType();
-
+       
+        /**
+       * Returns the reportconfiguration object that was created
+       * 
+       * @return
+       */
+       public ReportConfiguration getReportConfiguration();
 
        /**
        * Returns a one line human readable description of the type of report
