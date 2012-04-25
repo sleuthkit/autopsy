@@ -43,7 +43,7 @@ public class AutopsyExceptionHandler extends Handler {
 
     public AutopsyExceptionHandler() {
         super();
-        // Only display messages for WARNING level and above, that come from an uncaught exception.
+        // Only display messages for SEVERE level and above, that come from an uncaught exception.
         this.setLevel(Level.SEVERE);
         this.setFilter(new ExceptionFilter());
         this.setFormatter(new SimpleFormatter());

@@ -240,34 +240,31 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 propertiesAcc.clear();
                 Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
                 this.getAllChildPropertyHeadersRec(selectedNode, 100);
-                List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(propertiesAcc.toArray(new Property[propertiesAcc.size()])));
-                //List<Node.Property> tempProps = new ArrayList<Node.Property>(Arrays.asList(getAllChildPropertyHeaders(selectedNode)));
-                if(tempProps.size() > 0)
-                    tempProps.remove(0);
-
-                Node.Property[] props = tempProps.toArray(new Node.Property[tempProps.size()]);
+                List<Node.Property> props = new ArrayList<Node.Property>(propertiesAcc);
+                if(props.size() > 0)
+                    props.remove(0);
 
 
                 // *********** Make the TreeTableView to be sortable ***************
 
                 //First property column is sortable, but also sorted initially, so
                 //initially this one will have the arrow icon:
-                if(props.length > 0){
-                    props[0].setValue("TreeColumnTTV", Boolean.TRUE); // Identifies special property representing first (tree) column.
-                    props[0].setValue("ComparableColumnTTV", Boolean.TRUE); // This property column should be used for sorting.
-                    props[0].setValue("SortingColumnTTV", Boolean.TRUE); // TreeTableView should be initially sorted by this property column.
+                if(props.size() > 0){
+                    props.get(0).setValue("TreeColumnTTV", Boolean.TRUE); // Identifies special property representing first (tree) column.
+                    props.get(0).setValue("SortingColumnTTV", Boolean.TRUE); // TreeTableView should be initially sorted by this property column.
                 }
                 
                 // The rest of the columns are sortable, but not initially sorted,
                 // so initially will have no arrow icon:
-                for (int i = 1; i < props.length; i++) {
-                    props[i].setValue("ComparableColumnTTV", Boolean.TRUE);
+                String[] propStrings = new String[props.size()*2];
+                for (int i = 0; i < props.size(); i++) {
+                    props.get(i).setValue("ComparableColumnTTV", Boolean.TRUE);
+                    propStrings[2*i] = props.get(i).getName();
+                    propStrings[2*i+1] = props.get(i).getDisplayName();
                 }
 
+                ov.setPropertyColumns(propStrings);
                 // *****************************************************************
-
-                //ttv.setProperties(props); // set the properties
-                ov.setProperties(props); // set the properties
 
                 //            // set the first entry
                 //            Children test = root.getChildren();
@@ -279,7 +276,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 // show the horizontal scroll panel and show all the content & header
 
-                int totalColumns = props.length;
+                int totalColumns = props.size();
 
                 //int scrollWidth = ttv.getWidth();
                 int margin = 4;
@@ -317,7 +314,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node
                 ((OutlineView) this.tableScrollPanel).getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-                ((OutlineView) this.tableScrollPanel).setProperties(new Node.Property[]{}); // set the empty property header
+                ((OutlineView) this.tableScrollPanel).setPropertyColumns(); // set the empty property header
             }
         } finally {
             this.setCursor(null);
@@ -376,9 +373,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param table    the object table
      * @return max  the maximum width of the column
      */
-    private int getMaxColumnWidth(int index, FontMetrics metrics, int margin, int padding, Node.Property[] header, Object[][] table) {
+    private int getMaxColumnWidth(int index, FontMetrics metrics, int margin, int padding, List<Node.Property> header, Object[][] table) {
         // set the tree (the node / names column) width
-        String headerName = header[index - 1].getDisplayName();
+        String headerName = header.get(index - 1).getDisplayName();
 
         return getMaxColumnWidth(index, metrics, margin, padding, headerName, table);
     }
