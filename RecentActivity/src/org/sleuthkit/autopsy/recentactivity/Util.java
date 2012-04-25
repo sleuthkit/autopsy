@@ -193,4 +193,29 @@ public static long findID(String path) {
         }
         return -1;
     }
+
+
+
+public static boolean checkColumn(String column, String tablename, String connection){
+    String query = "PRAGMA table_info(" + tablename + ")";
+    boolean found = false;
+    ResultSet temprs;
+        try{
+            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connection);
+            temprs = tempdbconnect.executeQry(query);
+            while(temprs.next()) 
+                   {  
+                       if(temprs.getString("name") == null ? column == null : temprs.getString("name").equals(column))
+                       {
+                           found = true;
+                       }
+                   }
+        }
+        catch(Exception ex)
+        {
+                logger.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex);      
+        }
+    return found;
+    }
+
 }

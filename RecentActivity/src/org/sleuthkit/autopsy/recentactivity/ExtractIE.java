@@ -61,6 +61,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchUtil;
 
 public class ExtractIE { // implements BrowserActivity {
 
@@ -75,6 +76,7 @@ public class ExtractIE { // implements BrowserActivity {
     //paths set in init()
     private String PASCO_RESULTS_PATH;
     private String PASCO_LIB_PATH;
+    private String JAVA_PATH;
     
     //Results List to be referenced/used outside the class
     public ArrayList<HashMap<String, Object>> PASCO_RESULTS_LIST = new ArrayList<HashMap<String, Object>>();

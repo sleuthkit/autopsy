@@ -49,6 +49,7 @@ public class Firefox {
 
     private static final String ffquery = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000) as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
     private static final String ffcookiequery = "SELECT name,value,host,expiry,(lastAccessed/1000) as lastAccessed,(creationTime/1000) as creationTime FROM moz_cookies";
+    private static final String ff3cookiequery = "SELECT name,value,host,expiry,(lastAccessed/1000) as lastAccessed FROM moz_cookies";
     private static final String ffbookmarkquery = "SELECT fk, moz_bookmarks.title, url FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id";
     private static final String ffdownloadquery = "select target, source,(startTime/1000) as startTime, maxBytes  from moz_downloads";
     
@@ -198,17 +199,29 @@ public class Firefox {
                 if (controller.isCancelled() ) {
                  dbFile.delete();
                  break;
-                }  
+                }
+                boolean checkColumn = Util.checkColumn("creationTime", "moz_cookies", connectionString);
+                String query;
+                    if(checkColumn){
+                      query = ffcookiequery;
+                    }
+                    else{
+                      query = ff3cookiequery;
+                    }
                  try
                 {
                    dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connectionString);
-                   ResultSet temprs = tempdbconnect.executeQry(ffcookiequery);  
+                   ResultSet temprs = tempdbconnect.executeQry(query);  
                    while(temprs.next()) 
                    {
                           BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
                           Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                           bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", temprs.getString("host")));
                           bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", temprs.getLong("lastAccessed")));
+                          if(checkColumn == true)
+                          {
+                          bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Created", temprs.getLong("creationTime")));
+                          }
                           bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", "", temprs.getString("value")));
                           bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","Title",((temprs.getString("name") != null) ? temprs.getString("name") : "")));
                           bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","FireFox"));
