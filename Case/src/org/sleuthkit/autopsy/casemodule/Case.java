@@ -691,14 +691,23 @@ public class Case {
         if (totalLength > 0) {
             result = true;
             for (int i = 0; i < totalLength; i++) {
-                if (new File(imgPaths[i]).exists()) {
-                    result = result && true;
-                } else {
-                    result = result && false;
+                String path = imgPaths[i];
+                if (!new File(path).exists() && !isPhysicalDrive(path)) {
+                    result = false;
+                    break;
                 }
             }
         }
         return result;
+    }
+    
+    /**
+     * Does the given string refer to a physical drive?
+     */
+    private static String pdisk = "\\\\.\\physicaldrive";
+    static boolean isPhysicalDrive(String path) {
+        int endIndex = Math.min(path.length(), pdisk.length());
+        return path.substring(0, endIndex).toLowerCase().equals(pdisk);
     }
 
     /**

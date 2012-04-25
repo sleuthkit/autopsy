@@ -401,6 +401,7 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
                 imgPathTextField.setText(path);
             }
         }
+        this.wizPanel.moveFocusToNext();
 }//GEN-LAST:event_imgPathBrowserButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
@@ -469,9 +470,9 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
         boolean isImagePath = true;
         for (int i = 0; i < imgPath.length; i++) {
             File tempImgFile = new File(imgPath[i]);
-            isImagePath = isImagePath && tempImgFile.exists() && !tempImgFile.isDirectory()
+            isImagePath = isImagePath && (Case.isPhysicalDrive(imgPath[i]) || (tempImgFile.exists() && !tempImgFile.isDirectory()
                     && (imgFilter.accept(tempImgFile) || splitFilter.accept(tempImgFile)
-                    || encaseFilter.accept(tempImgFile));
+                    || encaseFilter.accept(tempImgFile))));
         }
 
 

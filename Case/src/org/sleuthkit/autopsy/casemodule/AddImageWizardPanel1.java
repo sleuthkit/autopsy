@@ -92,13 +92,17 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
      */
     @Override
     public boolean isValid() {
-
+        return isNextEnable;
+    }
+    
+    /**
+     * Move the keyboard focus to the next button
+     */
+    void moveFocusToNext() {
         // set the focus to the next button of the wizard dialog if it's enabled
         if(isNextEnable){
             Lookup.getDefault().lookup(AddImageAction.class).requestFocusButton("Next >");
         }
-
-        return isNextEnable;
     }
 
     /**
