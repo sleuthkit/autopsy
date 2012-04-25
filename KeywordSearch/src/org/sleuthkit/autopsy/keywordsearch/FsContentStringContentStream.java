@@ -24,8 +24,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.logging.Logger;
 import org.apache.solr.common.util.ContentStream;
-import org.sleuthkit.autopsy.datamodel.FsContentStringStream;
-import org.sleuthkit.autopsy.datamodel.FsContentStringStream.Encoding;
+import org.sleuthkit.autopsy.keywordsearch.FsContentStringStream.Encoding;
 import org.sleuthkit.datamodel.FsContent;
 
 /**

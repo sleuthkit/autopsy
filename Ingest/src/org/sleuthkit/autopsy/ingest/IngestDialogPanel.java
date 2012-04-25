@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import java.awt.Color;
 import java.awt.Component;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import java.awt.Graphics;
@@ -41,8 +40,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
-import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestMessagePanel.IngestMessageGroup;
+import org.sleuthkit.autopsy.ingest.IngestManager.UpdateFrequency;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -88,24 +86,32 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             addService(service);
         }
 
+        //time setting
+        timeGroup.add(timeRadioButton1);
+        timeGroup.add(timeRadioButton2);
+        timeGroup.add(timeRadioButton3);
+
         if (manager.isIngestRunning()) {
-            freqSlider.setEnabled(false);
+            setTimeSettingEnabled(false);
         } else {
-            freqSlider.setEnabled(true);
+            setTimeSettingEnabled(true);
         }
-        freqSlider.setValue(manager.getUpdateFrequency());
 
-        freqSlider.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int val = freqSlider.getValue();
-                if (val < 2) {
-                    freqSlider.setValue(2);
-                }
-            }
-        });
-
+        //set default
+        final UpdateFrequency curFreq = manager.getUpdateFrequency();
+        switch (curFreq) {
+            case FAST:
+                timeRadioButton1.setSelected(true);
+                break;
+            case AVG:
+                timeRadioButton2.setSelected(true);
+                break;
+            case SLOW:
+                timeRadioButton3.setSelected(true);
+                break;
+            default:
+            //
+        }
 
         servicesTable.setTableHeader(null);
         servicesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -145,13 +151,20 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
 
     }
 
+    private void setTimeSettingEnabled(boolean enabled) {
+        timeRadioButton1.setEnabled(enabled);
+        timeRadioButton2.setEnabled(enabled);
+        timeRadioButton3.setEnabled(enabled);
+    }
+
     @Override
     public void paint(Graphics g) {
         super.paint(g);
         if (manager.isIngestRunning()) {
-            freqSlider.setEnabled(false);
+            setTimeSettingEnabled(false);
+
         } else {
-            freqSlider.setEnabled(true);
+            setTimeSettingEnabled(true);
         }
     }
 
@@ -170,8 +183,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        freqSlider = new javax.swing.JSlider();
-        freqSliderLabel = new javax.swing.JLabel();
+        timeGroup = new javax.swing.ButtonGroup();
         servicesScrollPane = new javax.swing.JScrollPane();
         servicesTable = new javax.swing.JTable();
         jPanel1 = new javax.swing.JPanel();
@@ -179,21 +191,15 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         jSeparator2 = new javax.swing.JSeparator();
         jScrollPane1 = new javax.swing.JScrollPane();
         simplePanel = new javax.swing.JPanel();
+        timePanel = new javax.swing.JPanel();
+        timeRadioButton3 = new javax.swing.JRadioButton();
+        timeRadioButton2 = new javax.swing.JRadioButton();
+        timeRadioButton1 = new javax.swing.JRadioButton();
+        timeLabel = new javax.swing.JLabel();
 
         setPreferredSize(new java.awt.Dimension(522, 257));
 
-        freqSlider.setMajorTickSpacing(5);
-        freqSlider.setMaximum(30);
-        freqSlider.setMinorTickSpacing(2);
-        freqSlider.setPaintLabels(true);
-        freqSlider.setPaintTicks(true);
-        freqSlider.setSnapToTicks(true);
-        freqSlider.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.freqSlider.toolTipText")); // NOI18N
-        freqSlider.setValue(15);
-
-        freqSliderLabel.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.freqSliderLabel.text")); // NOI18N
-        freqSliderLabel.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.freqSliderLabel.toolTipText")); // NOI18N
-
+        servicesScrollPane.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
         servicesScrollPane.setPreferredSize(new java.awt.Dimension(160, 160));
 
         servicesTable.setBackground(new java.awt.Color(240, 240, 240));
@@ -240,7 +246,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 183, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 232, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
@@ -248,20 +254,61 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 .addContainerGap())
         );
 
+        timePanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
+
+        timeRadioButton3.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.timeRadioButton3.text")); // NOI18N
+        timeRadioButton3.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.timeRadioButton3.toolTipText")); // NOI18N
+
+        timeRadioButton2.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.timeRadioButton2.text")); // NOI18N
+        timeRadioButton2.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.timeRadioButton2.toolTipText")); // NOI18N
+
+        timeRadioButton1.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.timeRadioButton1.text")); // NOI18N
+        timeRadioButton1.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.timeRadioButton1.toolTipText")); // NOI18N
+        timeRadioButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                timeRadioButton1ActionPerformed(evt);
+            }
+        });
+
+        timeLabel.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.timeLabel.text")); // NOI18N
+        timeLabel.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.timeLabel.toolTipText")); // NOI18N
+
+        javax.swing.GroupLayout timePanelLayout = new javax.swing.GroupLayout(timePanel);
+        timePanel.setLayout(timePanelLayout);
+        timePanelLayout.setHorizontalGroup(
+            timePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(timePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(timePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(timeRadioButton3)
+                    .addComponent(timeRadioButton1)
+                    .addComponent(timeLabel)
+                    .addComponent(timeRadioButton2))
+                .addContainerGap(28, Short.MAX_VALUE))
+        );
+        timePanelLayout.setVerticalGroup(
+            timePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, timePanelLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(timeLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(timeRadioButton1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(timeRadioButton2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(timeRadioButton3)
+                .addGap(20, 20, 20))
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(freqSlider, 0, 0, Short.MAX_VALUE)
-                            .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGap(37, 37, 37)
-                        .addComponent(freqSliderLabel)))
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 195, Short.MAX_VALUE)
+                    .addComponent(timePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
@@ -271,13 +318,11 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 284, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 170, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(freqSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)
-                        .addComponent(freqSliderLabel)))
+                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 159, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
+                        .addComponent(timePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -295,16 +340,25 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         });
         dialog.display(currentService.getAdvancedConfiguration());
     }//GEN-LAST:event_advancedButtonActionPerformed
+
+private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeRadioButton1ActionPerformed
+// TODO add your handling code here:
+}//GEN-LAST:event_timeRadioButton1ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton advancedButton;
-    private javax.swing.JSlider freqSlider;
-    private javax.swing.JLabel freqSliderLabel;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JScrollPane servicesScrollPane;
     private javax.swing.JTable servicesTable;
     private javax.swing.JPanel simplePanel;
+    private javax.swing.ButtonGroup timeGroup;
+    private javax.swing.JLabel timeLabel;
+    private javax.swing.JPanel timePanel;
+    private javax.swing.JRadioButton timeRadioButton1;
+    private javax.swing.JRadioButton timeRadioButton2;
+    private javax.swing.JRadioButton timeRadioButton3;
     // End of variables declaration//GEN-END:variables
 
     private class ServicesTableModel extends AbstractTableModel {
@@ -359,12 +413,18 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         return servicesToStart;
     }
 
-    boolean freqSliderEnabled() {
-        return freqSlider.isEnabled();
+    private boolean timeSelectionEnabled() {
+        return timeRadioButton1.isEnabled() && timeRadioButton2.isEnabled() && timeRadioButton3.isEnabled();
     }
 
-    int sliderValue() {
-        return freqSlider.getValue();
+    private UpdateFrequency getSelectedTimeValue() {
+        if (timeRadioButton1.isSelected()) {
+            return UpdateFrequency.FAST;
+        } else if (timeRadioButton2.isSelected()) {
+            return UpdateFrequency.AVG;
+        } else {
+            return UpdateFrequency.SLOW;
+        }
     }
 
     private void reloadSimpleConfiguration() {
@@ -407,10 +467,17 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         }
 
         //update ingest freq. refresh
-        if (freqSlider.isEnabled()) {
-            manager.setUpdateFrequency(freqSlider.getValue());
+        if (timeSelectionEnabled()) {
+            manager.setUpdateFrequency(getSelectedTimeValue());
         }
     }
+
+    @Override
+    public boolean isIngestRunning() {
+        return manager.isIngestRunning();
+    }
+    
+    
 
     /**
      * Custom cell renderer for tooltips with service description

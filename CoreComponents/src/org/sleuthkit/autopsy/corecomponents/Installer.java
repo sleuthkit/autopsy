@@ -38,8 +38,6 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-        //TODO: the version number shouldn't really be stored in the Case class
-        System.setProperty("netbeans.buildnumber", Case.getAutopsyVersion());
 
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
 

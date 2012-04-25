@@ -56,10 +56,23 @@ import org.sleuthkit.datamodel.TskData;
  * 
  */
 public class IngestManager {
-
+    enum UpdateFrequency {
+      FAST(20),
+      AVG(10),
+      SLOW(5);
+      
+      private final int time;
+      UpdateFrequency(int time) {
+          this.time = time;
+      }
+      int getTime(){ return time;}
+    };
+    
+    
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private IngestManagerStats stats;
-    private volatile int updateFrequency = 15; //in minutes
+    
+    private volatile UpdateFrequency updateFrequency = UpdateFrequency.AVG;
     //queues
     private final ImageQueue imageQueue = new ImageQueue();   // list of services and images to analyze
     private final FsContentQueue fsContentQueue = new FsContentQueue();
@@ -394,7 +407,7 @@ public class IngestManager {
      * Services should call this at init() to get current setting
      * and use the setting to change notification and data refresh intervals
      */
-    int getUpdateFrequency() {
+    UpdateFrequency getUpdateFrequency() {
         return updateFrequency;
     }
 
@@ -402,7 +415,7 @@ public class IngestManager {
      * set new minimal update frequency services should use
      * @param frequency to use in minutes
      */
-    void setUpdateFrequency(int frequency) {
+    void setUpdateFrequency(UpdateFrequency frequency) {
         this.updateFrequency = frequency;
     }
 

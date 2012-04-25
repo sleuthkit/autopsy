@@ -31,6 +31,15 @@
         <fail unless="tskFound" message="TSK_HOME must be set as an environment variable."/>
         <echo> TSK_HOME: ${env.TSK_HOME}</echo>
     </target>
+    
+    <!-- Verify that the JRE_HOME env variable is set -->
+    <target name="findJRE">
+        <property environment="env"/>
+        <condition property="jreFound">
+            <isset property="env.JRE_HOME"/>
+        </condition>
+        <fail unless="jreFound" message="JRE_HOME must be set as an environment variable."/>
+    </target>
 
     <target name="getExternals" depends="findTSK,copyTSKLibs">
         <property environment="env"/>
@@ -66,17 +75,33 @@
 
         <delete dir="${zip-tmp}"/>
         <delete file="${nbdist.dir}/${app.name}.zip"/>
-
+        
         <echo message=" "/>
         <echo message="cleaning and finalizing release" />
         <delete dir="${release.dir}"/>
     </target>
-
-
-    <target name="-init" depends="-taskdefs,-convert-old-project,getExternals">
-        <convertclusterpath from="${cluster.path.evaluated}" to="cluster.path.final" id="cluster.path.id"/>
+    
+    <target name="getProps" depends="prop-files,input-build-type,input-version"></target>
+    
+    <target name="prop-files">
         <property file="nbproject/private/private.properties"/>
         <property file="nbproject/project.properties"/>
+    </target>
+    
+    <target name="input-build-type" unless="build.type">
+        <input addProperty="build.type"
+            message="Enter the desired build type:"
+                validargs="DEVELOPMENT,RELEASE"
+                defaultvalue="DEVELOPMENT"/>
+    </target>
+    
+    <target name="input-version" unless="app.version">
+        <tstamp/>
+        <property name="app.version" value="${DSTAMP}"/>
+    </target>
+    
+    <target name="-init" depends="-taskdefs,-convert-old-project,getExternals,getProps">
+        <convertclusterpath from="${cluster.path.evaluated}" to="cluster.path.final" id="cluster.path.id"/>
         <sortsuitemodules unsortedmodules="${modules}" sortedmodulesproperty="modules.sorted"/>
         <property name="cluster" location="build/cluster"/>
         <echo level="verbose">Suite in ${basedir} with clusters ${cluster.path.final}, build cluster ${cluster}, and sorted modules ${modules.sorted}</echo>
@@ -84,7 +109,11 @@
         <property name="disabled.modules" value=""/>
         <property name="enabled.clusters" value=""/>
         <property name="disabled.clusters" value=""/>
-        <property name="app.version" value="0.1"/>
+        <condition property="branding.dir" value="branding_${app.name}">
+            <not>
+                <equals arg1="${app.name}" arg2="autopsy"/> 
+            </not>
+        </condition>
         <property name="branding.dir" location="branding"/>
         <property name="dist.dir" location="dist"/>
         <!-- MOVE THE .DLL FILES TO THE NETBEANS DIRECTORY -->
@@ -96,7 +125,38 @@
             </and>
         </condition>
     </target>
-
+    
+    <!-- override build to add branding -->
+    <target name="build" depends="build-brand,suite.build"/>
+ 
+    <target name="build-brand" depends="-init">
+        
+        <echo>${app.name} branding</echo>
+        
+        <copy file="${basedir}/branding_${app.name}/welcome_logo.png" tofile="${basedir}/Case/src/org/sleuthkit/autopsy/casemodule/welcome_logo.png" overwrite="true"/>
+        
+        <propertyfile
+        file="${branding.dir}/core/core.jar/org/netbeans/core/startup/Bundle.properties" 
+        comment="Updated by build script">
+            <entry key="currentVersion" value="${app.title} ${app.version}" />
+        </propertyfile>
+ 
+        <propertyfile
+        file="${branding.dir}/modules/org-netbeans-core-windows.jar/org/netbeans/core/windows/view/ui/Bundle.properties"
+        comment="Updated by build script">
+            <entry key="CTL_MainWindow_Title" value="${app.title} ${app.version}" />
+            <entry key="CTL_MainWindow_Title_No_Project" value="${app.title} ${app.version}" />
+        </propertyfile>
+        
+        <propertyfile
+        file="${basedir}/CoreUtils/src/org/sleuthkit/autopsy/coreutils/Bundle.properties"
+        comment="Updated by build script">
+            <entry key="app.name" value="${app.title}" />
+            <entry key="app.version" value="${app.version}" />
+            <entry key="build.type" value="${build.type}" />
+        </propertyfile>
+    </target>
+    
     <target name="jni" depends="build,findTSK">
         <javah verbose="yes" outputFile="${env.TSK_HOME}/bindings/java/tsk_jni/tsk_jni/dataModel_SleuthkitJNI.h">
             <class name="org.sleuthkit.datamodel.SleuthkitJNI" />
