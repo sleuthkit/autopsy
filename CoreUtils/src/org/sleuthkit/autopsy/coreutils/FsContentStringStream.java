@@ -1,4 +1,4 @@
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.io.IOException;
 import java.io.InputStream;
