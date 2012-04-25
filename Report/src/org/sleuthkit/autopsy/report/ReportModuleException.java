@@ -21,4 +21,14 @@
 package org.sleuthkit.autopsy.report;
 
 //exception thrown by a reporting module when report generation failed
-class ReportModuleException extends Exception {}
+class ReportModuleException extends Exception {
+
+    public ReportModuleException(String msg){
+		super(msg);
+	}
+	
+	public ReportModuleException(String msg, Exception ex){
+		super(msg, ex);
+	}
+
+}

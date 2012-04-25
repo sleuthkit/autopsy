@@ -65,23 +65,56 @@ class ReportConfiguration {
        
     };
        //setters for generally supported report parts
-       public void setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type, Boolean value){
+       public void setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type, Boolean value) throws ReportModuleException{
            if(config.containsKey(type))
            {
                config.put(type, value);
+           }
+           else
+           {
+               throw new ReportModuleException("The following artifact type is not present:" + type);
+           }
+       };
+       
+       //This allows all that setting to happen in groups
+       public void setGenArtifactType(ArrayList<BlackboardArtifact.ARTIFACT_TYPE> typeList, boolean value) throws ReportModuleException{
+          
+           for(BlackboardArtifact.ARTIFACT_TYPE type : typeList)
+           {
+            if(config.containsKey(type))
+            {
+                config.put(type, value);
+            }
+            else
+            {
+                throw new ReportModuleException("The following artifact type is not present:" + type);
+            }
            }
        };
        
        
        //getters for generally supported report parts
-       public boolean getGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type){ 
+       public boolean getGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type) throws ReportModuleException{ 
            boolean value = false; 
            if(config.containsKey(type))
            {
                value = config.get(type);
            }
+           else
+           {
+               throw new ReportModuleException("The following artifact type is not present:" + type);
+           }
            
            return value;
        
        }   
+       
+       public void resetGenArtifactTypes()
+       {
+           for(Map.Entry<BlackboardArtifact.ARTIFACT_TYPE,Boolean> entry : config.entrySet())
+               {
+                   config.put(entry.getKey(), Boolean.FALSE);
+               }
+         
+       }
 }
