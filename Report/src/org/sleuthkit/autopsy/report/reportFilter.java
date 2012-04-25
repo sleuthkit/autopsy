@@ -32,6 +32,7 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class reportFilter extends javax.swing.JPanel {
   public static ArrayList<Integer> filters = new ArrayList<Integer>();
+  public static ReportConfiguration config = new ReportConfiguration();
   public final reportFilter panel = this;
   reportPanelAction rpa = new reportPanelAction();
   public static boolean cancel = false;
@@ -190,6 +191,10 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     filters.clear();
     if(jCheckBox1.isSelected())
     {
+        config.setGenWebBookmark(true);
+        config.setGenWebCookie(true);
+        config.setGenWebDownload(true);
+        config.setGenWebHistory(true);
         filters.add(2);
         filters.add(3);
         filters.add(4);
@@ -197,19 +202,25 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     }
     if(jCheckBox2.isSelected())
     {
+        config.setGenInfo(true);
         filters.add(1);
     }
     if(jCheckBox3.isSelected())
     {
+        config.setGenKeywordHit(true);
         filters.add(9);
     }
     if(jCheckBox4.isSelected())
     {
+        config.setGenHashhit(true);
         filters.add(10);
        
     }
     if(jCheckBox5.isSelected())
     {
+        config.setGenRecentObject(true);
+        config.setGenInstalledProg(true);
+        config.setGenDevices(true);
         filters.add(6);
         filters.add(8); 
         filters.add(11);
@@ -219,12 +230,14 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 
 public void getReports() {
   new SwingWorker<Void, Void>() {
+            @Override
      protected Void doInBackground() throws Exception {
-        rpa.reportGenerate(filters, panel);
+        rpa.reportGenerate(config, panel);
         return null;
      };
 
      // this is called when the SwingWorker's doInBackground finishes
+            @Override
      protected void done() {
         progBar.setVisible(false); // hide my progress bar JFrame
      };
@@ -245,6 +258,7 @@ public void progBarSet(int cc)
 {
     final int count = cc;
      SwingUtilities.invokeLater(new Runnable() {
+            @Override
     public void run() {
        int start = progBar.getValue();
        int end = start + count;

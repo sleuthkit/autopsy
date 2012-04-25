@@ -31,13 +31,62 @@ requested sections
 */
 class ReportConfiguration {
 
+       //supported report artifact variables -- later maybe make this a dynamic pull and have a generic set/get method
+       boolean GenWebHistory;
+       boolean GenWebCookie;
+       boolean GenWebBookmark;
+       boolean GenWebDownload;
+       boolean GenInfo;
+       boolean GenDevices;
+       boolean GenInstalledProg;
+       boolean GenKeywordHit;
+       boolean GenHashhit;
+       boolean GenRecentObject;
+    
+    ReportConfiguration(){
+       
+    };
        //setters for generally supported report parts
-       public void setGenWebHistory();
-       public void setGenWebCookie();
-       public void setGenDevices();
-
+       public void setGenWebHistory(boolean value){
+           GenWebHistory = value;
+       };
+       public void setGenWebCookie(boolean value){
+           GenWebCookie = value;
+       };
+       public void setGenWebBookmark(boolean value){
+           GenWebBookmark = value;
+       };
+       public void setGenWebDownload(boolean value){
+           GenWebDownload = value;
+       };
+       public void setGenInfo(boolean value){
+           GenInfo = value;
+       };
+       public void setGenDevices(boolean value){
+           GenDevices = value;
+       };
+       public void setGenInstalledProg(boolean value){
+           GenInstalledProg = value;
+       };
+       public void setGenKeywordHit(boolean value){
+           GenKeywordHit = value;
+       };
+       public void setGenHashhit(boolean value){
+           GenHashhit = value;
+       };
+       public void setGenRecentObject(boolean value){
+           GenRecentObject = value;
+       };
+       
        //getters for generally supported report parts
-       public void getGenWebHistory();
-       public void getGenWebCookie();
-       public void getGenDevices();
+       public boolean getGenWebHistory(){ return GenWebHistory;}
+       public boolean getGenWebCookie(){ return GenWebCookie;}
+       public boolean getGenWebBookmark(){ return GenWebBookmark;}
+       public boolean getGenWebDownload(){ return GenWebDownload;}
+       public boolean getGenInfo(){ return GenInfo;}
+       public boolean getGenDevices(){ return GenDevices;}
+       public boolean getGenInstalledProg(){ return GenInstalledProg;}
+       public boolean getGenKeywordHit(){ return GenKeywordHit;}
+       public boolean getGenHashhit(){ return GenHashhit;}
+       public boolean getGenRecentObject(){ return GenRecentObject;}
 }

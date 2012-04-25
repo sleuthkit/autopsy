@@ -30,8 +30,6 @@ import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -47,15 +45,14 @@ public class reportPanelAction {
         
      }
          
-     public void reportGenerate(ArrayList<Integer> reportlist, final reportFilter rr){
+     public void reportGenerate(ReportConfiguration reportconfig, final reportFilter rr){
          try {
              //Clear any old reports in the string
              viewReport.setLength(0);
 
              
             // Generate the reports and create the hashmap
-        final HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
-         report bbreport = new report();
+        ReportGen report = new ReportGen();
          //see what reports we need to run and run them
          //Set progress bar to move while doing this
              SwingUtilities.invokeLater(new Runnable() {
@@ -63,17 +60,7 @@ public class reportPanelAction {
                 public void run() {
                  rr.progBarStartText();
                  }});
-             if(reportlist.contains(1)){Results.putAll(bbreport.getGenInfo());}
-             if(reportlist.contains(2)){Results.putAll(bbreport.getWebBookmark());}
-             if(reportlist.contains(3)){Results.putAll(bbreport.getWebCookie());}
-             if(reportlist.contains(4)){Results.putAll(bbreport.getWebHistory());}
-             if(reportlist.contains(5)){Results.putAll(bbreport.getWebDownload());}
-             if(reportlist.contains(6)){Results.putAll(bbreport.getRecentObject());}
-            // if(reportlist.contains(7)){Results.putAll(bbreport.getGenInfo());}
-             if(reportlist.contains(8)){Results.putAll(bbreport.getInstalledProg());}
-             if(reportlist.contains(9)){Results.putAll(bbreport.getKeywordHit());}
-             if(reportlist.contains(10)){Results.putAll(bbreport.getHashHit());}
-              if(reportlist.contains(11)){Results.putAll(bbreport.getDevices());}
+         final  HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = report.generateReport(reportconfig);
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -125,7 +112,7 @@ public class reportPanelAction {
             htmlthread.join(); 
             //Set the temporary label to let the user know its done and is waiting on the report
             rr.progBarText();
-           final reportPanel panel = new reportPanel(viewReport.toString());
+           final reportPanel panel = new reportPanel();
             
            
              panel.setjButton1ActionListener(new ActionListener() {
@@ -135,19 +122,6 @@ public class reportPanelAction {
                                 popUpWindow.dispose();
                             }
                         });
-             panel.setjEditorPane1EventListener(new HyperlinkListener(){
-                 @Override
-                public void hyperlinkUpdate(HyperlinkEvent hev) {
-                     try {
-                    if (hev.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
-                    
-                    panel.getLink(hev);
-                    }
-                catch (Exception e) {
-                // Exceptions thrown...............
-                }
-                }
-             });
             // add the panel to the popup window
             popUpWindow.add(panel);
             

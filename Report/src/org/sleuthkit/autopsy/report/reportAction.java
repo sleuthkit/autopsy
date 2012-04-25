@@ -28,22 +28,22 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import org.openide.awt.ActionRegistration;
+import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
-import org.openide.awt.ActionID;
+import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Log;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.ImageIcon;
 
 @ActionID(category = "Tools",
 id = "org.sleuthkit.autopsy.report.reportAction")
@@ -56,7 +56,7 @@ public final class reportAction extends CallableSystemAction implements Presente
     
     private JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = "Generate Report";
-     Logger logger = Logger.getLogger(reportAction.class.getName());
+     static final Logger logger = Logger.getLogger(reportAction.class.getName());
     
     public reportAction() {
         setEnabled(false);

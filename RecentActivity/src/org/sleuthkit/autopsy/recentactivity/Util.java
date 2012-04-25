@@ -218,4 +218,17 @@ public static boolean checkColumn(String column, String tablename, String connec
     return found;
     }
 
+
+public static ResultSet runQuery(String query, String connection){
+    ResultSet results = null;
+    try{
+            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connection);
+            results = tempdbconnect.executeQry(query);
+            tempdbconnect.closeConnection();
+    }
+    catch(Exception ex){
+        logger.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex);   
+    }
+    return results;
+    }
 }

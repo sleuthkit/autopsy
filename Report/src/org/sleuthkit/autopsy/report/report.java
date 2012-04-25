@@ -46,7 +46,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getGenInfo() {
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(1);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -68,7 +68,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebHistory(
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(4);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -89,7 +89,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebCookie()
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(3);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -110,7 +110,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebBookmark
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(2);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -132,7 +132,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebDownload
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(5);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -154,7 +154,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getRecentObjec
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(6);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -176,7 +176,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getKeywordHit(
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(9);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -197,7 +197,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getHashHit() {
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(10);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -218,7 +218,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getInstalledPr
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(8);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -240,7 +240,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getDevices() {
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(11);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED); 
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();

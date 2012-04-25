@@ -37,8 +37,8 @@ public interface ReportModule {
 
 
        /**
-       * save already generated report to the user specified location ???
-       * or should this be part of generateReport() ???
+       * This saves a copy of the report (current one) to another place specified by the user.
+       * 
        */
        public void save() throws ReportModuleException;
 
@@ -55,8 +55,6 @@ public interface ReportModule {
 this module generates
        */
        public String getReportTypeDescription();
-
-
 
 
 }

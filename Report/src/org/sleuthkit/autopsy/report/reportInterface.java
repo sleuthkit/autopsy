@@ -41,4 +41,6 @@ public interface reportInterface{
     public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getInstalledProg();
     public String getGroupedKeywordHit();
     public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getDevices();
+    
+    public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> generateReport(ReportConfiguration config);
 }
