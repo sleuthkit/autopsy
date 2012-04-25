@@ -65,8 +65,6 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     static final String IMAGEID_PROP = "imageId";
     // AddImageProcess: the next availble id for a new image
     static final String PROCESS_PROP = "process";
-    // boolean: whether or not to index the image in Solr
-    static final String SOLR_PROP = "indexInSolr";
     // boolean: whether or not to lookup files in the hashDB
     static final String LOOKUPFILES_PROP = "lookupFiles";
     
@@ -108,8 +106,6 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         wizardDescriptor = new WizardDescriptor(iterator);
         wizardDescriptor.setTitle("Add Image");
         wizardDescriptor.putProperty(NAME, e);
-        wizardDescriptor.putProperty(SOLR_PROP, false);
-
 
         if (dialog != null) {
             dialog.setVisible(false); // hide the old one
