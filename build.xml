@@ -70,7 +70,7 @@
         
         <!-- step (4) zip again, but with the version numbers in the dir -->
         <zip destfile="${nbdist.dir}/${app.name}-${app.version}.zip">
-            <zipfileset dir="${zip-tmp}/${app.name}" prefix="${app.name}-${app.version}"/>
+            <zipfileset dir="${zip-tmp}/${app.name}"/>
         </zip>
 
         <delete dir="${zip-tmp}"/>
