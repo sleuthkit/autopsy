@@ -60,9 +60,9 @@ public class Firefox {
        
    }
 
-       public void getffdb(List<String> image, IngestImageWorkerController controller) {
+       public void getffdb(List<String> image, IngestImageWorkerController controller) throws SQLException {
          //Make these seperate, this is for history
-        
+        try{
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             String allFS = new String();
@@ -162,7 +162,11 @@ public class Firefox {
             }
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY)); 
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK)); 
- 
+        }
+        catch(Exception e)
+        {
+            
+        }
         
         
         //COOKIES section

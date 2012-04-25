@@ -20,6 +20,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.sql.SQLException;
 import java.util.List;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 
@@ -66,6 +67,9 @@ public class ExtractAll {
                 //Find a way to put these results into BB
                
                 return true;
+           }
+           catch(SQLException e){
+               return false;
            }
            catch(Error e){
                return false;
