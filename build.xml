@@ -70,7 +70,7 @@
         
         <!-- step (4) zip again, but with the version numbers in the dir -->
         <zip destfile="${nbdist.dir}/${app.name}-${app.version}.zip">
-            <zipfileset dir="${zip-tmp}/${app.name}" prefix="${app.name}-${app.version}"/>
+            <zipfileset dir="${zip-tmp}/${app.name}"/>
         </zip>
 
         <delete dir="${zip-tmp}"/>
@@ -169,11 +169,12 @@
     </target>
     
     <target name="build-installer-root" depends="findJRE,build-zip" >
-        <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}"/>
+        <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
         <delete file="${nbdist.dir}/${app.name}-${app.version}.zip"/>
-        <unzip src="${basedir}/thirdparty/gstreamer/${os.family}.zip" dest="${nbdist.dir}/${app.name}-${app.version}/gstreamer"/>
-        <copy todir="${nbdist.dir}/${app.name}-${app.version}/jre6">
+        <unzip src="${basedir}/thirdparty/gstreamer/${os.family}.zip" dest="${nbdist.dir}/${app.name}-installer/gstreamer"/>
+        <copy todir="${nbdist.dir}/${app.name}-installer/jre6">
             <fileset dir="${env.JRE_HOME}"/>
         </copy>
+        <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${nbdist.dir}/${app.name}-installer/icon.ico" overwrite="true"/>
     </target>
 </project>

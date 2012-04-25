@@ -472,6 +472,13 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
         }
     }
 
+    @Override
+    public boolean isIngestRunning() {
+        return manager.isIngestRunning();
+    }
+    
+    
+
     /**
      * Custom cell renderer for tooltips with service description
      */
