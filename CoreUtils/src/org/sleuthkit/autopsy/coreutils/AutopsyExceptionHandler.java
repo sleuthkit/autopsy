@@ -45,13 +45,15 @@ public class AutopsyExceptionHandler extends Handler {
     public AutopsyExceptionHandler() {
         super();
         
+        this.setLevel(Level.SEVERE);
+        /*
         if (buildType == Version.Type.DEVELOPMENT)
             //for dev builds, show dialogs for WARNING and above
             this.setLevel(Level.WARNING);
         else 
             //for production builds, show dialogs for SEVERE and above (TODO in future consider not show any, explicit dialogs should be in place)
             this.setLevel(Level.SEVERE);
-            
+         */  
         
         this.setFilter(new ExceptionFilter());
         this.setFormatter(new SimpleFormatter());
