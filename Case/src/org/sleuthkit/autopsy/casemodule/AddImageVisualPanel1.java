@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
@@ -104,11 +103,10 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
             return new String[0];
         }
     }
-    
+
     public JTextField getImagePathTextField() {
         return this.imgPathTextField;
     }
-   
 
     /**
      * Gets the type of the image that's selected.
@@ -401,6 +399,31 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
                 imgPathTextField.setText(path);
             }
         }
+
+
+        //if split image, and 1 chunk given, verify it's the first chunk
+        boolean invalidChunk = false;
+        String[] imgPath = Case.convertImgPath(imgPathTextField.getText());
+        if (imgPath.length == 1 && multi == true) {
+            if (!imgPath[0].matches(".*\\.0.*1$") //001
+                    && !imgPath[0].matches(".*\\.[aA]{1,}$") //aaa
+                    && !imgPath[0].matches(".*\\.[eE]{1}0.*1$") //E01
+                    ) {
+                NotifyDescriptor nd = new NotifyDescriptor.Confirmation("You need to select either all chunks or only the first chunk of a split image to add the entire image correctly. Are you sure you want to use this selection?", "Warning: First image chunk not selected", NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+                nd.setValue(NotifyDescriptor.NO_OPTION);
+
+                Object res = DialogDisplayer.getDefault().notify(nd);
+                if (res != null && res == DialogDescriptor.NO_OPTION) {
+                    invalidChunk = true;
+                }
+            }
+        }
+        if (invalidChunk) {
+            imgPathTextField.setText("");
+            return;
+        }
+
+
         this.wizPanel.moveFocusToNext();
 }//GEN-LAST:event_imgPathBrowserButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
