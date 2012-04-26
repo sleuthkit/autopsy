@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.netbeans.api.progress.ProgressHandle;
@@ -45,7 +48,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.TskData;
 
 //service provider registered in layer.xml
 public final class KeywordSearchIngestService implements IngestServiceFsContent {
@@ -59,12 +62,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private static final long MAX_INDEX_SIZE = 100 * (1 << 10) * (1 << 10);
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
-    private volatile boolean runTimer = false;
     private List<Keyword> keywords; //keywords to search
     private List<String> keywordLists; // lists currently being searched
     private Map<String, String> keywordToList; //keyword to list name mapping
     //private final Object lock = new Object();
-    private Thread timer;
+    private Timer commitTimer;
     private Indexer indexer;
     private Searcher searcher;
     private volatile boolean searcherDone = true;
@@ -149,7 +151,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
 
         //logger.log(Level.INFO, "complete()");
-        runTimer = false;
+        commitTimer.stop();
 
         //handle case if previous search running
         //cancel it, will re-run after final commit
@@ -185,7 +187,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         logger.log(Level.INFO, "stop()");
 
         //stop timer
-        runTimer = false;
+        commitTimer.stop();
         //stop searcher
         if (searcher != null) {
             searcher.cancel(true);
@@ -254,12 +256,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         final int commitIntervalMs = managerProxy.getUpdateFrequency() * 60 * 1000;
         logger.log(Level.INFO, "Using refresh interval (ms): " + commitIntervalMs);
 
-        timer = new CommitTimer(commitIntervalMs);
-        runTimer = true;
+        commitTimer = new Timer(commitIntervalMs, new CommitTimerAction());
 
         initialized = true;
 
-        timer.start();
+        commitTimer.start();
 
         managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Started"));
     }
@@ -410,31 +411,16 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
     }
 
-    //CommitTimer wakes up every interval ms
-    //and sets a flag for indexer to commit after indexing next file
-    private class CommitTimer extends Thread {
+    //CommitTimerAction to run by commitTimer
+    //sets a flag for indexer to commit after indexing next file
+    private class CommitTimerAction implements ActionListener {
 
-        private final Logger logger = Logger.getLogger(CommitTimer.class.getName());
-        private int interval;
-
-        CommitTimer(int interval) {
-            this.interval = interval;
-        }
+        private final Logger logger = Logger.getLogger(CommitTimerAction.class.getName());
 
         @Override
-        public void run() {
-            while (runTimer) {
-                try {
-                    Thread.sleep(interval);
-                    commitIndex = true;
-                    logger.log(Level.INFO, "CommitTimer awake");
-                } catch (InterruptedException e) {
-                    break;
-                }
-
-            }
-            commitIndex = false;
-            return;
+        public void actionPerformed(ActionEvent e) {
+            commitIndex = true;
+            logger.log(Level.INFO, "CommitTimer awake");
         }
     }
 
@@ -444,6 +430,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private class Indexer {
 
         private final Logger logger = Logger.getLogger(Indexer.class.getName());
+        private static final String DELETED_MSG = "The file is an unallocated or orphan file (deleted) and entire content is no longer recoverable. ";
 
         private boolean extractAndIngest(FsContent f) {
             boolean success = false;
@@ -480,7 +467,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 }
             }
 
+            String deletedMessage = "";
+            if ((fsContent.getMeta_flags() & (TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getMetaFlag() | TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getMetaFlag())) != 0) {
+                deletedMessage = DELETED_MSG;
+            }
+
             if (ingestible == true) {
+
                 try {
                     //logger.log(Level.INFO, "indexing: " + fsContent.getName());
                     ingester.ingest(fsContent);
@@ -489,40 +482,40 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
                     boolean processed = processNonIngestible(fsContent);
-                    postIngestibleErrorMessage(processed, fileName);
+                    postIngestibleErrorMessage(processed, fileName, deletedMessage);
 
                 } catch (Exception e) {
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
                     boolean processed = processNonIngestible(fsContent);
-                    postIngestibleErrorMessage(processed, fileName);
+
+                    postIngestibleErrorMessage(processed, fileName, deletedMessage);
 
                 }
             } else {
                 boolean processed = processNonIngestible(fsContent);
-                postNonIngestibleErrorMessage(processed, fsContent);
+                postNonIngestibleErrorMessage(processed, fsContent, deletedMessage);
 
             }
         }
 
-        private void postNonIngestibleErrorMessage(boolean stringsExtracted, FsContent fsContent) {
+        private void postNonIngestibleErrorMessage(boolean stringsExtracted, FsContent fsContent, String deletedMessage) {
             String fileName = fsContent.getName();
             if (!stringsExtracted) {
                 if (fsContent.getSize() < MAX_STRING_EXTRACT_SIZE) {
-                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing strings: " + fileName, "Error encountered extracting string content from this file (of unsupported format).  The file will not be included in the search results.<br />File: " + fileName));
-                }
-                else {
+                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing strings: " + fileName, "Error encountered extracting string content from this file (of unsupported format). " + deletedMessage + "The file will not be included in the search results.<br />File: " + fileName));
+                } else {
                     managerProxy.postMessage(IngestMessage.createMessage(++messageID, IngestMessage.MessageType.INFO, KeywordSearchIngestService.instance, "Skipped indexing strings: " + fileName, "Skipped extracting string content from this file (of unsupported format) due to the file size.  The file will not be included in the search results.<br />File: " + fileName));
                 }
             }
 
         }
 
-        private void postIngestibleErrorMessage(boolean stringsExtracted, String fileName) {
+        private void postIngestibleErrorMessage(boolean stringsExtracted, String fileName, String deletedMessage) {
             if (stringsExtracted) {
-                managerProxy.postMessage(IngestMessage.createWarningMessage(++messageID, KeywordSearchIngestService.instance, "Indexed strings only: " + fileName, "Error encountered extracting file content.  Used string extraction to index strings for partial analysis on this file.<br />File: " + fileName));
+                managerProxy.postMessage(IngestMessage.createWarningMessage(++messageID, KeywordSearchIngestService.instance, "Indexed strings only: " + fileName, "Error encountered extracting file content. " + deletedMessage + "Used string extraction to index strings for partial analysis on this file.<br />File: " + fileName));
             } else {
-                managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing: " + fileName, "Error encountered extracting file content and strings from this file.  The file will not be included in the search results.<br />File: " + fileName));
+                managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing: " + fileName, "Error encountered extracting file content and strings from this file. " + deletedMessage + "The file will not be included in the search results.<br />File: " + fileName));
             }
         }
 

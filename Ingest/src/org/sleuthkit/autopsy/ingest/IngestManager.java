@@ -90,6 +90,9 @@ public class IngestManager {
     final IngestManagerProxy managerProxy = new IngestManagerProxy(this);
     //notifications
     private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
+    
+    //monitor
+    private final IngestMonitor ingestMonitor = new IngestMonitor();
 
     private enum IngestManagerEvents {
 
@@ -193,6 +196,9 @@ public class IngestManager {
         logger.log(Level.INFO, "Image queue: " + this.imageQueue.toString());
         logger.log(Level.INFO, "File queue: " + this.fsContentQueue.toString());
 
+        if (! ingestMonitor.isRunning())
+            ingestMonitor.start();
+        
         //image ingesters
         // cycle through each image in the queue
         while (hasNextImage()) {

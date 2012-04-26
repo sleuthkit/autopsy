@@ -40,11 +40,21 @@ public class AutopsyExceptionHandler extends Handler {
     static final int WARNING_VALUE = Level.WARNING.intValue();
     static final int SEVERE_VALUE = Level.SEVERE.intValue();
     static final Handler nbErrorManager = new NbErrorManager(); // Default NetBeans handler
-
+    static final Version.Type buildType = Version.getBuildType();
+    
     public AutopsyExceptionHandler() {
         super();
-        // Only display messages for SEVERE level and above, that come from an uncaught exception.
+        
         this.setLevel(Level.SEVERE);
+        /*
+        if (buildType == Version.Type.DEVELOPMENT)
+            //for dev builds, show dialogs for WARNING and above
+            this.setLevel(Level.WARNING);
+        else 
+            //for production builds, show dialogs for SEVERE and above (TODO in future consider not show any, explicit dialogs should be in place)
+            this.setLevel(Level.SEVERE);
+         */  
+        
         this.setFilter(new ExceptionFilter());
         this.setFormatter(new SimpleFormatter());
     }
