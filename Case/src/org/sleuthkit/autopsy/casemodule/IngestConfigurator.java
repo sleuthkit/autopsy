@@ -47,4 +47,11 @@ public interface IngestConfigurator {
      */
     void save();
     
+    /**
+     * find out if ingest is currently running
+     * 
+     * @param true if ingest process is running
+     */
+    boolean isIngestRunning();
+    
 }

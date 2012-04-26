@@ -16,30 +16,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.IOException;
+import java.awt.EventQueue;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JCheckBox;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
-import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 import org.sleuthkit.datamodel.TskException;
@@ -54,21 +47,15 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private String[] imgPaths;
     // the time zone where the image is added
     private String timeZone;
-    
     // paths to any set hash lookup databases (can be null)
     private String NSRLPath, knownBadPath;
-    
     private boolean lookupFilesCheckboxChecked;
-    
     // task that will clean up the created database file if the wizard is cancelled before it finishes
     private AddImageAction.CleanupTask cleanupImage; // initialized to null in readSettings()
-
     // flag to control the availiablity of next action
     private boolean imgAdded; // initalized to false in readSettings()
-
     private AddImageProcess process;
-    private AddImgTask addImageTask; 
-
+    private AddImgTask addImageTask;
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
@@ -187,7 +174,6 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         }
     }
 
-
     /**
      * Load the image locations from the WizardDescriptor settings object, and
      * the
@@ -202,7 +188,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         timeZone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
 
         component.changeProgressBarTextAndColor("", 0, Color.black);
-        
+
         startAddImage();
     }
 
@@ -212,10 +198,10 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        
+
         // Store process so it can be committed if wizard finishes
         settings.putProperty(AddImageAction.PROCESS_PROP, process);
-        
+
         // Need to make the cleanup accessible to the finished wizard so it can
         // be cancelled if all goes well, and availble if we return to this
         // panel so the the previously added image can be reverted
@@ -226,9 +212,9 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      * Thread that will make the JNI call to ingest the image. 
      */
     private class AddImgTask extends SwingWorker<Integer, Integer> {
+
         private JProgressBar progressBar;
         private Case currentCase;
-
         // true if the process was requested to stop
         private boolean interrupted = false;
 
@@ -246,29 +232,38 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         @Override
         protected Integer doInBackground() throws Exception {
             this.setProgress(0);
-            
+
             // Add a cleanup task to interupt the backgroud process if the
             // wizard exits while the background process is running.
             AddImageAction.CleanupTask cancelledWhileRunning = action.new CleanupTask() {
+
                 @Override
                 void cleanup() throws Exception {
                     addImageTask.interrupt();
                 }
             };
-            
+
             SleuthkitCase skCase = currentCase.getSleuthkitCase();
             skCase.clearLookupDatabases();
-            
+
             if (lookupFilesCheckboxChecked) {
                 if (NSRLPath != null) {
                     skCase.setNSRLDatabase(NSRLPath);
                 }
-                
+
                 if (knownBadPath != null) {
                     skCase.setKnownBadDatabase(knownBadPath);
                 }
             }
 
+            //lock DB for writes in EWT thread
+            //wait until lock acquired in EWT
+            EventQueue.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                    SleuthkitCase.dbWriteLock();
+                }
+            });
             try {
                 process = currentCase.makeAddImageProcess(Case.convertTimeZone(timeZone));
                 cancelledWhileRunning.enable();
@@ -283,8 +278,6 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
             return 0;
         }
 
-
-
         /**
          * 
          * (called by EventDispatch Thread after doInBackground finishes)
@@ -298,27 +291,39 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 // get() will throw any expetions that were thrown in the background task
                 get();
                 if (interrupted) {
-                    process.revert();
+                    try {
+                        process.revert();
+                    } finally {
+                        //unlock db write within EWT thread
+                        SleuthkitCase.dbWriteUnlock();
+                    }
                     return;
                 }
-                
+
                 // When everything happens without an error:
-                
+
                 // the add-image process needs to be reverted if the wizard doesn't finish
                 cleanupImage = action.new CleanupTask() {
+                    //note, CleanupTask runs inside EWT thread
+
                     @Override
                     void cleanup() throws Exception {
-                        process.revert();
+                        try {
+                            process.revert();
+                        } finally {
+                            //unlock db write within EWT thread
+                            SleuthkitCase.dbWriteUnlock();
+                        }
                     }
                 };
                 cleanupImage.enable();
 
                 getComponent().changeProgressBarTextAndColor("*Image added.", 100, Color.black); // complete progress bar
-                
+
                 // Get attention for the process finish
                 java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
                 SwingUtilities.getWindowAncestor(getComponent()).toFront();
-                
+
                 setDbCreated(true);
 
             } catch (Exception ex) {
@@ -327,6 +332,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 // Log error/display warning
                 Logger logger = Logger.getLogger(AddImgTask.class.getName());
                 logger.log(Level.SEVERE, "Error adding image to case", ex);
+            } finally {
             }
         }
 

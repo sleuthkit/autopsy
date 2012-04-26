@@ -261,7 +261,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                          }
                          else if(type == 2 || type == 33 ){
                              value  = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date ((tempatt.getValueLong())));
-                             if(value == null | "".equals(value)){
+                             if(value == null || "".equals(value)){
                                  value = tempatt.getValueString();
                              }
                          }
@@ -420,7 +420,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
             catch(Exception e)
             {
 
-                Logger.getLogger(reportHTML.class.getName()).log(Level.INFO, "Exception occurred", e);
+                Logger.getLogger(reportHTML.class.getName()).log(Level.WARNING, "Exception occurred", e);
             }
         }
 

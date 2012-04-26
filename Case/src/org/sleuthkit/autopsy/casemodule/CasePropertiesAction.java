@@ -24,6 +24,8 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.JDialog;
@@ -75,16 +77,7 @@ public final class CasePropertiesAction extends CallableSystemAction {
             int totalImage = currentCase.getRootObjectsCount();
 
             // put the image paths information into hashmap
-            HashMap<Integer, String[]> imgPaths = new HashMap<Integer, String[]>();
-            int[] imgIDs = currentCase.getImageIDs();
-
-            for (int i = 0; i < totalImage; i++) {
-                int imgID = imgIDs[i];
-                String[] imagePaths = currentCase.getImagePaths(imgID);
-                if (imagePaths != null) {
-                    imgPaths.put(imgID, imagePaths);
-                }
-            }
+            Map<Long, List<String>> imgPaths = currentCase.getImagePaths();
 
             // create the case properties form
             CasePropertiesForm cpf = new CasePropertiesForm(currentCase, crDate, caseDir, imgPaths);

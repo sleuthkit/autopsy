@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -35,6 +36,7 @@ import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.openide.util.ChangeSupport;
 import org.openide.util.HelpCtx;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
@@ -65,8 +67,6 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     static final String IMAGEID_PROP = "imageId";
     // AddImageProcess: the next availble id for a new image
     static final String PROCESS_PROP = "process";
-    // boolean: whether or not to index the image in Solr
-    static final String SOLR_PROP = "indexInSolr";
     // boolean: whether or not to lookup files in the hashDB
     static final String LOOKUPFILES_PROP = "lookupFiles";
     
@@ -103,13 +103,19 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     @Override
     public void actionPerformed(ActionEvent e) {
         Log.noteAction(AddImageAction.class);
+        
+        final IngestConfigurator ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
+        if (ingestConfig.isIngestRunning()) {
+            final String msg = "<html>Ingest is ongoing on another image. Adding a new image now might slow down the current ingest.<br />Do you want to proceed and add a new image now?</html>";
+            if (JOptionPane.showConfirmDialog(null, msg, "Ingest in progress", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
+                return;
+            }
+        }
 
         iterator = new AddImageWizardIterator(this);
         wizardDescriptor = new WizardDescriptor(iterator);
         wizardDescriptor.setTitle("Add Image");
         wizardDescriptor.putProperty(NAME, e);
-        wizardDescriptor.putProperty(SOLR_PROP, false);
-
 
         if (dialog != null) {
             dialog.setVisible(false); // hide the old one

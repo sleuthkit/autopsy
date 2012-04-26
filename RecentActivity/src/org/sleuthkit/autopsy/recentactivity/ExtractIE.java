@@ -354,7 +354,7 @@ public class ExtractIE { // implements BrowserActivity {
                     ContentUtils.writeToFile(fsc, datFile);
                 }
                 catch (IOException e) {
-                    logger.log(Level.INFO, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
+                    logger.log(Level.WARNING, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
                 }
 
                 boolean bPascProcSuccess = executePasco(temps, (int)fsc.getId());

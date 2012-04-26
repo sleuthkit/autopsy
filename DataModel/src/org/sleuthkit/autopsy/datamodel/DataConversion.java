@@ -136,8 +136,6 @@ public class DataConversion {
         CharsetEncoder utf8Encoder =
         Charset.forName("UTF-8").newEncoder();
          */
-
-
         final StringBuilder result = new StringBuilder();
         StringBuilder temp = new StringBuilder();
         int counter = 0;
@@ -145,13 +143,22 @@ public class DataConversion {
 
         final char NL = (char) 10; // ASCII char for new line
         final String NLS = Character.toString(NL);
+        boolean isZero = false;
         for (int i = 0; i < len; i++) {
             char curChar = (char) args[i];
-            int curCharInt = (int) curChar;
 
-            // ignore non-printable ASCII chars
-            //  32-126 and TAB ( 9)
-            if (((curCharInt < 32) && (curCharInt != 9)) || (curCharInt > 126)) {
+            if (curChar == 0 && isZero == false) {
+                //allow to skip one 0
+                isZero = true;
+            } else {
+                isZero = false;
+            }
+            //ignore non-printable ASCII chars
+            //use 32-126 and not TAB ( 9)
+            if (isUsableChar(curChar)) {
+                temp.append(curChar);
+                ++counter;
+            } else if (!isZero) {
                 if (counter >= parameter) {
                     // add to the result and also add the new line at the end
                     result.append(temp);
@@ -160,15 +167,16 @@ public class DataConversion {
                 // reset the temp and counter
                 temp = new StringBuilder();
                 counter = 0;
-            }
-            else {
-                temp.append(curChar);
-                ++counter;
+
             }
         }
 
         result.append(temp);
         return result.toString();
+    }
+
+    private static boolean isUsableChar(char c) {
+        return c >= 32 && c <= 126 && c != 9;
     }
 
     /**
@@ -185,12 +193,12 @@ public class DataConversion {
      */
     public static String getformattedPath(String[] paths, int beginIndex, int endIndex) {
         String result = "";
-        for (int i = beginIndex; i < (paths.length-endIndex); i++) {
+        for (int i = beginIndex; i < (paths.length - endIndex); i++) {
             result = result + "\\" + paths[i];
         }
         return result;
     }
-    
+
     public static String getformattedPath(String[] paths, int index) {
         return getformattedPath(paths, index, 0);
     }

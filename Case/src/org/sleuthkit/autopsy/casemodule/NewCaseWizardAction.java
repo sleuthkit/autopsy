@@ -60,7 +60,7 @@ public final class NewCaseWizardAction extends CallableSystemAction {
                     Case.getCurrentCase().closeCase(); // close the current case
                     newCaseAction(); // start the new case creation process
                 } catch (Exception ex) {
-                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.INFO, "Error closing case.", ex);
+                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex);
                 }
             }
         } else {
@@ -108,7 +108,8 @@ public final class NewCaseWizardAction extends CallableSystemAction {
      * Initialize panels representing individual wizard's steps and sets
      * various properties for them influencing wizard appearance.
      */
-    private WizardDescriptor.Panel[] getPanels() {
+    @SuppressWarnings({"unchecked"})
+    private WizardDescriptor.Panel<WizardDescriptor>[] getPanels() {
         if (panels == null) {
             panels = new WizardDescriptor.Panel[]{
                         new NewCaseWizardPanel1(),

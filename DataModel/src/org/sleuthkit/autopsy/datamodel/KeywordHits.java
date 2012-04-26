@@ -136,7 +136,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             if (s != null)
                 s.close();
         } catch (SQLException ex) {
-            logger.log(Level.INFO, "SQL Exception occurred: ", ex);
+            logger.log(Level.WARNING, "SQL Exception occurred: ", ex);
         }
     }
 
@@ -318,7 +318,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                     //TODO: bulk artifact gettings
                     list.add(skCase.getBlackboardArtifact(l));
                 } catch (TskException ex) {
-                    logger.log(Level.INFO, "TSK Exception occurred", ex);
+                    logger.log(Level.WARNING, "TSK Exception occurred", ex);
                 }
             }
             return true;

@@ -48,6 +48,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
     private IngestManagerProxy managerProxy;
     private SleuthkitCase skCase;
     private static int messageId = 0;
+    private int count;
     // Whether or not to do hash lookups (only set to true if there are dbs set)
     private boolean process;
     String nsrlDbPath;
@@ -55,6 +56,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
     
 
     private HashDbIngestService() {
+        count = 0;
     }
 
     public static synchronized HashDbIngestService getDefault() {
@@ -106,7 +108,22 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void complete() {
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Complete"));
+        StringBuilder detailsSb = new StringBuilder();
+        //details
+        detailsSb.append("<table border='0' cellpadding='4' width='280'>");
+        
+        detailsSb.append("<tr>");
+        detailsSb.append("<th>Number of notable files found:</th>");
+        detailsSb.append("<td>").append(count).append("</td>");
+        detailsSb.append("</tr>");
+
+        detailsSb.append("<tr>");
+        detailsSb.append("<th>Notable database used:</th>");
+        detailsSb.append("<td>").append(knownBadDbPath != null ? knownBadDbPath : "").append("</td>");
+        detailsSb.append("</tr>");
+        
+        detailsSb.append("</table>");
+        managerProxy.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Ingest Complete", detailsSb.toString()));
     }
 
     /**
@@ -153,8 +170,9 @@ public class HashDbIngestService implements IngestServiceFsContent {
                 TskData.FileKnown status = skCase.lookupMd5(md5Hash);
                 boolean changed = skCase.setKnown(fsContent, status);
                 if (status.equals(TskData.FileKnown.BAD)) {
+                    count+=1;
                     BlackboardArtifact badFile = fsContent.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
-                    BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID(), MODULE_NAME, "Known Bad", knownBadDbPath != null ? knownBadDbPath : "");
+                    BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID(), MODULE_NAME, "Known Bad", knownBadDbPath);
                     badFile.addAttribute(att2);
                     BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), MODULE_NAME, "", md5Hash);
                     badFile.addAttribute(att3);
@@ -190,11 +208,15 @@ public class HashDbIngestService implements IngestServiceFsContent {
                 }
             } catch (TskException ex) {
                 // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
-                logger.log(Level.INFO, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
+                logger.log(Level.WARNING, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
+                managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, this, "Hash Lookup Error: " + name,
+                        "Error encountered while updating the hash values for " + name + "."));
                 ret = ProcessResult.ERROR;
             } catch (IOException ex) {
                 // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
-                logger.log(Level.INFO, "Error reading file", ex);
+                logger.log(Level.WARNING, "Error reading file " + name, ex);
+                managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, this, "Read Error: " + name,
+                        "Error encountered while calculating the hash value for " + name + "."));
                 ret = ProcessResult.ERROR;
             }
         }

@@ -89,7 +89,7 @@ public class RecentFilesChildren extends ChildFactory<RecentFiles.RecentFilesFil
                 s.close();
         } catch (SQLException ex) {
             Logger.getLogger(RecentFilesFilterChildren.class.getName())
-                    .log(Level.INFO, "Couldn't get search results", ex);
+                    .log(Level.WARNING, "Couldn't get search results", ex);
         }
         return result;
     }

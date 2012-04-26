@@ -261,8 +261,8 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
                 return;
             }
 
-            if (writer.writeLists(toImportConfirmed)) {
-                KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword list imported", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+            if (!writer.writeLists(toImportConfirmed)) {
+                KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword list not imported", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             }
 
         }
@@ -319,7 +319,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         }
 
         @Override
-        public Class getColumnClass(int c) {
+        public Class<?> getColumnClass(int c) {
             return getValueAt(0, c).getClass();
         }
 

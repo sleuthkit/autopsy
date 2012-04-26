@@ -48,6 +48,7 @@ import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -86,14 +87,7 @@ class Server {
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false);
         instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr";
         
-        File rootPath = solrFolder.getParentFile().getParentFile();
-        File jrePath = new File(rootPath.getAbsolutePath() + File.separator + "jre6");
-        logger.log(Level.INFO, "JREPATH: " + jrePath.getAbsolutePath());
-        if (jrePath != null && jrePath.exists() && jrePath.isDirectory()) {
-            javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java";
-        }
-        //else use system installed java
-        logger.log(Level.INFO, "JAVA BIN PATH: " + javaPath);
+        javaPath = PlatformUtil.getJavaPath();
     }
 
     @Override

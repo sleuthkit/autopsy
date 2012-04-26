@@ -435,7 +435,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
      * worker for writing results to bb, with progress bar, cancellation, 
      * and central registry of workers to be stopped when case is closed
      */
-    static class ResultWriter extends SwingWorker {
+    static class ResultWriter extends SwingWorker<Object,Void> {
 
         private static List<ResultWriter> writers = new ArrayList<ResultWriter>();
         private ProgressHandle progress;

@@ -38,8 +38,6 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-        //TODO: the version number shouldn't really be stored in the Case class
-        System.setProperty("netbeans.buildnumber", Case.getAutopsyVersion());
 
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
 
@@ -72,13 +70,13 @@ public class Installer extends ModuleInstall {
                 try {
                     UIManager.setLookAndFeel(info.getClassName());
                 } catch (ClassNotFoundException ex) {
-                    logger.log(Level.INFO, "Unable to set theme. ", ex);
+                    logger.log(Level.WARNING, "Unable to set theme. ", ex);
                 } catch (InstantiationException ex) {
-                    logger.log(Level.INFO, "Unable to set theme. ", ex);
+                    logger.log(Level.WARNING, "Unable to set theme. ", ex);
                 } catch (IllegalAccessException ex) {
-                    logger.log(Level.INFO, "Unable to set theme. ", ex);
+                    logger.log(Level.WARNING, "Unable to set theme. ", ex);
                 } catch (UnsupportedLookAndFeelException ex) {
-                    logger.log(Level.INFO, "Unable to set theme. ", ex);
+                    logger.log(Level.WARNING, "Unable to set theme. ", ex);
                 }
                 break;
             }
