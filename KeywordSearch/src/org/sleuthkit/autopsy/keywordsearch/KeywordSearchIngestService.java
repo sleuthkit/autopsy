@@ -48,6 +48,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskData;
 
 //service provider registered in layer.xml
 public final class KeywordSearchIngestService implements IngestServiceFsContent {
@@ -255,7 +256,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         final int commitIntervalMs = managerProxy.getUpdateFrequency() * 60 * 1000;
         logger.log(Level.INFO, "Using refresh interval (ms): " + commitIntervalMs);
 
-        commitTimer = new Timer(commitIntervalMs, new CommitTimerAction() );
+        commitTimer = new Timer(commitIntervalMs, new CommitTimerAction());
 
         initialized = true;
 
@@ -410,10 +411,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
     }
 
-    
     //CommitTimerAction to run by commitTimer
     //sets a flag for indexer to commit after indexing next file
     private class CommitTimerAction implements ActionListener {
+
         private final Logger logger = Logger.getLogger(CommitTimerAction.class.getName());
 
         @Override
@@ -429,6 +430,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private class Indexer {
 
         private final Logger logger = Logger.getLogger(Indexer.class.getName());
+        private static final String DELETED_MSG = "The file is an unallocated or orphan file (deleted) and entire content is no longer recoverable. ";
 
         private boolean extractAndIngest(FsContent f) {
             boolean success = false;
@@ -465,7 +467,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 }
             }
 
+            String deletedMessage = "";
+            if ((fsContent.getMeta_flags() & (TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getMetaFlag() | TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getMetaFlag())) != 0) {
+                deletedMessage = DELETED_MSG;
+            }
+
             if (ingestible == true) {
+
                 try {
                     //logger.log(Level.INFO, "indexing: " + fsContent.getName());
                     ingester.ingest(fsContent);
@@ -474,40 +482,40 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
                     boolean processed = processNonIngestible(fsContent);
-                    postIngestibleErrorMessage(processed, fileName);
+                    postIngestibleErrorMessage(processed, fileName, deletedMessage);
 
                 } catch (Exception e) {
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
                     boolean processed = processNonIngestible(fsContent);
-                    postIngestibleErrorMessage(processed, fileName);
+
+                    postIngestibleErrorMessage(processed, fileName, deletedMessage);
 
                 }
             } else {
                 boolean processed = processNonIngestible(fsContent);
-                postNonIngestibleErrorMessage(processed, fsContent);
+                postNonIngestibleErrorMessage(processed, fsContent, deletedMessage);
 
             }
         }
 
-        private void postNonIngestibleErrorMessage(boolean stringsExtracted, FsContent fsContent) {
+        private void postNonIngestibleErrorMessage(boolean stringsExtracted, FsContent fsContent, String deletedMessage) {
             String fileName = fsContent.getName();
             if (!stringsExtracted) {
                 if (fsContent.getSize() < MAX_STRING_EXTRACT_SIZE) {
-                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing strings: " + fileName, "Error encountered extracting string content from this file (of unsupported format).  The file will not be included in the search results.<br />File: " + fileName));
-                }
-                else {
+                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing strings: " + fileName, "Error encountered extracting string content from this file (of unsupported format). " + deletedMessage + "The file will not be included in the search results.<br />File: " + fileName));
+                } else {
                     managerProxy.postMessage(IngestMessage.createMessage(++messageID, IngestMessage.MessageType.INFO, KeywordSearchIngestService.instance, "Skipped indexing strings: " + fileName, "Skipped extracting string content from this file (of unsupported format) due to the file size.  The file will not be included in the search results.<br />File: " + fileName));
                 }
             }
 
         }
 
-        private void postIngestibleErrorMessage(boolean stringsExtracted, String fileName) {
+        private void postIngestibleErrorMessage(boolean stringsExtracted, String fileName, String deletedMessage) {
             if (stringsExtracted) {
-                managerProxy.postMessage(IngestMessage.createWarningMessage(++messageID, KeywordSearchIngestService.instance, "Indexed strings only: " + fileName, "Error encountered extracting file content.  Used string extraction to index strings for partial analysis on this file.<br />File: " + fileName));
+                managerProxy.postMessage(IngestMessage.createWarningMessage(++messageID, KeywordSearchIngestService.instance, "Indexed strings only: " + fileName, "Error encountered extracting file content. " + deletedMessage + "Used string extraction to index strings for partial analysis on this file.<br />File: " + fileName));
             } else {
-                managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing: " + fileName, "Error encountered extracting file content and strings from this file.  The file will not be included in the search results.<br />File: " + fileName));
+                managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing: " + fileName, "Error encountered extracting file content and strings from this file. " + deletedMessage + "The file will not be included in the search results.<br />File: " + fileName));
             }
         }
 
