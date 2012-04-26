@@ -194,7 +194,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         searchBoxPanel.setBorder(new javax.swing.border.LineBorder(java.awt.Color.lightGray, 1, true));
         searchBoxPanel.setPreferredSize(new java.awt.Dimension(255, 18));
 
-        searchBox.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        searchBox.setFont(new java.awt.Font("Tahoma", 0, 14));
         searchBox.setForeground(java.awt.Color.lightGray);
         searchBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.searchBox.text")); // NOI18N
         searchBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 3, 4, 1));
@@ -256,7 +256,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         );
 
         listsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/watchbutton-icon.png"))); // NOI18N
-        listsButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.listsButton.text")); // NOI18N
+        listsButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleName")); // NOI18N
         listsButton.setBorderPainted(false);
         listsButton.setContentAreaFilled(false);
         listsButton.setEnabled(false);
