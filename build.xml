@@ -155,6 +155,11 @@
             <entry key="app.version" value="${app.version}" />
             <entry key="build.type" value="${build.type}" />
         </propertyfile>
+        
+        <copy todir="${basedir}" failonerror="false">
+            <fileset dir="${branding.dir}/bundles"
+                    includes="**/*"/>
+        </copy>
     </target>
     
     <target name="jni" depends="build,findTSK">

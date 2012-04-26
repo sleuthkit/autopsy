@@ -145,7 +145,6 @@
     <ROW Directory="MSWindows_Dir" Directory_Parent="themes_Dir" DefaultDir="MS-Win~1|MS-Windows"/>
     <ROW Directory="ModuleAutoDeps_1_Dir" Directory_Parent="config_5_Dir" DefaultDir="Module~1|ModuleAutoDeps"/>
     <ROW Directory="ModuleAutoDeps_Dir" Directory_Parent="config_4_Dir" DefaultDir="Module~1|ModuleAutoDeps"/>
-    <ROW Directory="Modules_1_Dir" Directory_Parent="config_2_Dir" DefaultDir="Modules"/>
     <ROW Directory="Modules_2_Dir" Directory_Parent="config_3_Dir" DefaultDir="Modules"/>
     <ROW Directory="Modules_3_Dir" Directory_Parent="config_4_Dir" DefaultDir="Modules"/>
     <ROW Directory="Modules_4_Dir" Directory_Parent="config_5_Dir" DefaultDir="Modules"/>
@@ -162,14 +161,11 @@
     <ROW Directory="__3_Dir" Directory_Parent="gstpython_2_Dir" DefaultDir="0.10"/>
     <ROW Directory="__4_Dir" Directory_Parent="gstpython_3_Dir" DefaultDir="0.10"/>
     <ROW Directory="__Dir" Directory_Parent="gtk2.0_1_Dir" DefaultDir="210~1.0|2.10.0"/>
-    <ROW Directory="actions_Dir" Directory_Parent="components_1_Dir" DefaultDir="actions"/>
     <ROW Directory="af_Dir" Directory_Parent="locale_2_Dir" DefaultDir="af"/>
     <ROW Directory="am_Dir" Directory_Parent="locale_2_Dir" DefaultDir="am"/>
     <ROW Directory="amd64_Dir" Directory_Parent="lib_10_Dir" DefaultDir="amd64"/>
     <ROW Directory="ang_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ang"/>
-    <ROW Directory="antlib_Dir" Directory_Parent="harness_Dir" DefaultDir="antlib"/>
     <ROW Directory="app_Dir" Directory_Parent="gst_4_Dir" DefaultDir="app"/>
-    <ROW Directory="applications_Dir" Directory_Parent="utils_Dir" DefaultDir="applic~1|applications"/>
     <ROW Directory="ar_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ar"/>
     <ROW Directory="as_Dir" Directory_Parent="locale_2_Dir" DefaultDir="as"/>
     <ROW Directory="ast_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ast"/>
@@ -195,7 +191,6 @@
     <ROW Directory="br_Dir" Directory_Parent="locale_2_Dir" DefaultDir="br"/>
     <ROW Directory="bs_Dir" Directory_Parent="locale_2_Dir" DefaultDir="bs"/>
     <ROW Directory="bubble_Dir" Directory_Parent="themes_Dir" DefaultDir="bubble"/>
-    <ROW Directory="build_Dir" Directory_Parent="infra_Dir" DefaultDir="build"/>
     <ROW Directory="ca_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ca"/>
     <ROW Directory="cairo_Dir" Directory_Parent="include_Dir" DefaultDir="cairo"/>
     <ROW Directory="cavalencia_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ca@val~1|ca@valencia"/>
@@ -204,14 +199,10 @@
     <ROW Directory="chrome_Dir" Directory_Parent="ff_Dir" DefaultDir="chrome"/>
     <ROW Directory="client_Dir" Directory_Parent="bin_3_Dir" DefaultDir="client"/>
     <ROW Directory="cmm_Dir" Directory_Parent="lib_8_Dir" DefaultDir="cmm"/>
-    <ROW Directory="common_Dir" Directory_Parent="nbi_Dir" DefaultDir="common~1|.common"/>
-    <ROW Directory="components_1_Dir" Directory_Parent="wizard_1_Dir" DefaultDir="compon~1|components"/>
-    <ROW Directory="components_Dir" Directory_Parent="ext_2_Dir" DefaultDir="compon~1|components"/>
     <ROW Directory="conf.avail_Dir" Directory_Parent="fonts_Dir" DefaultDir="conf~1.ava|conf.avail"/>
     <ROW Directory="conf.d_Dir" Directory_Parent="fonts_Dir" DefaultDir="conf.d"/>
     <ROW Directory="conf_Dir" Directory_Parent="solr_1_Dir" DefaultDir="conf"/>
     <ROW Directory="config_1_Dir" Directory_Parent="freetype_Dir" DefaultDir="config"/>
-    <ROW Directory="config_2_Dir" Directory_Parent="harness_Dir" DefaultDir="config"/>
     <ROW Directory="config_3_Dir" Directory_Parent="java_Dir" DefaultDir="config"/>
     <ROW Directory="config_4_Dir" Directory_Parent="platform_Dir" DefaultDir="config"/>
     <ROW Directory="config_5_Dir" Directory_Parent="netbeans_Dir" DefaultDir="config"/>
@@ -226,8 +217,6 @@
     <ROW Directory="cursors_Dir" Directory_Parent="images_Dir" DefaultDir="cursors"/>
     <ROW Directory="cy_Dir" Directory_Parent="locale_2_Dir" DefaultDir="cy"/>
     <ROW Directory="da_Dir" Directory_Parent="locale_2_Dir" DefaultDir="da"/>
-    <ROW Directory="data_1_Dir" Directory_Parent="src_1_Dir" DefaultDir="data"/>
-    <ROW Directory="data_Dir" Directory_Parent="helloworld_Dir" DefaultDir="data"/>
     <ROW Directory="dataprotocol_Dir" Directory_Parent="gst_4_Dir" DefaultDir="datapr~1|dataprotocol"/>
     <ROW Directory="de_Dir" Directory_Parent="locale_2_Dir" DefaultDir="de"/>
     <ROW Directory="defs_1_Dir" Directory_Parent="__2_Dir" DefaultDir="defs"/>
@@ -243,8 +232,6 @@
     <ROW Directory="el_Dir" Directory_Parent="locale_2_Dir" DefaultDir="el"/>
     <ROW Directory="en_CA_Dir" Directory_Parent="locale_2_Dir" DefaultDir="en_CA"/>
     <ROW Directory="en_GB_Dir" Directory_Parent="locale_2_Dir" DefaultDir="en_GB"/>
-    <ROW Directory="engine_1_Dir" Directory_Parent="build_Dir" DefaultDir="engine"/>
-    <ROW Directory="engine_Dir" Directory_Parent="ext_2_Dir" DefaultDir="engine"/>
     <ROW Directory="engines_Dir" Directory_Parent="__Dir" DefaultDir="engines"/>
     <ROW Directory="enshaw_Dir" Directory_Parent="locale_2_Dir" DefaultDir="en@shaw"/>
     <ROW Directory="eo_Dir" Directory_Parent="locale_2_Dir" DefaultDir="eo"/>
@@ -252,15 +239,12 @@
     <ROW Directory="et_Dir" Directory_Parent="locale_2_Dir" DefaultDir="et"/>
     <ROW Directory="etc_1_Dir" Directory_Parent="APPDIR" DefaultDir="etc"/>
     <ROW Directory="etc_2_Dir" Directory_Parent="gstreamer_Dir" DefaultDir="etc"/>
-    <ROW Directory="etc_3_Dir" Directory_Parent="harness_Dir" DefaultDir="etc"/>
     <ROW Directory="etc_Dir" Directory_Parent="solr_Dir" DefaultDir="etc"/>
     <ROW Directory="eu_Dir" Directory_Parent="locale_2_Dir" DefaultDir="eu"/>
     <ROW Directory="examples_1_Dir" Directory_Parent="__2_Dir" DefaultDir="examples"/>
     <ROW Directory="examples_2_Dir" Directory_Parent="__3_Dir" DefaultDir="examples"/>
     <ROW Directory="examples_3_Dir" Directory_Parent="__4_Dir" DefaultDir="examples"/>
     <ROW Directory="examples_Dir" Directory_Parent="__1_Dir" DefaultDir="examples"/>
-    <ROW Directory="ext_1_Dir" Directory_Parent="modules_2_Dir" DefaultDir="ext"/>
-    <ROW Directory="ext_2_Dir" Directory_Parent="stub_Dir" DefaultDir="ext"/>
     <ROW Directory="ext_3_Dir" Directory_Parent="modules_3_Dir" DefaultDir="ext"/>
     <ROW Directory="ext_4_Dir" Directory_Parent="lib_8_Dir" DefaultDir="ext"/>
     <ROW Directory="ext_5_Dir" Directory_Parent="modules_4_Dir" DefaultDir="ext"/>
@@ -336,16 +320,11 @@
     <ROW Directory="gtkgl2.0_Dir" Directory_Parent="include_Dir" DefaultDir="gtkgl-2.0"/>
     <ROW Directory="gtkgl_Dir" Directory_Parent="gtkgl2.0_Dir" DefaultDir="gtkgl"/>
     <ROW Directory="gu_Dir" Directory_Parent="locale_2_Dir" DefaultDir="gu"/>
-    <ROW Directory="harness_Dir" Directory_Parent="APPDIR" DefaultDir="harness"/>
     <ROW Directory="he_Dir" Directory_Parent="locale_2_Dir" DefaultDir="he"/>
-    <ROW Directory="helloworld_1_Dir" Directory_Parent="products_1_Dir" DefaultDir="hellow~1|helloworld"/>
-    <ROW Directory="helloworld_Dir" Directory_Parent="products_Dir" DefaultDir="hellow~1|helloworld"/>
     <ROW Directory="hi_Dir" Directory_Parent="locale_2_Dir" DefaultDir="hi"/>
     <ROW Directory="hr_Dir" Directory_Parent="locale_2_Dir" DefaultDir="hr"/>
     <ROW Directory="hu_Dir" Directory_Parent="locale_2_Dir" DefaultDir="hu"/>
     <ROW Directory="hy_Dir" Directory_Parent="locale_2_Dir" DefaultDir="hy"/>
-    <ROW Directory="i18n_1_Dir" Directory_Parent="windows_Dir" DefaultDir="i18n"/>
-    <ROW Directory="i18n_Dir" Directory_Parent="unix_Dir" DefaultDir="i18n"/>
     <ROW Directory="i386_1_Dir" Directory_Parent="lib_10_Dir" DefaultDir="i386"/>
     <ROW Directory="i386_Dir" Directory_Parent="lib_8_Dir" DefaultDir="i386"/>
     <ROW Directory="ia_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ia"/>
@@ -354,15 +333,12 @@
     <ROW Directory="im_Dir" Directory_Parent="lib_8_Dir" DefaultDir="im"/>
     <ROW Directory="images_Dir" Directory_Parent="lib_8_Dir" DefaultDir="images"/>
     <ROW Directory="include_Dir" Directory_Parent="sdk_Dir" DefaultDir="include"/>
-    <ROW Directory="infra_Dir" Directory_Parent="ext_2_Dir" DefaultDir="infra"/>
-    <ROW Directory="installer_Dir" Directory_Parent="mycompany_1_Dir" DefaultDir="instal~1|installer"/>
     <ROW Directory="interfaces_Dir" Directory_Parent="gst_4_Dir" DefaultDir="interf~1|interfaces"/>
     <ROW Directory="io_Dir" Directory_Parent="locale_2_Dir" DefaultDir="io"/>
     <ROW Directory="is_Dir" Directory_Parent="locale_2_Dir" DefaultDir="is"/>
     <ROW Directory="it_Dir" Directory_Parent="locale_2_Dir" DefaultDir="it"/>
     <ROW Directory="ja_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ja"/>
     <ROW Directory="java_Dir" Directory_Parent="APPDIR" DefaultDir="java"/>
-    <ROW Directory="jnlp_Dir" Directory_Parent="harness_Dir" DefaultDir="jnlp"/>
     <ROW Directory="jqs_Dir" Directory_Parent="deploy_Dir" DefaultDir="jqs"/>
     <ROW Directory="jre6_Dir" Directory_Parent="APPDIR" DefaultDir="jre6"/>
     <ROW Directory="ka_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ka"/>
@@ -371,8 +347,6 @@
     <ROW Directory="ko_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ko"/>
     <ROW Directory="ku_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ku"/>
     <ROW Directory="lame_Dir" Directory_Parent="include_Dir" DefaultDir="lame"/>
-    <ROW Directory="launcher_Dir" Directory_Parent="native_Dir" DefaultDir="launcher"/>
-    <ROW Directory="launchers_Dir" Directory_Parent="harness_Dir" DefaultDir="launch~1|launchers"/>
     <ROW Directory="li_Dir" Directory_Parent="locale_2_Dir" DefaultDir="li"/>
     <ROW Directory="lib_10_Dir" Directory_Parent="modules_4_Dir" DefaultDir="lib"/>
     <ROW Directory="lib_1_Dir" Directory_Parent="solr_Dir" DefaultDir="lib"/>
@@ -422,7 +396,6 @@
     <ROW Directory="ml_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ml"/>
     <ROW Directory="mn_Dir" Directory_Parent="locale_2_Dir" DefaultDir="mn"/>
     <ROW Directory="modules_1_Dir" Directory_Parent="gtk2.0_1_Dir" DefaultDir="modules"/>
-    <ROW Directory="modules_2_Dir" Directory_Parent="harness_Dir" DefaultDir="modules"/>
     <ROW Directory="modules_3_Dir" Directory_Parent="java_Dir" DefaultDir="modules"/>
     <ROW Directory="modules_4_Dir" Directory_Parent="platform_Dir" DefaultDir="modules"/>
     <ROW Directory="modules_5_Dir" Directory_Parent="netbeans_Dir" DefaultDir="modules"/>
@@ -430,13 +403,7 @@
     <ROW Directory="mr_Dir" Directory_Parent="locale_2_Dir" DefaultDir="mr"/>
     <ROW Directory="ms_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ms"/>
     <ROW Directory="my_Dir" Directory_Parent="locale_2_Dir" DefaultDir="my"/>
-    <ROW Directory="mycompany_1_Dir" Directory_Parent="org_1_Dir" DefaultDir="mycomp~1|mycompany"/>
-    <ROW Directory="mycompany_Dir" Directory_Parent="org_Dir" DefaultDir="mycomp~1|mycompany"/>
-    <ROW Directory="native_Dir" Directory_Parent="src_1_Dir" DefaultDir="native"/>
     <ROW Directory="nb_Dir" Directory_Parent="locale_2_Dir" DefaultDir="nb"/>
-    <ROW Directory="nbi_Dir" Directory_Parent="harness_Dir" DefaultDir="nbi"/>
-    <ROW Directory="nbproject_1_Dir" Directory_Parent="engine_Dir" DefaultDir="nbproj~1|nbproject"/>
-    <ROW Directory="nbproject_Dir" Directory_Parent="helloworld_Dir" DefaultDir="nbproj~1|nbproject"/>
     <ROW Directory="nds_Dir" Directory_Parent="locale_2_Dir" DefaultDir="nds"/>
     <ROW Directory="ne_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ne"/>
     <ROW Directory="neon_Dir" Directory_Parent="include_Dir" DefaultDir="neon"/>
@@ -455,11 +422,7 @@
     <ROW Directory="orc0.4_Dir" Directory_Parent="include_Dir" DefaultDir="orc-0.4"/>
     <ROW Directory="orc_Dir" Directory_Parent="orc0.4_Dir" DefaultDir="orc"/>
     <ROW Directory="orctest_Dir" Directory_Parent="orc0.4_Dir" DefaultDir="orc-test"/>
-    <ROW Directory="org_1_Dir" Directory_Parent="src_1_Dir" DefaultDir="org"/>
-    <ROW Directory="org_Dir" Directory_Parent="src_Dir" DefaultDir="org"/>
     <ROW Directory="pa_Dir" Directory_Parent="locale_2_Dir" DefaultDir="pa"/>
-    <ROW Directory="panels_1_Dir" Directory_Parent="components_1_Dir" DefaultDir="panels"/>
-    <ROW Directory="panels_Dir" Directory_Parent="wizard_Dir" DefaultDir="panels"/>
     <ROW Directory="pango1.0_Dir" Directory_Parent="include_Dir" DefaultDir="pango-1.0"/>
     <ROW Directory="pango_1_Dir" Directory_Parent="pango1.0_Dir" DefaultDir="pango"/>
     <ROW Directory="pango_Dir" Directory_Parent="etc_2_Dir" DefaultDir="pango"/>
@@ -470,13 +433,10 @@
     <ROW Directory="platform_Dir" Directory_Parent="APPDIR" DefaultDir="platform"/>
     <ROW Directory="plugins_1_Dir" Directory_Parent="vlc_Dir" DefaultDir="plugins"/>
     <ROW Directory="plugins_Dir" Directory_Parent="rr_Dir" DefaultDir="plugins"/>
-    <ROW Directory="products_1_Dir" Directory_Parent="build_Dir" DefaultDir="products"/>
-    <ROW Directory="products_Dir" Directory_Parent="components_Dir" DefaultDir="products"/>
     <ROW Directory="ps_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ps"/>
     <ROW Directory="pt_BR_Dir" Directory_Parent="locale_2_Dir" DefaultDir="pt_BR"/>
     <ROW Directory="pt_Dir" Directory_Parent="locale_2_Dir" DefaultDir="pt"/>
     <ROW Directory="python_Dir" Directory_Parent="bindings_Dir" DefaultDir="python"/>
-    <ROW Directory="resources_Dir" Directory_Parent="panels_1_Dir" DefaultDir="resour~1|resources"/>
     <ROW Directory="riff_Dir" Directory_Parent="gst_4_Dir" DefaultDir="riff"/>
     <ROW Directory="ro_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ro"/>
     <ROW Directory="rr_Dir" Directory_Parent="autopsy_Dir" DefaultDir="rr"/>
@@ -489,7 +449,6 @@
     <ROW Directory="sdk_Dir" Directory_Parent="gstreamer_Dir" DefaultDir="sdk"/>
     <ROW Directory="sdp_Dir" Directory_Parent="gst_4_Dir" DefaultDir="sdp"/>
     <ROW Directory="security_Dir" Directory_Parent="lib_8_Dir" DefaultDir="security"/>
-    <ROW Directory="sequences_Dir" Directory_Parent="components_1_Dir" DefaultDir="sequen~1|sequences"/>
     <ROW Directory="servicetag_Dir" Directory_Parent="lib_8_Dir" DefaultDir="servic~1|servicetag"/>
     <ROW Directory="share_1_Dir" Directory_Parent="v2.6_Dir" DefaultDir="share"/>
     <ROW Directory="share_2_Dir" Directory_Parent="v2.7_Dir" DefaultDir="share"/>
@@ -507,11 +466,8 @@
     <ROW Directory="speex_Dir" Directory_Parent="include_Dir" DefaultDir="speex"/>
     <ROW Directory="sq_Dir" Directory_Parent="locale_2_Dir" DefaultDir="sq"/>
     <ROW Directory="sr_Dir" Directory_Parent="locale_2_Dir" DefaultDir="sr"/>
-    <ROW Directory="src_1_Dir" Directory_Parent="engine_Dir" DefaultDir="src"/>
-    <ROW Directory="src_Dir" Directory_Parent="helloworld_Dir" DefaultDir="src"/>
     <ROW Directory="srije_Dir" Directory_Parent="locale_2_Dir" DefaultDir="sr@ije"/>
     <ROW Directory="srlatin_Dir" Directory_Parent="locale_2_Dir" DefaultDir="sr@latin"/>
-    <ROW Directory="stub_Dir" Directory_Parent="nbi_Dir" DefaultDir="stub"/>
     <ROW Directory="stun_Dir" Directory_Parent="include_Dir" DefaultDir="stun"/>
     <ROW Directory="sv_Dir" Directory_Parent="locale_2_Dir" DefaultDir="sv"/>
     <ROW Directory="ta_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ta"/>
@@ -522,20 +478,16 @@
     <ROW Directory="theora_Dir" Directory_Parent="include_Dir" DefaultDir="theora"/>
     <ROW Directory="tk_Dir" Directory_Parent="locale_2_Dir" DefaultDir="tk"/>
     <ROW Directory="tl_Dir" Directory_Parent="locale_2_Dir" DefaultDir="tl"/>
-    <ROW Directory="toplink_Dir" Directory_Parent="ext_3_Dir" DefaultDir="toplink"/>
     <ROW Directory="tr_Dir" Directory_Parent="locale_2_Dir" DefaultDir="tr"/>
     <ROW Directory="tt_Dir" Directory_Parent="locale_2_Dir" DefaultDir="tt"/>
     <ROW Directory="ug_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ug"/>
     <ROW Directory="uk_Dir" Directory_Parent="locale_2_Dir" DefaultDir="uk"/>
-    <ROW Directory="unix_Dir" Directory_Parent="launcher_Dir" DefaultDir="unix"/>
     <ROW Directory="update_Dir" Directory_Parent="platform_Dir" DefaultDir="update"/>
-    <ROW Directory="update_tracking_1_Dir" Directory_Parent="harness_Dir" DefaultDir="update~1|update_tracking"/>
     <ROW Directory="update_tracking_2_Dir" Directory_Parent="java_Dir" DefaultDir="update~1|update_tracking"/>
     <ROW Directory="update_tracking_3_Dir" Directory_Parent="platform_Dir" DefaultDir="update~1|update_tracking"/>
     <ROW Directory="update_tracking_Dir" Directory_Parent="autopsy_Dir" DefaultDir="update~1|update_tracking"/>
     <ROW Directory="ur_Dir" Directory_Parent="locale_2_Dir" DefaultDir="ur"/>
     <ROW Directory="usages_Dir" Directory_Parent="stun_Dir" DefaultDir="usages"/>
-    <ROW Directory="utils_Dir" Directory_Parent="installer_Dir" DefaultDir="utils"/>
     <ROW Directory="uz_Dir" Directory_Parent="locale_2_Dir" DefaultDir="uz"/>
     <ROW Directory="uzcyrillic_Dir" Directory_Parent="locale_2_Dir" DefaultDir="uz@cyr~1|uz@cyrillic"/>
     <ROW Directory="v2.5_Dir" Directory_Parent="python_Dir" DefaultDir="v2.5"/>
@@ -549,9 +501,6 @@
     <ROW Directory="wa_Dir" Directory_Parent="locale_2_Dir" DefaultDir="wa"/>
     <ROW Directory="wavpack_Dir" Directory_Parent="include_Dir" DefaultDir="wavpack"/>
     <ROW Directory="webapps_Dir" Directory_Parent="solr_Dir" DefaultDir="webapps"/>
-    <ROW Directory="windows_Dir" Directory_Parent="launcher_Dir" DefaultDir="windows"/>
-    <ROW Directory="wizard_1_Dir" Directory_Parent="installer_Dir" DefaultDir="wizard"/>
-    <ROW Directory="wizard_Dir" Directory_Parent="mycompany_Dir" DefaultDir="wizard"/>
     <ROW Directory="x86_Dir" Directory_Parent="lib_10_Dir" DefaultDir="x86"/>
     <ROW Directory="xh_Dir" Directory_Parent="locale_2_Dir" DefaultDir="xh"/>
     <ROW Directory="yi_Dir" Directory_Parent="locale_2_Dir" DefaultDir="yi"/>
@@ -572,13 +521,6 @@
     <ROW Component="Azores" ComponentId="{A5362536-464B-45C2-9F52-AF24967D7349}" Directory_="Atlantic_Dir" Attributes="0" KeyPath="Azores" Type="0"/>
     <ROW Component="Beulah" ComponentId="{1392EBE0-F806-4868-B122-B72A2DC2C78C}" Directory_="North_Dakota_Dir" Attributes="0" KeyPath="Beulah" Type="0"/>
     <ROW Component="Buenos_Aires" ComponentId="{605814E9-25E9-4D97-A126-428BEE3A791A}" Directory_="Argentina_Dir" Attributes="0" KeyPath="Buenos_Aires" Type="0"/>
-    <ROW Component="Bundle.properties" ComponentId="{A5CB50EF-E0E3-4A06-A5A2-D7DF25F7C05A}" Directory_="data_Dir" Attributes="0" KeyPath="Bundle.properties" Type="0"/>
-    <ROW Component="Bundle.properties_1" ComponentId="{FD6933C9-F8BD-4605-A174-B45D298A1F33}" Directory_="mycompany_Dir" Attributes="0" KeyPath="Bundle.properties_1" Type="0"/>
-    <ROW Component="Bundle.properties_2" ComponentId="{459F3D51-9CCF-406F-B996-C711B8502845}" Directory_="panels_Dir" Attributes="0" KeyPath="Bundle.properties_2" Type="0"/>
-    <ROW Component="Bundle.properties_3" ComponentId="{E0354A22-A317-4360-9E5E-4B6063C63E3A}" Directory_="applications_Dir" Attributes="0" KeyPath="Bundle.properties_3" Type="0"/>
-    <ROW Component="Bundle.properties_4" ComponentId="{E361F740-B674-4FE6-85BF-AA4D2E22C4A4}" Directory_="actions_Dir" Attributes="0" KeyPath="Bundle.properties_4" Type="0"/>
-    <ROW Component="Bundle.properties_5" ComponentId="{FE288C34-49D1-4D35-8F69-6FDEBA79ED38}" Directory_="panels_1_Dir" Attributes="0" KeyPath="Bundle.properties_5" Type="0"/>
-    <ROW Component="Bundle.properties_6" ComponentId="{5650955F-9009-4F1B-8E0F-1C5203A1CDE4}" Directory_="sequences_Dir" Attributes="0" KeyPath="Bundle.properties_6" Type="0"/>
     <ROW Component="CET" ComponentId="{256AC0CA-BE1C-40C8-9D26-D673804D7AAF}" Directory_="zi_Dir" Attributes="0" KeyPath="CET" Type="0"/>
     <ROW Component="CIEXYZ.pf" ComponentId="{A6D55C33-4D66-435B-9BAD-07587857D635}" Directory_="cmm_Dir" Attributes="0" KeyPath="CIEXYZ.pf" Type="0"/>
     <ROW Component="COPYING" ComponentId="{F48FF8E3-48D5-47BA-AC86-CE065D2FEB88}" Directory_="gstreamer_Dir" Attributes="0" KeyPath="COPYING" Type="0"/>
@@ -591,7 +533,6 @@
     <ROW Component="LucidaBrightDemiBold.ttf" ComponentId="{4983C3C3-1AA4-4F73-800E-8E7059533F45}" Directory_="fonts_1_Dir" Attributes="0" Type="0"/>
     <ROW Component="Microsoft.VC90.CRT.manifest" ComponentId="{AC7C87A1-6025-47EC-A0A7-6FA69FA62D93}" Directory_="lib_Dir" Attributes="0" KeyPath="Microsoft.VC90.CRT.manifest" Type="0"/>
     <ROW Component="ProductInformation" ComponentId="{D944BCAA-4F64-4AF4-802C-EC49D1F3B9C2}" Directory_="APPDIR" Attributes="4" KeyPath="Version"/>
-    <ROW Component="README" ComponentId="{F853975C-8D8D-49A5-AD98-910803EC0164}" Directory_="toplink_Dir" Attributes="0" KeyPath="README_2" Type="0"/>
     <ROW Component="README.txt" ComponentId="{ED988AEB-BE4F-4735-BE52-2F2059BB9033}" Directory_="APPDIR" Attributes="0" KeyPath="README.txt_1" Type="0"/>
     <ROW Component="SDL.dll" ComponentId="{154F4EA3-F8E1-4F75-9969-BAABE156CF2B}" Directory_="bin_1_Dir" Attributes="0" KeyPath="SDL.dll"/>
     <ROW Component="SDL_ttf.dll" ComponentId="{3723CE5B-6DE2-477E-9FC1-C55C6FD74EB7}" Directory_="bin_1_Dir" Attributes="0" KeyPath="SDL_ttf.dll"/>
@@ -603,9 +544,6 @@
     <ROW Component="all.h" ComponentId="{91AE00D5-69FB-427E-B0E2-67F78F126D43}" Directory_="FLAC_Dir" Attributes="0" KeyPath="all.h" Type="0"/>
     <ROW Component="ant1.6.5.jar" ComponentId="{59D62BF6-EA5C-4204-BC3E-F55F5E62CB4E}" Directory_="lib_1_Dir" Attributes="0" KeyPath="ant1.6.5.jar" Type="0"/>
     <ROW Component="apachemime4jcore0.7.jar" ComponentId="{054D682F-0DD6-479E-9C33-8C090DA41C2C}" Directory_="lib_2_Dir" Attributes="0" KeyPath="apachemime4jcore0.7.jar" Type="0"/>
-    <ROW Component="app.conf" ComponentId="{23B96405-D104-406D-AB66-42F6D7FD4E71}" Directory_="etc_3_Dir" Attributes="0" KeyPath="app.conf" Type="0"/>
-    <ROW Component="app.exe" ComponentId="{6428112E-B357-4A3C-BE0B-45CCC031F344}" Directory_="launchers_Dir" Attributes="0" KeyPath="app.exe"/>
-    <ROW Component="app.sh" ComponentId="{AA5B2599-128E-410A-8047-6C9738734B52}" Directory_="launchers_Dir" Attributes="0" KeyPath="app.sh" Type="0"/>
     <ROW Component="applejavaextensions.jar" ComponentId="{1AD7ADDD-AB1B-4184-938B-810AD78A39A0}" Directory_="ext_Dir" Attributes="0" KeyPath="applejavaextensions.jar" Type="0"/>
     <ROW Component="arunmru.pl" ComponentId="{D3792B81-175A-4A0D-9CC9-2D9F1F95D820}" Directory_="plugins_Dir" Attributes="0" KeyPath="arunmru.pl" Type="0"/>
     <ROW Component="atk1.0.lib" ComponentId="{C28244E9-C0CF-4B9B-85C3-7150C2B17B65}" Directory_="lib_7_Dir" Attributes="0" KeyPath="atk1.0.lib" Type="0"/>
@@ -737,18 +675,10 @@
     <ROW Component="beansbinding1.2.1doc.zip" ComponentId="{778FFDC7-AAFF-4FF8-A082-ABBDA846F3EF}" Directory_="docs_1_Dir" Attributes="0" KeyPath="beansbinding1.2.1doc.zip" Type="0"/>
     <ROW Component="begin_code.h" ComponentId="{C4C52CF7-3559-4929-A700-DA12933C9C3D}" Directory_="SDL_Dir" Attributes="0" KeyPath="begin_code.h" Type="0"/>
     <ROW Component="bind.h" ComponentId="{A564F8E5-10CA-4FAA-B178-175236A50D50}" Directory_="usages_Dir" Attributes="0" KeyPath="bind.h" Type="0"/>
-    <ROW Component="bindex2.2.jar" ComponentId="{5301FA60-FBE2-41AB-81BD-097BE73ABF1B}" Directory_="antlib_Dir" Attributes="0" KeyPath="bindex2.2.jar" Type="0"/>
     <ROW Component="blacklist" ComponentId="{A129A182-7549-4944-BD13-A4CAFBEF8571}" Directory_="security_Dir" Attributes="0" KeyPath="blacklist" Type="0"/>
     <ROW Component="blue.svg" ComponentId="{8B14A811-C67E-4F76-9A7C-16ED9DFBA15D}" Directory_="gtk2.0_3_Dir" Attributes="0" KeyPath="blue.svg" Type="0"/>
     <ROW Component="boot.jar" ComponentId="{28034E84-7718-4279-8C1B-25052979DE3E}" Directory_="lib_9_Dir" Attributes="0" KeyPath="boot.jar" Type="0"/>
     <ROW Component="bswap.h" ComponentId="{7FBFF1C1-1128-4678-982F-A1F9EA506C5A}" Directory_="libmms_Dir" Attributes="0" KeyPath="bswap.h_1" Type="0"/>
-    <ROW Component="build.properties" ComponentId="{5F31D771-47C6-4C0B-B77B-EBE59FBC5ED2}" Directory_="stub_Dir" Attributes="0" KeyPath="build.properties" Type="0"/>
-    <ROW Component="build.properties_1" ComponentId="{A5EC0646-BB2E-43BA-84E4-B375D838C77F}" Directory_="engine_Dir" Attributes="0" KeyPath="build.properties_1" Type="0"/>
-    <ROW Component="build.properties_2" ComponentId="{B80DFD77-8DF9-41C8-ACC7-63B7A267B675}" Directory_="engine_1_Dir" Attributes="0" KeyPath="build.properties_2" Type="0"/>
-    <ROW Component="build.properties_3" ComponentId="{193FB373-86F8-4391-9985-E780FCEA2F64}" Directory_="helloworld_1_Dir" Attributes="0" KeyPath="build.properties_3" Type="0"/>
-    <ROW Component="build.xml" ComponentId="{159FAD2B-8780-4EDB-BB7A-08C92AA45BCA}" Directory_="helloworld_Dir" Attributes="0" KeyPath="build.xml_2" Type="0"/>
-    <ROW Component="buildimpl.xml" ComponentId="{77669D2C-EFE8-468D-A1D3-8E6019E07E2C}" Directory_="nbproject_Dir" Attributes="0" KeyPath="buildimpl.xml" Type="0"/>
-    <ROW Component="buildimpl.xml_1" ComponentId="{0436CA8E-38D3-4522-9FC9-FE8DECEAE698}" Directory_="nbproject_1_Dir" Attributes="0" KeyPath="buildimpl.xml_1" Type="0"/>
     <ROW Component="bzlib.h" ComponentId="{CD4AEAF7-ED25-4D3D-A865-DAF56AD0B85B}" Directory_="include_Dir" Attributes="0" KeyPath="bzlib.h" Type="0"/>
     <ROW Component="c14n.h" ComponentId="{6F89B8BC-C418-41F3-9E7E-3F3CB3F703AA}" Directory_="libxml_Dir" Attributes="0" KeyPath="c14n.h" Type="0"/>
     <ROW Component="cairodeprecated.h" ComponentId="{1DD8325B-7CFC-473E-8894-65545ED5917C}" Directory_="cairo_Dir" Attributes="0" KeyPath="cairodeprecated.h" Type="0"/>
@@ -761,7 +691,6 @@
     <ROW Component="codec.h_1" ComponentId="{EB93B466-82A8-40D8-BB10-4ED930AB6398}" Directory_="vorbis_Dir" Attributes="0" KeyPath="codec.h_1" Type="0"/>
     <ROW Component="codecutils.h" ComponentId="{E23A0195-DE5E-4D40-8C49-5B1F4348190A}" Directory_="pbutils_Dir" Attributes="0" KeyPath="codecutils.h" Type="0"/>
     <ROW Component="colorbalance.h" ComponentId="{8AE745FF-E025-4A89-9562-60721685215B}" Directory_="interfaces_Dir" Attributes="0" KeyPath="colorbalance.h" Type="0"/>
-    <ROW Component="common.properties" ComponentId="{6D461624-D4EB-483F-9918-4F71A9D9EA25}" Directory_="common_Dir" Attributes="0" KeyPath="common.properties" Type="0"/>
     <ROW Component="commonscli1.0.jar" ComponentId="{A28687A2-F7F3-429F-889B-05B086EDDE2E}" Directory_="pasco2_Dir" Attributes="0" KeyPath="commonscli1.0.jar" Type="0"/>
     <ROW Component="compat.h" ComponentId="{0B4AFAD2-87CF-4787-B93E-0718539E861E}" Directory_="gnutls_Dir" Attributes="0" KeyPath="compat.h" Type="0"/>
     <ROW Component="config_types.h" ComponentId="{627AF747-22AC-44FA-9BC0-99C48B5684CF}" Directory_="ogg_Dir" Attributes="0" KeyPath="config_types.h" Type="0"/>
@@ -784,7 +713,6 @@
     <ROW Component="dnsns.jar" ComponentId="{7D10819A-4E30-432B-9F11-35181214DE36}" Directory_="ext_4_Dir" Attributes="0" KeyPath="dnsns.jar" Type="0"/>
     <ROW Component="dt_shmem.dll" ComponentId="{8ADF71D6-BF94-4379-82F0-385EFADFD257}" Directory_="bin_3_Dir" Attributes="0" KeyPath="dt_shmem.dll"/>
     <ROW Component="dt_socket.dll" ComponentId="{4D5FD5B5-C7F4-491D-93BB-74214AAC7DC2}" Directory_="bin_3_Dir" Attributes="0" KeyPath="dt_socket.dll"/>
-    <ROW Component="engine.properties" ComponentId="{223D609F-393A-45F4-A9C5-8FB0474DE053}" Directory_="data_1_Dir" Attributes="0" KeyPath="engine.properties_1" Type="0"/>
     <ROW Component="eula.dll" ComponentId="{A9B5B0C6-7815-4A41-AEC8-2246AC929E2E}" Directory_="bin_3_Dir" Attributes="0" KeyPath="eula.dll"/>
     <ROW Component="farsight.pyd" ComponentId="{B5AA6BB4-CCEB-4355-83CB-6BA40B3E7A47}" Directory_="farsight_Dir" Attributes="0" KeyPath="farsight.pyd" Type="0"/>
     <ROW Component="farsight.pyd_1" ComponentId="{A0402A14-68A6-447C-A40D-C2FB5484CC21}" Directory_="farsight_1_Dir" Attributes="0" KeyPath="farsight.pyd_1" Type="0"/>
@@ -879,14 +807,12 @@
     <ROW Component="jbroker.exe" ComponentId="{C9612699-9CE4-4AD9-A789-CD46ED782969}" Directory_="bin_3_Dir" Attributes="0" KeyPath="jbroker.exe"/>
     <ROW Component="jdk_header.png" ComponentId="{B1C4DCEE-C648-4980-8181-FBA6343FE946}" Directory_="servicetag_Dir" Attributes="0" KeyPath="jdk_header.png" Type="0"/>
     <ROW Component="jdwp.dll" ComponentId="{C27E3C03-DB76-47FD-BF51-BFBED59BEF45}" Directory_="bin_3_Dir" Attributes="0" KeyPath="jdwp.dll"/>
-    <ROW Component="jemmy2.3.0.0.jar" ComponentId="{A00D8786-0999-409A-8E6F-BA1B4AD95EC1}" Directory_="ext_1_Dir" Attributes="0" KeyPath="jemmy2.3.0.0.jar" Type="0"/>
     <ROW Component="jetty.xml" ComponentId="{A87BC8A5-376E-4BDC-AEE6-49C8DD92949B}" Directory_="etc_Dir" Attributes="0" KeyPath="jetty.xml" Type="0"/>
     <ROW Component="jkernel.dll" ComponentId="{589D883C-FC41-4C93-826A-1B1D11711005}" Directory_="bin_3_Dir" Attributes="0" KeyPath="jkernel.dll"/>
     <ROW Component="jli.dll" ComponentId="{3026EC88-978C-4083-A418-546F39AFBF09}" Directory_="bin_3_Dir" Attributes="0" KeyPath="jli.dll"/>
     <ROW Component="jmxremote.access" ComponentId="{2E8C9166-4DC4-45BA-8999-566923627357}" Directory_="management_Dir" Attributes="0" KeyPath="jmxremote.access" Type="0"/>
     <ROW Component="jnidispatch.dll" ComponentId="{15C3FC21-2BDD-479E-85F8-C3DF112F97DB}" Directory_="amd64_Dir" Attributes="256" KeyPath="jnidispatch.dll"/>
     <ROW Component="jnidispatch.dll_1" ComponentId="{458AC921-B5ED-4536-948A-A40C7625ED88}" Directory_="x86_Dir" Attributes="0" KeyPath="jnidispatch.dll_1"/>
-    <ROW Component="jnlplauncher.jar" ComponentId="{8033559F-7C14-40C2-A064-D20D086AC4D7}" Directory_="jnlp_Dir" Attributes="0" KeyPath="jnlplauncher.jar" Type="0"/>
     <ROW Component="jp2iexp.dll" ComponentId="{C7DF4782-6021-4B11-8915-53E74DC64B63}" Directory_="bin_3_Dir" Attributes="0" KeyPath="jp2iexp.dll"/>
     <ROW Component="jp2launcher.exe" ComponentId="{66BCD979-5B83-442C-9F4D-6161DB4A78A9}" Directory_="bin_3_Dir" Attributes="0" KeyPath="jp2launcher.exe"/>
     <ROW Component="jp2native.dll" ComponentId="{B4DD0D8E-C188-4307-9DE6-5217901AEA4C}" Directory_="bin_3_Dir" Attributes="0" KeyPath="jp2native.dll"/>
@@ -911,11 +837,8 @@
     <ROW Component="ktab.exe" ComponentId="{FE63C0EE-5375-4A21-A08A-87C5D2D5CDFD}" Directory_="bin_3_Dir" Attributes="0" KeyPath="ktab.exe"/>
     <ROW Component="lame.h" ComponentId="{E9EC2D06-214F-4899-A544-88177B5FAB55}" Directory_="lame_Dir" Attributes="0" KeyPath="lame.h" Type="0"/>
     <ROW Component="lastModified" ComponentId="{6FC9D1D5-CA6A-4F3C-A3F3-FC53AF25FD89}" Directory_="autopsy_Dir" Attributes="0" KeyPath="lastModified" Type="0"/>
-    <ROW Component="lastModified_1" ComponentId="{25DFDF35-6BA9-491B-B508-D220EC914941}" Directory_="harness_Dir" Attributes="0" KeyPath="lastModified_1" Type="0"/>
     <ROW Component="lastModified_2" ComponentId="{E5966983-27A3-4E91-87C8-42951BBA7DF4}" Directory_="java_Dir" Attributes="0" KeyPath="lastModified_2" Type="0"/>
     <ROW Component="lastModified_3" ComponentId="{90779CBC-C0A9-4AC5-8488-F330BDDF2D98}" Directory_="platform_Dir" Attributes="0" KeyPath="lastModified_3" Type="0"/>
-    <ROW Component="launcher.properties" ComponentId="{A82F16CA-9B7E-45AB-8B19-C2D02BF58ACC}" Directory_="i18n_Dir" Attributes="0" KeyPath="launcher.properties" Type="0"/>
-    <ROW Component="launcher.properties_1" ComponentId="{149E04AD-9F64-4837-8976-AB23AB24C806}" Directory_="i18n_1_Dir" Attributes="0" KeyPath="launcher.properties_1" Type="0"/>
     <ROW Component="libFLAC8.dll" ComponentId="{EF712AE8-6E17-4BEB-BD8F-C4E9D1799DDC}" Directory_="bin_1_Dir" Attributes="0" KeyPath="libFLAC8.dll"/>
     <ROW Component="liba520.dll" ComponentId="{8F4D8F75-6C58-4A67-9657-A31401CBDFAB}" Directory_="bin_1_Dir" Attributes="0" KeyPath="liba520.dll"/>
     <ROW Component="libatk1.00.dll" ComponentId="{BA3C81F2-E188-4497-84EC-2C67CEFCFC72}" Directory_="bin_1_Dir" Attributes="0" KeyPath="libatk1.00.dll"/>
@@ -1250,9 +1173,6 @@
     <ROW Component="orgnetbeanscore_ja.jar" ComponentId="{8FB971A2-4024-41E2-B33C-10F475A18055}" Directory_="locale_3_Dir" Attributes="0" KeyPath="orgnetbeanscore_ja.jar" Type="0"/>
     <ROW Component="orgnetbeanscore_ja.jar_1" ComponentId="{5470A163-A34F-4A19-A72F-232B3900A2A8}" Directory_="locale_4_Dir" Attributes="0" KeyPath="orgnetbeanscore_ja.jar_1" Type="0"/>
     <ROW Component="orgnetbeanscorewindows_autopsy.jar" ComponentId="{E08D36FD-F32C-40CB-92AD-F93CE4ABECA8}" Directory_="locale_1_Dir" Attributes="0" KeyPath="orgnetbeanscorewindows_autopsy.jar" Type="0"/>
-    <ROW Component="orgnetbeansinsane.jar" ComponentId="{0E379D5E-C506-4E96-B436-AACA0CB4A5EC}" Directory_="modules_2_Dir" Attributes="0" KeyPath="orgnetbeansinsane.jar" Type="0"/>
-    <ROW Component="orgnetbeansinsane.xml" ComponentId="{7D693537-8C69-4957-B998-2C4371E24CE3}" Directory_="Modules_1_Dir" Attributes="0" KeyPath="orgnetbeansinsane.xml" Type="0"/>
-    <ROW Component="orgnetbeansinsane.xml_1" ComponentId="{C6BB60FA-E211-459D-BD26-27E2EBC7A4D5}" Directory_="update_tracking_1_Dir" Attributes="0" KeyPath="orgnetbeansinsane.xml_1" Type="0"/>
     <ROW Component="orgsleuthkitautopsycasemodule.jar" ComponentId="{4F6B1037-CCE6-46FB-8185-44FB3B46DE87}" Directory_="docs_Dir" Attributes="0" KeyPath="orgsleuthkitautopsycasemodule.jar" Type="0"/>
     <ROW Component="overlay.js" ComponentId="{29D17A85-84A0-4350-BBC6-1FD0E2B628D9}" Directory_="content_Dir" Attributes="0" KeyPath="overlay.js" Type="0"/>
     <ROW Component="p2x588.dll" ComponentId="{FE6FB03F-4415-4F85-B527-56ACBC1C5E9F}" Directory_="rr_Dir" Attributes="0" KeyPath="p2x588.dll"/>
@@ -1262,8 +1182,6 @@
     <ROW Component="pixmanversion.h" ComponentId="{A6D42B9D-CE88-4738-8A42-A87E6F4EC922}" Directory_="pixman1_Dir" Attributes="0" KeyPath="pixmanversion.h" Type="0"/>
     <ROW Component="png.h" ComponentId="{4496DE7D-A194-4361-9B93-6E7E2B4268A6}" Directory_="libpng14_Dir" Attributes="0" KeyPath="png.h" Type="0"/>
     <ROW Component="policytool.exe" ComponentId="{A705016C-7F45-4017-B117-DF5BD4762B36}" Directory_="bin_3_Dir" Attributes="0" KeyPath="policytool.exe"/>
-    <ROW Component="pre7_app.exe" ComponentId="{05EC7637-2B83-4F3D-B808-3235ED81213D}" Directory_="launchers_Dir" Attributes="0" KeyPath="pre7_app.exe"/>
-    <ROW Component="pre7_app_w.exe" ComponentId="{F1933744-A698-4DC3-B7B3-FFFB36D5B84D}" Directory_="launchers_Dir" Attributes="0" KeyPath="pre7_app_w.exe"/>
     <ROW Component="pthreadGC2.dll" ComponentId="{E48BB864-A4B0-4019-8ECF-5CD2ED5D5CF9}" Directory_="bin_1_Dir" Attributes="0" KeyPath="pthreadGC2.dll"/>
     <ROW Component="pygst.py" ComponentId="{8F5FC1AB-5871-4CB9-9748-2BF00A636451}" Directory_="sitepackages_Dir" Attributes="0" KeyPath="pygst.py" Type="0"/>
     <ROW Component="pygst.py_1" ComponentId="{F6305A88-610F-43DE-9775-241D7D281785}" Directory_="sitepackages_1_Dir" Attributes="0" KeyPath="pygst.py_1" Type="0"/>
@@ -1301,8 +1219,6 @@
     <ROW Component="vp8.h" ComponentId="{A262578E-7280-45E9-8419-DEC106B97913}" Directory_="vpx_Dir" Attributes="0" KeyPath="vp8.h" Type="0"/>
     <ROW Component="w2k_lsa_auth.dll" ComponentId="{A5FA0B16-BFCD-4D8E-B680-6A78FE70EA7F}" Directory_="bin_3_Dir" Attributes="0" KeyPath="w2k_lsa_auth.dll"/>
     <ROW Component="wavpack.h" ComponentId="{81BD1335-7A93-4D15-BB08-3EC44765FC8B}" Directory_="wavpack_Dir" Attributes="0" KeyPath="wavpack.h" Type="0"/>
-    <ROW Component="welcomeleftbottom.png" ComponentId="{B432519D-CDF7-4653-AE9B-1CB47AA76B0E}" Directory_="resources_Dir" Attributes="0" KeyPath="welcomeleftbottom.png" Type="0"/>
-    <ROW Component="wizardcomponents.xml" ComponentId="{746B6E5E-4F15-4001-8C90-9A83A7CDC2B9}" Directory_="wizard_1_Dir" Attributes="0" KeyPath="wizardcomponents.xml" Type="0"/>
     <ROW Component="wsdetect.dll" ComponentId="{6712898D-B07D-4F0C-86B5-3F839C85C0FA}" Directory_="bin_3_Dir" Attributes="0" KeyPath="wsdetect.dll"/>
     <ROW Component="xvidcore.dll" ComponentId="{6E8C2BED-F109-41F3-B17F-4D95F0C7624E}" Directory_="bin_1_Dir" Attributes="0" KeyPath="xvidcore.dll"/>
     <ROW Component="z.dll" ComponentId="{F701A058-FBD5-4B8A-9B30-505A0C734F21}" Directory_="bin_1_Dir" Attributes="0" KeyPath="z.dll"/>
@@ -1311,7 +1227,7 @@
     <ROW Component="zlib1.dll" ComponentId="{72F0D106-7749-4834-AD2A-EB16B4720379}" Directory_="lib_Dir" Attributes="0" KeyPath="zlib1.dll"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiFeatsComponent">
-    <ROW Feature="MainFeature" Title="MainFeature" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0" Components="AST4 Abidjan Adak Adelaide Aden Amsterdam Antananarivo Apia Azores Beulah Buenos_Aires Bundle.properties Bundle.properties_1 Bundle.properties_2 Bundle.properties_3 Bundle.properties_4 Bundle.properties_5 Bundle.properties_6 CET CIEXYZ.pf COPYING COPYRIGHT Casey GMT Indianapolis JdbcOdbc.dll Louisville LucidaBrightDemiBold.ttf Microsoft.VC90.CRT.manifest ProductInformation README README.txt SDL.dll SDL_ttf.dll SHORTCUTDIR address.h adler32.h adminextra.html aes.h all.h ant1.6.5.jar apachemime4jcore0.7.jar app.conf app.exe app.sh applejavaextensions.jar arunmru.pl atk1.0.lib atk10.mo atk10.mo_1 atk10.mo_10 atk10.mo_11 atk10.mo_12 atk10.mo_13 atk10.mo_14 atk10.mo_15 atk10.mo_16 atk10.mo_17 atk10.mo_18 atk10.mo_19 atk10.mo_2 atk10.mo_20 atk10.mo_21 atk10.mo_22 atk10.mo_23 atk10.mo_24 atk10.mo_25 atk10.mo_26 atk10.mo_27 atk10.mo_28 atk10.mo_29 atk10.mo_3 atk10.mo_30 atk10.mo_31 atk10.mo_32 atk10.mo_33 atk10.mo_34 atk10.mo_35 atk10.mo_36 atk10.mo_37 atk10.mo_38 atk10.mo_39 atk10.mo_4 atk10.mo_40 atk10.mo_41 atk10.mo_42 atk10.mo_43 atk10.mo_44 atk10.mo_45 atk10.mo_46 atk10.mo_47 atk10.mo_48 atk10.mo_49 atk10.mo_5 atk10.mo_50 atk10.mo_51 atk10.mo_52 atk10.mo_53 atk10.mo_54 atk10.mo_55 atk10.mo_56 atk10.mo_57 atk10.mo_58 atk10.mo_59 atk10.mo_6 atk10.mo_60 atk10.mo_61 atk10.mo_62 atk10.mo_63 atk10.mo_64 atk10.mo_65 atk10.mo_66 atk10.mo_67 atk10.mo_68 atk10.mo_69 atk10.mo_7 atk10.mo_70 atk10.mo_71 atk10.mo_72 atk10.mo_73 atk10.mo_74 atk10.mo_75 atk10.mo_76 atk10.mo_77 atk10.mo_78 atk10.mo_79 atk10.mo_8 atk10.mo_80 atk10.mo_81 atk10.mo_82 atk10.mo_83 atk10.mo_84 atk10.mo_85 atk10.mo_86 atk10.mo_87 atk10.mo_88 atk10.mo_89 atk10.mo_9 atk10.mo_90 atk10.mo_91 atk10.mo_92 atkenumtypes.h audio.defs audio.defs_1 audio.defs_2 audio.defs_3 audio.pyd audio.pyd_1 audio.pyd_2 audio.pyd_3 audiocontroller.py audiocontroller.py_1 audiocontroller.py_2 audiocontroller.py_3 audioenumtypes.h autohint.conf autopsy autopsy.clusters autopsy.exe avcodec.h avcodecgpl52.dll avcore.h avcoregpl0.dll avdevice.h avdevicegpl52.dll avfilter.h avfiltergpl1.dll avformat.h avformatgpl52.dll avutilgpl50.dll awt.dll axbridge.dll beansbinding1.2.1.jar beansbinding1.2.1doc.zip begin_code.h bind.h bindex2.2.jar blacklist blue.svg boot.jar bswap.h build.properties build.properties_1 build.properties_2 build.properties_3 build.xml buildimpl.xml buildimpl.xml_1 bzlib.h c14n.h cairodeprecated.h calendars.properties celt.h chrome.manifest classes.jsa cmm.dll codec.h codec.h_1 codecutils.h colorbalance.h common.properties commonscli1.0.jar compat.h config_types.h constants.h core.jar core_autopsy.jar cradditionalsel.h ctypes4j.dll curl.h cursors.properties dataprotocol.h dcpr.dll deploy.dll deployJava1.dll deprecated.h discoverer.py discoverer.py_1 discoverer.py_2 discoverer.py_3 dnsns.jar dt_shmem.dll dt_socket.dll engine.properties eula.dll farsight.pyd farsight.pyd_1 farsight.pyd_2 farsight.pyd_3 fcfreetype.h felix2.0.3.jar ffjcext.zip ffmpeg.txt fixglobaladvance.conf fontmanager.dll fonts.conf freetype.h fribidiarabic.h fsbaseconference.h ftconfig.h gailutil.h gailwidget.h galloca.h gappinfo.h gbinding.h gdk.h gdkconfig.h gdkgl.h gdkpixbufanimation.h glew.h glew32.dll glib20.mo glib20.mo_1 glib20.mo_2 glibcompat.h glibobject.h gsfblob.h gsfinputbonobo.h gsfinputwin32.h gstadapter.h gstappbuffer.h gstbasertpaudiopayload.h gstbasevideocodec.h gstcddabasesrc.h gstcontroller.h gstfft.h gstglbuffer.h gstinspect.exe gstlaunch.exe gstnet.h gstnetbuffer.h gstplayer.exe gstreamersharp.dll gstreamersharpglue0.10.dll gstreamersharpglue0.10.dll_1 gstrtspbase64.h gstsdp.h gsttagdemux.h gsttypefind.exe gstxmlinspect.exe gtk.h gtk.immodules gtk20properties.mo gtk20properties.mo_1 gtk20properties.mo_10 gtk20properties.mo_11 gtk20properties.mo_2 gtk20properties.mo_3 gtk20properties.mo_4 gtk20properties.mo_5 gtk20properties.mo_6 gtk20properties.mo_7 gtk20properties.mo_8 gtk20properties.mo_9 gtkrc gtkrc_1 gtkrc_2 gtkrc_3 gwin32inputstream.h hpi.dll hprof.dll indicim.jar instrument.dll ioser12.dll j2pcsc.dll j2pkcs11.dll jaas_nt.dll java.dll java.exe java_crw_demo.dll javacpl.exe javarmi.exe javaw.exe javaws.exe jawt.dll jbroker.exe jdk_header.png jdwp.dll jemmy2.3.0.0.jar jetty.xml jkernel.dll jli.dll jmxremote.access jnidispatch.dll jnidispatch.dll_1 jnlplauncher.jar jp2iexp.dll jp2launcher.exe jp2native.dll jp2ssv.dll jpeg.dll jpicom.dll jpiexp.dll jpinscp.dll jpioji.dll jpishare.dll jqs.conf jqs.exe jqs_plugin.dll jqsnotify.exe jsound.dll jsoundds.dll jvm.cfg jvm.dll keytool.exe kinit.exe klist.exe ktab.exe lame.h lastModified lastModified_1 lastModified_2 lastModified_3 launcher.properties launcher.properties_1 libFLAC8.dll liba520.dll libatk1.00.dll libbz2.dll libcairo2.dll libcairogobject2.dll libcairoscriptinterpreter2.dll libcelt0.dll libcharset1.dll libcroco0.63.dll libdca0.dll libdvdcss2.dll libdvdnav4.dll libdvdnavmini4.dll libdvdread4.dll libewf.dll libexpat1.dll libfaac0.dll libfaad2.dll libffi5.dll libfontconfig1.dll libfreetype6.dll libfribidi0.dll libfsfunnel.dll libfsrtcpfilter.dll libfsrtpconference.dll libfsselector.dll libfsvideoanyrate.dll libgail.dll libgailutil18.dll libgcc_s_sjlj1.dll libgcrypt11.dll libgdk_pixbuf2.00.dll libgdkwin322.00.dll libgio2.00.dll libglib2.00.dll libgmodule2.00.dll libgmp10.dll libgnl.dll libgnutls26.dll libgnutlsextra26.dll libgnutlsopenssl26.dll libgobject2.00.dll libgpgerror0.dll libgsf1114.dll libgsfwin321114.dll libgsta52dec.dll libgstadder.dll libgstaiff.dll libgstalaw.dll libgstalpha.dll libgstalphacolor.dll libgstapetag.dll libgstapp.dll libgstapp0.10.dll libgstasf.dll libgstasfmux.dll libgstaudio0.10.dll libgstaudioconvert.dll libgstaudiofx.dll libgstaudioparsersbad.dll libgstaudiorate.dll libgstaudioresample.dll libgstaudiotestsrc.dll libgstauparse.dll libgstautoconvert.dll libgstautodetect.dll libgstavi.dll libgstbase0.10.dll libgstbasevideo0.10.dll libgstbayer.dll libgstbz2.dll libgstcairo.dll libgstcamerabin.dll libgstcdda0.10.dll libgstcdxaparse.dll libgstcelt.dll libgstcontroller0.10.dll libgstcoreelements.dll libgstcoreindexers.dll libgstcutter.dll libgstd3dvideosink.dll libgstdataprotocol0.10.dll libgstdebug.dll libgstdecodebin.dll libgstdecodebin2.dll libgstdeinterlace.dll libgstdirectdraw.dll libgstdirectsound.dll libgstdirectsoundsrc.dll libgstdshowdecwrapper.dll libgstdshowsrcwrapper.dll libgstdshowvideosink.dll libgstdtmf.dll libgstdtsdec.dll libgstdvdlpcmdec.dll libgstdvdread.dll libgstdvdspu.dll libgstdvdsub.dll libgsteffectv.dll libgstequalizer.dll libgstfaac.dll libgstfaad.dll libgstfarsight0.10.dll libgstffmpegcolorspace.dll libgstffmpeggpl.dll libgstffmpegscalegpl.dll libgstfft0.10.dll libgstflac.dll libgstflv.dll libgstflxdec.dll libgstfreeze.dll libgstfrei0r.dll libgstgamma.dll libgstgdkpixbuf.dll libgstgdp.dll libgstgeometrictransform.dll libgstgio.dll libgstgl0.10.dll libgsth264parse.dll libgsthdvparse.dll libgsticydemux.dll libgstid3demux.dll libgstiec958.dll libgstimagefreeze.dll libgstinterfaces0.10.dll libgstinterleave.dll libgstjpeg.dll libgstjpegformat.dll libgstlame.dll libgstlegacyresample.dll libgstlevel.dll libgstliveadder.dll libgstmad.dll libgstmatroska.dll libgstmms.dll libgstmonoscope.dll libgstmpeg2dec.dll libgstmpeg4videoparse.dll libgstmpegaudioparse.dll libgstmpegdemux.dll libgstmpegpsmux.dll libgstmpegstream.dll libgstmpegtsmux.dll libgstmpegvideoparse.dll libgstmulaw.dll libgstmultifile.dll libgstmultipart.dll libgstmve.dll libgstmxf.dll libgstnavigationtest.dll libgstneonhttpsrc.dll libgstnet0.10.dll libgstnetbuffer0.10.dll libgstnetsim.dll libgstnice.dll libgstnuvdemux.dll libgstogg.dll libgstopengl.dll libgstpango.dll libgstpbutils0.10.dll libgstpcapparse.dll libgstphotography0.10.dll libgstplaybin.dll libgstpng.dll libgstpnm.dll libgstpythonv2.5.dll libgstpythonv2.6.dll libgstpythonv2.6.dll_1 libgstpythonv2.7.dll libgstqtdemux.dll libgstqtmux.dll libgstrawparse.dll libgstreal.dll libgstreamer0.10.dll libgstreplaygain.dll libgstriff0.10.dll libgstrmdemux.dll libgstrsvg.dll libgstrtp.dll libgstrtp0.10.dll libgstrtpdemux.dll libgstrtpjitterbuffer.dll libgstrtpmanager.dll libgstrtpmux.dll libgstrtppayloads.dll libgstrtsp.dll libgstrtsp0.10.dll libgstscaletempoplugin.dll libgstschro.dll libgstsdl.dll libgstsdp0.10.dll libgstsdpelem.dll libgstselector.dll libgstshapewipe.dll libgstsignalprocessor0.10.dll libgstsiren.dll libgstsmpte.dll libgstsouphttpsrc.dll libgstspectrum.dll libgstspeed.dll libgstspeex.dll libgststereo.dll libgstsubenc.dll libgstsubparse.dll libgstsynaesthesia.dll libgsttag0.10.dll libgsttheora.dll libgsttta.dll libgsttypefindfunctions.dll libgstudp.dll libgstvalve.dll libgstvideo0.10.dll libgstvideobalance.dll libgstvideobox.dll libgstvideocrop.dll libgstvideoflip.dll libgstvideomeasure.dll libgstvideomixer.dll libgstvideorate.dll libgstvideoscale.dll libgstvideosignal.dll libgstvideotestsrc.dll libgstvmnc.dll libgstvolume.dll libgstvorbis.dll libgstvp8.dll libgstwasapi.dll libgstwaveenc.dll libgstwaveformsink.dll libgstwavpack.dll libgstwavparse.dll libgstwininet.dll libgstwinks.dll libgstwinscreencap.dll libgstx264.dll libgstxvid.dll libgsty4menc.dll libgthread2.00.dll libgtkgl2.01.dll libgtkwin322.00.dll libhogweed20.dll libiconv2.dll libid3tag0.dll libjnidispatch.jnilib libjnidispatch.so libjnidispatch.so_1 libjpeg8.dll libmad0.dll libmms0.dll libmp3lame0.dll libmpeg20.dll libmpeg2convert0.dll libmulticasttransmitter.dll libneon27.dll libnettle40.dll libnice0.dll libnicetransmitter.dll libogg0.dll liboil0.30.dll liboilstdint.h libopenjpeg2.dll liborc0.40.dll liborctest0.40.dll libpango1.00.dll libpangocairo1.00.dll libpangoft21.00.dll libpangowin321.00.dll libpixman10.dll libpixmap.dll libpng1414.dll librawudptransmitter.dll libresindvd.dll librsvg22.dll librsvgenumtypes.h libschroedinger1.00.dll libsndfile1.dll libsoup2.41.dll libspeex1.dll libspeexdsp1.dll libsvg.dll libtasn13.dll libtheora0.dll libtheoradec1.dll libtheoraenc1.dll libtiff3.dll libtsk_jni.dll libturbojpeg.dll libvorbis0.dll libvorbisenc2.dll libvorbisfile3.dll libwavpack1.dll libwimp.dll libx264107.dll libxml22.dll lzma.dll management.dll mlib_image.dll msvcm90.dll msvcp90.dll msvcr71.dll msvcr71.dll_1 msvcr90.dll msvcrt.dll nbexec.dll nbexec.exe ne_207.h net.dll nio.dll npdeployJava1.dll npdeployJava1.dll_1 npjp2.dll npjpi160_29.dll npoji610.dll npt.dll nsProxyAutoConfig.js opcodes.h orbd.exe orcarray.h orggnutrove.jar orggnutrove.xml orggnutrove.xml_1 orgjdesktopbeansbinding.jar orgjdesktopbeansbinding.xml orgjdesktopbeansbinding.xml_1 orgjdesktoplayout.jar orgjdesktoplayout.xml orgjdesktoplayout.xml_1 orgnetbeanscore.xml orgnetbeanscore.xml_1 orgnetbeanscore.xml_2 orgnetbeanscore_ja.jar orgnetbeanscore_ja.jar_1 orgnetbeanscorewindows_autopsy.jar orgnetbeansinsane.jar orgnetbeansinsane.xml orgnetbeansinsane.xml_1 orgsleuthkitautopsycasemodule.jar overlay.js p2x588.dll pack200.exe pango.modules pangoattributes.h pixmanversion.h png.h policytool.exe pre7_app.exe pre7_app_w.exe pthreadGC2.dll pygst.py pygst.py_1 pygst.py_2 pygst.py_3 regutils.dll riffids.h rip.exe rip.pl rmi.dll rmid.exe rmiregistry.exe rr.exe schrostdint.h servertool.exe solr.war solr.xml soundbank.gm soupaddress.h speex.h splashscreen.dll ssv.dll ssvagent.exe start.jar sunmscapi.dll swinglayout1.0.4doc.zip swscale.h swscalegpl0.dll tnameserv.exe unicows.dll unpack.dll unpack200.exe verify.dll vlc_access.h vp8.h w2k_lsa_auth.dll wavpack.h welcomeleftbottom.png wizardcomponents.xml wsdetect.dll xvidcore.dll z.dll zip.dll zlib.dll zlib1.dll"/>
+    <ROW Feature="MainFeature" Title="MainFeature" Description="Description" Display="1" Level="1" Directory_="APPDIR" Attributes="0" Components="AST4 Abidjan Adak Adelaide Aden Amsterdam Antananarivo Apia Azores Beulah Buenos_Aires CET CIEXYZ.pf COPYING COPYRIGHT Casey GMT Indianapolis JdbcOdbc.dll Louisville LucidaBrightDemiBold.ttf Microsoft.VC90.CRT.manifest ProductInformation README.txt SDL.dll SDL_ttf.dll SHORTCUTDIR address.h adler32.h adminextra.html aes.h all.h ant1.6.5.jar apachemime4jcore0.7.jar applejavaextensions.jar arunmru.pl atk1.0.lib atk10.mo atk10.mo_1 atk10.mo_10 atk10.mo_11 atk10.mo_12 atk10.mo_13 atk10.mo_14 atk10.mo_15 atk10.mo_16 atk10.mo_17 atk10.mo_18 atk10.mo_19 atk10.mo_2 atk10.mo_20 atk10.mo_21 atk10.mo_22 atk10.mo_23 atk10.mo_24 atk10.mo_25 atk10.mo_26 atk10.mo_27 atk10.mo_28 atk10.mo_29 atk10.mo_3 atk10.mo_30 atk10.mo_31 atk10.mo_32 atk10.mo_33 atk10.mo_34 atk10.mo_35 atk10.mo_36 atk10.mo_37 atk10.mo_38 atk10.mo_39 atk10.mo_4 atk10.mo_40 atk10.mo_41 atk10.mo_42 atk10.mo_43 atk10.mo_44 atk10.mo_45 atk10.mo_46 atk10.mo_47 atk10.mo_48 atk10.mo_49 atk10.mo_5 atk10.mo_50 atk10.mo_51 atk10.mo_52 atk10.mo_53 atk10.mo_54 atk10.mo_55 atk10.mo_56 atk10.mo_57 atk10.mo_58 atk10.mo_59 atk10.mo_6 atk10.mo_60 atk10.mo_61 atk10.mo_62 atk10.mo_63 atk10.mo_64 atk10.mo_65 atk10.mo_66 atk10.mo_67 atk10.mo_68 atk10.mo_69 atk10.mo_7 atk10.mo_70 atk10.mo_71 atk10.mo_72 atk10.mo_73 atk10.mo_74 atk10.mo_75 atk10.mo_76 atk10.mo_77 atk10.mo_78 atk10.mo_79 atk10.mo_8 atk10.mo_80 atk10.mo_81 atk10.mo_82 atk10.mo_83 atk10.mo_84 atk10.mo_85 atk10.mo_86 atk10.mo_87 atk10.mo_88 atk10.mo_89 atk10.mo_9 atk10.mo_90 atk10.mo_91 atk10.mo_92 atkenumtypes.h audio.defs audio.defs_1 audio.defs_2 audio.defs_3 audio.pyd audio.pyd_1 audio.pyd_2 audio.pyd_3 audiocontroller.py audiocontroller.py_1 audiocontroller.py_2 audiocontroller.py_3 audioenumtypes.h autohint.conf autopsy autopsy.clusters autopsy.exe avcodec.h avcodecgpl52.dll avcore.h avcoregpl0.dll avdevice.h avdevicegpl52.dll avfilter.h avfiltergpl1.dll avformat.h avformatgpl52.dll avutilgpl50.dll awt.dll axbridge.dll beansbinding1.2.1.jar beansbinding1.2.1doc.zip begin_code.h bind.h blacklist blue.svg boot.jar bswap.h bzlib.h c14n.h cairodeprecated.h calendars.properties celt.h chrome.manifest classes.jsa cmm.dll codec.h codec.h_1 codecutils.h colorbalance.h commonscli1.0.jar compat.h config_types.h constants.h core.jar core_autopsy.jar cradditionalsel.h ctypes4j.dll curl.h cursors.properties dataprotocol.h dcpr.dll deploy.dll deployJava1.dll deprecated.h discoverer.py discoverer.py_1 discoverer.py_2 discoverer.py_3 dnsns.jar dt_shmem.dll dt_socket.dll eula.dll farsight.pyd farsight.pyd_1 farsight.pyd_2 farsight.pyd_3 fcfreetype.h felix2.0.3.jar ffjcext.zip ffmpeg.txt fixglobaladvance.conf fontmanager.dll fonts.conf freetype.h fribidiarabic.h fsbaseconference.h ftconfig.h gailutil.h gailwidget.h galloca.h gappinfo.h gbinding.h gdk.h gdkconfig.h gdkgl.h gdkpixbufanimation.h glew.h glew32.dll glib20.mo glib20.mo_1 glib20.mo_2 glibcompat.h glibobject.h gsfblob.h gsfinputbonobo.h gsfinputwin32.h gstadapter.h gstappbuffer.h gstbasertpaudiopayload.h gstbasevideocodec.h gstcddabasesrc.h gstcontroller.h gstfft.h gstglbuffer.h gstinspect.exe gstlaunch.exe gstnet.h gstnetbuffer.h gstplayer.exe gstreamersharp.dll gstreamersharpglue0.10.dll gstreamersharpglue0.10.dll_1 gstrtspbase64.h gstsdp.h gsttagdemux.h gsttypefind.exe gstxmlinspect.exe gtk.h gtk.immodules gtk20properties.mo gtk20properties.mo_1 gtk20properties.mo_10 gtk20properties.mo_11 gtk20properties.mo_2 gtk20properties.mo_3 gtk20properties.mo_4 gtk20properties.mo_5 gtk20properties.mo_6 gtk20properties.mo_7 gtk20properties.mo_8 gtk20properties.mo_9 gtkrc gtkrc_1 gtkrc_2 gtkrc_3 gwin32inputstream.h hpi.dll hprof.dll indicim.jar instrument.dll ioser12.dll j2pcsc.dll j2pkcs11.dll jaas_nt.dll java.dll java.exe java_crw_demo.dll javacpl.exe javarmi.exe javaw.exe javaws.exe jawt.dll jbroker.exe jdk_header.png jdwp.dll jetty.xml jkernel.dll jli.dll jmxremote.access jnidispatch.dll jnidispatch.dll_1 jp2iexp.dll jp2launcher.exe jp2native.dll jp2ssv.dll jpeg.dll jpicom.dll jpiexp.dll jpinscp.dll jpioji.dll jpishare.dll jqs.conf jqs.exe jqs_plugin.dll jqsnotify.exe jsound.dll jsoundds.dll jvm.cfg jvm.dll keytool.exe kinit.exe klist.exe ktab.exe lame.h lastModified lastModified_2 lastModified_3 libFLAC8.dll liba520.dll libatk1.00.dll libbz2.dll libcairo2.dll libcairogobject2.dll libcairoscriptinterpreter2.dll libcelt0.dll libcharset1.dll libcroco0.63.dll libdca0.dll libdvdcss2.dll libdvdnav4.dll libdvdnavmini4.dll libdvdread4.dll libewf.dll libexpat1.dll libfaac0.dll libfaad2.dll libffi5.dll libfontconfig1.dll libfreetype6.dll libfribidi0.dll libfsfunnel.dll libfsrtcpfilter.dll libfsrtpconference.dll libfsselector.dll libfsvideoanyrate.dll libgail.dll libgailutil18.dll libgcc_s_sjlj1.dll libgcrypt11.dll libgdk_pixbuf2.00.dll libgdkwin322.00.dll libgio2.00.dll libglib2.00.dll libgmodule2.00.dll libgmp10.dll libgnl.dll libgnutls26.dll libgnutlsextra26.dll libgnutlsopenssl26.dll libgobject2.00.dll libgpgerror0.dll libgsf1114.dll libgsfwin321114.dll libgsta52dec.dll libgstadder.dll libgstaiff.dll libgstalaw.dll libgstalpha.dll libgstalphacolor.dll libgstapetag.dll libgstapp.dll libgstapp0.10.dll libgstasf.dll libgstasfmux.dll libgstaudio0.10.dll libgstaudioconvert.dll libgstaudiofx.dll libgstaudioparsersbad.dll libgstaudiorate.dll libgstaudioresample.dll libgstaudiotestsrc.dll libgstauparse.dll libgstautoconvert.dll libgstautodetect.dll libgstavi.dll libgstbase0.10.dll libgstbasevideo0.10.dll libgstbayer.dll libgstbz2.dll libgstcairo.dll libgstcamerabin.dll libgstcdda0.10.dll libgstcdxaparse.dll libgstcelt.dll libgstcontroller0.10.dll libgstcoreelements.dll libgstcoreindexers.dll libgstcutter.dll libgstd3dvideosink.dll libgstdataprotocol0.10.dll libgstdebug.dll libgstdecodebin.dll libgstdecodebin2.dll libgstdeinterlace.dll libgstdirectdraw.dll libgstdirectsound.dll libgstdirectsoundsrc.dll libgstdshowdecwrapper.dll libgstdshowsrcwrapper.dll libgstdshowvideosink.dll libgstdtmf.dll libgstdtsdec.dll libgstdvdlpcmdec.dll libgstdvdread.dll libgstdvdspu.dll libgstdvdsub.dll libgsteffectv.dll libgstequalizer.dll libgstfaac.dll libgstfaad.dll libgstfarsight0.10.dll libgstffmpegcolorspace.dll libgstffmpeggpl.dll libgstffmpegscalegpl.dll libgstfft0.10.dll libgstflac.dll libgstflv.dll libgstflxdec.dll libgstfreeze.dll libgstfrei0r.dll libgstgamma.dll libgstgdkpixbuf.dll libgstgdp.dll libgstgeometrictransform.dll libgstgio.dll libgstgl0.10.dll libgsth264parse.dll libgsthdvparse.dll libgsticydemux.dll libgstid3demux.dll libgstiec958.dll libgstimagefreeze.dll libgstinterfaces0.10.dll libgstinterleave.dll libgstjpeg.dll libgstjpegformat.dll libgstlame.dll libgstlegacyresample.dll libgstlevel.dll libgstliveadder.dll libgstmad.dll libgstmatroska.dll libgstmms.dll libgstmonoscope.dll libgstmpeg2dec.dll libgstmpeg4videoparse.dll libgstmpegaudioparse.dll libgstmpegdemux.dll libgstmpegpsmux.dll libgstmpegstream.dll libgstmpegtsmux.dll libgstmpegvideoparse.dll libgstmulaw.dll libgstmultifile.dll libgstmultipart.dll libgstmve.dll libgstmxf.dll libgstnavigationtest.dll libgstneonhttpsrc.dll libgstnet0.10.dll libgstnetbuffer0.10.dll libgstnetsim.dll libgstnice.dll libgstnuvdemux.dll libgstogg.dll libgstopengl.dll libgstpango.dll libgstpbutils0.10.dll libgstpcapparse.dll libgstphotography0.10.dll libgstplaybin.dll libgstpng.dll libgstpnm.dll libgstpythonv2.5.dll libgstpythonv2.6.dll libgstpythonv2.6.dll_1 libgstpythonv2.7.dll libgstqtdemux.dll libgstqtmux.dll libgstrawparse.dll libgstreal.dll libgstreamer0.10.dll libgstreplaygain.dll libgstriff0.10.dll libgstrmdemux.dll libgstrsvg.dll libgstrtp.dll libgstrtp0.10.dll libgstrtpdemux.dll libgstrtpjitterbuffer.dll libgstrtpmanager.dll libgstrtpmux.dll libgstrtppayloads.dll libgstrtsp.dll libgstrtsp0.10.dll libgstscaletempoplugin.dll libgstschro.dll libgstsdl.dll libgstsdp0.10.dll libgstsdpelem.dll libgstselector.dll libgstshapewipe.dll libgstsignalprocessor0.10.dll libgstsiren.dll libgstsmpte.dll libgstsouphttpsrc.dll libgstspectrum.dll libgstspeed.dll libgstspeex.dll libgststereo.dll libgstsubenc.dll libgstsubparse.dll libgstsynaesthesia.dll libgsttag0.10.dll libgsttheora.dll libgsttta.dll libgsttypefindfunctions.dll libgstudp.dll libgstvalve.dll libgstvideo0.10.dll libgstvideobalance.dll libgstvideobox.dll libgstvideocrop.dll libgstvideoflip.dll libgstvideomeasure.dll libgstvideomixer.dll libgstvideorate.dll libgstvideoscale.dll libgstvideosignal.dll libgstvideotestsrc.dll libgstvmnc.dll libgstvolume.dll libgstvorbis.dll libgstvp8.dll libgstwasapi.dll libgstwaveenc.dll libgstwaveformsink.dll libgstwavpack.dll libgstwavparse.dll libgstwininet.dll libgstwinks.dll libgstwinscreencap.dll libgstx264.dll libgstxvid.dll libgsty4menc.dll libgthread2.00.dll libgtkgl2.01.dll libgtkwin322.00.dll libhogweed20.dll libiconv2.dll libid3tag0.dll libjnidispatch.jnilib libjnidispatch.so libjnidispatch.so_1 libjpeg8.dll libmad0.dll libmms0.dll libmp3lame0.dll libmpeg20.dll libmpeg2convert0.dll libmulticasttransmitter.dll libneon27.dll libnettle40.dll libnice0.dll libnicetransmitter.dll libogg0.dll liboil0.30.dll liboilstdint.h libopenjpeg2.dll liborc0.40.dll liborctest0.40.dll libpango1.00.dll libpangocairo1.00.dll libpangoft21.00.dll libpangowin321.00.dll libpixman10.dll libpixmap.dll libpng1414.dll librawudptransmitter.dll libresindvd.dll librsvg22.dll librsvgenumtypes.h libschroedinger1.00.dll libsndfile1.dll libsoup2.41.dll libspeex1.dll libspeexdsp1.dll libsvg.dll libtasn13.dll libtheora0.dll libtheoradec1.dll libtheoraenc1.dll libtiff3.dll libtsk_jni.dll libturbojpeg.dll libvorbis0.dll libvorbisenc2.dll libvorbisfile3.dll libwavpack1.dll libwimp.dll libx264107.dll libxml22.dll lzma.dll management.dll mlib_image.dll msvcm90.dll msvcp90.dll msvcr71.dll msvcr71.dll_1 msvcr90.dll msvcrt.dll nbexec.dll nbexec.exe ne_207.h net.dll nio.dll npdeployJava1.dll npdeployJava1.dll_1 npjp2.dll npjpi160_29.dll npoji610.dll npt.dll nsProxyAutoConfig.js opcodes.h orbd.exe orcarray.h orggnutrove.jar orggnutrove.xml orggnutrove.xml_1 orgjdesktopbeansbinding.jar orgjdesktopbeansbinding.xml orgjdesktopbeansbinding.xml_1 orgjdesktoplayout.jar orgjdesktoplayout.xml orgjdesktoplayout.xml_1 orgnetbeanscore.xml orgnetbeanscore.xml_1 orgnetbeanscore.xml_2 orgnetbeanscore_ja.jar orgnetbeanscore_ja.jar_1 orgnetbeanscorewindows_autopsy.jar orgsleuthkitautopsycasemodule.jar overlay.js p2x588.dll pack200.exe pango.modules pangoattributes.h pixmanversion.h png.h policytool.exe pthreadGC2.dll pygst.py pygst.py_1 pygst.py_2 pygst.py_3 regutils.dll riffids.h rip.exe rip.pl rmi.dll rmid.exe rmiregistry.exe rr.exe schrostdint.h servertool.exe solr.war solr.xml soundbank.gm soupaddress.h speex.h splashscreen.dll ssv.dll ssvagent.exe start.jar sunmscapi.dll swinglayout1.0.4doc.zip swscale.h swscalegpl0.dll tnameserv.exe unicows.dll unpack.dll unpack200.exe verify.dll vlc_access.h vp8.h w2k_lsa_auth.dll wavpack.h wsdetect.dll xvidcore.dll z.dll zip.dll zlib.dll zlib1.dll"/>
     <ATTRIBUTE name="CurrentFeature" value="MainFeature"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiFilesComponent">
@@ -1378,13 +1294,6 @@
     <ROW File="Budapest" Component_="Amsterdam" FileName="Budapest" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Europe\Budapest" SelfReg="false" NextFile="Chisinau"/>
     <ROW File="Buenos_Aires" Component_="Buenos_Aires" FileName="Buenos~1|Buenos_Aires" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Argentina\Buenos_Aires" SelfReg="false" NextFile="Catamarca"/>
     <ROW File="Bujumbura" Component_="Abidjan" FileName="Bujumb~1|Bujumbura" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Africa\Bujumbura" SelfReg="false" NextFile="Cairo"/>
-    <ROW File="Bundle.properties" Component_="Bundle.properties" FileName="Bundle~1.pro|Bundle.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\data\Bundle.properties" SelfReg="false" NextFile="icon.png"/>
-    <ROW File="Bundle.properties_1" Component_="Bundle.properties_1" FileName="Bundle~1.pro|Bundle.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\src\org\mycompany\Bundle.properties" SelfReg="false" NextFile="ConfigurationLogic.java"/>
-    <ROW File="Bundle.properties_2" Component_="Bundle.properties_2" FileName="Bundle~1.pro|Bundle.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\src\org\mycompany\wizard\panels\Bundle.properties" SelfReg="false" NextFile="HelloWorldPanel.java"/>
-    <ROW File="Bundle.properties_3" Component_="Bundle.properties_3" FileName="Bundle~1.pro|Bundle.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\utils\applications\Bundle.properties" SelfReg="false" NextFile="NetBeansRCPUtils.java"/>
-    <ROW File="Bundle.properties_4" Component_="Bundle.properties_4" FileName="Bundle~1.pro|Bundle.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\components\actions\Bundle.properties" SelfReg="false" NextFile="InitializeAction.java"/>
-    <ROW File="Bundle.properties_5" Component_="Bundle.properties_5" FileName="Bundle~1.pro|Bundle.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\components\panels\Bundle.properties" SelfReg="false" NextFile="PostInstallSummaryPanel.java"/>
-    <ROW File="Bundle.properties_6" Component_="Bundle.properties_6" FileName="Bundle~1.pro|Bundle.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\components\sequences\Bundle.properties" SelfReg="false" NextFile="MainSequence.java"/>
     <ROW File="CET" Component_="CET" FileName="CET" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\CET" SelfReg="false" NextFile="CST6CDT"/>
     <ROW File="CIEXYZ.pf" Component_="CIEXYZ.pf" FileName="CIEXYZ.pf" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\cmm\CIEXYZ.pf" SelfReg="false" NextFile="GRAY.pf"/>
     <ROW File="COPYING" Component_="COPYING" FileName="COPYING" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\COPYING" SelfReg="false" NextFile="autohint.conf"/>
@@ -1419,7 +1328,6 @@
     <ROW File="Colombo" Component_="Aden" FileName="Colombo" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Asia\Colombo" SelfReg="false" NextFile="Damascus"/>
     <ROW File="Comoro" Component_="Antananarivo" FileName="Comoro" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Indian\Comoro" SelfReg="false" NextFile="Kerguelen"/>
     <ROW File="Conakry" Component_="Abidjan" FileName="Conakry" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Africa\Conakry" SelfReg="false" NextFile="Dakar"/>
-    <ROW File="ConfigurationLogic.java" Component_="Bundle.properties_1" FileName="Config~1.jav|ConfigurationLogic.java" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\src\org\mycompany\ConfigurationLogic.java" SelfReg="false" NextFile="Bundle.properties_2"/>
     <ROW File="Copenhagen" Component_="Amsterdam" FileName="Copenh~1|Copenhagen" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Europe\Copenhagen" SelfReg="false" NextFile="Dublin"/>
     <ROW File="Cordoba" Component_="Buenos_Aires" FileName="Cordoba" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Argentina\Cordoba" SelfReg="false" NextFile="Jujuy"/>
     <ROW File="Costa_Rica" Component_="Adak" FileName="Costa_~1|Costa_Rica" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Costa_Rica" SelfReg="false" NextFile="Cuiaba"/>
@@ -1518,7 +1426,6 @@
     <ROW File="Harare" Component_="Abidjan" FileName="Harare" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Africa\Harare" SelfReg="false" NextFile="Johannesburg"/>
     <ROW File="Harbin" Component_="Aden" FileName="Harbin" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Asia\Harbin" SelfReg="false" NextFile="Hong_Kong"/>
     <ROW File="Havana" Component_="Adak" FileName="Havana" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Havana" SelfReg="false" NextFile="Hermosillo"/>
-    <ROW File="HelloWorldPanel.java" Component_="Bundle.properties_2" FileName="HelloW~1.jav|HelloWorldPanel.java" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\src\org\mycompany\wizard\panels\HelloWorldPanel.java" SelfReg="false" NextFile="wizard.xml"/>
     <ROW File="Helsinki" Component_="Amsterdam" FileName="Helsinki" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Europe\Helsinki" SelfReg="false" NextFile="Istanbul"/>
     <ROW File="Hermosillo" Component_="Adak" FileName="Hermos~1|Hermosillo" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Hermosillo" SelfReg="false" NextFile="Indianapolis"/>
     <ROW File="Ho_Chi_Minh" Component_="Aden" FileName="Ho_Chi~1|Ho_Chi_Minh" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Asia\Ho_Chi_Minh" SelfReg="false" NextFile="Irkutsk"/>
@@ -1527,8 +1434,6 @@
     <ROW File="Honolulu" Component_="Apia" FileName="Honolulu" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Pacific\Honolulu" SelfReg="false" NextFile="Johnston"/>
     <ROW File="Hovd" Component_="Aden" FileName="Hovd" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Asia\Hovd" SelfReg="false" NextFile="Ho_Chi_Minh"/>
     <ROW File="Indianapolis" Component_="Indianapolis" FileName="Indian~1|Indianapolis" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Indiana\Indianapolis" SelfReg="false" NextFile="Knox"/>
-    <ROW File="Info.plist" Component_="app.conf" FileName="Info~1.pli|Info.plist" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\etc\Info.plist" SelfReg="false" NextFile="jdk.xml"/>
-    <ROW File="InitializeAction.java" Component_="Bundle.properties_4" FileName="Initia~1.jav|InitializeAction.java" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\components\actions\InitializeAction.java" SelfReg="false" NextFile="Bundle.properties_5"/>
     <ROW File="Inuvik" Component_="Adak" FileName="Inuvik" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Inuvik" SelfReg="false" NextFile="Iqaluit"/>
     <ROW File="Iqaluit" Component_="Adak" FileName="Iqaluit" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Iqaluit" SelfReg="false" NextFile="Jamaica"/>
     <ROW File="Irkutsk" Component_="Aden" FileName="Irkutsk" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Asia\Irkutsk" SelfReg="false" NextFile="Jakarta"/>
@@ -1603,7 +1508,6 @@
     <ROW File="Madrid" Component_="Amsterdam" FileName="Madrid" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Europe\Madrid" SelfReg="false" NextFile="Malta"/>
     <ROW File="Magadan" Component_="Aden" FileName="Magadan" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Asia\Magadan" SelfReg="false" NextFile="Makassar"/>
     <ROW File="Mahe" Component_="Antananarivo" FileName="Mahe" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Indian\Mahe" SelfReg="false" NextFile="Maldives"/>
-    <ROW File="MainSequence.java" Component_="Bundle.properties_6" FileName="MainSe~1.jav|MainSequence.java" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\components\sequences\MainSequence.java" SelfReg="false" NextFile="wizardcomponents.xml"/>
     <ROW File="Majuro" Component_="Apia" FileName="Majuro" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Pacific\Majuro" SelfReg="false" NextFile="Marquesas"/>
     <ROW File="Makassar" Component_="Aden" FileName="Makassar" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Asia\Makassar" SelfReg="false" NextFile="Manila"/>
     <ROW File="Malabo" Component_="Abidjan" FileName="Malabo" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Africa\Malabo" SelfReg="false" NextFile="Maputo"/>
@@ -1650,7 +1554,6 @@
     <ROW File="Nassau" Component_="Adak" FileName="Nassau" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Nassau" SelfReg="false" NextFile="New_York"/>
     <ROW File="Nauru" Component_="Apia" FileName="Nauru" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Pacific\Nauru" SelfReg="false" NextFile="Niue"/>
     <ROW File="Ndjamena" Component_="Abidjan" FileName="Ndjamena" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Africa\Ndjamena" SelfReg="false" NextFile="Niamey"/>
-    <ROW File="NetBeansRCPUtils.java" Component_="Bundle.properties_3" FileName="NetBea~1.jav|NetBeansRCPUtils.java" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\utils\applications\NetBeansRCPUtils.java" SelfReg="false" NextFile="Bundle.properties_4"/>
     <ROW File="New_Salem" Component_="Beulah" FileName="New_Sa~1|New_Salem" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\North_Dakota\New_Salem" SelfReg="false" NextFile="Ojinaga"/>
     <ROW File="New_York" Component_="Adak" FileName="New_York" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\New_York" SelfReg="false" NextFile="Nipigon"/>
     <ROW File="Niamey" Component_="Abidjan" FileName="Niamey" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Africa\Niamey" SelfReg="false" NextFile="Nouakchott"/>
@@ -1693,9 +1596,7 @@
     <ROW File="PortauPrince" Component_="Adak" FileName="Port-a~1|Port-au-Prince" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Port-au-Prince" SelfReg="false" NextFile="Porto_Velho"/>
     <ROW File="PortoNovo" Component_="Abidjan" FileName="Porto-~1|Porto-Novo" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Africa\Porto-Novo" SelfReg="false" NextFile="Sao_Tome"/>
     <ROW File="Porto_Velho" Component_="Adak" FileName="Porto_~1|Porto_Velho" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Porto_Velho" SelfReg="false" NextFile="Port_of_Spain"/>
-    <ROW File="PostInstallSummaryPanel.java" Component_="Bundle.properties_5" FileName="PostIn~1.jav|PostInstallSummaryPanel.java" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\components\panels\PostInstallSummaryPanel.java" SelfReg="false" NextFile="PreInstallSummaryPanel.java"/>
     <ROW File="Prague" Component_="Amsterdam" FileName="Prague" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Europe\Prague" SelfReg="false" NextFile="Riga"/>
-    <ROW File="PreInstallSummaryPanel.java" Component_="Bundle.properties_5" FileName="PreIns~1.jav|PreInstallSummaryPanel.java" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\components\panels\PreInstallSummaryPanel.java" SelfReg="false" NextFile="welcomeleftbottom.png"/>
     <ROW File="Puerto_Rico" Component_="Adak" FileName="Puerto~1|Puerto_Rico" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Puerto_Rico" SelfReg="false" NextFile="Rainy_River"/>
     <ROW File="Pyongyang" Component_="Aden" FileName="Pyongy~1|Pyongyang" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Asia\Pyongyang" SelfReg="false" NextFile="Qatar"/>
     <ROW File="QTJava.zip" Component_="dnsns.jar" FileName="QTJava.zip" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\ext\QTJava.zip" SelfReg="false" NextFile="sound.jar"/>
@@ -1704,8 +1605,6 @@
     <ROW File="README" Component_="fixglobaladvance.conf" FileName="README" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.d\README" SelfReg="false" NextFile="fonts.conf"/>
     <ROW File="README.txt" Component_="COPYRIGHT" FileName="README.txt" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\README.txt" SelfReg="false" NextFile="THIRDPARTYLICENSEREADME.txt"/>
     <ROW File="README.txt_1" Component_="README.txt" FileName="README.txt" Attributes="0" SourcePath="..\dist\autopsy-installer\README.txt" SelfReg="false"/>
-    <ROW File="README_1" Component_="lastModified_1" FileName="README" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\README" SelfReg="false" NextFile="run.xml"/>
-    <ROW File="README_2" Component_="README" FileName="README" Attributes="0" SourcePath="..\dist\autopsy-installer\java\modules\ext\toplink\README" SelfReg="false" NextFile="orgjdesktopbeansbinding.jar"/>
     <ROW File="Rainy_River" Component_="Adak" FileName="Rainy_~1|Rainy_River" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Rainy_River" SelfReg="false" NextFile="Rankin_Inlet"/>
     <ROW File="Rangoon" Component_="Aden" FileName="Rangoon" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Asia\Rangoon" SelfReg="false" NextFile="Riyadh"/>
     <ROW File="Rankin_Inlet" Component_="Adak" FileName="Rankin~1|Rankin_Inlet" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Rankin_Inlet" SelfReg="false" NextFile="Recife"/>
@@ -1839,7 +1738,6 @@
     <ROW File="Wallis" Component_="Apia" FileName="Wallis" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Pacific\Wallis" SelfReg="false" NextFile="PST8PDT"/>
     <ROW File="Warsaw" Component_="Amsterdam" FileName="Warsaw" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Europe\Warsaw" SelfReg="false" NextFile="Zaporozhye"/>
     <ROW File="Welcome.html" Component_="COPYRIGHT" FileName="Welcom~1.htm|Welcome.html" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\Welcome.html" SelfReg="false" NextFile="LICENSE2.0.txt"/>
-    <ROW File="WelcomePanel.java" Component_="Bundle.properties_5" FileName="Welcom~1.jav|WelcomePanel.java" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\components\panels\WelcomePanel.java" SelfReg="false" NextFile="Bundle.properties_6"/>
     <ROW File="Whitehorse" Component_="Adak" FileName="Whiteh~1|Whitehorse" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Whitehorse" SelfReg="false" NextFile="Winnipeg"/>
     <ROW File="Winamac" Component_="Indianapolis" FileName="Winamac" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Indiana\Winamac" SelfReg="false" NextFile="Inuvik"/>
     <ROW File="Windhoek" Component_="Abidjan" FileName="Windhoek" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Africa\Windhoek" SelfReg="false" NextFile="Adak"/>
@@ -1877,11 +1775,7 @@
     <ROW File="ant1.6.5.jar" Component_="ant1.6.5.jar" FileName="ant-16~1.jar|ant-1.6.5.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\lib\ant-1.6.5.jar" SelfReg="false" NextFile="core3.1.1.jar"/>
     <ROW File="apachemime4jcore0.7.jar" Component_="apachemime4jcore0.7.jar" FileName="apache~1.jar|apache-mime4j-core-0.7.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\apache-mime4j-core-0.7.jar" SelfReg="false" NextFile="apachemime4jdom0.7.jar"/>
     <ROW File="apachemime4jdom0.7.jar" Component_="apachemime4jcore0.7.jar" FileName="apache~2.jar|apache-mime4j-dom-0.7.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\apache-mime4j-dom-0.7.jar" SelfReg="false" NextFile="asm3.1.jar"/>
-    <ROW File="app.conf" Component_="app.conf" FileName="app~1.con|app.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\etc\app.conf" SelfReg="false" NextFile="applicationIcon.icns"/>
-    <ROW File="app.exe" Component_="app.exe" FileName="app.exe" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\launchers\app.exe" SelfReg="false" NextFile="app.sh"/>
-    <ROW File="app.sh" Component_="app.sh" FileName="app.sh" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\launchers\app.sh" SelfReg="false" NextFile="pre7_app.exe"/>
     <ROW File="applejavaextensions.jar" Component_="applejavaextensions.jar" FileName="applej~1.jar|applejavaextensions.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\modules\ext\applejavaextensions.jar" SelfReg="false" NextFile="commonscodec1.5.jar"/>
-    <ROW File="applicationIcon.icns" Component_="app.conf" FileName="applic~1.icn|applicationIcon.icns" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\etc\applicationIcon.icns" SelfReg="false" NextFile="Info.plist"/>
     <ROW File="arcfour.h" Component_="aes.h" FileName="arcfour.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\nettle\arcfour.h" SelfReg="false" NextFile="arctwo.h"/>
     <ROW File="arctwo.h" Component_="aes.h" FileName="arctwo.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\nettle\arctwo.h" SelfReg="false" NextFile="asn1.h"/>
     <ROW File="arunmru.pl" Component_="arunmru.pl" FileName="arunmru.pl" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\rr\plugins\arunmru.pl" SelfReg="false" NextFile="autopsy"/>
@@ -2085,7 +1979,6 @@
     <ROW File="begin_code.h" Component_="begin_code.h" FileName="begin_~1.h|begin_code.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\SDL\begin_code.h" SelfReg="false" NextFile="close_code.h"/>
     <ROW File="bignum.h" Component_="aes.h" FileName="bignum.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\nettle\bignum.h" SelfReg="false" NextFile="blowfish.h"/>
     <ROW File="bind.h" Component_="bind.h" FileName="bind.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\stun\usages\bind.h" SelfReg="false" NextFile="ice.h"/>
-    <ROW File="bindex2.2.jar" Component_="bindex2.2.jar" FileName="bindex~1.jar|bindex-2.2.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\antlib\bindex-2.2.jar" SelfReg="false" NextFile="jsearch2.0_05.jar"/>
     <ROW File="blacklist" Component_="blacklist" FileName="blackl~1|blacklist" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\security\blacklist" SelfReg="false" NextFile="cacerts"/>
     <ROW File="blowfish.h" Component_="aes.h" FileName="blowfish.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\nettle\blowfish.h" SelfReg="false" NextFile="buffer.h"/>
     <ROW File="blue.svg" Component_="blue.svg" FileName="blue.svg" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\share\themes\bubble\gtk-2.0\blue.svg" SelfReg="false" NextFile="green.svg"/>
@@ -2098,18 +1991,6 @@
     <ROW File="bswap.h" Component_="adler32.h" FileName="bswap.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\libavutil\bswap.h" SelfReg="false" NextFile="common.h"/>
     <ROW File="bswap.h_1" Component_="bswap.h" FileName="bswap.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\libmms\bswap.h" SelfReg="false" NextFile="mms.h"/>
     <ROW File="buffer.h" Component_="aes.h" FileName="buffer.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\nettle\buffer.h" SelfReg="false" NextFile="camellia.h"/>
-    <ROW File="build.properties" Component_="build.properties" FileName="build~1.pro|build.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\build.properties" SelfReg="false" NextFile="build.xml_1"/>
-    <ROW File="build.properties_1" Component_="build.properties_1" FileName="build~1.pro|build.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\build.properties" SelfReg="false" NextFile="build.xml_3"/>
-    <ROW File="build.properties_2" Component_="build.properties_2" FileName="build~1.pro|build.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\infra\build\engine\build.properties" SelfReg="false" NextFile="build.xml_4"/>
-    <ROW File="build.properties_3" Component_="build.properties_3" FileName="build~1.pro|build.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\infra\build\products\helloworld\build.properties" SelfReg="false" NextFile="build.xml_5"/>
-    <ROW File="build.xml" Component_="lastModified_1" FileName="build.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\build.xml" SelfReg="false" NextFile="common.xml"/>
-    <ROW File="build.xml_1" Component_="build.properties" FileName="build.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\build.xml" SelfReg="false" NextFile="build.xml_2"/>
-    <ROW File="build.xml_2" Component_="build.xml" FileName="build.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\build.xml" SelfReg="false" NextFile="Bundle.properties"/>
-    <ROW File="build.xml_3" Component_="build.properties_1" FileName="build.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\build.xml" SelfReg="false" NextFile="manifest.mf_1"/>
-    <ROW File="build.xml_4" Component_="build.properties_2" FileName="build.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\infra\build\engine\build.xml" SelfReg="false" NextFile="build.properties_3"/>
-    <ROW File="build.xml_5" Component_="build.properties_3" FileName="build.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\infra\build\products\helloworld\build.xml" SelfReg="false" NextFile="template.xml"/>
-    <ROW File="buildimpl.xml" Component_="buildimpl.xml" FileName="build-~1.xml|build-impl.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\nbproject\build-impl.xml" SelfReg="false" NextFile="genfiles.properties"/>
-    <ROW File="buildimpl.xml_1" Component_="buildimpl.xml_1" FileName="build-~1.xml|build-impl.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\nbproject\build-impl.xml" SelfReg="false" NextFile="genfiles.properties_1"/>
     <ROW File="bz2.lib" Component_="atk1.0.lib" FileName="bz2.lib" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\lib\bz2.lib" SelfReg="false" NextFile="cairogobject.lib"/>
     <ROW File="bzlib.h" Component_="bzlib.h" FileName="bzlib.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\bzlib.h" SelfReg="false" NextFile="cairodeprecated.h"/>
     <ROW File="c14n.h" Component_="c14n.h" FileName="c14n.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\libxml2\libxml\c14n.h" SelfReg="false" NextFile="catalog.h"/>
@@ -2153,9 +2034,6 @@
     <ROW File="colorbalance.h" Component_="colorbalance.h" FileName="colorb~1.h|colorbalance.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\gstreamer-0.10\gst\interfaces\colorbalance.h" SelfReg="false" NextFile="colorbalancechannel.h"/>
     <ROW File="colorbalancechannel.h" Component_="colorbalance.h" FileName="colorb~2.h|colorbalancechannel.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\gstreamer-0.10\gst\interfaces\colorbalancechannel.h" SelfReg="false" NextFile="interfacesenumtypes.h"/>
     <ROW File="common.h" Component_="adler32.h" FileName="common.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\libavutil\common.h" SelfReg="false" NextFile="cpu.h"/>
-    <ROW File="common.properties" Component_="common.properties" FileName="common~1.pro|common.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\.common\common.properties" SelfReg="false" NextFile="common.xml_1"/>
-    <ROW File="common.xml" Component_="lastModified_1" FileName="common.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\common.xml" SelfReg="false" NextFile="orgnetbeansinsane.xml"/>
-    <ROW File="common.xml_1" Component_="common.properties" FileName="common.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\.common\common.xml" SelfReg="false" NextFile="engine.properties"/>
     <ROW File="commonscli1.0.jar" Component_="commonscli1.0.jar" FileName="common~1.jar|commons-cli-1.0.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\pasco2\commons-cli-1.0.jar" SelfReg="false" NextFile="commonscollections3.1.jar"/>
     <ROW File="commonscodec1.5.jar" Component_="applejavaextensions.jar" FileName="common~1.jar|commons-codec-1.5.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\modules\ext\commons-codec-1.5.jar" SelfReg="false" NextFile="commonshttpclient3.1.jar"/>
     <ROW File="commonscodec1.5.jar_1" Component_="apachemime4jcore0.7.jar" FileName="common~1.jar|commons-codec-1.5.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\commons-codec-1.5.jar" SelfReg="false" NextFile="commonscompress1.2.jar"/>
@@ -2263,9 +2141,6 @@
     <ROW File="easy.h" Component_="curl.h" FileName="easy.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\curl\easy.h" SelfReg="false" NextFile="mprintf.h"/>
     <ROW File="elevate.xml" Component_="adminextra.html" FileName="elevate.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\conf\elevate.xml" SelfReg="false" NextFile="mappingFoldToASCII.txt"/>
     <ROW File="encoding.h" Component_="c14n.h" FileName="encoding.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\libxml2\libxml\encoding.h" SelfReg="false" NextFile="entities.h"/>
-    <ROW File="engine.properties" Component_="common.properties" FileName="engine~1.pro|engine.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\.common\engine.properties" SelfReg="false" NextFile="engine.xml"/>
-    <ROW File="engine.properties_1" Component_="engine.properties" FileName="engine~1.pro|engine.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\data\engine.properties" SelfReg="false" NextFile="launcher.properties"/>
-    <ROW File="engine.xml" Component_="common.properties" FileName="engine.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\.common\engine.xml" SelfReg="false" NextFile="group.properties"/>
     <ROW File="entities.h" Component_="c14n.h" FileName="entities.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\libxml2\libxml\entities.h" SelfReg="false" NextFile="globals.h"/>
     <ROW File="error.h" Component_="adler32.h" FileName="error.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\libavutil\error.h" SelfReg="false" NextFile="eval.h"/>
     <ROW File="eula.dll" Component_="eula.dll" FileName="eula.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\eula.dll" SelfReg="false" NextFile="fontmanager.dll"/>
@@ -2504,8 +2379,6 @@
     <ROW File="gdrive.h" Component_="gappinfo.h" FileName="gdrive.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\glib-2.0\gio\gdrive.h" SelfReg="false" NextFile="gemblem.h"/>
     <ROW File="gemblem.h" Component_="gappinfo.h" FileName="gemblem.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\glib-2.0\gio\gemblem.h" SelfReg="false" NextFile="gemblemedicon.h"/>
     <ROW File="gemblemedicon.h" Component_="gappinfo.h" FileName="gemble~1.h|gemblemedicon.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\glib-2.0\gio\gemblemedicon.h" SelfReg="false" NextFile="gfile.h"/>
-    <ROW File="genfiles.properties" Component_="buildimpl.xml" FileName="genfil~1.pro|genfiles.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\nbproject\genfiles.properties" SelfReg="false" NextFile="project.properties"/>
-    <ROW File="genfiles.properties_1" Component_="buildimpl.xml_1" FileName="genfil~1.pro|genfiles.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\nbproject\genfiles.properties" SelfReg="false" NextFile="project.properties_1"/>
     <ROW File="genums.h" Component_="gbinding.h" FileName="genums.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\glib-2.0\gobject\genums.h" SelfReg="false" NextFile="gmarshal.h"/>
     <ROW File="geronimostaxapi_1.0_spec1.0.1.jar" Component_="apachemime4jcore0.7.jar" FileName="geroni~1.jar|geronimo-stax-api_1.0_spec-1.0.1.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\geronimo-stax-api_1.0_spec-1.0.1.jar" SelfReg="false" NextFile="guavar05.jar"/>
     <ROW File="gerror.h" Component_="galloca.h" FileName="gerror.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\glib-2.0\glib\gerror.h" SelfReg="false" NextFile="gfileutils.h"/>
@@ -2700,8 +2573,6 @@
     <ROW File="gregex.h" Component_="galloca.h" FileName="gregex.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\glib-2.0\glib\gregex.h" SelfReg="false" NextFile="grel.h"/>
     <ROW File="grel.h" Component_="galloca.h" FileName="grel.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\glib-2.0\glib\grel.h" SelfReg="false" NextFile="gscanner.h"/>
     <ROW File="gresolver.h" Component_="gappinfo.h" FileName="gresol~1.h|gresolver.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\glib-2.0\gio\gresolver.h" SelfReg="false" NextFile="gseekable.h"/>
-    <ROW File="group.properties" Component_="common.properties" FileName="group~1.pro|group.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\.common\group.properties" SelfReg="false" NextFile="group.xml"/>
-    <ROW File="group.xml" Component_="common.properties" FileName="group.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\.common\group.xml" SelfReg="false" NextFile="product.properties"/>
     <ROW File="gscanner.h" Component_="galloca.h" FileName="gscanner.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\glib-2.0\glib\gscanner.h" SelfReg="false" NextFile="gsequence.h"/>
     <ROW File="gseekable.h" Component_="gappinfo.h" FileName="gseeka~1.h|gseekable.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\glib-2.0\gio\gseekable.h" SelfReg="false" NextFile="gsettings.h"/>
     <ROW File="gsequence.h" Component_="galloca.h" FileName="gseque~1.h|gsequence.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\glib-2.0\glib\gsequence.h" SelfReg="false" NextFile="gshell.h"/>
@@ -3339,7 +3210,7 @@
     <ROW File="gtkrc_1" Component_="gtkrc" FileName="gtkrc" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\share\themes\Default\gtk-2.0-key\gtkrc" SelfReg="false" NextFile="gtkrc_2"/>
     <ROW File="gtkrc_2" Component_="gtkrc_1" FileName="gtkrc" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\share\themes\Emacs\gtk-2.0-key\gtkrc" SelfReg="false" NextFile="gtkrc_3"/>
     <ROW File="gtkrc_3" Component_="gtkrc_2" FileName="gtkrc" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\share\themes\MS-Windows\gtk-2.0\gtkrc" SelfReg="false" NextFile="gtkrc_4"/>
-    <ROW File="gtkrc_4" Component_="gtkrc_3" FileName="gtkrc" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\share\themes\Raleigh\gtk-2.0\gtkrc" SelfReg="false" NextFile="lastModified_1"/>
+    <ROW File="gtkrc_4" Component_="gtkrc_3" FileName="gtkrc" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\share\themes\Raleigh\gtk-2.0\gtkrc" SelfReg="false" NextFile="lastModified_2"/>
     <ROW File="gtkrecentaction.h" Component_="gtk.h" FileName="gtkrec~1.h|gtkrecentaction.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\gtk-2.0\gtk\gtkrecentaction.h" SelfReg="false" NextFile="gtkrecentchooser.h"/>
     <ROW File="gtkrecentchooser.h" Component_="gtk.h" FileName="gtkrec~2.h|gtkrecentchooser.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\gtk-2.0\gtk\gtkrecentchooser.h" SelfReg="false" NextFile="gtkrecentchooserdialog.h"/>
     <ROW File="gtkrecentchooserdialog.h" Component_="gtk.h" FileName="gtkrec~3.h|gtkrecentchooserdialog.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\gtk-2.0\gtk\gtkrecentchooserdialog.h" SelfReg="false" NextFile="gtkrecentchoosermenu.h"/>
@@ -3449,8 +3320,6 @@
     <ROW File="hpi.dll" Component_="hpi.dll" FileName="hpi.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\hpi.dll" SelfReg="false" NextFile="hprof.dll"/>
     <ROW File="hprof.dll" Component_="hprof.dll" FileName="hprof.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\hprof.dll" SelfReg="false" NextFile="instrument.dll"/>
     <ROW File="ice.h" Component_="bind.h" FileName="ice.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\stun\usages\ice.h" SelfReg="false" NextFile="timer.h"/>
-    <ROW File="icon.png" Component_="Bundle.properties" FileName="icon.png" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\data\icon.png" SelfReg="false" NextFile="icon48.png"/>
-    <ROW File="icon48.png" Component_="Bundle.properties" FileName="icon48.png" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\data\icon48.png" SelfReg="false" NextFile="manifest.mf"/>
     <ROW File="iconv.h" Component_="bzlib.h" FileName="iconv.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\iconv.h" SelfReg="false" NextFile="inttypes.h"/>
     <ROW File="iconv.lib" Component_="atk1.0.lib" FileName="iconv.lib" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\lib\iconv.lib" SelfReg="false" NextFile="intl.lib"/>
     <ROW File="icu4j4.8.1.1.jar" Component_="apachemime4jcore0.7.jar" FileName="icu4j-~1.jar|icu4j-4.8.1.1.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\icu4j-4.8.1.1.jar" SelfReg="false" NextFile="jakartaregexp1.4.jar"/>
@@ -3498,12 +3367,10 @@
     <ROW File="jcloverslf4j1.6.1.jar" Component_="applejavaextensions.jar" FileName="jcl-ov~1.jar|jcl-over-slf4j-1.6.1.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\modules\ext\jcl-over-slf4j-1.6.1.jar" SelfReg="false" NextFile="jdom1.1.2.jar"/>
     <ROW File="jcloverslf4j1.6.1.jar_1" Component_="apachemime4jcore0.7.jar" FileName="jcl-ov~1.jar|jcl-over-slf4j-1.6.1.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\jcl-over-slf4j-1.6.1.jar" SelfReg="false" NextFile="jdom1.0.jar"/>
     <ROW File="jconfig.h" Component_="bzlib.h" FileName="jconfig.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\jconfig.h" SelfReg="false" NextFile="jerror.h"/>
-    <ROW File="jdk.xml" Component_="lastModified_1" FileName="jdk.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\jdk.xml" SelfReg="false" NextFile="jnlplauncher.jar"/>
     <ROW File="jdk_header.png" Component_="jdk_header.png" FileName="jdk_he~1.png|jdk_header.png" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\servicetag\jdk_header.png" SelfReg="false" NextFile="registration.xml"/>
     <ROW File="jdom1.0.jar" Component_="apachemime4jcore0.7.jar" FileName="jdom-1~1.jar|jdom-1.0.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\jdom-1.0.jar" SelfReg="false" NextFile="jempbox1.6.0.jar"/>
     <ROW File="jdom1.1.2.jar" Component_="applejavaextensions.jar" FileName="jdom-1~1.jar|jdom-1.1.2.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\modules\ext\jdom-1.1.2.jar" SelfReg="false" NextFile="jna.jar"/>
     <ROW File="jdwp.dll" Component_="jdwp.dll" FileName="jdwp.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\jdwp.dll" SelfReg="false" NextFile="jkernel.dll"/>
-    <ROW File="jemmy2.3.0.0.jar" Component_="jemmy2.3.0.0.jar" FileName="jemmy-~1.jar|jemmy-2.3.0.0.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\modules\ext\jemmy-2.3.0.0.jar" SelfReg="false" NextFile="nbianttasks.jar"/>
     <ROW File="jempbox1.6.0.jar" Component_="apachemime4jcore0.7.jar" FileName="jempbo~1.jar|jempbox-1.6.0.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\jempbox-1.6.0.jar" SelfReg="false" NextFile="luceneanalyzers3.5.0.jar"/>
     <ROW File="jerror.h" Component_="bzlib.h" FileName="jerror.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\jerror.h" SelfReg="false" NextFile="jmorecfg.h"/>
     <ROW File="jetty.xml" Component_="jetty.xml" FileName="jetty.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\etc\jetty.xml" SelfReg="false" NextFile="webdefault.xml"/>
@@ -3520,8 +3387,6 @@
     <ROW File="jna3.2.7.jar" Component_="felix2.0.3.jar" FileName="jna-32~1.jar|jna-3.2.7.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\ext\jna-3.2.7.jar" SelfReg="false" NextFile="junit4.8.2.jar"/>
     <ROW File="jnidispatch.dll" Component_="jnidispatch.dll" FileName="jnidis~1.dll|jnidispatch.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\lib\amd64\jnidispatch.dll" SelfReg="false" NextFile="libjnidispatch.so"/>
     <ROW File="jnidispatch.dll_1" Component_="jnidispatch.dll_1" FileName="jnidis~1.dll|jnidispatch.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\lib\x86\jnidispatch.dll" SelfReg="false" NextFile="orgnetbeanscore_ja.jar"/>
-    <ROW File="jnlp.xml" Component_="lastModified_1" FileName="jnlp.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\jnlp.xml" SelfReg="false" NextFile="app.exe"/>
-    <ROW File="jnlplauncher.jar" Component_="jnlplauncher.jar" FileName="jnlp-l~1.jar|jnlp-launcher.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\jnlp\jnlp-launcher.jar" SelfReg="false" NextFile="jnlp.xml"/>
     <ROW File="jp2iexp.dll" Component_="jp2iexp.dll" FileName="jp2iexp.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\jp2iexp.dll" SelfReg="false" NextFile="jp2launcher.exe"/>
     <ROW File="jp2launcher.exe" Component_="jp2launcher.exe" FileName="jp2lau~1.exe|jp2launcher.exe" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\jp2launcher.exe" SelfReg="false" NextFile="jp2native.dll"/>
     <ROW File="jp2native.dll" Component_="jp2native.dll" FileName="jp2nat~1.dll|jp2native.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\jp2native.dll" SelfReg="false" NextFile="jp2ssv.dll"/>
@@ -3539,7 +3404,6 @@
     <ROW File="jqs_plugin.dll" Component_="jqs_plugin.dll" FileName="jqs_pl~1.dll|jqs_plugin.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\deploy\jqs\ie\jqs_plugin.dll" SelfReg="false" NextFile="jqs.conf"/>
     <ROW File="jqsmessages.properties" Component_="jqs.conf" FileName="jqsmes~1.pro|jqsmessages.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\deploy\jqs\jqsmessages.properties" SelfReg="false" NextFile="lzma.dll"/>
     <ROW File="jqsnotify.exe" Component_="jqsnotify.exe" FileName="jqsnot~1.exe|jqsnotify.exe" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\jqsnotify.exe" SelfReg="false" NextFile="jsound.dll"/>
-    <ROW File="jsearch2.0_05.jar" Component_="bindex2.2.jar" FileName="jsearc~1.jar|jsearch-2.0_05.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\antlib\jsearch-2.0_05.jar" SelfReg="false" NextFile="build.xml"/>
     <ROW File="jsound.dll" Component_="jsound.dll" FileName="jsound.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\jsound.dll" SelfReg="false" NextFile="jsoundds.dll"/>
     <ROW File="jsoundds.dll" Component_="jsoundds.dll" FileName="jsoundds.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\jsoundds.dll" SelfReg="false" NextFile="keytool.exe"/>
     <ROW File="jsp2.16.1.14.jar" Component_="ant1.6.5.jar" FileName="jsp-21~1.jar|jsp-2.1-6.1.14.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\lib\jsp-2.1-6.1.14.jar" SelfReg="false" NextFile="jspapi2.16.1.14.jar"/>
@@ -3550,7 +3414,7 @@
     <ROW File="jukebox.py_2" Component_="discoverer.py_2" FileName="jukebox.py" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\bindings\python\v2.6\lib\site-packages\gst-0.10\gst\extend\jukebox.py" SelfReg="false" NextFile="leveller.py_2"/>
     <ROW File="jukebox.py_3" Component_="discoverer.py_3" FileName="jukebox.py" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\bindings\python\v2.7\lib\site-packages\gst-0.10\gst\extend\jukebox.py" SelfReg="false" NextFile="leveller.py_3"/>
     <ROW File="junit3.8.1.jar" Component_="applejavaextensions.jar" FileName="junit-~1.jar|junit-3.8.1.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\modules\ext\junit-3.8.1.jar" SelfReg="false" NextFile="log4j1.2.13.jar"/>
-    <ROW File="junit3.8.2.jar" Component_="beansbinding1.2.1.jar" FileName="junit-~1.jar|junit-3.8.2.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\java\modules\ext\junit-3.8.2.jar" SelfReg="false" NextFile="README_2"/>
+    <ROW File="junit3.8.2.jar" Component_="beansbinding1.2.1.jar" FileName="junit-~1.jar|junit-3.8.2.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\java\modules\ext\junit-3.8.2.jar" SelfReg="false" NextFile="orgjdesktopbeansbinding.jar"/>
     <ROW File="junit3.8.2api.zip" Component_="beansbinding1.2.1doc.zip" FileName="junit-~1.zip|junit-3.8.2-api.zip" Attributes="0" SourcePath="..\dist\autopsy-installer\java\docs\junit-3.8.2-api.zip" SelfReg="false" NextFile="junit4.8.2api.zip"/>
     <ROW File="junit4.8.2.jar" Component_="felix2.0.3.jar" FileName="junit-~1.jar|junit-4.8.2.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\ext\junit-4.8.2.jar" SelfReg="false" NextFile="nsProxyAutoConfig.js"/>
     <ROW File="junit4.8.2api.zip" Component_="beansbinding1.2.1doc.zip" FileName="junit-~2.zip|junit-4.8.2-api.zip" Attributes="0" SourcePath="..\dist\autopsy-installer\java\docs\junit-4.8.2-api.zip" SelfReg="false" NextFile="junit4.8.2src.jar"/>
@@ -3566,15 +3430,12 @@
     <ROW File="ktab.exe" Component_="ktab.exe" FileName="ktab.exe" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\ktab.exe" SelfReg="false" NextFile="management.dll"/>
     <ROW File="lame.h" Component_="lame.h" FileName="lame.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\lame\lame.h" SelfReg="false" NextFile="avcodec.h"/>
     <ROW File="lastModified" Component_="lastModified" FileName="lastMo~1|.lastModified" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\.lastModified" SelfReg="false" NextFile="orggnutrove.xml"/>
-    <ROW File="lastModified_1" Component_="lastModified_1" FileName="lastMo~1|.lastModified" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\.lastModified" SelfReg="false" NextFile="bindex2.2.jar"/>
     <ROW File="lastModified_2" Component_="lastModified_2" FileName="lastMo~1|.lastModified" Attributes="0" SourcePath="..\dist\autopsy-installer\java\.lastModified" SelfReg="false" NextFile="orgjdesktopbeansbinding.xml"/>
     <ROW File="lastModified_3" Component_="lastModified_3" FileName="lastMo~1|.lastModified" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\.lastModified" SelfReg="false" NextFile="orgnetbeanscore.xml"/>
     <ROW File="latin.conf" Component_="autohint.conf" FileName="45-lat~1.con|45-latin.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.avail\45-latin.conf" SelfReg="false" NextFile="sansserif.conf"/>
     <ROW File="latin.conf_1" Component_="autohint.conf" FileName="60-lat~1.con|60-latin.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.avail\60-latin.conf" SelfReg="false" NextFile="fontspersian.conf"/>
     <ROW File="latin.conf_2" Component_="fixglobaladvance.conf" FileName="45-lat~1.con|45-latin.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.d\45-latin.conf" SelfReg="false" NextFile="sansserif.conf_1"/>
     <ROW File="latin.conf_3" Component_="fixglobaladvance.conf" FileName="60-lat~1.con|60-latin.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.d\60-latin.conf" SelfReg="false" NextFile="fontspersian.conf_1"/>
-    <ROW File="launcher.properties" Component_="launcher.properties" FileName="launch~1.pro|launcher.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\native\launcher\unix\i18n\launcher.properties" SelfReg="false" NextFile="launcher.properties_1"/>
-    <ROW File="launcher.properties_1" Component_="launcher.properties_1" FileName="launch~1.pro|launcher.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\native\launcher\windows\i18n\launcher.properties" SelfReg="false" NextFile="Bundle.properties_3"/>
     <ROW File="leveller.py" Component_="discoverer.py" FileName="leveller.py" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\lib\site-packages\gst-0.10\gst\extend\leveller.py" SelfReg="false" NextFile="pygobject.py"/>
     <ROW File="leveller.py_1" Component_="discoverer.py_1" FileName="leveller.py" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\bindings\python\v2.5\lib\site-packages\gst-0.10\gst\extend\leveller.py" SelfReg="false" NextFile="pygobject.py_1"/>
     <ROW File="leveller.py_2" Component_="discoverer.py_2" FileName="leveller.py" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\bindings\python\v2.6\lib\site-packages\gst-0.10\gst\extend\leveller.py" SelfReg="false" NextFile="pygobject.py_2"/>
@@ -3957,8 +3818,6 @@
     <ROW File="management.dll" Component_="management.dll" FileName="manage~1.dll|management.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\management.dll" SelfReg="false" NextFile="mlib_image.dll"/>
     <ROW File="management.properties" Component_="jmxremote.access" FileName="manage~1.pro|management.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\management\management.properties" SelfReg="false" NextFile="snmp.acl.template"/>
     <ROW File="managementagent.jar" Component_="calendars.properties" FileName="manage~1.jar|management-agent.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\management-agent.jar" SelfReg="false" NextFile="metaindex_1"/>
-    <ROW File="manifest.mf" Component_="build.xml" FileName="manifest.mf" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\manifest.mf" SelfReg="false" NextFile="buildimpl.xml"/>
-    <ROW File="manifest.mf_1" Component_="build.properties_1" FileName="manifest.mf" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\manifest.mf" SelfReg="false" NextFile="buildimpl.xml_1"/>
     <ROW File="mappingFoldToASCII.txt" Component_="adminextra.html" FileName="mappin~1.txt|mapping-FoldToASCII.txt" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\conf\mapping-FoldToASCII.txt" SelfReg="false" NextFile="mappingISOLatin1Accent.txt"/>
     <ROW File="mappingISOLatin1Accent.txt" Component_="adminextra.html" FileName="mappin~2.txt|mapping-ISOLatin1Accent.txt" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\conf\mapping-ISOLatin1Accent.txt" SelfReg="false" NextFile="protwords.txt"/>
     <ROW File="mathcompat.h" Component_="glibcompat.h" FileName="math-c~1.h|math-compat.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\gstreamer-0.10\gst\math-compat.h" SelfReg="false" NextFile="gstnet.h"/>
@@ -4024,9 +3883,6 @@
     <ROW File="nbexec" Component_="boot.jar" FileName="nbexec" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\lib\nbexec" SelfReg="false" NextFile="nbexec.dll"/>
     <ROW File="nbexec.dll" Component_="nbexec.dll" FileName="nbexec.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\lib\nbexec.dll" SelfReg="false" NextFile="nbexec.exe"/>
     <ROW File="nbexec.exe" Component_="nbexec.exe" FileName="nbexec.exe" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\lib\nbexec.exe" SelfReg="false" NextFile="orgopenidemodules.jar"/>
-    <ROW File="nbianttasks.jar" Component_="jemmy2.3.0.0.jar" FileName="nbi-an~1.jar|nbi-ant-tasks.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\modules\ext\nbi-ant-tasks.jar" SelfReg="false" NextFile="nbiengine.jar"/>
-    <ROW File="nbiengine.jar" Component_="jemmy2.3.0.0.jar" FileName="nbi-en~1.jar|nbi-engine.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\modules\ext\nbi-engine.jar" SelfReg="false" NextFile="nbiregistriesmanagement.jar"/>
-    <ROW File="nbiregistriesmanagement.jar" Component_="jemmy2.3.0.0.jar" FileName="nbi-re~1.jar|nbi-registries-management.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\modules\ext\nbi-registries-management.jar" SelfReg="false" NextFile="orgnetbeansinsane.jar"/>
     <ROW File="ne_207.h" Component_="ne_207.h" FileName="ne_207.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\neon\ne_207.h" SelfReg="false" NextFile="ne_acl.h"/>
     <ROW File="ne_acl.h" Component_="ne_207.h" FileName="ne_acl.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\neon\ne_acl.h" SelfReg="false" NextFile="ne_acl3744.h"/>
     <ROW File="ne_acl3744.h" Component_="ne_207.h" FileName="ne_acl~1.h|ne_acl3744.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\neon\ne_acl3744.h" SelfReg="false" NextFile="ne_alloc.h"/>
@@ -4079,7 +3935,6 @@
     <ROW File="nonlatin.conf_2" Component_="fixglobaladvance.conf" FileName="40-non~1.con|40-nonlatin.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.d\40-nonlatin.conf" SelfReg="false" NextFile="latin.conf_2"/>
     <ROW File="nonlatin.conf_3" Component_="fixglobaladvance.conf" FileName="65-non~1.con|65-nonlatin.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.d\65-nonlatin.conf" SelfReg="false" NextFile="unifont.conf_1"/>
     <ROW File="nosubpixel.conf" Component_="autohint.conf" FileName="10-no-~1.con|10-no-sub-pixel.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.avail\10-no-sub-pixel.conf" SelfReg="false" NextFile="subpixelbgr.conf"/>
-    <ROW File="notestcoverage.xml" Component_="lastModified_1" FileName="no-tes~1.xml|no-testcoverage.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\no-testcoverage.xml" SelfReg="false" NextFile="osgi.xml"/>
     <ROW File="npdeployJava1.dll" Component_="npdeployJava1.dll" FileName="npdepl~1.dll|npdeployJava1.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\new_plugin\npdeployJava1.dll" SelfReg="false" NextFile="npjp2.dll"/>
     <ROW File="npdeployJava1.dll_1" Component_="npdeployJava1.dll_1" FileName="npdepl~1.dll|npdeployJava1.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\npdeployJava1.dll" SelfReg="false" NextFile="npjpi160_29.dll"/>
     <ROW File="npjp2.dll" Component_="npjp2.dll" FileName="npjp2.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\new_plugin\npjp2.dll" SelfReg="false" NextFile="nio.dll"/>
@@ -4185,9 +4040,6 @@
     <ROW File="orgnetbeanscorewindows.xml" Component_="orgjdesktoplayout.xml" FileName="org-n~12.xml|org-netbeans-core-windows.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\config\Modules\org-netbeans-core-windows.xml" SelfReg="false" NextFile="orgnetbeanscore.xml_1"/>
     <ROW File="orgnetbeanscorewindows.xml_1" Component_="orgjdesktoplayout.xml_1" FileName="org-n~14.xml|org-netbeans-core-windows.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\update_tracking\org-netbeans-core-windows.xml" SelfReg="false" NextFile="orgnetbeanscore.xml_4"/>
     <ROW File="orgnetbeanscorewindows_autopsy.jar" Component_="orgnetbeanscorewindows_autopsy.jar" FileName="org-ne~1.jar|org-netbeans-core-windows_autopsy.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\modules\locale\org-netbeans-core-windows_autopsy.jar" SelfReg="false" NextFile="orggnutrove.jar"/>
-    <ROW File="orgnetbeansinsane.jar" Component_="orgnetbeansinsane.jar" FileName="org-ne~1.jar|org-netbeans-insane.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\modules\org-netbeans-insane.jar" SelfReg="false" NextFile="orgnetbeanslibsnbiant.jar"/>
-    <ROW File="orgnetbeansinsane.xml" Component_="orgnetbeansinsane.xml" FileName="org-ne~1.xml|org-netbeans-insane.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\config\Modules\org-netbeans-insane.xml" SelfReg="false" NextFile="orgnetbeanslibsnbiant.xml"/>
-    <ROW File="orgnetbeansinsane.xml_1" Component_="orgnetbeansinsane.xml_1" FileName="org-ne~1.xml|org-netbeans-insane.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\update_tracking\org-netbeans-insane.xml" SelfReg="false" NextFile="orgnetbeanslibsnbiant.xml_1"/>
     <ROW File="orgnetbeanslibsfelix.jar" Component_="orgjdesktoplayout.jar" FileName="org-n~14.jar|org-netbeans-libs-felix.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\org-netbeans-libs-felix.jar" SelfReg="false" NextFile="orgnetbeanslibsjna.jar"/>
     <ROW File="orgnetbeanslibsfelix.xml" Component_="orgjdesktoplayout.xml" FileName="org-n~14.xml|org-netbeans-libs-felix.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\config\Modules\org-netbeans-libs-felix.xml" SelfReg="false" NextFile="orgnetbeanslibsjna.xml"/>
     <ROW File="orgnetbeanslibsfelix.xml_1" Component_="orgjdesktoplayout.xml_1" FileName="org-n~16.xml|org-netbeans-libs-felix.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\update_tracking\org-netbeans-libs-felix.xml" SelfReg="false" NextFile="orgnetbeanslibsjna.xml_1"/>
@@ -4197,18 +4049,9 @@
     <ROW File="orgnetbeanslibsjunit4.jar" Component_="orgjdesktoplayout.jar" FileName="org-n~16.jar|org-netbeans-libs-junit4.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\org-netbeans-libs-junit4.jar" SelfReg="false" NextFile="orgnetbeanslibsosgi.jar"/>
     <ROW File="orgnetbeanslibsjunit4.xml" Component_="orgjdesktoplayout.xml" FileName="org-n~16.xml|org-netbeans-libs-junit4.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\config\Modules\org-netbeans-libs-junit4.xml" SelfReg="false" NextFile="orgnetbeanslibsosgi.xml"/>
     <ROW File="orgnetbeanslibsjunit4.xml_1" Component_="orgjdesktoplayout.xml_1" FileName="org-n~18.xml|org-netbeans-libs-junit4.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\update_tracking\org-netbeans-libs-junit4.xml" SelfReg="false" NextFile="orgnetbeanslibsosgi.xml_1"/>
-    <ROW File="orgnetbeanslibsnbiant.jar" Component_="orgnetbeansinsane.jar" FileName="org-ne~2.jar|org-netbeans-libs-nbi-ant.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\modules\org-netbeans-libs-nbi-ant.jar" SelfReg="false" NextFile="orgnetbeanslibsnbiengine.jar"/>
-    <ROW File="orgnetbeanslibsnbiant.xml" Component_="orgnetbeansinsane.xml" FileName="org-ne~2.xml|org-netbeans-libs-nbi-ant.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\config\Modules\org-netbeans-libs-nbi-ant.xml" SelfReg="false" NextFile="orgnetbeanslibsnbiengine.xml"/>
-    <ROW File="orgnetbeanslibsnbiant.xml_1" Component_="orgnetbeansinsane.xml_1" FileName="org-ne~2.xml|org-netbeans-libs-nbi-ant.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\update_tracking\org-netbeans-libs-nbi-ant.xml" SelfReg="false" NextFile="orgnetbeanslibsnbiengine.xml_1"/>
-    <ROW File="orgnetbeanslibsnbiengine.jar" Component_="orgnetbeansinsane.jar" FileName="org-ne~3.jar|org-netbeans-libs-nbi-engine.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\modules\org-netbeans-libs-nbi-engine.jar" SelfReg="false" NextFile="orgnetbeansmodulesapisupportharness.jar"/>
-    <ROW File="orgnetbeanslibsnbiengine.xml" Component_="orgnetbeansinsane.xml" FileName="org-ne~3.xml|org-netbeans-libs-nbi-engine.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\config\Modules\org-netbeans-libs-nbi-engine.xml" SelfReg="false" NextFile="orgnetbeansmodulesapisupportharness.xml"/>
-    <ROW File="orgnetbeanslibsnbiengine.xml_1" Component_="orgnetbeansinsane.xml_1" FileName="org-ne~3.xml|org-netbeans-libs-nbi-engine.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\update_tracking\org-netbeans-libs-nbi-engine.xml" SelfReg="false" NextFile="orgnetbeansmodulesapisupportharness.xml_1"/>
     <ROW File="orgnetbeanslibsosgi.jar" Component_="orgjdesktoplayout.jar" FileName="org-n~17.jar|org-netbeans-libs-osgi.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\org-netbeans-libs-osgi.jar" SelfReg="false" NextFile="orgnetbeansmodulesapplemenu.jar"/>
     <ROW File="orgnetbeanslibsosgi.xml" Component_="orgjdesktoplayout.xml" FileName="org-n~17.xml|org-netbeans-libs-osgi.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\config\Modules\org-netbeans-libs-osgi.xml" SelfReg="false" NextFile="orgnetbeansmodulesapplemenu.xml"/>
     <ROW File="orgnetbeanslibsosgi.xml_1" Component_="orgjdesktoplayout.xml_1" FileName="org-n~19.xml|org-netbeans-libs-osgi.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\update_tracking\org-netbeans-libs-osgi.xml" SelfReg="false" NextFile="orgnetbeansmodulesapplemenu.xml_1"/>
-    <ROW File="orgnetbeansmodulesapisupportharness.jar" Component_="orgnetbeansinsane.jar" FileName="org-ne~4.jar|org-netbeans-modules-apisupport-harness.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\modules\org-netbeans-modules-apisupport-harness.jar" SelfReg="false" NextFile="orgnetbeansmodulesjellytoolsplatform.jar"/>
-    <ROW File="orgnetbeansmodulesapisupportharness.xml" Component_="orgnetbeansinsane.xml" FileName="org-ne~4.xml|org-netbeans-modules-apisupport-harness.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\config\Modules\org-netbeans-modules-apisupport-harness.xml" SelfReg="false" NextFile="orgnetbeansmodulesjellytoolsplatform.xml"/>
-    <ROW File="orgnetbeansmodulesapisupportharness.xml_1" Component_="orgnetbeansinsane.xml_1" FileName="org-ne~4.xml|org-netbeans-modules-apisupport-harness.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\update_tracking\org-netbeans-modules-apisupport-harness.xml" SelfReg="false" NextFile="orgnetbeansmodulesjellytoolsplatform.xml_1"/>
     <ROW File="orgnetbeansmodulesapplemenu.jar" Component_="orgjdesktoplayout.jar" FileName="org-n~18.jar|org-netbeans-modules-applemenu.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\org-netbeans-modules-applemenu.jar" SelfReg="false" NextFile="orgnetbeansmodulesautoupdateservices.jar"/>
     <ROW File="orgnetbeansmodulesapplemenu.xml" Component_="orgjdesktoplayout.xml" FileName="org-n~18.xml|org-netbeans-modules-applemenu.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\config\Modules\org-netbeans-modules-applemenu.xml" SelfReg="false" NextFile="orgnetbeansmodulesautoupdateservices.xml"/>
     <ROW File="orgnetbeansmodulesapplemenu.xml_1" Component_="orgjdesktoplayout.xml_1" FileName="org-n~20.xml|org-netbeans-modules-applemenu.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\update_tracking\org-netbeans-modules-applemenu.xml" SelfReg="false" NextFile="orgnetbeansmodulesautoupdateservices.xml_1"/>
@@ -4233,12 +4076,6 @@
     <ROW File="orgnetbeansmodulesjavahelp.jar" Component_="orgjdesktoplayout.jar" FileName="org-n~25.jar|org-netbeans-modules-javahelp.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\org-netbeans-modules-javahelp.jar" SelfReg="false" NextFile="orgnetbeansmoduleskeyringimpl.jar"/>
     <ROW File="orgnetbeansmodulesjavahelp.xml" Component_="orgjdesktoplayout.xml" FileName="org-n~25.xml|org-netbeans-modules-javahelp.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\config\Modules\org-netbeans-modules-javahelp.xml" SelfReg="false" NextFile="orgnetbeansmoduleskeyringimpl.xml"/>
     <ROW File="orgnetbeansmodulesjavahelp.xml_1" Component_="orgjdesktoplayout.xml_1" FileName="org-n~27.xml|org-netbeans-modules-javahelp.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\update_tracking\org-netbeans-modules-javahelp.xml" SelfReg="false" NextFile="orgnetbeansmoduleskeyringimpl.xml_2"/>
-    <ROW File="orgnetbeansmodulesjellytoolsplatform.jar" Component_="orgnetbeansinsane.jar" FileName="org-ne~5.jar|org-netbeans-modules-jellytools-platform.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\modules\org-netbeans-modules-jellytools-platform.jar" SelfReg="false" NextFile="orgnetbeansmodulesjemmy.jar"/>
-    <ROW File="orgnetbeansmodulesjellytoolsplatform.xml" Component_="orgnetbeansinsane.xml" FileName="org-ne~5.xml|org-netbeans-modules-jellytools-platform.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\config\Modules\org-netbeans-modules-jellytools-platform.xml" SelfReg="false" NextFile="orgnetbeansmodulesjemmy.xml"/>
-    <ROW File="orgnetbeansmodulesjellytoolsplatform.xml_1" Component_="orgnetbeansinsane.xml_1" FileName="org-ne~5.xml|org-netbeans-modules-jellytools-platform.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\update_tracking\org-netbeans-modules-jellytools-platform.xml" SelfReg="false" NextFile="orgnetbeansmodulesjemmy.xml_1"/>
-    <ROW File="orgnetbeansmodulesjemmy.jar" Component_="orgnetbeansinsane.jar" FileName="org-ne~6.jar|org-netbeans-modules-jemmy.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\modules\org-netbeans-modules-jemmy.jar" SelfReg="false" NextFile="orgnetbeansmodulesnbjunit.jar"/>
-    <ROW File="orgnetbeansmodulesjemmy.xml" Component_="orgnetbeansinsane.xml" FileName="org-ne~6.xml|org-netbeans-modules-jemmy.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\config\Modules\org-netbeans-modules-jemmy.xml" SelfReg="false" NextFile="orgnetbeansmodulesnbjunit.xml"/>
-    <ROW File="orgnetbeansmodulesjemmy.xml_1" Component_="orgnetbeansinsane.xml_1" FileName="org-ne~6.xml|org-netbeans-modules-jemmy.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\update_tracking\org-netbeans-modules-jemmy.xml" SelfReg="false" NextFile="orgnetbeansmodulesnbjunit.xml_1"/>
     <ROW File="orgnetbeansmodulesjunitlib.jar" Component_="orgjdesktopbeansbinding.jar" FileName="org-ne~1.jar|org-netbeans-modules-junitlib.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\java\modules\org-netbeans-modules-junitlib.jar" SelfReg="false" NextFile="orgjdesktopbeansbinding.xml_1"/>
     <ROW File="orgnetbeansmodulesjunitlib.xml" Component_="orgjdesktopbeansbinding.xml" FileName="org-ne~1.xml|org-netbeans-modules-junitlib.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\java\config\Modules\org-netbeans-modules-junitlib.xml" SelfReg="false" NextFile="beansbinding1.2.1doc.zip"/>
     <ROW File="orgnetbeansmodulesjunitlib.xml_1" Component_="orgjdesktopbeansbinding.xml_1" FileName="org-ne~1.xml|org-netbeans-modules-junitlib.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\java\update_tracking\org-netbeans-modules-junitlib.xml" SelfReg="false" NextFile="VERSION.txt"/>
@@ -4267,9 +4104,6 @@
     <ROW File="orgnetbeansmodulesmasterfs_ru.jar_1" Component_="orgnetbeanscore_ja.jar_1" FileName="org-n~10.jar|org-netbeans-modules-masterfs_ru.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\update\backup\netbeans\modules\locale\org-netbeans-modules-masterfs_ru.jar" SelfReg="false" NextFile="orgnetbeansmodulesmasterfs_zh_CN.jar_1"/>
     <ROW File="orgnetbeansmodulesmasterfs_zh_CN.jar" Component_="orgnetbeanscore_ja.jar" FileName="org-n~11.jar|org-netbeans-modules-masterfs_zh_CN.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\locale\org-netbeans-modules-masterfs_zh_CN.jar" SelfReg="false" NextFile="orgnetbeansswingplaf_ja.jar"/>
     <ROW File="orgnetbeansmodulesmasterfs_zh_CN.jar_1" Component_="orgnetbeanscore_ja.jar_1" FileName="org-n~11.jar|org-netbeans-modules-masterfs_zh_CN.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\update\backup\netbeans\modules\locale\org-netbeans-modules-masterfs_zh_CN.jar" SelfReg="false" NextFile="orgnetbeansswingplaf_ja.jar_1"/>
-    <ROW File="orgnetbeansmodulesnbjunit.jar" Component_="orgnetbeansinsane.jar" FileName="org-ne~7.jar|org-netbeans-modules-nbjunit.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\modules\org-netbeans-modules-nbjunit.jar" SelfReg="false" NextFile="common.properties"/>
-    <ROW File="orgnetbeansmodulesnbjunit.xml" Component_="orgnetbeansinsane.xml" FileName="org-ne~7.xml|org-netbeans-modules-nbjunit.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\config\Modules\org-netbeans-modules-nbjunit.xml" SelfReg="false" NextFile="app.conf"/>
-    <ROW File="orgnetbeansmodulesnbjunit.xml_1" Component_="orgnetbeansinsane.xml_1" FileName="org-ne~7.xml|org-netbeans-modules-nbjunit.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\update_tracking\org-netbeans-modules-nbjunit.xml" SelfReg="false" NextFile="lastModified_2"/>
     <ROW File="orgnetbeansmodulesoptionsapi.jar" Component_="orgjdesktoplayout.jar" FileName="org-n~29.jar|org-netbeans-modules-options-api.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\org-netbeans-modules-options-api.jar" SelfReg="false" NextFile="orgnetbeansmodulesoptionskeymap.jar"/>
     <ROW File="orgnetbeansmodulesoptionsapi.xml" Component_="orgnetbeanscore.xml" FileName="org-ne~2.xml|org-netbeans-modules-options-api.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\config\ModuleAutoDeps\org-netbeans-modules-options-api.xml" SelfReg="false" NextFile="orgnetbeansmodulesqueries.xml"/>
     <ROW File="orgnetbeansmodulesoptionsapi.xml_1" Component_="orgjdesktoplayout.xml" FileName="org-n~29.xml|org-netbeans-modules-options-api.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\config\Modules\org-netbeans-modules-options-api.xml" SelfReg="false" NextFile="orgnetbeansmodulesoptionskeymap.xml"/>
@@ -4410,7 +4244,6 @@
     <ROW File="os_types.h" Component_="config_types.h" FileName="os_types.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\ogg\os_types.h" SelfReg="false" NextFile="openjpeg.h"/>
     <ROW File="osgi.cmpn4.2.jar" Component_="felix2.0.3.jar" FileName="osgicm~1.jar|osgi.cmpn-4.2.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\ext\osgi.cmpn-4.2.jar" SelfReg="false" NextFile="osgi.core4.2.jar"/>
     <ROW File="osgi.core4.2.jar" Component_="felix2.0.3.jar" FileName="osgico~1.jar|osgi.core-4.2.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\platform\modules\ext\osgi.core-4.2.jar" SelfReg="false" NextFile="platform3.2.7.jar"/>
-    <ROW File="osgi.xml" Component_="lastModified_1" FileName="osgi.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\osgi.xml" SelfReg="false" NextFile="README_1"/>
     <ROW File="overlay.js" Component_="overlay.js" FileName="overlay.js" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\deploy\jqs\ff\chrome\content\overlay.js" SelfReg="false" NextFile="overlay.xul"/>
     <ROW File="overlay.xul" Component_="overlay.js" FileName="overlay.xul" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\deploy\jqs\ff\chrome\content\overlay.xul" SelfReg="false" NextFile="chrome.manifest"/>
     <ROW File="p2x588.dll" Component_="p2x588.dll" FileName="p2x588.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\rr\p2x588.dll" SelfReg="false" NextFile="arunmru.pl"/>
@@ -4505,14 +4338,6 @@
     <ROW File="poiscratchpad3.820120326.jar" Component_="applejavaextensions.jar" FileName="poi-sc~1.jar|poi-scratchpad-3.8-20120326.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\modules\ext\poi-scratchpad-3.8-20120326.jar" SelfReg="false" NextFile="slf4japi1.6.1.jar"/>
     <ROW File="poiscratchpad3.8beta4.jar" Component_="apachemime4jcore0.7.jar" FileName="poi-sc~1.jar|poi-scratchpad-3.8-beta4.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\poi-scratchpad-3.8-beta4.jar" SelfReg="false" NextFile="rome0.9.jar"/>
     <ROW File="policytool.exe" Component_="policytool.exe" FileName="policy~1.exe|policytool.exe" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\policytool.exe" SelfReg="false" NextFile="regutils.dll"/>
-    <ROW File="pre7_app.exe" Component_="pre7_app.exe" FileName="pre7_app.exe" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\launchers\pre7_app.exe" SelfReg="false" NextFile="pre7_app_w.exe"/>
-    <ROW File="pre7_app_w.exe" Component_="pre7_app_w.exe" FileName="pre7_a~1.exe|pre7_app_w.exe" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\launchers\pre7_app_w.exe" SelfReg="false" NextFile="jemmy2.3.0.0.jar"/>
-    <ROW File="product.properties" Component_="common.properties" FileName="produc~1.pro|product.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\.common\product.properties" SelfReg="false" NextFile="product.xml"/>
-    <ROW File="product.xml" Component_="common.properties" FileName="product.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\.common\product.xml" SelfReg="false" NextFile="build.properties"/>
-    <ROW File="project.properties" Component_="buildimpl.xml" FileName="projec~1.pro|project.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\nbproject\project.properties" SelfReg="false" NextFile="project.xml"/>
-    <ROW File="project.properties_1" Component_="buildimpl.xml_1" FileName="projec~1.pro|project.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\nbproject\project.properties" SelfReg="false" NextFile="project.xml_1"/>
-    <ROW File="project.xml" Component_="buildimpl.xml" FileName="project.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\nbproject\project.xml" SelfReg="false" NextFile="Bundle.properties_1"/>
-    <ROW File="project.xml_1" Component_="buildimpl.xml_1" FileName="project.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\nbproject\project.xml" SelfReg="false" NextFile="engine.properties_1"/>
     <ROW File="propertyprobe.h" Component_="colorbalance.h" FileName="proper~1.h|propertyprobe.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\gstreamer-0.10\gst\interfaces\propertyprobe.h" SelfReg="false" NextFile="streamvolume.h"/>
     <ROW File="protwords.txt" Component_="adminextra.html" FileName="protwo~1.txt|protwords.txt" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\conf\protwords.txt" SelfReg="false" NextFile="schema.xml"/>
     <ROW File="proxylibintl.txt" Component_="ffmpeg.txt" FileName="proxy-~1.txt|proxy-libintl.txt" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\share\licenses\proxy-libintl.txt" SelfReg="false" NextFile="pthreads.txt"/>
@@ -4561,7 +4386,6 @@
     <ROW File="rsvg2.lib" Component_="atk1.0.lib" FileName="rsvg-2.lib" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\lib\rsvg-2.lib" SelfReg="false" NextFile="schroedinger1.0.lib"/>
     <ROW File="rsvgcairo.h" Component_="librsvgenumtypes.h" FileName="rsvg-c~1.h|rsvg-cairo.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\librsvg-2.0\librsvg\rsvg-cairo.h" SelfReg="false" NextFile="rsvg.h"/>
     <ROW File="rt.jar" Component_="calendars.properties" FileName="rt.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\rt.jar" SelfReg="false" NextFile="blacklist"/>
-    <ROW File="run.xml" Component_="lastModified_1" FileName="run.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\run.xml" SelfReg="false" NextFile="suite.xml"/>
     <ROW File="sRGB.pf" Component_="CIEXYZ.pf" FileName="sRGB.pf" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\cmm\sRGB.pf" SelfReg="false" NextFile="contenttypes.properties"/>
     <ROW File="sansserif.conf" Component_="autohint.conf" FileName="49-san~1.con|49-sansserif.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.avail\49-sansserif.conf" SelfReg="false" NextFile="user.conf"/>
     <ROW File="sansserif.conf_1" Component_="fixglobaladvance.conf" FileName="49-san~1.con|49-sansserif.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.d\49-sansserif.conf" SelfReg="false" NextFile="user.conf_1"/>
@@ -4723,7 +4547,6 @@
     <ROW File="subpixelrgb.conf" Component_="autohint.conf" FileName="10-sub~2.con|10-sub-pixel-rgb.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.avail\10-sub-pixel-rgb.conf" SelfReg="false" NextFile="subpixelvbgr.conf"/>
     <ROW File="subpixelvbgr.conf" Component_="autohint.conf" FileName="10-sub~3.con|10-sub-pixel-vbgr.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.avail\10-sub-pixel-vbgr.conf" SelfReg="false" NextFile="subpixelvrgb.conf"/>
     <ROW File="subpixelvrgb.conf" Component_="autohint.conf" FileName="10-sub~4.con|10-sub-pixel-vrgb.conf" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\etc\fonts\conf.avail\10-sub-pixel-vrgb.conf" SelfReg="false" NextFile="unhinted.conf"/>
-    <ROW File="suite.xml" Component_="lastModified_1" FileName="suite.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\suite.xml" SelfReg="false" NextFile="tasks.jar"/>
     <ROW File="sunjce_provider.jar" Component_="dnsns.jar" FileName="sunjce~1.jar|sunjce_provider.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\ext\sunjce_provider.jar" SelfReg="false" NextFile="sunmscapi.jar"/>
     <ROW File="sunmscapi.dll" Component_="sunmscapi.dll" FileName="sunmsc~1.dll|sunmscapi.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\sunmscapi.dll" SelfReg="false" NextFile="tnameserv.exe"/>
     <ROW File="sunmscapi.jar" Component_="dnsns.jar" FileName="sunmsc~1.jar|sunmscapi.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\ext\sunmscapi.jar" SelfReg="false" NextFile="sunpkcs11.jar"/>
@@ -4749,9 +4572,7 @@
     <ROW File="tag.pyd_2" Component_="audio.pyd_2" FileName="tag.pyd" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\bindings\python\v2.6\lib\site-packages\gst-0.10\gst\tag.pyd" SelfReg="false" NextFile="video.pyd_2"/>
     <ROW File="tag.pyd_3" Component_="audio.pyd_3" FileName="tag.pyd" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\bindings\python\v2.7\lib\site-packages\gst-0.10\gst\tag.pyd" SelfReg="false" NextFile="video.pyd_3"/>
     <ROW File="tagsoup1.2.1.jar" Component_="apachemime4jcore0.7.jar" FileName="tagsou~1.jar|tagsoup-1.2.1.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\tagsoup-1.2.1.jar" SelfReg="false" NextFile="tikacore0.10.jar"/>
-    <ROW File="tasks.jar" Component_="lastModified_1" FileName="tasks.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\tasks.jar" SelfReg="false" NextFile="orgnetbeansinsane.xml_1"/>
     <ROW File="tasn1.lib" Component_="atk1.0.lib" FileName="tasn1.lib" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\lib\tasn1.lib" SelfReg="false" NextFile="theora.lib"/>
-    <ROW File="template.xml" Component_="build.properties" FileName="template.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\template.xml" SelfReg="false" NextFile="tmpl.properties"/>
     <ROW File="thaiim.jar" Component_="indicim.jar" FileName="thaiim.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\im\thaiim.jar" SelfReg="false" NextFile="cursors.properties"/>
     <ROW File="theora.h" Component_="codec.h" FileName="theora.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\theora\theora.h" SelfReg="false" NextFile="theoradec.h"/>
     <ROW File="theora.lib" Component_="atk1.0.lib" FileName="theora.lib" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\lib\theora.lib" SelfReg="false" NextFile="theoradec.lib"/>
@@ -4769,7 +4590,6 @@
     <ROW File="tikacore0.10.jar" Component_="apachemime4jcore0.7.jar" FileName="tika-c~1.jar|tika-core-0.10.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\tika-core-0.10.jar" SelfReg="false" NextFile="tikaparsers0.10.jar"/>
     <ROW File="tikaparsers0.10.jar" Component_="apachemime4jcore0.7.jar" FileName="tika-p~1.jar|tika-parsers-0.10.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\tika-parsers-0.10.jar" SelfReg="false" NextFile="wstxasl3.2.7.jar_1"/>
     <ROW File="timer.h" Component_="bind.h" FileName="timer.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\stun\usages\timer.h" SelfReg="false" NextFile="turn.h"/>
-    <ROW File="tmpl.properties" Component_="build.properties" FileName="tmpl~1.pro|tmpl.properties" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\tmpl.properties" SelfReg="false" NextFile="notestcoverage.xml"/>
     <ROW File="tnameserv.exe" Component_="tnameserv.exe" FileName="tnames~1.exe|tnameserv.exe" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\tnameserv.exe" SelfReg="false" NextFile="unicows.dll"/>
     <ROW File="tree.h" Component_="c14n.h" FileName="tree.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\libxml2\libxml\tree.h" SelfReg="false" NextFile="uri.h"/>
     <ROW File="trove1.0.2.jar" Component_="commonscli1.0.jar" FileName="trove-~1.jar|trove-1.0.2.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\pasco2\trove-1.0.2.jar" SelfReg="false" NextFile="trove3.0.2.jar_1"/>
@@ -4917,8 +4737,6 @@
     <ROW File="wavpack.h" Component_="wavpack.h" FileName="wavpack.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\wavpack\wavpack.h" SelfReg="false" NextFile="zconf.h"/>
     <ROW File="wavpack.lib" Component_="atk1.0.lib" FileName="wavpack.lib" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\lib\wavpack.lib" SelfReg="false" NextFile="xml2.lib"/>
     <ROW File="webdefault.xml" Component_="jetty.xml" FileName="webdef~1.xml|webdefault.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\etc\webdefault.xml" SelfReg="false" NextFile="ant1.6.5.jar"/>
-    <ROW File="welcomeleftbottom.png" Component_="welcomeleftbottom.png" FileName="welcom~1.png|welcome-left-bottom.png" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\components\panels\resources\welcome-left-bottom.png" SelfReg="false" NextFile="welcomelefttop.png"/>
-    <ROW File="welcomelefttop.png" Component_="welcomeleftbottom.png" FileName="welcom~2.png|welcome-left-top.png" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\components\panels\resources\welcome-left-top.png" SelfReg="false" NextFile="WelcomePanel.java"/>
     <ROW File="wglew.h" Component_="glew.h" FileName="wglew.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\GL\wglew.h" SelfReg="false" NextFile="gappinfo.h"/>
     <ROW File="win32_CopyDrop32x32.gif" Component_="cursors.properties" FileName="win32_~1.gif|win32_CopyDrop32x32.gif" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\images\cursors\win32_CopyDrop32x32.gif" SelfReg="false" NextFile="win32_CopyNoDrop32x32.gif"/>
     <ROW File="win32_CopyNoDrop32x32.gif" Component_="cursors.properties" FileName="win32_~2.gif|win32_CopyNoDrop32x32.gif" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\images\cursors\win32_CopyNoDrop32x32.gif" SelfReg="false" NextFile="win32_LinkDrop32x32.gif"/>
@@ -4927,11 +4745,6 @@
     <ROW File="win32_MoveDrop32x32.gif" Component_="cursors.properties" FileName="win32_~5.gif|win32_MoveDrop32x32.gif" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\images\cursors\win32_MoveDrop32x32.gif" SelfReg="false" NextFile="win32_MoveNoDrop32x32.gif"/>
     <ROW File="win32_MoveNoDrop32x32.gif" Component_="cursors.properties" FileName="win32_~6.gif|win32_MoveNoDrop32x32.gif" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\images\cursors\win32_MoveNoDrop32x32.gif" SelfReg="false" NextFile="javaws.jar"/>
     <ROW File="win32_common.h" Component_="constants.h" FileName="win32_~1.h|win32_common.h" Attributes="0" SourcePath="..\dist\autopsy-installer\gstreamer\sdk\include\stun\win32_common.h" SelfReg="false" NextFile="codec.h"/>
-    <ROW File="wizard.xml" Component_="Bundle.properties_1" FileName="wizard.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\components\products\helloworld\src\org\mycompany\wizard.xml" SelfReg="false" NextFile="build.properties_1"/>
-    <ROW File="wizardcomponents.xml" Component_="wizardcomponents.xml" FileName="wizard~1.xml|wizard-components.xml" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\wizard-components.xml" SelfReg="false" NextFile="wizarddescriptionbackgroundleft.png"/>
-    <ROW File="wizarddescriptionbackgroundleft.png" Component_="wizardcomponents.xml" FileName="wizard~1.png|wizard-description-background-left.png" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\wizard-description-background-left.png" SelfReg="false" NextFile="wizarddescriptionbackgroundright.png"/>
-    <ROW File="wizarddescriptionbackgroundright.png" Component_="wizardcomponents.xml" FileName="wizard~2.png|wizard-description-background-right.png" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\wizard-description-background-right.png" SelfReg="false" NextFile="wizardicon.png"/>
-    <ROW File="wizardicon.png" Component_="wizardcomponents.xml" FileName="wizard~3.png|wizard-icon.png" Attributes="0" SourcePath="..\dist\autopsy-installer\harness\nbi\stub\ext\engine\src\org\mycompany\installer\wizard\wizard-icon.png" SelfReg="false" NextFile="build.properties_2"/>
     <ROW File="wsdetect.dll" Component_="wsdetect.dll" FileName="wsdetect.dll" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\bin\wsdetect.dll" SelfReg="false" NextFile="zip.dll"/>
     <ROW File="wstxasl3.2.7.jar" Component_="applejavaextensions.jar" FileName="wstx-a~1.jar|wstx-asl-3.2.7.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\modules\ext\wstx-asl-3.2.7.jar" SelfReg="false" NextFile="xmlbeans2.3.0.jar"/>
     <ROW File="wstxasl3.2.7.jar_1" Component_="apachemime4jcore0.7.jar" FileName="wstx-a~1.jar|wstx-asl-3.2.7.jar" Attributes="0" SourcePath="..\dist\autopsy-installer\autopsy\solr\solr\lib\wstx-asl-3.2.7.jar" SelfReg="false" NextFile="xercesImpl2.8.1.jar"/>
