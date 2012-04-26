@@ -24,7 +24,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.BorderLayout;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
@@ -37,7 +36,7 @@ public class KeywordSearchConfigurationPanel extends javax.swing.JPanel {
     KeywordSearchListsManagementPanel listsManagementPanel;
     KeywordSearchEditListPanel editListPanel;
     private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel.class.getName());
-    private static final String KEYWORD_CONFIG_NAME = "Keyword List Configuration";
+    private static final String KEYWORD_CONFIG_NAME = org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig");
     private static KeywordSearchConfigurationPanel instance;
     
     /** Creates new form KeywordSearchConfigurationPanel */

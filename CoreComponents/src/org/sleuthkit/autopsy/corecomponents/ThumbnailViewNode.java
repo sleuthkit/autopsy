@@ -24,12 +24,16 @@ import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.logging.Level;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
@@ -65,15 +69,26 @@ class ThumbnailViewNode extends FilterNode {
             icon = iconCache.get();
         }
         
+        
+        
         if (icon == null) {
             Content content = this.getLookup().lookup(Content.class);
             
             if (content != null) {
-                try {
-                    System.out.println("generate");
-                    icon = generateIcon(content);
-                } catch (TskException ex) {
-                    icon = ThumbnailViewNode.defaultIcon;
+                if (getFile(content.getId()).exists()) {
+                    try {
+                        icon = ImageIO.read(getFile(content.getId()));
+                    } catch (IOException ex) {
+                        icon = ThumbnailViewNode.defaultIcon;
+                    }
+                } else {
+                    try {
+                        icon = generateIcon(content);
+                        ImageIO.write(toBufferedImage(icon), "jpg", getFile(content.getId()));
+                    } catch (TskException ex) {
+                        icon = ThumbnailViewNode.defaultIcon;
+                    } catch (IOException ex) {
+                    }
                 }
             } else {
                 icon = ThumbnailViewNode.defaultIcon;
@@ -134,4 +149,20 @@ class ThumbnailViewNode extends FilterNode {
 
         return Toolkit.getDefaultToolkit().createImage(combined.getSource());
     }
+
+    private static BufferedImage toBufferedImage(Image src) {
+        int w = src.getWidth(null);
+        int h = src.getHeight(null);
+        int type = BufferedImage.TYPE_INT_RGB;  // other options
+        BufferedImage dest = new BufferedImage(w, h, type);
+        Graphics2D g2 = dest.createGraphics();
+        g2.drawImage(src, 0, 0, null);
+        g2.dispose();
+        return dest;
+    }
+    
+    private static File getFile(long id) {
+        return new File(Case.getCurrentCase().getCacheDirectory() + File.separator + id + ".jpg");
+    }
+    
 }

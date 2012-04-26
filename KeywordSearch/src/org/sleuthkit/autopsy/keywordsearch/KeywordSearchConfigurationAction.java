@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
  */
 class KeywordSearchConfigurationAction extends CallableSystemAction{
     
-    private static final String ACTION_NAME = "Keyword List Configuration";
+    private static final String ACTION_NAME = org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig");
 
     @Override
     public void performAction() {
