@@ -24,23 +24,28 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
+import javax.swing.filechooser.FileFilter;
 import org.openide.util.Lookup;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 
@@ -48,10 +53,9 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
  * Class to store the case information
  */
 public class Case {
-    // change the CTL_MainWindow_Title in Bundle.properties as well if you change this value
 
-    private static final String autopsyVer = "3.0.0b2"; // current version of autopsy. Change it when the version is changed
-    private static final String appName = "Autopsy " + autopsyVer;
+    private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
+    private static final String appName = Version.getName() + " " + autopsyVer;
     /**
      * Property name that indicates the name of the current case has changed.
      * Fired with the case is renamed, and when the current case is
@@ -223,6 +227,8 @@ public class Case {
             String caseDir = xmlcm.getCaseDirectory();
             String dbPath = caseDir + File.separator + "autopsy.db";
             SleuthkitCase db = SleuthkitCase.openCase(dbPath);
+            
+            checkImagesExist(db);
 
             Case openedCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
 
@@ -233,6 +239,73 @@ public class Case {
             CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
             closeCase.actionPerformed(null);
             throw ex;
+        }
+    }
+    
+    Map<Long, List<String>> getImagePaths() {
+        Map<Long, List<String>> imgPaths = new HashMap<Long, List<String>>();
+        try {
+            imgPaths = db.getImagePaths();
+        } catch (TskException ex) {
+            Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error getting image paths", ex);
+        }
+        return imgPaths;
+    }
+    
+    /**
+	 * Ensure that all image paths point to valid image files
+	 */
+	private static void checkImagesExist(SleuthkitCase db) {
+        Map<Long, List<String>> imgPaths = new HashMap<Long, List<String>>();
+        try {
+            imgPaths = db.getImagePaths();
+        } catch (TskException ex) {
+            Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error getting image paths", ex);
+        }
+        for (Map.Entry<Long, List<String>> entry : imgPaths.entrySet()) {
+            JFileChooser fc = new JFileChooser();
+            FileFilter filter;
+            long obj_id = entry.getKey();
+            List<String> paths = entry.getValue();
+            boolean allFilesExist = true;
+            String pathString = "";
+            for (String s : paths) {
+                allFilesExist &= new File(s).exists();
+                pathString += s + "\n";
+            }
+            if (!allFilesExist) {
+                File f = new File(paths.get(0));
+                if (AddImageVisualPanel1.encaseFilter.accept(f)) {
+                    filter = AddImageVisualPanel1.encaseFilter;
+                } else if (AddImageVisualPanel1.splitFilter.accept(f)) {
+                    filter = AddImageVisualPanel1.splitFilter;
+                } else {
+                    filter = AddImageVisualPanel1.imgFilter;
+                }
+                fc.setMultiSelectionEnabled(true);
+                fc.setFileFilter(filter);
+                int ret = JOptionPane.showConfirmDialog(null, appName + " has detected that one or more of the images associated with \n"
+                        + "this case are missing. Would you like to search for them now?\n"
+                        + "Previously, the image(s) were located at:\n" + pathString
+                        + "\nPlease note that you will still be able to browse directories and generate reports\n"
+                        + "if you choose No, but you will not be able to view file content or run the ingest process.", "Missing Images", JOptionPane.YES_NO_OPTION);
+                if (ret == JOptionPane.YES_OPTION) {
+                    fc.showOpenDialog(null);
+                    if (fc.getSelectedFiles().length == paths.size()) { //TODO: this is the extent of our equality checking...we should do more.
+                        List<String> newPaths = new ArrayList<String>();
+                        for (File newFile : fc.getSelectedFiles()) {
+                            newPaths.add(newFile.getPath());
+                        }
+                        try {
+                            db.setImagePaths(obj_id, newPaths);
+                        } catch (TskException ex) {
+                            Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error setting image paths", ex);
+                        }
+                    } else {
+                        Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Selected image files don't match old files!");
+                    }
+                }
+            }
         }
     }
 
@@ -512,20 +585,18 @@ public class Case {
         return pcs;
     }
 
-    String[] getImagePaths(int imgID) {
-        return xmlcm.getImageSet(imgID);
+    String[] getImagePaths(Long imgID) {
+        List<String> paths = getImagePaths().get(imgID);
+        return paths.toArray(new String[paths.size()]);
     }
 
     /**
      * get all the image id in this case
      * @return imageIDs
      */
-    public int[] getImageIDs() {
-        if (xmlcm == null) {
-            return new int[0];
-        } else {
-            return xmlcm.getImageIDs();
-        }
+    public Long[] getImageIDs() {
+        Set<Long> ids = getImagePaths().keySet();
+        return ids.toArray(new Long[ids.size()]);
     }
 
     /**
@@ -620,14 +691,23 @@ public class Case {
         if (totalLength > 0) {
             result = true;
             for (int i = 0; i < totalLength; i++) {
-                if (new File(imgPaths[i]).exists()) {
-                    result = result && true;
-                } else {
-                    result = result && false;
+                String path = imgPaths[i];
+                if (!new File(path).exists() && !isPhysicalDrive(path)) {
+                    result = false;
+                    break;
                 }
             }
         }
         return result;
+    }
+    
+    /**
+     * Does the given string refer to a physical drive?
+     */
+    private static String pdisk = "\\\\.\\physicaldrive";
+    static boolean isPhysicalDrive(String path) {
+        int endIndex = Math.min(path.length(), pdisk.length());
+        return path.substring(0, endIndex).toLowerCase().equals(pdisk);
     }
 
     /**
@@ -648,8 +728,8 @@ public class Case {
         DateFormat dfm = new SimpleDateFormat("z");
         dfm.setTimeZone(zone);
         boolean hasDaylight = zone.useDaylightTime();
-        String first = dfm.format(new Date(2010, 1, 1)).substring(0, 3); // make it only 3 letters code
-        String second = dfm.format(new Date(2011, 6, 6)).substring(0, 3); // make it only 3 letters code
+        String first = dfm.format(new GregorianCalendar(2010, 1, 1).getTime()).substring(0, 3); // make it only 3 letters code
+        String second = dfm.format(new GregorianCalendar(2011, 6, 6).getTime()).substring(0, 3); // make it only 3 letters code
         int mid = hour * -1;
         result = first + Integer.toString(mid);
         if (hasDaylight) {

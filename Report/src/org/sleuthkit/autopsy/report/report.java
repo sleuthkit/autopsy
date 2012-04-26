@@ -56,7 +56,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getGenInfo() {
     }
     catch (Exception e)
     {
-        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        Logger.getLogger(report.class.getName()).log(Level.WARNING, "Exception occurred", e);
     }
     
     return reportMap;
@@ -78,7 +78,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebHistory(
     }
     catch (Exception e)
     {
-        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        Logger.getLogger(report.class.getName()).log(Level.WARNING, "Exception occurred", e);
     }
     
     return reportMap;
@@ -99,7 +99,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebCookie()
     }
     catch (Exception e)
     {
-        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        Logger.getLogger(report.class.getName()).log(Level.WARNING, "Exception occurred", e);
     }
     
     return reportMap;
@@ -120,7 +120,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebBookmark
     }
     catch (Exception e)
     {
-        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        Logger.getLogger(report.class.getName()).log(Level.WARNING, "Exception occurred", e);
     }
     
     return reportMap;
@@ -141,7 +141,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebDownload
     }
     catch (Exception e)
     {
-        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        Logger.getLogger(report.class.getName()).log(Level.WARNING, "Exception occurred", e);
     }
     
     return reportMap;
@@ -162,7 +162,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getRecentObjec
     }
     catch (Exception e)
     {
-        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        Logger.getLogger(report.class.getName()).log(Level.WARNING, "Exception occurred", e);
     }
     
     return reportMap;
@@ -184,7 +184,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getKeywordHit(
     }
     catch (Exception e)
     {
-        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        Logger.getLogger(report.class.getName()).log(Level.WARNING, "Exception occurred", e);
     }
     
     return reportMap;
@@ -205,7 +205,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getHashHit() {
     }
     catch (Exception e)
     {
-        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        Logger.getLogger(report.class.getName()).log(Level.WARNING, "Exception occurred", e);
     }
     
     return reportMap;
@@ -226,7 +226,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getInstalledPr
     }
     catch (Exception e)
     {
-        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        Logger.getLogger(report.class.getName()).log(Level.WARNING, "Exception occurred", e);
     }
     
     return reportMap;
@@ -247,7 +247,7 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getDevices() {
     }
     catch (Exception e)
     {
-        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        Logger.getLogger(report.class.getName()).log(Level.WARNING, "Exception occurred", e);
     }
     
     return reportMap;
@@ -298,7 +298,7 @@ public String getGroupedKeywordHit() {
     }
     catch (Exception e)
     {
-        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        Logger.getLogger(report.class.getName()).log(Level.WARNING, "Exception occurred", e);
     }
     
     String result = table.toString();

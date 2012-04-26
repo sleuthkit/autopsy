@@ -185,7 +185,7 @@ public class Firefox {
             }
             List<FsContent> FFSqlitedb;  
 
-            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%cookies.sqlite%' and name NOT LIKE '%journal%' parent_path LIKE '%Firefox%'" + allFS);
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%cookies.sqlite%' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);   
             rs.close();
             rs.getStatement().close();  

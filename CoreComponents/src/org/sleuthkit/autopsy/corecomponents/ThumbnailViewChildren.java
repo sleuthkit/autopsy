@@ -76,7 +76,8 @@ class ThumbnailViewChildren extends FilterNode.Children {
             String lowerName = f.getName().toLowerCase();
             // Note: only supports JPG, GIF, and PNG for now
             // TODO: replace giant OR with check if in list
-            return lowerName.endsWith(".jpg")
+            return f.getSize() > 0 && 
+                    (lowerName.endsWith(".jpg")
                     || lowerName.endsWith(".jpeg")
                     || //node.getName().toLowerCase().endsWith(".jpe") ||
                     //node.getName().toLowerCase().endsWith(".jfif") ||
@@ -85,7 +86,7 @@ class ThumbnailViewChildren extends FilterNode.Children {
                     //node.getName().toLowerCase().endsWith(".tif") ||
                     //node.getName().toLowerCase().endsWith(".tiff") ||
                     //node.getName().toLowerCase().endsWith(".tga") ||
-                    lowerName.endsWith(".png");
+                    lowerName.endsWith(".png"));
         }
         
         @Override

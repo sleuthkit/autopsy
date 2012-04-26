@@ -39,7 +39,7 @@ public class IngestManagerProxy {
     }
     
     public int getUpdateFrequency() {
-        return manager.getUpdateFrequency();
+        return manager.getUpdateFrequency().getTime();
     }
     
     public IngestServiceFsContent.ProcessResult getFsContentServiceResult(String serviceName) {

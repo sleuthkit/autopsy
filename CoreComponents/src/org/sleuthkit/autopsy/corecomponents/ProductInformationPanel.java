@@ -75,6 +75,8 @@ class ProductInformationPanel extends JPanel implements HyperlinkListener {
         description = new javax.swing.JTextPane();
         verboseLoggingButton = new javax.swing.JButton();
 
+        setBackground(new java.awt.Color(255, 255, 255));
+
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setIcon(about);
         jLabel1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -84,9 +86,10 @@ class ProductInformationPanel extends JPanel implements HyperlinkListener {
             }
         });
 
+        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
-        jButton2.setMnemonic(NbBundle.getMessage(ProductInformationPanel.class, "MNE_Close").charAt(0));
+        jButton2.setBackground(new java.awt.Color(255, 255, 255));
         jButton2.setText(NbBundle.getMessage(ProductInformationPanel.class, "LBL_Close")); // NOI18N
         jButton2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -115,6 +118,7 @@ class ProductInformationPanel extends JPanel implements HyperlinkListener {
         description.setEditable(false);
         jScrollPane2.setViewportView(description);
 
+        verboseLoggingButton.setBackground(new java.awt.Color(255, 255, 255));
         verboseLoggingButton.setText("Activate verbose logging");
         verboseLoggingButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

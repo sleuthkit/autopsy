@@ -282,7 +282,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
             try {
                 StartupWindow.getInstance().close();
             } catch (Exception ex) {
-                Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.INFO, "Startup window didn't close as expected.", ex);
+                Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Startup window didn't close as expected.", ex);
 
             }
 

@@ -194,7 +194,7 @@ public class reportXML {
 
                 }   
     catch (Exception e){
-        Logger.getLogger(reportXML.class.getName()).log(Level.INFO, "Exception occurred", e);
+        Logger.getLogger(reportXML.class.getName()).log(Level.WARNING, "Exception occurred", e);
     }
   }
     

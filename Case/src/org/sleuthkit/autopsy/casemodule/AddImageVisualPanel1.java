@@ -44,15 +44,15 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
 
     private JFileChooser fc = new JFileChooser();
     private FileFilter filter;
-    private final String[] imgExt = {".img", ".dd"};
-    private final String imgDesc = "Raw Images (*.img, *.dd)";
-    private GeneralFilter imgFilter = new GeneralFilter(imgExt, imgDesc, false);
-    private final String[] splitExt = {".*\\.[0-9][0-9][0-9]", ".*\\.[a-z][a-z]"};
-    private final String splitDesc = "Split Part (*.001, *.002, etc)";
-    private GeneralFilter splitFilter = new GeneralFilter(splitExt, splitDesc, true);
-    private final String[] encasExt = {".*\\.e[0-9][0-9]", ".*\\.e[a-z][a-z]"};
-    private final String encaseDesc = "Encase Images (*.e01, *.eAA)";
-    private GeneralFilter encaseFilter = new GeneralFilter(encasExt, encaseDesc, true);
+    static final String[] imgExt = {".img", ".dd"};
+    static final String imgDesc = "Raw Images (*.img, *.dd)";
+    static GeneralFilter imgFilter = new GeneralFilter(imgExt, imgDesc, false);
+    static final String[] splitExt = {".*\\.[0-9][0-9][0-9]", ".*\\.[a-z][a-z]"};
+    static final String splitDesc = "Split Part (*.001, *.002, etc)";
+    static GeneralFilter splitFilter = new GeneralFilter(splitExt, splitDesc, true);
+    static final String[] encasExt = {".*\\.e[0-9][0-9]", ".*\\.e[a-z][a-z]"};
+    static final String encaseDesc = "Encase Images (*.e01, *.eAA)";
+    static GeneralFilter encaseFilter = new GeneralFilter(encasExt, encaseDesc, true);
     private boolean multi = false;
     private AddImageWizardPanel1 wizPanel;
 
@@ -401,6 +401,7 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
                 imgPathTextField.setText(path);
             }
         }
+        this.wizPanel.moveFocusToNext();
 }//GEN-LAST:event_imgPathBrowserButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
@@ -469,9 +470,9 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
         boolean isImagePath = true;
         for (int i = 0; i < imgPath.length; i++) {
             File tempImgFile = new File(imgPath[i]);
-            isImagePath = isImagePath && tempImgFile.exists() && !tempImgFile.isDirectory()
+            isImagePath = isImagePath && (Case.isPhysicalDrive(imgPath[i]) || (tempImgFile.exists() && !tempImgFile.isDirectory()
                     && (imgFilter.accept(tempImgFile) || splitFilter.accept(tempImgFile)
-                    || encaseFilter.accept(tempImgFile));
+                    || encaseFilter.accept(tempImgFile))));
         }
 
 

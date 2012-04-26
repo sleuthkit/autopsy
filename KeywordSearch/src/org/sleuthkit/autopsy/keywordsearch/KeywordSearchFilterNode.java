@@ -85,10 +85,10 @@ class KeywordSearchFilterNode extends FilterNode {
                 newPs.setDisplayName(ps.getDisplayName());
                 newPs.setShortDescription(ps.getShortDescription());
 
-                Property[] oldProperties = ps.getProperties();
+                Property<?>[] oldProperties = ps.getProperties();
 
                 int j = 0;
-                for (Property p : oldProperties) {
+                for (Property<?> p : oldProperties) {
                     if (j++ == 1) {
                         newPs.put(getSnippetProperty());
                     }

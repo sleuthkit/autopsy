@@ -67,7 +67,7 @@ class Ingester {
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    public void ingest(FsContentStringStream fcs) throws IngesterException {
+    public void ingest(FsContentStringContentStream fcs) throws IngesterException {
         ingest(fcs, getFsContentFields(fcs.getFsContent()));
     }
 
