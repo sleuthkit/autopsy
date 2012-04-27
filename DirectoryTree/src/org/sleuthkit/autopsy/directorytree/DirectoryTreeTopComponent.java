@@ -760,8 +760,23 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         tree.expandNode(results);
 
         Children resultsChilds = results.getChildren();
-        tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
-        tree.expandNode(resultsChilds.findChild(ExtractedContentNode.NAME));
+        
+        if (resultsChilds == null)
+            //intermediate state check
+            return;
+        
+        Node childNode = resultsChilds.findChild(KeywordHits.NAME);
+        if (childNode == null)
+            //intermediate state check
+            return;
+        tree.expandNode(childNode);
+        
+        childNode = resultsChilds.findChild(ExtractedContentNode.NAME);
+        if (childNode == null)
+            //intermediate state check
+            return;
+        tree.expandNode(childNode);
+        
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
@@ -771,8 +786,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     try {
                         Node newSelection = NodeOp.findPath(em.getRootContext(), path);
                         resetHistoryListAndButtons();
-                        tree.expandNode(newSelection);
-                        em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                        if (newSelection != null) {
+                            tree.expandNode(newSelection);
+                            em.setExploredContextAndSelection(newSelection, new Node[]{newSelection});
+                        }
                         // We need to set the selection, which will refresh dataresult and get rid of the oob exception
                     } catch (NodeNotFoundException ex) {
                         logger.log(Level.WARNING, "Node not found", ex);
