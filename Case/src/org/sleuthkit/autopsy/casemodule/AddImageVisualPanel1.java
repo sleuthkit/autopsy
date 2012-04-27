@@ -296,10 +296,10 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(timeZoneLabel)
                         .addGap(18, 18, 18)
-                        .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 253, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(noFatOrphansCheckbox)
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(36, Short.MAX_VALUE))
+                .addContainerGap(39, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
