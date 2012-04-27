@@ -45,8 +45,8 @@ import org.sleuthkit.datamodel.TskData;
 public class DataContentViewerMedia extends javax.swing.JPanel implements DataContentViewer {
 
     private static final String[] IMAGES = new String[]{ ".jpg", ".jpeg", ".png", ".gif", ".jpe", ".bmp"};
-    private static final String[] VIDEOS = new String[]{ ".mov", ".m4v", ".flv", ".mp4", ".3gp"};
-    private static final String[] AUDIOS = new String[]{ ".mp3", ".wav"};
+    private static final String[] VIDEOS = new String[]{ ".mov", ".m4v", ".flv", ".mp4", ".3gp", ".avi", ".mpg", ".mpeg"};
+    private static final String[] AUDIOS = new String[]{ ".mp3", ".wav", ".wma"};
     private static final Logger logger = Logger.getLogger(DataContentViewerMedia.class.getName());
     private VideoComponent videoComponent; 
     private PlayBin2 playbin2;
@@ -330,7 +330,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         int extStart = name.lastIndexOf(".");
         String ext = "";
         if (extStart != -1) {
-            ext = name.substring(extStart, name.length());
+            ext = name.substring(extStart, name.length()).toLowerCase();
         }
         return Arrays.asList(exts).contains(ext);
     }
@@ -338,12 +338,18 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private java.io.File extractFile(File file) {
         // Get the temp folder path of the case
         String tempPath = Case.getCurrentCase().getTempDirectory();
-        tempPath = tempPath + java.io.File.separator + file.getName();
+        String name = file.getName();
+        int extStart = name.lastIndexOf(".");
+        String ext = "";
+        if (extStart != -1) {
+            ext = name.substring(extStart, name.length()).toLowerCase();
+        }
+        tempPath = tempPath + java.io.File.separator + file.getId() + ext;
 
         // create the temporary file
         java.io.File tempFile = new java.io.File(tempPath);
         if (tempFile.exists()) {
-            tempFile.delete();
+            return tempFile;
         }
         
         try {

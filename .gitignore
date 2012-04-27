@@ -18,3 +18,5 @@
 /DataModel/release/modules/ext/sqlite-jdbc-3.7.2.jar
 /DataModel/release/modules/lib/zlib.dll
 /branding_spear
+/installer_spear
+Bundle_*.properties
