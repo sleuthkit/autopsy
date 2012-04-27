@@ -4,7 +4,7 @@
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
- * Project Contact/Architect: carrier <at> autopsy <dot> org
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.sql.SQLException;
 import java.util.List;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 
@@ -66,6 +67,9 @@ public class ExtractAll {
                 //Find a way to put these results into BB
                
                 return true;
+           }
+           catch(SQLException e){
+               return false;
            }
            catch(Error e){
                return false;

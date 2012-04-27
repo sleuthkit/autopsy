@@ -4,7 +4,7 @@
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
- * Project Contact/Architect: carrier <at> autopsy <dot> org
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 public class ExtractIE { // implements BrowserActivity {
 
@@ -75,6 +76,7 @@ public class ExtractIE { // implements BrowserActivity {
     //paths set in init()
     private String PASCO_RESULTS_PATH;
     private String PASCO_LIB_PATH;
+    private String JAVA_PATH;
     
     //Results List to be referenced/used outside the class
     public ArrayList<HashMap<String, Object>> PASCO_RESULTS_LIST = new ArrayList<HashMap<String, Object>>();
@@ -295,8 +297,12 @@ public class ExtractIE { // implements BrowserActivity {
     private void init(List<String> image, IngestImageWorkerController controller) {
         final Case currentCase = Case.getCurrentCase();
         final String caseDir = Case.getCurrentCase().getCaseDirectory();
-        PASCO_RESULTS_PATH = caseDir + File.separator + "recentactivity" + File.separator + "results";
-
+        PASCO_RESULTS_PATH = Case.getCurrentCase().getTempDirectory() + File.separator + "results";
+        JAVA_PATH = PlatformUtil.getJavaPath();
+        if(JAVA_PATH.isEmpty() || JAVA_PATH == null)
+        {
+            JAVA_PATH = "java";
+        }
         logger.log(Level.INFO, "Pasco results path: " + PASCO_RESULTS_PATH);
         
          final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false);
@@ -395,7 +401,7 @@ public class ExtractIE { // implements BrowserActivity {
             command.append(" > \"").append(PASCO_RESULTS_PATH).append("\\pasco2Result.").append(Integer.toString(fileIndex)).append(".txt\"");
            // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String cmd = command.toString();
-             JavaSystemCaller.Exec.execute("\"java "+cmd+ "\"");
+             JavaSystemCaller.Exec.execute("\"" + JAVA_PATH + " "+cmd+ "\"");
 
         } catch (Exception e) {
             success = false;

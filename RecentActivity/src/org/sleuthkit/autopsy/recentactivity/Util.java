@@ -4,7 +4,7 @@
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
- * Project Contact/Architect: carrier <at> autopsy <dot> org
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,5 +192,43 @@ public static long findID(String path) {
         //    logger.log(Level.WARNING, "Error retrieving content from DB", ex);
         }
         return -1;
+    }
+
+
+
+public static boolean checkColumn(String column, String tablename, String connection){
+    String query = "PRAGMA table_info(" + tablename + ")";
+    boolean found = false;
+    ResultSet temprs;
+        try{
+            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connection);
+            temprs = tempdbconnect.executeQry(query);
+            while(temprs.next()) 
+                   {  
+                       if(temprs.getString("name") == null ? column == null : temprs.getString("name").equals(column))
+                       {
+                           found = true;
+                       }
+                   }
+        }
+        catch(Exception ex)
+        {
+                logger.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex);      
+        }
+    return found;
+    }
+
+
+public static ResultSet runQuery(String query, String connection){
+    ResultSet results = null;
+    try{
+            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC",connection);
+            results = tempdbconnect.executeQry(query);
+            tempdbconnect.closeConnection();
+    }
+    catch(Exception ex){
+        logger.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex);   
+    }
+    return results;
     }
 }

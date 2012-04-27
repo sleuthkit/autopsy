@@ -4,7 +4,7 @@
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
- * Project Contact/Architect: carrier <at> autopsy <dot> org
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,21 @@
 package org.sleuthkit.autopsy.report;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskException;
 /**
  *
  * @author Alex
  */
 public class reportFilter extends javax.swing.JPanel {
   public static ArrayList<Integer> filters = new ArrayList<Integer>();
+  public static ReportConfiguration config = new ReportConfiguration();
+  private final Logger logger = Logger.getLogger(this.getClass().getName());
   public final reportFilter panel = this;
   reportPanelAction rpa = new reportPanelAction();
   public static boolean cancel = false;
@@ -190,41 +194,74 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     filters.clear();
     if(jCheckBox1.isSelected())
     {
-        filters.add(2);
-        filters.add(3);
-        filters.add(4);
-        filters.add(5);
+            try {
+                config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, true);
+                config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, true);
+                config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, true);
+                config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, true);
+                
+                filters.add(2);
+                filters.add(3);
+                filters.add(4);
+                filters.add(5);
+            } catch (ReportModuleException ex) {
+                logger.log(Level.WARNING, "", ex);   
+            }
     }
     if(jCheckBox2.isSelected())
     {
-        filters.add(1);
+            try {
+                config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO, true);
+                filters.add(1);
+            } catch (ReportModuleException ex) {
+                logger.log(Level.WARNING, "", ex);   
+            }
     }
     if(jCheckBox3.isSelected())
     {
-        filters.add(9);
+            try {
+                config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, true);
+                filters.add(9);
+            } catch (ReportModuleException ex) {
+                logger.log(Level.WARNING, "", ex);   
+            }
     }
     if(jCheckBox4.isSelected())
     {
-        filters.add(10);
+            try {
+                config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, true);
+                filters.add(10);
+            } catch (ReportModuleException ex) {
+                logger.log(Level.WARNING, "", ex);   
+            }
        
     }
     if(jCheckBox5.isSelected())
     {
-        filters.add(6);
-        filters.add(8); 
-        filters.add(11);
+            try {
+                config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT, true);
+                config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG, true);
+                 config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED, true);
+                 filters.add(6);
+                 filters.add(8); 
+                 filters.add(11);
+            } catch (ReportModuleException ex) {
+                
+            }
     }
    getReports();
 }//GEN-LAST:event_jButton1ActionPerformed
 
 public void getReports() {
   new SwingWorker<Void, Void>() {
+            @Override
      protected Void doInBackground() throws Exception {
-        rpa.reportGenerate(filters, panel);
+        rpa.reportGenerate(config, panel);
         return null;
      };
 
      // this is called when the SwingWorker's doInBackground finishes
+            @Override
      protected void done() {
         progBar.setVisible(false); // hide my progress bar JFrame
      };
@@ -245,6 +282,7 @@ public void progBarSet(int cc)
 {
     final int count = cc;
      SwingUtilities.invokeLater(new Runnable() {
+            @Override
     public void run() {
        int start = progBar.getValue();
        int end = start + count;
