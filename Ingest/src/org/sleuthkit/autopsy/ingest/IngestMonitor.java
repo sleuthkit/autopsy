@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Timer;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 
 /**
@@ -63,6 +64,19 @@ public class IngestMonitor {
     
     private class MonitorAction implements ActionListener {
         private final static long MIN_FREE_DISK_SPACE = 100L * 1024 * 1024; //100MB
+        private File root = new File(File.separator); //default, roto dir where autopsy runs
+        
+        MonitorAction() {
+            //find drive where case is located
+            String caseDir = Case.getCurrentCase().getCaseDirectory();
+            File curDir = new File(caseDir);
+            File tempF = null;
+            while (  (tempF = curDir.getParentFile()) != null)
+                curDir = tempF;
+            root = curDir;
+            //logger.log(Level.INFO, "Using case root: " + curDir.getAbsolutePath());
+            
+        }
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -74,9 +88,10 @@ public class IngestMonitor {
             
             if (checkDiskSpace() == false) {
                 //stop ingest if running
-                logger.log(Level.SEVERE, "Stopping ingest due to low disk space");
+                final String diskPath = root.getAbsolutePath();
+                logger.log(Level.SEVERE, "Stopping ingest due to low disk space on disk " + diskPath);
                 manager.stopAll();
-                manager.postMessage(IngestMessage.createManagerMessage("Stopping ingest due to low disk space", "Stopping ingest due to low disk space. Please ensure the system disk has at least 1GB free space (more for large images) and restart ingest."));
+                manager.postMessage(IngestMessage.createManagerMessage("Stopping ingest due to low disk space on disk " + diskPath, "Stopping ingest due to low disk space on disk " + diskPath + ". Please ensure the drive where Case is located has at least 1GB free space (more for large images) and restart ingest."));
             }
         }
         
@@ -85,15 +100,12 @@ public class IngestMonitor {
          * @return true if OK, false otherwise
          */
         private boolean checkDiskSpace() {
-            //assume root partition
-            //TODO use better check, i.e. root partition + user partition + try to write temp file
-            File root = new File(File.separator);
             long freeSpace;
             try {
                 freeSpace = root.getFreeSpace();
             }
             catch (SecurityException e) {
-                logger.log(Level.INFO, "Unable to check for free disk space (probably permission issue)", e);
+                logger.log(Level.WARNING, "Unable to check for free disk space (permission issue)", e);
                 return true; //OK
             }
             //logger.log(Level.INFO, "Checking free disk apce: " + freeSpace + " need: " + Long.toString(MIN_FREE_DISK_SPACE));
