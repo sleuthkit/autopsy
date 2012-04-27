@@ -167,8 +167,7 @@ public class Firefox {
         {
             
         }
-        
-        
+
         //COOKIES section
           // This gets the cookie info
          try 
