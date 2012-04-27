@@ -88,8 +88,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,
-    };
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
     private Map<Long, IngestStatus> ingestStatus;
     private Map<String, List<FsContent>> reportedHits; //already reported hits
 
@@ -219,16 +218,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         this.managerProxy = managerProxy;
 
-        Server.Core solrCore = null;
-        try {
-            solrCore = KeywordSearch.getServer().getCore();
-        } catch (SolrServerException ex) {
-            logger.log(Level.WARNING, "Could not get Solr core", ex);
-            managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "Error initializing.", "Keyword indexing and search cannot proceed. Try restarting the application."));
-            return;
-        }
+        Server solrServer = KeywordSearch.getServer();
 
-        ingester = solrCore.getIngester();
+
+        ingester = solrServer.getIngester();
 
         ingestStatus = new HashMap<Long, IngestStatus>();
 
@@ -348,7 +341,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private void indexChangeNotify() {
         //signal a potential change in number of indexed files
         try {
-            final int numIndexedFiles = KeywordSearch.getServer().getCore().queryNumIndexedFiles();
+            final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
             SwingUtilities.invokeLater(new Runnable() {
 
                 @Override
@@ -356,6 +349,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
                 }
             });
+        } catch (NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex);
         } catch (SolrServerException se) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", se);
         }
@@ -591,6 +586,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
                 try {
                     queryResult = del.performQuery();
+                } catch (NoOpenCoreException ex) {
+                    logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), ex);
+                    //no reason to continue with next query if recovery failed
+                    //or wait for recovery to kick in and run again later
+                    //likely case has closed and threads are being interrupted
+                    break;
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e);
                     continue;

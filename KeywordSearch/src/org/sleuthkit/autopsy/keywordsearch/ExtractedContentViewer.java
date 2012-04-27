@@ -196,25 +196,21 @@ public class ExtractedContentViewer implements DataContentViewer {
             return false;
         }
 
-        Server.Core solrCore = null;
-        try {
-            solrCore = KeywordSearch.getServer().getCore();
-        } catch (SolrServerException e) {
-            logger.log(Level.INFO, "Could not get Solr Core", e);
-        }
+        final Server solrServer = KeywordSearch.getServer();
         
-        if (solrCore == null) {
-            return false;
-        }
-
         SolrQuery q = new SolrQuery();
         q.setQuery("*:*");
         q.addFilterQuery("id:" + content.getId());
         q.setFields("id");
 
         try {
-            return !solrCore.query(q).getResults().isEmpty();
-        } catch (SolrServerException ex) {
+            return !solrServer.query(q).getResults().isEmpty();
+        } 
+        catch (NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex);
+            return false;
+        }
+        catch (SolrServerException ex) {
             logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex);
             return false;
         }
@@ -228,13 +224,20 @@ public class ExtractedContentViewer implements DataContentViewer {
      * @throws SolrServerException if something goes wrong
      */
     private String getSolrContent(Node node) throws SolrServerException {
-        Server.Core solrCore = KeywordSearch.getServer().getCore();
+        Server solrServer = KeywordSearch.getServer();
         SolrQuery q = new SolrQuery();
         q.setQuery("*:*");
         q.addFilterQuery("id:" + node.getLookup().lookup(Content.class).getId());
         q.setFields("content");
 
-        String content = (String) solrCore.query(q).getResults().get(0).getFieldValue("content");
+        String content;
+        try {
+            content = (String) solrServer.query(q).getResults().get(0).getFieldValue("content");
+        }
+        catch (NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Couldn't get Solr content.", ex);
+            return "";
+        }
         return content;
     }
 

@@ -24,8 +24,13 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
 import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
@@ -41,11 +46,12 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 class Ingester {
 
     private static final Logger logger = Logger.getLogger(Ingester.class.getName());
-    private SolrServer solrCore;
     private boolean uncommitedIngests = false;
+    private final ExecutorService upRequestExecutor = Executors.newSingleThreadExecutor();
+    static final int UP_REQUEST_TIMEOUT_SECS = 30 * 60; //30 min TODO use variable time depending on file size
+    private final Server solrServer = KeywordSearch.getServer();
 
-    Ingester(SolrServer solrCore) {
-        this.solrCore = solrCore;
+    Ingester() {
     }
 
     @Override
@@ -108,42 +114,79 @@ class Ingester {
      * content, but the Solr server is probably fine.
      */
     private void ingest(ContentStream cs, Map<String, String> fields) throws IngesterException {
-        ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract");
+        final ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract");
         up.addContentStream(cs);
         setFields(up, fields);
         up.setAction(AbstractUpdateRequest.ACTION.COMMIT, true, true);
 
         //logger.log(Level.INFO, "Ingesting " + fields.get("file_name"));
+
         up.setParam("commit", "false");
 
-        try {
-            solrCore.request(up);
-            // should't get any checked exceptions, 
-        } catch (IOException ex) {
-            // It's possible that we will have IO errors 
-            throw new IngesterException("Problem reading file.", ex);
-        } catch (IllegalStateException ex) {
-            // problems with content
-            throw new IngesterException("Problem reading file.", ex);
-        } catch (SolrServerException ex) {
-            // If there's a problem talking to Solr, something is fundamentally
-            // wrong with ingest
-            throw new IngesterException("Problem with Solr", ex);
-        } catch (SolrException ex) {
-            // Tika problems result in an unchecked SolrException
-            ErrorCode ec = ErrorCode.getErrorCode(ex.code());
 
-            // When Tika has problems with a document, it throws a server error
-            // but it's okay to continue with other documents
-            if (ec.equals(ErrorCode.SERVER_ERROR)) {
-                throw new IngesterException("Problem posting file contents to Solr. SolrException error code: " + ec, ex);
-            } else {
-                // shouldn't get any other error codes
-                throw ex;
-            }
+        final Future f = upRequestExecutor.submit(new UpRequestTask(up));
+        try {
+            //TODO use timeout proportional to content size
+            f.get(UP_REQUEST_TIMEOUT_SECS, TimeUnit.SECONDS);
+        } catch (TimeoutException te) {
+            logger.log(Level.WARNING, "Solr timeout encountered, trying to restart Solr");
+            //TODO restart solr might be needed to recover from some error conditions
+            hardSolrRestart();
+            throw new IngesterException("Solr index request time out for id: " + fields.get("id") + ", name: " + fields.get("file_name"));
+        } catch (Exception e) {
+            throw new IngesterException("Problem posting content to Solr, id: " + fields.get("id") + ", name: " + fields.get("file_name"), e);
+        }
+        uncommitedIngests = true;
+    }
+    
+    
+    //attempt to restart Solr and recover from its internal error
+    private void hardSolrRestart() {
+        solrServer.closeCore();
+        solrServer.stop();
+
+        solrServer.start();
+        solrServer.openCore();
+
+
+    }
+
+    private class UpRequestTask implements Runnable {
+
+        ContentStreamUpdateRequest up;
+
+        UpRequestTask(ContentStreamUpdateRequest up) {
+            this.up = up;
         }
 
-        uncommitedIngests = true;
+        @Override
+        public void run() {
+            try {
+                solrServer.request(up);
+            } catch (NoOpenCoreException ex) {
+                throw new RuntimeException("No Solr core available, cannot index the content", ex);
+            } catch (IllegalStateException ex) {
+                // problems with content
+                throw new RuntimeException("Problem reading file.", ex);
+            } catch (SolrServerException ex) {
+                // If there's a problem talking to Solr, something is fundamentally
+                // wrong with ingest
+                throw new RuntimeException("Problem with Solr", ex);
+            } catch (SolrException ex) {
+                // Tika problems result in an unchecked SolrException
+                ErrorCode ec = ErrorCode.getErrorCode(ex.code());
+
+                // When Tika has problems with a document, it throws a server error
+                // but it's okay to continue with other documents
+                if (ec.equals(ErrorCode.SERVER_ERROR)) {
+                    throw new RuntimeException("Problem posting file contents to Solr. SolrException error code: " + ec, ex);
+                } else {
+                    // shouldn't get any other error codes
+                    throw ex;
+                }
+            }
+
+        }
     }
 
     /**
@@ -152,13 +195,12 @@ class Ingester {
      */
     void commit() {
         try {
-            solrCore.commit();
+            solrServer.commit();
             uncommitedIngests = false;
-            // if commit doesn't work, something's broken
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
+        } catch (NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Error commiting index", ex);
         } catch (SolrServerException ex) {
-            throw new RuntimeException(ex);
+            logger.log(Level.WARNING, "Error commiting index", ex);
         }
     }
 
@@ -170,6 +212,8 @@ class Ingester {
     private static void setFields(ContentStreamUpdateRequest up, Map<String, String> fields) {
         for (Entry<String, String> field : fields.entrySet()) {
             up.setParam("literal." + field.getKey(), field.getValue());
+
+
         }
     }
 
@@ -223,6 +267,10 @@ class Ingester {
 
         IngesterException(String message, Throwable ex) {
             super(message, ex);
+        }
+
+        IngesterException(String message) {
+            super(message);
         }
     }
 }

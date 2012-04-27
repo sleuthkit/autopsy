@@ -36,10 +36,10 @@ public interface KeywordSearchQuery {
     /**
      * execute query and return results without publishing them
      * return results for all matching terms
-     * 
+     * @throws NoOpenCoreException if query failed due to server error, this could be a notification to stop processing
      * @return 
      */
-    public Map<String,List<FsContent>> performQuery();
+    public Map<String,List<FsContent>> performQuery() throws NoOpenCoreException;
     
   
     
@@ -84,8 +84,9 @@ public interface KeywordSearchQuery {
      * @param newFsHit fscontent for which to write results for this hit
      * @param listName listname
      * @return collection of results (with cached bb artifacts/attributes) created and written
+     * @throws NoOpenCoreException if could not write to bb because required query failed due to server error, this could be a notification to stop processing
      */
-    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName);
+    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) throws NoOpenCoreException;
        
 }
 

@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
  *
  * @author dfickling
  */
-public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
+public class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
 
     private static final Logger logger = Logger.getLogger(KeywordSearchPanel.class.getName());
     private KeywordPropertyChangeListener listener;
@@ -60,14 +60,15 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
     }
 
     private void customizeComponents() {
-        
+
         listener = new KeywordPropertyChangeListener();
-        
+
         KeywordSearch.getServer().addServerActionListener(listener);
-        
+
         Case.addPropertyChangeListener(listener);
-        
+
         searchBox.addFocusListener(new FocusListener() {
+
             @Override
             public void focusGained(FocusEvent e) {
                 if (searchBox.getText().equals("Search...")) {
@@ -76,6 +77,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
                     entered = true;
                 }
             }
+
             @Override
             public void focusLost(FocusEvent e) {
                 if (searchBox.getText().equals("")) {
@@ -90,10 +92,9 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
             public void actionPerformed(ActionEvent e) {
                 listsMenu.setVisible(false);
             }
-            
         });
         // Adding border of six to account for menu border
-        listsMenu.setSize(listsPanel.getPreferredSize().width+6, listsPanel.getPreferredSize().height+6);
+        listsMenu.setSize(listsPanel.getPreferredSize().width + 6, listsPanel.getPreferredSize().height + 6);
         listsMenu.add(listsPanel);
         listsMenu.addPopupMenuListener(new PopupMenuListener() {
 
@@ -111,9 +112,8 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
             public void popupMenuCanceled(PopupMenuEvent e) {
                 listsButton.setSelected(false);
             }
-            
         });
-        
+
         searchBox.setComponentPopupMenu(rightClickMenu);
         ActionListener actList = new ActionListener() {
 
@@ -140,9 +140,9 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
         copyMenuItem.addActionListener(actList);
         pasteMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
-        
+
     }
-    
+
     private void resetSearchBox() {
         searchBox.setEditable(true);
         searchBox.setText("Search...");
@@ -293,8 +293,9 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchBoxActionPerformed
-        if(!entered)
+        if (!entered) {
             return;
+        }
         getRootPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             search();
@@ -326,7 +327,6 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
     private void settingsLabelMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_settingsLabelMouseExited
         settingsLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/dropdown-icon.png")));
     }//GEN-LAST:event_settingsLabelMouseExited
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JMenuItem cutMenuItem;
@@ -362,7 +362,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
     public List<Keyword> getQueryList() {
         throw new UnsupportedOperationException("No list for single-keyword search");
     }
-    
+
     private class KeywordPropertyChangeListener implements PropertyChangeListener {
 
         @Override
@@ -370,7 +370,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
             String changed = evt.getPropertyName();
             Object oldValue = evt.getOldValue();
             Object newValue = evt.getNewValue();
-            
+
             if (changed.equals(Case.CASE_CURRENT_CASE)) {
                 if (newValue == null) {
                     setFields(false);
@@ -382,10 +382,14 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
                 switch (state) {
                     case STARTED:
                         try {
-                            final int numIndexedFiles = KeywordSearch.getServer().getCore().queryNumIndexedFiles();
+                            final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
                             KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
                             //setFilesIndexed(numIndexedFiles);
-                        } catch (SolrServerException se) {
+                        } 
+                        catch (NoOpenCoreException ex) {
+                            logger.log(Level.SEVERE, "Error executing Solr query, " + ex);
+                        }
+                        catch (SolrServerException se) {
                             logger.log(Level.SEVERE, "Error executing Solr query, " + se.getMessage());
                         }
                         break;
@@ -395,8 +399,8 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
                 }
             }
         }
-        
-        private void setFields(boolean enabled){
+
+        private void setFields(boolean enabled) {
             searchBox.setEnabled(enabled);
             regExCheckboxMenuItem.setEnabled(enabled);
             settingsLabel.setEnabled(enabled);
@@ -405,25 +409,25 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer{
             active = enabled;
         }
     }
-    
-    private void maybeShowSettingsPopup (MouseEvent evt) {
-        if(!active) {
+
+    private void maybeShowSettingsPopup(MouseEvent evt) {
+        if (!active) {
             return;
         }
         if (evt != null && !SwingUtilities.isLeftMouseButton(evt)) {
             return;
         }
-        
+
         settingsMenu.show(searchBoxPanel, 0, searchBoxPanel.getHeight());
     }
-    
-    private void maybeShowListsPopup (MouseEvent evt) {
-        if(!active) {
+
+    private void maybeShowListsPopup(MouseEvent evt) {
+        if (!active) {
             return;
         }
         if (evt != null && !SwingUtilities.isLeftMouseButton(evt)) {
             return;
         }
-        listsMenu.show(listsButton, listsButton.getWidth()-listsMenu.getWidth(), listsButton.getHeight()-1);
+        listsMenu.show(listsButton, listsButton.getWidth() - listsMenu.getWidth(), listsButton.getHeight() - 1);
     }
 }
