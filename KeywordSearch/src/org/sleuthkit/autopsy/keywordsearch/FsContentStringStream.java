@@ -237,4 +237,20 @@ public class FsContentStringStream extends InputStream {
         }
 
     }
+
+    @Override
+    public int available() throws IOException {
+        //we don't know how many bytes in curReadBuf may end up as strings
+        return 0;
+    }
+
+    @Override
+    public long skip(long n) throws IOException {
+        //use default implementation that reads into skip buffer
+        //but it could be more efficient
+        return super.skip(n);
+    }
+    
+    
+    
 }
