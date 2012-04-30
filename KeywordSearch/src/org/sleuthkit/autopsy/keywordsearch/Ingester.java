@@ -48,7 +48,6 @@ class Ingester {
     private static final Logger logger = Logger.getLogger(Ingester.class.getName());
     private boolean uncommitedIngests = false;
     private final ExecutorService upRequestExecutor = Executors.newSingleThreadExecutor();
-    static final int UP_REQUEST_TIMEOUT_SECS = 30 * 60; //30 min TODO use variable time depending on file size
     private final Server solrServer = KeywordSearch.getServer();
 
     Ingester() {
@@ -74,7 +73,7 @@ class Ingester {
      * file, but the Solr server is probably fine.
      */
     public void ingest(FsContentStringContentStream fcs) throws IngesterException {
-        ingest(fcs, getFsContentFields(fcs.getFsContent()));
+        ingest(fcs, getFsContentFields(fcs.getFsContent()), fcs.getFsContent());
     }
 
     /**
@@ -86,7 +85,7 @@ class Ingester {
      * file, but the Solr server is probably fine.
      */
     public void ingest(FsContent f) throws IngesterException {
-        ingest(new FscContentStream(f), getFsContentFields(f));
+        ingest(new FscContentStream(f), getFsContentFields(f), f);
     }
 
     /**
@@ -113,7 +112,7 @@ class Ingester {
      * @throws IngesterException if there was an error processing a specific
      * content, but the Solr server is probably fine.
      */
-    private void ingest(ContentStream cs, Map<String, String> fields) throws IngesterException {
+    private void ingest(ContentStream cs, Map<String, String> fields, final FsContent sourceContent) throws IngesterException {
         final ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract");
         up.addContentStream(cs);
         setFields(up, fields);
@@ -126,11 +125,10 @@ class Ingester {
 
         final Future f = upRequestExecutor.submit(new UpRequestTask(up));
         try {
-            //TODO use timeout proportional to content size
-            f.get(UP_REQUEST_TIMEOUT_SECS, TimeUnit.SECONDS);
+            f.get(getTimeout(sourceContent), TimeUnit.SECONDS);
         } catch (TimeoutException te) {
             logger.log(Level.WARNING, "Solr timeout encountered, trying to restart Solr");
-            //TODO restart solr might be needed to recover from some error conditions
+            //restart may be needed to recover from some error conditions
             hardSolrRestart();
             throw new IngesterException("Solr index request time out for id: " + fields.get("id") + ", name: " + fields.get("file_name"));
         } catch (Exception e) {
@@ -138,8 +136,7 @@ class Ingester {
         }
         uncommitedIngests = true;
     }
-    
-    
+
     //attempt to restart Solr and recover from its internal error
     private void hardSolrRestart() {
         solrServer.closeCore();
@@ -148,6 +145,29 @@ class Ingester {
         solrServer.start();
         solrServer.openCore();
 
+
+    }
+
+    /**
+     * return timeout that should be use to index the content 
+     * TODO adjust them more as needed, and handle file chunks
+     * @param f the source FsContent
+     * @return time in seconds to use a timeout
+     */
+    private static int getTimeout(FsContent f) {
+        final long size = f.getSize();
+        if (size < 1024 * 1024L) //1MB
+        {
+            return 60;
+        } else if (size < 10 * 1024 * 1024L) //10MB
+        {
+            return 1200;
+        } else if (size < 100 * 1024 * 1024L) //100MB
+        {
+            return 3600;
+        } else {
+            return 3 * 3600;
+        }
 
     }
 
