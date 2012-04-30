@@ -291,9 +291,7 @@ class Server {
             throw new NoOpenCoreException();
         }
 
-        SolrQuery q = new SolrQuery("*:*");
-        q.setRows(0);
-        return (int) query(q).getResults().getNumFound();
+        return currentCore.queryNumIndexedFiles();
     }
 
     /**
@@ -336,8 +334,7 @@ class Server {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
-        QueryResponse qres = currentCore.query(sq);
-        return qres.getTermsResponse();
+        return currentCore.queryTerms(sq);
     }
 
     /**
