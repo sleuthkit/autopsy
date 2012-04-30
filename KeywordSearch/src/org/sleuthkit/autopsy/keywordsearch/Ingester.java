@@ -109,6 +109,7 @@ class Ingester {
      * 
      * @param ContentStream to ingest
      * @param fields content specific fields
+     * @param sourceContent fsContent from which the cs content stream originated from
      * @throws IngesterException if there was an error processing a specific
      * content, but the Solr server is probably fine.
      */
