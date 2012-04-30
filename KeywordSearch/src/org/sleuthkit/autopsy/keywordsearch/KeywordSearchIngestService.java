@@ -78,13 +78,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private final String hashDBServiceName = "Hash Lookup";
     private SleuthkitCase caseHandle = null;
     boolean initialized = false;
-    // TODO: use a more robust method than checking file extension to determine
-    // whether to try a file
-    // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
-    static final String[] ingestibleExtensions = {"tar", "jar", "zip", "gzip", "bzip2",
-        "gz", "tgz", "odf", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log",
-        "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
-        "pst", "xml", "class", "dwg"};
+    
 
     public enum IngestStatus {
 
@@ -447,14 +441,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 return;
             }
 
-            boolean ingestible = false;
+            boolean ingestible = Ingester.isIngestible(fsContent);
             final String fileName = fsContent.getName();
-            for (String ext : ingestibleExtensions) {
-                if (fileName.toLowerCase().endsWith(ext)) {
-                    ingestible = true;
-                    break;
-                }
-            }
 
             String deletedMessage = "";
             if ((fsContent.getMeta_flags() & (TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getMetaFlag() | TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getMetaFlag())) != 0) {

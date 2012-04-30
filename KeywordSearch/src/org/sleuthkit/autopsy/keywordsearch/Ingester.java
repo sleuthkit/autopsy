@@ -49,6 +49,12 @@ class Ingester {
     private boolean uncommitedIngests = false;
     private final ExecutorService upRequestExecutor = Executors.newSingleThreadExecutor();
     private final Server solrServer = KeywordSearch.getServer();
+    // TODO: use a more robust method than checking file extension
+    // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
+    static final String[] ingestibleExtensions = {"tar", "jar", "zip", "gzip", "bzip2",
+        "gz", "tgz", "odf", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log", "manifest",
+        "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
+        "pst", "xml", "class", "dwg"};
 
     Ingester() {
     }
@@ -292,5 +298,24 @@ class Ingester {
         IngesterException(String message) {
             super(message);
         }
+    }
+
+    
+    /**
+     * Determine if the fscontent is ingestible/indexable by keyword search
+     * Note: currently only checks by extension, could be a more robust check.
+     * @param fsContent
+     * @return true if it is ingestible, false otherwise
+     */
+    static boolean isIngestible(FsContent fsContent) {
+        boolean ingestible = false;
+        final String fileName = fsContent.getName();
+        for (String ext : ingestibleExtensions) {
+            if (fileName.toLowerCase().endsWith(ext)) {
+                ingestible = true;
+                break;
+            }
+        }
+        return ingestible;
     }
 }
