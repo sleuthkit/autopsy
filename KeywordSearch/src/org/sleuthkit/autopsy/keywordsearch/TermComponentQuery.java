@@ -125,18 +125,15 @@ public class TermComponentQuery implements KeywordSearchQuery {
     /*
      * execute query and return terms, helper method
      */
-    protected List<Term> executeQuery(SolrQuery q) {
+    protected List<Term> executeQuery(SolrQuery q) throws NoOpenCoreException {
         List<Term> termsCol = null;
         try {
             Server solrServer = KeywordSearch.getServer();
             TermsResponse tr = solrServer.queryTerms(q);
             termsCol = tr.getTerms(TERMS_SEARCH_FIELD);
             return termsCol;
-        } catch (NoOpenCoreException ex) {
-            logger.log(Level.SEVERE, "Error executing the regex terms query: " + termsQuery, ex);
-            return null;  //no need to create result view, just display error dialog
         } catch (SolrServerException ex) {
-            logger.log(Level.SEVERE, "Error executing the regex terms query: " + termsQuery, ex);
+            logger.log(Level.WARNING, "Error executing the regex terms query: " + termsQuery, ex);
             return null;  //no need to create result view, just display error dialog
         }
     }
@@ -252,11 +249,11 @@ public class TermComponentQuery implements KeywordSearchQuery {
                 results.put(term.getTerm(), new ArrayList<FsContent>(filesResults));
             } 
             catch (NoOpenCoreException e) {
-                logger.log(Level.SEVERE, "Error executing Solr query,", e);
+                logger.log(Level.WARNING, "Error executing Solr query,", e);
                 throw e;
             }
             catch (RuntimeException e) {
-                logger.log(Level.SEVERE, "Error executing Solr query,", e);
+                logger.log(Level.WARNING, "Error executing Solr query,", e);
             }
 
         }

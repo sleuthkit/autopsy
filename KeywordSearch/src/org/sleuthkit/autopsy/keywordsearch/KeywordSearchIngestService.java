@@ -342,13 +342,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         //signal a potential change in number of indexed files
         try {
             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
-                }
-            });
+            KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex);
         } catch (SolrServerException se) {
@@ -591,7 +585,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     //no reason to continue with next query if recovery failed
                     //or wait for recovery to kick in and run again later
                     //likely case has closed and threads are being interrupted
-                    break;
+                    return null;
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e);
                     continue;
