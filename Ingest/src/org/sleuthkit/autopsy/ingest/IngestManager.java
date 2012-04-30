@@ -288,8 +288,14 @@ public class IngestManager {
         if (fsContentIngester != null) {
             //send signals to all file services
             for (IngestServiceFsContent s : this.fsContentServices) {
-                if (isServiceRunning(s))
-                    s.stop();
+                if (isServiceRunning(s)) {
+                    try {
+                        s.stop();
+                    } catch (Exception e) {
+                        logger.log(Level.WARNING, "Exception while stopping service: " + s.getName(), e);
+                    }
+                }
+
             }
             //stop fs ingester thread
             boolean cancelled = fsContentIngester.cancel(true);
@@ -306,8 +312,13 @@ public class IngestManager {
 
         for (IngestImageThread imageWorker : toStop) {
             IngestServiceImage s = imageWorker.getService();
-            if (isServiceRunning(s))
-                imageWorker.getService().stop();
+            if (isServiceRunning(s)) {
+                try {
+                    imageWorker.getService().stop();
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, "Exception while stopping service: " + s.getName(), e);
+                }
+            }
             boolean cancelled = imageWorker.cancel(true);
             if (!cancelled) {
                 logger.log(Level.WARNING, "Unable to cancel image ingest worker for service: " + imageWorker.getService().getName() + " img: " + imageWorker.getImage().getName());
