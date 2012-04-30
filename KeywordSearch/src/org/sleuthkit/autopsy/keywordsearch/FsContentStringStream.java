@@ -1,13 +1,3 @@
-package org.sleuthkit.autopsy.keywordsearch;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.TskException;
-
 /*
  * Autopsy Forensic Browser
  *
@@ -26,6 +16,19 @@ import org.sleuthkit.datamodel.TskException;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
+package org.sleuthkit.autopsy.keywordsearch;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.TskException;
+
+
 /**
  * FsContent input string stream reader/converter
  */
