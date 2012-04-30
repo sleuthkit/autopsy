@@ -1048,7 +1048,14 @@ public class IngestManager {
 
         private void handleInterruption() {
             for (IngestServiceFsContent s : fsContentServices) {
-                s.stop();
+                if (isServiceRunning(s)) {
+                    try {
+                        s.stop();
+                    }
+                    catch (Exception e) {
+                        logger.log(Level.WARNING, "Exception while stopping service: " + s.getName(), e);
+                    }
+                }
                 IngestManager.fireServiceEvent(SERVICE_STOPPED_EVT, s.getName());
             }
             //empty queues
