@@ -4,22 +4,12 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringReader;
+import java.io.*;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -27,13 +17,9 @@ import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.*;
 
 
 
@@ -90,9 +76,15 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                 if(i == image.size()-1)
                     allFS += ")";
             }
-            List<FsContent> Regfiles;  
+            List<FsContent> Regfiles = null; 
+            try{
             ResultSet rs = tempDb.runQuery("select * from tsk_files where lower(name) = 'ntuser.dat' OR lower(parent_path) LIKE '%/system32/config%' and (name LIKE 'system' OR name LIKE 'software' OR name = 'SECURITY' OR name = 'SAM' OR name = 'default')" + allFS);
             Regfiles = tempDb.resultSetToFsContents(rs);
+            }
+             catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
             
             int j = 0;
      
@@ -102,7 +94,13 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                 Content orgFS = Regfiles.get(j);
                 long orgId = orgFS.getId();
                 String temps = currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName().toString();
+                try{
                 ContentUtils.writeToFile(Regfiles.get(j), new File(currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName()));
+                }
+                 catch (Exception ex)
+                 {
+                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                 }
                 File regFile = new File(temps);
                
                  String txtPath = executeRegRip(temps, j);
@@ -122,19 +120,14 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                regFile.delete();
              }
                 j++;
-                
-                
-             
+
             }
         }
-        catch (SQLException ex) 
+        catch (Exception ex) 
         {
            logger.log(Level.WARNING, "Error while trying to get Registry files", ex);
         }
-        catch(IOException ioex)
-        {   
-            logger.log(Level.WARNING, "Error while trying to write to the file system.", ioex);
-        }
+        
 }
 
 

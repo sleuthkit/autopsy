@@ -105,12 +105,17 @@ public class ExtractIE { // implements BrowserActivity {
                 if(i == image.size()-1)
                     allFS += ")";
             }
-            List<FsContent> FavoriteList;  
-
+            List<FsContent> FavoriteList = null;  
+            try{
             ResultSet rs = tempDb.runQuery(favoriteQuery + allFS);
             FavoriteList = tempDb.resultSetToFsContents(rs);   
             rs.close();
             rs.getStatement().close();  
+            }
+            catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
             
             for(FsContent Favorite : FavoriteList)
             {
@@ -133,6 +138,7 @@ public class ExtractIE { // implements BrowserActivity {
                 String name = Favorite.getName();
                 String datetime = Favorite.getCrtimeAsDate();
                 String domain = Util.extractDomain(url);
+                try{
                 BlackboardArtifact bbart = Favorite.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",datetime));
@@ -142,17 +148,19 @@ public class ExtractIE { // implements BrowserActivity {
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                      bbart.addAttributes(bbattributes);
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK)); 
+                }
+                 catch (Exception ex)
+                {
+                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                }
                 
             }
         }
-        catch(TskException ex)
+        catch(Exception ex)
         {
             logger.log(Level.WARNING, "Error while trying to retrieve content from the TSK .", ex);
         }
-        catch(SQLException ioex)
-        {   
-            logger.log(Level.WARNING, "Error while trying to retrieve files from the TSK .", ioex);
-        }
+  
         
          //Cookies section
           // This gets the cookies info
@@ -168,12 +176,17 @@ public class ExtractIE { // implements BrowserActivity {
                 if(i == image.size()-1)
                     allFS += ")";
             }
-            List<FsContent> CookiesList;  
-
+            List<FsContent> CookiesList = null;  
+            try{
             ResultSet rs = tempDb.runQuery(cookiesQuery + allFS);
             CookiesList = tempDb.resultSetToFsContents(rs);   
             rs.close();
             rs.getStatement().close();  
+            }
+             catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
             
             for(FsContent Cookie : CookiesList)
             {
@@ -191,6 +204,7 @@ public class ExtractIE { // implements BrowserActivity {
                 String name = values.length > 0 ? values[0] : "";
                 String datetime = Cookie.getCrtimeAsDate();
                String domain = Util.extractDomain(url);
+               try{
                   BlackboardArtifact bbart = Cookie.newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", url));
@@ -200,19 +214,21 @@ public class ExtractIE { // implements BrowserActivity {
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Internet Explorer"));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                      bbart.addAttributes(bbattributes);
+               }
+                catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
                 
             }
             
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE)); 
         }
-        catch(TskException ex)
+        catch(Exception ex)
         {
             logger.log(Level.WARNING, "Error while trying to retrieve content from the TSK .", ex);
         }
-        catch(SQLException ioex)
-        {   
-            logger.log(Level.WARNING, "Error while trying to retrieve files from the TSK .", ioex);
-        }
+       
         
        
            //Recent Documents section
@@ -229,12 +245,18 @@ public class ExtractIE { // implements BrowserActivity {
                 if(i == image.size()-1)
                     allFS += ")";
             }
-            List<FsContent> RecentList;  
+            List<FsContent> RecentList = null;  
 
+            try{
             ResultSet rs = tempDb.runQuery(recentQuery + allFS);
             RecentList = tempDb.resultSetToFsContents(rs);   
             rs.close();
             rs.getStatement().close();  
+            }
+             catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
             
             for(FsContent Recent : RecentList)
             {
@@ -264,6 +286,7 @@ public class ExtractIE { // implements BrowserActivity {
                 String path = Util.getPath(recentString);
                 String name = Util.getFileName(path);
                 String datetime = Recent.getCrtimeAsDate();
+                try{
                 BlackboardArtifact bbart = Recent.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT); 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),"RecentActivity","Last Visited",path));
@@ -272,19 +295,21 @@ public class ExtractIE { // implements BrowserActivity {
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),"RecentActivity","Date Created",datetime));
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Windows Explorer"));
                      bbart.addAttributes(bbattributes);
+                } 
+                catch (Exception ex)
+                {
+                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                }
                     
             }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT)); 
                 
         }
-        catch(TskException ex)
+        catch(Exception ex)
         {
             logger.log(Level.WARNING, "Error while trying to retrieve content from the TSK .", ex);
         }
-        catch(SQLException ioex)
-        {   
-            logger.log(Level.WARNING, "Error while trying to retrieve files from the TSK .", ioex);
-        }
+   
         
          
     }
@@ -325,7 +350,7 @@ public class ExtractIE { // implements BrowserActivity {
             File resultsDir = new File(PASCO_RESULTS_PATH);
             resultsDir.mkdirs();
 
-            Collection<FsContent> FsContentCollection;
+            Collection<FsContent> FsContentCollection = null;
             tempDb = currentCase.getSleuthkitCase();
             String allFS = new String();
             for(int i = 0; i < image.size(); i++) {
@@ -335,10 +360,16 @@ public class ExtractIE { // implements BrowserActivity {
                 if(i == image.size()-1)
                     allFS += ")";
             }
+            try{
             ResultSet rs = tempDb.runQuery(indexDatQueryStr + allFS);
             FsContentCollection = tempDb.resultSetToFsContents(rs);
             rs.close();
             rs.getStatement().close(); 
+            }
+             catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
             String temps;
             String indexFileName;
 
@@ -493,6 +524,7 @@ public class ExtractIE { // implements BrowserActivity {
                                       }
                                        
                                         // TODO: Need to fix this so we have the right obj_id
+                                        try{
                                         BlackboardArtifact bbart = tempDb.getContentById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", realurl));
@@ -507,6 +539,11 @@ public class ExtractIE { // implements BrowserActivity {
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(),"RecentActivity","",user));
                                         bbart.addAttributes(bbattributes);
+                                        }
+                                         catch (Exception ex)
+                                         {
+                                         logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                                         }
 
                                         //KeyValueThing
                                         //This will be redundant in terms IE.name() because of
@@ -516,9 +553,11 @@ public class ExtractIE { // implements BrowserActivity {
                                         IE_PASCO_LUT.addMap(IE_OBJ);
 
                                         PASCO_RESULTS_LIST.add(PASCO_RESULTS_LUT);
-                                    } catch (TskException ex) {
-                                        Exceptions.printStackTrace(ex);
-                                    } 
+                                      } 
+                                        catch (Exception ex)
+                                        {
+                                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                                        }
                                 }
 
                             }

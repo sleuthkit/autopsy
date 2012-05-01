@@ -69,7 +69,7 @@ public class Chrome {
         {   
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-            List<FsContent> FFSqlitedb;  
+            List<FsContent> FFSqlitedb = null;  
             Map<String, Object> kvs = new LinkedHashMap<String, Object>(); 
             String allFS = new String();
             for(int i = 0; i < image.size(); i++) {
@@ -80,18 +80,29 @@ public class Chrome {
                     allFS += ")";
             }
             
+            try{
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' and name NOT LIKE '%journal%' AND parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             ChromeCount = FFSqlitedb.size();
-              
             rs.close();
             rs.getStatement().close();
+            }
+            catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
             int j = 0;
             while (j < FFSqlitedb.size())
             {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
-                 ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                try{
+                ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                }
+                catch (Exception ex)
+                {
+                 logger.log(Level.WARNING, "Error while trying to write to disk.{0}", ex);      
+                }
                 File dbFile = new File(temps);
                 if (controller.isCancelled() ) {
                  dbFile.delete();
@@ -104,6 +115,7 @@ public class Chrome {
                   
                    while(temprs.next()) 
                    {
+                       try{
                        String domain = Util.extractDomain(temprs.getString("url"));
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -114,6 +126,11 @@ public class Chrome {
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
                       bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                       bbart.addAttributes(bbattributes);
+                       } 
+                       catch (Exception ex)
+                       {
+                       logger.log(Level.WARNING, "Error while trying to insert BB artifact.{0}", ex);      
+                       }
                      
                    } 
                    tempdbconnect.closeConnection();
@@ -130,14 +147,11 @@ public class Chrome {
             }
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY)); 
         }
-        catch (SQLException ex) 
+        catch (Exception ex) 
         {
            logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
         }
-        catch(IOException ioex)
-        {   
-            logger.log(Level.WARNING, "Error while trying to write to the file system.", ioex);
-        }
+        
         
         //COOKIES section
           // This gets the cookie info
@@ -153,19 +167,30 @@ public class Chrome {
                 if(i == image.size()-1)
                     allFS += ")";
             }
-            List<FsContent> FFSqlitedb;  
+            List<FsContent> FFSqlitedb = null;  
+            try{
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%Cookies%' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
-             
             rs.close();
-            rs.getStatement().close(); 
+            rs.getStatement().close();   
+            }
+            catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
             int j = 0;
      
             while (j < FFSqlitedb.size())
             {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
+                try{
                 ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                }
+                catch (Exception ex)
+                {
+                logger.log(Level.WARNING, "Error while trying to write IO.{0}", ex);      
+                }
                 File dbFile = new File(temps);
                 if (controller.isCancelled() ) {
                  dbFile.delete();
@@ -177,6 +202,7 @@ public class Chrome {
                    ResultSet temprs = tempdbconnect.executeQry(chcookiequery);  
                    while(temprs.next()) 
                    {
+                     try{
                       BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
                       Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                       String domain = temprs.getString("host_key");
@@ -187,6 +213,11 @@ public class Chrome {
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                      bbart.addAttributes(bbattributes);
+                     }
+                     catch (Exception ex)
+                     {
+                     logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                     }
                    } 
                    tempdbconnect.closeConnection();
                    temprs.close();
@@ -201,14 +232,11 @@ public class Chrome {
             }
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE)); 
         }
-        catch (SQLException ex) 
+        catch (Exception ex) 
         {
            logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
         }
-        catch(IOException ioex)
-        {   
-            logger.log(Level.WARNING, "Error while trying to write to the file system.", ioex);
-        }
+   
         
         //BOokmarks section
           // This gets the bm info
@@ -224,19 +252,30 @@ public class Chrome {
                 if(i == image.size()-1)
                     allFS += ")";
             }
-            List<FsContent> FFSqlitedb;  
+            List<FsContent> FFSqlitedb = null;
+            try
+            {
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'Bookmarks' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             rs.close();
             rs.getStatement().close();  
-            
+            }
+            catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
             int j = 0;
      
             while (j < FFSqlitedb.size())
             {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
-              
+                try{
                 ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                } 
+                 catch (Exception ex)
+                 {
+                    logger.log(Level.WARNING, "Error while trying to write IO {0}", ex);      
+                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled() ) {
                  dbFile.delete();
@@ -252,7 +291,7 @@ public class Chrome {
                     JsonObject whatever2 = whatever.get("bookmark_bar").getAsJsonObject();
                     JsonArray whatever3 = whatever2.getAsJsonArray("children");
                     for (JsonElement result : whatever3) {
-                                            
+                        try{       
                         JsonObject address = result.getAsJsonObject();
                         String url = address.get("url").getAsString();
                         String name = address.get("name").getAsString();
@@ -266,6 +305,11 @@ public class Chrome {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                         bbart.addAttributes(bbattributes);     
+                        }
+                         catch (Exception ex)
+                        {
+                        logger.log(Level.WARNING, "Error while trying to insert BB artifact{0}", ex);      
+                        }
                     } 
 
                     
@@ -279,14 +323,11 @@ public class Chrome {
             }
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
         }
-        catch (SQLException ex) 
+        catch (Exception ex) 
         {
            logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
         }
-        catch(IOException ioex)
-        {   
-            logger.log(Level.WARNING, "Error while trying to write to the file system.", ioex);
-        } 
+  
          
           //Downloads section
           // This gets the downloads info
@@ -294,7 +335,7 @@ public class Chrome {
          {   
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-            List<FsContent> FFSqlitedb;  
+            List<FsContent> FFSqlitedb = null;  
              String allFS = new String();
             for(int i = 0; i < image.size(); i++) {
                 if(i == 0)
@@ -303,18 +344,29 @@ public class Chrome {
                 if(i == image.size()-1)
                     allFS += ")";
             }
+            try{
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' and name NOT LIKE '%journal%' and  parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             rs.close();
             rs.getStatement().close();  
-            
+            }
+             catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
             int j = 0;
      
             while (j < FFSqlitedb.size())
             {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
+                try{
                 ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                }
+                catch (Exception ex)
+                {
+                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                }
                 File dbFile = new File(temps);
                 if (controller.isCancelled() ) {
                  dbFile.delete();
@@ -326,6 +378,7 @@ public class Chrome {
                    ResultSet temprs = tempdbconnect.executeQry(chdownloadquery);  
                    while(temprs.next()) 
                    {
+                       try{
                          BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD); 
                          Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                          String domain = Util.extractDomain(temprs.getString("url"));
@@ -337,6 +390,11 @@ public class Chrome {
                          bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
                          bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
                          bbart.addAttributes(bbattributes);
+                       }
+                        catch (Exception ex)
+                        {
+                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                        }
                       
                    } 
                    tempdbconnect.closeConnection();
@@ -352,14 +410,11 @@ public class Chrome {
                 dbFile.delete();
             }
         }
-        catch (SQLException ex) 
+        catch (Exception ex) 
         {
            logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
         }
-        catch(IOException ioex)
-        {   
-            logger.log(Level.WARNING, "Error while trying to write to the file system.", ioex);
-        } 
+       
          
           //Login/Password section
           // This gets the user info
@@ -375,19 +430,31 @@ public class Chrome {
                 if(i == image.size()-1)
                     allFS += ")";
             }
-            List<FsContent> FFSqlitedb;  
+            List<FsContent> FFSqlitedb = null;  
+            try{
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'signons.sqlite' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             rs.close();
             rs.getStatement().close();  
-            
+            }
+             catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
             int j = 0;
      
             while (j < FFSqlitedb.size())
             {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
+                try
+                {
                 ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                }
+                 catch (Exception ex)
+                {
+                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                }
                 File dbFile = new File(temps);
                 if (controller.isCancelled() ) {
                  dbFile.delete();
@@ -399,6 +466,7 @@ public class Chrome {
                    ResultSet temprs = tempdbconnect.executeQry(chloginquery);  
                    while(temprs.next()) 
                    {
+                       try{
                          BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY); 
                          Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                          bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("origin_url") != null) ? temprs.getString("origin_url") : "")));
@@ -407,6 +475,11 @@ public class Chrome {
                          bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",Util.extractDomain(((temprs.getString("origin_url") != null) ? temprs.getString("origin_url") : ""))));
                          bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
                          bbart.addAttributes(bbattributes);
+                       }
+                        catch (Exception ex)
+                        {
+                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                        }
                    } 
                    tempdbconnect.closeConnection();
                    temprs.close();
@@ -421,13 +494,9 @@ public class Chrome {
             }
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY)); 
         }
-        catch (SQLException ex) 
+        catch (Exception ex) 
         {
            logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
-        }
-        catch(IOException ioex)
-        {   
-            logger.log(Level.WARNING, "Error while trying to write to the file system.", ioex);
         } 
          
     }

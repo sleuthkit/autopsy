@@ -98,11 +98,13 @@ public class Firefox {
             {         
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
-            try {
+                try {
                 ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
-            } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
-            }
+                }
+                catch (Exception ex)
+                {
+                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                }
                 File dbFile = new File(temps);
                 if (controller.isCancelled() ) {
                  dbFile.delete();
@@ -134,12 +136,11 @@ public class Firefox {
  
                 try
                 {
-                   
-                   
-                    dbconnect tempdbconnect2 = new dbconnect("org.sqlite.JDBC",connectionString);
+                   dbconnect tempdbconnect2 = new dbconnect("org.sqlite.JDBC",connectionString);
                    ResultSet tempbm = tempdbconnect2.executeQry(ffbookmarkquery);  
                    while(tempbm.next()) 
                    {
+                       try {
                           BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
                           Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                           bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(),"RecentActivity","",((tempbm.getString("url") != null) ? tempbm.getString("url") : "")));
@@ -147,6 +148,11 @@ public class Firefox {
                           bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","FireFox")); 
                           bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",Util.extractDomain(tempbm.getString("url"))));
                           bbart.addAttributes(bbattributes);
+                        }
+                         catch (Exception ex)
+                         {
+                         logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                         }
                    } 
                    tempbm.close();
                    tempdbconnect2.closeConnection();
@@ -163,10 +169,10 @@ public class Firefox {
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY)); 
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK)); 
         }
-        catch(Exception e)
-        {
-            
-        }
+      catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
 
         //COOKIES section
           // This gets the cookie info
@@ -182,19 +188,30 @@ public class Firefox {
                 if(i == image.size()-1)
                     allFS += ")";
             }
-            List<FsContent> FFSqlitedb;  
-
+            List<FsContent> FFSqlitedb = null;  
+            try{
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%cookies.sqlite%' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);   
             rs.close();
             rs.getStatement().close();  
+            }
+             catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
             int j = 0;
      
             while (j < FFSqlitedb.size())
             {
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
+                try{
                 ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                }
+                 catch (Exception ex)
+                {
+                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                }
                 File dbFile = new File(temps);
                 if (controller.isCancelled() ) {
                  dbFile.delete();
@@ -214,6 +231,7 @@ public class Firefox {
                    ResultSet temprs = tempdbconnect.executeQry(query);  
                    while(temprs.next()) 
                    {
+                       try{
                           BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
                           Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                           bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", temprs.getString("host")));
@@ -227,6 +245,11 @@ public class Firefox {
                           bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","FireFox"));
                           bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",temprs.getString("host")));
                           bbart.addAttributes(bbattributes);
+                       }
+                        catch (Exception ex)
+                        {
+                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                        }
                    } 
                    tempdbconnect.closeConnection();
                    temprs.close();
@@ -241,14 +264,11 @@ public class Firefox {
             }
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE)); 
         }
-        catch (SQLException ex) 
+        catch (Exception ex) 
         {
            logger.log(Level.WARNING, "Error while trying to get Firefox SQLite db.", ex);
         }
-        catch(IOException ioex)
-        {   
-            logger.log(Level.WARNING, "Error while trying to write to the file system.", ioex);
-        }
+       
          
          
           //Downloads section
@@ -265,11 +285,17 @@ public class Firefox {
                 if(i == image.size()-1)
                     allFS += ")";
             }
-            List<FsContent> FFSqlitedb;  
+            List<FsContent> FFSqlitedb = null;  
+            try{
             ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'downloads.sqlite' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'" + allFS);
             FFSqlitedb = tempDb.resultSetToFsContents(rs);
             rs.close();
             rs.getStatement().close();  
+            }
+             catch (Exception ex)
+            {
+             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            }
             
             int j = 0;
      
@@ -277,7 +303,13 @@ public class Firefox {
             {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
+                try{
                 ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                }
+                 catch (Exception ex)
+                {
+                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                }
                 File dbFile = new File(temps);
                 if (controller.isCancelled() ) {
                  dbFile.delete();
@@ -289,6 +321,7 @@ public class Firefox {
                    ResultSet temprs = tempdbconnect.executeQry(ffdownloadquery);  
                    while(temprs.next()) 
                    {   
+                       try{
                          BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD); 
                          Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                          bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",temprs.getLong("startTime")));
@@ -299,6 +332,11 @@ public class Firefox {
                          bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",Util.extractDomain(temprs.getString("source"))));
                          bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","FireFox"));
                          bbart.addAttributes(bbattributes);
+                       }
+                        catch (Exception ex)
+                        {
+                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                        }
                    } 
                    tempdbconnect.closeConnection();
                    temprs.close();
@@ -313,13 +351,9 @@ public class Firefox {
             }
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD)); 
         }
-        catch (SQLException ex) 
+        catch (Exception ex) 
         {
            logger.log(Level.WARNING, "Error while trying to get FireFox SQLite db.", ex);
         }
-        catch(IOException ioex)
-        {   
-            logger.log(Level.WARNING, "Error while trying to write to the file system.", ioex);
-        } 
    } 
 }
