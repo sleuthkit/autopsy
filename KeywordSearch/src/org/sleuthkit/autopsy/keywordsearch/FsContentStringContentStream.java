@@ -56,7 +56,7 @@ public class FsContentStringContentStream implements ContentStream {
 
     @Override
     public String getContentType() {
-        return "text/plain; charset=" + encoding.toString();
+        return "text/plain;charset=" + encoding.toString();
     }
 
     @Override

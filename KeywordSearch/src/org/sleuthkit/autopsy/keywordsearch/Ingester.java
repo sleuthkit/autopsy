@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
 import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
@@ -79,7 +80,8 @@ class Ingester {
      * file, but the Solr server is probably fine.
      */
     public void ingest(FsContentStringContentStream fcs) throws IngesterException {
-        ingest(fcs, getFsContentFields(fcs.getFsContent()), fcs.getFsContent());
+        Map<String, String> params = getFsContentFields(fcs.getFsContent());
+        ingest(fcs, params, fcs.getFsContent());
     }
 
     /**
@@ -125,12 +127,16 @@ class Ingester {
         setFields(up, fields);
         up.setAction(AbstractUpdateRequest.ACTION.COMMIT, true, true);
 
-        //logger.log(Level.INFO, "Ingesting " + fields.get("file_name"));
+        final String contentType = cs.getContentType();
+        if (contentType != null && !contentType.trim().equals("")) {
+            up.setParam("stream.contentType", contentType);
+        }
 
+        //logger.log(Level.INFO, "Ingesting " + fields.get("file_name"));
         up.setParam("commit", "false");
 
-
         final Future f = upRequestExecutor.submit(new UpRequestTask(up));
+
         try {
             f.get(getTimeout(sourceContent), TimeUnit.SECONDS);
         } catch (TimeoutException te) {
@@ -144,15 +150,15 @@ class Ingester {
         uncommitedIngests = true;
     }
 
-    //attempt to restart Solr and recover from its internal error
+    /**
+     * attempt to restart Solr and recover from its internal error
+     */
     private void hardSolrRestart() {
         solrServer.closeCore();
         solrServer.stop();
 
         solrServer.start();
         solrServer.openCore();
-
-
     }
 
     /**
@@ -189,6 +195,7 @@ class Ingester {
         @Override
         public void run() {
             try {
+                up.setMethod(METHOD.POST);
                 solrServer.request(up);
             } catch (NoOpenCoreException ex) {
                 throw new RuntimeException("No Solr core available, cannot index the content", ex);
@@ -239,8 +246,6 @@ class Ingester {
     private static void setFields(ContentStreamUpdateRequest up, Map<String, String> fields) {
         for (Entry<String, String> field : fields.entrySet()) {
             up.setParam("literal." + field.getKey(), field.getValue());
-
-
         }
     }
 
@@ -301,7 +306,6 @@ class Ingester {
         }
     }
 
-    
     /**
      * Determine if the fscontent is ingestible/indexable by keyword search
      * Note: currently only checks by extension, could be a more robust check.

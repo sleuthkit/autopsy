@@ -16,8 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.datamodel;
 
 import java.io.IOException;
@@ -28,7 +26,6 @@ import java.util.logging.Logger;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskException;
 
-
 /**
  * FsContent input string stream reader/converter
  * TODO should be encoding specific and detect UTF8, UTF16LE, UTF16BE
@@ -37,13 +34,13 @@ import org.sleuthkit.datamodel.TskException;
 public class FsContentStringStream extends InputStream {
 
     public static enum Encoding {
+
         UTF8 {
 
             @Override
             public String toString() {
                 return "UTF-8";
             }
-            
         },
     };
     private FsContent content;
@@ -61,7 +58,7 @@ public class FsContentStringStream extends InputStream {
     private boolean stringAtBoundary = false; //if temp has part of string that didn't make it in previous read()
     private static final byte[] oneCharBuf = new byte[1];
     private final int MIN_PRINTABLE_CHARS = 4; //num. of chars needed to qualify as a char string
-    private static final String NLS = Character.toString((char)10); //new line
+    private static final String NLS = Character.toString((char) 10); //new line
     private static final Logger logger = Logger.getLogger(FsContentStringStream.class.getName());
 
     /**
@@ -74,6 +71,8 @@ public class FsContentStringStream extends InputStream {
         this.encoding = encoding.toString();
         //logger.log(Level.INFO, "FILE: " + content.getParentPath() + "/" + content.getName());
     }
+
+    
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
@@ -97,7 +96,7 @@ public class FsContentStringStream extends InputStream {
         if (stringAtBoundary) {
             //append entire temp string residual from previous read()
             //because qualified string was broken down into 2 parts
-            curString.append(tempString); 
+            curString.append(tempString);
             curStringLen += tempStringLen;
 
             //reset temp
@@ -115,11 +114,13 @@ public class FsContentStringStream extends InputStream {
             if (readBufOffset > bytesInReadBuf - 1) {
                 //no more bytes to process into strings, read them
                 try {
+                    bytesInReadBuf = 0;
                     bytesInReadBuf = content.read(curReadBuf, contentOffset, READ_BUF_SIZE);
                 } catch (TskException ex) {
-                    isEOF = true;
-                    //have some extracted string, return that, and fail next time
-                    if (curStringLen > 0) {
+                    if (curStringLen > 0 || tempStringLen > MIN_PRINTABLE_CHARS) {
+                        appendResetTemp();
+                        //have some extracted string, return that, and fail next time
+                        isEOF = true;
                         int copied = copyToReturn(b, off, len);
                         return copied;
                     } else {
@@ -127,9 +128,10 @@ public class FsContentStringStream extends InputStream {
                     }
                 }
                 if (bytesInReadBuf < 1) {
-                    isEOF = true;
-                    //have some extracted string, return that, and fail next time
-                    if (curStringLen > 0) {
+                    if (curStringLen > 0 || tempStringLen > MIN_PRINTABLE_CHARS) {
+                        appendResetTemp();
+                        //have some extracted string, return that, and fail next time
+                        isEOF = true;
                         int copied = copyToReturn(b, off, len);
                         return copied;
                     } else {
@@ -146,15 +148,14 @@ public class FsContentStringStream extends InputStream {
             if (c == 0 && singleConsecZero == false) {
                 //preserve the current sequence if max consec. 1 zero char 
                 singleConsecZero = true;
-            }
-            else {
+            } else {
                 singleConsecZero = false;
             }
             if (DataConversion.isPrintableAscii(c)) {
                 tempString.append(c);
                 ++tempStringLen;
                 //boundary case handled after the loop
-            } else if (! singleConsecZero) {
+            } else if (!singleConsecZero) {
                 //break the string, clear temp
                 if (tempStringLen >= MIN_PRINTABLE_CHARS) {
                     //append entire temp string
@@ -212,6 +213,17 @@ public class FsContentStringStream extends InputStream {
 
         return copied;
     }
+    
+    //append temp buffer to cur string buffer and reset temp, if enough chars
+    //does not append new line
+    private void appendResetTemp() {
+        if (tempStringLen > MIN_PRINTABLE_CHARS) {
+            curString.append(tempString);
+            curStringLen += tempStringLen;
+            tempString = new StringBuilder();
+            tempStringLen = 0;
+        }
+    }
 
     //copy currently extracted string to user buffer
     //and reset for next read() call
@@ -233,8 +245,6 @@ public class FsContentStringStream extends InputStream {
 
         return 0;
     }
-
-
 
     @Override
     public int read() throws IOException {
@@ -259,7 +269,4 @@ public class FsContentStringStream extends InputStream {
         //but it could be more efficient
         return super.skip(n);
     }
-    
-    
-    
 }
