@@ -37,8 +37,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.FileSystem;
 
 /**
- * Recent activity image ingest service 
- * 
+ * Recent activity image ingest service
+ *
  */
 public final class RAImageIngestService implements IngestServiceImage {
 
@@ -79,27 +79,20 @@ public final class RAImageIngestService implements IngestServiceImage {
 
         try {
             //do the work for(FileSystem img : imageFS )
-            try{
-           ResultSet artset = sCurrentCase.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
-               int artcount = 0; 
-           while (artset.next()){
-              artcount++;
-              }
-       
-         //  artset.beforeFirst();
-               if(artcount > 0)
-               {
+            try {
+                ResultSet artset = sCurrentCase.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
+                int artcount = 0;
+                while (artset.next()) {
+                    artcount++;
+                }
 
-               }
-               else
-               {
-                   int artint = sCurrentCase.addArtifactType("TSK_SYS_INFO", "System Information"); 
-               }
-           
-            }
-            catch(Exception e)
-            {
-              
+                //  artset.beforeFirst();
+                if (artcount > 0) {
+                } else {
+                    int artint = sCurrentCase.addArtifactType("TSK_SYS_INFO", "System Information");
+                }
+
+            } catch (Exception e) {
             }
             ext.extractToBlackboard(controller, fsIds);
 
@@ -125,7 +118,7 @@ public final class RAImageIngestService implements IngestServiceImage {
     public String getName() {
         return "Recent Activity";
     }
-    
+
     @Override
     public String getDescription() {
         return "Extracts recent user activity, such as Internet browsing, recently used documents and installed programs.";
@@ -151,12 +144,12 @@ public final class RAImageIngestService implements IngestServiceImage {
     public ServiceType getType() {
         return ServiceType.Image;
     }
-   
-     @Override
+
+    @Override
     public boolean hasSimpleConfiguration() {
         return false;
     }
-    
+
     @Override
     public boolean hasAdvancedConfiguration() {
         return false;
@@ -166,23 +159,22 @@ public final class RAImageIngestService implements IngestServiceImage {
     public javax.swing.JPanel getSimpleConfiguration() {
         return null;
     }
-    
+
     @Override
     public javax.swing.JPanel getAdvancedConfiguration() {
         return null;
     }
-    
+
     @Override
     public void saveAdvancedConfiguration() {
     }
-    
+
     @Override
     public void saveSimpleConfiguration() {
     }
-    
+
     @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
     }
-    
 }

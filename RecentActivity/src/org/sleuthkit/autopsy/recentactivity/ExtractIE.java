@@ -72,246 +72,223 @@ public class ExtractIE { // implements BrowserActivity {
     private String recentQuery = "select * from `tsk_files` where parent_path LIKE '%/Recent%' and name LIKE '%.lnk'";
     //sleauthkit db handle
     SleuthkitCase tempDb;
-    
     //paths set in init()
     private String PASCO_RESULTS_PATH;
     private String PASCO_LIB_PATH;
     private String JAVA_PATH;
-    
     //Results List to be referenced/used outside the class
     public ArrayList<HashMap<String, Object>> PASCO_RESULTS_LIST = new ArrayList<HashMap<String, Object>>();
     //Look Up Table  that holds Pasco2 results
     private HashMap<String, Object> PASCO_RESULTS_LUT;
     private KeyValue IE_PASCO_LUT = new KeyValue(BrowserType.IE.name(), BrowserType.IE.getType());
     public LinkedHashMap<String, Object> IE_OBJ;
-
-    
     boolean pascoFound = false;
 
     public ExtractIE(List<String> image, IngestImageWorkerController controller) {
         init(image, controller);
-        
+
         //Favorites section
-          // This gets the favorite info
-         try 
-        {   
+        // This gets the favorite info
+        try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             String allFS = new String();
-            for(int i = 0; i < image.size(); i++) {
-                if(i == 0)
+            for (int i = 0; i < image.size(); i++) {
+                if (i == 0) {
                     allFS += " AND (0";
+                }
                 allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if(i == image.size()-1)
+                if (i == image.size() - 1) {
                     allFS += ")";
+                }
             }
-            List<FsContent> FavoriteList = null;  
-            try{
-            ResultSet rs = tempDb.runQuery(favoriteQuery + allFS);
-            FavoriteList = tempDb.resultSetToFsContents(rs);   
-            rs.close();
-            rs.getStatement().close();  
+            List<FsContent> FavoriteList = null;
+            try {
+                ResultSet rs = tempDb.runQuery(favoriteQuery + allFS);
+                FavoriteList = tempDb.resultSetToFsContents(rs);
+                rs.close();
+                rs.getStatement().close();
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
             }
-            catch (Exception ex)
-            {
-             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
-            }
-            
-            for(FsContent Favorite : FavoriteList)
-            {
-                if (controller.isCancelled() ) {
-                 break;
-                }  
+
+            for (FsContent Favorite : FavoriteList) {
+                if (controller.isCancelled()) {
+                    break;
+                }
                 Content fav = Favorite;
                 byte[] t = new byte[(int) fav.getSize()];
                 final int bytesRead = fav.read(t, 0, fav.getSize());
                 String bookmarkString = new String(t);
-                String re1=".*?";	// Non-greedy match on filler
-                String re2="((?:http|https)(?::\\/{2}[\\w]+)(?:[\\/|\\.]?)(?:[^\\s\"]*))";	// HTTP URL 1
+                String re1 = ".*?";	// Non-greedy match on filler
+                String re2 = "((?:http|https)(?::\\/{2}[\\w]+)(?:[\\/|\\.]?)(?:[^\\s\"]*))";	// HTTP URL 1
                 String url = "";
-                Pattern p = Pattern.compile(re1+re2,Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+                Pattern p = Pattern.compile(re1 + re2, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
                 Matcher m = p.matcher(bookmarkString);
-                if (m.find())
-                {
-                     url = m.group(1);
+                if (m.find()) {
+                    url = m.group(1);
                 }
                 String name = Favorite.getName();
                 Long datetime = Favorite.getCrtime();
                 String domain = Util.extractDomain(url);
-                try{
-                BlackboardArtifact bbart = Favorite.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",datetime));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",url));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","",name));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Internet Explorer"));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
-                     bbart.addAttributes(bbattributes);
-                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK)); 
+                try {
+                    BlackboardArtifact bbart = Favorite.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
+                    Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", datetime));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", url));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "", name));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Internet Explorer"));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", domain));
+                    bbart.addAttributes(bbattributes);
+                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+                } catch (Exception ex) {
+                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
                 }
-                 catch (Exception ex)
-                {
-                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
-                }
-                
+
             }
-        }
-        catch(Exception ex)
-        {
+        } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to retrieve content from the TSK .", ex);
         }
-  
-        
-         //Cookies section
-          // This gets the cookies info
-         try 
-        {   
+
+
+        //Cookies section
+        // This gets the cookies info
+        try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             String allFS = new String();
-            for(int i = 0; i < image.size(); i++) {
-                if(i == 0)
+            for (int i = 0; i < image.size(); i++) {
+                if (i == 0) {
                     allFS += " AND (0";
+                }
                 allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if(i == image.size()-1)
+                if (i == image.size() - 1) {
                     allFS += ")";
+                }
             }
-            List<FsContent> CookiesList = null;  
-            try{
-            ResultSet rs = tempDb.runQuery(cookiesQuery + allFS);
-            CookiesList = tempDb.resultSetToFsContents(rs);   
-            rs.close();
-            rs.getStatement().close();  
+            List<FsContent> CookiesList = null;
+            try {
+                ResultSet rs = tempDb.runQuery(cookiesQuery + allFS);
+                CookiesList = tempDb.resultSetToFsContents(rs);
+                rs.close();
+                rs.getStatement().close();
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
             }
-             catch (Exception ex)
-            {
-             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
-            }
-            
-            for(FsContent Cookie : CookiesList)
-            {
-                if (controller.isCancelled() ) {
-                 break;
-                }  
+
+            for (FsContent Cookie : CookiesList) {
+                if (controller.isCancelled()) {
+                    break;
+                }
                 Content fav = Cookie;
                 byte[] t = new byte[(int) fav.getSize()];
                 final int bytesRead = fav.read(t, 0, fav.getSize());
                 String cookieString = new String(t);
-                
-               String[] values = cookieString.split("\n");  
+
+                String[] values = cookieString.split("\n");
                 String url = values.length > 2 ? values[2] : "";
                 String value = values.length > 1 ? values[1] : "";
                 String name = values.length > 0 ? values[0] : "";
                 Long datetime = Cookie.getCrtime();
-               String domain = Util.extractDomain(url);
-               try{
-                  BlackboardArtifact bbart = Cookie.newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
-                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", url));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),"RecentActivity", "Last Visited",datetime));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(),"RecentActivity", "",value));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","Title",(name != null) ? name : ""));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Internet Explorer"));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
-                     bbart.addAttributes(bbattributes);
-               }
-                catch (Exception ex)
-            {
-             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                String domain = Util.extractDomain(url);
+                try {
+                    BlackboardArtifact bbart = Cookie.newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
+                    Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", url));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", datetime));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", "", value));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", (name != null) ? name : ""));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Internet Explorer"));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", domain));
+                    bbart.addAttributes(bbattributes);
+                } catch (Exception ex) {
+                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
+                }
+
             }
-                
-            }
-            
-                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE)); 
-        }
-        catch(Exception ex)
-        {
+
+            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+        } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to retrieve content from the TSK .", ex);
         }
-       
-        
-       
-           //Recent Documents section
-          // This gets the recent object info
-         try 
-        {   
+
+
+
+        //Recent Documents section
+        // This gets the recent object info
+        try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             String allFS = new String();
-            for(int i = 0; i < image.size(); i++) {
-                if(i == 0)
+            for (int i = 0; i < image.size(); i++) {
+                if (i == 0) {
                     allFS += " AND (0";
+                }
                 allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if(i == image.size()-1)
+                if (i == image.size() - 1) {
                     allFS += ")";
+                }
             }
-            List<FsContent> RecentList = null;  
+            List<FsContent> RecentList = null;
 
-            try{
-            ResultSet rs = tempDb.runQuery(recentQuery + allFS);
-            RecentList = tempDb.resultSetToFsContents(rs);   
-            rs.close();
-            rs.getStatement().close();  
+            try {
+                ResultSet rs = tempDb.runQuery(recentQuery + allFS);
+                RecentList = tempDb.resultSetToFsContents(rs);
+                rs.close();
+                rs.getStatement().close();
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
             }
-             catch (Exception ex)
-            {
-             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
-            }
-            
-            for(FsContent Recent : RecentList)
-            {
-                if (controller.isCancelled() ) {
-                 break;
-                }  
+
+            for (FsContent Recent : RecentList) {
+                if (controller.isCancelled()) {
+                    break;
+                }
                 Content fav = Recent;
-                
-                 byte[] t = new byte[(int) fav.getSize()];
+
+                byte[] t = new byte[(int) fav.getSize()];
 
                 int bytesRead = 0;
                 if (fav.getSize() > 0) {
                     bytesRead = fav.read(t, 0, fav.getSize()); // read the data
-                } 
+                }
 
 
                 // set the data on the bottom and show it
-               
-                 String recentString = new String();
-               
+
+                String recentString = new String();
+
 
                 if (bytesRead > 0) {
-                 recentString =  DataConversion.getString(t, bytesRead, 4);
+                    recentString = DataConversion.getString(t, bytesRead, 4);
                 }
-                
-                
+
+
                 String path = Util.getPath(recentString);
                 String name = Util.getFileName(path);
                 Long datetime = Recent.getCrtime();
-                try{
-                BlackboardArtifact bbart = Recent.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT); 
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(),"RecentActivity","Last Visited",path));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","",name));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),"RecentActivity","",Util.findID(path)));
-                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(),"RecentActivity","Date Created",datetime));
-                      bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Windows Explorer"));
-                     bbart.addAttributes(bbattributes);
-                } 
-                catch (Exception ex)
-                {
-                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+                try {
+                    BlackboardArtifact bbart = Recent.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                    Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", "Last Visited", path));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "", name));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", "", Util.findID(path)));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Date Created", datetime));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Windows Explorer"));
+                    bbart.addAttributes(bbattributes);
+                } catch (Exception ex) {
+                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
                 }
-                    
+
             }
-            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT)); 
-                
-        }
-        catch(Exception ex)
-        {
+            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
+
+        } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to retrieve content from the TSK .", ex);
         }
-   
-        
-         
+
+
+
     }
 
     //@Override
@@ -324,27 +301,25 @@ public class ExtractIE { // implements BrowserActivity {
         final String caseDir = Case.getCurrentCase().getCaseDirectory();
         PASCO_RESULTS_PATH = Case.getCurrentCase().getTempDirectory() + File.separator + "results";
         JAVA_PATH = PlatformUtil.getJavaPath();
-        if(JAVA_PATH.isEmpty() || JAVA_PATH == null)
-        {
+        if (JAVA_PATH.isEmpty() || JAVA_PATH == null) {
             JAVA_PATH = "java";
         }
         logger.log(Level.INFO, "Pasco results path: " + PASCO_RESULTS_PATH);
-        
-         final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false);
-         if (pascoRoot == null) {
-             logger.log(Level.SEVERE, "Pasco2 not found");
-             pascoFound = false;
-             return;
-         }
-         else {
-             pascoFound = true;
-         }
-         
+
+        final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false);
+        if (pascoRoot == null) {
+            logger.log(Level.SEVERE, "Pasco2 not found");
+            pascoFound = false;
+            return;
+        } else {
+            pascoFound = true;
+        }
+
         final String pascoHome = pascoRoot.getAbsolutePath();
         logger.log(Level.INFO, "Pasco2 home: " + pascoHome);
-             
-        PASCO_LIB_PATH  = pascoHome + File.separator + "pasco2.jar" + File.pathSeparator
-            + pascoHome + File.separator + "*";
+
+        PASCO_LIB_PATH = pascoHome + File.separator + "pasco2.jar" + File.pathSeparator
+                + pascoHome + File.separator + "*";
 
         try {
             File resultsDir = new File(PASCO_RESULTS_PATH);
@@ -353,22 +328,22 @@ public class ExtractIE { // implements BrowserActivity {
             Collection<FsContent> FsContentCollection = null;
             tempDb = currentCase.getSleuthkitCase();
             String allFS = new String();
-            for(int i = 0; i < image.size(); i++) {
-                if(i == 0)
+            for (int i = 0; i < image.size(); i++) {
+                if (i == 0) {
                     allFS += " AND (0";
+                }
                 allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if(i == image.size()-1)
+                if (i == image.size() - 1) {
                     allFS += ")";
+                }
             }
-            try{
-            ResultSet rs = tempDb.runQuery(indexDatQueryStr + allFS);
-            FsContentCollection = tempDb.resultSetToFsContents(rs);
-            rs.close();
-            rs.getStatement().close(); 
-            }
-             catch (Exception ex)
-            {
-             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
+            try {
+                ResultSet rs = tempDb.runQuery(indexDatQueryStr + allFS);
+                FsContentCollection = tempDb.resultSetToFsContents(rs);
+                rs.close();
+                rs.getStatement().close();
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
             }
             String temps;
             String indexFileName;
@@ -379,22 +354,21 @@ public class ExtractIE { // implements BrowserActivity {
                 // index<Number>.dat (i.e. index0.dat, index1.dat,..., indexN.dat)
                 // Write each index.dat file to a temp directory.
                 //BlackboardArtifact bbart = fsc.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                indexFileName = "index" + Integer.toString((int)fsc.getId()) + ".dat";
+                indexFileName = "index" + Integer.toString((int) fsc.getId()) + ".dat";
                 //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
                 temps = currentCase.getTempDirectory() + File.separator + indexFileName;
                 File datFile = new File(temps);
-                if (controller.isCancelled() ) {
-                 datFile.delete();
-                 break;
-                }  
+                if (controller.isCancelled()) {
+                    datFile.delete();
+                    break;
+                }
                 try {
                     ContentUtils.writeToFile(fsc, datFile);
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     logger.log(Level.WARNING, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
                 }
 
-                boolean bPascProcSuccess = executePasco(temps, (int)fsc.getId());
+                boolean bPascProcSuccess = executePasco(temps, (int) fsc.getId());
 
                 //At this point pasco2 proccessed the index files.
                 //Now fetch the results, parse them and the delete the files.
@@ -407,9 +381,9 @@ public class ExtractIE { // implements BrowserActivity {
         } catch (Exception ioex) {
             logger.log(Level.SEVERE, "Error while trying to write index.dat files.", ioex);
         }
-        
+
         //bookmarks
-        
+
         //cookies
     }
 
@@ -417,8 +391,9 @@ public class ExtractIE { // implements BrowserActivity {
     // TODO: Hardcoded command args/path needs to be removed. Maybe set some constants and set env variables for classpath
     // I'm not happy with this code. Can't stand making a system call, is not an acceptable solution but is a hack for now.
     private boolean executePasco(String indexFilePath, int fileIndex) {
-        if (pascoFound == false)
+        if (pascoFound == false) {
             return false;
+        }
         boolean success = true;
 
         try {
@@ -430,9 +405,9 @@ public class ExtractIE { // implements BrowserActivity {
             command.append(" -T history");
             command.append(" \"").append(indexFilePath).append("\"");
             command.append(" > \"").append(PASCO_RESULTS_PATH).append("\\pasco2Result.").append(Integer.toString(fileIndex)).append(".txt\"");
-           // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
+            // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String cmd = command.toString();
-             JavaSystemCaller.Exec.execute("\"" + JAVA_PATH + " "+cmd+ "\"");
+            JavaSystemCaller.Exec.execute("\"" + JAVA_PATH + " " + cmd + "\"");
 
         } catch (Exception e) {
             success = false;
@@ -443,8 +418,9 @@ public class ExtractIE { // implements BrowserActivity {
     }
 
     public void parsePascoResults() {
-        if (pascoFound == false)
+        if (pascoFound == false) {
             return;
+        }
         // First thing we want to do is check to make sure the results directory
         // is not empty.
         File rFile = new File(PASCO_RESULTS_PATH);
@@ -460,8 +436,8 @@ public class ExtractIE { // implements BrowserActivity {
             if (pascoFiles.length > 0) {
                 try {
                     for (File file : pascoFiles) {
-                       String fileName = file.getName();
-                       long artObjId = Long.parseLong(fileName.substring(fileName.indexOf(".")+1, fileName.lastIndexOf(".")));
+                        String fileName = file.getName();
+                        long artObjId = Long.parseLong(fileName.substring(fileName.indexOf(".") + 1, fileName.lastIndexOf(".")));
                         //bbartname = bbartname.substring(0, 4);
 
                         // Make sure the file the is not empty or the Scanner will
@@ -472,7 +448,7 @@ public class ExtractIE { // implements BrowserActivity {
                             fileScanner.nextLine();
                             fileScanner.nextLine();
                             fileScanner.nextLine();
-                          //  long inIndexId = 0;
+                            //  long inIndexId = 0;
 
                             while (fileScanner.hasNext()) {
                                 //long bbartId = Long.parseLong(bbartname + inIndexId++);
@@ -488,62 +464,58 @@ public class ExtractIE { // implements BrowserActivity {
                                     try {
                                         String[] lineBuff = line.split("\\t");
                                         PASCO_RESULTS_LUT = new HashMap<String, Object>();
-                                        String url[] = lineBuff[1].split("@",2);
+                                        String url[] = lineBuff[1].split("@", 2);
                                         String ddtime = lineBuff[2];
                                         String actime = lineBuff[3];
-                                        Long ftime = (long)0;
+                                        Long ftime = (long) 0;
                                         String user = "";
                                         String realurl = "";
                                         String domain = "";
-                                      if(url.length > 1)
-                                      {
-                                       user = url[0];
-                                       user = user.replace("Visited:", "");
-                                       user = user.replace(":Host:", "");
-                                       user = user.replaceAll("(:)(.*?)(:)", "");
-                                       user = user.trim();
-                                       realurl = url[1];
-                                       realurl = realurl.replace("Visited:", "");
-                                       realurl = realurl.replaceAll(":(.*?):", "");
-                                       realurl = realurl.replace(":Host:", "");
-                                       realurl = realurl.trim();
-                                       domain = Util.extractDomain(realurl);
-                                      }
-                                      if(!ddtime.isEmpty()){
-                                          ddtime = ddtime.replace("T"," ");
-                                          ddtime = ddtime.substring(ddtime.length()-5);
-                                      }
-                                        if(!actime.isEmpty()){
-                                        try{
-                                        Long epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(actime).getTime();
-                                        ftime = epochtime.longValue();
+                                        if (url.length > 1) {
+                                            user = url[0];
+                                            user = user.replace("Visited:", "");
+                                            user = user.replace(":Host:", "");
+                                            user = user.replaceAll("(:)(.*?)(:)", "");
+                                            user = user.trim();
+                                            realurl = url[1];
+                                            realurl = realurl.replace("Visited:", "");
+                                            realurl = realurl.replaceAll(":(.*?):", "");
+                                            realurl = realurl.replace(":Host:", "");
+                                            realurl = realurl.trim();
+                                            domain = Util.extractDomain(realurl);
                                         }
-                                        catch(ParseException e){
-                                              logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e.getMessage());
+                                        if (!ddtime.isEmpty()) {
+                                            ddtime = ddtime.replace("T", " ");
+                                            ddtime = ddtime.substring(ddtime.length() - 5);
                                         }
-                                      }
-                                       
+                                        if (!actime.isEmpty()) {
+                                            try {
+                                                Long epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(actime).getTime();
+                                                ftime = epochtime.longValue();
+                                            } catch (ParseException e) {
+                                                logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e.getMessage());
+                                            }
+                                        }
+
                                         // TODO: Need to fix this so we have the right obj_id
-                                        try{
-                                        BlackboardArtifact bbart = tempDb.getContentById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", realurl));
-                                       
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "", ftime));
-                                        
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", "", ""));
-                                   
-                                     //   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "", ddtime));
-                                       
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Internet Explorer"));
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
-                                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(),"RecentActivity","",user));
-                                        bbart.addAttributes(bbattributes);
+                                        try {
+                                            BlackboardArtifact bbart = tempDb.getContentById(artObjId).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+                                            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", realurl));
+
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "", ftime));
+
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", "", ""));
+
+                                            //   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "", ddtime));
+
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Internet Explorer"));
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", domain));
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "RecentActivity", "", user));
+                                            bbart.addAttributes(bbattributes);
+                                        } catch (Exception ex) {
+                                            logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
                                         }
-                                         catch (Exception ex)
-                                         {
-                                         logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
-                                         }
 
                                         //KeyValueThing
                                         //This will be redundant in terms IE.name() because of
@@ -553,11 +525,9 @@ public class ExtractIE { // implements BrowserActivity {
                                         IE_PASCO_LUT.addMap(IE_OBJ);
 
                                         PASCO_RESULTS_LIST.add(PASCO_RESULTS_LUT);
-                                      } 
-                                        catch (Exception ex)
-                                        {
-                                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);      
-                                        }
+                                    } catch (Exception ex) {
+                                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
+                                    }
                                 }
 
                             }
@@ -571,7 +541,7 @@ public class ExtractIE { // implements BrowserActivity {
 
             }
         }
-        
-                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY)); 
+
+        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 }
