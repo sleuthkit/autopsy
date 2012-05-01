@@ -117,7 +117,7 @@ public class FsContentStringStream extends InputStream {
                     bytesInReadBuf = 0;
                     bytesInReadBuf = content.read(curReadBuf, contentOffset, READ_BUF_SIZE);
                 } catch (TskException ex) {
-                    if (curStringLen > 0 || tempStringLen > MIN_PRINTABLE_CHARS) {
+                    if (curStringLen > 0 || tempStringLen >= MIN_PRINTABLE_CHARS) {
                         appendResetTemp();
                         //have some extracted string, return that, and fail next time
                         isEOF = true;
@@ -128,7 +128,7 @@ public class FsContentStringStream extends InputStream {
                     }
                 }
                 if (bytesInReadBuf < 1) {
-                    if (curStringLen > 0 || tempStringLen > MIN_PRINTABLE_CHARS) {
+                    if (curStringLen > 0 || tempStringLen >= MIN_PRINTABLE_CHARS) {
                         appendResetTemp();
                         //have some extracted string, return that, and fail next time
                         isEOF = true;
@@ -217,7 +217,7 @@ public class FsContentStringStream extends InputStream {
     //append temp buffer to cur string buffer and reset temp, if enough chars
     //does not append new line
     private void appendResetTemp() {
-        if (tempStringLen > MIN_PRINTABLE_CHARS) {
+        if (tempStringLen >= MIN_PRINTABLE_CHARS) {
             curString.append(tempString);
             curStringLen += tempStringLen;
             tempString = new StringBuilder();
