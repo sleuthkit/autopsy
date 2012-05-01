@@ -18,45 +18,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.report;
 
-import java.util.EnumSet;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  *
- * @author arivera
+ * This class is the 'default' way to get artifacts/attributes from the blackboard using a reportconfiguration object. 
  */
-public enum BrowserActivityType {
-   Cookies(0),
-   Url(1),
-   Bookmarks(2);
-    private static final Map<Integer,BrowserActivityType> lookup
-            = new HashMap<Integer,BrowserActivityType>();
-
-    static {
-        for(BrowserActivityType bat : values())
-            lookup.put(bat.type, bat);
-    }
-
-
-   private int type;
-
-   private BrowserActivityType(int type)
-   {
-      this.type = type;
-   }
-
-    public int getType() { return type; }
-
-    public static BrowserActivityType get(int type) {
-        switch(type) {
-            case 0: return Cookies;
-            case 1: return Url;
-            case 2: return Bookmarks;
-        }
-        return null;
-    }
-
+public class ReportGen {
+   HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
+  ReportGen(){
+ 
+  }
+  
+  public void flushReport(){
+        Results.clear();
+  }
+  
+  public void populateReport(ReportConfiguration config){  
+             flushReport();
+             report bbreport = new report();
+             Results = bbreport.getAllTypes(config);
+  }
 }

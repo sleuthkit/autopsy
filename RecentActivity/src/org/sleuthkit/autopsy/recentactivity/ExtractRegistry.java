@@ -195,118 +195,105 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
         SleuthkitCase tempDb = currentCase.getSleuthkitCase();
         
          try {
-             File regfile = new File(regRecord);
-          
-           FileInputStream fstream = new FileInputStream(regfile);
-           InputStreamReader fstreamReader = new InputStreamReader(fstream, "UTF-8");
-           BufferedReader input = new BufferedReader(fstreamReader);
-           //logger.log(Level.INFO, "using encoding " + fstreamReader.getEncoding());
-           String regString = new Scanner(input).useDelimiter("\\Z").next();
-           regfile.delete();
-           String startdoc = "<?xml version=\"1.0\"?><document>";
-           String result = regString.replaceAll("----------------------------------------","");
-           result = result.replaceAll("\\n", "");
-           result = result.replaceAll("\\r","");
-           result = result.replaceAll("'","&apos;");
-           result = result.replaceAll("&", "&amp;");
-           String enddoc = "</document>";
-           String stringdoc = startdoc + result + enddoc;
-           SAXBuilder sb = new SAXBuilder();
-           Document document = sb.build(new StringReader(stringdoc));
-           Element root = document.getRootElement();
-           List<Element> types = root.getChildren();
-           Iterator<Element> iterator = types.iterator();
-           //for(int i = 0; i < types.size(); i++)
-           //for(Element tempnode : types)
-            while (iterator.hasNext()) {
-              String time = "";
-               String context = "";
-               Element tempnode = iterator.next();
-              // Element tempnode = types.get(i);
-               context = tempnode.getName();
-               Element timenode = tempnode.getChild("time");
-                    time = timenode.getTextTrim();
-               
-               Element artroot = tempnode.getChild("artifacts");
-               List<Element> artlist = artroot.getChildren();
-               String winver = "";
-               String installdate = "";
-            if(artlist.isEmpty()){   
-            }
-            else{
-            
-              Iterator<Element> aiterator = artlist.iterator();
-               while (aiterator.hasNext()) {
-                 Element artnode = aiterator.next();
-                 String name = artnode.getAttributeValue("name");
-                 String value = artnode.getTextTrim();  
-                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                
-               if("recentdocs".equals(context)){        
-//               BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
-//               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
-//               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
-//               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
-//               bbart.addAttributes(bbattributes);
-               }
-               else if("usb".equals(context)){
-                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, name));
-                String dev = artnode.getAttributeValue("dev");
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", context, dev));
-      
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", context, value));
-                bbart.addAttributes(bbattributes);
-               }
-               else if("uninstall".equals(context)){
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, value));
-      
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, name));
-                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
-                bbart.addAttributes(bbattributes);
-                }
-                 else if("WinVersion".equals(context)){
-                     
-                     if(name.contains("ProductName"))
-                     {
-                         winver = value;
-                     }
-                     if(name.contains("CSDVersion")){
-                         winver = winver + " " + value;
-                     }
-                     if(name.contains("InstallDate"))
-                     {
-                      installdate = value;
-                     
-                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, winver));
-      
-                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, installdate));
-                     BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
-                       bbart.addAttributes(bbattributes);
+               File regfile = new File(regRecord);
+               FileInputStream fstream = new FileInputStream(regfile);
+               InputStreamReader fstreamReader = new InputStreamReader(fstream, "UTF-8");
+               BufferedReader input = new BufferedReader(fstreamReader);
+               //logger.log(Level.INFO, "using encoding " + fstreamReader.getEncoding());
+               String regString = new Scanner(input).useDelimiter("\\Z").next();
+               regfile.delete();
+               String startdoc = "<?xml version=\"1.0\"?><document>";
+               String result = regString.replaceAll("----------------------------------------","");
+               result = result.replaceAll("\\n", "");
+               result = result.replaceAll("\\r","");
+               result = result.replaceAll("'","&apos;");
+               result = result.replaceAll("&", "&amp;");
+               String enddoc = "</document>";
+               String stringdoc = startdoc + result + enddoc;
+               SAXBuilder sb = new SAXBuilder();
+               Document document = sb.build(new StringReader(stringdoc));
+               Element root = document.getRootElement();
+               List<Element> types = root.getChildren();
+               Iterator<Element> iterator = types.iterator();
+               while (iterator.hasNext()) 
+                {
+                       String time = "";
+                       String context = "";
+                       Element tempnode = iterator.next();
+                      // Element tempnode = types.get(i);
+                       context = tempnode.getName();
+                       Element timenode = tempnode.getChild("time");
+                       time = timenode.getTextTrim();
+                       Element artroot = tempnode.getChild("artifacts");
+                       List<Element> artlist = artroot.getChildren();
+                       String winver = "";
+                       String installdate = "";
+                       if(artlist.isEmpty()){   
+                       }
+                       else
+                       {
+                           Iterator<Element> aiterator = artlist.iterator();
+                           while (aiterator.hasNext()) {
+                                 Element artnode = aiterator.next();
+                                 String name = artnode.getAttributeValue("name");
+                                 String value = artnode.getTextTrim();  
+                                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+
+                           if("recentdocs".equals(context)){        
+                //               BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
+                //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
+                //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
+                //               bbart.addAttributes(bbattributes);
+                           }
+                           else if("usb".equals(context)){
+                                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, name));
+                                String dev = artnode.getAttributeValue("dev");
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", context, dev));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", context, value));
+                                bbart.addAttributes(bbattributes);
+                           }
+                           else if("uninstall".equals(context)){
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, value));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, name));
+                                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
+                                bbart.addAttributes(bbattributes);
+                         }
+                         else if("WinVersion".equals(context)){
+
+                             if(name.contains("ProductName"))
+                             {
+                                 winver = value;
+                             }
+                             if(name.contains("CSDVersion")){
+                                 winver = winver + " " + value;
+                             }
+                             if(name.contains("InstallDate"))
+                             {
+                                 installdate = value;
+                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, winver));
+                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, installdate));
+                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
+                                 bbart.addAttributes(bbattributes);
+                            }
+                         }
+                       else
+                       {   
+
+                           BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
+                            bbart.addAttributes(bbattributes);
+                       }  
+                       }
                     }
-                 }
-               else
-               {   
-                 
-                   BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
-                    bbart.addAttributes(bbattributes);
-               }  
-               }
-              
-               
-            }
-            }
+                }
            }
            catch (Exception ex)
            {
             
             logger.log(Level.WARNING, "Error while trying to read into a registry file." +  ex);    
-            String sadafd = "";
            }
-   
-
-       
        return true;
     }
 

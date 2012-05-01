@@ -1,6 +1,22 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ /*
+ *
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2012 42six Solutions.
+ * Contact: aebadirad <at> 42six <dot> com
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.recentactivity;
 import com.google.gson.JsonArray;
@@ -230,28 +246,26 @@ public class Chrome {
                 {
                     
                     final JsonParser parser = new JsonParser();
-                     JsonElement jsonElement = parser.parse(new FileReader(temps));
+                    JsonElement jsonElement = parser.parse(new FileReader(temps));
                     JsonObject test = jsonElement.getAsJsonObject();
                     JsonObject whatever = test.get("roots").getAsJsonObject();
                     JsonObject whatever2 = whatever.get("bookmark_bar").getAsJsonObject();
                     JsonArray whatever3 = whatever2.getAsJsonArray("children");
-                    
- //                    JsonArray results = parser.parse(new FileReader(temps)).getAsJsonObject().getAsJsonArray("roots").getAsJsonObject().getAsJsonArray("bookmark_bar").get(0).getAsJsonObject().getAsJsonArray("children");
-                     for (JsonElement result : whatever3) {
+                    for (JsonElement result : whatever3) {
                                             
-                                            JsonObject address = result.getAsJsonObject();
-                                            String url = address.get("url").getAsString();
-                                            String name = address.get("name").getAsString();
-                                            Long date = address.get("date_added").getAsLong();                   
-                                            String domain = Util.extractDomain(url);
-                    BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
-                     Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",(date/10000)));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",url));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","",name));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
-                     bbart.addAttributes(bbattributes);     
+                        JsonObject address = result.getAsJsonObject();
+                        String url = address.get("url").getAsString();
+                        String name = address.get("name").getAsString();
+                        Long date = address.get("date_added").getAsLong();                   
+                        String domain = Util.extractDomain(url);
+                        BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
+                        Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",(date/10000)));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",url));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","",name));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
+                        bbart.addAttributes(bbattributes);     
                     } 
 
                     
@@ -312,17 +326,17 @@ public class Chrome {
                    ResultSet temprs = tempdbconnect.executeQry(chdownloadquery);  
                    while(temprs.next()) 
                    {
-                      BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD); 
-                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                      String domain = Util.extractDomain(temprs.getString("url"));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",(temprs.getLong("start_time")/10000)));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("url") != null) ? temprs.getString("url") : "")));
-                     //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "")));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", "", temprs.getString("full_path")));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),"RecentActivity","",Util.findID(temprs.getString("full_path"))));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
-                     bbart.addAttributes(bbattributes);
+                         BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD); 
+                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                         String domain = Util.extractDomain(temprs.getString("url"));
+                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",(temprs.getLong("start_time")/10000)));
+                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("url") != null) ? temprs.getString("url") : "")));
+                         //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "")));
+                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", "", temprs.getString("full_path")));
+                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(),"RecentActivity","",Util.findID(temprs.getString("full_path"))));
+                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",domain));
+                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
+                         bbart.addAttributes(bbattributes);
                       
                    } 
                    tempdbconnect.closeConnection();
@@ -385,16 +399,14 @@ public class Chrome {
                    ResultSet temprs = tempdbconnect.executeQry(chloginquery);  
                    while(temprs.next()) 
                    {
-                      BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY); 
-                      Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                     //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(),"RecentActivity","Last Visited",temprs.getString("start_time")));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("origin_url") != null) ? temprs.getString("origin_url") : "")));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "RecentActivity","", ((temprs.getString("username_value") != null) ? temprs.getString("username_value").replaceAll("'", "''") : "")));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", "", temprs.getString("signon_realm")));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",Util.extractDomain(((temprs.getString("origin_url") != null) ? temprs.getString("origin_url") : ""))));
-                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
-                     bbart.addAttributes(bbattributes);
-                      
+                         BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY); 
+                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity","",((temprs.getString("origin_url") != null) ? temprs.getString("origin_url") : "")));
+                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "RecentActivity","", ((temprs.getString("username_value") != null) ? temprs.getString("username_value").replaceAll("'", "''") : "")));
+                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", "", temprs.getString("signon_realm")));
+                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(),"RecentActivity","",Util.extractDomain(((temprs.getString("origin_url") != null) ? temprs.getString("origin_url") : ""))));
+                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(),"RecentActivity","","Chrome"));
+                         bbart.addAttributes(bbattributes);
                    } 
                    tempdbconnect.closeConnection();
                    temprs.close();

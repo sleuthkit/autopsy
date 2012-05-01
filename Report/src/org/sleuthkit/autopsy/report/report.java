@@ -1,12 +1,29 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ /*
+ *
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2012 42six Solutions.
+ * Contact: aebadirad <at> 42six <dot> com
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.report;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -18,19 +35,19 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  *
  * @author Alex
  */
-public class report implements reportInterface {
+public class report{
     
 private void report(){
 
 }
-@Override
+
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getGenInfo() {
     HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(1);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -45,14 +62,14 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getGenInfo() {
     return reportMap;
 }
 
-@Override
+
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebHistory() {
     HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(4);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -66,14 +83,14 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebHistory(
     
     return reportMap;
 }
-@Override
+
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebCookie() {
     HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(3);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -87,14 +104,14 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebCookie()
     
     return reportMap;
 }
-@Override
+
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebBookmark() {
     HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(2);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -109,14 +126,13 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebBookmark
     return reportMap;
 }
 
-@Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebDownload() {
     HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(5);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -131,14 +147,13 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getWebDownload
     return reportMap;
 }
 
-@Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getRecentObject() {
     HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(6);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -153,14 +168,14 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getRecentObjec
     return reportMap;
 }
 
-@Override
+
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getKeywordHit() {
     HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(9);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -174,14 +189,14 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getKeywordHit(
     
     return reportMap;
 }
-@Override
+
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getHashHit() {
     HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(10);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -195,14 +210,14 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getHashHit() {
     
     return reportMap;
 }
-@Override
+
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getInstalledProg() {
     HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(8);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG);
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -217,14 +232,13 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getInstalledPr
     return reportMap;
 }
 
-@Override
 public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getDevices() {
     HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
     Case currentCase = Case.getCurrentCase(); // get the most updated case
     SleuthkitCase tempDb = currentCase.getSleuthkitCase();
     try
     {
-        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(11);
+        ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED); 
         for (BlackboardArtifact artifact : bbart)
             {
                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
@@ -239,7 +253,6 @@ public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getDevices() {
     return reportMap;
 }
 
-@Override
 public String getGroupedKeywordHit() {
     StringBuilder table = new StringBuilder();
     HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
@@ -290,6 +303,33 @@ public String getGroupedKeywordHit() {
     
     String result = table.toString();
     return result;
+}
+
+public HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> getAllTypes(ReportConfiguration config) {
+    HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
+    Case currentCase = Case.getCurrentCase(); // get the most updated case
+    SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+    try
+    {
+        for(Map.Entry<BlackboardArtifact.ARTIFACT_TYPE, Boolean> entry : config.config.entrySet())
+        {
+            if(entry.getValue())
+            {
+             ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(entry.getKey());
+             for (BlackboardArtifact artifact : bbart)
+                 {
+                 ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
+                 reportMap.put(artifact, attributes);    
+                 }
+            }
+        }
+    }
+    catch (Exception e)
+    {
+        Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+    }
+    
+    return reportMap;
 }
 
 }

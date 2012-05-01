@@ -1,20 +1,26 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
-/*
- * reportPanel.java
+ /*
  *
- * Created on Feb 21, 2012, 12:13:14 PM
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2012 42six Solutions.
+ * Contact: aebadirad <at> 42six <dot> com
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.report;
 import java.awt.event.ActionListener;
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -31,9 +37,8 @@ import org.jdom.output.XMLOutputter;
 public class reportPanel extends javax.swing.JPanel {
 
     /** Creates new form reportPanel */
-    public reportPanel(String report) {
+    public reportPanel() {
         initComponents();
-        setReportWindow(report);
     }
 
     /** This method is called from within the constructor to
@@ -105,25 +110,7 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
     public void setjButton1ActionListener(ActionListener e){
        jButton1.addActionListener(e);
     }
-    public void getLink(HyperlinkEvent evt){
-        try{
-         
-         String str = evt.getDescription();
-       //  jEditorPane1.scrollToReference(str.substring(1));
-        }
-        catch(Exception e){
-            String whater = "";
-        }
-    }
-    public void setjEditorPane1EventListener(HyperlinkListener evt){
-       // jEditorPane1.addHyperlinkListener(evt);
-    }
     
-    private void setReportWindow(String report)
-    {
-     //   jEditorPane1.setText(report);
-     //   jEditorPane1.setCaretPosition(0);
-    }
     
     public void setFinishedReportText(){
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
