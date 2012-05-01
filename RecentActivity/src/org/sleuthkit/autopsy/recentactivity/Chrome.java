@@ -89,6 +89,8 @@ public class Chrome {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
             }
             int j = 0;
+            if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
+            {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
@@ -133,6 +135,7 @@ public class Chrome {
                 j++;
                 dbFile.delete();
             }
+           }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
@@ -164,7 +167,8 @@ public class Chrome {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
             }
             int j = 0;
-
+            if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
+            {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
@@ -206,6 +210,7 @@ public class Chrome {
                 j++;
                 dbFile.delete();
             }
+           }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
@@ -237,7 +242,8 @@ public class Chrome {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
             }
             int j = 0;
-
+            if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
+            {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 try {
@@ -285,6 +291,7 @@ public class Chrome {
                 j++;
                 dbFile.delete();
             }
+            }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
@@ -316,7 +323,8 @@ public class Chrome {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
             }
             int j = 0;
-
+            if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
+            {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
@@ -361,6 +369,7 @@ public class Chrome {
                 j++;
                 dbFile.delete();
             }
+           }
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
         }
@@ -391,7 +400,8 @@ public class Chrome {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
             }
             int j = 0;
-
+            if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
+            {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
@@ -431,6 +441,7 @@ public class Chrome {
                 j++;
                 dbFile.delete();
             }
+           }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);

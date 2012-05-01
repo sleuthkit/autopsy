@@ -93,6 +93,8 @@ public class Firefox {
             }
 
             int j = 0;
+              if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
+            {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
@@ -155,7 +157,9 @@ public class Firefox {
             }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
-        } catch (Exception ex) {
+          }
+        }
+        catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
         }
 
@@ -184,7 +188,8 @@ public class Firefox {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
             }
             int j = 0;
-
+            if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
+            {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
@@ -235,6 +240,7 @@ public class Firefox {
                 j++;
                 dbFile.delete();
             }
+            }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to get Firefox SQLite db.", ex);
@@ -268,7 +274,8 @@ public class Firefox {
             }
 
             int j = 0;
-
+              if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
+            {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 String connectionString = "jdbc:sqlite:" + temps;
@@ -309,6 +316,7 @@ public class Firefox {
                 }
                 j++;
                 dbFile.delete();
+            }
             }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
         } catch (Exception ex) {

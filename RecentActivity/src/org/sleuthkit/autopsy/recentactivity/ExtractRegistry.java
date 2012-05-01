@@ -73,7 +73,7 @@ public class ExtractRegistry {
                     allFS += ")";
                 }
             }
-            List<FsContent> Regfiles = null;
+            List<FsContent> Regfiles = new ArrayList<FsContent>();
             try {
                 ResultSet rs = tempDb.runQuery("select * from tsk_files where lower(name) = 'ntuser.dat' OR lower(parent_path) LIKE '%/system32/config%' and (name LIKE 'system' OR name LIKE 'software' OR name = 'SECURITY' OR name = 'SAM' OR name = 'default')" + allFS);
                 Regfiles = tempDb.resultSetToFsContents(rs);
