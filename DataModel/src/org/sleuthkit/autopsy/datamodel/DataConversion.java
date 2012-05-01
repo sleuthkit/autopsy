@@ -119,54 +119,44 @@ public class DataConversion {
      *  -- When looking for ASCII strings, they evaluate each byte and when they find four or more printable characters they get printed out with a newline in between each string.
      *  -- When looking for Unicode strings, they evaluate each two byte sequence and look for four or more printable characters…
      *
-     * @param args          the bytes that the string read from
+     * @param readBuf          the bytes that the string read from
      * @param len           length of text in the buffer to convert, starting at position 0
-     * @param parameter     the "length" parameter for the string
+     * @param minStringLen     minimum length of consecutive chars to qualify as a string
      *
+     * TODO should be encoding specific and detect UTF8, UTF16LE, UTF16BE
+     * then process remainder of the string using detected encoding  
+     * 
      * @author jantonius
      */
-    public static String getString(byte[] args, int len, int parameter) {
-
-        /*
-        // these encoding might be needed for later
-        // Note: if not used, can be deleted
-        CharsetEncoder asciiEncoder =
-        Charset.forName("US-ASCII").newEncoder(); // or "ISO-8859-1" for ISO Latin 1
-        
-        CharsetEncoder utf8Encoder =
-        Charset.forName("UTF-8").newEncoder();
-         */
+    public static String getString(byte[] readBuf, int len, int minStringLen) {
         final StringBuilder result = new StringBuilder();
         StringBuilder temp = new StringBuilder();
-        int counter = 0;
-        //char[] converted = new java.lang.System.Text.Encoding.ASCII.GetString(args).ToCharArray();
+        int curLen = 0;
 
         final char NL = (char) 10; // ASCII char for new line
         final String NLS = Character.toString(NL);
-        boolean isZero = false;
+        boolean singleConsecZero = false; //preserve the current sequence of chars if 1 consecutive zero char
         for (int i = 0; i < len; i++) {
-            char curChar = (char) args[i];
-
-            if (curChar == 0 && isZero == false) {
-                //allow to skip one 0
-                isZero = true;
+            char curChar = (char) readBuf[i];
+            if (curChar == 0 && singleConsecZero == false) {
+                //preserve the current sequence if max consec. 1 zero char 
+                singleConsecZero = true;
             } else {
-                isZero = false;
+                singleConsecZero = false;
             }
             //ignore non-printable ASCII chars
-            //use 32-126 and not TAB ( 9)
-            if (isUsableChar(curChar)) {
+            if (isPrintableAscii(curChar)) {
                 temp.append(curChar);
-                ++counter;
-            } else if (!isZero) {
-                if (counter >= parameter) {
+                ++curLen;
+            } else if (!singleConsecZero) {
+                if (curLen >= minStringLen) {
                     // add to the result and also add the new line at the end
                     result.append(temp);
                     result.append(NLS);
                 }
-                // reset the temp and counter
+                // reset the temp and curLen
                 temp = new StringBuilder();
-                counter = 0;
+                curLen = 0;
 
             }
         }
@@ -175,8 +165,14 @@ public class DataConversion {
         return result.toString();
     }
 
-    private static boolean isUsableChar(char c) {
-        return c >= 32 && c <= 126 && c != 9;
+    /**
+     * Determine if char is a printable ASCII char
+     * in range <32,126> and a tab
+     * @param c char to test
+     * @return true if it's a printable char, or false otherwise
+     */
+    public static boolean isPrintableAscii(char c) {
+        return (c >= 32 && c <= 126) || c == 9;
     }
 
     /**

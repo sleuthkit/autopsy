@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.sleuthkit.autopsy.datamodel.FsContentStringStream;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -417,7 +418,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         private boolean extractAndIngest(FsContent f) {
             boolean success = false;
-            FsContentStringContentStream fscs = new FsContentStringContentStream(f, FsContentStringStream.Encoding.ASCII);
+            FsContentStringContentStream fscs = new FsContentStringContentStream(f, FsContentStringStream.Encoding.UTF8);
             try {
                 ingester.ingest(fscs);
                 success = true;

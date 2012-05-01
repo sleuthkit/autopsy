@@ -18,7 +18,7 @@
  */
 
 
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.datamodel;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,11 +31,20 @@ import org.sleuthkit.datamodel.TskException;
 
 /**
  * FsContent input string stream reader/converter
+ * TODO should be encoding specific and detect UTF8, UTF16LE, UTF16BE
+ * then process remainder of the string using detected encoding  
  */
 public class FsContentStringStream extends InputStream {
 
     public static enum Encoding {
-        ASCII,
+        UTF8 {
+
+            @Override
+            public String toString() {
+                return "UTF-8";
+            }
+            
+        },
     };
     private FsContent content;
     private String encoding;
@@ -51,7 +60,7 @@ public class FsContentStringStream extends InputStream {
     private boolean isEOF = false;
     private boolean stringAtBoundary = false; //if temp has part of string that didn't make it in previous read()
     private static final byte[] oneCharBuf = new byte[1];
-    private final int ASCII_CHARS_MIN = 4; //num. of chars needed to qualify as a char string
+    private final int MIN_PRINTABLE_CHARS = 4; //num. of chars needed to qualify as a char string
     private static final String NLS = Character.toString((char)10); //new line
     private static final Logger logger = Logger.getLogger(FsContentStringStream.class.getName());
 
@@ -99,7 +108,7 @@ public class FsContentStringStream extends InputStream {
             //there could be more to this string in fscontent/buffer
         }
 
-        boolean isZero = false;
+        boolean singleConsecZero = false; //preserve the current sequence of chars if 1 consecutive zero char
         int newCurLen = curStringLen + tempStringLen;
         while (newCurLen < len) {
             //need to extract more strings
@@ -134,20 +143,20 @@ public class FsContentStringStream extends InputStream {
             }
             //get char from cur read buf
             char c = (char) curReadBuf[readBufOffset++];
-            if (c == 0 && isZero == false) {
-                //allow to skip one zero
-                isZero = true;
+            if (c == 0 && singleConsecZero == false) {
+                //preserve the current sequence if max consec. 1 zero char 
+                singleConsecZero = true;
             }
             else {
-                isZero = false;
+                singleConsecZero = false;
             }
-            if (isUsableChar(c)) {
+            if (DataConversion.isPrintableAscii(c)) {
                 tempString.append(c);
                 ++tempStringLen;
                 //boundary case handled after the loop
-            } else if (! isZero) {
+            } else if (! singleConsecZero) {
                 //break the string, clear temp
-                if (tempStringLen >= ASCII_CHARS_MIN) {
+                if (tempStringLen >= MIN_PRINTABLE_CHARS) {
                     //append entire temp string
                     tempString.append(NLS);
                     ++tempStringLen;
@@ -166,7 +175,7 @@ public class FsContentStringStream extends InputStream {
         //check if temp still has chars to qualify as a string
         //we might need to break up temp into 2 parts for next read() call
         //consume as many as possible to fill entire user buffer
-        if (tempStringLen >= ASCII_CHARS_MIN) {
+        if (tempStringLen >= MIN_PRINTABLE_CHARS) {
             if (newCurLen > len) {
                 int appendChars = len - curStringLen;
                 //save part for next user read(), need to break up temp string
@@ -225,9 +234,6 @@ public class FsContentStringStream extends InputStream {
         return 0;
     }
 
-    private static boolean isUsableChar(char c) {
-        return c >= 32 && c <= 126 && c != 9;
-    }
 
 
     @Override
