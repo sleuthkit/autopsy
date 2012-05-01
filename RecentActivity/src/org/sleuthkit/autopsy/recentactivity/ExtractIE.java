@@ -136,7 +136,7 @@ public class ExtractIE { // implements BrowserActivity {
                      url = m.group(1);
                 }
                 String name = Favorite.getName();
-                String datetime = Favorite.getCrtimeAsDate();
+                Long datetime = Favorite.getCrtime();
                 String domain = Util.extractDomain(url);
                 try{
                 BlackboardArtifact bbart = Favorite.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK); 
@@ -202,7 +202,7 @@ public class ExtractIE { // implements BrowserActivity {
                 String url = values.length > 2 ? values[2] : "";
                 String value = values.length > 1 ? values[1] : "";
                 String name = values.length > 0 ? values[0] : "";
-                String datetime = Cookie.getCrtimeAsDate();
+                Long datetime = Cookie.getCrtime();
                String domain = Util.extractDomain(url);
                try{
                   BlackboardArtifact bbart = Cookie.newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
@@ -285,7 +285,7 @@ public class ExtractIE { // implements BrowserActivity {
                 
                 String path = Util.getPath(recentString);
                 String name = Util.getFileName(path);
-                String datetime = Recent.getCrtimeAsDate();
+                Long datetime = Recent.getCrtime();
                 try{
                 BlackboardArtifact bbart = Recent.newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT); 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
