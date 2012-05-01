@@ -56,39 +56,39 @@ public class reportXLS {
       int countHash = 0;
       int countDevice = 0;
       for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
-                    if(entry.getKey().getArtifactTypeID() == 1){  
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()){  
                         countGen++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 2){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()){
                         countBookmark++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 3){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()){
 
                         countCookie++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 4){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()){
 
                         countHistory++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 5){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()){
                          countDownload++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 6){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()){
                          countRecentObjects++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 7){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getTypeID()){
                          countTrackPoint++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 8){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()){
                          countInstalled++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 9){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()){
                          countKeyword++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 10){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()){
                          countHash++;
                     } 
-                     if(entry.getKey().getArtifactTypeID() == 11){
+                     if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()){
                          countDevice++;
                     } 
     }
@@ -260,7 +260,7 @@ public class reportXLS {
                          if(tempatt.getValueString() == null || "null".equals(tempatt.getValueString())){
                          
                          }
-                         else if(type == 2){
+                         else if(type== 2 || type == 33){
                              value  = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date ((tempatt.getValueLong())*1000));
                          }
                          else
@@ -273,19 +273,19 @@ public class reportXLS {
               }
                      
 
-            if(entry.getKey().getArtifactTypeID() == 1){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()){
                countedGen++;
              //  Row temp = sheetGen.getRow(countedGen);
            
             }
-            if(entry.getKey().getArtifactTypeID() == 2){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()){
                 countedBookmark++;
                 Row temp = sheetBookmark.createRow(countedBookmark);
                 temp.createCell(0).setCellValue(attributes.get(1));
                 temp.createCell(1).setCellValue(attributes.get(3));
                 temp.createCell(2).setCellValue(attributes.get(4));
             }
-            if(entry.getKey().getArtifactTypeID() == 3){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()){
                  countedCookie++;
                 Row temp = sheetCookie.createRow(countedCookie);
                 temp.createCell(0).setCellValue(attributes.get(1));
@@ -294,7 +294,7 @@ public class reportXLS {
                 temp.createCell(3).setCellValue(attributes.get(6));
                 temp.createCell(4).setCellValue(attributes.get(4));
             }
-            if(entry.getKey().getArtifactTypeID() == 4){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()){
                 countedHistory++;
                 Row temp = sheetHistory.createRow(countedHistory);
                 temp.createCell(0).setCellValue(attributes.get(1));
@@ -303,7 +303,7 @@ public class reportXLS {
                 temp.createCell(3).setCellValue(attributes.get(3));
                 temp.createCell(4).setCellValue(attributes.get(4));
             }
-            if(entry.getKey().getArtifactTypeID() == 5){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()){
                 countedDownload++;
                 Row temp = sheetDownload.createRow(countedDownload);
                 temp.createCell(0).setCellValue(attributes.get(8));
@@ -311,7 +311,7 @@ public class reportXLS {
                 temp.createCell(2).setCellValue(attributes.get(33));
                 temp.createCell(3).setCellValue(attributes.get(4));
             }
-            if(entry.getKey().getArtifactTypeID() == 6){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()){
                 countedRecentObjects++;
                 Row temp = sheetRecent.createRow(countedRecentObjects);
                 temp.createCell(0).setCellValue(attributes.get(3));
@@ -319,16 +319,16 @@ public class reportXLS {
                 temp.createCell(2).setCellValue(file.getName());
                 temp.createCell(3).setCellValue(attributes.get(4));
             }
-            if(entry.getKey().getArtifactTypeID() == 7){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getTypeID()){
                 // sheetTrackpoint.addContent(artifact);
             }
-            if(entry.getKey().getArtifactTypeID() == 8){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()){
                 countedInstalled++;
                 Row temp = sheetInstalled.createRow(countedInstalled);
                 temp.createCell(0).setCellValue(attributes.get(4));
                 temp.createCell(1).setCellValue(attributes.get(2));
             }
-            if(entry.getKey().getArtifactTypeID() == 9){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()){
                countedKeyword++;
                 Row temp = sheetKeyword.createRow(countedKeyword);
                 temp.createCell(0).setCellValue(attributes.get(10));
@@ -336,14 +336,14 @@ public class reportXLS {
                 temp.createCell(2).setCellValue(attributes.get(12));
                 temp.createCell(3).setCellValue(attributes.get(13));
             }
-            if(entry.getKey().getArtifactTypeID() == 10){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()){
                  countedHash++;
                 Row temp = sheetHash.createRow(countedHash);
                 temp.createCell(0).setCellValue(file.getName().toString());
                 temp.createCell(1).setCellValue(filesize.toString());
                 temp.createCell(2).setCellValue(attributes.get(30));
             } 
-             if(entry.getKey().getArtifactTypeID() == 11){
+             if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()){
                  countedDevice++;
                 Row temp = sheetDevice.createRow(countedDevice);
                 temp.createCell(0).setCellValue(attributes.get(18));

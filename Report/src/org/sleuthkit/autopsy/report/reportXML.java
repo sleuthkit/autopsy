@@ -123,44 +123,44 @@ public class reportXML {
                   cc++;
                  }
              
-            if(entry.getKey().getArtifactTypeID() == 1){
+            if(entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()){
                 //while (entry.getValue().iterator().hasNext())
                // {
               //  }
                 nodeGen.addContent(artifact);
             }
-            if(entry.getKey().getArtifactTypeID() == 2){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()){
                 
                 
                 nodeWebBookmark.addContent(artifact);
             }
-            if(entry.getKey().getArtifactTypeID() == 3){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()){
                 
                 nodeWebCookie.addContent(artifact);
             }
-            if(entry.getKey().getArtifactTypeID() == 4){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()){
                 
                 nodeWebHistory.addContent(artifact);
             }
-            if(entry.getKey().getArtifactTypeID() == 5){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()){
                  nodeWebDownload.addContent(artifact);
             }
-            if(entry.getKey().getArtifactTypeID() == 6){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()){
                  nodeRecentObjects.addContent(artifact);
             }
-            if(entry.getKey().getArtifactTypeID() == 7){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getTypeID()){
                  nodeTrackPoint.addContent(artifact);
             }
-            if(entry.getKey().getArtifactTypeID() == 8){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()){
                  nodeInstalled.addContent(artifact);
             }
-            if(entry.getKey().getArtifactTypeID() == 9){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()){
                  nodeKeyword.addContent(artifact);
             }
-            if(entry.getKey().getArtifactTypeID() == 10){
+            if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()){
                  nodeHash.addContent(artifact);
             } 
-             if(entry.getKey().getArtifactTypeID() == 11){
+             if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()){
                  nodeDevice.addContent(artifact);
             } 
             cc++;

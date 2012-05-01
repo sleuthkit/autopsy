@@ -73,39 +73,39 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
       int countHash = 0;
       int countDevice = 0;
       for (Entry<BlackboardArtifact,ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
-                    if(entry.getKey().getArtifactTypeID() == 1){  
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()){  
                         countGen++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 2){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()){
                         countWebBookmark++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 3){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()){
 
                         countWebCookie++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 4){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()){
 
                         countWebHistory++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 5){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()){
                          countWebDownload++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 6){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()){
                          countRecentObjects++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 7){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getTypeID()){
                          countTrackPoint++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 8){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()){
                          countInstalled++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 9){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()){
                          countKeyword++;
                     }
-                    if(entry.getKey().getArtifactTypeID() == 10){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()){
                          countHash++;
                     } 
-                     if(entry.getKey().getArtifactTypeID() == 11){
+                     if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()){
                          countDevice++;
                     } 
     }
@@ -275,19 +275,19 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                          }
                      
                     
-                    if(entry.getKey().getArtifactTypeID() == 1){  
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()){  
                         
                         artifact.append("</tr>");
                         nodeGen.append(artifact);
                     }
-                    if(entry.getKey().getArtifactTypeID() == 2){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()){
                         artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(1)).append("</td>");
                         artifact.append("<td>").append(attributes.get(3)).append("</td>");
                         artifact.append("<td>").append(attributes.get(4)).append("</td>");
                         artifact.append("</tr>");
                         nodeWebBookmark.append(artifact);
                     }
-                    if(entry.getKey().getArtifactTypeID() == 3){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()){
                        artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(1)).append("</td>");
                         artifact.append("<td>").append(attributes.get(2)).append("</td>");
                         artifact.append("<td>").append(attributes.get(3)).append("</td>");
@@ -296,7 +296,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                         artifact.append("</tr>");
                         nodeWebCookie.append(artifact);
                     }
-                    if(entry.getKey().getArtifactTypeID() == 4){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()){
                        artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(1)).append("</td>");
                         artifact.append("<td>").append(attributes.get(33)).append("</td>");
                         artifact.append("<td>").append(attributes.get(32)).append("</td>");
@@ -305,7 +305,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                         artifact.append("</tr>");
                         nodeWebHistory.append(artifact);
                     }
-                    if(entry.getKey().getArtifactTypeID() == 5){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()){
                        artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(8)).append("</td>");
                          artifact.append("<td>").append(attributes.get(1)).append("</td>");  
                          artifact.append("<td>").append(attributes.get(33)).append("</td>");  
@@ -313,7 +313,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                          artifact.append("</tr>");
                          nodeWebDownload.append(artifact);
                     }
-                    if(entry.getKey().getArtifactTypeID() == 6){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()){
                          //artifact.append("<tr><td>").append(objId.toString());
                       artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(3)).append("</strong></td>");
                          artifact.append("<td>").append(attributes.get(8)).append("</td>");  
@@ -321,27 +321,27 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                          artifact.append("</tr>");
                          nodeRecentObjects.append(artifact);
                     }
-                    if(entry.getKey().getArtifactTypeID() == 7){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getTypeID()){
                          artifact.append("<tr").append(altRow).append("><td>").append(objId.toString());
                          artifact.append("</td><td><strong>").append(file.getName().toString()).append("</strong></td>");
                          artifact.append("<td>").append(filesize.toString()).append("</td>");  
                          artifact.append("</tr>");
                          nodeTrackPoint.append(artifact);
                     }
-                    if(entry.getKey().getArtifactTypeID() == 8){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()){
                         artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(4)).append("</strong></td>");
                          artifact.append("<td>").append(attributes.get(2)).append("</td>");  
                          artifact.append("</tr>");
                          nodeInstalled.append(artifact);
                     }
-                    if(entry.getKey().getArtifactTypeID() == 9){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()){
                          
                        //  artifact.append("<table><thead><tr><th>Artifact ID</th><th>Name</th><th>Size</th>");
                          
                      //    artifact.append("</tr></table>");
                      //    nodeKeyword.append(artifact);
                     }
-                    if(entry.getKey().getArtifactTypeID() == 10){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()){
                         // artifact.append("<tr><td>").append(objId.toString());
                         artifact.append("<tr").append(altRow).append("><td><strong>").append(file.getName().toString()).append("</strong></td>");
                          artifact.append("<td>").append(filesize.toString()).append("</td>");  
@@ -350,7 +350,7 @@ public reportHTML (HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> re
                          artifact.append("</tr>");
                          nodeHash.append(artifact);
                     } 
-                    if(entry.getKey().getArtifactTypeID() == 11){
+                    if(entry.getKey().getArtifactTypeID()== BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()){
                         artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(18)).append("</strong></td>");
                         artifact.append("<td>").append(attributes.get(20)).append("</td>");  
                          artifact.append("<td>").append(attributes.get(2)).append("</td>");  
