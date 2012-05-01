@@ -395,8 +395,9 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
         fc.setMultiSelectionEnabled(multi);
         fc.setDragEnabled(multi);
 
+        String oldText = imgPathTextField.getText();
         // set the current directory of the FileChooser if the ImagePath Field is valid
-        File currentDir = new File(imgPathTextField.getText());
+        File currentDir = new File(oldText);
         if (currentDir.exists()) {
             fc.setCurrentDirectory(currentDir);
         }
@@ -414,29 +415,28 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
                 path = fc.getSelectedFile().getPath();
                 imgPathTextField.setText(path);
             }
-        }
+            //if split image, and 1 chunk given, verify it's the first chunk
+            boolean invalidChunk = false;
+            String[] imgPath = Case.convertImgPath(imgPathTextField.getText());
+            if (imgPath.length == 1 && multi == true) {
+                if (!imgPath[0].matches(".*\\.0.*1$") //001
+                        && !imgPath[0].matches(".*\\.[aA]{1,}$") //aaa
+                        && !imgPath[0].matches(".*\\.[eE]{1}0.*1$") //E01
+                        ) {
+                    NotifyDescriptor nd = new NotifyDescriptor.Confirmation("You need to select either all chunks or only the first chunk of a split image to add the entire image correctly. Are you sure you want to use this selection?", "Warning: First image chunk not selected", NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+                    nd.setValue(NotifyDescriptor.NO_OPTION);
 
-
-        //if split image, and 1 chunk given, verify it's the first chunk
-        boolean invalidChunk = false;
-        String[] imgPath = Case.convertImgPath(imgPathTextField.getText());
-        if (imgPath.length == 1 && multi == true) {
-            if (!imgPath[0].matches(".*\\.0.*1$") //001
-                    && !imgPath[0].matches(".*\\.[aA]{1,}$") //aaa
-                    && !imgPath[0].matches(".*\\.[eE]{1}0.*1$") //E01
-                    ) {
-                NotifyDescriptor nd = new NotifyDescriptor.Confirmation("You need to select either all chunks or only the first chunk of a split image to add the entire image correctly. Are you sure you want to use this selection?", "Warning: First image chunk not selected", NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
-                nd.setValue(NotifyDescriptor.NO_OPTION);
-
-                Object res = DialogDisplayer.getDefault().notify(nd);
-                if (res != null && res == DialogDescriptor.NO_OPTION) {
-                    invalidChunk = true;
+                    Object res = DialogDisplayer.getDefault().notify(nd);
+                    if (res != null && res == DialogDescriptor.NO_OPTION) {
+                        invalidChunk = true;
+                    }
                 }
             }
-        }
-        if (invalidChunk) {
-            imgPathTextField.setText("");
-            return;
+
+            if (invalidChunk) {
+                imgPathTextField.setText(oldText);
+                return;
+            }
         }
 
 
