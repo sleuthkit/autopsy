@@ -7,6 +7,8 @@ package org.sleuthkit.autopsy.recentactivity;
 import java.io.File;
 import java.io.*;
 import java.sql.ResultSet;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -210,13 +212,21 @@ public void getregistryfiles(List<String> image, IngestImageWorkerController con
                Iterator<Element> iterator = types.iterator();
                while (iterator.hasNext()) 
                 {
-                       String time = "";
+                       String etime = "";
                        String context = "";
                        Element tempnode = iterator.next();
                       // Element tempnode = types.get(i);
                        context = tempnode.getName();
                        Element timenode = tempnode.getChild("time");
-                       time = timenode.getTextTrim();
+                       etime = timenode.getTextTrim();
+                       Long time = null;
+                        try{
+                        Long epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(etime).getTime();
+                        time = epochtime.longValue();
+                         }
+                         catch(ParseException e){
+                         logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e.getMessage());
+                         }
                        Element artroot = tempnode.getChild("artifacts");
                        List<Element> artlist = artroot.getChildren();
                        String winver = "";
