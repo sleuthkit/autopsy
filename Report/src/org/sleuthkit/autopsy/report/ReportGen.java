@@ -18,23 +18,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.recentactivity;
+package org.sleuthkit.autopsy.report;
 
-import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  *
- * @author Alex
+ * This class is the 'default' way to get artifacts/attributes from the
+ * blackboard using a reportconfiguration object.
  */
-public class dbconnect extends sqlitedbconnect {
+public class ReportGen {
 
-    private String sDriverForclass = "org.sqlite.JDBC";
+    HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> Results = new HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>>();
 
-    public dbconnect(String sDriverForClass, String sUrlKey) throws Exception {
-        init(sDriverForClass, sUrlKey);
-        //Statement stmt = conn.createStatement();
-        //String selecthistory = "SELECT moz_historyvisits.id,url,title,visit_count,visit_date,from_visit,rev_host FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
-        // ResultSet rs = stmt.executeQuery(selecthistory); 
+    ReportGen() {
+    }
 
+    public void flushReport() {
+        Results.clear();
+    }
+
+    public void populateReport(ReportConfiguration config) {
+        flushReport();
+        report bbreport = new report();
+        Results = bbreport.getAllTypes(config);
     }
 }
