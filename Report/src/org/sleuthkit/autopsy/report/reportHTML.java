@@ -251,15 +251,21 @@ public class reportHTML {
                         break;
                     }
                     String value = "";
-                    int type = tempatt.getAttributeTypeID();
-                    if (tempatt.getValueString() == null || "null".equals(tempatt.getValueString())) {
-                    } else if (type == 2 || type == 33) {
-                        value = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date((tempatt.getValueLong())));
-                        if (value == null || "".equals(value)) {
-                            value = tempatt.getValueString();
-                        }
+                    Integer type = tempatt.getAttributeTypeID();
+                    if (type.equals(2) || type.equals(33)) {
+                            try{
+                        SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                        value = sdf.format(new java.util.Date((tempatt.getValueLong())));
+                            }
+                            catch(Exception ex){
+                                
+                            } 
                     } else {
                         value = tempatt.getValueString();
+                    }
+                    if(value == null || value.isEmpty())
+                    {
+                        value = "";
                     }
                     value = reportUtils.insertPeriodically(value, "<br>", 30);
                     attributes.put(type, value);

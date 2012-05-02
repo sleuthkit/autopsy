@@ -35,8 +35,7 @@ public class reportUtils {
         }
     }
 
-    public static String insertPeriodically(
-            String text, String insert, int period) {
+    public static String insertPeriodically(String text, String insert, int period) {
         StringBuilder builder = new StringBuilder(
                 text.length() + insert.length() * (text.length() / period) + 1);
 
