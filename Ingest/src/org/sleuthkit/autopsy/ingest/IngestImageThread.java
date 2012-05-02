@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.Image;
  * worker for every ingest image service
  * there is a separate instance per image / service pair
  */
-public class IngestImageThread extends SwingWorker {
+public class IngestImageThread extends SwingWorker<Object,Void> {
 
     private Logger logger = Logger.getLogger(IngestImageThread.class.getName());
     private ProgressHandle progress;

@@ -172,8 +172,8 @@ public class Case {
         }
     }
 
-    AddImageProcess makeAddImageProcess(String timezone) {
-        return this.db.makeAddImageProcess(timezone);
+    AddImageProcess makeAddImageProcess(String timezone, boolean noFatOrphans) {
+        return this.db.makeAddImageProcess(timezone, noFatOrphans);
     }
 
     /**
@@ -270,7 +270,7 @@ public class Case {
             boolean allFilesExist = true;
             String pathString = "";
             for (String s : paths) {
-                allFilesExist &= new File(s).exists();
+                allFilesExist &= isPhysicalDrive(s) || new File(s).exists();
                 pathString += s + "\n";
             }
             if (!allFilesExist) {
@@ -564,6 +564,18 @@ public class Case {
             return xmlcm.getTempDir();
         }
     }
+    
+    /**
+     * Gets the full path to the cache directory of this case
+     * @return cacheDirectoryPath
+     */
+    public String getCacheDirectory() {
+        if (xmlcm == null) {
+            return "";
+        } else {
+            return xmlcm.getCacheDir();
+        }
+    }
 
     /**
      * get the created date of this case
@@ -755,7 +767,8 @@ public class Case {
             // create the folders inside the case directory
             result = result && (new File(caseDir + File.separator + XMLCaseManagement.EXPORT_FOLDER_RELPATH)).mkdir()
                     && (new File(caseDir + File.separator + XMLCaseManagement.LOG_FOLDER_RELPATH)).mkdir()
-                    && (new File(caseDir + File.separator + XMLCaseManagement.TEMP_FOLDER_RELPATH)).mkdir();
+                    && (new File(caseDir + File.separator + XMLCaseManagement.TEMP_FOLDER_RELPATH)).mkdir()
+                    && (new File(caseDir + File.separator + XMLCaseManagement.CACHE_FOLDER_RELPATH)).mkdir();
 
             return result;
         } catch (Exception e) {

@@ -44,7 +44,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.commons.httpclient.NoHttpResponseException;
 import org.apache.solr.client.solrj.SolrRequest;
-import org.apache.solr.client.solrj.SolrRequest.METHOD;
+import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -60,8 +60,8 @@ class Server {
     private static final String DEFAULT_CORE_NAME = "coreCase";
     // TODO: DEFAULT_CORE_NAME needs to be replaced with unique names to support multiple open cases
     public static final String CORE_EVT = "CORE_EVT";
-    
     private String javaPath = "java";
+    private Process curSolrProcess = null;
 
     public enum CORE_EVT_STATES {
 
@@ -86,7 +86,7 @@ class Server {
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false);
         instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr";
-        
+
         javaPath = PlatformUtil.getJavaPath();
     }
 
@@ -110,22 +110,25 @@ class Server {
 
         InputStreamPrinterThread(InputStream stream, String type) {
             this.stream = stream;
-            try{ 
+            try {
                 String log = System.getProperty("netbeans.user") + "/var/log/solr.log." + type;
                 File outputFile = new File(log.concat(".0"));
                 File first = new File(log.concat(".1"));
                 File second = new File(log.concat(".2"));
-                if(second.exists())
+                if (second.exists()) {
                     second.delete();
-                if(first.exists())
+                }
+                if (first.exists()) {
                     first.renameTo(second);
-                if(outputFile.exists())
+                }
+                if (outputFile.exists()) {
                     outputFile.renameTo(first);
-                else
+                } else {
                     outputFile.createNewFile();
+                }
                 out = new FileOutputStream(outputFile);
-                
-            } catch(Exception ex){
+
+            } catch (Exception ex) {
                 logger.log(Level.WARNING, "Failed to create solr log file", ex);
             }
         }
@@ -134,7 +137,7 @@ class Server {
         public void run() {
             InputStreamReader isr = new InputStreamReader(stream);
             BufferedReader br = new BufferedReader(isr);
-            try{
+            try {
                 OutputStreamWriter osw = new OutputStreamWriter(out);
                 BufferedWriter bw = new BufferedWriter(osw);
                 String line = null;
@@ -153,14 +156,20 @@ class Server {
      * (probably before the server is ready) and doesn't check whether it was
      * successful.
      */
-    synchronized void start() {
+    void start() {
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
         try {
-            Process start = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar", null, solrFolder);
-
+            curSolrProcess = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar", null, solrFolder);
+            try {
+                //block, give time to fully stary the process
+                //so if it's restarted solr operations can be resumed seamlessly
+                Thread.sleep(3000);
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+            }
             // Handle output to prevent process from blocking
-            (new InputStreamPrinterThread(start.getInputStream(), "input")).start();
-            (new InputStreamPrinterThread(start.getErrorStream(), "error")).start();
+            (new InputStreamPrinterThread(curSolrProcess.getInputStream(), "input")).start();
+            (new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "error")).start();
 
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -172,13 +181,18 @@ class Server {
      * 
      * Waits for the stop command to finish
      * before returning.
-     * @return  true if the stop command finished successfully, else false
      */
-    synchronized boolean stop() {
+    synchronized void stop() {
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
+            //try graceful shutdown
             Process stop = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar --stop", null, solrFolder);
-            return stop.waitFor() == 0;
+            stop.waitFor();
+            //if still running, forcefully stop it
+            if (curSolrProcess != null) {
+                curSolrProcess.destroy();
+                curSolrProcess = null;
+            }
 
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
@@ -217,7 +231,7 @@ class Server {
         return true;
     }
     /**** Convenience methods for use while we only open one case at a time ****/
-    private Core currentCore = null;
+    private volatile Core currentCore = null;
 
     synchronized void openCore() {
         if (currentCore != null) {
@@ -236,13 +250,6 @@ class Server {
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
     }
 
-    synchronized Core getCore() throws SolrServerException {
-        if (currentCore == null) {
-            throw new SolrServerException("No currently open Core!");
-        }
-        return currentCore;
-    }
-
     /**** end single-case specific methods ****/
     /**
      * Open a core for the given case
@@ -253,6 +260,103 @@ class Server {
         String sep = File.separator;
         String dataDir = c.getCaseDirectory() + sep + "keywordsearch" + sep + "data";
         return this.openCore(DEFAULT_CORE_NAME, new File(dataDir));
+    }
+
+    /**
+     * commit current core if it exists
+     * @throws SolrServerException, NoOpenCoreException
+     */
+    synchronized void commit() throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+        currentCore.commit();
+    }
+
+    NamedList<Object> request(SolrRequest request) throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+        return currentCore.request(request);
+    }
+
+    /**
+     * Execute query that gets only number of all Solr documents indexed
+     * without actually returning the documents
+     * @return int representing number of indexed files
+     * @throws SolrServerException 
+     */
+    public synchronized int queryNumIndexedFiles() throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+
+        return currentCore.queryNumIndexedFiles();
+    }
+
+    /**
+     * Execute solr query
+     * @param sq query
+     * @return query response
+     * @throws SolrServerException
+     * @throws NoOpenCoreException 
+     */
+    public synchronized QueryResponse query(SolrQuery sq) throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+        return currentCore.query(sq);
+    }
+
+    /**
+     * Execute solr query
+     * @param sq the query
+     * @param method http method to use
+     * @return query response
+     * @throws SolrServerException
+     * @throws NoOpenCoreException 
+     */
+    public synchronized QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+        return currentCore.query(sq, method);
+    }
+
+    /**
+     * Execute Solr terms query
+     * @param sq the query
+     * @return terms response
+     * @throws SolrServerException
+     * @throws NoOpenCoreException 
+     */
+    public synchronized TermsResponse queryTerms(SolrQuery sq) throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+        return currentCore.queryTerms(sq);
+    }
+
+    /**
+     * Execute Solr query to get content text
+     * @param content to get the text for
+     * @return content text string
+     * @throws SolrServerException
+     * @throws NoOpenCoreException 
+     */
+    public synchronized String getSolrContent(final Content content) throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+        return currentCore.getSolrContent(content);
+    }
+
+    /**
+     * factory method to create ingester
+     * @return ingester
+     */
+    public Ingester getIngester() {
+        return new Ingester();
     }
 
     /**
@@ -300,25 +404,39 @@ class Server {
             }
         }
 
-        public Ingester getIngester() {
-            return new Ingester(this.solrCore);
-        }
-
-        public synchronized QueryResponse query(SolrQuery sq) throws SolrServerException {
+        private QueryResponse query(SolrQuery sq) throws SolrServerException {
             return solrCore.query(sq);
         }
-        
-        public synchronized QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws SolrServerException {
+
+        private NamedList<Object> request(SolrRequest request) throws SolrServerException {
+            try {
+                return solrCore.request(request);
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "Could not issue Solr request. ", e);
+                throw new SolrServerException("Could not issue Solr request", e);
+            }
+
+        }
+
+        private QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws SolrServerException {
             return solrCore.query(sq, method);
         }
-        
 
-        public synchronized TermsResponse queryTerms(SolrQuery sq) throws SolrServerException {
+        private TermsResponse queryTerms(SolrQuery sq) throws SolrServerException {
             QueryResponse qres = solrCore.query(sq);
             return qres.getTermsResponse();
         }
 
-        public synchronized String getSolrContent(final Content content) {
+        private void commit() throws SolrServerException {
+            try {
+                solrCore.commit();
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "Could not commit index. ", e);
+                throw new SolrServerException("Could not commit index", e);
+            }
+        }
+
+        private String getSolrContent(final Content content) {
             final SolrQuery q = new SolrQuery();
             q.setQuery("*:*");
             q.addFilterQuery("id:" + content.getId());
@@ -347,7 +465,7 @@ class Server {
          * @return int representing number of indexed files
          * @throws SolrServerException 
          */
-        public synchronized int queryNumIndexedFiles() throws SolrServerException {
+        private int queryNumIndexedFiles() throws SolrServerException {
             SolrQuery q = new SolrQuery("*:*");
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();

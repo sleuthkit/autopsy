@@ -216,9 +216,13 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
                     if (manager == null) {
                         manager = IngestManager.getDefault();
                     }
-                    manager.stopAll();
-                    //clear inbox 
-                    clearMessages();
+                    try {
+                        manager.stopAll();
+                    }
+                    finally {
+                        //clear inbox 
+                        clearMessages();
+                    }
                 }
             }
         });

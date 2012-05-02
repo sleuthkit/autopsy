@@ -24,8 +24,14 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
 import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
@@ -41,11 +47,17 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 class Ingester {
 
     private static final Logger logger = Logger.getLogger(Ingester.class.getName());
-    private SolrServer solrCore;
     private boolean uncommitedIngests = false;
+    private final ExecutorService upRequestExecutor = Executors.newSingleThreadExecutor();
+    private final Server solrServer = KeywordSearch.getServer();
+    // TODO: use a more robust method than checking file extension
+    // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
+    static final String[] ingestibleExtensions = {"tar", "jar", "zip", "gzip", "bzip2",
+        "gz", "tgz", "odf", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log", "manifest",
+        "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
+        "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
-    Ingester(SolrServer solrCore) {
-        this.solrCore = solrCore;
+    Ingester() {
     }
 
     @Override
@@ -68,7 +80,8 @@ class Ingester {
      * file, but the Solr server is probably fine.
      */
     public void ingest(FsContentStringContentStream fcs) throws IngesterException {
-        ingest(fcs, getFsContentFields(fcs.getFsContent()));
+        Map<String, String> params = getFsContentFields(fcs.getFsContent());
+        ingest(fcs, params, fcs.getFsContent());
     }
 
     /**
@@ -80,7 +93,7 @@ class Ingester {
      * file, but the Solr server is probably fine.
      */
     public void ingest(FsContent f) throws IngesterException {
-        ingest(new FscContentStream(f), getFsContentFields(f));
+        ingest(new FscContentStream(f), getFsContentFields(f), f);
     }
 
     /**
@@ -104,46 +117,110 @@ class Ingester {
      * 
      * @param ContentStream to ingest
      * @param fields content specific fields
+     * @param sourceContent fsContent from which the cs content stream originated from
      * @throws IngesterException if there was an error processing a specific
      * content, but the Solr server is probably fine.
      */
-    private void ingest(ContentStream cs, Map<String, String> fields) throws IngesterException {
-        ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract");
+    private void ingest(ContentStream cs, Map<String, String> fields, final FsContent sourceContent) throws IngesterException {
+        final ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract");
         up.addContentStream(cs);
         setFields(up, fields);
         up.setAction(AbstractUpdateRequest.ACTION.COMMIT, true, true);
 
+        final String contentType = cs.getContentType();
+        if (contentType != null && !contentType.trim().equals("")) {
+            up.setParam("stream.contentType", contentType);
+        }
+
         //logger.log(Level.INFO, "Ingesting " + fields.get("file_name"));
         up.setParam("commit", "false");
 
-        try {
-            solrCore.request(up);
-            // should't get any checked exceptions, 
-        } catch (IOException ex) {
-            // It's possible that we will have IO errors 
-            throw new IngesterException("Problem reading file.", ex);
-        } catch (IllegalStateException ex) {
-            // problems with content
-            throw new IngesterException("Problem reading file.", ex);
-        } catch (SolrServerException ex) {
-            // If there's a problem talking to Solr, something is fundamentally
-            // wrong with ingest
-            throw new IngesterException("Problem with Solr", ex);
-        } catch (SolrException ex) {
-            // Tika problems result in an unchecked SolrException
-            ErrorCode ec = ErrorCode.getErrorCode(ex.code());
+        final Future<?> f = upRequestExecutor.submit(new UpRequestTask(up));
 
-            // When Tika has problems with a document, it throws a server error
-            // but it's okay to continue with other documents
-            if (ec.equals(ErrorCode.SERVER_ERROR)) {
-                throw new IngesterException("Problem posting file contents to Solr. SolrException error code: " + ec, ex);
-            } else {
-                // shouldn't get any other error codes
-                throw ex;
-            }
+        try {
+            f.get(getTimeout(sourceContent), TimeUnit.SECONDS);
+        } catch (TimeoutException te) {
+            logger.log(Level.WARNING, "Solr timeout encountered, trying to restart Solr");
+            //restart may be needed to recover from some error conditions
+            hardSolrRestart();
+            throw new IngesterException("Solr index request time out for id: " + fields.get("id") + ", name: " + fields.get("file_name"));
+        } catch (Exception e) {
+            throw new IngesterException("Problem posting content to Solr, id: " + fields.get("id") + ", name: " + fields.get("file_name"), e);
+        }
+        uncommitedIngests = true;
+    }
+
+    /**
+     * attempt to restart Solr and recover from its internal error
+     */
+    private void hardSolrRestart() {
+        solrServer.closeCore();
+        solrServer.stop();
+
+        solrServer.start();
+        solrServer.openCore();
+    }
+
+    /**
+     * return timeout that should be use to index the content 
+     * TODO adjust them more as needed, and handle file chunks
+     * @param f the source FsContent
+     * @return time in seconds to use a timeout
+     */
+    private static int getTimeout(FsContent f) {
+        final long size = f.getSize();
+        if (size < 1024 * 1024L) //1MB
+        {
+            return 60;
+        } else if (size < 10 * 1024 * 1024L) //10MB
+        {
+            return 1200;
+        } else if (size < 100 * 1024 * 1024L) //100MB
+        {
+            return 3600;
+        } else {
+            return 3 * 3600;
         }
 
-        uncommitedIngests = true;
+    }
+
+    private class UpRequestTask implements Runnable {
+
+        ContentStreamUpdateRequest up;
+
+        UpRequestTask(ContentStreamUpdateRequest up) {
+            this.up = up;
+        }
+
+        @Override
+        public void run() {
+            try {
+                up.setMethod(METHOD.POST);
+                solrServer.request(up);
+            } catch (NoOpenCoreException ex) {
+                throw new RuntimeException("No Solr core available, cannot index the content", ex);
+            } catch (IllegalStateException ex) {
+                // problems with content
+                throw new RuntimeException("Problem reading file.", ex);
+            } catch (SolrServerException ex) {
+                // If there's a problem talking to Solr, something is fundamentally
+                // wrong with ingest
+                throw new RuntimeException("Problem with Solr", ex);
+            } catch (SolrException ex) {
+                // Tika problems result in an unchecked SolrException
+                ErrorCode ec = ErrorCode.getErrorCode(ex.code());
+
+                // When Tika has problems with a document, it throws a server error
+                // but it's okay to continue with other documents
+                if (ec.equals(ErrorCode.SERVER_ERROR)) {
+                    throw new RuntimeException("Problem posting file contents to Solr. SolrException error code: " + ec, ex);
+                } else {
+                    // shouldn't get any other error codes
+                    throw ex;
+                }
+            }
+
+        }
     }
 
     /**
@@ -152,13 +229,12 @@ class Ingester {
      */
     void commit() {
         try {
-            solrCore.commit();
+            solrServer.commit();
             uncommitedIngests = false;
-            // if commit doesn't work, something's broken
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
+        } catch (NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Error commiting index", ex);
         } catch (SolrServerException ex) {
-            throw new RuntimeException(ex);
+            logger.log(Level.WARNING, "Error commiting index", ex);
         }
     }
 
@@ -224,5 +300,27 @@ class Ingester {
         IngesterException(String message, Throwable ex) {
             super(message, ex);
         }
+
+        IngesterException(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Determine if the fscontent is ingestible/indexable by keyword search
+     * Note: currently only checks by extension, could be a more robust check.
+     * @param fsContent
+     * @return true if it is ingestible, false otherwise
+     */
+    static boolean isIngestible(FsContent fsContent) {
+        boolean ingestible = false;
+        final String fileName = fsContent.getName();
+        for (String ext : ingestibleExtensions) {
+            if (fileName.toLowerCase().endsWith(ext)) {
+                ingestible = true;
+                break;
+            }
+        }
+        return ingestible;
     }
 }

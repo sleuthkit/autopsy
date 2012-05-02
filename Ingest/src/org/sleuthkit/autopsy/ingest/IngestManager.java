@@ -56,22 +56,24 @@ import org.sleuthkit.datamodel.TskData;
  * 
  */
 public class IngestManager {
+
     enum UpdateFrequency {
-      FAST(20),
-      AVG(10),
-      SLOW(5);
-      
-      private final int time;
-      UpdateFrequency(int time) {
-          this.time = time;
-      }
-      int getTime(){ return time;}
+
+        FAST(20),
+        AVG(10),
+        SLOW(5);
+        private final int time;
+
+        UpdateFrequency(int time) {
+            this.time = time;
+        }
+
+        int getTime() {
+            return time;
+        }
     };
-    
-    
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private IngestManagerStats stats;
-    
     private volatile UpdateFrequency updateFrequency = UpdateFrequency.AVG;
     //queues
     private final ImageQueue imageQueue = new ImageQueue();   // list of services and images to analyze
@@ -80,7 +82,7 @@ public class IngestManager {
     //workers
     private IngestFsContentThread fsContentIngester;
     private List<IngestImageThread> imageIngesters;
-    private SwingWorker queueWorker;
+    private SwingWorker<Object,Void> queueWorker;
     //services
     final List<IngestServiceImage> imageServices = enumerateImageServices();
     final List<IngestServiceFsContent> fsContentServices = enumerateFsContentServices();
@@ -90,7 +92,6 @@ public class IngestManager {
     final IngestManagerProxy managerProxy = new IngestManagerProxy(this);
     //notifications
     private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
-    
     //monitor
     private final IngestMonitor ingestMonitor = new IngestMonitor();
 
@@ -196,9 +197,10 @@ public class IngestManager {
         logger.log(Level.INFO, "Image queue: " + this.imageQueue.toString());
         logger.log(Level.INFO, "File queue: " + this.fsContentQueue.toString());
 
-        if (! ingestMonitor.isRunning())
+        if (!ingestMonitor.isRunning()) {
             ingestMonitor.start();
-        
+        }
+
         //image ingesters
         // cycle through each image in the queue
         while (hasNextImage()) {
@@ -271,7 +273,7 @@ public class IngestManager {
     /**
      * stop currently running threads if any (e.g. when changing a case)
      */
-    void stopAll() {
+    synchronized void stopAll() {
         //stop queue worker
         if (queueWorker != null) {
             queueWorker.cancel(true);
@@ -284,6 +286,18 @@ public class IngestManager {
 
         //stop service workers
         if (fsContentIngester != null) {
+            //send signals to all file services
+            for (IngestServiceFsContent s : this.fsContentServices) {
+                if (isServiceRunning(s)) {
+                    try {
+                        s.stop();
+                    } catch (Exception e) {
+                        logger.log(Level.WARNING, "Exception while stopping service: " + s.getName(), e);
+                    }
+                }
+
+            }
+            //stop fs ingester thread
             boolean cancelled = fsContentIngester.cancel(true);
             if (!cancelled) {
                 logger.log(Level.WARNING, "Unable to cancel file ingest worker");
@@ -293,11 +307,18 @@ public class IngestManager {
         }
 
         List<IngestImageThread> toStop = new ArrayList<IngestImageThread>();
-        synchronized (this) {
-            toStop.addAll(imageIngesters);
-        }
+        toStop.addAll(imageIngesters);
+
 
         for (IngestImageThread imageWorker : toStop) {
+            IngestServiceImage s = imageWorker.getService();
+            if (isServiceRunning(s)) {
+                try {
+                    imageWorker.getService().stop();
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, "Exception while stopping service: " + s.getName(), e);
+                }
+            }
             boolean cancelled = imageWorker.cancel(true);
             if (!cancelled) {
                 logger.log(Level.WARNING, "Unable to cancel image ingest worker for service: " + imageWorker.getService().getName() + " img: " + imageWorker.getImage().getName());
@@ -902,7 +923,7 @@ public class IngestManager {
 //ingester worker for fsContent queue
 //worker runs until fsContent queue is consumed
 //and if needed, new instance is created and started when data arrives
-    private class IngestFsContentThread extends SwingWorker {
+    private class IngestFsContentThread extends SwingWorker<Object,Void> {
 
         private Logger logger = Logger.getLogger(IngestFsContentThread.class.getName());
         private ProgressHandle progress;
@@ -946,7 +967,7 @@ public class IngestManager {
                 }
 
                 final FsContent fileToProcess = unit.getKey();
-                
+
                 progress.progress(fileToProcess.getName(), processedFiles);
 
                 for (IngestServiceFsContent service : unit.getValue()) {
@@ -1027,7 +1048,14 @@ public class IngestManager {
 
         private void handleInterruption() {
             for (IngestServiceFsContent s : fsContentServices) {
-                s.stop();
+                if (isServiceRunning(s)) {
+                    try {
+                        s.stop();
+                    }
+                    catch (Exception e) {
+                        logger.log(Level.WARNING, "Exception while stopping service: " + s.getName(), e);
+                    }
+                }
                 IngestManager.fireServiceEvent(SERVICE_STOPPED_EVT, s.getName());
             }
             //empty queues
@@ -1036,7 +1064,7 @@ public class IngestManager {
     }
 
     /* Thread that adds image/file and service pairs to queues */
-    private class EnqueueWorker extends SwingWorker {
+    private class EnqueueWorker extends SwingWorker<Object,Void> {
 
         List<IngestServiceAbstract> services;
         final List<Image> images;

@@ -50,9 +50,9 @@ public final class CaseOpenAction implements ActionListener {
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
-        fc.setAcceptAllFileFilterUsed(false);
+        //fc.setAcceptAllFileFilterUsed(false);
         fc.addChoosableFileFilter(autFilter);
-        fc.addChoosableFileFilter(fc.getAcceptAllFileFilter());
+        //fc.addChoosableFileFilter(fc.getAcceptAllFileFilter());
         if(AutopsyProperties.getProperty(PROP_BASECASE) != null)
             fc.setCurrentDirectory(new File(AutopsyProperties.getProperty(PROP_BASECASE)));
     }

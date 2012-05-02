@@ -43,7 +43,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     private static final String NO_MATCHES = "<span style='background:red'>No matches in content.</span>";
     private Content content;
     private String solrQuery;
-    private Core solrCore;
+    private Server solrServer;
     private int numberHits;
     private boolean isRegex = false;
     private boolean group = true;
@@ -54,11 +54,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         this.isRegex = isRegex;
         this.group = true;
 
-        try {
-            this.solrCore = KeywordSearch.getServer().getCore();
-        } catch (SolrServerException ex) {
-            logger.log(Level.INFO, "Could not get Solr core", ex);
-        }
+        this.solrServer = KeywordSearch.getServer();
+
     }
 
     HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, boolean group) {
@@ -72,10 +69,6 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public String getMarkup() {
-        if (solrCore == null) {
-            return NO_MATCHES;
-        }
-
         String highLightField = null;
 
         String highlightQuery = solrQuery;
@@ -124,7 +117,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         q.setHighlightFragsize(0); // don't fragment the highlight
 
         try {
-            QueryResponse response = solrCore.query(q, METHOD.POST);
+            QueryResponse response = solrServer.query(q, METHOD.POST);
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
             long contentID = content.getId();
             Map<String, List<String>> responseHighlightID = responseHighlight.get(Long.toString(contentID));
@@ -140,7 +133,12 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                 highlightedContent = insertAnchors(highlightedContent);
                 return "<pre>" + highlightedContent + "</pre>";
             }
-        } catch (SolrServerException ex) {
+        } 
+        catch (NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Couldn't query markup.", ex);
+            return "";
+        }
+        catch (SolrServerException ex) {
             logger.log(Level.INFO, "Could not query markup. ", ex);
             return "";
         }

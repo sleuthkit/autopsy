@@ -27,6 +27,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
@@ -52,7 +53,14 @@ class KeywordSearchFilterNode extends FilterNode {
 
     String getSnippet() {
         final Content content = this.getOriginal().getLookup().lookup(Content.class);
-        final String snippet = LuceneQuery.querySnippet(solrQuery, content.getId(), false, true);
+        String snippet;
+        try {
+            snippet = LuceneQuery.querySnippet(solrQuery, content.getId(), false, true);
+        } catch (NoOpenCoreException ex) {
+            //logger.log(Level.WARNING, "Could not perform the snippet query. ", ex);
+            return "";
+        }
+
         return snippet;
     }
 
@@ -101,7 +109,7 @@ class KeywordSearchFilterNode extends FilterNode {
 
         return propertySets;
     }
-    
+
     /**
      * Right click action for the nodes that we want to pass to the directory
      * table and the output view.
@@ -113,18 +121,17 @@ class KeywordSearchFilterNode extends FilterNode {
     public Action[] getActions(boolean popup) {
 
         List<Action> actions = new ArrayList<Action>();
-        
+
         Content content = this.getOriginal().getLookup().lookup(Content.class);
         actions.addAll(content.accept(new GetPopupActionsContentVisitor()));
-        
+
         //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
 
         return actions.toArray(new Action[actions.size()]);
     }
-    
-    
+
     private class GetPopupActionsContentVisitor extends ContentVisitor.Default<List<Action>> {
-        
+
         @Override
         public List<Action> visit(File f) {
             List<Action> actions = new ArrayList<Action>();
@@ -133,10 +140,10 @@ class KeywordSearchFilterNode extends FilterNode {
             actions.add(new ExtractAction("Extract File", getOriginal()));
             return actions;
         }
+
         @Override
         protected List<Action> defaultVisit(Content c) {
             return new ArrayList<Action>();
         }
-        
     }
 }

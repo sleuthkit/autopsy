@@ -6,10 +6,6 @@ General:
 - Only a single instance of the application can be started at once.  
 There is no check if another instance is already running.  Running a second instance will cause issues.
 
-Case:
-- Closing a case in certain situations (when ingest is running or processing is being done in the background) may cause stability issues.  
-If case cannot be cleanly closed, try closing the application.
-
 Keyword search module:
 - Keyword search module does not currently search unallocated space,
 - Keyword search maximum size of files to be indexed and searched is 100MB,

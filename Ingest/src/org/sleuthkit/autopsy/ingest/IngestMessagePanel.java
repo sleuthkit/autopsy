@@ -385,7 +385,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         @Override
-        public Class getColumnClass(int c) {
+        public Class<?> getColumnClass(int c) {
             return getValueAt(0, c).getClass();
         }
 

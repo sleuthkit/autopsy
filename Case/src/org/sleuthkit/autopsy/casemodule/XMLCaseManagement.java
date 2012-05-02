@@ -79,6 +79,8 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
     final static String TEMP_FOLDER_RELPATH = "Temp";
     final static String EXPORT_FOLDER_NAME = "ExportFolder";
     final static String EXPORT_FOLDER_RELPATH = "Export";
+    final static String CACHE_FOLDER_NAME = "CacheFolder";
+    final static String CACHE_FOLDER_RELPATH = "Cache";
 
     // folders attribute
     final static String RELATIVE_NAME = "Relative";	// relevant path info
@@ -450,6 +452,26 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
             return ""; // should throw error or exception
         }
     }
+    
+    /**
+     * Gets the full path to the Cache directory
+     *
+     * @return cacheDir  the full path of the "Cache" directory
+     */
+    protected String getCacheDir(){
+        if(doc != null){
+            Element cacheElement = (Element)getCaseElement().getElementsByTagName(CACHE_FOLDER_NAME).item(0);
+            if(cacheElement.getAttribute(RELATIVE_NAME).equals(RELATIVE_TRUE)){
+                return caseDirPath + File.separator + cacheElement.getTextContent();
+            }
+            else{
+                return cacheElement.getTextContent();
+            }
+        }
+        else{
+            return ""; // should throw error or exception
+        }
+    }
 
     /**
      * Gets image Element from the document handler
@@ -720,6 +742,11 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
         tempElement.appendChild(doc.createTextNode(TEMP_FOLDER_RELPATH));
         tempElement.setAttribute(RELATIVE_NAME, "true");
         caseElement.appendChild(tempElement);
+        
+        Element cacheElement = doc.createElement(CACHE_FOLDER_NAME); // <CacheFolder> ... </CacheFolder>
+        cacheElement.appendChild(doc.createTextNode(CACHE_FOLDER_RELPATH));
+        cacheElement.setAttribute(RELATIVE_NAME, "true");
+        caseElement.appendChild(cacheElement);
 
         // create the new images
         Element imagesElement = doc.createElement(IMAGES_NAME); // <Images> ... </Images>

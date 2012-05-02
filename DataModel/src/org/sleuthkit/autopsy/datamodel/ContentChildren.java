@@ -19,12 +19,15 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Collections;
+import java.util.List;
 import org.sleuthkit.datamodel.Content;
 
 /**
  * Class for Children of all ContentNodes. Handles creating child ContentNodes.
  */
 class ContentChildren extends AbstractContentChildren {
+    
+    private static final int MAX_CHILD_COUNT = 10000;
 
     private Content parent;
 
@@ -34,7 +37,8 @@ class ContentChildren extends AbstractContentChildren {
 
     @Override
     protected void addNotify() {
-        setKeys(ContentHierarchyVisitor.getChildren(parent));
+        List<Content> children = ContentHierarchyVisitor.getChildren(parent);
+        setKeys(children.subList(0, Math.min(children.size(), MAX_CHILD_COUNT)));
     }
 
     @Override

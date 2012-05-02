@@ -155,6 +155,11 @@
             <entry key="app.version" value="${app.version}" />
             <entry key="build.type" value="${build.type}" />
         </propertyfile>
+        
+        <copy todir="${basedir}" failonerror="false">
+            <fileset dir="${branding.dir}/bundles"
+                    includes="**/*"/>
+        </copy>
     </target>
     
     <target name="jni" depends="build,findTSK">
@@ -168,13 +173,26 @@
         <subant target="javadoc" buildpath="${modules.sorted}" inheritrefs="false" inheritall="false" />
     </target>
     
-    <target name="build-installer-root" depends="findJRE,build-zip" >
+    <target name="build-installer-dir" depends="findJRE,build-zip" >
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
+        <antcall target="update-conf-file" />
         <delete file="${nbdist.dir}/${app.name}-${app.version}.zip"/>
-        <unzip src="${basedir}/thirdparty/gstreamer/${os.family}.zip" dest="${nbdist.dir}/${app.name}-installer/gstreamer"/>
+        <unzip src="${basedir}/thirdparty/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${nbdist.dir}/${app.name}-installer/gstreamer"/>
         <copy todir="${nbdist.dir}/${app.name}-installer/jre6">
             <fileset dir="${env.JRE_HOME}"/>
         </copy>
         <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${nbdist.dir}/${app.name}-installer/icon.ico" overwrite="true"/>
+    </target>
+    
+    <target name="update-conf-file" depends="getProps">
+        <propertyfile
+        file="${nbdist.dir}/${app.name}-installer/etc/${app.name}.conf">
+            <entry key="jdkhome" value="&quot;jre6&quot;" />
+            <entry key="default_options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx1024m&quot;" />
+        </propertyfile>
+    </target>
+    
+    <target name="build-installer" depends="build-installer-dir">
+        <antcall target="build-installer-${os.family}" />
     </target>
 </project>

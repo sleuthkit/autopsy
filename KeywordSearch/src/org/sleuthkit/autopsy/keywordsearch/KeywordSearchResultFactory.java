@@ -225,7 +225,13 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             }
 
             //execute the query and get fscontents matching
-            Map<String, List<FsContent>> tcqRes = tcq.performQuery();
+            Map<String, List<FsContent>> tcqRes;
+            try {
+                tcqRes = tcq.performQuery();
+            } catch (NoOpenCoreException ex) {
+                logger.log(Level.WARNING, "Could not perform the query. ", ex);
+                return false;
+            }
             final Set<FsContent> fsContents = new HashSet<FsContent>();
             for (String key : tcqRes.keySet()) {
                 fsContents.addAll(tcqRes.get(key));
@@ -247,8 +253,14 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 AbstractFsContentNode.fillPropertyMap(resMap, f);
                 setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
                 if (literal_query) {
-                    final String snippet = LuceneQuery.querySnippet(tcq.getEscapedQueryString(), f.getId(), false, true);
-                    setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
+                    try {
+                        String snippet;
+                        snippet = LuceneQuery.querySnippet(tcq.getEscapedQueryString(), f.getId(), false, true);
+                        setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
+                    } catch (NoOpenCoreException ex) {
+                        logger.log(Level.WARNING, "Could not perform the query. ", ex);
+                        return false;
+                    }
                 }
                 final String highlightQueryEscaped = getHighlightQuery(tcq, literal_query, tcqRes, f);
                 toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq));
@@ -367,7 +379,14 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 LuceneQuery filesQuery = new LuceneQuery(keywordQuery);
                 filesQuery.escape();
 
-                Map<String, List<FsContent>> matchesRes = filesQuery.performQuery();
+                Map<String, List<FsContent>> matchesRes;
+                try {
+                    matchesRes = filesQuery.performQuery();
+                } catch (NoOpenCoreException ex) {
+                    logger.log(Level.WARNING, "Could not perform the query. ", ex);
+                    return false;
+                }
+
                 Set<FsContent> matches = new HashSet<FsContent>();
                 for (String key : matchesRes.keySet()) {
                     matches.addAll(matchesRes.get(key));
@@ -435,7 +454,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
      * worker for writing results to bb, with progress bar, cancellation, 
      * and central registry of workers to be stopped when case is closed
      */
-    static class ResultWriter extends SwingWorker<Object,Void> {
+    static class ResultWriter extends SwingWorker<Object, Void> {
 
         private static List<ResultWriter> writers = new ArrayList<ResultWriter>();
         private ProgressHandle progress;

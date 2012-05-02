@@ -47,6 +47,8 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private String[] imgPaths;
     // the time zone where the image is added
     private String timeZone;
+    //whether to not process FAT filesystem orphans
+    private boolean noFatOrphans;
     // paths to any set hash lookup databases (can be null)
     private String NSRLPath, knownBadPath;
     private boolean lookupFilesCheckboxChecked;
@@ -186,6 +188,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         imgAdded = false;
         imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
         timeZone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
+        noFatOrphans = ((Boolean)settings.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
 
         component.changeProgressBarTextAndColor("", 0, Color.black);
 
@@ -265,7 +268,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 }
             });
             try {
-                process = currentCase.makeAddImageProcess(Case.convertTimeZone(timeZone));
+                process = currentCase.makeAddImageProcess(Case.convertTimeZone(timeZone), noFatOrphans);
                 cancelledWhileRunning.enable();
                 process.run(imgPaths);
             } catch (TskException ex) {

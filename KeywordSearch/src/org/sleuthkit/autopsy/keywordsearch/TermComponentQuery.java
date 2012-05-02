@@ -125,15 +125,15 @@ public class TermComponentQuery implements KeywordSearchQuery {
     /*
      * execute query and return terms, helper method
      */
-    protected List<Term> executeQuery(SolrQuery q) {
+    protected List<Term> executeQuery(SolrQuery q) throws NoOpenCoreException {
         List<Term> termsCol = null;
         try {
-            Server.Core solrCore = KeywordSearch.getServer().getCore();
-            TermsResponse tr = solrCore.queryTerms(q);
+            Server solrServer = KeywordSearch.getServer();
+            TermsResponse tr = solrServer.queryTerms(q);
             termsCol = tr.getTerms(TERMS_SEARCH_FIELD);
             return termsCol;
         } catch (SolrServerException ex) {
-            logger.log(Level.SEVERE, "Error executing the regex terms query: " + termsQuery, ex);
+            logger.log(Level.WARNING, "Error executing the regex terms query: " + termsQuery, ex);
             return null;  //no need to create result view, just display error dialog
         }
     }
@@ -154,15 +154,20 @@ public class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) {
+    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) throws NoOpenCoreException {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
 
         //snippet
         String snippet = null;
         try {
             snippet = LuceneQuery.querySnippet(KeywordSearchUtil.escapeLuceneQuery(termHit, true, false), newFsHit.getId(), true, true);
-        } catch (Exception e) {
-            logger.log(Level.INFO, "Error querying snippet: " + termHit, e);
+        } 
+        catch (NoOpenCoreException e) {
+            logger.log(Level.WARNING, "Error querying snippet: " + termHit, e);
+            throw e;
+        }
+        catch (Exception e) {
+            logger.log(Level.WARNING, "Error querying snippet: " + termHit, e);
             return null;
         }
 
@@ -178,7 +183,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
             bba = newFsHit.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
             writeResult = new KeywordWriteResult(bba);
         } catch (Exception e) {
-            logger.log(Level.INFO, "Error adding bb artifact for keyword hit", e);
+            logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e);
             return null;
         }
 
@@ -212,16 +217,15 @@ public class TermComponentQuery implements KeywordSearchQuery {
             writeResult.add(attributes);
             return writeResult;
         } catch (TskException e) {
-            logger.log(Level.INFO, "Error adding bb attributes for terms search artifact", e);
+            logger.log(Level.WARNING, "Error adding bb attributes for terms search artifact", e);
         }
-        
+
         return null;
 
     }
 
-  
     @Override
-    public Map<String, List<FsContent>> performQuery() {
+    public Map<String, List<FsContent>> performQuery() throws NoOpenCoreException{
         Map<String, List<FsContent>> results = new HashMap<String, List<FsContent>>();
 
         final SolrQuery q = createQuery();
@@ -230,21 +234,26 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         for (Term term : terms) {
             final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
-            
+
             StringBuilder filesQueryB = new StringBuilder();
             filesQueryB.append(TERMS_SEARCH_FIELD).append(":").append(termS);
             final String queryStr = filesQueryB.toString();
 
             LuceneQuery filesQuery = new LuceneQuery(queryStr);
             try {
-                Map<String,List<FsContent>> subResults = filesQuery.performQuery();
-                Set<FsContent>filesResults = new HashSet<FsContent>();
+                Map<String, List<FsContent>> subResults = filesQuery.performQuery();
+                Set<FsContent> filesResults = new HashSet<FsContent>();
                 for (String key : subResults.keySet()) {
                     filesResults.addAll(subResults.get(key));
                 }
                 results.put(term.getTerm(), new ArrayList<FsContent>(filesResults));
-            } catch (RuntimeException e) {
-                logger.log(Level.SEVERE, "Error executing Solr query,", e);
+            } 
+            catch (NoOpenCoreException e) {
+                logger.log(Level.WARNING, "Error executing Solr query,", e);
+                throw e;
+            }
+            catch (RuntimeException e) {
+                logger.log(Level.WARNING, "Error executing Solr query,", e);
             }
 
         }
@@ -253,7 +262,6 @@ public class TermComponentQuery implements KeywordSearchQuery {
         return results;
     }
 
-   
     @Override
     public void execute() {
         SolrQuery q = createQuery();

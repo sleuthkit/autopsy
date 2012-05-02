@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.sleuthkit.autopsy.datamodel.FsContentStringStream;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -78,18 +79,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private final String hashDBServiceName = "Hash Lookup";
     private SleuthkitCase caseHandle = null;
     boolean initialized = false;
-    // TODO: use a more robust method than checking file extension to determine
-    // whether to try a file
-    // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
-    static final String[] ingestibleExtensions = {"tar", "jar", "zip", "gzip", "bzip2",
-        "gz", "tgz", "odf", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log",
-        "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
-        "pst", "xml", "class", "dwg"};
+    
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,
-    };
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
     private Map<Long, IngestStatus> ingestStatus;
     private Map<String, List<FsContent>> reportedHits; //already reported hits
 
@@ -219,16 +213,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         this.managerProxy = managerProxy;
 
-        Server.Core solrCore = null;
-        try {
-            solrCore = KeywordSearch.getServer().getCore();
-        } catch (SolrServerException ex) {
-            logger.log(Level.WARNING, "Could not get Solr core", ex);
-            managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, instance, "Error initializing.", "Keyword indexing and search cannot proceed. Try restarting the application."));
-            return;
-        }
+        Server solrServer = KeywordSearch.getServer();
 
-        ingester = solrCore.getIngester();
+
+        ingester = solrServer.getIngester();
 
         ingestStatus = new HashMap<Long, IngestStatus>();
 
@@ -348,14 +336,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private void indexChangeNotify() {
         //signal a potential change in number of indexed files
         try {
-            final int numIndexedFiles = KeywordSearch.getServer().getCore().queryNumIndexedFiles();
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
-                }
-            });
+            final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
+            KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
+        } catch (NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex);
         } catch (SolrServerException se) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", se);
         }
@@ -434,7 +418,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         private boolean extractAndIngest(FsContent f) {
             boolean success = false;
-            FsContentStringContentStream fscs = new FsContentStringContentStream(f, FsContentStringStream.Encoding.ASCII);
+            FsContentStringContentStream fscs = new FsContentStringContentStream(f, FsContentStringStream.Encoding.UTF8);
             try {
                 ingester.ingest(fscs);
                 success = true;
@@ -458,14 +442,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 return;
             }
 
-            boolean ingestible = false;
+            boolean ingestible = Ingester.isIngestible(fsContent);
             final String fileName = fsContent.getName();
-            for (String ext : ingestibleExtensions) {
-                if (fileName.toLowerCase().endsWith(ext)) {
-                    ingestible = true;
-                    break;
-                }
-            }
 
             String deletedMessage = "";
             if ((fsContent.getMeta_flags() & (TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getMetaFlag() | TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getMetaFlag())) != 0) {
@@ -482,19 +460,19 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
                     boolean processed = processNonIngestible(fsContent);
-                    postIngestibleErrorMessage(processed, fileName, deletedMessage);
+                    //postIngestibleErrorMessage(processed, fileName, deletedMessage);
 
                 } catch (Exception e) {
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
                     boolean processed = processNonIngestible(fsContent);
 
-                    postIngestibleErrorMessage(processed, fileName, deletedMessage);
+                    //postIngestibleErrorMessage(processed, fileName, deletedMessage);
 
                 }
             } else {
                 boolean processed = processNonIngestible(fsContent);
-                postNonIngestibleErrorMessage(processed, fsContent, deletedMessage);
+                //postNonIngestibleErrorMessage(processed, fsContent, deletedMessage);
 
             }
         }
@@ -591,6 +569,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
                 try {
                     queryResult = del.performQuery();
+                } catch (NoOpenCoreException ex) {
+                    logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), ex);
+                    //no reason to continue with next query if recovery failed
+                    //or wait for recovery to kick in and run again later
+                    //likely case has closed and threads are being interrupted
+                    return null;
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e);
                     continue;

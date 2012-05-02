@@ -69,6 +69,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     static final String PROCESS_PROP = "process";
     // boolean: whether or not to lookup files in the hashDB
     static final String LOOKUPFILES_PROP = "lookupFiles";
+    // boolean: whether or not to skip processing orphan files on FAT filesystems
+    static final String NOFATORPHANS_PROP = "nofatorphans";
     
     static final Logger logger = Logger.getLogger(AddImageAction.class.getName());
 
