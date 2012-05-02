@@ -55,7 +55,9 @@ public class FsContentStringStream extends InputStream {
     private StringBuilder tempString = new StringBuilder();
     private int tempStringLen = 0;
     private boolean isEOF = false;
-    private boolean stringAtBoundary = false; //if temp has part of string that didn't make it in previous read()
+    private boolean stringAtTempBoundary = false; //if temp has part of string that didn't make it in previous read()
+    private boolean stringAtBufBoundary = false; //if continue string from prev read 
+    private boolean inString = false; //if current temp has min chars required
     private static final byte[] oneCharBuf = new byte[1];
     private final int MIN_PRINTABLE_CHARS = 4; //num. of chars needed to qualify as a char string
     private static final String NLS = Character.toString((char) 10); //new line
@@ -71,8 +73,6 @@ public class FsContentStringStream extends InputStream {
         this.encoding = encoding.toString();
         //logger.log(Level.INFO, "FILE: " + content.getParentPath() + "/" + content.getName());
     }
-
-    
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
@@ -93,7 +93,7 @@ public class FsContentStringStream extends InputStream {
             return -1;
         }
 
-        if (stringAtBoundary) {
+        if (stringAtTempBoundary) {
             //append entire temp string residual from previous read()
             //because qualified string was broken down into 2 parts
             curString.append(tempString);
@@ -103,7 +103,7 @@ public class FsContentStringStream extends InputStream {
             tempString = new StringBuilder();
             tempStringLen = 0;
 
-            stringAtBoundary = false;
+            stringAtTempBoundary = false;
             //there could be more to this string in fscontent/buffer
         }
 
@@ -154,16 +154,23 @@ public class FsContentStringStream extends InputStream {
             if (DataConversion.isPrintableAscii(c)) {
                 tempString.append(c);
                 ++tempStringLen;
-                //boundary case handled after the loop
+                if (tempStringLen >= MIN_PRINTABLE_CHARS) {
+                    inString = true;
+                }
+
+                //boundary case when temp has still chars - handled after the loop
             } else if (!singleConsecZero) {
                 //break the string, clear temp
-                if (tempStringLen >= MIN_PRINTABLE_CHARS) {
-                    //append entire temp string
+                if (tempStringLen >= MIN_PRINTABLE_CHARS
+                        || stringAtBufBoundary) {
+                    //append entire temp string with new line
                     tempString.append(NLS);
                     ++tempStringLen;
 
                     curString.append(tempString);
                     curStringLen += tempStringLen;
+
+                    stringAtBufBoundary = false;
                 }
                 //reset temp
                 tempString = new StringBuilder();
@@ -171,6 +178,13 @@ public class FsContentStringStream extends InputStream {
             }
 
             newCurLen = curStringLen + tempStringLen;
+        }
+
+        //check if still in string state, so that next chars in read buf bypass min chars check
+        //and qualify as string even if less < min chars required
+        if (inString) {
+            inString = false; //reset
+            stringAtBufBoundary = true; //will bypass the check
         }
 
         //check if temp still has chars to qualify as a string
@@ -190,7 +204,7 @@ public class FsContentStringStream extends InputStream {
                 tempString = new StringBuilder(newTemp);
                 tempStringLen = newTemp.length();
 
-                stringAtBoundary = true;
+                stringAtTempBoundary = true;
 
             } else {
                 //append entire temp
@@ -213,7 +227,7 @@ public class FsContentStringStream extends InputStream {
 
         return copied;
     }
-    
+
     //append temp buffer to cur string buffer and reset temp, if enough chars
     //does not append new line
     private void appendResetTemp() {
@@ -233,6 +247,7 @@ public class FsContentStringStream extends InputStream {
             //logger.log(Level.INFO, curStringS);
             byte[] stringBytes = curStringS.getBytes(encoding);
             System.arraycopy(stringBytes, 0, b, off, Math.min(curStringLen, (int) len));
+            //logger.log(Level.INFO, curStringS);
             //copied all string, reset
             curString = new StringBuilder();
             int ret = curStringLen;

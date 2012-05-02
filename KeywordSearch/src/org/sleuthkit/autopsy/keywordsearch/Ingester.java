@@ -55,7 +55,7 @@ class Ingester {
     static final String[] ingestibleExtensions = {"tar", "jar", "zip", "gzip", "bzip2",
         "gz", "tgz", "odf", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log", "manifest",
         "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
-        "pst", "xml", "class", "dwg"};
+        "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
     Ingester() {
     }
