@@ -82,7 +82,7 @@ public class IngestManager {
     //workers
     private IngestFsContentThread fsContentIngester;
     private List<IngestImageThread> imageIngesters;
-    private SwingWorker queueWorker;
+    private SwingWorker<Object,Void> queueWorker;
     //services
     final List<IngestServiceImage> imageServices = enumerateImageServices();
     final List<IngestServiceFsContent> fsContentServices = enumerateFsContentServices();
@@ -923,7 +923,7 @@ public class IngestManager {
 //ingester worker for fsContent queue
 //worker runs until fsContent queue is consumed
 //and if needed, new instance is created and started when data arrives
-    private class IngestFsContentThread extends SwingWorker {
+    private class IngestFsContentThread extends SwingWorker<Object,Void> {
 
         private Logger logger = Logger.getLogger(IngestFsContentThread.class.getName());
         private ProgressHandle progress;
@@ -1064,7 +1064,7 @@ public class IngestManager {
     }
 
     /* Thread that adds image/file and service pairs to queues */
-    private class EnqueueWorker extends SwingWorker {
+    private class EnqueueWorker extends SwingWorker<Object,Void> {
 
         List<IngestServiceAbstract> services;
         final List<Image> images;
