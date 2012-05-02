@@ -23,44 +23,42 @@ package org.sleuthkit.autopsy.report;
 //interface every reporting module should implement
 public interface ReportModule {
 
-       /**
-       * Generates a report on the current case
-       * Reporting module should traverse the blackboard, extract needed
-       *  information as specified in the config
-       * and generate a report file
-       *
-       * @param config specifiying parts that should be generated
-       * @return absolute file path to the report generated
-       * @throws ReportModuleException if report generation failed
-       */
-       public String generateReport() throws ReportModuleException;
+    /**
+     * Generates a report on the current case Reporting module should traverse
+     * the blackboard, extract needed information as specified in the config and
+     * generate a report file
+     *
+     * @param config specifiying parts that should be generated
+     * @return absolute file path to the report generated
+     * @throws ReportModuleException if report generation failed
+     */
+    public String generateReport() throws ReportModuleException;
 
+    /**
+     * This saves a copy of the report (current one) to another place specified
+     * by the user. Takes the input of where the path needs to be saved, include
+     * filename and extention.
+     */
+    public void save(String Path) throws ReportModuleException;
 
-       /**
-       * This saves a copy of the report (current one) to another place specified by the user.
-       * Takes the input of where the path needs to be saved, include filename and extention.
-       */
-       public void save(String Path) throws ReportModuleException;
+    /**
+     * Returns a short description of report type/file format this module
+     * generates for instance, "XML", "Excel"
+     *
+     * @return
+     */
+    public String getReportType();
 
-       /**
-       * Returns a short description of report type/file format this module generates
-       * for instance, "XML", "Excel"
-       * @return
-       */
-       public String getReportType();
-       
-        /**
-       * Returns the reportconfiguration object that was created
-       * 
-       * @return
-       */
-       public ReportConfiguration getReportConfiguration();
+    /**
+     * Returns the reportconfiguration object that was created
+     *
+     * @return
+     */
+    public ReportConfiguration getReportConfiguration();
 
-       /**
-       * Returns a one line human readable description of the type of report
-this module generates
-       */
-       public String getReportTypeDescription();
-
-
+    /**
+     * Returns a one line human readable description of the type of report this
+     * module generates
+     */
+    public String getReportTypeDescription();
 }

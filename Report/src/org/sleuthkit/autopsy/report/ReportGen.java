@@ -27,21 +27,23 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  *
- * This class is the 'default' way to get artifacts/attributes from the blackboard using a reportconfiguration object. 
+ * This class is the 'default' way to get artifacts/attributes from the
+ * blackboard using a reportconfiguration object.
  */
 public class ReportGen {
-   HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
-  ReportGen(){
- 
-  }
-  
-  public void flushReport(){
+
+    HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> Results = new HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>>();
+
+    ReportGen() {
+    }
+
+    public void flushReport() {
         Results.clear();
-  }
-  
-  public void populateReport(ReportConfiguration config){  
-             flushReport();
-             report bbreport = new report();
-             Results = bbreport.getAllTypes(config);
-  }
+    }
+
+    public void populateReport(ReportConfiguration config) {
+        flushReport();
+        report bbreport = new report();
+        Results = bbreport.getAllTypes(config);
+    }
 }

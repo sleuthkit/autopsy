@@ -52,53 +52,50 @@ id = "org.sleuthkit.autopsy.report.reportAction")
     @ActionReference(path = "Menu/Tools", position = 80)
 })
 @Messages("CTL_reportAction=Run Report")
-public final class reportAction extends CallableSystemAction implements Presenter.Toolbar{
-    
+public final class reportAction extends CallableSystemAction implements Presenter.Toolbar {
+
     private JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = "Generate Report";
-     static final Logger logger = Logger.getLogger(reportAction.class.getName());
-    
+    static final Logger logger = Logger.getLogger(reportAction.class.getName());
+
     public reportAction() {
         setEnabled(false);
         Case.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                if(evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)){
+                if (evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)) {
                     setEnabled(evt.getNewValue() != null);
                 }
             }
-            
         });
         //attempt to create a report folder if a case is active
-        Case.addPropertyChangeListener(new PropertyChangeListener () {
+        Case.addPropertyChangeListener(new PropertyChangeListener() {
 
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            String changed = evt.getPropertyName();
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String changed = evt.getPropertyName();
 
-            //case has been changed
-            if (changed.equals(Case.CASE_CURRENT_CASE)) {
-            Case newCase = (Case)evt.getNewValue();
+                //case has been changed
+                if (changed.equals(Case.CASE_CURRENT_CASE)) {
+                    Case newCase = (Case) evt.getNewValue();
 
-                if (newCase != null) {
-                    boolean exists = (new File(newCase.getCaseDirectory() + "\\Reports")).exists();
-                    if (exists) {
-                        // report directory exists -- don't need to do anything
-                        
-                    } else {
-                        // report directory does not exist -- create it
-                        boolean reportCreate = (new File(newCase.getCaseDirectory() + "\\Reports")).mkdirs();
-                        if(!reportCreate){
-                            logger.log(Level.WARNING, "Could not create Reports directory for case. It does not exist.");
+                    if (newCase != null) {
+                        boolean exists = (new File(newCase.getCaseDirectory() + "\\Reports")).exists();
+                        if (exists) {
+                            // report directory exists -- don't need to do anything
+                        } else {
+                            // report directory does not exist -- create it
+                            boolean reportCreate = (new File(newCase.getCaseDirectory() + "\\Reports")).mkdirs();
+                            if (!reportCreate) {
+                                logger.log(Level.WARNING, "Could not create Reports directory for case. It does not exist.");
+                            }
                         }
                     }
-                } 
+                }
             }
-        }
+        });
 
-});
-        
         // set action of the toolbar button
         toolbarButton.addActionListener(new ActionListener() {
 
@@ -109,24 +106,25 @@ public final class reportAction extends CallableSystemAction implements Presente
         });
 
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            
+
             // create the popUp window for it
             final JFrame frame = new JFrame(ACTION_NAME);
             final JDialog popUpWindow = new JDialog(frame, ACTION_NAME, true); // to make the popUp Window to be modal
 
             // initialize panel with loaded settings
-            final reportFilter panel = new reportFilter();   
-             panel.setjButton2ActionListener(new ActionListener() {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                  popUpWindow.dispose();
-                            }
-                        });
-             
+            final reportFilter panel = new reportFilter();
+            panel.setjButton2ActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    popUpWindow.dispose();
+                }
+            });
+
             // add the panel to the popup window
             popUpWindow.add(panel);
             popUpWindow.pack();
@@ -141,16 +139,15 @@ public final class reportAction extends CallableSystemAction implements Presente
             // display the window
             popUpWindow.setVisible(true);
             // add the command to close the window to the button on the Case Properties form / panel
-           
-            
+
+
         } catch (Exception ex) {
             Log.get(reportFilterAction.class).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
         }
     }
-    
+
     @Override
     public void performAction() {
-        
     }
 
     @Override
@@ -162,11 +159,11 @@ public final class reportAction extends CallableSystemAction implements Presente
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-    
+
     /**
      * Returns the toolbar component of this action
      *
-     * @return component  the toolbar button
+     * @return component the toolbar button
      */
     @Override
     public Component getToolbarPresenter() {
@@ -179,10 +176,10 @@ public final class reportAction extends CallableSystemAction implements Presente
     /**
      * Set this action to be enabled/disabled
      *
-     * @param value  whether to enable this action or not
+     * @param value whether to enable this action or not
      */
     @Override
-    public void setEnabled(boolean value){
+    public void setEnabled(boolean value) {
         super.setEnabled(value);
         toolbarButton.setEnabled(value);
     }
