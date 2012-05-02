@@ -193,7 +193,7 @@ public class ExtractRegistry {
                 try {
                     Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
                     time = epochtime.longValue();
-                    String Tempdate = time.toString() + "000";
+                    String Tempdate = time.toString();
                     time = Long.valueOf(Tempdate);
                 } catch (ParseException e) {
                     logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
@@ -263,7 +263,7 @@ public class ExtractRegistry {
                             try {
                                 Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
                                 installtime = epochtime.longValue();
-                                String Tempdate = installtime.toString() + "000";
+                                String Tempdate = installtime.toString();
                                  installtime = Long.valueOf(Tempdate);
                             } catch (ParseException e) {
                                 logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());

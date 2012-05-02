@@ -61,7 +61,7 @@ public class Firefox {
     public Firefox() {
     }
 
-    public void getffdb(List<String> image, IngestImageWorkerController controller) throws SQLException {
+    public void getffdb(List<String> image, IngestImageWorkerController controller) {
         //Make these seperate, this is for history
         try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
