@@ -460,19 +460,19 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
                     boolean processed = processNonIngestible(fsContent);
-                    postIngestibleErrorMessage(processed, fileName, deletedMessage);
+                    //postIngestibleErrorMessage(processed, fileName, deletedMessage);
 
                 } catch (Exception e) {
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
                     boolean processed = processNonIngestible(fsContent);
 
-                    postIngestibleErrorMessage(processed, fileName, deletedMessage);
+                    //postIngestibleErrorMessage(processed, fileName, deletedMessage);
 
                 }
             } else {
                 boolean processed = processNonIngestible(fsContent);
-                postNonIngestibleErrorMessage(processed, fsContent, deletedMessage);
+                //postNonIngestibleErrorMessage(processed, fsContent, deletedMessage);
 
             }
         }
