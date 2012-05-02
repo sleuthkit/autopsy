@@ -108,8 +108,8 @@ public class Firefox {
                     dbFile.delete();
                     break;
                 }
-
-                ResultSet temprs = Util.runQuery(ffquery, connectionString);
+                    dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", connectionString);
+                    ResultSet temprs = tempdbconnect.executeQry(ffquery);
                 while (temprs.next()) {
                     try {
                         BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
@@ -126,6 +126,7 @@ public class Firefox {
                     }
                 }
                 temprs.close();
+                tempdbconnect.closeConnection();
 
 
 
@@ -225,7 +226,7 @@ public class Firefox {
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", "", temprs.getString("value")));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", ((temprs.getString("name") != null) ? temprs.getString("name") : "")));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "FireFox"));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", temprs.getString("host")));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", Util.getBaseDomain(temprs.getString("host"))));
                             bbart.addAttributes(bbattributes);
                         } catch (Exception ex) {
                             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);

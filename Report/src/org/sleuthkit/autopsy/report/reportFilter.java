@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class reportFilter extends javax.swing.JPanel {
 
     public static ArrayList<Integer> filters = new ArrayList<Integer>();
-    public static ReportConfiguration config = new ReportConfiguration();
+   public static ReportConfiguration config = new ReportConfiguration();
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public final reportFilter panel = this;
     reportPanelAction rpa = new reportPanelAction();
@@ -51,7 +51,13 @@ public class reportFilter extends javax.swing.JPanel {
     public reportFilter() {
         initComponents();
         cancel = false;
-
+        try{
+        config.getAllTypes();
+        }
+        catch(ReportModuleException ex)
+        {
+              Logger.getLogger(report.class.getName()).log(Level.SEVERE, "Exception occurred", ex);
+        }
     }
 
     /**

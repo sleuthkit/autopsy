@@ -105,6 +105,24 @@ public class Util {
         return rt;
     }
 
+    public static String getBaseDomain(String url) {
+    String host = url;
+
+    int startIndex = 0;
+    int nextIndex = host.indexOf('.');
+    int lastIndex = host.lastIndexOf('.');
+    while (nextIndex < lastIndex) {
+        startIndex = nextIndex + 1;
+        nextIndex = host.indexOf('.', startIndex);
+    }
+    if (startIndex > 0) {
+        return host.substring(startIndex);
+    } else {
+        return host;
+    }
+}
+    
+    
     public static String extractDomain(String value) {
         if (value == null) {
             throw new java.lang.NullPointerException("domains to extract");

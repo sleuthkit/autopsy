@@ -79,21 +79,21 @@ public final class RAImageIngestService implements IngestServiceImage {
 
         try {
             //do the work for(FileSystem img : imageFS )
-            try {
-                ResultSet artset = sCurrentCase.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
-                int artcount = 0;
-                while (artset.next()) {
-                    artcount++;
-                }
-
-                //  artset.beforeFirst();
-                if (artcount > 0) {
-                } else {
-                    int artint = sCurrentCase.addArtifactType("TSK_SYS_INFO", "System Information");
-                }
-
-            } catch (Exception e) {
-            }
+//            try {
+//                ResultSet artset = sCurrentCase.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
+//                int artcount = 0;
+//                while (artset.next()) {
+//                    artcount++;
+//                }
+//
+//                //  artset.beforeFirst();
+//                if (artcount > 0) {
+//                } else {
+//                    int artint = sCurrentCase.addArtifactType("TSK_SYS_INFO", "System Information");
+//                }
+//
+//            } catch (Exception e) {
+//            }
             ext.extractToBlackboard(controller, fsIds);
 
 

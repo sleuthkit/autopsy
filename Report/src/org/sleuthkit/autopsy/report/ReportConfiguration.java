@@ -60,8 +60,29 @@ class ReportConfiguration {
     }
 
     ;
-       //setters for generally supported report parts
-       public void setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type, Boolean value) throws ReportModuleException {
+    
+        //regets everything that occurs in the constructor normally
+       public void getAllTypes() throws ReportModuleException {
+        config.clear();
+        //now lets get the list from the tsk and current case
+        Case currentCase = Case.getCurrentCase(); // get the most updated case
+        SleuthkitCase skCase = currentCase.getSleuthkitCase();
+        try {
+            ArrayList<BlackboardArtifact.ARTIFACT_TYPE> arttypes = skCase.getBlackboardArtifactTypes();
+            for (BlackboardArtifact.ARTIFACT_TYPE type : arttypes) {
+                config.put(type, Boolean.FALSE);
+            }
+
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, "Error while trying to retrieve list of artifact types from the TSK case .", ex);
+        }
+
+    }
+
+    ;
+
+//setters for generally supported report parts
+public void setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type, Boolean value) throws ReportModuleException {
         if (config.containsKey(type)) {
             config.put(type, value);
         } else {

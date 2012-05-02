@@ -43,16 +43,16 @@ public class ExtractRegistry {
         } else {
             rrFound = true;
         }
-        try {
-            Case currentCase = Case.getCurrentCase(); // get the most updated case
-            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-            ResultSet artset = tempDb.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
-
-            while (artset.next()) {
-                sysid = artset.getInt("artifact_type_id");
-            }
-        } catch (Exception e) {
-        }
+//        try {
+//            Case currentCase = Case.getCurrentCase(); // get the most updated case
+//            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+//            ResultSet artset = tempDb.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
+//
+//            while (artset.next()) {
+//                sysid = artset.getInt("artifact_type_id");
+//            }
+//        } catch (Exception e) {
+//        }
         final String rrHome = rrRoot.getAbsolutePath();
         logger.log(Level.INFO, "RegRipper home: " + rrHome);
 
@@ -191,10 +191,10 @@ public class ExtractRegistry {
                 etime = timenode.getTextTrim();
                 Long time = null;
                 try {
-                    Long epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(etime).getTime();
+                    Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
                     time = epochtime.longValue();
                 } catch (ParseException e) {
-                    logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e.getMessage());
+                    logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                 }
                 Element artroot = tempnode.getChild("artifacts");
                 List<Element> artlist = artroot.getChildren();
@@ -216,16 +216,32 @@ public class ExtractRegistry {
                             //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
                             //               bbart.addAttributes(bbattributes);
                         } else if ("usb".equals(context)) {
+                            
+                             Long utime = null;
+                            try {
+                               
+                                utime = Long.parseLong(name);
+                            } catch (Exception e) {
+                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
+                            }
+                            
                             BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, name));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, utime));
                             String dev = artnode.getAttributeValue("dev");
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", context, dev));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", context, value));
                             bbart.addAttributes(bbattributes);
                         } else if ("uninstall".equals(context)) {
+                            Long ftime = null;
+                            try {
+                                Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(name).getTime();
+                                ftime = epochtime.longValue();
+                            } catch (ParseException e) {
+                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
+                            }
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, value));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, name));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, ftime));
                             BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                             bbart.addAttributes(bbattributes);
                         } else if ("WinVersion".equals(context)) {
@@ -238,15 +254,22 @@ public class ExtractRegistry {
                             }
                             if (name.contains("InstallDate")) {
                                 installdate = value;
+                                Long installtime = null;
+                            try {
+                                Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
+                                installtime = epochtime.longValue();
+                            } catch (ParseException e) {
+                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
+                            }
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, winver));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, installdate));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, installtime));
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                 bbart.addAttributes(bbattributes);
                             }
                         } else {
 
-                            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
-                            bbart.addAttributes(bbattributes);
+//                            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
+//                            bbart.addAttributes(bbattributes);
                         }
                     }
                 }
