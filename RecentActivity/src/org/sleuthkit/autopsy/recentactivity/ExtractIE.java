@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
@@ -67,6 +68,7 @@ public class ExtractIE { // implements BrowserActivity {
     private String favoriteQuery = "select * from `tsk_files` where parent_path LIKE '%/Favorites%' and name LIKE '%.url'";
     private String cookiesQuery = "select * from `tsk_files` where parent_path LIKE '%/Cookies%' and name LIKE '%.txt'";
     private String recentQuery = "select * from `tsk_files` where parent_path LIKE '%/Recent%' and name LIKE '%.lnk'";
+    private String JAVA_PATH = "java";
     //sleauthkit db handle
     SleuthkitCase tempDb;
     
@@ -293,8 +295,12 @@ public class ExtractIE { // implements BrowserActivity {
     private void init(List<String> image, IngestImageWorkerController controller) {
         final Case currentCase = Case.getCurrentCase();
         final String caseDir = Case.getCurrentCase().getCaseDirectory();
-        PASCO_RESULTS_PATH = caseDir + File.separator + "recentactivity" + File.separator + "results";
-
+        PASCO_RESULTS_PATH = Case.getCurrentCase().getTempDirectory() + File.separator + "results";
+        JAVA_PATH = PlatformUtil.getJavaPath();
+        if(JAVA_PATH == null || JAVA_PATH.isEmpty())
+        {
+            JAVA_PATH = "java";
+        }
         logger.log(Level.INFO, "Pasco results path: " + PASCO_RESULTS_PATH);
         
          final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false);
@@ -393,7 +399,7 @@ public class ExtractIE { // implements BrowserActivity {
             command.append(" > \"").append(PASCO_RESULTS_PATH).append("\\pasco2Result.").append(Integer.toString(fileIndex)).append(".txt\"");
            // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String cmd = command.toString();
-             JavaSystemCaller.Exec.execute("\"java "+cmd+ "\"");
+             JavaSystemCaller.Exec.execute("\"" + JAVA_PATH + " "+cmd+ "\"");
 
         } catch (Exception e) {
             success = false;
