@@ -1,6 +1,22 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ /*
+ *
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2012 42six Solutions.
+ * Contact: aebadirad <at> 42six <dot> com
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.report;
 
@@ -8,18 +24,11 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import org.sleuthkit.autopsy.coreutils.Log;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  *
@@ -32,15 +41,14 @@ public class reportPanelAction {
         
      }
          
-     public void reportGenerate(ArrayList<Integer> reportlist, final reportFilter rr){
+     public void reportGenerate(ReportConfiguration reportconfig, final reportFilter rr){
          try {
              //Clear any old reports in the string
              viewReport.setLength(0);
 
              
             // Generate the reports and create the hashmap
-        final HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>> Results = new HashMap<BlackboardArtifact,ArrayList<BlackboardAttribute>>();
-         report bbreport = new report();
+       final ReportGen report = new ReportGen();
          //see what reports we need to run and run them
          //Set progress bar to move while doing this
              SwingUtilities.invokeLater(new Runnable() {
@@ -48,21 +56,11 @@ public class reportPanelAction {
                 public void run() {
                  rr.progBarStartText();
                  }});
-             if(reportlist.contains(1)){Results.putAll(bbreport.getGenInfo());}
-             if(reportlist.contains(2)){Results.putAll(bbreport.getWebBookmark());}
-             if(reportlist.contains(3)){Results.putAll(bbreport.getWebCookie());}
-             if(reportlist.contains(4)){Results.putAll(bbreport.getWebHistory());}
-             if(reportlist.contains(5)){Results.putAll(bbreport.getWebDownload());}
-             if(reportlist.contains(6)){Results.putAll(bbreport.getRecentObject());}
-            // if(reportlist.contains(7)){Results.putAll(bbreport.getGenInfo());}
-             if(reportlist.contains(8)){Results.putAll(bbreport.getInstalledProg());}
-             if(reportlist.contains(9)){Results.putAll(bbreport.getKeywordHit());}
-             if(reportlist.contains(10)){Results.putAll(bbreport.getHashHit());}
-              if(reportlist.contains(11)){Results.putAll(bbreport.getDevices());}
+              report.populateReport(reportconfig);
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                 rr.progBarCount(2*Results.size());
+                 rr.progBarCount(2*report.Results.size());
                  }});
          //Turn our results into the appropriate xml/html reports
          //TODO: add a way for users to select what they will run when
@@ -71,7 +69,7 @@ public class reportPanelAction {
                 @Override
                    public void run()
                    { 
-                    reportXML xmlReport = new reportXML(Results, rr); 
+                    reportXML xmlReport = new reportXML(report.Results, rr); 
                    }
                 });
               Thread htmlthread = new Thread(new Runnable()
@@ -79,7 +77,7 @@ public class reportPanelAction {
                 @Override
                    public void run()
                    { 
-                    reportHTML htmlReport = new reportHTML(Results,rr);
+                    reportHTML htmlReport = new reportHTML(report.Results,rr);
                     BrowserControl.openUrl(reportHTML.htmlPath);
                    }
                 });
@@ -88,7 +86,7 @@ public class reportPanelAction {
                 @Override
                    public void run()
                    { 
-                    reportXLS xlsReport = new reportXLS(Results,rr);
+                    reportXLS xlsReport = new reportXLS(report.Results,rr);
                //   
                    }
                 });
@@ -110,7 +108,7 @@ public class reportPanelAction {
             htmlthread.join(); 
             //Set the temporary label to let the user know its done and is waiting on the report
             rr.progBarText();
-           final reportPanel panel = new reportPanel(viewReport.toString());
+           final reportPanel panel = new reportPanel();
             
            
              panel.setjButton1ActionListener(new ActionListener() {
@@ -120,19 +118,6 @@ public class reportPanelAction {
                                 popUpWindow.dispose();
                             }
                         });
-             panel.setjEditorPane1EventListener(new HyperlinkListener(){
-                 @Override
-                public void hyperlinkUpdate(HyperlinkEvent hev) {
-                     try {
-                    if (hev.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
-                    
-                    panel.getLink(hev);
-                    }
-                catch (Exception e) {
-                // Exceptions thrown...............
-                }
-                }
-             });
             // add the panel to the popup window
             popUpWindow.add(panel);
             
