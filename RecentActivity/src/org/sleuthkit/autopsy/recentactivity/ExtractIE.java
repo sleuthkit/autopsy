@@ -399,7 +399,7 @@ public class ExtractIE { // implements BrowserActivity {
             command.append(" > \"").append(PASCO_RESULTS_PATH).append("\\pasco2Result.").append(Integer.toString(fileIndex)).append(".txt\"");
            // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String cmd = command.toString();
-             JavaSystemCaller.Exec.execute("\"" + JAVA_PATH + " "+cmd+ "\"");
+             JavaSystemCaller.Exec.execute("\"\"" + JAVA_PATH + "\" "+cmd+ "\"");
 
         } catch (Exception e) {
             success = false;
