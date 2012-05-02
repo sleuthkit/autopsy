@@ -346,7 +346,10 @@ public class Chrome {
                             BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                             String domain = Util.extractDomain(temprs.getString("url"));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (temprs.getLong("start_time") / 10000)));
+                            Long time = temprs.getLong("start_time");
+                            String Tempdate = time.toString() + "000";
+                            time = Long.valueOf(Tempdate);
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", time));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", ((temprs.getString("url") != null) ? temprs.getString("url") : "")));
                             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "")));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", "", temprs.getString("full_path")));

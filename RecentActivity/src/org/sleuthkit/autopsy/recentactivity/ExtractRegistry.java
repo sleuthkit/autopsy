@@ -193,6 +193,8 @@ public class ExtractRegistry {
                 try {
                     Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
                     time = epochtime.longValue();
+                    String Tempdate = time.toString() + "000";
+                    time = Long.valueOf(Tempdate);
                 } catch (ParseException e) {
                     logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                 }
@@ -221,6 +223,8 @@ public class ExtractRegistry {
                             try {
                                
                                 utime = Long.parseLong(name);
+                                String Tempdate = utime.toString() + "000";
+                                 utime = Long.valueOf(Tempdate);
                             } catch (Exception e) {
                                 logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                             }
@@ -236,6 +240,7 @@ public class ExtractRegistry {
                             try {
                                 Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(name).getTime();
                                 ftime = epochtime.longValue();
+                                
                             } catch (ParseException e) {
                                 logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                             }
@@ -258,6 +263,8 @@ public class ExtractRegistry {
                             try {
                                 Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
                                 installtime = epochtime.longValue();
+                                String Tempdate = installtime.toString() + "000";
+                                 installtime = Long.valueOf(Tempdate);
                             } catch (ParseException e) {
                                 logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                             }
