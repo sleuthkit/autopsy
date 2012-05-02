@@ -135,7 +135,7 @@ class Ingester {
         //logger.log(Level.INFO, "Ingesting " + fields.get("file_name"));
         up.setParam("commit", "false");
 
-        final Future f = upRequestExecutor.submit(new UpRequestTask(up));
+        final Future<?> f = upRequestExecutor.submit(new UpRequestTask(up));
 
         try {
             f.get(getTimeout(sourceContent), TimeUnit.SECONDS);
