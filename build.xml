@@ -66,6 +66,7 @@
         <copy file="${basedir}/README.txt" tofile="${zip-tmp}/${app.name}/README.txt"/>
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
+        <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
         <antcall target="copyExternalLibs"></antcall>
         
         <!-- step (4) zip again, but with the version numbers in the dir -->
