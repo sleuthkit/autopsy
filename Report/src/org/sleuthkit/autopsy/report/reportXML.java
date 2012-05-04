@@ -34,20 +34,11 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.jdom.Comment;
 import org.jdom.Document;
-import org.jdom.Document.*;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.*;
 
 public class reportXML {
 

@@ -191,7 +191,9 @@ public class ExtractIE { // implements BrowserActivity {
                 Long datetime = Cookie.getCrtime();
                 String Tempdate = datetime.toString() + "000";
                 datetime = Long.valueOf(Tempdate);
-                String domain = Util.extractDomain(url);
+                String domain = url;
+                domain = domain.replaceFirst("^\\.+(?!$)", "");
+                domain = domain.replaceFirst("/", "");
                 try {
                     BlackboardArtifact bbart = Cookie.newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -253,10 +255,8 @@ public class ExtractIE { // implements BrowserActivity {
                 if (fav.getSize() > 0) {
                     bytesRead = fav.read(t, 0, fav.getSize()); // read the data
                 }
-
-
+                
                 // set the data on the bottom and show it
-
                 String recentString = new String();
 
 

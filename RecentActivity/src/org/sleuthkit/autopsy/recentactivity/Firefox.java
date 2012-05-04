@@ -21,7 +21,6 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URLDecoder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -31,7 +30,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
@@ -226,7 +224,9 @@ public class Firefox {
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", "", temprs.getString("value")));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", ((temprs.getString("name") != null) ? temprs.getString("name") : "")));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "FireFox"));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", Util.getBaseDomain(temprs.getString("host"))));
+                            String domain = Util.getBaseDomain(temprs.getString("host"));
+                            domain = domain.replaceFirst("^\\.+(?!$)", "");
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", domain));
                             bbart.addAttributes(bbattributes);
                         } catch (Exception ex) {
                             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);

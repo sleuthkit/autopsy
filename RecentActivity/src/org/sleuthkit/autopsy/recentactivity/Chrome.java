@@ -190,6 +190,7 @@ public class Chrome {
                             BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                             String domain = temprs.getString("host_key");
+                            domain = domain.replaceFirst("^\\.+(?!$)", "");
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", temprs.getString("host_key")));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", (temprs.getLong("last_access_utc") / 10000)));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", "", temprs.getString("value")));

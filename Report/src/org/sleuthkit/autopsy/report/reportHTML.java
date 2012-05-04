@@ -252,7 +252,7 @@ public class reportHTML {
                     }
                     String value = "";
                     Integer type = tempatt.getAttributeTypeID();
-                    if (type.equals(2) || type.equals(33)) {
+                    if (type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()) || type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())) {
                             try{
                         SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                         value = sdf.format(new java.util.Date((tempatt.getValueLong())));
@@ -279,42 +279,42 @@ public class reportHTML {
                     nodeGen.append(artifact);
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(1)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(3)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(4)).append("</td>");
+                    artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
                     artifact.append("</tr>");
                     nodeWebBookmark.append(artifact);
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(1)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(2)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(3)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(6)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(4)).append("</td>");
+                    artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
                     artifact.append("</tr>");
                     nodeWebCookie.append(artifact);
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(1)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(33)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(32)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(3)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(4)).append("</td>");
+                    artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
                     artifact.append("</tr>");
                     nodeWebHistory.append(artifact);
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(8)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(1)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(33)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(4)).append("</td>");
+                    artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
                     artifact.append("</tr>");
                     nodeWebDownload.append(artifact);
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()) {
                     //artifact.append("<tr><td>").append(objId.toString());
-                    artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(3)).append("</strong></td>");
-                    artifact.append("<td>").append(attributes.get(8)).append("</td>");
+                    artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</strong></td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID())).append("</td>");
                     artifact.append("<td>").append(file.getName()).append("</td>");
                     artifact.append("</tr>");
                     nodeRecentObjects.append(artifact);
@@ -327,8 +327,8 @@ public class reportHTML {
                     nodeTrackPoint.append(artifact);
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(4)).append("</strong></td>");
-                    artifact.append("<td>").append(attributes.get(2)).append("</td>");
+                    artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</strong></td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>");
                     artifact.append("</tr>");
                     nodeInstalled.append(artifact);
                 }
@@ -341,15 +341,15 @@ public class reportHTML {
                     // artifact.append("<tr><td>").append(objId.toString());
                     artifact.append("<tr").append(altRow).append("><td><strong>").append(file.getName().toString()).append("</strong></td>");
                     artifact.append("<td>").append(filesize.toString()).append("</td>");
-                    //artifact.append("<td>").append(attributes.get(31)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(30)).append("</td>");
+                    //artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_INTERESTING_FILE.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID())).append("</td>");
                     artifact.append("</tr>");
                     nodeHash.append(artifact);
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(18)).append("</strong></td>");
-                    artifact.append("<td>").append(attributes.get(20)).append("</td>");
-                    artifact.append("<td>").append(attributes.get(2)).append("</td>");
+                    artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID())).append("</strong></td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID())).append("</td>");
+                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>");
                     artifact.append("</tr>");
                     nodeDevice.append(artifact);
                 }
