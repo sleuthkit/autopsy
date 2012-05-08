@@ -154,6 +154,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             searcher.cancel(true);
         }
 
+        logger.log(Level.INFO, "Running final index commit and search");
         //final commit
         commit();
 
@@ -328,8 +329,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         StringBuilder msg = new StringBuilder();
         msg.append("Indexed files: ").append(indexed).append("<br />Indexed strings: ").append(indexed_extr);
         msg.append("<br />Skipped files: ").append(skipped).append("<br />");
-
-        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Keyword Indexing Completed", msg.toString()));
+        String indexStats = msg.toString();
+        logger.log(Level.INFO, "Keyword Indexing Completed: " + indexStats);
+        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Keyword Indexing Completed", indexStats));
 
     }
 
@@ -616,9 +618,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     for (final Keyword hitTerm : newResults.keySet()) {
                         List<FsContent> fsContentHits = newResults.get(hitTerm);
                         for (final FsContent hitFile : fsContentHits) {
-                            if (this.isCancelled()) {
-                                return null;
-                            }
                             KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, listName);
                             if (written == null) {
                                 //logger.log(Level.INFO, "BB artifact for keyword not written: " + hitTerm.toString());

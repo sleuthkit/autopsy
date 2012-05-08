@@ -468,14 +468,7 @@ public class IngestManager {
                 stats.addError(message.getSource());
             }
         }
-
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                ui.displayMessage(message);
-            }
-        });
+        ui.displayMessage(message);
     }
 
     /**
@@ -1038,7 +1031,7 @@ public class IngestManager {
                 progress.finish();
 
                 if (!this.isCancelled()) {
-                    //logger.log(Level.INFO, "Summary Report: " + stats.toString());
+                    logger.log(Level.INFO, "Summary Report: " + stats.toString());
                     //ui.displayReport(stats.toHtmlString());
                     IngestManager.this.postMessage(IngestMessage.createManagerMessage("File Ingest Complete", stats.toHtmlString()));
                 }

@@ -58,6 +58,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private static Color ERROR_COLOR = new Color(255, 90, 90);
     private int lastRowSelected = -1;
     private boolean resized = false;
+    private long totalMessages = 0;
 
     private enum COLUMN {
 
@@ -74,11 +75,11 @@ class IngestMessagePanel extends javax.swing.JPanel {
         customizeComponents();
     }
 
-    int getLastRowSelected() {
+    synchronized int getLastRowSelected() {
         return this.lastRowSelected;
     }
 
-    IngestMessageGroup getSelectedMessage() {
+    synchronized IngestMessageGroup getSelectedMessage() {
         if (lastRowSelected < 0) {
             return null;
         }
@@ -86,7 +87,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         return tableModel.getMessageGroup(lastRowSelected);
     }
 
-    IngestMessageGroup getMessageGroup(int rowNumber) {
+    synchronized IngestMessageGroup getMessageGroup(int rowNumber) {
         return tableModel.getMessageGroup(rowNumber);
     }
 
@@ -108,6 +109,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
         controlPanel = new javax.swing.JPanel();
         sortByLabel = new javax.swing.JLabel();
         sortByComboBox = new javax.swing.JComboBox();
+        totalMessagesNameLabel = new javax.swing.JLabel();
+        totalMessagesNameVal = new javax.swing.JLabel();
+        totalUniqueMessagesNameLabel = new javax.swing.JLabel();
+        totalUniqueMessagesNameVal = new javax.swing.JLabel();
 
         setOpaque(false);
 
@@ -115,7 +120,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         jScrollPane1.setOpaque(false);
 
         messageTable.setBackground(new java.awt.Color(221, 221, 235));
-        messageTable.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
+        messageTable.setFont(new java.awt.Font("Arial", 0, 10));
         messageTable.setModel(tableModel);
         messageTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         messageTable.setAutoscrolls(false);
@@ -139,22 +144,42 @@ class IngestMessagePanel extends javax.swing.JPanel {
             }
         });
 
+        totalMessagesNameLabel.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.totalMessagesNameLabel.text")); // NOI18N
+
+        totalMessagesNameVal.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.totalMessagesNameVal.text")); // NOI18N
+
+        totalUniqueMessagesNameLabel.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.totalUniqueMessagesNameLabel.text")); // NOI18N
+
+        totalUniqueMessagesNameVal.setText(org.openide.util.NbBundle.getMessage(IngestMessagePanel.class, "IngestMessagePanel.totalUniqueMessagesNameVal.text")); // NOI18N
+
         javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
         controlPanel.setLayout(controlPanelLayout);
         controlPanelLayout.setHorizontalGroup(
             controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(controlPanelLayout.createSequentialGroup()
-                .addGap(2, 2, 2)
+                .addGap(10, 10, 10)
                 .addComponent(sortByLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(sortByComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(247, Short.MAX_VALUE))
+                .addGap(101, 101, 101)
+                .addComponent(totalMessagesNameLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(totalMessagesNameVal, javax.swing.GroupLayout.DEFAULT_SIZE, 9, Short.MAX_VALUE)
+                .addGap(22, 22, 22)
+                .addComponent(totalUniqueMessagesNameLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(totalUniqueMessagesNameVal, javax.swing.GroupLayout.DEFAULT_SIZE, 8, Short.MAX_VALUE)
+                .addGap(22, 22, 22))
         );
         controlPanelLayout.setVerticalGroup(
             controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(sortByComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(sortByLabel))
+                .addComponent(sortByLabel)
+                .addComponent(totalUniqueMessagesNameLabel)
+                .addComponent(totalUniqueMessagesNameVal)
+                .addComponent(totalMessagesNameLabel)
+                .addComponent(totalMessagesNameVal))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -174,10 +199,12 @@ class IngestMessagePanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void sortByComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortByComboBoxActionPerformed
-        if (sortByComboBox.getSelectedIndex() == 0) {
-            tableModel.reSort(true);
-        } else {
-            tableModel.reSort(false);
+        synchronized (this) {
+            if (sortByComboBox.getSelectedIndex() == 0) {
+                tableModel.reSort(true);
+            } else {
+                tableModel.reSort(false);
+            }
         }
     }//GEN-LAST:event_sortByComboBoxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -186,6 +213,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private javax.swing.JTable messageTable;
     private javax.swing.JComboBox sortByComboBox;
     private javax.swing.JLabel sortByLabel;
+    private javax.swing.JLabel totalMessagesNameLabel;
+    private javax.swing.JLabel totalMessagesNameVal;
+    private javax.swing.JLabel totalUniqueMessagesNameLabel;
+    private javax.swing.JLabel totalUniqueMessagesNameVal;
     // End of variables declaration//GEN-END:variables
 
     private void customizeComponents() {
@@ -207,12 +238,12 @@ class IngestMessagePanel extends javax.swing.JPanel {
             //column.setCellRenderer(new MessageTableRenderer());
             column.setCellRenderer(renderer);
         }
-        
+
         messageTable.setCellSelectionEnabled(false);
         messageTable.setColumnSelectionAllowed(false);
         messageTable.setRowSelectionAllowed(true);
         messageTable.getSelectionModel().addListSelectionListener(new MessageVisitedSelection());
-        
+
     }
 
     @Override
@@ -220,9 +251,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
         super.setPreferredSize(dmnsn);
         setTableSize(messageTable.getParent().getSize());
     }
-    
 
-     void setTableSize(Dimension d) {
+    void setTableSize(Dimension d) {
         for (int i = 0; i < 3; ++i) {
             TableColumn column = messageTable.getColumnModel().getColumn(i);
             if (i == 0) {
@@ -245,23 +275,34 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
     }
 
-
-    public void addMessage(IngestMessage m) {
-        final int origMsgGroups = tableModel.getNumberUnreadGroups();
+    public synchronized void addMessage(IngestMessage m) {
+        //final int origMsgUnreadUnique = tableModel.getNumberUnreadGroups();
         tableModel.addMessage(m);
-        messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, tableModel.getNumberUnreadGroups());
+        
+        //update total individual messages count
+        ++totalMessages;
+        final int newMsgUnreadUnique = tableModel.getNumberUnreadGroups();
+                
+        messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, 0, newMsgUnreadUnique);
+        
+        //update labels
+        this.totalMessagesNameVal.setText(Long.toString(totalMessages));
+        final int totalMessagesUnique = tableModel.getNumberGroups();
+        this.totalUniqueMessagesNameVal.setText(Integer.toString(totalMessagesUnique));
+        //this.unreadLabelVal.setText(Integer.toString(newMsgUnreadUnique));
 
         //autoscroll
         //messageTable.scrollRectToVisible(messageTable.getCellRect(messageTable.getRowCount() - 1, messageTable.getColumnCount(), true));
     }
 
-    public void clearMessages() {
+    public synchronized void clearMessages() {
         final int origMsgGroups = tableModel.getNumberUnreadGroups();
         tableModel.clearMessages();
+        totalMessages = 0;
         messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, 0);
     }
 
-    private void setVisited(int rowNumber) {
+    private synchronized void setVisited(int rowNumber) {
         final int origMsgGroups = tableModel.getNumberUnreadGroups();
         tableModel.setVisited(rowNumber);
         renderer.setSelected(rowNumber);
@@ -558,10 +599,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
     //with the same uniqness
     static class IngestMessageGroup {
 
-        static Color VERY_HIGH_PRI_COLOR = new Color(164, 164, 202); //for a single message in a group
-        static Color HIGH_PRI_COLOR = new Color(180, 180, 211);
-        static Color MED_PRI_COLOR = new Color(199, 199, 222);
-        static Color LOW_PRI_COLOR = new Color(221, 221, 235);
+        static final Color VERY_HIGH_PRI_COLOR = new Color(164, 164, 202); //for a single message in a group
+        static final Color HIGH_PRI_COLOR = new Color(180, 180, 211);
+        static final Color MED_PRI_COLOR = new Color(199, 199, 222);
+        static final Color LOW_PRI_COLOR = new Color(221, 221, 235);
         private List<IngestMessage> messages;
         private int count;
 
@@ -581,8 +622,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
             //make sure uniqness agrees
             /*
             if (!message.getSource().equals(first.getSource())
-                    || !message.getUniqueKey().equals(first.getUniqueKey())) {
-                throw new IllegalArgumentException("Tried to add a message to a wrong message group.");
+            || !message.getUniqueKey().equals(first.getUniqueKey())) {
+            throw new IllegalArgumentException("Tried to add a message to a wrong message group.");
             } */
 
             messages.add(message);
@@ -597,8 +638,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
             //make sure uniqness agrees
             /*
             if (!firstG.getSource().equals(first.getSource())
-                    || !firstG.getUniqueKey().equals(first.getUniqueKey())) {
-                throw new IllegalArgumentException("Tried to add a message to a wrong message group.");
+            || !firstG.getUniqueKey().equals(first.getUniqueKey())) {
+            throw new IllegalArgumentException("Tried to add a message to a wrong message group.");
             } */
 
             for (IngestMessage m : group.getMessages()) {
@@ -694,10 +735,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
      * tooltips that show entire query string, disable selection borders
      */
     private class MessageTableRenderer extends DefaultTableCellRenderer {
-        
+
         //custom selection tracking
         private int selected = -1;
-        
+
         void setSelected(int row) {
             this.selected = row;
         }
@@ -769,31 +810,32 @@ class IngestMessagePanel extends javax.swing.JPanel {
         @Override
         public void valueChanged(ListSelectionEvent e) {
             ListSelectionModel selModel = (ListSelectionModel) e.getSource();
-            if (selModel.isSelectionEmpty() || selModel.getValueIsAdjusting())
+            if (selModel.isSelectionEmpty() || selModel.getValueIsAdjusting()) {
                 return;
-            
-                final int minIndex = selModel.getMinSelectionIndex();
-                final int maxIndex = selModel.getMaxSelectionIndex();
-                int selected = -1;
-                for (int i = minIndex; i <= maxIndex; i++) {
-                    if (selModel.isSelectedIndex(i)) {
-                        selected = i;
-                        break;
-                    }
+            }
+
+            final int minIndex = selModel.getMinSelectionIndex();
+            final int maxIndex = selModel.getMaxSelectionIndex();
+            int selected = -1;
+            for (int i = minIndex; i <= maxIndex; i++) {
+                if (selModel.isSelectedIndex(i)) {
+                    selected = i;
+                    break;
                 }
-                selModel.clearSelection();
-                if (selected != -1) {
-                    setVisited(selected);
-                    messageTable.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                    //check if has details
-                    IngestMessageGroup m = getMessageGroup(selected);
-                    String details = m.getDetails();
-                    if (details != null && !details.equals("")) {
-                        mainPanel.showDetails(selected);
-                    }
-                    messageTable.setCursor(null);
+            }
+            selModel.clearSelection();
+            if (selected != -1) {
+                setVisited(selected);
+                messageTable.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                //check if has details
+                IngestMessageGroup m = getMessageGroup(selected);
+                String details = m.getDetails();
+                if (details != null && !details.equals("")) {
+                    mainPanel.showDetails(selected);
                 }
-            
+                messageTable.setCursor(null);
+            }
+
         }
     }
 }
