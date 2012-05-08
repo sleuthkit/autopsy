@@ -33,6 +33,9 @@ public interface ReportModule {
      * @throws ReportModuleException if report generation failed
      */
     public String generateReport() throws ReportModuleException;
+    
+    //If it uses a report configuration and reports back to the gui its progress
+    public String generateReport(ReportConfiguration config, reportFilter rr) throws ReportModuleException;
 
     /**
      * This saves a copy of the report (current one) to another place specified

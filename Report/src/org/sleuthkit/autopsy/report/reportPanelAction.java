@@ -25,6 +25,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -41,7 +42,7 @@ public class reportPanelAction {
         
      }
          
-     public void reportGenerate(ReportConfiguration reportconfig, final reportFilter rr){
+     public void reportGenerate(final ReportConfiguration reportconfig, final reportFilter rr){
          try {
              //Clear any old reports in the string
              viewReport.setLength(0);
@@ -64,37 +65,54 @@ public class reportPanelAction {
                  }});
          //Turn our results into the appropriate xml/html reports
          //TODO: add a way for users to select what they will run when
-             Thread xmlthread = new Thread(new Runnable()
+             Thread reportThread = new Thread(new Runnable()
                 {
                 @Override
                    public void run()
-                   { 
-                    reportXML xmlReport = new reportXML(report.Results, rr); 
-                   }
-                });
-              Thread htmlthread = new Thread(new Runnable()
-                {
-                @Override
-                   public void run()
-                   { 
-                    reportHTML htmlReport = new reportHTML(report.Results,rr);
+                   {  
+                    StopWatch a = new StopWatch();
+                    a.start();
+                    reportHTML htmlReport = new reportHTML();
+                    try{
+                    htmlReport.generateReport(reportconfig, rr);
                     BrowserControl.openUrl(reportHTML.htmlPath);
+                    }
+                    catch(ReportModuleException e){
+                        Logger.getLogger(reportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the htmlReport", e);
+                    }
+                    a.stop();
+                    System.out.println("html in milliseconds: " + a.getElapsedTime());
+                    
+                    StopWatch s = new StopWatch();
+                    s.start();
+                    reportXLS xlsReport = new reportXLS();
+                    try{
+                    xlsReport.generateReport(reportconfig,rr);
+                    }
+                    catch(ReportModuleException e){
+                        Logger.getLogger(reportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the XLS Report", e);
+                    }
+                    s.stop();
+                    System.out.println("xls in milliseconds: " + s.getElapsedTime());
+                    
+                    StopWatch S = new StopWatch();
+                    S.start();
+                    reportXML xmlReport = new reportXML(); 
+                    try{
+                    xmlReport.generateReport(reportconfig,rr);
+                    }
+                    catch(ReportModuleException e){
+                        Logger.getLogger(reportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the XML Report", e);
+                    }
+                    S.stop();
+                    System.out.println("xml in milliseconds: " + S.getElapsedTime());
                    }
                 });
-                Thread xlsthread = new Thread(new Runnable()
-                {
-                @Override
-                   public void run()
-                   { 
-                    reportXLS xlsReport = new reportXLS(report.Results,rr);
-               //   
-                   }
-                });
+             
 
         // start our threads
-        xmlthread.start();
-        htmlthread.start();
-        xlsthread.start();
+        reportThread.start();
+    
             // display the window
             
             // create the popUp window for it
@@ -105,7 +123,7 @@ public class reportPanelAction {
             
             
             // initialize panel with loaded settings   
-            htmlthread.join(); 
+            
             //Set the temporary label to let the user know its done and is waiting on the report
             rr.progBarText();
            final reportPanel panel = new reportPanel();
@@ -128,11 +146,13 @@ public class reportPanelAction {
             double w = popUpWindow.getSize().getWidth();
             double h = popUpWindow.getSize().getHeight();
             popUpWindow.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
+          
+            reportThread.join();  
             rr.progBarDone();
             panel.setFinishedReportText();
             popUpWindow.setVisible(true);
-            xmlthread.join();
-            xlsthread.join();
+            
+     
             
            
          }

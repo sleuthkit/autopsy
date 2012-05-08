@@ -40,11 +40,20 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
 
-public class reportXML {
+public class reportXML implements ReportModule {
 
     public static Document xmldoc = new Document();
+    private ReportConfiguration reportconfig = new ReportConfiguration();
+    private String xmlPath;
 
-    public reportXML(HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report, reportFilter rr) {
+    public reportXML() {
+    }
+
+    @Override
+    public String generateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException{
+       ReportGen reportobj = new ReportGen();
+       reportobj.populateReport(reportconfig);
+        HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
         try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase skCase = currentCase.getSleuthkitCase();
@@ -173,9 +182,25 @@ public class reportXML {
             root.addContent(nodeKeyword);
             root.addContent(nodeHash);
             root.addContent(nodeDevice);
+            
+            
+            //Export it the first time
+              xmlPath = currentCase.getCaseDirectory() + "/Reports/" + caseName + "-" + datenotime + ".xml";
+              this.save(xmlPath);
 
-            try {
-                FileOutputStream out = new FileOutputStream(currentCase.getCaseDirectory() + "/Reports/" + caseName + "-" + datenotime + ".xml");
+        } catch (Exception e) {
+            Logger.getLogger(reportXML.class.getName()).log(Level.WARNING, "Exception occurred", e);
+        }
+
+        return xmlPath;
+    }
+
+    @Override
+    public void save(String path) {
+        
+        try {
+              
+                FileOutputStream out = new FileOutputStream(xmlPath);
                 XMLOutputter serializer = new XMLOutputter();
                 serializer.output(xmldoc, out);
                 out.flush();
@@ -183,10 +208,30 @@ public class reportXML {
             } catch (IOException e) {
                 System.err.println(e);
             }
+        
+    }
 
-        } catch (Exception e) {
-            Logger.getLogger(reportXML.class.getName()).log(Level.WARNING, "Exception occurred", e);
-        }
+    @Override
+    public String getReportType() {
+        String type = "XML";
+        return type;
+    }
+
+    @Override
+    public ReportConfiguration getReportConfiguration() {
+        ReportConfiguration config = reportconfig;
+        return config;
+    }
+
+    @Override
+    public String getReportTypeDescription() {
+        String desc = "This is an html formatted report that is meant to be viewed in a modern browser.";
+        return desc;
+    }
+
+    @Override
+    public String generateReport() throws ReportModuleException {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     private class NameVisitor extends ContentVisitor.Default<String> {

@@ -29,6 +29,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -38,14 +40,23 @@ import org.sleuthkit.datamodel.*;
  *
  * @author Alex
  */
-public class reportXLS {
+public class reportXLS implements ReportModule {
 
     public static Workbook wb = new XSSFWorkbook();
+    static String xlsPath = "";
+        ReportConfiguration config = new ReportConfiguration();
 
-    public reportXLS(HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report, reportFilter rr) {
+    public reportXLS() {
         //Empty the workbook first
-        Workbook wbtemp = new XSSFWorkbook();
         
+    }
+    @Override
+   public String generateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException {
+      config = reportconfig;
+      ReportGen reportobj = new ReportGen();
+      reportobj.populateReport(reportconfig);
+      HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
+      Workbook wbtemp = new XSSFWorkbook();
         int countGen = 0;
         int countBookmark = 0;
         int countCookie = 0;
@@ -371,19 +382,53 @@ public class reportXLS {
             }
 
 
-            //write out the report to the reports folder
-            try {
-                FileOutputStream fos = new FileOutputStream(currentCase.getCaseDirectory() + "/Reports/" + caseName + "-" + datenotime + ".xlsx");
-                wbtemp.write(fos);
-                fos.close();
-                wb = wbtemp;
-            } catch (IOException e) {
-                System.err.println(e);
-            }
+            //write out the report to the reports folder, set the wbtemp to the primary wb object
+           wb = wbtemp;
+           xlsPath = currentCase.getCaseDirectory() + "/Reports/" + caseName + "-" + datenotime + ".xlsx";
+           this.save(xlsPath);
 
         } catch (Exception E) {
             String test = E.toString();
         }
 
+         return xlsPath;
+    }
+    
+       @Override
+    public void save(String path)
+    {
+        try{ 
+             FileOutputStream fos = new FileOutputStream(path);
+              wb.write(fos);
+                fos.close();     
+        }
+        catch(IOException e){
+             Logger.getLogger(reportHTML.class.getName()).log(Level.SEVERE, "Could not write out XLS report!", e);
+        }
+        
+    }
+   
+    @Override
+      public String getReportType(){
+          String type = "XLS";
+        return type;
+      }
+
+ 
+    @Override
+    public ReportConfiguration getReportConfiguration(){
+        return config;
+    }
+
+    
+    @Override
+    public String getReportTypeDescription(){
+        String desc = "This is an xls formatted report that is meant to be viewed in Excel.";
+        return desc;
+    }
+
+    @Override
+    public String generateReport() throws ReportModuleException {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

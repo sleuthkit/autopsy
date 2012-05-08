@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.report;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.text.DateFormat;
@@ -45,16 +46,24 @@ import org.sleuthkit.datamodel.TskData;
  *
  * @author Alex
  */
-public class reportHTML {
-
+public class reportHTML implements ReportModule{
     //Declare our publically accessible formatted report, this will change everytime they run a report
     public static StringBuilder formatted_Report = new StringBuilder();
     public static StringBuilder unformatted_header = new StringBuilder();
     public static StringBuilder formatted_header = new StringBuilder();
     public static String htmlPath = "";
+    ReportConfiguration config = new ReportConfiguration();
 
-    public reportHTML(HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report, reportFilter rr) {
-
+     reportHTML(){
+        
+    }
+    
+    @Override
+    public String generateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException {
+        config = reportconfig;
+      ReportGen reportobj = new ReportGen();
+       reportobj.populateReport(reportconfig);
+        HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
         //This is literally a terrible way to count up all the types of artifacts, and doesn't include any added ones. 
         //Unlike the XML report, which is dynamic, this is formatted and needs to be redone later instead of being hardcoded.
         //Also, clearing variables to generate new report.
@@ -359,6 +368,7 @@ public class reportHTML {
             //Add them back in order
             //formatted_Report.append(nodeGen);
             // formatted_Report.append("</tbody></table>");
+            
             if (countWebBookmark > 0) {
                 formatted_Report.append(nodeWebBookmark);
                 formatted_Report.append("</tbody></table>");
@@ -406,15 +416,53 @@ public class reportHTML {
             formatted_header.append(formatted_Report);
             // unformatted_header.append(formatted_Report);
             htmlPath = currentCase.getCaseDirectory() + "/Reports/" + caseName + "-" + datenotime + ".html";
-            Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(htmlPath), "UTF-8"));
-            out.write(formatted_header.toString());
-
-            out.flush();
-            out.close();
-
+            this.save(htmlPath);
+            
         } catch (Exception e) {
 
             Logger.getLogger(reportHTML.class.getName()).log(Level.WARNING, "Exception occurred", e);
         }
+        return htmlPath;
     }
+    
+ 
+    @Override
+    public void save(String path)
+    {
+        try{
+         Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(htmlPath), "UTF-8"));
+            out.write(formatted_header.toString());
+            out.flush();
+            out.close();
+        }
+        catch(IOException e){
+             Logger.getLogger(reportHTML.class.getName()).log(Level.SEVERE, "Could not write out HTML report!", e);
+        }
+        
+    }
+   
+    @Override
+      public String getReportType(){
+          String type = "HTML";
+        return type;
+      }
+
+ 
+    @Override
+    public ReportConfiguration getReportConfiguration(){
+        return config;
+    }
+
+    
+    @Override
+    public String getReportTypeDescription(){
+        String desc = "This is an html formatted report that is meant to be viewed in a modern browser.";
+        return desc;
+    }
+
+    @Override
+    public String generateReport() throws ReportModuleException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
 }
