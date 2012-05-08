@@ -49,15 +49,10 @@ class HashDbMgmtAction extends CallableSystemAction {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (panel.indexesExist()) {
-                    try {
-                        panel.saveSettings();
-                    } catch (IOException ex) {
-                        Log.get(HashDbMgmtAction.class).log(Level.WARNING, "Couldn't save hash database settings.", ex);
-                    }
+                if(panel.save()) {
                     dialog.close();
                 } else {
-                    NotifyDescriptor d = new NotifyDescriptor.Message("All selected databases must have indexes.", NotifyDescriptor.INFORMATION_MESSAGE);
+                    NotifyDescriptor d = new NotifyDescriptor.Message("Error saving settings", NotifyDescriptor.INFORMATION_MESSAGE);
                     DialogDisplayer.getDefault().notify(d);
                 }
             }

@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- *
+ * 
  * Copyright 2011 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,34 +19,69 @@
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.io.File;
+import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * HashDb is based on the path to a database, and has methods to check the 
- * status of database and index files, and create indexes.  One of these 
- * is created for every open hash database. 
+ *
+ * @author dfickling
  */
-class HashDb {
+public class HashDb implements Comparable<HashDb> {
 
+    public enum DBType{
+        NSRL, NOTABLE;
+    }
+    
     // Suffix added to the end of a database name to get its index file
     private static final String INDEX_SUFFIX = "-md5.idx";
-    /**
-     * Path to database (database and/or index may not actually exist)
-     */
-    String databasePath;
-
-    /**
-     * New {@link HashDb} for database at given path
-     * @param databasePath Path of database this instance represents (database
-     * and/or index may not actually exist)
-     */
-    HashDb(String databasePath) {
-        this.databasePath = databasePath;
+    
+    private String name;
+    private List<String> databasePaths; // TODO: Length limited to one for now...
+    private boolean useForIngest;
+    private DBType type;
+    
+    public HashDb(String name, DBType type, List<String> databasePaths, boolean useForIngest) {
+        this.name = name;
+        this.type = type;
+        this.databasePaths = databasePaths;
+        this.useForIngest = useForIngest;
     }
-
+    
+    boolean getUseForIngest() {
+        return useForIngest;
+    }
+    
+    String getName() {
+        return name;
+    }
+    
+    List<String> getDatabasePaths() {
+        return databasePaths;
+    }
+    
+    DBType getType() {
+        return type;
+    }
+    
+    void setUseForIngest(boolean useForIngest) {
+        this.useForIngest = useForIngest;
+    }
+    
+    void setName(String name) {
+        this.name = name;
+    }
+    
+    void setDatabasePaths(List<String> databasePaths) {
+        this.databasePaths = databasePaths;
+    }
+    
+    void setType(DBType type) {
+        this.type = type;
+    }
+    
     /**
      * Checks if the database exists.
      * @return true if a file exists at the database path, else false
@@ -54,14 +89,14 @@ class HashDb {
     boolean databaseExists() {
         return databaseFile().exists();
     }
-
+    
     /**
      * Checks if Sleuth Kit can open the index for the database path.
      * @return true if the index was found and opened successfully, else false
      */
     boolean indexExists() {
         try {
-            return hasIndex(databasePath);
+            return hasIndex(databasePaths.get(0)); // TODO: support multiple paths
         } catch (TskException ex) {
             Log.get(this.getClass()).log(Level.WARNING, "Error checking if index exists.", ex);
             return false;
@@ -73,16 +108,16 @@ class HashDb {
      * @return a File initialized with the database path
      */
     File databaseFile() {
-        return new File(databasePath);
+        return new File(databasePaths.get(0)); // TODO: support multiple paths
     }
-
+    
     /**
      * Gets the index file
      * @return a File initialized with an index path derived from the database
      * path
      */
     File indexFile() {
-        return new File(toIndexPath(databasePath));
+        return new File(toIndexPath(databasePaths.get(0))); // TODO: support multiple paths
     }
 
     /**
@@ -123,7 +158,7 @@ class HashDb {
      * @throws TskException if an error occurs in the SleuthKit bindings 
      */
     void createIndex() throws TskException {
-        SleuthkitJNI.createLookupIndex(databasePath);
+        SleuthkitJNI.createLookupIndex(databasePaths.get(0), name); //TODO: fix for multiple paths
         //TODO: error checking
     }
 
@@ -175,5 +210,10 @@ class HashDb {
      */
     static boolean hasIndex(String databasePath) throws TskException {
         return SleuthkitJNI.lookupIndexExists(databasePath);
+    }
+    
+    @Override
+    public int compareTo(HashDb o) {
+        return this.name.compareTo(o.name);
     }
 }
