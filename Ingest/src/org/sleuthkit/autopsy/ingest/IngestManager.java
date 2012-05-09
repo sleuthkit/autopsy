@@ -942,6 +942,7 @@ public class IngestManager {
 
                 @Override
                 public boolean cancel() {
+                    logger.log(Level.INFO, "Filed ingest cancelled by user.");
                     return IngestFsContentThread.this.cancel(true);
                 }
             });
@@ -965,6 +966,7 @@ public class IngestManager {
 
                 for (IngestServiceFsContent service : unit.getValue()) {
                     if (isCancelled()) {
+                        logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
                         return null;
                     }
 
@@ -1075,6 +1077,7 @@ public class IngestManager {
 
                 @Override
                 public boolean cancel() {
+                    logger.log(Level.INFO, "Queueing ingest cancelled by user.");
                     return EnqueueWorker.this.cancel(true);
                 }
             });
@@ -1123,6 +1126,7 @@ public class IngestManager {
                 Collection<FsContent> fsContents = null;
                 for (IngestServiceAbstract service : services) {
                     if (isCancelled()) {
+                        logger.log(Level.INFO, "Terminating ingest queueing due to cancellation.");
                         return;
                     }
                     final String serviceName = service.getName();
