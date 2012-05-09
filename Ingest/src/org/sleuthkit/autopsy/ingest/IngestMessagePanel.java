@@ -56,9 +56,9 @@ class IngestMessagePanel extends javax.swing.JPanel {
     private static Font visitedFont = new Font("Arial", Font.PLAIN, 11);
     private static Font notVisitedFont = new Font("Arial", Font.BOLD, 11);
     private static Color ERROR_COLOR = new Color(255, 90, 90);
-    private int lastRowSelected = -1;
     private boolean resized = false;
-    private long totalMessages = 0;
+    private volatile int lastRowSelected = -1;
+    private volatile long totalMessages = 0;
 
     private enum COLUMN {
 
@@ -75,7 +75,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         customizeComponents();
     }
 
-    synchronized int getLastRowSelected() {
+    int getLastRowSelected() {
         return this.lastRowSelected;
     }
 
@@ -278,13 +278,13 @@ class IngestMessagePanel extends javax.swing.JPanel {
     public synchronized void addMessage(IngestMessage m) {
         //final int origMsgUnreadUnique = tableModel.getNumberUnreadGroups();
         tableModel.addMessage(m);
-        
+
         //update total individual messages count
         ++totalMessages;
         final int newMsgUnreadUnique = tableModel.getNumberUnreadGroups();
-                
+
         messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, 0, newMsgUnreadUnique);
-        
+
         //update labels
         this.totalMessagesNameVal.setText(Long.toString(totalMessages));
         final int totalMessagesUnique = tableModel.getNumberGroups();
@@ -297,8 +297,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
     public synchronized void clearMessages() {
         final int origMsgGroups = tableModel.getNumberUnreadGroups();
-        tableModel.clearMessages();
         totalMessages = 0;
+        tableModel.clearMessages();
+        totalMessagesNameVal.setText("-");
+        totalUniqueMessagesNameVal.setText("-");
         messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, 0);
     }
 
@@ -321,6 +323,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
         private Logger logger = Logger.getLogger(MessageTableModel.class.getName());
 
         MessageTableModel() {
+            init();
+        }
+
+        private void init() {
             //initialize groupings map with services
             for (IngestServiceAbstract service : IngestManager.enumerateFsContentServices()) {
                 groupings.put(service, new HashMap<String, List<IngestMessageGroup>>());
@@ -336,15 +342,15 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         @Override
-        public int getRowCount() {
+        synchronized public int getRowCount() {
             return getNumberGroups();
         }
 
-        int getNumberGroups() {
+        synchronized int getNumberGroups() {
             return messageData.size();
         }
 
-        int getNumberMessages() {
+        synchronized int getNumberMessages() {
             int total = 0;
             for (TableEntry e : messageData) {
                 total += e.messageGroup.count;
@@ -352,7 +358,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
             return total;
         }
 
-        int getNumberUnreadMessages() {
+        synchronized int getNumberUnreadMessages() {
             int total = 0;
             for (TableEntry e : messageData) {
                 if (e.visited == false) {
@@ -362,7 +368,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
             return total;
         }
 
-        int getNumberUnreadGroups() {
+        synchronized int getNumberUnreadGroups() {
             int total = 0;
             for (TableEntry e : messageData) {
                 if (e.visited == false) {
@@ -394,8 +400,9 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
+        public synchronized Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
+
             TableEntry entry = messageData.get(rowIndex);
 
             switch (columnIndex) {
@@ -430,11 +437,11 @@ class IngestMessagePanel extends javax.swing.JPanel {
             return getValueAt(0, c).getClass();
         }
 
-        private int getTableEntryIndex(IngestMessageGroup group) {
+        private synchronized int getTableEntryIndex(String uniqueKey) {
             int ret = -1;
             int i = 0;
             for (TableEntry e : messageData) {
-                if (e.messageGroup.getUniqueKey().equals(group.getUniqueKey())) {
+                if (e.messageGroup.getUniqueKey().equals(uniqueKey)) {
                     ret = i;
                     break;
                 }
@@ -443,7 +450,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
             return ret;
         }
 
-        public void addMessage(IngestMessage m) {
+        synchronized public void addMessage(IngestMessage m) {
             //check how many messages per service with the same uniqness
             //and add to existing group or create a new group
             IngestServiceAbstract service = m.getSource();
@@ -461,26 +468,28 @@ class IngestMessagePanel extends javax.swing.JPanel {
                     uniqGroups.add(messageGroup);
                     groups.put(uniqueness, uniqGroups);
                 } else {
-                    int uniqueGroupsCount = uniqGroups.size();
+                    final int uniqueGroupsCount = uniqGroups.size();
                     if (uniqueGroupsCount > MESSAGE_GROUP_THRESH) {
                         //merge them
                         messageGroup = uniqGroups.get(0);
                         for (int i = 1; i < uniqueGroupsCount; ++i) {
-                            messageGroup.add(uniqGroups.get(i));
+                            messageGroup.addAll(uniqGroups.get(i));
                         }
                         //add the new msg
                         messageGroup.add(m);
                         //remove merged groups
                         uniqGroups.clear();
+
+                        //add the group with all messages merged
                         uniqGroups.add(messageGroup);
-                        //remove all rows, new merged row will be added to the bottom
+
+                        //remove all rows with this uniquness, new merged row will be added to the bottom
                         int toRemove = 0;
-                        while ((toRemove = getTableEntryIndex(messageGroup)) != -1) {
+                        while ((toRemove = getTableEntryIndex(uniqueness)) != -1) {
                             messageData.remove(toRemove);
                             //remove the row, will be added to the bottom
                             this.fireTableRowsDeleted(toRemove, toRemove);
                         }
-
 
                     } else if (uniqueGroupsCount == 1) {
                         IngestMessageGroup first = uniqGroups.get(0);
@@ -492,11 +501,12 @@ class IngestMessagePanel extends javax.swing.JPanel {
                             //move to bottom of table
                             //remove from existing position
                             int toRemove = 0;
-                            while ((toRemove = getTableEntryIndex(messageGroup)) != -1) {
+                            while ((toRemove = getTableEntryIndex(uniqueness)) != -1) {
                                 messageData.remove(toRemove);
                                 //remove the row, will be added to the bottom
                                 this.fireTableRowsDeleted(toRemove, toRemove);
                             }
+
                         } else {
                             //one group with one message
                             //create another group
@@ -530,18 +540,20 @@ class IngestMessagePanel extends javax.swing.JPanel {
             }
         }
 
-        public void clearMessages() {
+        public synchronized void clearMessages() {
             messageData.clear();
+            groupings.clear();
+            init();
             fireTableDataChanged();
         }
 
-        public void setVisited(int rowNumber) {
+        public synchronized void setVisited(int rowNumber) {
             messageData.get(rowNumber).visited = true;
             //repaint the cell 
             fireTableCellUpdated(rowNumber, 2);
         }
 
-        public void setVisitedAll() {
+        public synchronized void setVisitedAll() {
             int row = 0;
             for (TableEntry e : messageData) {
                 if (e.visited == false) {
@@ -552,19 +564,19 @@ class IngestMessagePanel extends javax.swing.JPanel {
             }
         }
 
-        public boolean isVisited(int rowNumber) {
+        public synchronized boolean isVisited(int rowNumber) {
             return messageData.get(rowNumber).visited;
         }
 
-        public MessageType getMessageType(int rowNumber) {
+        public synchronized MessageType getMessageType(int rowNumber) {
             return messageData.get(rowNumber).messageGroup.getMessageType();
         }
 
-        public IngestMessageGroup getMessageGroup(int rowNumber) {
+        public synchronized IngestMessageGroup getMessageGroup(int rowNumber) {
             return messageData.get(rowNumber).messageGroup;
         }
 
-        public void reSort(boolean chronoLogical) {
+        public synchronized void reSort(boolean chronoLogical) {
             if (chronoSort == chronoLogical) {
                 return;
             }
@@ -631,7 +643,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         //add all messages from another group
-        void add(IngestMessageGroup group) {
+        void addAll(IngestMessageGroup group) {
 
             //IngestMessage first = messages.get(0);
             //IngestMessage firstG = group.messages.get(0);

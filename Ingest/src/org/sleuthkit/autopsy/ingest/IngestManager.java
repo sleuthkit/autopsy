@@ -460,7 +460,7 @@ public class IngestManager {
      * IngestService should make an attempt not to publish the same message multiple times.
      * Viewer will attempt to identify duplicate messages and filter them out (slower)
      */
-    synchronized void postMessage(final IngestMessage message) {
+    void postMessage(final IngestMessage message) {
 
         if (stats != null) {
             //record the error for stats, if stats are running
