@@ -284,7 +284,7 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                 String setName = (String) JOptionPane.showInputDialog(this, "New Hash Set name:", "New Hash Set", 
                         JOptionPane.PLAIN_MESSAGE, null, null, derivedName);
                 
-                nsrlTableModel.newSet(setName, Arrays.asList(new String[] {filePath}), false, HashDb.DBType.NSRL); // TODO: support multiple file paths
+                nsrlTableModel.newSet(setName, Arrays.asList(new String[] {filePath}), true, HashDb.DBType.NSRL); // TODO: support multiple file paths
 
 
             } catch (IOException ex) {
@@ -317,7 +317,7 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                         JOptionPane.PLAIN_MESSAGE, null, null, derivedName);
                 
                 if(setName != null && !setName.equals(""))
-                    notableTableModel.newSet(setName, Arrays.asList(new String[] {filePath}), false, HashDb.DBType.NOTABLE); // TODO: support multiple file paths
+                    notableTableModel.newSet(setName, Arrays.asList(new String[] {filePath}), true, HashDb.DBType.NOTABLE); // TODO: support multiple file paths
 
 
             } catch (IOException ex) {
@@ -492,19 +492,22 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
             
             
             IndexStatus selected = (IndexStatus) table.getModel().getValueAt(row, column);
-            theButton.setText(selected.toString());
             
             switch (selected) {
                 case INDEX_OUTDATED:
+                    theButton.setText("Re-index");
                     theButton.setEnabled(true);
                     break;
                 case INDEX_CURRENT:
+                    theButton.setText("Re-index");
                     theButton.setEnabled(true);
                     break;
                 case NO_INDEX:
+                    theButton.setText("Index");
                     theButton.setEnabled(true);
                     break;
                 default:
+                    theButton.setText("No DB");
                     theButton.setEnabled(false);
             }
             

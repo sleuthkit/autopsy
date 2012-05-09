@@ -41,21 +41,13 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(HashDbSimplePanel.class.getName());
     private HashTableModel notableTableModel;
     private HashTableModel nsrlTableModel;
-    private static HashDbSimplePanel instance;
 
     /** Creates new form HashDbSimplePanel */
-    private HashDbSimplePanel() {
+    public HashDbSimplePanel() {
         notableTableModel = new HashTableModel();
         nsrlTableModel = new HashTableModel();
         initComponents();
         customizeComponents();
-    }
-    
-    public static HashDbSimplePanel getDefault() {
-        if(instance == null) {
-            instance = new HashDbSimplePanel();
-        }
-        return instance;
     }
     
     private void customizeComponents() {

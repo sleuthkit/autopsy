@@ -86,7 +86,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
             NSRLDbs.clear();
             notableDbs.clear();
             skCase.clearLookupDatabases();
-            boolean nsrlsSet = false;
+            boolean nsrlSet = false;
             boolean notablesSet = false;
             
             for(HashDb db : hdbxml.getSets()) {
@@ -95,12 +95,12 @@ public class HashDbIngestService implements IngestServiceFsContent {
                     notablesSet = true;
                     skCase.addKnownBadDatabase(db.getDatabasePaths().get(0), db.getName()); // TODO: support multiple paths
                 } else if(db.getType().equals(DBType.NSRL) && db.getUseForIngest()) {
-                    nsrlsSet = true;
-                    skCase.addNSRLDatabase(db.getDatabasePaths().get(0), db.getName()); // TODO: support multiple paths
+                    nsrlSet = true;
+                    skCase.setNSRLDatabase(db.getDatabasePaths().get(0)); // TODO: support multiple paths
                 }
             }
 
-            if (!nsrlsSet) {
+            if (!nsrlSet) {
                 this.managerProxy.postMessage(IngestMessage.createWarningMessage(++messageId, this, "No NSRL database set", "Known file search will not be executed."));
             }
             if (!notablesSet) {
@@ -266,7 +266,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
 
     @Override
     public javax.swing.JPanel getSimpleConfiguration() {
-        return HashDbSimplePanel.getDefault();
+        return new HashDbSimplePanel();
     }
 
     @Override
