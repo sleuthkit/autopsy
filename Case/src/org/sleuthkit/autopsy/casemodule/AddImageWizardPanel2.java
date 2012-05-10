@@ -58,6 +58,9 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private boolean imgAdded; // initalized to false in readSettings()
     private AddImageProcess process;
     private AddImgTask addImageTask;
+    
+    private static final Logger logger = Logger.getLogger(AddImageWizardPanel2.class.getName());
+    
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
@@ -267,12 +270,16 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                     SleuthkitCase.dbWriteLock();
                 }
             });
+            
+            
+            process = currentCase.makeAddImageProcess(Case.convertTimeZone(timeZone), noFatOrphans);
+            cancelledWhileRunning.enable();
             try {
-                process = currentCase.makeAddImageProcess(Case.convertTimeZone(timeZone), noFatOrphans);
-                cancelledWhileRunning.enable();
                 process.run(imgPaths);
             } catch (TskException ex) {
-                throw ex;
+                logger.log(Level.WARNING, "Errors occurred while running add image. ", ex);
+                //do not rethrow
+                //TODO show record and add error count to add image summary stats dialog
             } finally {
                 // process is over, doesn't need to be dealt with if cancel happens
                 cancelledWhileRunning.disable();
