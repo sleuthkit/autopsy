@@ -49,9 +49,6 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private String timeZone;
     //whether to not process FAT filesystem orphans
     private boolean noFatOrphans;
-    // paths to any set hash lookup databases (can be null)
-    private String NSRLPath, knownBadPath;
-    private boolean lookupFilesCheckboxChecked;
     // task that will clean up the created database file if the wizard is cancelled before it finishes
     private AddImageAction.CleanupTask cleanupImage; // initialized to null in readSettings()
     // flag to control the availiablity of next action
@@ -248,19 +245,6 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                     addImageTask.interrupt();
                 }
             };
-
-            SleuthkitCase skCase = currentCase.getSleuthkitCase();
-            skCase.clearLookupDatabases();
-
-            if (lookupFilesCheckboxChecked) {
-                if (NSRLPath != null) {
-                    skCase.setNSRLDatabase(NSRLPath);
-                }
-
-                if (knownBadPath != null) {
-                    skCase.setKnownBadDatabase(knownBadPath);
-                }
-            }
 
             //lock DB for writes in EWT thread
             //wait until lock acquired in EWT

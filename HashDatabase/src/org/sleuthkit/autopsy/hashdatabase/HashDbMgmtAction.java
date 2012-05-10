@@ -20,10 +20,6 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.util.logging.Level;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
@@ -44,22 +40,13 @@ class HashDbMgmtAction extends CallableSystemAction {
 
         // initialize panel with loaded settings
         final HashDbMgmtPanel panel = HashDbMgmtPanel.getDefault();
-        final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog();
+        final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
         dialog.addApplyButtonListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (panel.indexesExist()) {
-                    try {
-                        panel.saveSettings();
-                    } catch (IOException ex) {
-                        Log.get(HashDbMgmtAction.class).log(Level.WARNING, "Couldn't save hash database settings.", ex);
-                    }
-                    dialog.close();
-                } else {
-                    NotifyDescriptor d = new NotifyDescriptor.Message("All selected databases must have indexes.", NotifyDescriptor.INFORMATION_MESSAGE);
-                    DialogDisplayer.getDefault().notify(d);
-                }
+                panel.save();
+                dialog.close();
             }
         });
         dialog.display(panel);
