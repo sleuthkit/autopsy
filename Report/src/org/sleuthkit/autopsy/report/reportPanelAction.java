@@ -74,8 +74,8 @@ public class reportPanelAction {
                     a.start();
                     ReportHTML htmlReport = new ReportHTML();
                     try{
-                    htmlReport.generateReport(reportconfig, rr);
-                    BrowserControl.openUrl(ReportHTML.htmlPath);
+                    String htmlpath = htmlReport.generateReport(reportconfig, rr);
+                    BrowserControl.openUrl(htmlpath);
                     }
                     catch(ReportModuleException e){
                         Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the htmlReport", e);

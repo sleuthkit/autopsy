@@ -139,7 +139,7 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(htmlpath), "UTF-8"));
 
             // FileOutputStream out = new FileOutputStream(htmlpath);
-            out.write(ReportHTML.formatted_header.toString());
+            out.write(ReportHTML.formatted_Report.toString());
             out.flush();
             out.close();
 

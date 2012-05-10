@@ -252,7 +252,6 @@ public class ReportXML implements ReportModule {
             return img.getName();
         }
 
-        @Override
         public String visit(File fil) {
             return fil.getName();
         }
