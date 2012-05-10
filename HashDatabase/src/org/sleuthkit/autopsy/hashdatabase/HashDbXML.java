@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,11 +68,12 @@ public class HashDbXML {
     private static final Logger logger = Logger.getLogger(HashDbXML.class.getName());
     private static HashDbXML currentInstance;
     
-    private Map<String, HashDb> theSets;
+    private List<HashDb> knownBadSets;
+    private HashDb nsrlSet;
     private String xmlFile;
     
     private HashDbXML(String xmlFile) {
-        theSets = new LinkedHashMap<String, HashDb>();
+        knownBadSets = new ArrayList<HashDb>();
         this.xmlFile = xmlFile;
     }
     
@@ -89,47 +91,56 @@ public class HashDbXML {
     /**
      * Get the hash sets
      */
-    public List<HashDb> getSets() {
+    public List<HashDb> getAllSets() {
         List<HashDb> ret = new ArrayList<HashDb>();
-        ret.addAll(theSets.values());
+        ret.addAll(knownBadSets);
+        ret.add(nsrlSet);
         return ret;
     }
     
     /** 
-     * Get the NSRL sets
+     * Get the Known Bad sets
      */
-    public List<HashDb> getSets(DBType type) {
-        List<HashDb> ret = new ArrayList<HashDb>();
-        for(HashDb db : theSets.values()) {
-            if(db.getType().equals(type))
-                ret.add(db);
-        }
-        return ret;
+    public List<HashDb> getKnownBadSets() {
+        return knownBadSets;
+    }
+    
+    /** 
+     * Get the NSRL set
+     */
+    public HashDb getNSRLSet() {
+        return nsrlSet;
     }
     
     /**
-     * Add a hash set (override old set)
+     * Add a known bad hash set
      */
-    public void addSet(HashDb set) {
-        theSets.put(set.getName(), set);
+    public void addKnownBadSet(HashDb set) {
+        knownBadSets.add(set);
         save();
     }
     
     /**
-     * Remove a hash set
+     * Set the NSRL hash set (override old set)
      */
-    public void removeSet(HashDb set) {
-        theSets.remove(set.getName());
+    public void setNSRLSet(HashDb set) {
+        this.nsrlSet = set;
         save();
     }
     
     /**
-     * Put all the given DBs into this XML (overwrite old ones)
+     * Remove a hash known bad set
      */
-    public void putAll(List<HashDb> sets) {
-        for(HashDb set : sets) {
-            theSets.put(set.getName(), set);
-        }
+    public void removeKnownBadSetAt(int index) {
+        knownBadSets.remove(index);
+        save();
+    }
+    
+    /** 
+     * Remove the NSRL database
+     */
+    public void removeNSRLSet() {
+        this.nsrlSet = null;
         save();
     }
     
@@ -139,7 +150,8 @@ public class HashDbXML {
     public void reload() {
         boolean created = false;
 
-        theSets.clear();
+        knownBadSets.clear();
+        nsrlSet = null;
         
         if (!this.setsFileExists()) {
             //create new if it doesn't exist
@@ -169,14 +181,33 @@ public class HashDbXML {
             Element rootEl = doc.createElement(ROOT_EL);
             doc.appendChild(rootEl);
 
-            for (String setName : theSets.keySet()) {
-                HashDb set = theSets.get(setName);
+            for (HashDb set : knownBadSets) {
                 String useForIngest = Boolean.toString(set.getUseForIngest());
                 List<String> paths = set.getDatabasePaths();
-                String type = set.getType().toString();
+                String type = DBType.KNOWN_BAD.toString();
 
                 Element setEl = doc.createElement(SET_EL);
-                setEl.setAttribute(SET_NAME_ATTR, setName);
+                setEl.setAttribute(SET_NAME_ATTR, set.getName());
+                setEl.setAttribute(SET_TYPE_ATTR, type);
+                setEl.setAttribute(SET_USE_FOR_INGEST_ATTR, useForIngest);
+
+                for (int i = 0; i < paths.size(); i++) {
+                    String path = paths.get(i);
+                    Element pathEl = doc.createElement(PATH_EL);
+                    pathEl.setAttribute(PATH_NUMBER_ATTR, Integer.toString(i));
+                    pathEl.setTextContent(path);
+                    setEl.appendChild(pathEl);
+                }
+                rootEl.appendChild(setEl);
+            }
+            
+            if(nsrlSet != null) {
+                String useForIngest = Boolean.toString(nsrlSet.getUseForIngest());
+                List<String> paths = nsrlSet.getDatabasePaths();
+                String type = DBType.NSRL.toString();
+
+                Element setEl = doc.createElement(SET_EL);
+                setEl.setAttribute(SET_NAME_ATTR, nsrlSet.getName());
                 setEl.setAttribute(SET_TYPE_ATTR, type);
                 setEl.setAttribute(SET_USE_FOR_INGEST_ATTR, useForIngest);
 
@@ -231,9 +262,14 @@ public class HashDbXML {
                 String path = pathEl.getTextContent();
                 paths.add(path);
             }
-
-            HashDb set = new HashDb(name, typeDBType, paths, useForIngestBool);
-            theSets.put(name, set);
+            
+            HashDb set = new HashDb(name, paths, useForIngestBool);
+            
+            if(typeDBType == DBType.KNOWN_BAD) {
+                knownBadSets.add(set);
+            } else if(typeDBType == DBType.NSRL) {
+                this.nsrlSet = set;
+            }
         }
         return true;
     }

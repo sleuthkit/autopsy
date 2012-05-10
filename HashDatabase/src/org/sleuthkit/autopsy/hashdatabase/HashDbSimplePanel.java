@@ -27,10 +27,8 @@ package org.sleuthkit.autopsy.hashdatabase;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
 
 /**
  *
@@ -39,22 +37,21 @@ import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
 public class HashDbSimplePanel extends javax.swing.JPanel {
     
     private static final Logger logger = Logger.getLogger(HashDbSimplePanel.class.getName());
-    private HashTableModel notableTableModel;
-    private HashTableModel nsrlTableModel;
+    private HashTableModel knownBadTableModel;
+    private HashDb nsrl;
 
     /** Creates new form HashDbSimplePanel */
     public HashDbSimplePanel() {
-        notableTableModel = new HashTableModel();
-        nsrlTableModel = new HashTableModel();
+        knownBadTableModel = new HashTableModel();
         initComponents();
         customizeComponents();
     }
     
     private void customizeComponents() {
-        notableHashTable.setModel(notableTableModel);
+        notableHashTable.setModel(knownBadTableModel);
         
         notableHashTable.setTableHeader(null);
-        notableHashTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        notableHashTable.setRowSelectionAllowed(false);
         //customize column witdhs
         final int width1 = jScrollPane1.getPreferredSize().width;
         TableColumn column1 = null;
@@ -67,22 +64,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
             }
         }
         
-        nsrlHashTable.setModel(nsrlTableModel);
-        
-        nsrlHashTable.setTableHeader(null);
-        nsrlHashTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        //customize column witdhs
-        final int width2 = jScrollPane1.getPreferredSize().width;
-        TableColumn column2 = null;
-        for (int i = 0; i < nsrlHashTable.getColumnCount(); i++) {
-            column2 = nsrlHashTable.getColumnModel().getColumn(i);
-            if (i == 0) {
-                column2.setPreferredWidth(((int) (width2 * 0.15)));
-            } else {
-                column2.setPreferredWidth(((int) (width2 * 0.84)));
-            }
-        }
-        reloadLists();
+        reloadSets();
     }
 
     /** This method is called from within the constructor to
@@ -96,18 +78,22 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         notableHashTable = new javax.swing.JTable();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        nsrlHashTable = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
+        nsrlNameLabel = new javax.swing.JLabel();
 
+        jScrollPane1.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+
+        notableHashTable.setBackground(new java.awt.Color(240, 240, 240));
+        notableHashTable.setShowHorizontalLines(false);
+        notableHashTable.setShowVerticalLines(false);
         jScrollPane1.setViewportView(notableHashTable);
-
-        jScrollPane2.setViewportView(nsrlHashTable);
 
         jLabel1.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.jLabel1.text")); // NOI18N
 
         jLabel2.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.jLabel2.text")); // NOI18N
+
+        nsrlNameLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.nsrlNameLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -115,48 +101,56 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel2)
-                .addContainerGap(154, Short.MAX_VALUE))
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 274, Short.MAX_VALUE)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
                 .addComponent(jLabel1)
                 .addContainerGap(142, Short.MAX_VALUE))
             .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 274, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(nsrlNameLabel))
+                    .addComponent(jLabel2))
+                .addContainerGap(143, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(nsrlNameLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 91, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 106, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable notableHashTable;
-    private javax.swing.JTable nsrlHashTable;
+    private javax.swing.JLabel nsrlNameLabel;
     // End of variables declaration//GEN-END:variables
 
-    private void reloadLists() {
-        nsrlTableModel.resync(DBType.NSRL);
-        notableTableModel.resync(DBType.NOTABLE);
+    private void reloadSets() {
+        nsrl = HashDbXML.getCurrent().getNSRLSet();
+        if(nsrl == null) {
+            nsrlNameLabel.setText("No NSRL database set.");
+        } else {
+            nsrlNameLabel.setText(nsrl.getName());
+        }
+        knownBadTableModel.resync();
     }
 
     private class HashTableModel extends AbstractTableModel {
         
         private List<HashDb> data = new ArrayList<HashDb>();
         
-        private void resync(DBType type) {
+        private void resync() {
             data.clear();
-            data.addAll(HashDbXML.getCurrent().getSets(type));
+            data.addAll(HashDbXML.getCurrent().getKnownBadSets());
         }
 
         @Override
@@ -188,8 +182,8 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if(columnIndex == 0){
                 HashDb db = data.get(rowIndex);
-                HashDbXML.getCurrent().addSet(new HashDb(db.getName(), db.getType(), db.getDatabasePaths(), (Boolean) aValue));
-                reloadLists();
+                HashDbXML.getCurrent().addKnownBadSet(new HashDb(db.getName(), db.getDatabasePaths(), (Boolean) aValue));
+                reloadSets();
             }
         }
         

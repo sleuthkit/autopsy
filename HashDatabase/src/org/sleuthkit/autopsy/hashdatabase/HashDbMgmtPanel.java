@@ -26,7 +26,6 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,7 +33,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.AbstractCellEditor;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
@@ -43,10 +43,8 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskException;
 
@@ -58,14 +56,14 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
     
     private static final Logger logger = Logger.getLogger(HashDbMgmtPanel.class.getName());
     private HashSetTableModel notableTableModel;
-    private HashSetTableModel nsrlTableModel;
     private JFileChooser fc = new JFileChooser();
     private static HashDbMgmtPanel instance;
+    private HashDb nsrlSet;
+    private static boolean ingestRunning = false;
 
     /** Creates new form HashDbMgmtPanel */
     private HashDbMgmtPanel() {
         notableTableModel = new HashSetTableModel();
-        nsrlTableModel = new HashSetTableModel();
         initComponents();
         customizeComponents();
     }
@@ -74,18 +72,19 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
         if(instance == null) {
             instance = new HashDbMgmtPanel();
         }
+        instance.notableTableModel.resync();
         return instance;
+    }
+    
+    void resync() {
+        notableTableModel.resync();
     }
     
     private void customizeComponents() {
         notableHashSetTable.setModel(notableTableModel);
         notableHashSetTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        notableHashSetTable.setRowHeight(25);
-        notableTableModel.resync(DBType.NOTABLE);
-        nsrlHashSetTable.setModel(nsrlTableModel);
-        nsrlHashSetTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        nsrlHashSetTable.setRowHeight(25);
-        nsrlTableModel.resync(DBType.NSRL);
+        notableHashSetTable.setRowHeight(20);
+        notableTableModel.resync();
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         String[] EXTENSION = new String[] { "txt", "idx", "hash", "Hash" };
@@ -94,76 +93,60 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
         fc.setFileFilter(filter);
         fc.setMultiSelectionEnabled(false);
         
-        final int width1 = jScrollPane1.getPreferredSize().width;
         TableColumn column1 = null;
         for (int i = 0; i < notableHashSetTable.getColumnCount(); i++) {
             column1 = notableHashSetTable.getColumnModel().getColumn(i);
-            if (i == 2) {
-                ButtonRenderer br = new ButtonRenderer();
-                br.getTheButton().addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        int row = notableHashSetTable.getSelectedRow();
-                        try {
-                            notableTableModel.getHashSetAt(row).createIndex();
-                        } catch (TskException ex) {
-                            logger.log(Level.WARNING, "Error creating index", ex);
-                        }
-                        notableTableModel.resync(DBType.NOTABLE);
-                    }
-                });
-                column1.setCellRenderer(br);
-                column1.setCellEditor(br);
-            }
             if (i == 3) {
                 column1.setCellRenderer(new CheckBoxRenderer());
             }
         }
         
-        final int width2 = jScrollPane2.getPreferredSize().width;
-        TableColumn column2 = null;
-        for (int i = 0; i < nsrlHashSetTable.getColumnCount(); i++) {
-            column2 = nsrlHashSetTable.getColumnModel().getColumn(i);
-            if (i == 2) {
-                ButtonRenderer br = new ButtonRenderer();
-                br.getTheButton().addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        int row = nsrlHashSetTable.getSelectedRow();
-                        try {
-                            nsrlTableModel.getHashSetAt(row).createIndex();
-                        } catch (TskException ex) {
-                            logger.log(Level.WARNING, "Error creating index", ex);
-                        }
-                        nsrlTableModel.resync(DBType.NSRL);
-                    }
-                });
-                column2.setCellRenderer(br);
-                column2.setCellEditor(br);
+        Action indexSet = new AbstractAction() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int row = notableHashSetTable.getSelectedRow();
+                try {
+                    notableTableModel.getHashSetAt(row).createIndex();
+                } catch (TskException ex) {
+                    logger.log(Level.WARNING, "Error creating index", ex);
+                }
+                notableTableModel.resync();
             }
-            if (i == 3) {
-                column2.setCellRenderer(new CheckBoxRenderer());
-            }
+        };
+        new ButtonColumn(notableHashSetTable, indexSet, 2);
+
+        nsrlSet = HashDbXML.getCurrent().getNSRLSet();
+        if(nsrlSet != null) {
+            nsrlNameLabel.setText(nsrlSet.getName());
+            setButtonFromIndexStatus(indexNSRLButton, nsrlSet.status());
+        } else {
+            setButtonFromIndexStatus(indexNSRLButton, IndexStatus.NO_DB);
+            removeNSRLButton.setEnabled(false);
         }
     }
-    
+
     /**
-     * Checks if indexes exist for all defined databases
-     * @return true if Sleuth Kit can open the indexes of all databases
-     * than have been selected
+     * Save the modified settings
      */
-    boolean indexesExist() {
-        return notableTableModel.indexesExist() && nsrlTableModel.indexesExist();
+    void save() {
+        HashDbXML.getCurrent().setNSRLSet(nsrlSet);
     }
     
     /**
-     * Save the table settings
-     * @return whether save was successful
+     * Don't allow any changes if ingest is running
      */
-    boolean save() {
-        notableTableModel.saveAll();
-        nsrlTableModel.saveAll();
-        return true;
+    void setIngestRunning(boolean running) {
+        addNotableButton.setEnabled(!running);
+        removeNotableButton.setEnabled(!running);
+        setNSRLButton.setEnabled(!running);
+        indexNSRLButton.setEnabled(!running);
+        removeNSRLButton.setEnabled(!running);
+        ingestRunning = running;
+        if(running)
+            ingestRunningLabel.setText("Ingest is ongoing; some settings will be unavailable until it finishes.");
+        else
+            ingestRunningLabel.setText("");
     }
 
     /** This method is called from within the constructor to
@@ -177,38 +160,17 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         notableHashSetTable = new javax.swing.JTable();
-        addNSRLButton = new javax.swing.JButton();
-        removeNSRLButton = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        nsrlHashSetTable = new javax.swing.JTable();
         addNotableButton = new javax.swing.JButton();
         removeNotableButton = new javax.swing.JButton();
+        setNSRLButton = new javax.swing.JButton();
+        nsrlNameLabel = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        indexNSRLButton = new javax.swing.JButton();
+        removeNSRLButton = new javax.swing.JButton();
+        ingestRunningLabel = new javax.swing.JLabel();
 
         jScrollPane1.setViewportView(notableHashSetTable);
-
-        addNSRLButton.setText(org.openide.util.NbBundle.getMessage(HashDbMgmtPanel.class, "HashDbMgmtPanel.addNSRLButton.text")); // NOI18N
-        addNSRLButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addNSRLButtonActionPerformed(evt);
-            }
-        });
-
-        removeNSRLButton.setText(org.openide.util.NbBundle.getMessage(HashDbMgmtPanel.class, "HashDbMgmtPanel.removeNSRLButton.text")); // NOI18N
-        removeNSRLButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                removeNSRLButtonActionPerformed(evt);
-            }
-        });
-
-        nsrlHashSetTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-
-            }
-        ));
-        jScrollPane2.setViewportView(nsrlHashSetTable);
 
         addNotableButton.setText(org.openide.util.NbBundle.getMessage(HashDbMgmtPanel.class, "HashDbMgmtPanel.addNotableButton.text")); // NOI18N
         addNotableButton.addActionListener(new java.awt.event.ActionListener() {
@@ -224,74 +186,93 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
             }
         });
 
+        setNSRLButton.setText(org.openide.util.NbBundle.getMessage(HashDbMgmtPanel.class, "HashDbMgmtPanel.setNSRLButton.text")); // NOI18N
+        setNSRLButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                setNSRLButtonActionPerformed(evt);
+            }
+        });
+
+        nsrlNameLabel.setText(org.openide.util.NbBundle.getMessage(HashDbMgmtPanel.class, "HashDbMgmtPanel.nsrlNameLabel.text")); // NOI18N
+
+        jLabel1.setText(org.openide.util.NbBundle.getMessage(HashDbMgmtPanel.class, "HashDbMgmtPanel.jLabel1.text")); // NOI18N
+
+        jLabel2.setText(org.openide.util.NbBundle.getMessage(HashDbMgmtPanel.class, "HashDbMgmtPanel.jLabel2.text")); // NOI18N
+
+        indexNSRLButton.setText(org.openide.util.NbBundle.getMessage(HashDbMgmtPanel.class, "HashDbMgmtPanel.indexNSRLButton.text")); // NOI18N
+        indexNSRLButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                indexNSRLButtonActionPerformed(evt);
+            }
+        });
+
+        removeNSRLButton.setText(org.openide.util.NbBundle.getMessage(HashDbMgmtPanel.class, "HashDbMgmtPanel.removeNSRLButton.text")); // NOI18N
+        removeNSRLButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                removeNSRLButtonActionPerformed(evt);
+            }
+        });
+
+        ingestRunningLabel.setText(org.openide.util.NbBundle.getMessage(HashDbMgmtPanel.class, "HashDbMgmtPanel.ingestRunningLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(addNSRLButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 235, Short.MAX_VALUE)
-                .addComponent(removeNSRLButton)
-                .addContainerGap())
-            .addComponent(jScrollPane1, 0, 0, Short.MAX_VALUE)
+                .addComponent(jLabel1)
+                .addContainerGap(257, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(nsrlNameLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 63, Short.MAX_VALUE)
+                        .addComponent(indexNSRLButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(setNSRLButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(removeNSRLButton))
+                    .addComponent(jLabel2))
+                .addContainerGap())
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 389, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(addNotableButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 223, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 113, Short.MAX_VALUE)
                 .addComponent(removeNotableButton)
                 .addContainerGap())
-            .addComponent(jScrollPane2, 0, 0, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(ingestRunningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 369, Short.MAX_VALUE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(addNotableButton)
-                    .addComponent(removeNotableButton))
+                    .addComponent(nsrlNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(removeNSRLButton)
+                    .addComponent(setNSRLButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(indexNSRLButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 186, Short.MAX_VALUE)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 163, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(addNSRLButton)
-                    .addComponent(removeNSRLButton))
+                    .addComponent(removeNotableButton)
+                    .addComponent(addNotableButton))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(ingestRunningLabel)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void addNSRLButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addNSRLButtonActionPerformed
-        save();
-        
-        int retval = fc.showOpenDialog(this);
-        
-        if(retval == JFileChooser.APPROVE_OPTION) {
-            File f = fc.getSelectedFile();
-            try {
-                String filePath = f.getCanonicalPath();
-
-                if (HashDb.isIndexPath(filePath)) {
-                    filePath = HashDb.toDatabasePath(filePath);
-                }
-                String derivedName;
-                try {
-                    derivedName = SleuthkitJNI.getDatabaseName(filePath);
-                } catch (TskException ex) {
-                    derivedName = "";
-                }
-                
-                String setName = (String) JOptionPane.showInputDialog(this, "New Hash Set name:", "New Hash Set", 
-                        JOptionPane.PLAIN_MESSAGE, null, null, derivedName);
-                
-                nsrlTableModel.newSet(setName, Arrays.asList(new String[] {filePath}), true, HashDb.DBType.NSRL); // TODO: support multiple file paths
-
-
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Couldn't get selected file path.", ex);
-            }
-        }
-    }//GEN-LAST:event_addNSRLButtonActionPerformed
 
     private void addNotableButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addNotableButtonActionPerformed
         save();
@@ -316,40 +297,110 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                 String setName = (String) JOptionPane.showInputDialog(this, "New Hash Set name:", "New Hash Set", 
                         JOptionPane.PLAIN_MESSAGE, null, null, derivedName);
                 
-                if(setName != null && !setName.equals(""))
-                    notableTableModel.newSet(setName, Arrays.asList(new String[] {filePath}), true, HashDb.DBType.NOTABLE); // TODO: support multiple file paths
+                if(setName != null && !setName.equals("")) {
+                    HashDb newDb = new HashDb(setName, Arrays.asList(new String[] {filePath}), false);
+                    if(IndexStatus.isIngestible(newDb.status()))
+                            newDb.setUseForIngest(true);
+                    notableTableModel.newSet(newDb); // TODO: support multiple file paths
+                }
 
 
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Couldn't get selected file path.", ex);
             }
         }
+        save();
     }//GEN-LAST:event_addNotableButtonActionPerformed
 
     private void removeNotableButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeNotableButtonActionPerformed
-        notableTableModel.removeSetAt(notableHashSetTable.getSelectedRow());
+        int selected = notableHashSetTable.getSelectedRow();
+        if(selected >= 0)
+            notableTableModel.removeSetAt(notableHashSetTable.getSelectedRow());
     }//GEN-LAST:event_removeNotableButtonActionPerformed
 
+    private void setNSRLButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setNSRLButtonActionPerformed
+        save();
+        
+        int retval = fc.showOpenDialog(this);
+        
+        if(retval == JFileChooser.APPROVE_OPTION) {
+            File f = fc.getSelectedFile();
+            try {
+                String filePath = f.getCanonicalPath();
+
+                if (HashDb.isIndexPath(filePath)) {
+                    filePath = HashDb.toDatabasePath(filePath);
+                }
+                String derivedName;
+                try {
+                    derivedName = SleuthkitJNI.getDatabaseName(filePath);
+                } catch (TskException ex) {
+                    derivedName = "";
+                }
+
+                this.nsrlSet = new HashDb(derivedName, Arrays.asList(new String[]{filePath}), false); // TODO: support multiple file paths
+                int toIndex = JOptionPane.NO_OPTION;
+                if(IndexStatus.isIngestible(this.nsrlSet.status())) {
+                    this.nsrlSet.setUseForIngest(true);
+                } else {
+                    toIndex = JOptionPane.showConfirmDialog(this, 
+                            "The NSRL database you added has no index.\n" + 
+                            "It will not be used for ingest until you create one.\n" + 
+                            "Would you like to do so now?", "No Index Exists", JOptionPane.YES_NO_OPTION);
+                }
+
+                nsrlNameLabel.setText(nsrlSet.getName());
+                setButtonFromIndexStatus(indexNSRLButton, nsrlSet.status());
+                removeNSRLButton.setEnabled(true);
+                save();
+                
+                if(toIndex == JOptionPane.YES_OPTION) {
+                    indexNSRLButtonActionPerformed(null);
+                }
+
+                
+                
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Couldn't get selected file path.", ex);
+            }
+        }
+    }//GEN-LAST:event_setNSRLButtonActionPerformed
+
+    private void indexNSRLButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_indexNSRLButtonActionPerformed
+        try {
+            nsrlSet.createIndex();
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "Error creating index", ex);
+        }
+        setButtonFromIndexStatus(indexNSRLButton, nsrlSet.status());
+    }//GEN-LAST:event_indexNSRLButtonActionPerformed
+
     private void removeNSRLButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeNSRLButtonActionPerformed
-        nsrlTableModel.removeSetAt(nsrlHashSetTable.getSelectedRow());
+        this.nsrlSet = null;
+        save();
+        setButtonFromIndexStatus(indexNSRLButton, IndexStatus.NO_DB);
+        nsrlNameLabel.setText(org.openide.util.NbBundle.getMessage(HashDbMgmtPanel.class, "HashDbMgmtPanel.nsrlNameLabel.text"));
+        removeNSRLButton.setEnabled(false);
     }//GEN-LAST:event_removeNSRLButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton addNSRLButton;
     private javax.swing.JButton addNotableButton;
+    private javax.swing.JButton indexNSRLButton;
+    private javax.swing.JLabel ingestRunningLabel;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable notableHashSetTable;
-    private javax.swing.JTable nsrlHashSetTable;
+    private javax.swing.JLabel nsrlNameLabel;
     private javax.swing.JButton removeNSRLButton;
     private javax.swing.JButton removeNotableButton;
+    private javax.swing.JButton setNSRLButton;
     // End of variables declaration//GEN-END:variables
 
     private class HashSetTableModel extends AbstractTableModel {
         //data
 
         private HashDbXML xmlHandle = HashDbXML.getCurrent();
-        private List<HashDb> data = new ArrayList<HashDb>();
 
         @Override
         public int getColumnCount() {
@@ -358,7 +409,7 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
 
         @Override
         public int getRowCount() {
-            return data.size();
+            return xmlHandle.getKnownBadSets().size();
         }
 
         @Override
@@ -377,7 +428,7 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            HashDb entry = data.get(rowIndex);
+            HashDb entry = xmlHandle.getKnownBadSets().get(rowIndex);
             switch(columnIndex) {
                 case 0:
                     return entry.getName();
@@ -392,12 +443,18 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return columnIndex == 2 || columnIndex == 3; //(status or ingest)
+            if(ingestRunning)
+                return false;
+            if(columnIndex == 2)
+                return true;
+            if(columnIndex == 3)
+                return true;
+            return false;
         }
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-            HashDb entry = data.get(rowIndex);
+            HashDb entry = xmlHandle.getKnownBadSets().get(rowIndex);
             switch(columnIndex) {
                 case 0:
                     entry.setName((String) aValue);
@@ -408,7 +465,10 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                 case 2:
                     break;
                 case 3:
-                    entry.setUseForIngest((Boolean) aValue);
+                    if(((Boolean) getValueAt(rowIndex, columnIndex)) || IndexStatus.isIngestible(entry.status()))
+                        entry.setUseForIngest((Boolean) aValue);
+                    else
+                        JOptionPane.showMessageDialog(HashDbMgmtPanel.this, "Databases must be indexed before they can be used for ingest.");
             }
         }
 
@@ -417,37 +477,22 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
             return getValueAt(0, c).getClass();
         }
         
-        void resync(DBType type) {
-            data.clear();
-            data.addAll(xmlHandle.getSets(type));
+        void resync() {
             fireTableDataChanged();
         }
         
-        void newSet(String name, List<String> paths, boolean useForIngest, DBType type) {
-            xmlHandle.addSet(new HashDb(name, type, paths, useForIngest));
-            resync(type);
+        void newSet(HashDb db) {
+            xmlHandle.addKnownBadSet(db);
+            resync();
         }
         
         void removeSetAt(int index) {
-            HashDb db = data.get(index);
-            xmlHandle.removeSet(db);
-            resync(db.getType());
-        }
-        
-        void saveAll() {
-            xmlHandle.putAll(data);
-        }
-        
-        boolean indexesExist() {
-            boolean ret = true;
-            for(HashDb db : xmlHandle.getSets()) {
-                ret = ret && db.databaseExists();
-            }
-            return ret;
+            xmlHandle.removeKnownBadSetAt(index);
+            resync();
         }
         
         HashDb getHashSetAt(int row) {
-            return data.get(row);
+            return xmlHandle.getKnownBadSets().get(row);
         }
     }
     
@@ -461,6 +506,7 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
 
             this.setHorizontalAlignment(JCheckBox.CENTER);
             this.setVerticalAlignment(JCheckBox.CENTER);
+            setEnabled(!ingestRunning);
 
             Boolean selected = (Boolean) table.getModel().getValueAt(row, column);
             setSelected(selected);
@@ -473,27 +519,13 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
         }
     }
     
-    private class ButtonRenderer extends AbstractCellEditor implements TableCellRenderer, TableCellEditor {
-        
-        private JButton theButton;
-        
-        private ButtonRenderer() {
-            theButton = new JButton();
+    static void setButtonFromIndexStatus(JButton theButton, IndexStatus status) {
+        if(ingestRunning) {
+            theButton.setText("Not Available");
+            theButton.setEnabled(false);
+            return;
         }
-        
-        JButton getTheButton() {
-            return theButton;
-        }
-        
-        void updateData(
-                JTable table, boolean isSelected, int row, int column) {
-            theButton.setHorizontalAlignment(JButton.CENTER);
-            theButton.setVerticalAlignment(JButton.CENTER);
-            
-            
-            IndexStatus selected = (IndexStatus) table.getModel().getValueAt(row, column);
-            
-            switch (selected) {
+        switch (status) {
                 case INDEX_OUTDATED:
                     theButton.setText("Re-index");
                     theButton.setEnabled(true);
@@ -506,38 +538,14 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                     theButton.setText("Index");
                     theButton.setEnabled(true);
                     break;
+                case INDEXING:
+                    theButton.setText("Indexing");
+                    theButton.setEnabled(false);
+                    break;
                 default:
                     theButton.setText("No DB");
                     theButton.setEnabled(false);
             }
-            
-            if (isSelected) {
-                theButton.setBackground(notableHashSetTable.getSelectionBackground());
-            } else {
-                theButton.setBackground(notableHashSetTable.getBackground());
-            }
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(
-                JTable table, Object value,
-                boolean isSelected, boolean hasFocus,
-                int row, int column) {
-            updateData(table, isSelected, row, column);
-            return theButton;
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            updateData(table, isSelected, row, column);
-            return theButton;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            return null;
-        }
-        
     }
 }
 

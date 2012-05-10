@@ -20,7 +20,15 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskException;
@@ -32,7 +40,7 @@ import org.sleuthkit.datamodel.TskException;
 public class HashDb implements Comparable<HashDb> {
 
     public enum DBType{
-        NSRL, NOTABLE;
+        NSRL, KNOWN_BAD;
     }
     
     // Suffix added to the end of a database name to get its index file
@@ -41,13 +49,13 @@ public class HashDb implements Comparable<HashDb> {
     private String name;
     private List<String> databasePaths; // TODO: Length limited to one for now...
     private boolean useForIngest;
-    private DBType type;
+    private boolean indexing;
     
-    public HashDb(String name, DBType type, List<String> databasePaths, boolean useForIngest) {
+    public HashDb(String name, List<String> databasePaths, boolean useForIngest) {
         this.name = name;
-        this.type = type;
         this.databasePaths = databasePaths;
         this.useForIngest = useForIngest;
+        this.indexing = false;
     }
     
     boolean getUseForIngest() {
@@ -62,10 +70,6 @@ public class HashDb implements Comparable<HashDb> {
         return databasePaths;
     }
     
-    DBType getType() {
-        return type;
-    }
-    
     void setUseForIngest(boolean useForIngest) {
         this.useForIngest = useForIngest;
     }
@@ -76,10 +80,6 @@ public class HashDb implements Comparable<HashDb> {
     
     void setDatabasePaths(List<String> databasePaths) {
         this.databasePaths = databasePaths;
-    }
-    
-    void setType(DBType type) {
-        this.type = type;
     }
     
     /**
@@ -132,6 +132,13 @@ public class HashDb implements Comparable<HashDb> {
 
         return i.exists() && db.exists() && isOlderThan(i, db);
     }
+    
+    /**
+     * Checks if the database is being indexed
+     */
+    boolean isIndexing() {
+        return indexing;
+    }
 
     /**
      * Returns the status of the HashDb as determined from indexExists(),
@@ -142,6 +149,8 @@ public class HashDb implements Comparable<HashDb> {
         boolean i = this.indexExists();
         boolean db = this.databaseExists();
 
+        if(indexing)
+            return IndexStatus.INDEXING;
         if (i) {
             if (db) {
                 return this.isOutdated() ? IndexStatus.INDEX_OUTDATED : IndexStatus.INDEX_CURRENT;
@@ -158,7 +167,9 @@ public class HashDb implements Comparable<HashDb> {
      * @throws TskException if an error occurs in the SleuthKit bindings 
      */
     void createIndex() throws TskException {
-        SleuthkitJNI.createLookupIndex(databasePaths.get(0), name); //TODO: fix for multiple paths
+        indexing = true;
+        CreateIndex creator = new CreateIndex();
+        creator.execute();
         //TODO: error checking
     }
 
@@ -215,5 +226,53 @@ public class HashDb implements Comparable<HashDb> {
     @Override
     public int compareTo(HashDb o) {
         return this.name.compareTo(o.name);
+    }
+    
+    /* Thread that adds image/file and service pairs to queues */
+    private class CreateIndex extends SwingWorker<Object,Void> {
+
+        private ProgressHandle progress;
+        
+        CreateIndex(){};
+
+        @Override
+        protected Object doInBackground() throws Exception {
+            progress = ProgressHandleFactory.createHandle("Indexing " + name, new Cancellable() {
+                @Override
+                public boolean cancel() {
+                    return CreateIndex.this.cancel(true);
+                }
+            });
+            progress.start();
+            progress.switchToIndeterminate();
+            SleuthkitJNI.createLookupIndex(databasePaths.get(0));
+            return null;
+        }
+
+        /* clean up or start the worker threads */
+        @Override
+        protected void done() {
+            try {
+                super.get(); //block and get all exceptions thrown while doInBackground()      
+            } catch (CancellationException e) {
+                //task was cancelled
+                handleInterruption(e);
+            } catch (InterruptedException ex) {
+                handleInterruption(ex);
+            } catch (ExecutionException ex) {
+                handleInterruption(ex);
+            } catch (Exception ex) {
+                handleInterruption(ex);
+            } finally {
+                indexing = false;
+                progress.finish();
+                HashDbMgmtPanel.getDefault().resync();
+            }
+        }
+        
+        private void handleInterruption(Exception ex) {
+            //TODO: something
+            Logger.getLogger(CreateIndex.class.getName()).log(Level.WARNING, "interrupted!", ex);
+        }
     }
 }

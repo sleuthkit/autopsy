@@ -20,10 +20,6 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.util.logging.Level;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
@@ -44,17 +40,13 @@ class HashDbMgmtAction extends CallableSystemAction {
 
         // initialize panel with loaded settings
         final HashDbMgmtPanel panel = HashDbMgmtPanel.getDefault();
-        final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog();
+        final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
         dialog.addApplyButtonListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(panel.save()) {
-                    dialog.close();
-                } else {
-                    NotifyDescriptor d = new NotifyDescriptor.Message("Error saving settings", NotifyDescriptor.INFORMATION_MESSAGE);
-                    DialogDisplayer.getDefault().notify(d);
-                }
+                panel.save();
+                dialog.close();
             }
         });
         dialog.display(panel);

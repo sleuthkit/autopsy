@@ -19,14 +19,12 @@
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -54,8 +52,9 @@ public class HashDbIngestService implements IngestServiceFsContent {
     private int count;
     // Whether or not to do hash lookups (only set to true if there are dbs set)
     private boolean process;
-    private List<HashDb> NSRLDbs = new ArrayList<HashDb>();
-    private List<HashDb> notableDbs = new ArrayList<HashDb>();
+    private HashDb nsrlSet;
+    private int nsrlPointer;
+    private Map<Integer, HashDb> knownBadSets = new HashMap<Integer, HashDb>();
     
 
     private HashDbIngestService() {
@@ -77,33 +76,41 @@ public class HashDbIngestService implements IngestServiceFsContent {
      */
     @Override
     public void init(IngestManagerProxy managerProxy) {
+        HashDbMgmtPanel.getDefault().setIngestRunning(true);
         this.process = false;
         this.managerProxy = managerProxy;
         this.managerProxy.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
             HashDbXML hdbxml = HashDbXML.getCurrent();
-            NSRLDbs.clear();
-            notableDbs.clear();
+            nsrlSet = null;
+            knownBadSets.clear();
             skCase.clearLookupDatabases();
-            boolean nsrlSet = false;
-            boolean notablesSet = false;
+            boolean nsrlIsSet = false;
+            boolean knownBadIsSet = false;
             
-            for(HashDb db : hdbxml.getSets()) {
+            HashDb nsrl = hdbxml.getNSRLSet();
+            if(nsrl != null && IndexStatus.isIngestible(nsrl.status())) {
+                nsrlIsSet = true;
                 this.process = true;
-                if(db.getType().equals(DBType.NOTABLE) && db.getUseForIngest()) {
-                    notablesSet = true;
-                    skCase.addKnownBadDatabase(db.getDatabasePaths().get(0), db.getName()); // TODO: support multiple paths
-                } else if(db.getType().equals(DBType.NSRL) && db.getUseForIngest()) {
-                    nsrlSet = true;
-                    skCase.setNSRLDatabase(db.getDatabasePaths().get(0)); // TODO: support multiple paths
-                }
+                this.nsrlSet = nsrl;
+                nsrlPointer = skCase.setNSRLDatabase(nsrl.getDatabasePaths().get(0));
             }
 
-            if (!nsrlSet) {
+            for(HashDb db : hdbxml.getKnownBadSets()) {
+                IndexStatus status = db.status();
+                if (db.getUseForIngest() && IndexStatus.isIngestible(status)) { // TODO: should inform user that we won't use the db if it's not indexed
+                    this.process = true;
+                    knownBadIsSet = true;
+                    int ret = skCase.addKnownBadDatabase(db.getDatabasePaths().get(0)); // TODO: support multiple paths
+                    knownBadSets.put(ret, db);
+                }
+            }
+            
+            if (!nsrlIsSet) {
                 this.managerProxy.postMessage(IngestMessage.createWarningMessage(++messageId, this, "No NSRL database set", "Known file search will not be executed."));
             }
-            if (!notablesSet) {
+            if (!knownBadIsSet) {
                 this.managerProxy.postMessage(IngestMessage.createWarningMessage(++messageId, this, "No known bad database set", "Known bad file search will not be executed."));
             }
 
@@ -131,7 +138,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
         detailsSb.append("<th>Notable databases used:</th>");
         detailsSb.append("</tr>");
         
-        for(HashDb db : notableDbs) {
+        for(HashDb db : knownBadSets.values()) {
             detailsSb.append("<tr><th>");
             detailsSb.append(db.getName());
             detailsSb.append("</th><td>");
@@ -141,6 +148,8 @@ public class HashDbIngestService implements IngestServiceFsContent {
         
         detailsSb.append("</table>");
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Ingest Complete", detailsSb.toString()));
+        
+        HashDbMgmtPanel.getDefault().setIngestRunning(false);
     }
 
     /**
@@ -149,6 +158,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
     @Override
     public void stop() {
         //manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "STOP"));
+        HashDbMgmtPanel.getDefault().setIngestRunning(false);
     }
 
     /**
@@ -184,46 +194,24 @@ public class HashDbIngestService implements IngestServiceFsContent {
             String name = fsContent.getName();
             try {
                 String md5Hash = Hash.calculateMd5(fsContent);
-                Map<String, TskData.FileKnown> results = skCase.lookupMd5(md5Hash);
-                for (Map.Entry<String, TskData.FileKnown> entry : results.entrySet()) {
-                    String hashSetName = entry.getKey();
-                    TskData.FileKnown status = entry.getValue();
-                    boolean changed = skCase.setKnown(fsContent, status);
+                TskData.FileKnown status = TskData.FileKnown.UKNOWN;
+                boolean foundBad = false;
+                for (Map.Entry<Integer, HashDb> entry : knownBadSets.entrySet()) {
+                    status = skCase.knownBadLookupMd5(md5Hash, entry.getKey());
                     if (status.equals(TskData.FileKnown.BAD)) {
+                        foundBad = true;
                         count += 1;
-                        BlackboardArtifact badFile = fsContent.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
-                        BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID(), MODULE_NAME, "Known Bad", hashSetName);
-                        badFile.addAttribute(att2);
-                        BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), MODULE_NAME, "", md5Hash);
-                        badFile.addAttribute(att3);
-                        StringBuilder detailsSb = new StringBuilder();
-                        //details
-                        detailsSb.append("<table border='0' cellpadding='4' width='280'>");
-                        //hit
-                        detailsSb.append("<tr>");
-                        detailsSb.append("<th>File Name</th>");
-                        detailsSb.append("<td>").append(name).append("</td>");
-                        detailsSb.append("</tr>");
-
-                        detailsSb.append("<tr>");
-                        detailsSb.append("<th>MD5 Hash</th>");
-                        detailsSb.append("<td>").append(md5Hash).append("</td>");
-                        detailsSb.append("</tr>");
-
-                        detailsSb.append("<tr>");
-                        detailsSb.append("<th>Hashset Name</th>");
-                        detailsSb.append("<td>").append(hashSetName).append("</td>");
-                        detailsSb.append("</tr>");
-
-                        detailsSb.append("</table>");
-
-                        managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this, "Notable: " + name, detailsSb.toString(), name + md5Hash, badFile));
-                        IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
-                        ret = ProcessResult.OK;
-                    } else if (status.equals(TskData.FileKnown.KNOWN)) {
+                        skCase.setKnown(fsContent, status);
+                        String hashSetName = entry.getValue().getName();
+                        processBadFile(fsContent, md5Hash, hashSetName);
+                    }
+                    ret = ProcessResult.OK;
+                }
+                if(!foundBad) {
+                    status = skCase.nsrlLookupMd5(md5Hash);
+                    if (status.equals(TskData.FileKnown.KNOWN)) {
+                        skCase.setKnown(fsContent, status);
                         ret = ProcessResult.COND_STOP;
-                    } else {
-                        ret = ProcessResult.OK;
                     }
                 }
             } catch (TskException ex) {
@@ -283,4 +271,44 @@ public class HashDbIngestService implements IngestServiceFsContent {
     public void saveSimpleConfiguration() {
     }
     
+    private void processBadFile(FsContent fsContent, String md5Hash, String hashSetName) {
+        try {
+            BlackboardArtifact badFile = fsContent.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
+            BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID(), MODULE_NAME, "Known Bad", hashSetName);
+            badFile.addAttribute(att2);
+            BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), MODULE_NAME, "", md5Hash);
+            badFile.addAttribute(att3);
+            StringBuilder detailsSb = new StringBuilder();
+            //details
+            detailsSb.append("<table border='0' cellpadding='4' width='280'>");
+            //hit
+            detailsSb.append("<tr>");
+            detailsSb.append("<th>File Name</th>");
+            detailsSb.append("<td>").append(fsContent.getName()).append("</td>");
+            detailsSb.append("</tr>");
+
+            detailsSb.append("<tr>");
+            detailsSb.append("<th>MD5 Hash</th>");
+            detailsSb.append("<td>").append(md5Hash).append("</td>");
+            detailsSb.append("</tr>");
+
+            detailsSb.append("<tr>");
+            detailsSb.append("<th>Hashset Name</th>");
+            detailsSb.append("<td>").append(hashSetName).append("</td>");
+            detailsSb.append("</tr>");
+
+            detailsSb.append("</table>");
+
+            managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this,
+                    "Notable: " + fsContent.getName(),
+                    detailsSb.toString(),
+                    fsContent.getName() + md5Hash,
+                    badFile));
+            IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "Error creating blackboard artifact", ex);
+        }
+
+    }
+
 }
