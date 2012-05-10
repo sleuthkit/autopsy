@@ -85,7 +85,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         INGESTED, EXTRACTED_INGESTED, SKIPPED,};
     private Map<Long, IngestStatus> ingestStatus;
-    private Map<String, List<FsContent>> reportedHits; //already reported hits
 
     public static synchronized KeywordSearchIngestService getDefault() {
         if (instance == null) {
@@ -151,7 +150,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         //cancel it, will re-run after final commit
         //note: cancellation of Searcher worker is graceful (between keywords)
         if (searcher != null) {
-            searcher.cancel(true);
+            searcher.cancel(false);
         }
 
         logger.log(Level.INFO, "Running final index commit and search");
@@ -216,12 +215,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         Server solrServer = KeywordSearch.getServer();
 
-
         ingester = solrServer.getIngester();
 
         ingestStatus = new HashMap<Long, IngestStatus>();
-
-        reportedHits = new HashMap<String, List<FsContent>>();
 
         keywords = new ArrayList<Keyword>();
         keywordLists = new ArrayList<String>();
@@ -373,7 +369,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     /**
      * Retrieve the updated keyword search lists from the XML loader
      */
-    private void updateKeywords() {
+    private synchronized void updateKeywords() {
         KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
 
         keywords.clear();
@@ -528,16 +524,16 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         @Override
         protected Object doInBackground() throws Exception {
+            logger.log(Level.INFO, "Starting new searcher");
+            
             //make sure other searchers are not spawned 
-            //slight chance if interals are tight or data sets are large
-            //(would still work, but for performance reasons)
             searcherDone = false;
-            //logger.log(Level.INFO, "Starting search");
 
             progress = ProgressHandleFactory.createHandle("Keyword Search", new Cancellable() {
 
                 @Override
                 public boolean cancel() {
+                    logger.log(Level.INFO, "Cancelling the searcher");
                     finalRunComplete = true;
                     return Searcher.this.cancel(true);
                 }
@@ -548,11 +544,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
             for (Keyword keywordQuery : keywords) {
                 if (this.isCancelled()) {
+                    logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: " + keywordQuery.getQuery());
                     return null;
                 }
                 final String queryStr = keywordQuery.getQuery();
                 final String listName = keywordToList.get(queryStr);
 
+                //DEBUG
                 //logger.log(Level.INFO, "Searching: " + queryStr);
 
                 progress.progress(queryStr, numSearched);
@@ -693,7 +691,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             }
                             detailsSb.append("</table>");
 
-                            managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+                            managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));                     
+
 
                         } //for each term hit
                     }//for each file hit
@@ -716,11 +715,13 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
             progress.finish();
 
-            //logger.log(Level.INFO, "Finished search");
+            logger.log(Level.INFO, "Searcher done");
             if (finalRun) {
+                logger.log(Level.INFO, "The final searcher in this ingest done.");
                 finalRunComplete = true;
                 keywords.clear();
                 keywordLists.clear();
+                keywordToList.clear();
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
             }
         }
