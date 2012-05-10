@@ -50,8 +50,8 @@ public class Report {
             ResultSet uniqueresults = tempDb.runQuery("SELECT DISTINCT value_text from blackboard_attributes where attribute_type_id = '10' order by value_text ASC");
            
             while (uniqueresults.next()) { 
-             //  table.append("<strong>").append(uniqueresults.getString("value_text")).append("</strong>");
-              //  table.append("<table><thead><tr><th>").append("File Name").append("</th><th>Preview</th><th>Keyword List</th></tr><tbody>");
+               table.append("<strong>").append(uniqueresults.getString("value_text")).append("</strong>");
+                table.append("<table><thead><tr><th>").append("File Name").append("</th><th>Preview</th><th>Keyword List</th></tr><tbody>");
                 ArrayList<BlackboardArtifact> artlist = new ArrayList<BlackboardArtifact>();
                 ResultSet tempresults = tempDb.runQuery("select DISTINCT artifact_id from blackboard_attributes where attribute_type_id = '10' and value_text = '" + uniqueresults.getString(1) + "'");
                 while (tempresults.next()) {
@@ -62,7 +62,7 @@ public class Report {
                     String filename = tempDb.getFsContentById(art.getObjectID()).getName();
                     String preview = "";
                     String set = "";
-                 //   table.append("<tr><td>").append(filename).append("</td>");
+                    table.append("<tr><td>").append(filename).append("</td>");
                     ArrayList<BlackboardAttribute> tempatts = art.getAttributes();
                     for (BlackboardAttribute att : tempatts) {
                         if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
@@ -72,10 +72,10 @@ public class Report {
                             set = "<td>" + att.getValueString() + "</td>";
                         }
                     }
-                   // table.append(preview).append(set).append("</tr>");
+                    table.append(preview).append(set).append("</tr>");
                 }
           
-              //  table.append("</tbody></table><br /><br />");
+                table.append("</tbody></table><br /><br />");
             }
         } catch (Exception e) {
             Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);

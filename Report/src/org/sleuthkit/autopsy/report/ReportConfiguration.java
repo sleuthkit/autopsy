@@ -61,7 +61,10 @@ class ReportConfiguration {
 
     ;
     
-        //regets everything that occurs in the constructor normally
+     /**regets everything that occurs in the constructor normally
+     * 
+     * @throws ReportModuleException 
+     */
        public void getAllTypes() throws ReportModuleException {
         config.clear();
         //now lets get the list from the tsk and current case
@@ -81,7 +84,9 @@ class ReportConfiguration {
 
     ;
 
-//setters for generally supported report parts
+        /**setters for generally supported report parts
+        * 
+        */
 public void setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type, Boolean value) throws ReportModuleException {
         if (config.containsKey(type)) {
             config.put(type, value);
@@ -92,7 +97,9 @@ public void setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type, Boolean va
 
     ;
        
-       //This allows all that setting to happen in groups
+       /**This allows all that setting to happen in groups
+         *
+         */
        public void setGenArtifactType(ArrayList<BlackboardArtifact.ARTIFACT_TYPE> typeList, boolean value) throws ReportModuleException {
 
         for (BlackboardArtifact.ARTIFACT_TYPE type : typeList) {
@@ -107,7 +114,9 @@ public void setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type, Boolean va
     ;
        
        
-       //getters for generally supported report parts
+       /** getters for generally supported report parts
+        * 
+        */
        public boolean getGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type) throws ReportModuleException {
         boolean value = false;
         if (config.containsKey(type)) {

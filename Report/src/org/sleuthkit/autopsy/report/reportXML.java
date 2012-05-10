@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.*;
 public class ReportXML implements ReportModule {
 
     public static Document xmldoc = new Document();
-    private ReportConfiguration reportconfig = new ReportConfiguration();
+    private ReportConfiguration reportconfig;
     private String xmlPath;
 
     public ReportXML() {

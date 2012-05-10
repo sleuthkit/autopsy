@@ -45,7 +45,7 @@ public class ReportXLS implements ReportModule {
 
     public static Workbook wb = new XSSFWorkbook();
     private static String xlsPath = "";
-    private ReportConfiguration config = new ReportConfiguration();
+    private ReportConfiguration config;
 
     public ReportXLS() {
         //Empty the workbook first

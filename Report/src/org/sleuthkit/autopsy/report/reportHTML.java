@@ -52,7 +52,7 @@ public class ReportHTML implements ReportModule{
     private static StringBuilder unformatted_header = new StringBuilder();
     private static StringBuilder formatted_header = new StringBuilder();
     private static String htmlPath = "";
-    private ReportConfiguration config = new ReportConfiguration();
+    private ReportConfiguration config;
 
      ReportHTML(){
         
