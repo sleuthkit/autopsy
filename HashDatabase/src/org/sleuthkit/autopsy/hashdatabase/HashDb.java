@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- *
+ * 
  * Copyright 2011 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,34 +19,69 @@
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.io.File;
+import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
+import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * HashDb is based on the path to a database, and has methods to check the 
- * status of database and index files, and create indexes.  One of these 
- * is created for every open hash database. 
+ *
+ * @author dfickling
  */
-class HashDb {
+public class HashDb implements Comparable<HashDb> {
 
+    public enum DBType{
+        NSRL, KNOWN_BAD;
+    }
+    
     // Suffix added to the end of a database name to get its index file
     private static final String INDEX_SUFFIX = "-md5.idx";
-    /**
-     * Path to database (database and/or index may not actually exist)
-     */
-    String databasePath;
-
-    /**
-     * New {@link HashDb} for database at given path
-     * @param databasePath Path of database this instance represents (database
-     * and/or index may not actually exist)
-     */
-    HashDb(String databasePath) {
-        this.databasePath = databasePath;
+    
+    private String name;
+    private List<String> databasePaths; // TODO: Length limited to one for now...
+    private boolean useForIngest;
+    private boolean indexing;
+    
+    public HashDb(String name, List<String> databasePaths, boolean useForIngest) {
+        this.name = name;
+        this.databasePaths = databasePaths;
+        this.useForIngest = useForIngest;
+        this.indexing = false;
     }
-
+    
+    boolean getUseForIngest() {
+        return useForIngest;
+    }
+    
+    String getName() {
+        return name;
+    }
+    
+    List<String> getDatabasePaths() {
+        return databasePaths;
+    }
+    
+    void setUseForIngest(boolean useForIngest) {
+        this.useForIngest = useForIngest;
+    }
+    
+    void setName(String name) {
+        this.name = name;
+    }
+    
+    void setDatabasePaths(List<String> databasePaths) {
+        this.databasePaths = databasePaths;
+    }
+    
     /**
      * Checks if the database exists.
      * @return true if a file exists at the database path, else false
@@ -54,14 +89,14 @@ class HashDb {
     boolean databaseExists() {
         return databaseFile().exists();
     }
-
+    
     /**
      * Checks if Sleuth Kit can open the index for the database path.
      * @return true if the index was found and opened successfully, else false
      */
     boolean indexExists() {
         try {
-            return hasIndex(databasePath);
+            return hasIndex(databasePaths.get(0)); // TODO: support multiple paths
         } catch (TskException ex) {
             Log.get(this.getClass()).log(Level.WARNING, "Error checking if index exists.", ex);
             return false;
@@ -73,16 +108,16 @@ class HashDb {
      * @return a File initialized with the database path
      */
     File databaseFile() {
-        return new File(databasePath);
+        return new File(databasePaths.get(0)); // TODO: support multiple paths
     }
-
+    
     /**
      * Gets the index file
      * @return a File initialized with an index path derived from the database
      * path
      */
     File indexFile() {
-        return new File(toIndexPath(databasePath));
+        return new File(toIndexPath(databasePaths.get(0))); // TODO: support multiple paths
     }
 
     /**
@@ -97,6 +132,13 @@ class HashDb {
 
         return i.exists() && db.exists() && isOlderThan(i, db);
     }
+    
+    /**
+     * Checks if the database is being indexed
+     */
+    boolean isIndexing() {
+        return indexing;
+    }
 
     /**
      * Returns the status of the HashDb as determined from indexExists(),
@@ -107,6 +149,8 @@ class HashDb {
         boolean i = this.indexExists();
         boolean db = this.databaseExists();
 
+        if(indexing)
+            return IndexStatus.INDEXING;
         if (i) {
             if (db) {
                 return this.isOutdated() ? IndexStatus.INDEX_OUTDATED : IndexStatus.INDEX_CURRENT;
@@ -123,7 +167,9 @@ class HashDb {
      * @throws TskException if an error occurs in the SleuthKit bindings 
      */
     void createIndex() throws TskException {
-        SleuthkitJNI.createLookupIndex(databasePath);
+        indexing = true;
+        CreateIndex creator = new CreateIndex();
+        creator.execute();
         //TODO: error checking
     }
 
@@ -175,5 +221,58 @@ class HashDb {
      */
     static boolean hasIndex(String databasePath) throws TskException {
         return SleuthkitJNI.lookupIndexExists(databasePath);
+    }
+    
+    @Override
+    public int compareTo(HashDb o) {
+        return this.name.compareTo(o.name);
+    }
+    
+    /* Thread that adds image/file and service pairs to queues */
+    private class CreateIndex extends SwingWorker<Object,Void> {
+
+        private ProgressHandle progress;
+        
+        CreateIndex(){};
+
+        @Override
+        protected Object doInBackground() throws Exception {
+            progress = ProgressHandleFactory.createHandle("Indexing " + name, new Cancellable() {
+                @Override
+                public boolean cancel() {
+                    return CreateIndex.this.cancel(true);
+                }
+            });
+            progress.start();
+            progress.switchToIndeterminate();
+            SleuthkitJNI.createLookupIndex(databasePaths.get(0));
+            return null;
+        }
+
+        /* clean up or start the worker threads */
+        @Override
+        protected void done() {
+            try {
+                super.get(); //block and get all exceptions thrown while doInBackground()      
+            } catch (CancellationException e) {
+                //task was cancelled
+                handleInterruption(e);
+            } catch (InterruptedException ex) {
+                handleInterruption(ex);
+            } catch (ExecutionException ex) {
+                handleInterruption(ex);
+            } catch (Exception ex) {
+                handleInterruption(ex);
+            } finally {
+                indexing = false;
+                progress.finish();
+                HashDbMgmtPanel.getDefault().resync();
+            }
+        }
+        
+        private void handleInterruption(Exception ex) {
+            //TODO: something
+            Logger.getLogger(CreateIndex.class.getName()).log(Level.WARNING, "interrupted!", ex);
+        }
     }
 }

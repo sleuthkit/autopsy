@@ -44,7 +44,11 @@ enum IndexStatus {
     /**
      * Neither the index nor the database exists.
      */
-    NONE("No index or database.");
+    NONE("No index or database."),
+    /**
+     * The index is currently being generated
+     */
+    INDEXING("The index is currently being generated");
     
     private String message;
 
@@ -61,5 +65,9 @@ enum IndexStatus {
      */
     String message() {
         return this.message;
+    }
+    
+    public static boolean isIngestible(IndexStatus status) {
+        return status == NO_DB || status == INDEX_CURRENT || status == INDEX_OUTDATED;
     }
 }

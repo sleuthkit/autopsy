@@ -39,8 +39,16 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
 
     /** Creates new form AdvancedConfigurationDialog */
     public AdvancedConfigurationDialog() {
+        this(false);
+    }
+    
+    /** Creates new form AdvancedConfigurationDialog */
+    public AdvancedConfigurationDialog(boolean resizable) {
         super(new JFrame(), true);
-        setResizable(false);
+        setResizable(resizable);
+        if(resizable) {
+            this.setIconImage(null);
+        }
         initComponents();
     }
     
