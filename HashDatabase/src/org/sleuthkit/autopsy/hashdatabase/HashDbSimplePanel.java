@@ -146,16 +146,15 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
     private class HashTableModel extends AbstractTableModel {
         
-        private List<HashDb> data = new ArrayList<HashDb>();
+        private HashDbXML xmlHandle = HashDbXML.getCurrent();
         
         private void resync() {
-            data.clear();
-            data.addAll(HashDbXML.getCurrent().getKnownBadSets());
+            fireTableDataChanged();
         }
 
         @Override
         public int getRowCount() {
-            return data.size();
+            return xmlHandle.getKnownBadSets().size();
         }
 
         @Override
@@ -165,7 +164,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            HashDb db = data.get(rowIndex);
+            HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
             if(columnIndex == 0) {
                 return db.getUseForIngest();
             } else {
@@ -181,9 +180,8 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if(columnIndex == 0){
-                HashDb db = data.get(rowIndex);
-                HashDbXML.getCurrent().addKnownBadSet(new HashDb(db.getName(), db.getDatabasePaths(), (Boolean) aValue));
-                reloadSets();
+                HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
+                db.setUseForIngest((Boolean) aValue);
             }
         }
         
