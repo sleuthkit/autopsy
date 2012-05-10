@@ -37,13 +37,13 @@ public class ReportGen {
     ReportGen() {
     }
 
-    public void flushReport() {
+    public void ClearReport() {
         Results.clear();
     }
 
-    public void populateReport(ReportConfiguration config) {
-        flushReport();
-        report bbreport = new report();
+    public void PopulateReport(ReportConfiguration config) {
+        ClearReport();
+        Report bbreport = new Report();
         Results = bbreport.getAllTypes(config);
     }
 }

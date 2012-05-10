@@ -52,13 +52,13 @@ id = "org.sleuthkit.autopsy.report.reportAction")
     @ActionReference(path = "Menu/Tools", position = 80)
 })
 @Messages("CTL_reportAction=Run Report")
-public final class reportAction extends CallableSystemAction implements Presenter.Toolbar {
+public final class ReportAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = "Generate Report";
-    static final Logger logger = Logger.getLogger(reportAction.class.getName());
+    static final Logger logger = Logger.getLogger(ReportAction.class.getName());
 
-    public reportAction() {
+    public ReportAction() {
         setEnabled(false);
         Case.addPropertyChangeListener(new PropertyChangeListener() {
 
@@ -101,7 +101,7 @@ public final class reportAction extends CallableSystemAction implements Presente
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                reportAction.this.actionPerformed(e);
+                ReportAction.this.actionPerformed(e);
             }
         });
 

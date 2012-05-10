@@ -57,7 +57,7 @@ public class reportPanelAction {
                 public void run() {
                  rr.progBarStartText();
                  }});
-              report.populateReport(reportconfig);
+              report.PopulateReport(reportconfig);
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -72,37 +72,37 @@ public class reportPanelAction {
                    {  
                     StopWatch a = new StopWatch();
                     a.start();
-                    reportHTML htmlReport = new reportHTML();
+                    ReportHTML htmlReport = new ReportHTML();
                     try{
-                    htmlReport.generateReport(reportconfig, rr);
-                    BrowserControl.openUrl(reportHTML.htmlPath);
+                    htmlReport.GenerateReport(reportconfig, rr);
+                    BrowserControl.openUrl(ReportHTML.htmlPath);
                     }
                     catch(ReportModuleException e){
-                        Logger.getLogger(reportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the htmlReport", e);
+                        Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the htmlReport", e);
                     }
                     a.stop();
                     System.out.println("html in milliseconds: " + a.getElapsedTime());
                     
                     StopWatch s = new StopWatch();
                     s.start();
-                    reportXLS xlsReport = new reportXLS();
+                    ReportXLS xlsReport = new ReportXLS();
                     try{
-                    xlsReport.generateReport(reportconfig,rr);
+                    xlsReport.GenerateReport(reportconfig,rr);
                     }
                     catch(ReportModuleException e){
-                        Logger.getLogger(reportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the XLS Report", e);
+                        Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the XLS Report", e);
                     }
                     s.stop();
                     System.out.println("xls in milliseconds: " + s.getElapsedTime());
                     
                     StopWatch S = new StopWatch();
                     S.start();
-                    reportXML xmlReport = new reportXML(); 
+                    ReportXML xmlReport = new ReportXML(); 
                     try{
-                    xmlReport.generateReport(reportconfig,rr);
+                    xmlReport.GenerateReport(reportconfig,rr);
                     }
                     catch(ReportModuleException e){
-                        Logger.getLogger(reportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the XML Report", e);
+                        Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the XML Report", e);
                     }
                     S.stop();
                     System.out.println("xml in milliseconds: " + S.getElapsedTime());

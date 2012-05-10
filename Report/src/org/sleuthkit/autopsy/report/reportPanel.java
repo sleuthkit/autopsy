@@ -132,25 +132,25 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
 
     private void exportReport(String path) {
 
-        String htmlpath = reportUtils.changeExtension(path, ".html");
-        String xmlpath = reportUtils.changeExtension(path, ".xml");
-        String xlspath = reportUtils.changeExtension(path, ".xlsx");
+        String htmlpath = ReportUtils.changeExtension(path, ".html");
+        String xmlpath = ReportUtils.changeExtension(path, ".xml");
+        String xlspath = ReportUtils.changeExtension(path, ".xlsx");
         try {
             Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(htmlpath), "UTF-8"));
 
             // FileOutputStream out = new FileOutputStream(htmlpath);
-            out.write(reportHTML.formatted_header.toString());
+            out.write(ReportHTML.formatted_header.toString());
             out.flush();
             out.close();
 
             //xls report
             FileOutputStream fos = new FileOutputStream(xlspath);
-            reportXLS.wb.write(fos);
+            ReportXLS.wb.write(fos);
             fos.close();
 
             FileOutputStream xmlout = new FileOutputStream(xmlpath);
             XMLOutputter serializer = new XMLOutputter();
-            serializer.output(reportXML.xmldoc, xmlout);
+            serializer.output(ReportXML.xmldoc, xmlout);
             xmlout.flush();
             xmlout.close();
             JOptionPane.showMessageDialog(this, "Report has been successfully saved!");

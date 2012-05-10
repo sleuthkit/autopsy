@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.report;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -40,21 +41,21 @@ import org.sleuthkit.datamodel.*;
  *
  * @author Alex
  */
-public class reportXLS implements ReportModule {
+public class ReportXLS implements ReportModule {
 
     public static Workbook wb = new XSSFWorkbook();
-    static String xlsPath = "";
-        ReportConfiguration config = new ReportConfiguration();
+    private static String xlsPath = "";
+    private ReportConfiguration config = new ReportConfiguration();
 
-    public reportXLS() {
+    public ReportXLS() {
         //Empty the workbook first
         
     }
     @Override
-   public String generateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException {
+   public String GenerateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException {
       config = reportconfig;
       ReportGen reportobj = new ReportGen();
-      reportobj.populateReport(reportconfig);
+      reportobj.PopulateReport(reportconfig);
       HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
       Workbook wbtemp = new XSSFWorkbook();
         int countGen = 0;
@@ -384,8 +385,8 @@ public class reportXLS implements ReportModule {
 
             //write out the report to the reports folder, set the wbtemp to the primary wb object
            wb = wbtemp;
-           xlsPath = currentCase.getCaseDirectory() + "/Reports/" + caseName + "-" + datenotime + ".xlsx";
-           this.save(xlsPath);
+           xlsPath = currentCase.getCaseDirectory() + File.separator + "Reports" + File.separator + caseName + "-" + datenotime + ".xlsx";
+           this.Save(xlsPath);
 
         } catch (Exception E) {
             String test = E.toString();
@@ -395,7 +396,7 @@ public class reportXLS implements ReportModule {
     }
     
        @Override
-    public void save(String path)
+    public void Save(String path)
     {
         try{ 
              FileOutputStream fos = new FileOutputStream(path);
@@ -403,32 +404,32 @@ public class reportXLS implements ReportModule {
                 fos.close();     
         }
         catch(IOException e){
-             Logger.getLogger(reportHTML.class.getName()).log(Level.SEVERE, "Could not write out XLS report!", e);
+             Logger.getLogger(ReportHTML.class.getName()).log(Level.SEVERE, "Could not write out XLS report!", e);
         }
         
     }
    
     @Override
-      public String getReportType(){
+      public String GetReportType(){
           String type = "XLS";
         return type;
       }
 
  
     @Override
-    public ReportConfiguration getReportConfiguration(){
+    public ReportConfiguration GetReportConfiguration(){
         return config;
     }
 
     
     @Override
-    public String getReportTypeDescription(){
+    public String GetReportTypeDescription(){
         String desc = "This is an xls formatted report that is meant to be viewed in Excel.";
         return desc;
     }
 
     @Override
-    public String generateReport() throws ReportModuleException {
+    public String GenerateReport() throws ReportModuleException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

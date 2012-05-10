@@ -46,27 +46,27 @@ import org.sleuthkit.datamodel.TskData;
  *
  * @author Alex
  */
-public class reportHTML implements ReportModule{
-    //Declare our publically accessible formatted report, this will change everytime they run a report
+public class ReportHTML implements ReportModule{
+    //Declare our publically accessible formatted Report, this will change everytime they run a Report
     public static StringBuilder formatted_Report = new StringBuilder();
-    public static StringBuilder unformatted_header = new StringBuilder();
-    public static StringBuilder formatted_header = new StringBuilder();
-    public static String htmlPath = "";
-    ReportConfiguration config = new ReportConfiguration();
+    private static StringBuilder unformatted_header = new StringBuilder();
+    private static StringBuilder formatted_header = new StringBuilder();
+    private static String htmlPath = "";
+    private ReportConfiguration config = new ReportConfiguration();
 
-     reportHTML(){
+     ReportHTML(){
         
     }
     
     @Override
-    public String generateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException {
+    public String GenerateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException {
         config = reportconfig;
       ReportGen reportobj = new ReportGen();
-       reportobj.populateReport(reportconfig);
+       reportobj.PopulateReport(reportconfig);
         HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
         //This is literally a terrible way to count up all the types of artifacts, and doesn't include any added ones. 
-        //Unlike the XML report, which is dynamic, this is formatted and needs to be redone later instead of being hardcoded.
-        //Also, clearing variables to generate new report.
+        //Unlike the XML Report, which is dynamic, this is formatted and needs to be redone later instead of being hardcoded.
+        //Also, clearing variables to generate new Report.
         formatted_Report.setLength(0);
         unformatted_header.setLength(0);
         formatted_header.setLength(0);
@@ -168,7 +168,7 @@ public class reportHTML implements ReportModule{
                     + "</style>";
             unformatted_header.append(header);
             unformatted_header.append(simpleCSS);
-            //formatted_Report.append("<link rel=\"stylesheet\" href=\"" + rrpath + "report.css\" type=\"text/css\" />");
+            //formatted_Report.append("<link rel=\"stylesheet\" href=\"" + rrpath + "Report.css\" type=\"text/css\" />");
             formatted_Report.append("</head><body><div id=\"main\"><div id=\"content\">");
             // Add summary information now
 
@@ -276,7 +276,7 @@ public class reportHTML implements ReportModule{
                     {
                         value = "";
                     }
-                    value = reportUtils.insertPeriodically(value, "<br>", 30);
+                    value = ReportUtils.insertPeriodically(value, "<br>", 30);
                     attributes.put(type, value);
                     cc++;
                 }
@@ -397,7 +397,7 @@ public class reportHTML implements ReportModule{
             }
             if (countKeyword > 0) {
                 formatted_Report.append(nodeKeyword);
-                report keywords = new report();
+                Report keywords = new Report();
                 formatted_Report.append(keywords.getGroupedKeywordHit());
                 // "<table><thead><tr><th>Artifact ID</th><th>Name</th><th>Size</th>
                 // formatted_Report.append("</tbody></table>");
@@ -416,52 +416,52 @@ public class reportHTML implements ReportModule{
             formatted_header.append(formatted_Report);
             // unformatted_header.append(formatted_Report);
             htmlPath = currentCase.getCaseDirectory() + "/Reports/" + caseName + "-" + datenotime + ".html";
-            this.save(htmlPath);
+            this.Save(htmlPath);
             
         } catch (Exception e) {
 
-            Logger.getLogger(reportHTML.class.getName()).log(Level.WARNING, "Exception occurred", e);
+            Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Exception occurred", e);
         }
         return htmlPath;
     }
     
  
     @Override
-    public void save(String path)
+    public void Save(String path)
     {
         try{
-         Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(htmlPath), "UTF-8"));
+         Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path), "UTF-8"));
             out.write(formatted_header.toString());
             out.flush();
             out.close();
         }
         catch(IOException e){
-             Logger.getLogger(reportHTML.class.getName()).log(Level.SEVERE, "Could not write out HTML report!", e);
+             Logger.getLogger(ReportHTML.class.getName()).log(Level.SEVERE, "Could not write out HTML report!", e);
         }
         
     }
    
     @Override
-      public String getReportType(){
+      public String GetReportType(){
           String type = "HTML";
         return type;
       }
 
  
     @Override
-    public ReportConfiguration getReportConfiguration(){
+    public ReportConfiguration GetReportConfiguration(){
         return config;
     }
 
     
     @Override
-    public String getReportTypeDescription(){
+    public String GetReportTypeDescription(){
         String desc = "This is an html formatted report that is meant to be viewed in a modern browser.";
         return desc;
     }
 
     @Override
-    public String generateReport() throws ReportModuleException {
+    public String GenerateReport() throws ReportModuleException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

@@ -56,7 +56,7 @@ public class reportFilter extends javax.swing.JPanel {
         }
         catch(ReportModuleException ex)
         {
-              Logger.getLogger(report.class.getName()).log(Level.SEVERE, "Exception occurred", ex);
+              Logger.getLogger(Report.class.getName()).log(Level.SEVERE, "Exception occurred", ex);
         }
     }
 

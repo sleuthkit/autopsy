@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  *
  * @author Alex
  */
-public class report {
+public class Report {
 
     private void report() {
     }
@@ -50,19 +50,19 @@ public class report {
             ResultSet uniqueresults = tempDb.runQuery("SELECT DISTINCT value_text from blackboard_attributes where attribute_type_id = '10' order by value_text ASC");
            
             while (uniqueresults.next()) { 
-                table.append("<strong>").append(uniqueresults.getString("value_text")).append("</strong>");
-                table.append("<table><thead><tr><th>").append("File Name").append("</th><th>Preview</th><th>Keyword List</th></tr><tbody>");
+             //  table.append("<strong>").append(uniqueresults.getString("value_text")).append("</strong>");
+              //  table.append("<table><thead><tr><th>").append("File Name").append("</th><th>Preview</th><th>Keyword List</th></tr><tbody>");
                 ArrayList<BlackboardArtifact> artlist = new ArrayList<BlackboardArtifact>();
-                ResultSet tempresults = tempDb.runQuery("select DISTINCT artifact_id from blackboard_attributes where attribute_type_id = '10' and value_text = '" + uniqueresults.getString("value_text") + "'");
+                ResultSet tempresults = tempDb.runQuery("select DISTINCT artifact_id from blackboard_attributes where attribute_type_id = '10' and value_text = '" + uniqueresults.getString(1) + "'");
                 while (tempresults.next()) {
-                    artlist.add(tempDb.getBlackboardArtifact(tempresults.getLong("artifact_id")));
+                    artlist.add(tempDb.getBlackboardArtifact(tempresults.getLong(1)));
                 }
                 
                 for (BlackboardArtifact art : artlist) {
                     String filename = tempDb.getFsContentById(art.getObjectID()).getName();
                     String preview = "";
                     String set = "";
-                    table.append("<tr><td>").append(filename).append("</td>");
+                 //   table.append("<tr><td>").append(filename).append("</td>");
                     ArrayList<BlackboardAttribute> tempatts = art.getAttributes();
                     for (BlackboardAttribute att : tempatts) {
                         if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
@@ -72,13 +72,13 @@ public class report {
                             set = "<td>" + att.getValueString() + "</td>";
                         }
                     }
-                    table.append(preview).append(set).append("</tr>");
+                   // table.append(preview).append(set).append("</tr>");
                 }
           
-                table.append("</tbody></table><br /><br />");
+              //  table.append("</tbody></table><br /><br />");
             }
         } catch (Exception e) {
-            Logger.getLogger(report.class.getName()).log(Level.WARNING, "Exception occurred", e);
+            Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);
         }
         
         return table.toString();
@@ -99,7 +99,7 @@ public class report {
                 }
             }
         } catch (Exception e) {
-            Logger.getLogger(report.class.getName()).log(Level.INFO, "Exception occurred", e);
+            Logger.getLogger(Report.class.getName()).log(Level.INFO, "Exception occurred", e);
         }
 
         return reportMap;

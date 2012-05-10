@@ -24,7 +24,7 @@ package org.sleuthkit.autopsy.report;
  *
  * @author Alex
  */
-public class reportUtils {
+public class ReportUtils {
 
     static String changeExtension(String originalName, String newExtension) {
         int lastDot = originalName.lastIndexOf(".");
