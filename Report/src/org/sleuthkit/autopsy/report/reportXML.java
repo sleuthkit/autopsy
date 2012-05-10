@@ -51,9 +51,9 @@ public class ReportXML implements ReportModule {
     }
 
     @Override
-    public String GenerateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException{
+    public String generateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException{
        ReportGen reportobj = new ReportGen();
-       reportobj.PopulateReport(reportconfig);
+       reportobj.populateReport(reportconfig);
         HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
         try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
@@ -187,7 +187,7 @@ public class ReportXML implements ReportModule {
             
             //Export it the first time
               xmlPath = currentCase.getCaseDirectory() + File.separator + "Reports" + File.separator + caseName + "-" + datenotime + ".xml";
-              this.Save(xmlPath);
+              this.save(xmlPath);
 
         } catch (Exception e) {
             Logger.getLogger(ReportXML.class.getName()).log(Level.WARNING, "Exception occurred", e);
@@ -197,7 +197,7 @@ public class ReportXML implements ReportModule {
     }
 
     @Override
-    public void Save(String path) {
+    public void save(String path) {
         
         try {
               
@@ -213,7 +213,7 @@ public class ReportXML implements ReportModule {
     }
 
     @Override
-    public String GetReportType() {
+    public String getReportType() {
         String type = "XML";
         return type;
     }
@@ -225,13 +225,13 @@ public class ReportXML implements ReportModule {
     }
 
     @Override
-    public String GetReportTypeDescription() {
+    public String getReportTypeDescription() {
         String desc = "This is an html formatted report that is meant to be viewed in a modern browser.";
         return desc;
     }
 
     @Override
-    public String GenerateReport() throws ReportModuleException {
+    public String generateReport() throws ReportModuleException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

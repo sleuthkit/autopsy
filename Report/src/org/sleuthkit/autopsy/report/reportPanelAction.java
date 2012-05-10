@@ -57,7 +57,7 @@ public class reportPanelAction {
                 public void run() {
                  rr.progBarStartText();
                  }});
-              report.PopulateReport(reportconfig);
+              report.populateReport(reportconfig);
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -74,7 +74,7 @@ public class reportPanelAction {
                     a.start();
                     ReportHTML htmlReport = new ReportHTML();
                     try{
-                    htmlReport.GenerateReport(reportconfig, rr);
+                    htmlReport.generateReport(reportconfig, rr);
                     BrowserControl.openUrl(ReportHTML.htmlPath);
                     }
                     catch(ReportModuleException e){
@@ -87,7 +87,7 @@ public class reportPanelAction {
                     s.start();
                     ReportXLS xlsReport = new ReportXLS();
                     try{
-                    xlsReport.GenerateReport(reportconfig,rr);
+                    xlsReport.generateReport(reportconfig,rr);
                     }
                     catch(ReportModuleException e){
                         Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the XLS Report", e);
@@ -99,7 +99,7 @@ public class reportPanelAction {
                     S.start();
                     ReportXML xmlReport = new ReportXML(); 
                     try{
-                    xmlReport.GenerateReport(reportconfig,rr);
+                    xmlReport.generateReport(reportconfig,rr);
                     }
                     catch(ReportModuleException e){
                         Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the XML Report", e);

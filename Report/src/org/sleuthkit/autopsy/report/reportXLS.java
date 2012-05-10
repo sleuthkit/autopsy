@@ -52,10 +52,10 @@ public class ReportXLS implements ReportModule {
         
     }
     @Override
-   public String GenerateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException {
+   public String generateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException {
       config = reportconfig;
       ReportGen reportobj = new ReportGen();
-      reportobj.PopulateReport(reportconfig);
+      reportobj.populateReport(reportconfig);
       HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
       Workbook wbtemp = new XSSFWorkbook();
         int countGen = 0;
@@ -386,7 +386,7 @@ public class ReportXLS implements ReportModule {
             //write out the report to the reports folder, set the wbtemp to the primary wb object
            wb = wbtemp;
            xlsPath = currentCase.getCaseDirectory() + File.separator + "Reports" + File.separator + caseName + "-" + datenotime + ".xlsx";
-           this.Save(xlsPath);
+           this.save(xlsPath);
 
         } catch (Exception E) {
             String test = E.toString();
@@ -396,7 +396,7 @@ public class ReportXLS implements ReportModule {
     }
     
        @Override
-    public void Save(String path)
+    public void save(String path)
     {
         try{ 
              FileOutputStream fos = new FileOutputStream(path);
@@ -410,7 +410,7 @@ public class ReportXLS implements ReportModule {
     }
    
     @Override
-      public String GetReportType(){
+      public String getReportType(){
           String type = "XLS";
         return type;
       }
@@ -423,13 +423,13 @@ public class ReportXLS implements ReportModule {
 
     
     @Override
-    public String GetReportTypeDescription(){
+    public String getReportTypeDescription(){
         String desc = "This is an xls formatted report that is meant to be viewed in Excel.";
         return desc;
     }
 
     @Override
-    public String GenerateReport() throws ReportModuleException {
+    public String generateReport() throws ReportModuleException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

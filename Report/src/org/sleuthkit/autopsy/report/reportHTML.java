@@ -59,10 +59,10 @@ public class ReportHTML implements ReportModule{
     }
     
     @Override
-    public String GenerateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException {
+    public String generateReport(ReportConfiguration reportconfig, reportFilter rr) throws ReportModuleException {
         config = reportconfig;
       ReportGen reportobj = new ReportGen();
-       reportobj.PopulateReport(reportconfig);
+       reportobj.populateReport(reportconfig);
         HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
         //This is literally a terrible way to count up all the types of artifacts, and doesn't include any added ones. 
         //Unlike the XML Report, which is dynamic, this is formatted and needs to be redone later instead of being hardcoded.
@@ -416,7 +416,7 @@ public class ReportHTML implements ReportModule{
             formatted_header.append(formatted_Report);
             // unformatted_header.append(formatted_Report);
             htmlPath = currentCase.getCaseDirectory() + "/Reports/" + caseName + "-" + datenotime + ".html";
-            this.Save(htmlPath);
+            this.save(htmlPath);
             
         } catch (Exception e) {
 
@@ -427,7 +427,7 @@ public class ReportHTML implements ReportModule{
     
  
     @Override
-    public void Save(String path)
+    public void save(String path)
     {
         try{
          Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path), "UTF-8"));
@@ -442,7 +442,7 @@ public class ReportHTML implements ReportModule{
     }
    
     @Override
-      public String GetReportType(){
+      public String getReportType(){
           String type = "HTML";
         return type;
       }
@@ -455,13 +455,13 @@ public class ReportHTML implements ReportModule{
 
     
     @Override
-    public String GetReportTypeDescription(){
+    public String getReportTypeDescription(){
         String desc = "This is an html formatted report that is meant to be viewed in a modern browser.";
         return desc;
     }
 
     @Override
-    public String GenerateReport() throws ReportModuleException {
+    public String generateReport() throws ReportModuleException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

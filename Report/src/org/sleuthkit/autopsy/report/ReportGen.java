@@ -37,12 +37,12 @@ public class ReportGen {
     ReportGen() {
     }
 
-    public void ClearReport() {
+    public void clearReport() {
         Results.clear();
     }
 
-    public void PopulateReport(ReportConfiguration config) {
-        ClearReport();
+    public void populateReport(ReportConfiguration config) {
+        clearReport();
         Report bbreport = new Report();
         Results = bbreport.getAllTypes(config);
     }
