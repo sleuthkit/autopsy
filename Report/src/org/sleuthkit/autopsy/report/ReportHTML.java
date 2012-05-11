@@ -464,5 +464,6 @@ public class ReportHTML implements ReportModule{
     public String generateReport() throws ReportModuleException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+    
 
 }

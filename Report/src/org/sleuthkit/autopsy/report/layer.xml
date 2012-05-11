@@ -5,15 +5,24 @@
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-report-ReportAction.instance"/>
             <file name="org-sleuthkit-autopsy-report-ReportAction.instance_hidden"/>
-            <file name="org-sleuthkit-autopsy-report-reportAction.instance_hidden"/>
+            <file name="org-sleuthkit-autopsy-report-ReportAction.instance_hidden"/>
         </folder>
     </folder>
-    <folder name="Services"/>
+    <folder name="Services">
+        <file name="org-sleuthkit-autopsy-report-ReportModule.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.ReportHTML"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportHTML.getDefault"/>
+            <attr name="position" intvalue="1000"/>
+        </file>
+        </folder>
     <folder name="Toolbars">
-         
-        <folder name="File">
-            <file name="org-sleuthkit-autopsy-report-reportAction.shadow">
-                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.report.Bundle#Toolbars/Reports/org-sleuthkit-autopsy-report-reportAction.shadow"/>
+            <file name="sep2.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JToolBar$Separator"/>
+            <attr name="position" intvalue="600"/>
+           </file>
+          <folder name="File">
+            <file name="org-sleuthkit-autopsy-report-ReportAction.shadow">
+                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.report.Bundle#Toolbars/Reports/org-sleuthkit-autopsy-report-ReportAction.shadow"/>
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportAction.instance"/>
                 <attr name="position" intvalue="650"/>
             </file>
