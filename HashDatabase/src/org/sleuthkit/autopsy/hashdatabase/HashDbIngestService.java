@@ -51,7 +51,8 @@ public class HashDbIngestService implements IngestServiceFsContent {
     private static int messageId = 0;
     private int count;
     // Whether or not to do hash lookups (only set to true if there are dbs set)
-    private boolean process;
+    private boolean nsrlIsSet;
+    private boolean knownBadIsSet;
     private HashDb nsrlSet;
     private int nsrlPointer;
     private Map<Integer, HashDb> knownBadSets = new HashMap<Integer, HashDb>();
@@ -77,7 +78,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
     @Override
     public void init(IngestManagerProxy managerProxy) {
         HashDbMgmtPanel.getDefault().setIngestRunning(true);
-        this.process = false;
+        HashDbSimplePanel.setIngestRunning(true);
         this.managerProxy = managerProxy;
         this.managerProxy.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
@@ -86,13 +87,12 @@ public class HashDbIngestService implements IngestServiceFsContent {
             nsrlSet = null;
             knownBadSets.clear();
             skCase.clearLookupDatabases();
-            boolean nsrlIsSet = false;
-            boolean knownBadIsSet = false;
+            nsrlIsSet = false;
+            knownBadIsSet = false;
             
             HashDb nsrl = hdbxml.getNSRLSet();
             if(nsrl != null && IndexStatus.isIngestible(nsrl.status())) {
                 nsrlIsSet = true;
-                this.process = true;
                 this.nsrlSet = nsrl;
                 nsrlPointer = skCase.setNSRLDatabase(nsrl.getDatabasePaths().get(0));
             }
@@ -100,7 +100,6 @@ public class HashDbIngestService implements IngestServiceFsContent {
             for(HashDb db : hdbxml.getKnownBadSets()) {
                 IndexStatus status = db.status();
                 if (db.getUseForIngest() && IndexStatus.isIngestible(status)) { // TODO: should inform user that we won't use the db if it's not indexed
-                    this.process = true;
                     knownBadIsSet = true;
                     int ret = skCase.addKnownBadDatabase(db.getDatabasePaths().get(0)); // TODO: support multiple paths
                     knownBadSets.put(ret, db);
@@ -150,6 +149,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Ingest Complete", detailsSb.toString()));
         
         HashDbMgmtPanel.getDefault().setIngestRunning(false);
+        HashDbSimplePanel.setIngestRunning(false);
     }
 
     /**
@@ -159,6 +159,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
     public void stop() {
         //manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "STOP"));
         HashDbMgmtPanel.getDefault().setIngestRunning(false);
+        HashDbSimplePanel.setIngestRunning(false);
     }
 
     /**
@@ -185,12 +186,12 @@ public class HashDbIngestService implements IngestServiceFsContent {
     @Override
     public ProcessResult process(FsContent fsContent) {
         ProcessResult ret = ProcessResult.UNKNOWN;
-        process = true;
+        boolean processFile = true;
         if(fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
             ret = ProcessResult.OK;
-            process = false;
+            processFile = false;
         }
-        if (process) {
+        if (processFile && (nsrlIsSet || knownBadIsSet)) {
             String name = fsContent.getName();
             try {
                 String md5Hash = Hash.calculateMd5(fsContent);
@@ -207,7 +208,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
                     }
                     ret = ProcessResult.OK;
                 }
-                if(!foundBad) {
+                if(!foundBad && nsrlIsSet) {
                     status = skCase.nsrlLookupMd5(md5Hash);
                     if (status.equals(TskData.FileKnown.KNOWN)) {
                         skCase.setKnown(fsContent, status);

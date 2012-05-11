@@ -819,7 +819,20 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Node resultsNode = rootChilds.findChild(ResultsNode.NAME);
         Children resultsChilds = resultsNode.getChildren();
         if (type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT)) {
-            treeNode = resultsChilds.findChild(type.getLabel());
+            Node hashsetRootNode = resultsChilds.findChild(type.getLabel());
+            Children hashsetRootChilds = hashsetRootNode.getChildren();
+            try {
+                String setName = null;
+                List<BlackboardAttribute> attributes = art.getAttributes();
+                for(BlackboardAttribute att : attributes) {
+                    int typeId = att.getAttributeTypeID();
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID())
+                        setName = att.getValueString();
+                }
+                treeNode = hashsetRootChilds.findChild(setName);
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Error retrieving attributes", ex);
+            }
         } else if (type.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT)) {
             Node keywordRootNode = resultsChilds.findChild(type.getLabel());
             Children keywordRootChilds = keywordRootNode.getChildren();
