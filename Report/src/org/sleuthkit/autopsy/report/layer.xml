@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+       <folder name="Actions">
+        <folder name="Tools">
+            <file name="org-sleuthkit-autopsy-report-ReportAction.instance"/>
+            <file name="org-sleuthkit-autopsy-report-ReportAction.instance_hidden"/>
+            <file name="org-sleuthkit-autopsy-report-reportAction.instance_hidden"/>
+        </folder>
+    </folder>
+    <folder name="Services"/>
+    <folder name="Toolbars">
+         
+        <folder name="File">
+            <file name="org-sleuthkit-autopsy-report-reportAction.shadow">
+                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.report.Bundle#Toolbars/Reports/org-sleuthkit-autopsy-report-reportAction.shadow"/>
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportAction.instance"/>
+                <attr name="position" intvalue="650"/>
+            </file>
+        </folder>
+    </folder>
+    
+</filesystem>
