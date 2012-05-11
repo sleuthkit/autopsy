@@ -403,6 +403,13 @@ class IngestMessagePanel extends javax.swing.JPanel {
         public synchronized Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
 
+            int numMessages = messageData.size();
+            if (rowIndex > messageData.size() -1) {
+                //temporary check if the rare case still occurrs
+                //#messages is now lower after last regrouping, and gui event thinks it's not
+                logger.log(Level.WARNING, "Requested inbox message at" + rowIndex, ", only have " + numMessages);
+                return "";
+            }
             TableEntry entry = messageData.get(rowIndex);
 
             switch (columnIndex) {
@@ -530,8 +537,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
             //add new or updated row to the bottom
             messageData.add(new TableEntry(messageGroup));
-            int size = messageData.size();
-            fireTableRowsInserted(size - 1, size);
+            int newRowIndex = messageData.size() -1;
+            fireTableRowsInserted(newRowIndex, newRowIndex);
 
             //if priority sort, need to re-sort everything
             if (chronoSort == false) {
