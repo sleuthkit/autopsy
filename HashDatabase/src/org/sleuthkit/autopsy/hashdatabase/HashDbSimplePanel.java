@@ -27,6 +27,7 @@ package org.sleuthkit.autopsy.hashdatabase;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 
@@ -39,12 +40,17 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     private static final Logger logger = Logger.getLogger(HashDbSimplePanel.class.getName());
     private HashTableModel knownBadTableModel;
     private HashDb nsrl;
+    private static boolean ingestRunning = false;
 
     /** Creates new form HashDbSimplePanel */
     public HashDbSimplePanel() {
         knownBadTableModel = new HashTableModel();
         initComponents();
         customizeComponents();
+    }
+    
+    static void setIngestRunning(boolean running) {
+        ingestRunning = running;
     }
     
     private void customizeComponents() {
@@ -174,14 +180,18 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return columnIndex == 0;
+            return !ingestRunning && columnIndex == 0;
         }
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if(columnIndex == 0){
                 HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
-                db.setUseForIngest((Boolean) aValue);
+                if(((Boolean) getValueAt(rowIndex, columnIndex)) || IndexStatus.isIngestible(db.status())) {
+                        db.setUseForIngest((Boolean) aValue);
+                } else {
+                        JOptionPane.showMessageDialog(HashDbSimplePanel.this, "Databases must be indexed before they can be used for ingest");
+                }
             }
         }
         

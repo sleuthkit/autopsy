@@ -287,12 +287,7 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                 if (HashDb.isIndexPath(filePath)) {
                     filePath = HashDb.toDatabasePath(filePath);
                 }
-                String derivedName;
-                try {
-                    derivedName = SleuthkitJNI.getDatabaseName(filePath);
-                } catch (TskException ex) {
-                    derivedName = "";
-                }
+                String derivedName = SleuthkitJNI.getDatabaseName(filePath);
                 
                 String setName = (String) JOptionPane.showInputDialog(this, "New Hash Set name:", "New Hash Set", 
                         JOptionPane.PLAIN_MESSAGE, null, null, derivedName);
@@ -307,6 +302,15 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
 
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Couldn't get selected file path.", ex);
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Invalid database: ", ex);
+                int tryAgain = JOptionPane.showConfirmDialog(this, 
+                            "Database file you chose cannot be opened.\n" + 
+                            "If it was just an index, please try to recreate it from the database.\n" + 
+                            "Would you like to choose another database?", "Invalid File", JOptionPane.YES_NO_OPTION);
+                if(tryAgain == JOptionPane.YES_OPTION) {
+                    setNSRLButtonActionPerformed(null);
+                }
             }
         }
         save();
@@ -331,12 +335,7 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                 if (HashDb.isIndexPath(filePath)) {
                     filePath = HashDb.toDatabasePath(filePath);
                 }
-                String derivedName;
-                try {
-                    derivedName = SleuthkitJNI.getDatabaseName(filePath);
-                } catch (TskException ex) {
-                    derivedName = "";
-                }
+                String derivedName = SleuthkitJNI.getDatabaseName(filePath);
 
                 this.nsrlSet = new HashDb(derivedName, Arrays.asList(new String[]{filePath}), false); // TODO: support multiple file paths
                 int toIndex = JOptionPane.NO_OPTION;
@@ -357,11 +356,17 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                 if(toIndex == JOptionPane.YES_OPTION) {
                     indexNSRLButtonActionPerformed(null);
                 }
-
-                
-                
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Couldn't get selected file path.", ex);
+            } catch (TskException ex) {
+                logger.log(Level.WARNING, "Invalid database: ", ex);
+                int tryAgain = JOptionPane.showConfirmDialog(this, 
+                            "Database file you chose cannot be opened.\n" + 
+                            "If it was just an index, please try to recreate it from the database.\n" + 
+                            "Would you like to choose another database?", "Invalid File", JOptionPane.YES_NO_OPTION);
+                if(tryAgain == JOptionPane.YES_OPTION) {
+                    setNSRLButtonActionPerformed(null);
+                }
             }
         }
     }//GEN-LAST:event_setNSRLButtonActionPerformed
@@ -468,7 +473,7 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                     if(((Boolean) getValueAt(rowIndex, columnIndex)) || IndexStatus.isIngestible(entry.status()))
                         entry.setUseForIngest((Boolean) aValue);
                     else
-                        JOptionPane.showMessageDialog(HashDbMgmtPanel.this, "Databases must be indexed before they can be used for ingest.");
+                        JOptionPane.showMessageDialog(HashDbMgmtPanel.this, "Databases must be indexed before they can be used for ingest");
             }
         }
 
@@ -520,32 +525,30 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
     }
     
     static void setButtonFromIndexStatus(JButton theButton, IndexStatus status) {
-        if(ingestRunning) {
-            theButton.setText("Not Available");
-            theButton.setEnabled(false);
-            return;
-        }
         switch (status) {
-                case INDEX_OUTDATED:
-                    theButton.setText("Re-index");
-                    theButton.setEnabled(true);
-                    break;
-                case INDEX_CURRENT:
-                    theButton.setText("Re-index");
-                    theButton.setEnabled(true);
-                    break;
-                case NO_INDEX:
-                    theButton.setText("Index");
-                    theButton.setEnabled(true);
-                    break;
-                case INDEXING:
-                    theButton.setText("Indexing");
-                    theButton.setEnabled(false);
-                    break;
-                default:
-                    theButton.setText("No DB");
-                    theButton.setEnabled(false);
-            }
+            case INDEX_OUTDATED:
+                theButton.setText("Re-index");
+                theButton.setEnabled(true);
+                break;
+            case INDEX_CURRENT:
+                theButton.setText("Re-index");
+                theButton.setEnabled(true);
+                break;
+            case NO_INDEX:
+                theButton.setText("Index");
+                theButton.setEnabled(true);
+                break;
+            case INDEXING:
+                theButton.setText("Indexing");
+                theButton.setEnabled(false);
+                break;
+            default:
+                theButton.setText("No DB");
+                theButton.setEnabled(false);
+        }
+        if (ingestRunning) {
+            theButton.setEnabled(false);
+        }
     }
 }
 
