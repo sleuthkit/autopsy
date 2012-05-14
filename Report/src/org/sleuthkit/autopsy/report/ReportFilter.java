@@ -195,6 +195,7 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     progBar.setStringPainted(true);
     progBar.setValue(0);
     filters.clear();
+    config.resetGenArtifactTypes();
     if (jCheckBox1.isSelected()) {
         try {
             config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, true);

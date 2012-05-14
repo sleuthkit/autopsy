@@ -20,6 +20,12 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  *
  * @author Alex
@@ -52,4 +58,18 @@ public class ReportUtils {
         }
         return builder.toString();
     }
+    
+    public static void copy(InputStream in, OutputStream out) throws IOException {
+
+    BufferedInputStream bin = new BufferedInputStream(in);
+    BufferedOutputStream bout = new BufferedOutputStream(out);
+
+    while (true) {
+      int datum = bin.read();
+      if (datum == -1)
+        break;
+      bout.write(datum);
+    }
+    bout.flush();
+  }
 }

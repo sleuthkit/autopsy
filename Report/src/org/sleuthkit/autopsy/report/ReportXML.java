@@ -106,10 +106,14 @@ public class ReportXML implements ReportModule {
                 Long objId = entry.getKey().getObjectID();
                 Content cont = skCase.getContentById(objId);
                 Long filesize = cont.getSize();
-                artifact.setAttribute("ID", objId.toString());
+                try{
+                 artifact.setAttribute("ID", objId.toString());                
                 artifact.setAttribute("Name", cont.accept(new NameVisitor()));
                 artifact.setAttribute("Size", filesize.toString());
-
+                }
+                catch(Exception e){
+                     Logger.getLogger(ReportXML.class.getName()).log(Level.WARNING, "Visitor content exception occurred:", e);
+                }
                 // Get all the attributes for this guy
                 for (BlackboardAttribute tempatt : entry.getValue()) {
                     if (ReportFilter.cancel == true) {
