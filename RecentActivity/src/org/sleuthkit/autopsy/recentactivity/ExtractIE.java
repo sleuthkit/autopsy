@@ -129,7 +129,7 @@ public class ExtractIE { // implements BrowserActivity {
                 Long datetime = Favorite.getCrtime();
                 String Tempdate = datetime.toString() + "000";
                 datetime = Long.valueOf(Tempdate);
-                String domain = Util.extractDomain(url);
+                String domain = Util.getBaseDomain(url);
                 try {
                     BlackboardArtifact bbart = Favorite.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -485,7 +485,7 @@ public class ExtractIE { // implements BrowserActivity {
                                             realurl = realurl.replaceAll(":(.*?):", "");
                                             realurl = realurl.replace(":Host:", "");
                                             realurl = realurl.trim();
-                                            domain = Util.extractDomain(realurl);
+                                            domain = Util.getBaseDomain(realurl);
                                         }
                                         if (!ddtime.isEmpty()) {
                                             ddtime = ddtime.replace("T", " ");

@@ -20,11 +20,17 @@ package org.sleuthkit.autopsy.report;
 
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.util.logging.Level;
+import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.border.Border;
 import org.openide.util.HelpCtx;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
@@ -50,7 +56,7 @@ class ReportFilterAction {
             cpane = frame.getContentPane();
             // initialize panel with loaded settings
             final ReportFilter panel = new ReportFilter();
-
+          
             // add the panel to the popup window
             popUpWindow.add(panel);
             popUpWindow.pack();
@@ -61,7 +67,6 @@ class ReportFilterAction {
             double w = popUpWindow.getSize().getWidth();
             double h = popUpWindow.getSize().getHeight();
             popUpWindow.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
-
             // display the window
             popUpWindow.setVisible(true);
 

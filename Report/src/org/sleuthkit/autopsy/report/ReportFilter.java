@@ -20,12 +20,19 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.awt.GridLayout;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.border.Border;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -50,9 +57,11 @@ public class ReportFilter extends javax.swing.JPanel {
      */
     public ReportFilter() {
         initComponents();
+        createReports();
         cancel = false;
         try{
         config.getAllTypes();
+   
         }
         catch(ReportModuleException ex)
         {
@@ -70,40 +79,16 @@ public class ReportFilter extends javax.swing.JPanel {
     private void initComponents() {
 
         jButton2 = new javax.swing.JButton();
-        jCheckBox1 = new javax.swing.JCheckBox();
-        jCheckBox2 = new javax.swing.JCheckBox();
-        jCheckBox3 = new javax.swing.JCheckBox();
-        jCheckBox4 = new javax.swing.JCheckBox();
-        jCheckBox5 = new javax.swing.JCheckBox();
         jButton1 = new javax.swing.JButton();
         progBar = new javax.swing.JProgressBar();
         cancelButton = new javax.swing.JButton();
+        filterpanel = new JPanel(new GridLayout(0, 1));
 
         jButton2.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jButton2.text")); // NOI18N
         jButton2.setActionCommand(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jButton2.actionCommand")); // NOI18N
         jButton2.setLabel(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jButton2.label")); // NOI18N
 
-        setPreferredSize(new java.awt.Dimension(250, 193));
-
-        jCheckBox1.setSelected(true);
-        jCheckBox1.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jCheckBox1.text")); // NOI18N
-        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox1ActionPerformed(evt);
-            }
-        });
-
-        jCheckBox2.setSelected(true);
-        jCheckBox2.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jCheckBox2.text")); // NOI18N
-
-        jCheckBox3.setSelected(true);
-        jCheckBox3.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jCheckBox3.text")); // NOI18N
-
-        jCheckBox4.setSelected(true);
-        jCheckBox4.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jCheckBox4.text")); // NOI18N
-
-        jCheckBox5.setSelected(true);
-        jCheckBox5.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jCheckBox5.text")); // NOI18N
+        setPreferredSize(new java.awt.Dimension(325, 200));
 
         jButton1.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jButton1.text")); // NOI18N
         jButton1.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -133,6 +118,17 @@ public class ReportFilter extends javax.swing.JPanel {
             }
         });
 
+        javax.swing.GroupLayout filterpanelLayout = new javax.swing.GroupLayout(filterpanel);
+        filterpanel.setLayout(filterpanelLayout);
+        filterpanelLayout.setHorizontalGroup(
+            filterpanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 306, Short.MAX_VALUE)
+        );
+        filterpanelLayout.setVerticalGroup(
+            filterpanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -140,48 +136,28 @@ public class ReportFilter extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(filterpanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButton1)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jButton1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cancelButton)
-                        .addGap(156, 156, 156))
-                    .addComponent(jCheckBox3)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jCheckBox2)
-                            .addComponent(jCheckBox1))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jCheckBox5)
-                            .addComponent(jCheckBox4)))
-                    .addComponent(progBar, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(progBar, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(cancelButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jCheckBox1)
-                    .addComponent(jCheckBox4))
+                .addComponent(filterpanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jCheckBox2)
-                    .addComponent(jCheckBox5))
-                .addGap(18, 18, 18)
-                .addComponent(jCheckBox3)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progBar, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(progBar, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE)
+                    .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
-
-private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
-}//GEN-LAST:event_jCheckBox1ActionPerformed
 
     public void getfilters(java.awt.event.ActionEvent evt) {
         jButton1ActionPerformed(evt);
@@ -196,57 +172,6 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     progBar.setValue(0);
     filters.clear();
     config.resetGenArtifactTypes();
-    if (jCheckBox1.isSelected()) {
-        try {
-            config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, true);
-            config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, true);
-            config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, true);
-            config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, true);
-
-            filters.add(2);
-            filters.add(3);
-            filters.add(4);
-            filters.add(5);
-        } catch (ReportModuleException ex) {
-            logger.log(Level.WARNING, "", ex);
-        }
-    }
-    if (jCheckBox2.isSelected()) {
-        try {
-            config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO, true);
-            filters.add(1);
-        } catch (ReportModuleException ex) {
-            logger.log(Level.WARNING, "", ex);
-        }
-    }
-    if (jCheckBox3.isSelected()) {
-        try {
-            config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, true);
-            filters.add(9);
-        } catch (ReportModuleException ex) {
-            logger.log(Level.WARNING, "", ex);
-        }
-    }
-    if (jCheckBox4.isSelected()) {
-        try {
-            config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT, true);
-            filters.add(10);
-        } catch (ReportModuleException ex) {
-            logger.log(Level.WARNING, "", ex);
-        }
-
-    }
-    if (jCheckBox5.isSelected()) {
-        try {
-            config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT, true);
-            config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG, true);
-            config.setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED, true);
-            filters.add(6);
-            filters.add(8);
-            filters.add(11);
-        } catch (ReportModuleException ex) {
-        }
-    }
     getReports();
 }//GEN-LAST:event_jButton1ActionPerformed
 
@@ -299,6 +224,36 @@ private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             }
         });
     }
+    
+    public void createReports() {
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+            Border border = BorderFactory.createTitledBorder("Reporting Modules");
+            filterpanel.setBorder(border);
+            for (ReportModule m : Lookup.getDefault().lookupAll(ReportModule.class))
+            {
+                       String name = m.getName();
+                       String desc = m.getReportTypeDescription();
+
+            JCheckBox ch = new JCheckBox();
+            ch.setText(name);
+            ch.setToolTipText(desc);
+            ch.setSelected(false);
+            filterpanel.add(ch);
+             } 
+            
+            JCheckBox ch = new JCheckBox();
+            ch.setText("133454");
+            ch.setToolTipText("235325353");
+            ch.setSelected(false);
+            filterpanel.add(ch);
+            filterpanel.revalidate();
+            filterpanel.repaint();
+            }
+        });
+    }
 
     public void progBarDone() {
         int max = progBar.getMaximum();
@@ -340,15 +295,13 @@ private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         jButton2.addActionListener(e);
         cancelButton.addActionListener(e);
     }
+    
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
+    private javax.swing.JPanel filterpanel;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JCheckBox jCheckBox1;
-    private javax.swing.JCheckBox jCheckBox2;
-    private javax.swing.JCheckBox jCheckBox3;
-    private javax.swing.JCheckBox jCheckBox4;
-    private javax.swing.JCheckBox jCheckBox5;
     private javax.swing.JProgressBar progBar;
     // End of variables declaration//GEN-END:variables
 }

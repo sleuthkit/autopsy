@@ -12,9 +12,9 @@
         </folder>
     </folder>
     <folder name="Services">
-        <file name="org-sleuthkit-autopsy-report-ReportModule.instance">
+        <file name="org-sleuthkit-autopsy-report-register-ReportRegisterService.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.ReportHTML"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportHTML.getDefault"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.register.ReportRegisterService.getDefault"/>
             <attr name="position" intvalue="1000"/>
         </file>
         </folder>

@@ -39,6 +39,7 @@ import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.report.register.ReportRegisterService;
 import org.sleuthkit.datamodel.*;
 
 public class ReportXML implements ReportModule {
@@ -46,8 +47,16 @@ public class ReportXML implements ReportModule {
     public static Document xmldoc = new Document();
     private ReportConfiguration reportconfig;
     private String xmlPath;
+     private static ReportRegisterService instance = null;
 
     public ReportXML() {
+    }
+    
+     public static synchronized ReportRegisterService getDefault() {
+        if (instance == null) {
+            instance = new ReportRegisterService();
+        }
+        return instance;
     }
 
     @Override
@@ -215,6 +224,12 @@ public class ReportXML implements ReportModule {
             }
         
     }
+    
+    @Override
+     public String getName(){
+     String name = "Default XML";   
+     return name;   
+    }
 
     @Override
     public String getReportType() {
@@ -234,11 +249,6 @@ public class ReportXML implements ReportModule {
         return desc;
     }
 
-    @Override
-    public String generateReport() throws ReportModuleException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
     private class NameVisitor extends ContentVisitor.Default<String> {
 
         @Override
@@ -255,9 +265,10 @@ public class ReportXML implements ReportModule {
         public String visit(Image img) {
             return img.getName();
         }
-
-        public String visit(File fil) {
-            return fil.getName();
+        
+        //@Override
+        public String visit(File file) {
+            return file.getName();
         }
     }
 }

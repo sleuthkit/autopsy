@@ -32,9 +32,6 @@ public interface ReportModule {
      * @return absolute file path to the report generated
      * @throws ReportModuleException if report generation failed
      */
-    public String generateReport() throws ReportModuleException;
-
-    //If it uses a report configuration and reports back to the gui its progress
     public String generateReport(ReportConfiguration config, ReportFilter rr) throws ReportModuleException;
 
     /**
@@ -51,6 +48,13 @@ public interface ReportModule {
      * @return
      */
     public String getReportType();
+    
+    /**
+     * Returns a basic string name for the report. What is 'officially' titled.
+     *
+     * @return
+     */
+    public String getName();
 
     /**
      * Returns the reportconfiguration object that was created

@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.report.register.ReportRegisterService;
 import org.sleuthkit.datamodel.*;
 
 /**
@@ -46,11 +47,19 @@ public class ReportXLS implements ReportModule {
     public static Workbook wb = new XSSFWorkbook();
     private static String xlsPath = "";
     private ReportConfiguration config;
-
+    private static ReportRegisterService instance = null;
     public ReportXLS() {
         //Empty the workbook first
         
     }
+    
+     public static synchronized ReportRegisterService getDefault() {
+        if (instance == null) {
+            instance = new ReportRegisterService();
+        }
+        return instance;
+    }
+    
     @Override
    public String generateReport(ReportConfiguration reportconfig, ReportFilter rr) throws ReportModuleException {
       config = reportconfig;
@@ -410,6 +419,12 @@ public class ReportXLS implements ReportModule {
     }
    
     @Override
+     public String getName(){
+     String name = "Excel";   
+     return name;   
+    }
+       
+    @Override
       public String getReportType(){
           String type = "XLS";
         return type;
@@ -428,8 +443,4 @@ public class ReportXLS implements ReportModule {
         return desc;
     }
 
-    @Override
-    public String generateReport() throws ReportModuleException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
 }

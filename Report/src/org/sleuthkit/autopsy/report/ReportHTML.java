@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.report.register.ReportRegisterService;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.FsContent;
@@ -53,9 +54,17 @@ public class ReportHTML implements ReportModule{
     private static StringBuilder formatted_header = new StringBuilder();
     private static String htmlPath = "";
     private ReportConfiguration config;
+    private static ReportRegisterService instance = null;
 
      ReportHTML(){
         
+    }
+     
+     public static synchronized ReportRegisterService getDefault() {
+        if (instance == null) {
+            instance = new ReportRegisterService();
+        }
+        return instance;
     }
     
     @Override
@@ -425,6 +434,12 @@ public class ReportHTML implements ReportModule{
         return htmlPath;
     }
     
+    @Override
+     public String getName(){
+     String name = "HTML";   
+     return name;   
+    }
+    
  
     @Override
     public void save(String path)
@@ -460,10 +475,6 @@ public class ReportHTML implements ReportModule{
         return desc;
     }
 
-    @Override
-    public String generateReport() throws ReportModuleException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
     
 
 }
