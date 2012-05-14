@@ -254,7 +254,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
                 options,
                 options[0]);
 
-        final String reportActionName = "org.sleuthkit.autopsy.report.reportAction";
+        final String reportActionName = "org.sleuthkit.autopsy.report.ReportAction";
         Action reportAction = null;
         
         //find action by name from action lookup, without introducing cyclic dependency
