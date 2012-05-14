@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -33,14 +32,12 @@ import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
-import org.sleuthkit.datamodel.FsContent;
-
 
 /**
  * Query manager responsible for running appropriate queries and displaying results
  * for single, multi keyword queries, with detailed or collapsed results
  */
-public class KeywordSearchQueryManager implements KeywordSearchQuery {
+public class KeywordSearchQueryManager {
 
     public enum Presentation {
 
@@ -61,7 +58,7 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
 
     public KeywordSearchQueryManager(String query, QueryType qt, Presentation presentation) {
         queries = new ArrayList<Keyword>();
-        queries.add(new Keyword(query, false));
+        queries.add(new Keyword(query, qt==QueryType.REGEX?false:true));
         this.presentation = presentation;
         queryType = qt;
         init();
@@ -71,7 +68,7 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
         queries = new ArrayList<Keyword>();
         queries.add(new Keyword(query, isLiteral));
         this.presentation = presentation;
-        queryType = QueryType.REGEX;
+        queryType = isLiteral?QueryType.WORD:QueryType.REGEX;
         init();
     }
 
@@ -103,53 +100,40 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
 
     }
 
-    @Override
     public void execute() {
         //execute and present the query
         //delegate query to query objects and presentation child factories
-        if (queryType == QueryType.WORD || presentation == Presentation.DETAIL) {
-            for (KeywordSearchQuery q : queryDelegates) {
-                q.execute();
-            }
-        } else {
-            //Collapsed view
-            Collection<KeyValueQuery> things = new ArrayList<KeyValueQuery>();
-            int queryID = 0;
-            for (KeywordSearchQuery q : queryDelegates) {
-                Map<String, Object> kvs = new LinkedHashMap<String, Object>();
-                final String queryStr = q.getQueryString();
-                things.add(new KeyValueQuery(queryStr, kvs, ++queryID, q));
-            }
-
-            Node rootNode = null;
-
-            if (things.size() > 0) {
-                Children childThingNodes =
-                        Children.create(new KeywordSearchResultFactory(queries, things, Presentation.COLLAPSE), true);
-
-                rootNode = new AbstractNode(childThingNodes);
-            } else {
-                rootNode = Node.EMPTY;
-            }
-
-            final String pathText = "Keyword search";
-            TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, things.size());
-            searchResultWin.requestActive();
+        //if (queryType == QueryType.WORD || presentation == Presentation.DETAIL) {
+        //   for (KeywordSearchQuery q : queryDelegates) {
+        //       q.execute();
+        //  }
+        // } else {
+        //Collapsed view
+        Collection<KeyValueQuery> things = new ArrayList<KeyValueQuery>();
+        int queryID = 0;
+        for (KeywordSearchQuery q : queryDelegates) {
+            Map<String, Object> kvs = new LinkedHashMap<String, Object>();
+            final String queryStr = q.getQueryString();
+            things.add(new KeyValueQuery(queryStr, kvs, ++queryID, q));
         }
+
+        Node rootNode = null;
+
+        if (things.size() > 0) {
+            Children childThingNodes =
+                    Children.create(new KeywordSearchResultFactory(queries, things, Presentation.COLLAPSE), true);
+
+            rootNode = new AbstractNode(childThingNodes);
+        } else {
+            rootNode = Node.EMPTY;
+        }
+
+        final String pathText = "Keyword search";
+        TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, things.size());
+        searchResultWin.requestActive();
+        // }
     }
 
-    @Override
-    public void escape() {
-    }
-
-    @Override
-    public Map<String, List<ContentHit>> performQuery() {
-        throw new UnsupportedOperationException("performQuery() unsupported");
-    }
-    
-    
-
-    @Override
     public boolean validate() {
         boolean allValid = true;
         for (KeywordSearchQuery tcq : queryDelegates) {
@@ -161,52 +145,8 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
         }
         return allValid;
     }
-
-    @Override
-    public String getEscapedQueryString() {
-        StringBuilder sb = new StringBuilder();
-        final String SEP = queryType == QueryType.WORD ? " " : "|";
-        for (KeywordSearchQuery q : queryDelegates) {
-            sb.append(q.getEscapedQueryString()).append(SEP);
-        }
-        return sb.toString();
-    }
-
-    @Override
-    public boolean isEscaped() {
-        return false;
-    }
-
-    @Override
-    public String getQueryString() {
-        StringBuilder sb = new StringBuilder();
-        final String SEP = queryType == QueryType.WORD ? " " : "|";
-        for (KeywordSearchQuery q : queryDelegates) {
-            sb.append(q.getQueryString()).append(SEP);
-        }
-        return sb.toString();
-    }
-
-    @Override
-    public Collection<Term> getTerms() {
-        return null;
-    }
-
-    @Override
-    public boolean isLiteral() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-    
-    
-    
-
-    @Override
-    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String snippet, String listName) {
-        throw new UnsupportedOperationException("writeToBlackBoard() unsupported by manager");
-    }
-    
-    
 }
+
 /**
  * custom KeyValue that also stores query object  to execute
  */
@@ -223,4 +163,3 @@ class KeyValueQuery extends KeyValue {
         this.query = query;
     }
 }
-
