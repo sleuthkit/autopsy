@@ -85,7 +85,6 @@ public class Report {
                 table.append("<td>").append(uniqueresults.getString("preview")).append("</td>").append("<td>").append(uniqueresults.getString("exp")).append("</td>").append("</tr>");
               
             }
-            tempDb.close();
            tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_keyword;"); 
            tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_preview;");
            tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_exp;");
