@@ -143,7 +143,7 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
     }
 
     @Override
-    public Map<String, List<FsContent>> performQuery() {
+    public Map<String, List<ContentHit>> performQuery() {
         throw new UnsupportedOperationException("performQuery() unsupported");
     }
     
@@ -191,10 +191,17 @@ public class KeywordSearchQueryManager implements KeywordSearchQuery {
     public Collection<Term> getTerms() {
         return null;
     }
+
+    @Override
+    public boolean isLiteral() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
+    
     
 
     @Override
-    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) {
+    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String snippet, String listName) {
         throw new UnsupportedOperationException("writeToBlackBoard() unsupported by manager");
     }
     

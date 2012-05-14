@@ -49,6 +49,7 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -56,6 +57,77 @@ import org.sleuthkit.datamodel.Content;
  */
 class Server {
 
+    public static enum Schema {
+
+        ID {
+
+            @Override
+            public String toString() {
+                return "id";
+            }
+        },
+        CONTENT {
+
+            @Override
+            public String toString() {
+                return "content";
+            }
+        },
+        CONTENT_WS {
+
+            @Override
+            public String toString() {
+                return "content_ws";
+            }
+        },
+        FILE_NAME {
+
+            @Override
+            public String toString() {
+                return "file_name";
+            }
+        },
+        CTIME {
+
+            @Override
+            public String toString() {
+                return "ctime";
+            }
+        },
+        ATIME {
+
+            @Override
+            public String toString() {
+                return "atime";
+            }
+        },
+        MTIME {
+
+            @Override
+            public String toString() {
+                return "mtime";
+            }
+        },
+        CRTIME {
+
+            @Override
+            public String toString() {
+                return "crtime";
+            }
+        },
+        NUM_CHUNKS {
+
+            @Override
+            public String toString() {
+                return "num_chunks";
+            }
+        },};
+    
+    public static final String HL_ANALYZE_CHARS_UNLIMITED = "-1";
+    
+    //max content size we can send to Solr
+    public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
+    
     private static final Logger logger = Logger.getLogger(Server.class.getName());
     private static final String DEFAULT_CORE_NAME = "coreCase";
     // TODO: DEFAULT_CORE_NAME needs to be replaced with unique names to support multiple open cases
@@ -144,6 +216,10 @@ class Server {
                 while ((line = br.readLine()) != null) {
                     bw.write(line);
                     bw.newLine();
+                    if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
+                        //flush buffers if dev version for debugging
+                        bw.flush(); 
+                    }
                 }
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
@@ -295,6 +371,34 @@ class Server {
     }
 
     /**
+     * Return true if the file is indexed (either as a whole as a chunk)
+     * @param contentID
+     * @return true if it is indexed
+     * @throws SolrServerException, NoOpenCoreException
+     */
+    public boolean queryIsIndexed(long contentID) throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+
+        return currentCore.queryIsIndexed(contentID);
+    }
+
+    /**
+     * Execute query that gets number of indexed file chunks for a file
+     * @param fileID file id of the original file broken into chunks and indexed
+     * @return int representing number of indexed file chunks, 0 if there is no chunks
+     * @throws SolrServerException 
+     */
+    public int queryNumFileChunks(long fileID) throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+
+        return currentCore.queryNumFileChunks(fileID);
+    }
+
+    /**
      * Execute solr query
      * @param sq query
      * @return query response
@@ -348,7 +452,22 @@ class Server {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
-        return currentCore.getSolrContent(content);
+        return currentCore.getSolrContent(content.getId(), 0);
+    }
+    
+    /**
+     * Execute Solr query to get content text from content chunk
+     * @param content to get the text for
+     * @param chunkID chunk number to query (starting at 1), or 0 if there is no chunks for that content
+     * @return content text string
+     * @throws SolrServerException
+     * @throws NoOpenCoreException 
+     */
+    public String getSolrContent(final Content content, int chunkID) throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+        return currentCore.getSolrContent(content.getId(), chunkID);
     }
 
     /**
@@ -436,15 +555,19 @@ class Server {
             }
         }
 
-        private String getSolrContent(final Content content) {
+        
+         private String getSolrContent(long contentID, int chunkID) {
             final SolrQuery q = new SolrQuery();
             q.setQuery("*:*");
-            q.addFilterQuery("id:" + content.getId());
-            q.setFields("content");
+            String filterQuery = Schema.ID.toString() + ":" + contentID;
+            if (chunkID != 0)
+                filterQuery = filterQuery + "_" + chunkID;
+            q.addFilterQuery(filterQuery);
+            q.setFields(Schema.CONTENT.toString());
             try {
-                return (String) solrCore.query(q).getResults().get(0).getFieldValue("content");
+                return (String) solrCore.query(q).getResults().get(0).getFieldValue(Schema.CONTENT.toString());
             } catch (SolrServerException ex) {
-                logger.log(Level.WARNING, "Error getting content from Solr and validating regex match", ex);
+                logger.log(Level.WARNING, "Error getting content from Solr", ex);
                 return null;
             }
         }
@@ -467,6 +590,32 @@ class Server {
          */
         private int queryNumIndexedFiles() throws SolrServerException {
             SolrQuery q = new SolrQuery("*:*");
+            q.setRows(0);
+            return (int) query(q).getResults().getNumFound();
+        }
+
+        /**
+         * Return true if the file is indexed (either as a whole as a chunk)
+         * @param contentID
+         * @return true if it is indexed
+         * @throws SolrServerException 
+         */
+        private boolean queryIsIndexed(long contentID) throws SolrServerException {
+            SolrQuery q = new SolrQuery("*:*");
+            q.addFilterQuery(Server.Schema.ID.toString() + ":" + Long.toString(contentID));
+            //q.setFields(Server.Schema.ID.toString());
+            q.setRows(0);
+            return (int) query(q).getResults().getNumFound() != 0;
+        }
+
+        /**
+         * Execute query that gets number of indexed file chunks for a file
+         * @param contentID file id of the original file broken into chunks and indexed
+         * @return int representing number of indexed file chunks, 0 if there is no chunks
+         * @throws SolrServerException 
+         */
+        private int queryNumFileChunks(long contentID) throws SolrServerException {
+            SolrQuery q = new SolrQuery("id:" + Long.toString(contentID) + "_*");
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
         }

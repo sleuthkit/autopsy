@@ -56,7 +56,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
     private static final int TERMS_UNLIMITED = -1;
     //corresponds to field in Solr schema, analyzed with white-space tokenizer only
-    private static final String TERMS_SEARCH_FIELD = "content_ws";
+    private static final String TERMS_SEARCH_FIELD = Server.Schema.CONTENT_WS.toString();
     private static final String TERMS_HANDLER = "/terms";
     private static final int TERMS_TIMEOUT = 90 * 1000; //in ms
     private static Logger logger = Logger.getLogger(TermComponentQuery.class.getName());
@@ -100,6 +100,11 @@ public class TermComponentQuery implements KeywordSearchQuery {
     @Override
     public boolean isEscaped() {
         return isEscaped;
+    }
+    
+    @Override
+    public boolean isLiteral() {
+        return false;
     }
 
     /*
@@ -154,22 +159,8 @@ public class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) throws NoOpenCoreException {
+    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
-
-        //snippet
-        String snippet = null;
-        try {
-            snippet = LuceneQuery.querySnippet(KeywordSearchUtil.escapeLuceneQuery(termHit, true, false), newFsHit.getId(), true, true);
-        } 
-        catch (NoOpenCoreException e) {
-            logger.log(Level.WARNING, "Error querying snippet: " + termHit, e);
-            throw e;
-        }
-        catch (Exception e) {
-            logger.log(Level.WARNING, "Error querying snippet: " + termHit, e);
-            return null;
-        }
 
         if (snippet == null || snippet.equals("")) {
             return null;
@@ -225,8 +216,8 @@ public class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public Map<String, List<FsContent>> performQuery() throws NoOpenCoreException{
-        Map<String, List<FsContent>> results = new HashMap<String, List<FsContent>>();
+    public Map<String, List<ContentHit>> performQuery() throws NoOpenCoreException{
+        Map<String, List<ContentHit>> results = new HashMap<String, List<ContentHit>>();
 
         final SolrQuery q = createQuery();
         terms = executeQuery(q);
@@ -241,12 +232,12 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
             LuceneQuery filesQuery = new LuceneQuery(queryStr);
             try {
-                Map<String, List<FsContent>> subResults = filesQuery.performQuery();
-                Set<FsContent> filesResults = new HashSet<FsContent>();
+                Map<String, List<ContentHit>> subResults = filesQuery.performQuery();
+                Set<ContentHit> filesResults = new HashSet<ContentHit>();
                 for (String key : subResults.keySet()) {
                     filesResults.addAll(subResults.get(key));
                 }
-                results.put(term.getTerm(), new ArrayList<FsContent>(filesResults));
+                results.put(term.getTerm(), new ArrayList<ContentHit>(filesResults));
             } 
             catch (NoOpenCoreException e) {
                 logger.log(Level.WARNING, "Error executing Solr query,", e);

@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.IOException;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.datamodel.FsContentStringStream;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -47,6 +48,7 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
@@ -59,7 +61,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
     private static KeywordSearchIngestService instance = null;
     private IngestManagerProxy managerProxy;
-    private static final long MAX_STRING_EXTRACT_SIZE = 1 * (1 << 10) * (1 << 10);
+    private static final long MAX_STRING_CHUNK_SIZE = 1 * (1 << 10) * (1 << 10);
     private static final long MAX_INDEX_SIZE = 100 * (1 << 10) * (1 << 10);
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
@@ -71,7 +73,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private Indexer indexer;
     private Searcher searcher;
     private volatile boolean searcherDone = true;
-    private Map<Keyword, List<FsContent>> currentResults;
+    private Map<Keyword, List<ContentHit>> currentResults;
     private volatile int messageID = 0;
     private boolean processedFiles;
     private volatile boolean finalRun = false;
@@ -79,13 +81,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private final String hashDBServiceName = "Hash Lookup";
     private SleuthkitCase caseHandle = null;
     boolean initialized = false;
-    
+    private final byte[] STRING_CHUNK_BUF = new byte[(int) MAX_STRING_CHUNK_SIZE];
 
     public enum IngestStatus {
 
         INGESTED, EXTRACTED_INGESTED, SKIPPED,};
     private Map<Long, IngestStatus> ingestStatus;
-    private Map<String, List<FsContent>> reportedHits; //already reported hits
 
     public static synchronized KeywordSearchIngestService getDefault() {
         if (instance == null) {
@@ -220,8 +221,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         ingestStatus = new HashMap<Long, IngestStatus>();
 
-        reportedHits = new HashMap<String, List<FsContent>>();
-
         keywords = new ArrayList<Keyword>();
         keywordLists = new ArrayList<String>();
         keywordToList = new HashMap<String, String>();
@@ -237,7 +236,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         finalRunComplete = false;
         searcherDone = true; //make sure to start the initial searcher
         //keeps track of all results per run not to repeat reporting the same hits
-        currentResults = new HashMap<Keyword, List<FsContent>>();
+        currentResults = new HashMap<Keyword, List<ContentHit>>();
 
         indexer = new Indexer();
 
@@ -416,18 +415,18 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         private final Logger logger = Logger.getLogger(Indexer.class.getName());
         private static final String DELETED_MSG = "The file is an unallocated or orphan file (deleted) and entire content is no longer recoverable. ";
 
-        private boolean extractAndIngest(FsContent f) {
-            boolean success = false;
-            FsContentStringContentStream fscs = new FsContentStringContentStream(f, FsContentStringStream.Encoding.UTF8);
+        private boolean extractAndIngest(File file) {
+            boolean indexed = false;
+            FileExtract fe = new FileExtract(file);
             try {
-                ingester.ingest(fscs);
-                success = true;
-            } catch (IngesterException ingEx) {
-                logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" + f.getName() + "' (id: " + f.getId() + ").", ingEx);
-            } catch (Exception ingEx) {
-                logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" + f.getName() + "' (id: " + f.getId() + ").", ingEx);
+                indexed = fe.index(ingester);
+            } catch (IngesterException ex) {
+                logger.log(Level.WARNING, "Error extracting strings and indexing file: " + file.getName(), ex);
+                indexed = false;
             }
-            return success;
+
+            return indexed;
+
         }
 
         private void indexFile(FsContent fsContent) {
@@ -436,17 +435,21 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             if (!fsContent.isFile()) {
                 return;
             }
+            File file = (File) fsContent;
 
-            if (size == 0 || size > MAX_INDEX_SIZE) {
+            boolean ingestible = Ingester.isIngestible(file);
+
+            //limit size of entire file, do not limit strings
+            if (size == 0 || (ingestible && size > MAX_INDEX_SIZE)) {
                 ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                 return;
             }
 
-            boolean ingestible = Ingester.isIngestible(fsContent);
-            final String fileName = fsContent.getName();
+
+            final String fileName = file.getName();
 
             String deletedMessage = "";
-            if ((fsContent.getMeta_flags() & (TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getMetaFlag() | TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getMetaFlag())) != 0) {
+            if ((file.getMeta_flags() & (TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getMetaFlag() | TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getMetaFlag())) != 0) {
                 deletedMessage = DELETED_MSG;
             }
 
@@ -454,37 +457,33 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
                 try {
                     //logger.log(Level.INFO, "indexing: " + fsContent.getName());
-                    ingester.ingest(fsContent);
-                    ingestStatus.put(fsContent.getId(), IngestStatus.INGESTED);
+                    ingester.ingest(file);
+                    ingestStatus.put(file.getId(), IngestStatus.INGESTED);
                 } catch (IngesterException e) {
-                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+                    ingestStatus.put(file.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
-                    boolean processed = processNonIngestible(fsContent);
+                    boolean processed = processNonIngestible(file);
                     //postIngestibleErrorMessage(processed, fileName, deletedMessage);
 
                 } catch (Exception e) {
-                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+                    ingestStatus.put(file.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
-                    boolean processed = processNonIngestible(fsContent);
+                    boolean processed = processNonIngestible(file);
 
                     //postIngestibleErrorMessage(processed, fileName, deletedMessage);
 
                 }
             } else {
-                boolean processed = processNonIngestible(fsContent);
+                boolean processed = processNonIngestible(file);
                 //postNonIngestibleErrorMessage(processed, fsContent, deletedMessage);
 
             }
         }
 
-        private void postNonIngestibleErrorMessage(boolean stringsExtracted, FsContent fsContent, String deletedMessage) {
-            String fileName = fsContent.getName();
+        private void postNonIngestibleErrorMessage(boolean stringsExtracted, File file, String deletedMessage) {
+            String fileName = file.getName();
             if (!stringsExtracted) {
-                if (fsContent.getSize() < MAX_STRING_EXTRACT_SIZE) {
-                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing strings: " + fileName, "Error encountered extracting string content from this file (of unsupported format). " + deletedMessage + "The file will not be included in the search results.<br />File: " + fileName));
-                } else {
-                    managerProxy.postMessage(IngestMessage.createMessage(++messageID, IngestMessage.MessageType.INFO, KeywordSearchIngestService.instance, "Skipped indexing strings: " + fileName, "Skipped extracting string content from this file (of unsupported format) due to the file size.  The file will not be included in the search results.<br />File: " + fileName));
-                }
+                managerProxy.postMessage(IngestMessage.createMessage(++messageID, IngestMessage.MessageType.INFO, KeywordSearchIngestService.instance, "Skipped indexing strings: " + fileName, "Skipped extracting string content from this file (of unsupported format) due to the file size.  The file will not be included in the search results.<br />File: " + fileName));
             }
 
         }
@@ -497,20 +496,16 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             }
         }
 
-        private boolean processNonIngestible(FsContent fsContent) {
-            if (fsContent.getSize() < MAX_STRING_EXTRACT_SIZE) {
-                if (!extractAndIngest(fsContent)) {
-                    logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + fsContent.getName() + "' (id: " + fsContent.getId() + ").");
-                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
-                    return false;
-                } else {
-                    ingestStatus.put(fsContent.getId(), IngestStatus.EXTRACTED_INGESTED);
-                    return true;
-                }
-            } else {
-                ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+        private boolean processNonIngestible(File file) {
+            if (!extractAndIngest(file)) {
+                logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + file.getName() + "' (id: " + file.getId() + ").");
+                ingestStatus.put(file.getId(), IngestStatus.SKIPPED);
                 return false;
+            } else {
+                ingestStatus.put(file.getId(), IngestStatus.EXTRACTED_INGESTED);
+                return true;
             }
+
         }
     }
 
@@ -565,7 +560,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     del = new TermComponentQuery(keywordQuery);
                 }
 
-                Map<String, List<FsContent>> queryResult = null;
+                Map<String, List<ContentHit>> queryResult = null;
 
                 try {
                     queryResult = del.performQuery();
@@ -581,23 +576,23 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 }
 
                 //calculate new results but substracting results already obtained in this run
-                Map<Keyword, List<FsContent>> newResults = new HashMap<Keyword, List<FsContent>>();
+                Map<Keyword, List<ContentHit>> newResults = new HashMap<Keyword, List<ContentHit>>();
 
                 for (String termResult : queryResult.keySet()) {
-                    List<FsContent> queryTermResults = queryResult.get(termResult);
+                    List<ContentHit> queryTermResults = queryResult.get(termResult);
                     Keyword termResultK = new Keyword(termResult, !isRegex);
-                    List<FsContent> curTermResults = currentResults.get(termResultK);
+                    List<ContentHit> curTermResults = currentResults.get(termResultK);
                     if (curTermResults == null) {
                         currentResults.put(termResultK, queryTermResults);
                         newResults.put(termResultK, queryTermResults);
                     } else {
                         //some fscontent hits already exist for this keyword
-                        for (FsContent res : queryTermResults) {
-                            if (!curTermResults.contains(res)) {
+                        for (ContentHit res : queryTermResults) {
+                            if (! previouslyHit(curTermResults, res)) {
                                 //add to new results
-                                List<FsContent> newResultsFs = newResults.get(termResultK);
+                                List<ContentHit> newResultsFs = newResults.get(termResultK);
                                 if (newResultsFs == null) {
-                                    newResultsFs = new ArrayList<FsContent>();
+                                    newResultsFs = new ArrayList<ContentHit>();
                                     newResults.put(termResultK, newResultsFs);
                                 }
                                 newResultsFs.add(res);
@@ -610,16 +605,32 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
 
                 if (!newResults.isEmpty()) {
-
+                    
                     //write results to BB
                     Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>(); //new artifacts to report
                     for (final Keyword hitTerm : newResults.keySet()) {
-                        List<FsContent> fsContentHits = newResults.get(hitTerm);
-                        for (final FsContent hitFile : fsContentHits) {
+                        List<ContentHit> contentHitsAll = newResults.get(hitTerm);
+                        Map<FsContent,Integer>contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
+                        for (final FsContent hitFile : contentHitsFlattened.keySet()) {
                             if (this.isCancelled()) {
                                 return null;
                             }
-                            KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, listName);
+
+                            String snippet = null;
+                            final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery(), true, false);
+                            int chunkId = contentHitsFlattened.get(hitFile);
+                            try {
+                                snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, isRegex, true);
+                            } catch (NoOpenCoreException e) {
+                                logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
+                                //no reason to continie
+                                return null;
+                            } catch (Exception e) {
+                                logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
+                                continue;
+                            }
+                            
+                            KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
                             if (written == null) {
                                 //logger.log(Level.INFO, "BB artifact for keyword not written: " + hitTerm.toString());
                                 continue;
@@ -725,5 +736,18 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
             }
         }
+    }
+    
+    //check if fscontent already hit, ignore chunks
+    private static boolean previouslyHit(List<ContentHit> contents, ContentHit hit) {
+        boolean ret = false;
+        long hitId = hit.getId();
+        for (ContentHit c : contents) {
+            if (c.getId() == hitId) {
+                ret = true;
+                break;
+            }
+        }
+        return ret;
     }
 }

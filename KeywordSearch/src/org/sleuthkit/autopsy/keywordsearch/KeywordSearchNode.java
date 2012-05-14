@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
@@ -30,8 +31,9 @@ import org.sleuthkit.datamodel.FsContent;
  */
 class KeywordSearchNode extends AbstractNode {
 
-    KeywordSearchNode(List<FsContent> keys, final String solrQuery) {
-        super(new RootContentChildren(keys) {
+    KeywordSearchNode(final Map<FsContent,Integer> keys, final String solrQuery) {
+
+        super(new RootContentChildren(new ArrayList(keys.keySet())) {
 
             @Override
             protected Node[] createNodes(Object key) {
@@ -43,7 +45,8 @@ class KeywordSearchNode extends AbstractNode {
                 int i = 0;
                 for (Node original : originalNodes) {
                     HighlightedMatchesSource markup = new HighlightedMatchesSource((Content)key, solrQuery, false);
-                    filterNodes[i++] = new KeywordSearchFilterNode(markup, original, solrQuery);
+                    int previewChunk = keys.get((FsContent)key);
+                    filterNodes[i++] = new KeywordSearchFilterNode(markup, original, solrQuery, previewChunk);
                 }
 
                 return filterNodes;

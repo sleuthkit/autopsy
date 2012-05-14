@@ -45,17 +45,19 @@ import org.sleuthkit.datamodel.File;
 class KeywordSearchFilterNode extends FilterNode {
 
     String solrQuery;
+    int previewChunk;
 
-    KeywordSearchFilterNode(HighlightedMatchesSource highlights, Node original, String solrQuery) {
+    KeywordSearchFilterNode(HighlightedMatchesSource highlights, Node original, String solrQuery, int previewChunk) {
         super(original, null, new ProxyLookup(Lookups.singleton(highlights), original.getLookup()));
         this.solrQuery = solrQuery;
+        this.previewChunk = previewChunk;
     }
 
     String getSnippet() {
         final Content content = this.getOriginal().getLookup().lookup(Content.class);
         String snippet;
         try {
-            snippet = LuceneQuery.querySnippet(solrQuery, content.getId(), false, true);
+            snippet = LuceneQuery.querySnippet(solrQuery, content.getId(), previewChunk, false, true);
         } catch (NoOpenCoreException ex) {
             //logger.log(Level.WARNING, "Could not perform the snippet query. ", ex);
             return "";

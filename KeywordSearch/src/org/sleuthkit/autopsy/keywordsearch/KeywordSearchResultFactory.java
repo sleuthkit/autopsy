@@ -225,17 +225,14 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             }
 
             //execute the query and get fscontents matching
-            Map<String, List<FsContent>> tcqRes;
+            Map<String, List<ContentHit>> tcqRes;
             try {
                 tcqRes = tcq.performQuery();
             } catch (NoOpenCoreException ex) {
                 logger.log(Level.WARNING, "Could not perform the query. ", ex);
                 return false;
             }
-            final Set<FsContent> fsContents = new HashSet<FsContent>();
-            for (String key : tcqRes.keySet()) {
-                fsContents.addAll(tcqRes.get(key));
-            }
+            final Map<FsContent, Integer> hitContents = ContentHit.flattenResults(tcqRes);
 
             //get listname
             String listName = "";
@@ -247,23 +244,27 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             final boolean literal_query = tcq.isEscaped();
 
             int resID = 0;
-            for (final FsContent f : fsContents) {
+            for (final FsContent f : hitContents.keySet()) {
+                final int previewChunk = hitContents.get(f);
                 //get unique match result files
                 Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                 AbstractFsContentNode.fillPropertyMap(resMap, f);
                 setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
-                if (literal_query) {
+
+                if (true) {
                     try {
                         String snippet;
-                        snippet = LuceneQuery.querySnippet(tcq.getEscapedQueryString(), f.getId(), false, true);
+                        //TODO reuse snippet in ResultWriter
+                        snippet = LuceneQuery.querySnippet(tcq.getEscapedQueryString(), f.getId(), previewChunk, !literal_query, true);
                         setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
                     } catch (NoOpenCoreException ex) {
-                        logger.log(Level.WARNING, "Could not perform the query. ", ex);
+                        logger.log(Level.WARNING, "Could not perform the snippet query. ", ex);
                         return false;
                     }
                 }
+
                 final String highlightQueryEscaped = getHighlightQuery(tcq, literal_query, tcqRes, f);
-                toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq));
+                toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, previewChunk));
             }
             //write to bb
             new ResultWriter(tcqRes, tcq, listName).execute();
@@ -272,7 +273,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             return true;
         }
 
-        private String getHighlightQuery(KeywordSearchQuery tcq, boolean literal_query, Map<String, List<FsContent>> tcqRes, FsContent f) {
+        private String getHighlightQuery(KeywordSearchQuery tcq, boolean literal_query, Map<String, List<ContentHit>> tcqRes, FsContent f) {
             String highlightQueryEscaped = null;
             if (literal_query) {
                 //literal, treat as non-regex, non-term component query
@@ -290,8 +291,13 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                     //find terms for this file hit
                     List<String> hitTerms = new ArrayList<String>();
                     for (String term : tcqRes.keySet()) {
-                        if (tcqRes.get(term).contains(f)) {
-                            hitTerms.add(term);
+                        List<ContentHit> hitList = tcqRes.get(term);
+
+                        for (ContentHit h : hitList) {
+                            if (h.getContent().equals(f)) {
+                                hitTerms.add(term);
+                                break; //go to next term
+                            }
                         }
                     }
 
@@ -305,8 +311,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                         highlightQuery.append("\"");
                         if (lastTerm != curTerm) {
                             highlightQuery.append(" "); //acts as OR ||
-                            //force white-space separated index and stored content
-                            //in each term after first. First term taken case by HighlightedMatchesSource
+                            //force HIGHLIGHT_FIELD_REGEX index and stored content
+                            //in each term after first. First term taken care by HighlightedMatchesSource
                             highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD_REGEX).append(":");
                         }
 
@@ -327,11 +333,12 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             final KeyValueQueryContent thingContent = (KeyValueQueryContent) thing;
             final Content content = thingContent.getContent();
             final String queryStr = thingContent.getQueryStr();
+            final int previewChunk = thingContent.getPreviewChunk();
 
             Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
             HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr, !thingContent.getQuery().isEscaped(), false);
-            return new KeywordSearchFilterNode(highlights, kvNode, queryStr);
+            return new KeywordSearchFilterNode(highlights, kvNode, queryStr, previewChunk);
 
         }
     }
@@ -379,7 +386,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 LuceneQuery filesQuery = new LuceneQuery(keywordQuery);
                 filesQuery.escape();
 
-                Map<String, List<FsContent>> matchesRes;
+                Map<String, List<ContentHit>> matchesRes;
                 try {
                     matchesRes = filesQuery.performQuery();
                 } catch (NoOpenCoreException ex) {
@@ -387,23 +394,18 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                     return false;
                 }
 
-                Set<FsContent> matches = new HashSet<FsContent>();
-                for (String key : matchesRes.keySet()) {
-                    matches.addAll(matchesRes.get(key));
-                }
-
                 //get unique match result files
-                final Set<FsContent> uniqueMatches = new LinkedHashSet<FsContent>();
-                uniqueMatches.addAll(matches);
+                final Map<FsContent, Integer> uniqueMatches = ContentHit.flattenResults(matchesRes);
 
                 int resID = 0;
 
                 final KeywordSearchQuery origQuery = thing.getQuery();
 
-                for (final FsContent f : uniqueMatches) {
+                for (final FsContent f : uniqueMatches.keySet()) {
+                    final int previewChunkId = uniqueMatches.get(f);
                     Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                     AbstractFsContentNode.fillPropertyMap(resMap, (File) f);
-                    toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, keywordQuery, thing.getQuery()));
+                    toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, keywordQuery, thing.getQuery(), previewChunkId));
 
                 }
                 //write to bb
@@ -417,11 +419,12 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 final KeyValueQueryContent thingContent = (KeyValueQueryContent) thing;
                 final Content content = thingContent.getContent();
                 final String query = thingContent.getQueryStr();
+                final int previewChunk = thingContent.getPreviewChunk();
 
                 Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
                 //wrap in KeywordSearchFilterNode for the markup content
                 HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query, !thingContent.getQuery().isEscaped());
-                return new KeywordSearchFilterNode(highlights, kvNode, query);
+                return new KeywordSearchFilterNode(highlights, kvNode, query, previewChunk);
             }
         }
     }
@@ -434,6 +437,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         private Content content;
         private String queryStr;
         private KeywordSearchQuery query;
+        private int previewChunk;
 
         Content getContent() {
             return content;
@@ -443,10 +447,15 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             return queryStr;
         }
 
-        public KeyValueQueryContent(String name, Map<String, Object> map, int id, Content content, String queryStr, KeywordSearchQuery query) {
+        int getPreviewChunk() {
+            return previewChunk;
+        }
+
+        public KeyValueQueryContent(String name, Map<String, Object> map, int id, Content content, String queryStr, KeywordSearchQuery query, int previewChunk) {
             super(name, map, id, query);
             this.content = content;
             this.queryStr = queryStr;
+            this.previewChunk = previewChunk;
         }
     }
 
@@ -460,13 +469,15 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         private ProgressHandle progress;
         private KeywordSearchQuery query;
         private String listName;
-        private Map<String, List<FsContent>> hits;
+        private Map<String, List<ContentHit>> hits;
         final Collection<BlackboardArtifact> na = new ArrayList<BlackboardArtifact>();
+        private static final int QUERY_DISPLAY_LEN = 40;
 
-        ResultWriter(Map<String, List<FsContent>> hits, KeywordSearchQuery query, String listName) {
+        ResultWriter(Map<String, List<ContentHit>> hits, KeywordSearchQuery query, String listName) {
             this.hits = hits;
             this.query = query;
             this.listName = listName;
+
         }
 
         @Override
@@ -484,7 +495,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         protected Object doInBackground() throws Exception {
             registerWriter(this);
             final String queryStr = query.getQueryString();
-            final String queryDisp = queryStr.length() > 40 ? queryStr.substring(0, 39) + " ..." : queryStr;
+            final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
             progress = ProgressHandleFactory.createHandle("Saving results: " + queryDisp, new Cancellable() {
 
                 @Override
@@ -500,10 +511,26 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 if (this.isCancelled()) {
                     break;
                 }
-                for (FsContent f : hits.get(hit)) {
-                    KeywordWriteResult written = query.writeToBlackBoard(hit, f, listName);
-                    if (written != null) {
-                        na.add(written.getArtifact());
+                Map<FsContent, Integer> flattened = ContentHit.flattenResults(hits.get(hit));
+                for (FsContent f : flattened.keySet()) {
+                    int chunkId = flattened.get(f);
+                    final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit, true, false);
+                    String snippet = null;
+                    try {
+                        snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), chunkId, !query.isLiteral(), true);
+                    } catch (NoOpenCoreException e) {
+                        logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
+                        //no reason to continie
+                        return null;
+                    } catch (Exception e) {
+                        logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
+                        continue;
+                    }
+                    if (snippet != null) {
+                        KeywordWriteResult written = query.writeToBlackBoard(hit, f, snippet, listName);
+                        if (written != null) {
+                            na.add(written.getArtifact());
+                        }
                     }
                 }
 

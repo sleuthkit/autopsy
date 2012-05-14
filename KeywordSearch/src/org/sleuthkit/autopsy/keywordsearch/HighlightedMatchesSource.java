@@ -26,8 +26,8 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.datamodel.HighlightLookup;
-import org.sleuthkit.autopsy.keywordsearch.Server.Core;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -45,6 +45,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     private String solrQuery;
     private Server solrServer;
     private int numberHits;
+    private int numberPages;
     private boolean isRegex = false;
     private boolean group = true;
 
@@ -56,6 +57,15 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
         this.solrServer = KeywordSearch.getServer();
 
+        this.numberPages = 0;
+        try {
+            this.numberPages = solrServer.queryNumFileChunks(content.getId());
+        } catch (SolrServerException ex) {
+            logger.log(Level.WARNING, "Could not get number pages for content: " + content.getId());
+        } catch (NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Could not get number pages for content: " + content.getId());
+        }
+        
     }
 
     HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, boolean group) {
@@ -68,7 +78,13 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     }
 
     @Override
-    public String getMarkup() {
+    public int getNumberPages() {
+        return this.numberPages;
+    }
+    
+
+    @Override
+    public String getMarkup(int pageNum) {
         String highLightField = null;
 
         String highlightQuery = solrQuery;
@@ -110,17 +126,25 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         //  q.setQuery(highLightField + ":" + highlightQuery); 
         //else q.setQuery(highlightQuery); //use default field, simplifies query
 
-        q.addFilterQuery("id:" + content.getId());
+        final long contentId = content.getId();
+        
+        String contentIdStr = Long.toString(contentId);
+        if (pageNum > 0)
+            contentIdStr += "_" + Integer.toString(pageNum);
+        
+        final String filterQuery = Server.Schema.ID.toString() + ":" + contentIdStr;
+        q.addFilterQuery(filterQuery);
         q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
         q.setHighlightSimplePre(HIGHLIGHT_PRE);
         q.setHighlightSimplePost(HIGHLIGHT_POST);
         q.setHighlightFragsize(0); // don't fragment the highlight
+        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //analyze all content
 
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
-            long contentID = content.getId();
-            Map<String, List<String>> responseHighlightID = responseHighlight.get(Long.toString(contentID));
+
+            Map<String, List<String>> responseHighlightID = responseHighlight.get(contentIdStr);
             if (responseHighlightID == null) {
                 return NO_MATCHES;
             }
@@ -135,11 +159,11 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             }
         } 
         catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't query markup.", ex);
+            logger.log(Level.WARNING, "Couldn't query markup for page: " + pageNum, ex);
             return "";
         }
         catch (SolrServerException ex) {
-            logger.log(Level.INFO, "Could not query markup. ", ex);
+            logger.log(Level.WARNING, "Could not query markup for page: " + pageNum, ex);
             return "";
         }
     }

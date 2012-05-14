@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -44,7 +45,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 /**
  * Handles indexing files on a Solr core.
  */
-class Ingester {
+public class Ingester {
 
     private static final Logger logger = Logger.getLogger(Ingester.class.getName());
     private boolean uncommitedIngests = false;
@@ -56,6 +57,7 @@ class Ingester {
         "gz", "tgz", "odf", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log", "manifest",
         "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
         "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
+
 
     Ingester() {
     }
@@ -79,9 +81,29 @@ class Ingester {
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    public void ingest(FsContentStringContentStream fcs) throws IngesterException {
+    void ingest(FsContentStringContentStream fcs) throws IngesterException {
         Map<String, String> params = getFsContentFields(fcs.getFsContent());
-        ingest(fcs, params, fcs.getFsContent());
+        ingest(fcs, params, fcs.getFsContent().getSize());
+    }
+
+    void ingest(FileExtract fe) throws IngesterException {
+        Map<String, String> params = getFsContentFields(fe.getSourceFile());
+
+        params.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(fe.getNumChunks()));
+
+        ingest(new NullContentStream(fe.getSourceFile()), params, 0);
+    }
+
+    //chunk stream
+    void ingest(FileExtractedChild fec, ByteContentStream bcs) throws IngesterException {
+        FsContent sourceFsContent = bcs.getFsContent();
+        Map<String, String> params = getFsContentFields(sourceFsContent);
+
+        //overwrite, TODO set separately
+        params.put(Server.Schema.ID.toString(), 
+                FileExtractedChild.getFileExtractChildId(sourceFsContent.getId(), fec.getChunkId()));
+    
+        ingest(bcs, params, FileExtract.MAX_CHUNK_SIZE);
     }
 
     /**
@@ -92,8 +114,8 @@ class Ingester {
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    public void ingest(FsContent f) throws IngesterException {
-        ingest(new FscContentStream(f), getFsContentFields(f), f);
+    void ingest(FsContent f) throws IngesterException {
+        ingest(new FscContentStream(f), getFsContentFields(f), f.getSize());
     }
 
     /**
@@ -103,12 +125,12 @@ class Ingester {
      */
     private Map<String, String> getFsContentFields(FsContent fsc) {
         Map<String, String> fields = new HashMap<String, String>();
-        fields.put("id", Long.toString(fsc.getId()));
-        fields.put("file_name", fsc.getName());
-        fields.put("ctime", fsc.getCtimeAsDate());
-        fields.put("atime", fsc.getAtimeAsDate());
-        fields.put("mtime", fsc.getMtimeAsDate());
-        fields.put("crtime", fsc.getMtimeAsDate());
+        fields.put(Server.Schema.ID.toString(), Long.toString(fsc.getId()));
+        fields.put(Server.Schema.FILE_NAME.toString(), fsc.getName());
+        fields.put(Server.Schema.CTIME.toString(), fsc.getCtimeAsDate());
+        fields.put(Server.Schema.ATIME.toString(), fsc.getAtimeAsDate());
+        fields.put(Server.Schema.MTIME.toString(), fsc.getMtimeAsDate());
+        fields.put(Server.Schema.CRTIME.toString(), fsc.getMtimeAsDate());
         return fields;
     }
 
@@ -117,11 +139,11 @@ class Ingester {
      * 
      * @param ContentStream to ingest
      * @param fields content specific fields
-     * @param sourceContent fsContent from which the cs content stream originated from
+     * @param size size of the content
      * @throws IngesterException if there was an error processing a specific
      * content, but the Solr server is probably fine.
      */
-    private void ingest(ContentStream cs, Map<String, String> fields, final FsContent sourceContent) throws IngesterException {
+    private void ingest(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
         final ContentStreamUpdateRequest up = new ContentStreamUpdateRequest("/update/extract");
         up.addContentStream(cs);
         setFields(up, fields);
@@ -138,7 +160,7 @@ class Ingester {
         final Future<?> f = upRequestExecutor.submit(new UpRequestTask(up));
 
         try {
-            f.get(getTimeout(sourceContent), TimeUnit.SECONDS);
+            f.get(getTimeout(size), TimeUnit.SECONDS);
         } catch (TimeoutException te) {
             logger.log(Level.WARNING, "Solr timeout encountered, trying to restart Solr");
             //restart may be needed to recover from some error conditions
@@ -162,13 +184,11 @@ class Ingester {
     }
 
     /**
-     * return timeout that should be use to index the content 
-     * TODO adjust them more as needed, and handle file chunks
-     * @param f the source FsContent
+     * return timeout that should be used to index the content 
+     * @param size size of the content
      * @return time in seconds to use a timeout
      */
-    private static int getTimeout(FsContent f) {
-        final long size = f.getSize();
+    private static int getTimeout(long size) {
         if (size < 1024 * 1024L) //1MB
         {
             return 60;
@@ -283,6 +303,48 @@ class Ingester {
         @Override
         public InputStream getStream() throws IOException {
             return new ReadContentInputStream(f);
+        }
+
+        @Override
+        public Reader getReader() throws IOException {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+    }
+
+    /**
+     * ContentStream associated with FsContent, but forced with no content
+     */
+    private static class NullContentStream implements ContentStream {
+
+        FsContent f;
+
+        NullContentStream(FsContent f) {
+            this.f = f;
+        }
+
+        @Override
+        public String getName() {
+            return f.getName();
+        }
+
+        @Override
+        public String getSourceInfo() {
+            return "File:" + f.getId();
+        }
+
+        @Override
+        public String getContentType() {
+            return null;
+        }
+
+        @Override
+        public Long getSize() {
+            return 0L;
+        }
+
+        @Override
+        public InputStream getStream() throws IOException {
+            return new ByteArrayInputStream(new byte[0]);
         }
 
         @Override

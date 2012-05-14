@@ -504,7 +504,10 @@
    <field name="atime" type="tdate" indexed="true" stored="true"/>
    <field name="mtime" type="tdate" indexed="true" stored="true"/>
    <field name="crtime" type="tdate" indexed="true" stored="true"/>
-
+	<!-- file chunk-specific fields (optional for others) -->
+	<!-- for a parent file with no content, number of chunks are specified -->
+	<field name="num_chunks" type="int" indexed="true" stored="true" required="false" />
+   
    <!-- Common metadata fields, named specifically to match up with
      SolrCell metadata when parsing rich documents such as Word, PDF.
      Some fields are multiValued only because Tika currently may return

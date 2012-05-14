@@ -18,16 +18,12 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -39,7 +35,6 @@ import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
@@ -61,10 +56,10 @@ public class LuceneQuery implements KeywordSearchQuery {
     private boolean isEscaped;
     private Keyword keywordQuery = null;
     //use different highlight Solr fields for regex and literal search
-    static final String HIGHLIGHT_FIELD_LITERAL = "content";
-    static final String HIGHLIGHT_FIELD_REGEX = "content";
+    static final String HIGHLIGHT_FIELD_LITERAL = Server.Schema.CONTENT.toString();
+    static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.CONTENT.toString();
     //TODO use content_ws stored="true" in solr schema for perfect highlight hits
-    //static final String HIGHLIGHT_FIELD_REGEX = "content_ws";
+    //static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.CONTENT_WS.toString()
 
     public LuceneQuery(Keyword keywordQuery) {
         this(keywordQuery.getQuery());
@@ -89,6 +84,13 @@ public class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
+    public boolean isLiteral() {
+        return true;
+    }
+    
+    
+
+    @Override
     public String getEscapedQueryString() {
         return this.queryEscaped;
     }
@@ -104,8 +106,8 @@ public class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public Map<String, List<FsContent>> performQuery() throws NoOpenCoreException {
-        Map<String, List<FsContent>> results = new HashMap<String, List<FsContent>>();
+    public Map<String, List<ContentHit>> performQuery() throws NoOpenCoreException {
+        Map<String, List<ContentHit>> results = new HashMap<String, List<ContentHit>>();
         //in case of single term literal query there is only 1 term
         results.put(query, performLuceneQuery());
 
@@ -115,17 +117,13 @@ public class LuceneQuery implements KeywordSearchQuery {
     @Override
     public void execute() {
         escape();
-        Set<FsContent> fsMatches = new HashSet<FsContent>();
-        final Map<String, List<FsContent>> matches;
-        
+   
+        final Map<String, List<ContentHit>> matches;
+
         try {
             matches = performQuery();
         } catch (NoOpenCoreException ex) {
             return;
-        }
-        
-        for (String key : matches.keySet()) {
-            fsMatches.addAll(matches.get(key));
         }
 
         String pathText = "Keyword query: " + query;
@@ -134,11 +132,14 @@ public class LuceneQuery implements KeywordSearchQuery {
             KeywordSearchUtil.displayDialog("Keyword Search", "No results for keyword: " + query, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             return;
         }
-
+        
+        //map of unique fs hit and chunk id or 0
+        LinkedHashMap<FsContent,Integer> fsMatches = ContentHit.flattenResults(matches);
+   
         //get listname
         String listName = "";
 
-        Node rootNode = new KeywordSearchNode(new ArrayList<FsContent>(fsMatches), queryEscaped);
+        Node rootNode = new KeywordSearchNode(fsMatches, queryEscaped);
         Node filteredRootNode = new TableFilterNode(rootNode, true);
 
         TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, filteredRootNode, matches.size());
@@ -154,9 +155,8 @@ public class LuceneQuery implements KeywordSearchQuery {
         return query != null && !query.equals("");
     }
 
-
     @Override
-    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) throws NoOpenCoreException {
+    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
 
         KeywordWriteResult writeResult = null;
@@ -170,18 +170,6 @@ public class LuceneQuery implements KeywordSearchQuery {
             return null;
         }
 
-        String snippet = null;
-        try {
-            snippet = LuceneQuery.querySnippet(queryEscaped, newFsHit.getId(), false, true);
-        } 
-        catch (NoOpenCoreException e) {   
-            logger.log(Level.WARNING, "Error querying snippet: " + query, e);
-            throw e;
-        }
-        catch (Exception e) {  
-            logger.log(Level.WARNING, "Error querying snippet: " + query, e);
-            return null;
-        }
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
         }
@@ -219,9 +207,9 @@ public class LuceneQuery implements KeywordSearchQuery {
      * @param query
      * @return matches List
      */
-    private List<FsContent> performLuceneQuery() throws NoOpenCoreException {
+    private List<ContentHit> performLuceneQuery() throws NoOpenCoreException {
 
-        List<FsContent> matches = new ArrayList<FsContent>();
+        List<ContentHit> matches = new ArrayList<ContentHit>();
 
         boolean allMatchesFetched = false;
         final int ROWS_PER_FETCH = 10000;
@@ -232,21 +220,18 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         q.setQuery(queryEscaped);
         q.setRows(ROWS_PER_FETCH);
-        q.setFields("id");
+        q.setFields(Server.Schema.ID.toString());
 
+        
         for (int start = 0; !allMatchesFetched; start = start + ROWS_PER_FETCH) {
-
             q.setStart(start);
 
             try {
                 QueryResponse response = solrServer.query(q, METHOD.POST);
                 SolrDocumentList resultList = response.getResults();
                 long results = resultList.getNumFound();
-
                 allMatchesFetched = start + ROWS_PER_FETCH >= results;
-
-                SleuthkitCase sc;
-
+                SleuthkitCase sc = null;
                 try {
                     sc = Case.getCurrentCase().getSleuthkitCase();
                 } catch (IllegalStateException ex) {
@@ -255,17 +240,39 @@ public class LuceneQuery implements KeywordSearchQuery {
                 }
 
                 for (SolrDocument resultDoc : resultList) {
-                    long id = Long.parseLong((String) resultDoc.getFieldValue("id"));
+                    final String resultID = (String) resultDoc.getFieldValue(Server.Schema.ID.toString());
 
-                    // TODO: has to be a better way to get files. Also, need to 
-                    // check that we actually get 1 hit for each id
-                    ResultSet rs = sc.runQuery("select * from tsk_files where obj_id=" + id);
-                    matches.addAll(sc.resultSetToFsContents(rs));
-                    final Statement s = rs.getStatement();
-                    rs.close();
-                    if (s != null) {
-                        s.close();
+                    final int sepIndex = resultID.indexOf('_');
+                    
+                    if (sepIndex != -1) {
+                        //file chunk result
+                        final long fileID = Long.parseLong(resultID.substring(0, sepIndex));
+                        final int chunkId = Integer.parseInt(resultID.substring(sepIndex+1));
+                        logger.log(Level.INFO, "file id: " + fileID + ", chunkID: " + chunkId);
+                        
+                        try {
+                            FsContent resultFsContent = sc.getFsContentById(fileID);
+                            matches.add(new ContentHit(resultFsContent, chunkId));
+                            
+                        } catch (TskException ex) {
+                            logger.log(Level.WARNING, "Could not get the fscontent for keyword hit, ", ex);
+                            //something wrong with case/db
+                            return matches;
+                        }
+                        
+                    } else {
+                        final long fileID = Long.parseLong(resultID);
+
+                        try {
+                            FsContent resultFsContent = sc.getFsContentById(fileID);
+                            matches.add(new ContentHit(resultFsContent));
+                        } catch (TskException ex) {
+                            logger.log(Level.WARNING, "Could not get the fscontent for keyword hit, ", ex);
+                            //something wrong with case/db
+                            return matches;
+                        }
                     }
+
                 }
 
 
@@ -275,9 +282,6 @@ public class LuceneQuery implements KeywordSearchQuery {
             } catch (SolrServerException ex) {
                 logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
                 // TODO: handle bad query strings, among other issues
-            } catch (SQLException ex) {
-                logger.log(Level.WARNING, "Error interpreting results from Lucene Solr Query: " + query, ex);
-                return matches;
             }
 
         }
@@ -293,6 +297,20 @@ public class LuceneQuery implements KeywordSearchQuery {
      * @return 
      */
     public static String querySnippet(String query, long contentID, boolean isRegex, boolean group) throws NoOpenCoreException {
+        return querySnippet(query, contentID, 0, isRegex, group);
+    }
+    
+    
+    /**
+     * return snippet preview context
+     * @param query the keyword query for text to highlight. Lucene special cahrs should already be escaped.
+     * @param contentID content id associated with the hit
+     * @param chunkID chunk id associated with the content hit, or 0 if no chunks
+     * @param isRegex whether the query is a regular expression (different Solr fields are then used to generate the preview)
+     * @param group whether the query should look for all terms grouped together in the query order, or not
+     * @return 
+     */
+    public static String querySnippet(String query, long contentID, int chunkID, boolean isRegex, boolean group) throws NoOpenCoreException {
         final int SNIPPET_LENGTH = 45;
 
         Server solrServer = KeywordSearch.getServer();
@@ -323,17 +341,27 @@ public class LuceneQuery implements KeywordSearchQuery {
             //quote only if user supplies quotes
             q.setQuery(query);
         }
-        q.addFilterQuery("id:" + contentID);
+        
+        String contentIDStr = null;
+      
+        if (chunkID == 0)
+            contentIDStr = Long.toString(contentID);
+        else
+            contentIDStr = FileExtractedChild.getFileExtractChildId(contentID, chunkID);
+            
+        String idQuery = Server.Schema.ID.toString() + ":" + contentIDStr;
+        q.addFilterQuery(idQuery);
         q.addHighlightField(highlightField);
         q.setHighlightSimplePre("&laquo;");
         q.setHighlightSimplePost("&raquo;");
         q.setHighlightSnippets(1);
         q.setHighlightFragsize(SNIPPET_LENGTH);
+        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //analyze all content 
 
         try {
             QueryResponse response = solrServer.query(q);
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
-            Map<String, List<String>> responseHighlightID = responseHighlight.get(Long.toString(contentID));
+            Map<String, List<String>> responseHighlightID = responseHighlight.get(contentIDStr);
             if (responseHighlightID == null) {
                 return "";
             }

@@ -43,8 +43,13 @@ public class FsContentStringStream extends InputStream {
             }
         },
     };
+    
+    //args
     private FsContent content;
     private String encoding;
+    private boolean preserveOnBuffBoundary;
+    
+    //internal data
     private long contentOffset = 0; //offset in fscontent read into curReadBuf
     private static final int READ_BUF_SIZE = 256;
     private static final byte[] curReadBuf = new byte[READ_BUF_SIZE];
@@ -64,14 +69,27 @@ public class FsContentStringStream extends InputStream {
     private static final Logger logger = Logger.getLogger(FsContentStringStream.class.getName());
 
     /**
-     * 
+     * Construct new string stream from FsContent
      * @param content to extract strings from
-     * @param encoding target encoding, current only ASCII supported
+     * @param encoding target encoding, currently UTF-8
+     * @param preserveOnBuffBoundary whether to preserve or split string on a buffer boundary. If false, will pack into read buffer up to max. possible, potentially splitting a string. If false, the string will be preserved for next read.
      */
-    public FsContentStringStream(FsContent content, Encoding encoding) {
+    public FsContentStringStream(FsContent content, Encoding encoding, boolean preserveOnBuffBoundary) {
         this.content = content;
         this.encoding = encoding.toString();
+        this.preserveOnBuffBoundary = preserveOnBuffBoundary;
         //logger.log(Level.INFO, "FILE: " + content.getParentPath() + "/" + content.getName());
+    }
+    
+    /**
+     * Construct new string stream from FsContent
+     * Do not attempt to fill entire read buffer if that would break a string
+     * 
+     * @param content to extract strings from
+     * @param encoding target encoding, currently UTF-8
+     */
+    public FsContentStringStream(FsContent content, Encoding encoding) {
+        this(content, encoding, false);
     }
 
     @Override
@@ -190,7 +208,7 @@ public class FsContentStringStream extends InputStream {
         //check if temp still has chars to qualify as a string
         //we might need to break up temp into 2 parts for next read() call
         //consume as many as possible to fill entire user buffer
-        if (tempStringLen >= MIN_PRINTABLE_CHARS) {
+        if (!this.preserveOnBuffBoundary && tempStringLen >= MIN_PRINTABLE_CHARS) {
             if (newCurLen > len) {
                 int appendChars = len - curStringLen;
                 //save part for next user read(), need to break up temp string

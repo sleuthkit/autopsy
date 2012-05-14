@@ -25,10 +25,12 @@ package org.sleuthkit.autopsy.keywordsearch;
 public interface MarkupSource {
 
     /**
+     * @param pageNum page number to get markup for
      * @return text optionally marked up with the subsest of HTML that Swing
      * components can handle in their setText() method.
+     * 
      */
-    String getMarkup();
+    String getMarkup(int pageNum);
     
     /**
      * 
@@ -53,4 +55,10 @@ public interface MarkupSource {
      */
     @Override
     String toString();
+    
+    /**
+     * get number pages/chunks
+     * @return number pages
+     */
+    int getNumberPages();
 }

@@ -39,7 +39,7 @@ public interface KeywordSearchQuery {
      * @throws NoOpenCoreException if query failed due to server error, this could be a notification to stop processing
      * @return 
      */
-    public Map<String,List<FsContent>> performQuery() throws NoOpenCoreException;
+    public Map<String,List<ContentHit>> performQuery() throws NoOpenCoreException;
     
   
     
@@ -58,6 +58,12 @@ public interface KeywordSearchQuery {
      * @return true if query was escaped
      */
     public boolean isEscaped();
+    
+    /**
+     * 
+     * @return true if query is a literal query (non regex)
+     */
+    public boolean isLiteral();
     
     /**
      * return original query string
@@ -82,11 +88,12 @@ public interface KeywordSearchQuery {
      * this method is useful if something else should keep track of partial results to write
      * @param termHit term for only which to write results
      * @param newFsHit fscontent for which to write results for this hit
+     * @param snippet snippet preview with hit context, or null if there is no snippet
      * @param listName listname
      * @return collection of results (with cached bb artifacts/attributes) created and written
      * @throws NoOpenCoreException if could not write to bb because required query failed due to server error, this could be a notification to stop processing
      */
-    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) throws NoOpenCoreException;
+    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String snippet, String listName);
        
 }
 

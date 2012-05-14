@@ -18,39 +18,46 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.logging.Logger;
 import org.apache.solr.common.util.ContentStream;
-import org.sleuthkit.autopsy.datamodel.FsContentStringStream;
 import org.sleuthkit.autopsy.datamodel.FsContentStringStream.Encoding;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
- * Converter from FsContent into String with specific encoding
- * Then, an adapter back to Solr' ContentStream (which is a specific InputStream), 
- * using the same encoding
+ * Stream of bytes representing string with specified encoding
+ * to feed into Solr as ContentStream
  */
-public class FsContentStringContentStream implements ContentStream {
+public class ByteContentStream implements ContentStream {   
     //input
-
-    private FsContent content;
+    private byte[] content; //extracted subcontent
+    private long contentSize;
+    private FsContent fsContent; //origin
     private Encoding encoding;
-    //converted
-    private FsContentStringStream stream;
+    
+    private InputStream stream;
+
     private static Logger logger = Logger.getLogger(FsContentStringContentStream.class.getName());
 
-    public FsContentStringContentStream(FsContent content, Encoding encoding) {
+    public ByteContentStream(byte [] content, long contentSize, FsContent fsContent, Encoding encoding) {
         this.content = content;
+        this.fsContent = fsContent;
         this.encoding = encoding;
-        this.stream = new FsContentStringStream(content, encoding);
+        stream = new ByteArrayInputStream(content, 0, (int)contentSize);
     }
 
-    public FsContent getFsContent() {
+    public byte[] getByteContent() {
         return content;
     }
+    
+    public FsContent getFsContent() {
+        return fsContent;
+    }
+
 
     @Override
     public String getContentType() {
@@ -59,7 +66,7 @@ public class FsContentStringContentStream implements ContentStream {
 
     @Override
     public String getName() {
-        return content.getName();
+        return fsContent.getName();
     }
 
     @Override
@@ -70,13 +77,12 @@ public class FsContentStringContentStream implements ContentStream {
 
     @Override
     public Long getSize() {
-        //return convertedLength;
-        throw new UnsupportedOperationException("Cannot tell how many chars in converted string, until entire string is converted");
+        return contentSize;
     }
 
     @Override
     public String getSourceInfo() {
-        return "File:" + content.getId();
+        return "File:" + fsContent.getId();
     }
 
     @Override
@@ -87,7 +93,10 @@ public class FsContentStringContentStream implements ContentStream {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-
+        
         stream.close();
     }
+    
+    
+
 }
