@@ -51,8 +51,8 @@ public class Report {
         SleuthkitCase tempDb = currentCase.getSleuthkitCase();
         try {
            ReportUtils util = new ReportUtils();
-           util.copy(new FileInputStream(currentCase.getCaseDirectory()+File.separator+"autopsy.db"), new FileOutputStream(currentCase.getCaseDirectory()+File.separator+"autopsy-copy.db"));
-            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", "jdbc:sqlite:"+currentCase.getCaseDirectory()+File.separator+"autopsy-copy.db");
+           util.copy(new FileInputStream(currentCase.getCaseDirectory()+File.separator+"autopsy.db"), new FileOutputStream(currentCase.getTempDirectory()+File.separator+"autopsy-copy.db"));
+            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", "jdbc:sqlite:"+currentCase.getTempDirectory()+File.separator+"autopsy-copy.db");
            tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_keyword;"); 
            tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_preview;");
            tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_exp;");
@@ -92,7 +92,7 @@ public class Report {
            tempdbconnect.executeStmt("DROP TABLE IF EXISTS report;");
            tempdbconnect.closeConnection();
            
-             File f1 = new File(currentCase.getCaseDirectory()+File.separator+"autopsy-copy.db");
+             File f1 = new File(currentCase.getTempDirectory()+File.separator+"autopsy-copy.db");
              boolean success = f1.delete();
           
         } catch (Exception e) {
