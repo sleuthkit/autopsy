@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.hashdatabase;
 
 /**
  * @author jantonius
@@ -44,7 +44,7 @@ import javax.swing.table.*;
  *  the model row number of the button that was clicked.
  *
  */
-class ButtonColumn extends AbstractCellEditor
+public class ButtonColumn extends AbstractCellEditor
 	implements TableCellRenderer, TableCellEditor, ActionListener, MouseListener
 {
 	private JTable table;
@@ -57,8 +57,6 @@ class ButtonColumn extends AbstractCellEditor
 	private JButton editButton;
 	private String text;
 	private boolean isButtonColumnEditor;
-        
-        String buttonName;
 
 
 	/**
@@ -71,11 +69,10 @@ class ButtonColumn extends AbstractCellEditor
          *  @param column the column to which the button renderer/editor is added
          *  @param buttonName  text displayed on the button
 	 */
-	ButtonColumn(JTable table, Action action, int column, String buttonName)
+	public ButtonColumn(JTable table, Action action, int column)
 	{
         this.table = table;
 		this.action = action;
-                this.buttonName = buttonName;
 
 		renderButton = new JButton();
 		editButton = new JButton();
@@ -133,9 +130,8 @@ class ButtonColumn extends AbstractCellEditor
 	public Component getTableCellEditorComponent(
 		JTable table, Object value, boolean isSelected, int row, int column)
 	{
-		text = (value == null) ? "" : value.toString();
-		editButton.setText( text );
-		return editButton;
+        HashDbMgmtPanel.setButtonFromIndexStatus(editButton, (IndexStatus) value);
+        return editButton;
 	}
 
 	@Override
@@ -171,8 +167,7 @@ class ButtonColumn extends AbstractCellEditor
 			renderButton.setBorder( originalBorder );
 		}
 
-		//renderButton.setText( (value == null) ? "" : value.toString() );
-            renderButton.setText(buttonName);
+        HashDbMgmtPanel.setButtonFromIndexStatus(renderButton, (IndexStatus) value);
 		return renderButton;
 	}
 

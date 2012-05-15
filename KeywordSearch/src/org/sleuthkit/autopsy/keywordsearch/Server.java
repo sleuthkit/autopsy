@@ -286,7 +286,7 @@ class Server {
      * @return int representing number of indexed files
      * @throws SolrServerException 
      */
-    public synchronized int queryNumIndexedFiles() throws SolrServerException, NoOpenCoreException {
+    public int queryNumIndexedFiles() throws SolrServerException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
@@ -301,7 +301,7 @@ class Server {
      * @throws SolrServerException
      * @throws NoOpenCoreException 
      */
-    public synchronized QueryResponse query(SolrQuery sq) throws SolrServerException, NoOpenCoreException {
+    public QueryResponse query(SolrQuery sq) throws SolrServerException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
@@ -316,7 +316,7 @@ class Server {
      * @throws SolrServerException
      * @throws NoOpenCoreException 
      */
-    public synchronized QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws SolrServerException, NoOpenCoreException {
+    public QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws SolrServerException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
@@ -330,7 +330,7 @@ class Server {
      * @throws SolrServerException
      * @throws NoOpenCoreException 
      */
-    public synchronized TermsResponse queryTerms(SolrQuery sq) throws SolrServerException, NoOpenCoreException {
+    public TermsResponse queryTerms(SolrQuery sq) throws SolrServerException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
@@ -344,7 +344,7 @@ class Server {
      * @throws SolrServerException
      * @throws NoOpenCoreException 
      */
-    public synchronized String getSolrContent(final Content content) throws SolrServerException, NoOpenCoreException {
+    public String getSolrContent(final Content content) throws SolrServerException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }

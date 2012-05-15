@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
+import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.ImagesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
@@ -84,6 +85,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 || arg0 instanceof RecentFilesNode
                 || arg0 instanceof KeywordHitsRootNode
                 || arg0 instanceof KeywordHitsListNode
+                || arg0 instanceof HashsetHitsRootNode
                 || arg0 instanceof ImagesNode
                 || arg0 instanceof ViewsNode
                 || arg0 instanceof ResultsNode)) {
@@ -95,7 +97,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 || arg0 instanceof ArtifactTypeNode 
                 || arg0 instanceof RecentFilesFilterNode
                 || arg0 instanceof FileSearchFilterNode
-                || arg0 instanceof HashsetHitsRootNode
+                || arg0 instanceof HashsetHitsSetNode
                 )) {
             return new Node[]{this.copyNode(arg0, false)};
         } else {

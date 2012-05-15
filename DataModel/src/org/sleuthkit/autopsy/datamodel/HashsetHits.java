@@ -18,8 +18,15 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
@@ -29,6 +36,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
@@ -43,9 +51,36 @@ public class HashsetHits implements AutopsyVisitableItem {
     private static final Logger logger = Logger.getLogger(HashsetHits.class.getName());
     
     private SleuthkitCase skCase;
+    private Map<String, Set<Long>> hashSetHitsMap;
     
     public HashsetHits(SleuthkitCase skCase) {
         this.skCase = skCase;
+        hashSetHitsMap = new LinkedHashMap<String, Set<Long>>();
+    }
+    
+    private void initArtifacts() {
+        hashSetHitsMap.clear();
+        try {
+            int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID();
+            String query = "select value_text,artifact_id,attribute_type_id from blackboard_attributes where " + 
+                    "attribute_type_id=" + setNameId;
+            ResultSet rs = skCase.runQuery(query);
+            while(rs.next()){
+                String value = rs.getString("value_text");
+                long artifactId = rs.getLong("artifact_id");
+                if(!hashSetHitsMap.containsKey(value)) {
+                    hashSetHitsMap.put(value, new HashSet<Long>());
+                }
+                hashSetHitsMap.get(value).add(artifactId);
+                
+            }
+            Statement s = rs.getStatement();
+            rs.close();
+            if (s != null)
+                s.close();
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "SQL Exception occurred: ", ex);
+        }
     }
 
     @Override
@@ -58,14 +93,9 @@ public class HashsetHits implements AutopsyVisitableItem {
         public HashsetHitsRootNode() {
             super(Children.create(new HashsetHitsRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(HASHSET_HITS);
-            List<BlackboardArtifact> arts = new ArrayList<BlackboardArtifact>();
-            try {
-                arts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID());
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "Error retrieving artifacts", ex);
-            }
-            super.setDisplayName(DISPLAY_NAME + " (" + arts.size() + ")");
+            super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png");
+            initArtifacts();
         }
         
         @Override
@@ -91,22 +121,77 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
     }
     
-    private class HashsetHitsRootChildren extends ChildFactory<BlackboardArtifact> {
+    private class HashsetHitsRootChildren extends ChildFactory<String> {
+
+        @Override
+        protected boolean createKeys(List<String> list) {
+            list.addAll(hashSetHitsMap.keySet());
+            return true;
+        }
+        
+        @Override
+        protected Node createNodeForKey(String key) {
+            return new HashsetHitsSetNode(key, hashSetHitsMap.get(key));
+        }
+    }
+    
+    public class HashsetHitsSetNode extends AbstractNode implements DisplayableItemNode {
+        
+        public HashsetHitsSetNode(String name, Set<Long> children) {
+            super(Children.create(new HashsetHitsSetChildren(children), true), Lookups.singleton(name));
+            super.setName(name);
+            super.setDisplayName(name + " (" + children.size() + ")");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hashset_hits.png");
+        }
+        
+        @Override
+        protected Sheet createSheet() {
+            Sheet s = super.createSheet();
+            Sheet.Set ss = s.get(Sheet.PROPERTIES);
+            if (ss == null) {
+                ss = Sheet.createPropertiesSet();
+                s.put(ss);
+            }
+
+            ss.put(new NodeProperty("Name",
+                    "Name",
+                    "no description",
+                    getName()));
+            
+            return s;
+        }
+
+        @Override
+        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+            return v.visit(this);
+        }
+    }
+    
+    private class HashsetHitsSetChildren extends ChildFactory<BlackboardArtifact> {
+
+        private Set<Long> children;
+
+        private HashsetHitsSetChildren(Set<Long> children) {
+            super();
+            this.children = children;
+        }
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact> list) {
-            try {
-                list.addAll(skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()));
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "Error getting Blackboard Artifacts", ex);
+            for (long l : children) {
+                try {
+                    //TODO: bulk artifact gettings
+                    list.add(skCase.getBlackboardArtifact(l));
+                } catch (TskException ex) {
+                    logger.log(Level.WARNING, "TSK Exception occurred", ex);
+                }
             }
             return true;
         }
         
         @Override
-        protected Node createNodeForKey(BlackboardArtifact key) {
-            return new BlackboardArtifactNode(key);
+        protected Node createNodeForKey(BlackboardArtifact artifact) {
+            return new BlackboardArtifactNode(artifact);
         }
     }
-    
 }

@@ -304,9 +304,7 @@ public class ExtractIE { // implements BrowserActivity {
         final String caseDir = Case.getCurrentCase().getCaseDirectory();
         PASCO_RESULTS_PATH = Case.getCurrentCase().getTempDirectory() + File.separator + "results";
         JAVA_PATH = PlatformUtil.getJavaPath();
-        if (JAVA_PATH.isEmpty() || JAVA_PATH == null) {
-            JAVA_PATH = "java";
-        }
+        
         logger.log(Level.INFO, "Pasco results path: " + PASCO_RESULTS_PATH);
 
         final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false);
@@ -410,7 +408,7 @@ public class ExtractIE { // implements BrowserActivity {
             command.append(" > \"").append(PASCO_RESULTS_PATH).append("\\pasco2Result.").append(Integer.toString(fileIndex)).append(".txt\"");
             // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String cmd = command.toString();
-            JavaSystemCaller.Exec.execute("\"" + JAVA_PATH + " " + cmd + "\"");
+            JavaSystemCaller.Exec.execute("\"\"" + JAVA_PATH + "\" " + cmd + "\"");
 
         } catch (Exception e) {
             success = false;
