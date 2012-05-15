@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class ReportFilter extends javax.swing.JPanel {
 
     public static ArrayList<Integer> filters = new ArrayList<Integer>();
-   public static ReportConfiguration config = new ReportConfiguration();
+    public static ReportConfiguration config = new ReportConfiguration();
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public final ReportFilter panel = this;
     ReportPanelAction rpa = new ReportPanelAction();
@@ -51,16 +51,14 @@ public class ReportFilter extends javax.swing.JPanel {
      * Creates new form ReportFilter
      */
     public ReportFilter() {
-        this.setLayout(new GridLayout(0,1));
+        this.setLayout(new GridLayout(0, 1));
         initComponents();
         cancel = false;
-        try{
-        config.getAllTypes();
-   
-        }
-        catch(ReportModuleException ex)
-        {
-              Logger.getLogger(Report.class.getName()).log(Level.SEVERE, "Exception occurred", ex);
+        try {
+            config.getAllTypes();
+
+        } catch (ReportModuleException ex) {
+            Logger.getLogger(Report.class.getName()).log(Level.SEVERE, "Exception occurred", ex);
         }
     }
 
@@ -156,9 +154,8 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     String preview = ReportAction.preview;
     ArrayList<JCheckBox> reportList = ReportAction.reportList;
     ArrayList<String> classList = new ArrayList<String>();
-    for(JCheckBox box : reportList)
-    {
-        if(box.isSelected()){
+    for (JCheckBox box : reportList) {
+        if (box.isSelected()) {
             classList.add(box.getName());
 
         }
@@ -216,8 +213,7 @@ private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             }
         });
     }
-    
-    
+
     public void progBarDone() {
         int max = progBar.getMaximum();
         progBar.setValue(max);
@@ -258,8 +254,6 @@ private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         jButton2.addActionListener(e);
         cancelButton.addActionListener(e);
     }
-    
-    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JButton jButton1;
