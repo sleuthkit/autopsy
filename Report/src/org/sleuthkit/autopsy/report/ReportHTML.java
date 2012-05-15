@@ -54,15 +54,15 @@ public class ReportHTML implements ReportModule{
     private static StringBuilder formatted_header = new StringBuilder();
     private static String htmlPath = "";
     private ReportConfiguration config;
-    private static ReportRegisterService instance = null;
+    private static ReportHTML instance = null;
 
      ReportHTML(){
         
     }
      
-     public static synchronized ReportRegisterService getDefault() {
+     public static synchronized ReportHTML getDefault() {
         if (instance == null) {
-            instance = new ReportRegisterService();
+            instance = new ReportHTML();
         }
         return instance;
     }
@@ -473,6 +473,11 @@ public class ReportHTML implements ReportModule{
     public String getReportTypeDescription(){
         String desc = "This is an html formatted report that is meant to be viewed in a modern browser.";
         return desc;
+    }
+
+    @Override
+    public void getPreview(String path) {
+        BrowserControl.openUrl(path);
     }
 
     

@@ -47,22 +47,22 @@ public class ReportXML implements ReportModule {
     public static Document xmldoc = new Document();
     private ReportConfiguration reportconfig;
     private String xmlPath;
-     private static ReportRegisterService instance = null;
+    private static ReportXML instance = null;
 
     public ReportXML() {
     }
-    
-     public static synchronized ReportRegisterService getDefault() {
+
+    public static synchronized ReportXML getDefault() {
         if (instance == null) {
-            instance = new ReportRegisterService();
+            instance = new ReportXML();
         }
         return instance;
     }
 
     @Override
-    public String generateReport(ReportConfiguration reportconfig, ReportFilter rr) throws ReportModuleException{
-       ReportGen reportobj = new ReportGen();
-       reportobj.populateReport(reportconfig);
+    public String generateReport(ReportConfiguration reportconfig, ReportFilter rr) throws ReportModuleException {
+        ReportGen reportobj = new ReportGen();
+        reportobj.populateReport(reportconfig);
         HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
         try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
@@ -115,13 +115,12 @@ public class ReportXML implements ReportModule {
                 Long objId = entry.getKey().getObjectID();
                 Content cont = skCase.getContentById(objId);
                 Long filesize = cont.getSize();
-                try{
-                 artifact.setAttribute("ID", objId.toString());                
-                artifact.setAttribute("Name", cont.accept(new NameVisitor()));
-                artifact.setAttribute("Size", filesize.toString());
-                }
-                catch(Exception e){
-                     Logger.getLogger(ReportXML.class.getName()).log(Level.WARNING, "Visitor content exception occurred:", e);
+                try {
+                    artifact.setAttribute("ID", objId.toString());
+                    artifact.setAttribute("Name", cont.accept(new NameVisitor()));
+                    artifact.setAttribute("Size", filesize.toString());
+                } catch (Exception e) {
+                    Logger.getLogger(ReportXML.class.getName()).log(Level.WARNING, "Visitor content exception occurred:", e);
                 }
                 // Get all the attributes for this guy
                 for (BlackboardAttribute tempatt : entry.getValue()) {
@@ -196,11 +195,11 @@ public class ReportXML implements ReportModule {
             root.addContent(nodeKeyword);
             root.addContent(nodeHash);
             root.addContent(nodeDevice);
-            
-            
+
+
             //Export it the first time
-              xmlPath = currentCase.getCaseDirectory() + File.separator + "Reports" + File.separator + caseName + "-" + datenotime + ".xml";
-              this.save(xmlPath);
+            xmlPath = currentCase.getCaseDirectory() + File.separator + "Reports" + File.separator + caseName + "-" + datenotime + ".xml";
+            this.save(xmlPath);
 
         } catch (Exception e) {
             Logger.getLogger(ReportXML.class.getName()).log(Level.WARNING, "Exception occurred", e);
@@ -211,24 +210,24 @@ public class ReportXML implements ReportModule {
 
     @Override
     public void save(String path) {
-        
+
         try {
-              
-                FileOutputStream out = new FileOutputStream(path);
-                XMLOutputter serializer = new XMLOutputter();
-                serializer.output(xmldoc, out);
-                out.flush();
-                out.close();
-            } catch (IOException e) {
-                System.err.println(e);
-            }
-        
+
+            FileOutputStream out = new FileOutputStream(path);
+            XMLOutputter serializer = new XMLOutputter();
+            serializer.output(xmldoc, out);
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            System.err.println(e);
+        }
+
     }
-    
+
     @Override
-     public String getName(){
-     String name = "Default XML";   
-     return name;   
+    public String getName() {
+        String name = "Default XML";
+        return name;
     }
 
     @Override
@@ -241,6 +240,11 @@ public class ReportXML implements ReportModule {
     public ReportConfiguration GetReportConfiguration() {
         ReportConfiguration config = reportconfig;
         return config;
+    }
+
+    @Override
+    public void getPreview(String path) {
+        BrowserControl.openUrl(path);
     }
 
     @Override
@@ -265,7 +269,7 @@ public class ReportXML implements ReportModule {
         public String visit(Image img) {
             return img.getName();
         }
-        
+
         //@Override
         public String visit(File file) {
             return file.getName();

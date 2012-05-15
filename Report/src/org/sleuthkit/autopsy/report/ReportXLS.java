@@ -20,6 +20,8 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.awt.Desktop;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.File;
@@ -35,7 +37,6 @@ import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.report.register.ReportRegisterService;
 import org.sleuthkit.datamodel.*;
 
 /**
@@ -47,26 +48,26 @@ public class ReportXLS implements ReportModule {
     public static Workbook wb = new XSSFWorkbook();
     private static String xlsPath = "";
     private ReportConfiguration config;
-    private static ReportRegisterService instance = null;
+    private static ReportXLS instance = null;
+
     public ReportXLS() {
         //Empty the workbook first
-        
     }
-    
-     public static synchronized ReportRegisterService getDefault() {
+
+    public static synchronized ReportXLS getDefault() {
         if (instance == null) {
-            instance = new ReportRegisterService();
+            instance = new ReportXLS();
         }
         return instance;
     }
-    
+
     @Override
-   public String generateReport(ReportConfiguration reportconfig, ReportFilter rr) throws ReportModuleException {
-      config = reportconfig;
-      ReportGen reportobj = new ReportGen();
-      reportobj.populateReport(reportconfig);
-      HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
-      Workbook wbtemp = new XSSFWorkbook();
+    public String generateReport(ReportConfiguration reportconfig, ReportFilter rr) throws ReportModuleException {
+        config = reportconfig;
+        ReportGen reportobj = new ReportGen();
+        reportobj.populateReport(reportconfig);
+        HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
+        Workbook wbtemp = new XSSFWorkbook();
         int countGen = 0;
         int countBookmark = 0;
         int countCookie = 0;
@@ -132,7 +133,7 @@ public class ReportXLS implements ReportModule {
 
             //The first summary report page
             Sheet sheetSummary = wbtemp.createSheet("Summary");
-            
+
             //Generate a sheet per artifact type
             //  Sheet sheetGen = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getDisplayName()); 
             Sheet sheetHash = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName());
@@ -154,7 +155,7 @@ public class ReportXLS implements ReportModule {
             font.setFontName("Arial");
             font.setBoldweight((short) 2);
             style.setFont(font);
-            
+
             //create 'default' style
             CellStyle defaultstyle = wbtemp.createCellStyle();
             defaultstyle.setBorderBottom((short) 2);
@@ -196,7 +197,7 @@ public class ReportXLS implements ReportModule {
             sheetHash.getRow(0).createCell(0).setCellValue("Name");
             sheetHash.getRow(0).createCell(1).setCellValue("Size");
             sheetHash.getRow(0).createCell(2).setCellValue("Hashset Name");
-            
+
             sheetDevice.setDefaultColumnStyle(1, defaultstyle);
             sheetDevice.createRow(0).setRowStyle(style);
             sheetDevice.getRow(0).createCell(0).setCellValue("Name");
@@ -393,54 +394,59 @@ public class ReportXLS implements ReportModule {
 
 
             //write out the report to the reports folder, set the wbtemp to the primary wb object
-           wb = wbtemp;
-           xlsPath = currentCase.getCaseDirectory() + File.separator + "Reports" + File.separator + caseName + "-" + datenotime + ".xlsx";
-           this.save(xlsPath);
+            wb = wbtemp;
+            xlsPath = currentCase.getCaseDirectory() + File.separator + "Reports" + File.separator + caseName + "-" + datenotime + ".xlsx";
+            this.save(xlsPath);
 
         } catch (Exception E) {
             String test = E.toString();
         }
 
-         return xlsPath;
+        return xlsPath;
     }
-    
-       @Override
-    public void save(String path)
-    {
-        try{ 
-             FileOutputStream fos = new FileOutputStream(path);
-              wb.write(fos);
-                fos.close();     
-        }
-        catch(IOException e){
-             Logger.getLogger(ReportHTML.class.getName()).log(Level.SEVERE, "Could not write out XLS report!", e);
-        }
-        
-    }
-   
-    @Override
-     public String getName(){
-     String name = "Excel";   
-     return name;   
-    }
-       
-    @Override
-      public String getReportType(){
-          String type = "XLS";
-        return type;
-      }
 
- 
     @Override
-    public ReportConfiguration GetReportConfiguration(){
+    public void save(String path) {
+        try {
+            FileOutputStream fos = new FileOutputStream(path);
+            wb.write(fos);
+            fos.close();
+        } catch (IOException e) {
+            Logger.getLogger(ReportXLS.class.getName()).log(Level.SEVERE, "Could not write out XLS report!", e);
+        }
+
+    }
+
+    @Override
+    public String getName() {
+        String name = "Excel";
+        return name;
+    }
+
+    @Override
+    public String getReportType() {
+        String type = "XLS";
+        return type;
+    }
+
+    @Override
+    public ReportConfiguration GetReportConfiguration() {
         return config;
     }
 
-    
     @Override
-    public String getReportTypeDescription(){
+    public String getReportTypeDescription() {
         String desc = "This is an xls formatted report that is meant to be viewed in Excel.";
         return desc;
     }
 
+    @Override
+    public void getPreview(String path) {
+        File file = new File(path);
+        try {
+            Desktop.getDesktop().open(file);
+        } catch (IOException e) {
+            Logger.getLogger(ReportXLS.class.getName()).log(Level.SEVERE, "Could not open XLS report! ", e);
+        }
+    }
 }

@@ -56,8 +56,8 @@ public class ReportFilter extends javax.swing.JPanel {
      * Creates new form ReportFilter
      */
     public ReportFilter() {
+        this.setLayout(new GridLayout(0,1));
         initComponents();
-        createReports();
         cancel = false;
         try{
         config.getAllTypes();
@@ -79,16 +79,22 @@ public class ReportFilter extends javax.swing.JPanel {
     private void initComponents() {
 
         jButton2 = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
         progBar = new javax.swing.JProgressBar();
+        jButton1 = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
-        filterpanel = new JPanel(new GridLayout(0, 1));
 
         jButton2.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jButton2.text")); // NOI18N
         jButton2.setActionCommand(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jButton2.actionCommand")); // NOI18N
         jButton2.setLabel(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jButton2.label")); // NOI18N
 
-        setPreferredSize(new java.awt.Dimension(325, 200));
+        setPreferredSize(new java.awt.Dimension(325, 75));
+
+        progBar.setDoubleBuffered(true);
+        progBar.setEnabled(false);
+        progBar.setName(""); // NOI18N
+        progBar.setPreferredSize(new java.awt.Dimension(146, 15));
+        progBar.setString(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.progBar.string")); // NOI18N
+        progBar.setStringPainted(true);
 
         jButton1.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jButton1.text")); // NOI18N
         jButton1.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -102,13 +108,6 @@ public class ReportFilter extends javax.swing.JPanel {
             }
         });
 
-        progBar.setDoubleBuffered(true);
-        progBar.setEnabled(false);
-        progBar.setName(""); // NOI18N
-        progBar.setPreferredSize(new java.awt.Dimension(146, 15));
-        progBar.setString(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.progBar.string")); // NOI18N
-        progBar.setStringPainted(true);
-
         cancelButton.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.cancelButton.text")); // NOI18N
         cancelButton.setActionCommand(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.cancelButton.actionCommand")); // NOI18N
         cancelButton.setEnabled(false);
@@ -118,17 +117,6 @@ public class ReportFilter extends javax.swing.JPanel {
             }
         });
 
-        javax.swing.GroupLayout filterpanelLayout = new javax.swing.GroupLayout(filterpanel);
-        filterpanel.setLayout(filterpanelLayout);
-        filterpanelLayout.setHorizontalGroup(
-            filterpanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 306, Short.MAX_VALUE)
-        );
-        filterpanelLayout.setVerticalGroup(
-            filterpanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -136,26 +124,25 @@ public class ReportFilter extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(filterpanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton1)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(progBar, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(cancelButton)))
-                .addContainerGap())
+                        .addComponent(jButton1)
+                        .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(progBar, javax.swing.GroupLayout.DEFAULT_SIZE, 221, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cancelButton)
+                        .addGap(24, 24, 24))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(filterpanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(19, 19, 19)
+                .addComponent(jButton1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(progBar, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE)
-                    .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(progBar, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -225,36 +212,7 @@ private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         });
     }
     
-    public void createReports() {
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-            Border border = BorderFactory.createTitledBorder("Reporting Modules");
-            filterpanel.setBorder(border);
-            for (ReportModule m : Lookup.getDefault().lookupAll(ReportModule.class))
-            {
-                       String name = m.getName();
-                       String desc = m.getReportTypeDescription();
-
-            JCheckBox ch = new JCheckBox();
-            ch.setText(name);
-            ch.setToolTipText(desc);
-            ch.setSelected(false);
-            filterpanel.add(ch);
-             } 
-            
-            JCheckBox ch = new JCheckBox();
-            ch.setText("133454");
-            ch.setToolTipText("235325353");
-            ch.setSelected(false);
-            filterpanel.add(ch);
-            filterpanel.revalidate();
-            filterpanel.repaint();
-            }
-        });
-    }
-
+    
     public void progBarDone() {
         int max = progBar.getMaximum();
         progBar.setValue(max);
@@ -299,7 +257,6 @@ private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
-    private javax.swing.JPanel filterpanel;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JProgressBar progBar;

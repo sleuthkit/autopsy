@@ -20,30 +20,31 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
+import javax.swing.*;
+import javax.swing.border.Border;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 @ActionID(category = "Tools",
 id = "org.sleuthkit.autopsy.report.ReportAction")
@@ -57,6 +58,10 @@ public final class ReportAction extends CallableSystemAction implements Presente
     private JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = "Generate Report";
     static final Logger logger = Logger.getLogger(ReportAction.class.getName());
+    private JPanel panel;
+    private  ArrayList<JCheckBox> reportList = new ArrayList<JCheckBox>();
+    private ArrayList<JCheckBox> configList = new ArrayList<JCheckBox>();
+    
 
     public ReportAction() {
         setEnabled(false);
@@ -106,6 +111,33 @@ public final class ReportAction extends CallableSystemAction implements Presente
         });
 
     }
+    
+    private class reportListener implements ItemListener {
+
+                            @Override
+                            public void itemStateChanged(ItemEvent e) {
+                                Object source = e.getItem();
+                                JCheckBox comp = (JCheckBox)source;
+                                String name = comp.getName();
+                                JRadioButton buttan = null;
+                               Component[] comps = comp.getParent().getComponents();
+                               for(Component c : comps)
+                               {
+                                   if(c.getName().equals(name+"p"))
+                                   {
+                                       buttan = (JRadioButton)c;
+                                   }
+                               }
+                              if(e.getStateChange() == ItemEvent.DESELECTED)
+                              {
+                                 buttan.setEnabled(false);
+                              }
+                              if(e.getStateChange() == ItemEvent.SELECTED)
+                              {
+                                  buttan.setEnabled(true);
+                              }
+                            }
+                        };
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -114,7 +146,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
             // create the popUp window for it
             final JFrame frame = new JFrame(ACTION_NAME);
             final JDialog popUpWindow = new JDialog(frame, ACTION_NAME, true); // to make the popUp Window to be modal
-
+            popUpWindow.setLayout(new GridLayout(0, 1));
             // initialize panel with loaded settings
             final ReportFilter panel = new ReportFilter();
             panel.setjButton2ActionListener(new ActionListener() {
@@ -124,9 +156,60 @@ public final class ReportAction extends CallableSystemAction implements Presente
                     popUpWindow.dispose();
                 }
             });
+            final reportListener listener = new reportListener();
+            final JPanel filterpanel = new JPanel(new GridLayout(0, 2, 5, 5));
+            final JPanel artpanel = new JPanel(new GridLayout(0, 3, 5, 5));
+            SwingUtilities.invokeLater(new Runnable() {
 
+                @Override
+                public void run() {
+
+                    Border border = BorderFactory.createTitledBorder("Reporting Modules");
+                    filterpanel.setBorder(border);
+                    filterpanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+                    filterpanel.setAlignmentY(Component.TOP_ALIGNMENT);
+                    filterpanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    filterpanel.setSize(300, 100);
+                    ButtonGroup previewGroup = new ButtonGroup();
+                    for (ReportModule m : Lookup.getDefault().lookupAll(ReportModule.class)) {
+                        String name = m.getName();
+                        String desc = m.getReportTypeDescription();
+                        JCheckBox ch = new JCheckBox();
+                        ch.setAlignmentY(Component.TOP_ALIGNMENT);
+                        ch.setText(name);
+                        ch.setName(m.getClass().getName());
+                        ch.setToolTipText(desc);
+                        ch.setSelected(true);
+                        
+                        JRadioButton cb = new JRadioButton("Preview");
+                        previewGroup.add(cb);
+                        cb.setName(m.getClass().getName()+"p");
+                        filterpanel.add(cb, 0);
+                        ch.addItemListener(listener);
+                        filterpanel.add(ch, 0);
+                    }
+                    Border artborder = BorderFactory.createTitledBorder("Report Data");
+                    artpanel.setBorder(artborder);
+                    artpanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+                    artpanel.setAlignmentY(Component.TOP_ALIGNMENT);
+                    artpanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    artpanel.setSize(300, 100);
+                    for (BlackboardArtifact.ARTIFACT_TYPE a : panel.config.config.keySet()) {
+                        JCheckBox ce = new JCheckBox();
+                        ce.setText(a.getDisplayName());
+                        ce.setToolTipText(a.getDisplayName());
+                        ce.setName(a.getLabel());
+                        ce.setSelected(true);
+                        artpanel.add(ce);
+                    }
+
+                }
+            });
+            popUpWindow.add(filterpanel, 0);
+            popUpWindow.add(artpanel, 1);
             // add the panel to the popup window
-            popUpWindow.add(panel);
+            popUpWindow.add(panel, 2);
+
             popUpWindow.pack();
             popUpWindow.setResizable(false);
 
@@ -145,7 +228,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
             Log.get(ReportFilterAction.class).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
         }
     }
-
+    
     @Override
     public void performAction() {
     }

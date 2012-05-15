@@ -68,4 +68,12 @@ public interface ReportModule {
      * module generates
      */
     public String getReportTypeDescription();
+    
+    
+    /**
+     * Calls to the report module to execute a method to display the report that was generated. 
+     *@param String the path to the file
+     * 
+     */
+    public void getPreview(String path);
 }
