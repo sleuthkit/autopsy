@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.report;
 
 import java.awt.Container;
@@ -29,11 +28,12 @@ import org.openide.util.HelpCtx;
 import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
- * The reportFilterAction opens the reportFilterPanel in a dialog, and saves the
+ * The ReportFilterAction opens the reportFilterPanel in a dialog, and saves the
  * settings of the panel if the Apply button is clicked.
+ *
  * @author pmartel
  */
-class reportFilterAction {
+class ReportFilterAction {
 
     private static final String ACTION_NAME = "Report Window";
 
@@ -44,13 +44,13 @@ class reportFilterAction {
         try {
 
             // create the popUp window for it
-              Container cpane;  
+            Container cpane;
             final JFrame frame = new JFrame(ACTION_NAME);
             final JDialog popUpWindow = new JDialog(frame, ACTION_NAME, true); // to make the popUp Window to be modal
-            cpane = frame.getContentPane();  
+            cpane = frame.getContentPane();
             // initialize panel with loaded settings
-            final reportFilter panel = new reportFilter();
-
+            final ReportFilter panel = new ReportFilter();
+          
             // add the panel to the popup window
             popUpWindow.add(panel);
             popUpWindow.pack();
@@ -61,13 +61,12 @@ class reportFilterAction {
             double w = popUpWindow.getSize().getWidth();
             double h = popUpWindow.getSize().getHeight();
             popUpWindow.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
-
             // display the window
             popUpWindow.setVisible(true);
-                 
-            
+
+
         } catch (Exception ex) {
-            Log.get(reportFilterAction.class).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
+            Log.get(ReportFilterAction.class).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
         }
     }
 
@@ -76,9 +75,8 @@ class reportFilterAction {
         return ACTION_NAME;
     }
 
-   // @Override
+    // @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
 }
-
