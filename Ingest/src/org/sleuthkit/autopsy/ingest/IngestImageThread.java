@@ -65,6 +65,7 @@ public class IngestImageThread extends SwingWorker<Object,Void> {
 
             @Override
             public boolean cancel() {
+                logger.log(Level.INFO, "Image ingest service " + service.getName() + " cancelled by user.");
                 return IngestImageThread.this.cancel(true);
             }
         });
@@ -75,6 +76,7 @@ public class IngestImageThread extends SwingWorker<Object,Void> {
         controller = new IngestImageWorkerController(this, progress);
 
         if (isCancelled()) {
+            logger.log(Level.INFO, "Terminating image ingest service " + service.getName() + " due to cancellation.");
             return null;
         }
         try {

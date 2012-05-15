@@ -28,6 +28,7 @@ import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * The "Add Image" wizard panel3. Presents the
@@ -185,7 +186,11 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         long imageId = 0;
         try {
             imageId = process.commit();
-        } finally {
+        } 
+        catch (TskException e) {
+            logger.log(Level.WARNING, "Errors occured while committing the image", e);
+        }
+        finally {
             //commit done, unlock db write in EWT thread
             //before doing anything else
             SleuthkitCase.dbWriteUnlock();

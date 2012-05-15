@@ -204,7 +204,11 @@ public class KeywordHits implements AutopsyVisitableItem {
         public KeywordHitsListNode(String name, Map<String, Set<Long>> children) {
             super(Children.create(new KeywordHitsListChildren(children), true), Lookups.singleton(name));
             super.setName(name);
-            super.setDisplayName(name + " (" +children.size() + ")");
+            int totalDescendants = 0;
+            for(Set<Long> grandChildren : children.values()) {
+                totalDescendants += grandChildren.size();
+            }
+            super.setDisplayName(name + " (" + totalDescendants + ")");
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png");
             this.name = name;
             this.children = children;

@@ -460,7 +460,7 @@ public class IngestManager {
      * IngestService should make an attempt not to publish the same message multiple times.
      * Viewer will attempt to identify duplicate messages and filter them out (slower)
      */
-    synchronized void postMessage(final IngestMessage message) {
+    void postMessage(final IngestMessage message) {
 
         if (stats != null) {
             //record the error for stats, if stats are running
@@ -468,14 +468,7 @@ public class IngestManager {
                 stats.addError(message.getSource());
             }
         }
-
-        SwingUtilities.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                ui.displayMessage(message);
-            }
-        });
+        ui.displayMessage(message);
     }
 
     /**
@@ -949,6 +942,7 @@ public class IngestManager {
 
                 @Override
                 public boolean cancel() {
+                    logger.log(Level.INFO, "Filed ingest cancelled by user.");
                     return IngestFsContentThread.this.cancel(true);
                 }
             });
@@ -972,6 +966,7 @@ public class IngestManager {
 
                 for (IngestServiceFsContent service : unit.getValue()) {
                     if (isCancelled()) {
+                        logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
                         return null;
                     }
 
@@ -1038,7 +1033,7 @@ public class IngestManager {
                 progress.finish();
 
                 if (!this.isCancelled()) {
-                    //logger.log(Level.INFO, "Summary Report: " + stats.toString());
+                    logger.log(Level.INFO, "Summary Report: " + stats.toString());
                     //ui.displayReport(stats.toHtmlString());
                     IngestManager.this.postMessage(IngestMessage.createManagerMessage("File Ingest Complete", stats.toHtmlString()));
                 }
@@ -1082,6 +1077,7 @@ public class IngestManager {
 
                 @Override
                 public boolean cancel() {
+                    logger.log(Level.INFO, "Queueing ingest cancelled by user.");
                     return EnqueueWorker.this.cancel(true);
                 }
             });
@@ -1130,6 +1126,7 @@ public class IngestManager {
                 Collection<FsContent> fsContents = null;
                 for (IngestServiceAbstract service : services) {
                     if (isCancelled()) {
+                        logger.log(Level.INFO, "Terminating ingest queueing due to cancellation.");
                         return;
                     }
                     final String serviceName = service.getName();

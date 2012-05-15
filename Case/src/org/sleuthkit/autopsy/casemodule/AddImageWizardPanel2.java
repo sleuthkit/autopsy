@@ -49,15 +49,15 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private String timeZone;
     //whether to not process FAT filesystem orphans
     private boolean noFatOrphans;
-    // paths to any set hash lookup databases (can be null)
-    private String NSRLPath, knownBadPath;
-    private boolean lookupFilesCheckboxChecked;
     // task that will clean up the created database file if the wizard is cancelled before it finishes
     private AddImageAction.CleanupTask cleanupImage; // initialized to null in readSettings()
     // flag to control the availiablity of next action
     private boolean imgAdded; // initalized to false in readSettings()
     private AddImageProcess process;
     private AddImgTask addImageTask;
+    
+    private static final Logger logger = Logger.getLogger(AddImageWizardPanel2.class.getName());
+    
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
@@ -246,19 +246,6 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 }
             };
 
-            SleuthkitCase skCase = currentCase.getSleuthkitCase();
-            skCase.clearLookupDatabases();
-
-            if (lookupFilesCheckboxChecked) {
-                if (NSRLPath != null) {
-                    skCase.setNSRLDatabase(NSRLPath);
-                }
-
-                if (knownBadPath != null) {
-                    skCase.setKnownBadDatabase(knownBadPath);
-                }
-            }
-
             //lock DB for writes in EWT thread
             //wait until lock acquired in EWT
             EventQueue.invokeAndWait(new Runnable() {
@@ -267,12 +254,16 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                     SleuthkitCase.dbWriteLock();
                 }
             });
+            
+            
+            process = currentCase.makeAddImageProcess(Case.convertTimeZone(timeZone), noFatOrphans);
+            cancelledWhileRunning.enable();
             try {
-                process = currentCase.makeAddImageProcess(Case.convertTimeZone(timeZone), noFatOrphans);
-                cancelledWhileRunning.enable();
                 process.run(imgPaths);
             } catch (TskException ex) {
-                throw ex;
+                logger.log(Level.WARNING, "Errors occurred while running add image. ", ex);
+                //do not rethrow
+                //TODO show record and add error count to add image summary stats dialog
             } finally {
                 // process is over, doesn't need to be dealt with if cancel happens
                 cancelledWhileRunning.disable();

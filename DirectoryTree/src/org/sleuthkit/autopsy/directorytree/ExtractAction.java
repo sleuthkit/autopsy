@@ -25,6 +25,7 @@ import java.awt.Component;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.autopsy.coreutils.Log;
@@ -80,6 +81,7 @@ public final class ExtractAction extends AbstractAction {
         Log.noteAction(this.getClass());
 
         JFileChooser fc = new JFileChooser();
+        fc.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory()));
         fc.setSelectedFile(new File(this.fsContent.getName()));
         int returnValue = fc.showSaveDialog((Component) e.getSource());
 

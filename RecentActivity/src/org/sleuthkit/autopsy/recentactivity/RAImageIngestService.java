@@ -1,15 +1,17 @@
-/*
+ /*
+ *
  * Autopsy Forensic Browser
- *
- * Copyright 2011 Basis Technology Corp.
- * Contact: carrier <at> sleuthkit <dot> org
- *
+ * 
+ * Copyright 2012 42six Solutions.
+ * Contact: aebadirad <at> 42six <dot> com
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +37,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.FileSystem;
 
 /**
- * Recent activity image ingest service 
- * 
+ * Recent activity image ingest service
+ *
  */
 public final class RAImageIngestService implements IngestServiceImage {
 
@@ -77,28 +79,21 @@ public final class RAImageIngestService implements IngestServiceImage {
 
         try {
             //do the work for(FileSystem img : imageFS )
-            try{
-           ResultSet artset = sCurrentCase.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
-               int artcount = 0; 
-           while (artset.next()){
-              artcount++;
-              }
-       
-         //  artset.beforeFirst();
-               if(artcount > 0)
-               {
-
-               }
-               else
-               {
-                   int artint = sCurrentCase.addArtifactType("TSK_SYS_INFO", "System Information"); 
-               }
-           
-            }
-            catch(Exception e)
-            {
-              
-            }
+//            try {
+//                ResultSet artset = sCurrentCase.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
+//                int artcount = 0;
+//                while (artset.next()) {
+//                    artcount++;
+//                }
+//
+//                //  artset.beforeFirst();
+//                if (artcount > 0) {
+//                } else {
+//                    int artint = sCurrentCase.addArtifactType("TSK_SYS_INFO", "System Information");
+//                }
+//
+//            } catch (Exception e) {
+//            }
             ext.extractToBlackboard(controller, fsIds);
 
 
@@ -123,7 +118,7 @@ public final class RAImageIngestService implements IngestServiceImage {
     public String getName() {
         return "Recent Activity";
     }
-    
+
     @Override
     public String getDescription() {
         return "Extracts recent user activity, such as Internet browsing, recently used documents and installed programs.";
@@ -149,12 +144,12 @@ public final class RAImageIngestService implements IngestServiceImage {
     public ServiceType getType() {
         return ServiceType.Image;
     }
-   
-     @Override
+
+    @Override
     public boolean hasSimpleConfiguration() {
         return false;
     }
-    
+
     @Override
     public boolean hasAdvancedConfiguration() {
         return false;
@@ -164,23 +159,22 @@ public final class RAImageIngestService implements IngestServiceImage {
     public javax.swing.JPanel getSimpleConfiguration() {
         return null;
     }
-    
+
     @Override
     public javax.swing.JPanel getAdvancedConfiguration() {
         return null;
     }
-    
+
     @Override
     public void saveAdvancedConfiguration() {
     }
-    
+
     @Override
     public void saveSimpleConfiguration() {
     }
-    
+
     @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
     }
-    
 }
