@@ -140,7 +140,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
             Object source = e.getItem();
             JCheckBox comp = (JCheckBox) source;
             String name = comp.getName();
-            BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.valueOf(name);
+            BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromLabel(name);
             if (e.getStateChange() == ItemEvent.DESELECTED) {
                 try {
                     config.setGenArtifactType(type, Boolean.FALSE);
