@@ -20,17 +20,11 @@ package org.sleuthkit.autopsy.report;
 
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.util.logging.Level;
-import javax.swing.BorderFactory;
-import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.border.Border;
 import org.openide.util.HelpCtx;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Log;
 
 /**

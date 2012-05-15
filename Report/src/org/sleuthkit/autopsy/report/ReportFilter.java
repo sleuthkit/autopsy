@@ -25,12 +25,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.BorderFactory;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
+import javax.swing.*;
 import javax.swing.border.Border;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -157,17 +152,27 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     cancelButton.setEnabled(true);
     progBar.setStringPainted(true);
     progBar.setValue(0);
-    filters.clear();
+    ReportConfiguration newConfig = ReportAction.config;
+    String preview = ReportAction.preview;
+    ArrayList<JCheckBox> reportList = ReportAction.reportList;
+    ArrayList<String> classList = new ArrayList<String>();
+    for(JCheckBox box : reportList)
+    {
+        if(box.isSelected()){
+            classList.add(box.getName());
+
+        }
+    }
     config.resetGenArtifactTypes();
-    getReports();
+    getReports(newConfig, classList, preview);
 }//GEN-LAST:event_jButton1ActionPerformed
 
-    public void getReports() {
+    public void getReports(final ReportConfiguration reportConfig, final ArrayList classList, final String preview) {
         new SwingWorker<Void, Void>() {
 
             @Override
             protected Void doInBackground() throws Exception {
-                rpa.reportGenerate(config, panel);
+                rpa.reportGenerate(reportConfig, classList, preview, panel);
                 return null;
             }
 

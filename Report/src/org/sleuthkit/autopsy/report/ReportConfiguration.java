@@ -50,7 +50,7 @@ class ReportConfiguration {
         try {
             ArrayList<BlackboardArtifact.ARTIFACT_TYPE> arttypes = skCase.getBlackboardArtifactTypes();
             for (BlackboardArtifact.ARTIFACT_TYPE type : arttypes) {
-                config.put(type, Boolean.FALSE);
+                config.put(type, Boolean.TRUE);
             }
 
         } catch (Exception ex) {
@@ -73,7 +73,7 @@ class ReportConfiguration {
         try {
             ArrayList<BlackboardArtifact.ARTIFACT_TYPE> arttypes = skCase.getBlackboardArtifactTypes();
             for (BlackboardArtifact.ARTIFACT_TYPE type : arttypes) {
-                config.put(type, Boolean.FALSE);
+                config.put(type, Boolean.TRUE);
             }
 
         } catch (Exception ex) {

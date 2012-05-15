@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
-       <folder name="Actions">
-        <folder name="Tools">
-            <file name="org-sleuthkit-autopsy-report-ReportAction.instance"/>
-        </folder>
-    </folder>
     <folder name="Menu">
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-report-ReportAction.shadow"/>
@@ -15,25 +10,21 @@
         <file name="org-sleuthkit-autopsy-report-ReportHTML.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.ReportModule"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportHTML.getDefault"/>
-            <attr name="position" intvalue="1000"/>
+            <attr name="position" intvalue="900"/>
         </file>
         <file name="org-sleuthkit-autopsy-report-ReportXML.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.ReportModule"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportXML.getDefault"/>
-            <attr name="position" intvalue="1000"/>
+            <attr name="position" intvalue="901"/>
         </file>
         <file name="org-sleuthkit-autopsy-report-ReportXLS.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.ReportModule"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportXLS.getDefault"/>
-            <attr name="position" intvalue="1000"/>
+            <attr name="position" intvalue="902"/>
         </file>
-        </folder>
+    </folder>
     <folder name="Toolbars">
-            <!-- <file name="sep2.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JToolBar$Separator"/>
-            <attr name="position" intvalue="600"/>
-           </file> -->
-          <folder name="File">
+        <folder name="File">
             <file name="org-sleuthkit-autopsy-report-ReportAction.shadow">
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.report.Bundle#Toolbars/Reports/org-sleuthkit-autopsy-report-ReportAction.shadow"/>
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportAction.instance"/>
@@ -41,5 +32,5 @@
             </file>
         </folder>
     </folder>
-    
+   
 </filesystem>

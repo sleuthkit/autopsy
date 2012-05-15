@@ -46,25 +46,23 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
-@ActionID(category = "Tools",
-id = "org.sleuthkit.autopsy.report.ReportAction")
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.report.ReportAction")
 @ActionRegistration(displayName = "#CTL_ReportAction")
-@ActionReferences({
-    @ActionReference(path = "Menu/Tools", position = 80)
-})
-@Messages("CTL_ReportAction=Run Report")
+@ActionReferences(value = {
+    @ActionReference(path = "Menu/Tools", position = 80)})
+@Messages(value = "CTL_ReportAction=Run Report")
 public final class ReportAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private JButton toolbarButton = new JButton();
     private static final String ACTION_NAME = "Generate Report";
     static final Logger logger = Logger.getLogger(ReportAction.class.getName());
     private JPanel panel;
-    private  ArrayList<JCheckBox> reportList = new ArrayList<JCheckBox>();
-    private ArrayList<JCheckBox> configList = new ArrayList<JCheckBox>();
-    
+    public static ArrayList<JCheckBox> reportList = new ArrayList<JCheckBox>();
+    public static String preview;
+    public static ReportConfiguration config;
 
     public ReportAction() {
-        setEnabled(false);
+       setEnabled(false);
         Case.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
@@ -86,12 +84,12 @@ public final class ReportAction extends CallableSystemAction implements Presente
                     Case newCase = (Case) evt.getNewValue();
 
                     if (newCase != null) {
-                        boolean exists = (new File(newCase.getCaseDirectory() + "\\Reports")).exists();
+                        boolean exists = (new File(newCase.getCaseDirectory() + File.separator + "Reports")).exists();
                         if (exists) {
                             // report directory exists -- don't need to do anything
                         } else {
                             // report directory does not exist -- create it
-                            boolean reportCreate = (new File(newCase.getCaseDirectory() + "\\Reports")).mkdirs();
+                            boolean reportCreate = (new File(newCase.getCaseDirectory() + File.separator + "Reports")).mkdirs();
                             if (!reportCreate) {
                                 logger.log(Level.WARNING, "Could not create Reports directory for case. It does not exist.");
                             }
@@ -106,38 +104,79 @@ public final class ReportAction extends CallableSystemAction implements Presente
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                ReportAction.this.actionPerformed(e);
+                ReportPanel.this.actionPerformed(e);
             }
         });
 
     }
-    
+
     private class reportListener implements ItemListener {
 
-                            @Override
-                            public void itemStateChanged(ItemEvent e) {
-                                Object source = e.getItem();
-                                JCheckBox comp = (JCheckBox)source;
-                                String name = comp.getName();
-                                JRadioButton buttan = null;
-                               Component[] comps = comp.getParent().getComponents();
-                               for(Component c : comps)
-                               {
-                                   if(c.getName().equals(name+"p"))
-                                   {
-                                       buttan = (JRadioButton)c;
-                                   }
-                               }
-                              if(e.getStateChange() == ItemEvent.DESELECTED)
-                              {
-                                 buttan.setEnabled(false);
-                              }
-                              if(e.getStateChange() == ItemEvent.SELECTED)
-                              {
-                                  buttan.setEnabled(true);
-                              }
-                            }
-                        };
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+            Object source = e.getItem();
+            JCheckBox comp = (JCheckBox) source;
+            String name = comp.getName();
+            JRadioButton buttan = null;
+            Component[] comps = comp.getParent().getComponents();
+            for (Component c : comps) {
+                if (c.getName().equals(name + "p")) {
+                    buttan = (JRadioButton) c;
+                }
+            }
+            if (e.getStateChange() == ItemEvent.DESELECTED) {
+                buttan.setEnabled(false);
+            }
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                buttan.setEnabled(true);
+            }
+        }
+    };
+
+    private class configListener implements ItemListener {
+
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+            Object source = e.getItem();
+            JCheckBox comp = (JCheckBox) source;
+            String name = comp.getName();
+            BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.valueOf(name);
+            if (e.getStateChange() == ItemEvent.DESELECTED) {
+                try {
+                    config.setGenArtifactType(type, Boolean.FALSE);
+                } catch (ReportModuleException ex) {
+                }
+            }
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                try {
+                    config.setGenArtifactType(type, Boolean.TRUE);
+                } catch (ReportModuleException ex) {
+                }
+            }
+        }
+    };
+    
+     private class previewListener implements ItemListener {
+
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+            Object source = e.getItem();
+            JRadioButton comp = (JRadioButton) source;
+            String name = comp.getName();
+            JRadioButton buttan = new JRadioButton();
+            Component[] comps = comp.getParent().getComponents();
+            for (Component c : comps) {
+                if (c.getName().equals(name)) {
+                    buttan = (JRadioButton) c;
+                }
+            }
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                String temp = buttan.getName();
+                temp = temp.substring(0, temp.length()-1);
+                preview = temp;
+            }
+        }
+    };
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -157,6 +196,11 @@ public final class ReportAction extends CallableSystemAction implements Presente
                 }
             });
             final reportListener listener = new reportListener();
+            final configListener clistener = new configListener();
+            final previewListener plistener = new previewListener();
+            preview = "";
+            reportList.clear();
+            config = new ReportConfiguration();
             final JPanel filterpanel = new JPanel(new GridLayout(0, 2, 5, 5));
             final JPanel artpanel = new JPanel(new GridLayout(0, 3, 5, 5));
             SwingUtilities.invokeLater(new Runnable() {
@@ -170,7 +214,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
                     filterpanel.setAlignmentY(Component.TOP_ALIGNMENT);
                     filterpanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                     filterpanel.setSize(300, 100);
-                    ButtonGroup previewGroup = new ButtonGroup();
+                   ButtonGroup previewGroup = new ButtonGroup();
                     for (ReportModule m : Lookup.getDefault().lookupAll(ReportModule.class)) {
                         String name = m.getName();
                         String desc = m.getReportTypeDescription();
@@ -180,12 +224,14 @@ public final class ReportAction extends CallableSystemAction implements Presente
                         ch.setName(m.getClass().getName());
                         ch.setToolTipText(desc);
                         ch.setSelected(true);
-                        
+
                         JRadioButton cb = new JRadioButton("Preview");
                         previewGroup.add(cb);
-                        cb.setName(m.getClass().getName()+"p");
+                        cb.setName(m.getClass().getName() + "p");
+                        cb.addItemListener(plistener);
                         filterpanel.add(cb, 0);
                         ch.addItemListener(listener);
+                        reportList.add(ch);
                         filterpanel.add(ch, 0);
                     }
                     Border artborder = BorderFactory.createTitledBorder("Report Data");
@@ -200,6 +246,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
                         ce.setToolTipText(a.getDisplayName());
                         ce.setName(a.getLabel());
                         ce.setSelected(true);
+                        ce.addItemListener(clistener);
                         artpanel.add(ce);
                     }
 
@@ -228,7 +275,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
             Log.get(ReportFilterAction.class).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
         }
     }
-    
+
     @Override
     public void performAction() {
     }
