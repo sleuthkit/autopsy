@@ -233,6 +233,12 @@ public class ReportXML implements ReportModule {
         String type = "XML";
         return type;
     }
+    
+    @Override
+    public String getExtention() {
+        String ext = ".xml";
+        return ext;
+    }
 
     @Override
     public ReportConfiguration GetReportConfiguration() {
