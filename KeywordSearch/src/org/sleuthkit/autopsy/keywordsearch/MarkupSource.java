@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.LinkedHashMap;
+
 /**
  * Interface to provide HTML markup (to be displayed in ExtractedContentViewer)
  * in a Node's lookup
@@ -25,12 +27,11 @@ package org.sleuthkit.autopsy.keywordsearch;
 public interface MarkupSource {
 
     /**
-     * @param pageNum page number to get markup for
      * @return text optionally marked up with the subsest of HTML that Swing
      * components can handle in their setText() method.
      * 
      */
-    String getMarkup(int pageNum);
+    String getMarkup();
     
     /**
      * 
@@ -61,4 +62,74 @@ public interface MarkupSource {
      * @return number pages
      */
     int getNumberPages();
+    
+    /**
+     * get the current page number
+     * @return current page number
+     */
+    int getCurrentPage();
+    
+    /**
+     * Check if has next page
+     * @return true, if next page exists in the source
+     */
+    boolean hasNextPage();
+    
+    /**
+     * Move to next page
+     * @return the new page number
+     */
+    int nextPage();
+    
+     /**
+     * Check if has previous page
+     * @return true, if previous page exists in the source
+     */
+    boolean hasPreviousPage();
+    
+    
+    /**
+     * Move to previous page
+     * @return the new page number
+     */
+    int previousPage();
+    
+    /**
+     * Check if has next searchable item
+     * @return true, if next item exists in the source
+     */
+    boolean hasNextItem();
+    
+    /**
+     * Move to next item
+     * @return the new item number
+     */
+    int nextItem();
+    
+     /**
+     * Check if has previous item
+     * @return true, if previous item exists in the source
+     */
+    boolean hasPreviousItem();
+    
+    
+    /**
+     * Move to previous item
+     * @return the new item number
+     */
+    int previousItem();
+    
+    /**
+     * Get the current item number, do not change anything
+     * @return the current item number
+     */
+    int currentItem();
+    
+    
+    /**
+     * get a map storing which pages have matches to their number, or -1 if unknown
+     * @return map storing pages with matches, or null if not supported
+     */
+    LinkedHashMap<Integer,Integer> getHitsPages();
+ 
 }

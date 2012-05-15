@@ -18,15 +18,19 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.datamodel.HighlightLookup;
 import org.sleuthkit.datamodel.Content;
 
@@ -44,33 +48,100 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     private Content content;
     private String solrQuery;
     private Server solrServer;
-    private int numberHits;
     private int numberPages;
+    private int currentPage;
     private boolean isRegex = false;
     private boolean group = true;
+    private boolean hasChunks = false;
+    //stores all pages/chunks that have hits as key, and number of hits as a value, or -1 if yet unknown
+    private LinkedHashMap<Integer, Integer> hitsPages;
+    //stored page num -> current hit number mapping
+    private HashMap<Integer,Integer> pagesToHits;
+    private List<Integer> pages;
+    private Map<String, List<ContentHit>> hits = null; //original hits that may get passed in
+    private boolean inited = false;
 
     HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex) {
         this.content = content;
         this.solrQuery = solrQuery;
         this.isRegex = isRegex;
         this.group = true;
+        this.hitsPages = new LinkedHashMap<Integer, Integer>();
+        this.pages = new ArrayList<Integer>();
+        this.pagesToHits = new HashMap<Integer, Integer>();
 
         this.solrServer = KeywordSearch.getServer();
-
         this.numberPages = 0;
+        this.currentPage = 0;
+        //hits are unknown
+
+    }
+
+    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, Map<String, List<ContentHit>> hits) {
+        this(content, solrQuery, isRegex);
+        this.hits = hits;
+
+    }
+
+    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, boolean group, Map<String, List<ContentHit>> hits) {
+        this(content, solrQuery, isRegex, hits);
+        this.group = group;
+    }
+
+    private void init() {
+        if (inited) {
+            return;
+        }
         try {
             this.numberPages = solrServer.queryNumFileChunks(content.getId());
         } catch (SolrServerException ex) {
             logger.log(Level.WARNING, "Could not get number pages for content: " + content.getId());
+            return;
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Could not get number pages for content: " + content.getId());
+            return;
         }
         
-    }
+        if (this.numberPages == 0)
+            hasChunks = false;
+        else hasChunks = true;
 
-    HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, boolean group) {
-        this(content, solrQuery, isRegex);
-        this.group = group;
+        //if has chunks, get pages with hits
+        if (hasChunks) {
+            if (hits == null) {
+                //TODO reperform search query, but don't get content
+                //hits =
+            }
+
+            //extract pages of interest, sorted
+            TreeSet<Integer> pagesSorted = new TreeSet<Integer>();
+            for (Collection<ContentHit> hitCol : hits.values()) {
+                for (ContentHit hit : hitCol) {
+                    pagesSorted.add(hit.getChunkId());
+                }
+            }
+
+            //set page to first page having highlights
+            this.currentPage = pagesSorted.first();
+
+            for (Integer page : pagesSorted) {
+                hitsPages.put(page, -1); //unknown number of matches in the page
+                pages.add(page);
+                pagesToHits.put(page, 0); //set current hit to 0th
+            }
+
+        }
+        else {
+            //no chunks
+            this.numberPages = 1;
+            this.currentPage = 1;
+            hitsPages.put(1, -1);
+            pages.add(1);
+            pagesToHits.put(1, 0);
+            
+        }
+
+        inited = true;
     }
 
     //constructor for dummy singleton factory instance for Lookup
@@ -80,11 +151,92 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     @Override
     public int getNumberPages() {
         return this.numberPages;
+        //return number of pages that have hits
+        //return this.hitsPages.keySet().size();
+    }
+
+    @Override
+    public int getCurrentPage() {
+        return this.currentPage;
+    }
+
+    @Override
+    public boolean hasNextPage() {
+        int idx = pages.indexOf(this.currentPage);
+        return idx < pages.size()-1;
+    }
+
+    @Override
+    public boolean hasPreviousPage() {
+         int idx = pages.indexOf(this.currentPage);
+        return idx > 0;
+    }
+
+    @Override
+    public int nextPage() {
+        if (!hasNextPage()) {
+            throw new IllegalStateException("No next page.");
+        }
+        int idx = pages.indexOf(this.currentPage);
+        currentPage = pages.get(idx+1);
+        return currentPage;
+    }
+
+    @Override
+    public int previousPage() {
+        if (!hasPreviousPage()) {
+            throw new IllegalStateException("No previous page.");
+        }
+        int idx = pages.indexOf(this.currentPage);
+        currentPage = pages.get(idx-1);
+        return currentPage;
+    }
+
+    @Override
+    public boolean hasNextItem() {
+        return this.pagesToHits.get(currentPage) < this.hitsPages.get(currentPage);
+    }
+
+    @Override
+    public boolean hasPreviousItem() {
+        return this.pagesToHits.get(currentPage) > 1;
+    }
+
+    @Override
+    public int nextItem() {
+        if (!hasNextItem()) {
+            throw new IllegalStateException("No next item.");
+        }
+        int cur = pagesToHits.get(currentPage) +1;
+        pagesToHits.put(currentPage, cur);
+        return cur;
+    }
+
+    @Override
+    public int previousItem() {
+        if (!hasPreviousItem()) {
+            throw new IllegalStateException("No previous item.");
+        }
+        int cur = pagesToHits.get(currentPage) -1;
+        pagesToHits.put(currentPage, cur);
+        return cur;
+    }
+
+    @Override
+    public int currentItem() {
+        return pagesToHits.get(currentPage);
     }
     
 
     @Override
-    public String getMarkup(int pageNum) {
+    public LinkedHashMap<Integer, Integer> getHitsPages() {
+        return this.hitsPages;
+    }
+
+    @Override
+    public String getMarkup() {
+        init(); //inits once
+
         String highLightField = null;
 
         String highlightQuery = solrQuery;
@@ -127,11 +279,12 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         //else q.setQuery(highlightQuery); //use default field, simplifies query
 
         final long contentId = content.getId();
-        
+
         String contentIdStr = Long.toString(contentId);
-        if (pageNum > 0)
-            contentIdStr += "_" + Integer.toString(pageNum);
-        
+        if (hasChunks) {
+            contentIdStr += "_" + Integer.toString(this.currentPage);
+        }
+
         final String filterQuery = Server.Schema.ID.toString() + ":" + contentIdStr;
         q.addFilterQuery(filterQuery);
         q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
@@ -155,15 +308,15 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                 // extracted content (minus highlight tags) is HTML-escaped
                 String highlightedContent = contentHighlights.get(0).trim();
                 highlightedContent = insertAnchors(highlightedContent);
+
+
                 return "<pre>" + highlightedContent + "</pre>";
             }
-        } 
-        catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Couldn't query markup for page: " + pageNum, ex);
+        } catch (NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Couldn't query markup for page: " + currentPage, ex);
             return "";
-        }
-        catch (SolrServerException ex) {
-            logger.log(Level.WARNING, "Could not query markup for page: " + pageNum, ex);
+        } catch (SolrServerException ex) {
+            logger.log(Level.WARNING, "Could not query markup for page: " + currentPage, ex);
             return "";
         }
     }
@@ -185,7 +338,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public int getNumberHits() {
-        return numberHits;
+        return this.hitsPages.get(this.currentPage);
     }
 
     private String insertAnchors(String searchableContent) {
@@ -207,7 +360,9 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             ++count;
         }
 
-        this.numberHits = count;
+        //store total hits for this page, now that we know it
+        this.hitsPages.put(this.currentPage, count);
+        
         return buf.toString();
     }
     //dummy instance for Lookup only

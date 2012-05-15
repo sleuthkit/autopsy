@@ -44,12 +44,8 @@ import javax.swing.text.html.HTMLEditorKit.HTMLFactory;
 class ExtractedContentPanel extends javax.swing.JPanel {
 
     private static Logger logger = Logger.getLogger(ExtractedContentPanel.class.getName());
-    
-    private ExtractedContentViewer viewer;
 
-    ExtractedContentPanel(ExtractedContentViewer viewer) {
-        this.viewer = viewer;
-        
+    ExtractedContentPanel() {      
         initComponents();
 
         initControls();
@@ -90,7 +86,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
                     MarkupSource source = (MarkupSource) e.getItem();
-                    setPanelText(viewer.getDisplayText(source));
+                    setPanelText(source.getMarkup());
                 }
             }
         });
@@ -311,7 +307,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     
     void refreshCurrentMarkup() {
         MarkupSource ms = (MarkupSource)sourceComboBox.getSelectedItem();    
-        setPanelText(viewer.getDisplayText(ms));
+        setPanelText(ms.getMarkup());
     }
     
     /**

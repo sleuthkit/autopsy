@@ -25,6 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,18 +48,15 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
     private ExtractedContentPanel panel;
-    private ExtractedContentFind find;
-    private ExtractedContentPaging paging;
     private Node currentNode = null;
     private MarkupSource currentSource = null;
 
     public ExtractedContentViewer() {
-        find = new ExtractedContentFind();
-        paging = new ExtractedContentPaging();
     }
 
     @Override
     public void setNode(final Node selectedNode) {
+        //TODO why setNode() is called twice for the same node each time
 
         // to clear the viewer
         if (selectedNode == null) {
@@ -87,10 +85,73 @@ public class ExtractedContentViewer implements DataContentViewer {
 
             MarkupSource newSource = new MarkupSource() {
 
+                private boolean inited = false;
+                private int numPages = 0;
+                private int currentPage = 0;
+                private boolean hasChunks = false;
+
                 @Override
-                public String getMarkup(int pageNum) {
+                public int getCurrentPage() {
+                    return this.currentPage;
+                }
+
+                @Override
+                public boolean hasNextPage() {
+                    return currentPage < numPages;
+                }
+
+                @Override
+                public boolean hasPreviousPage() {
+                    return currentPage > 1;
+                }
+
+                @Override
+                public int nextPage() {
+                    if (!hasNextPage()) {
+                        throw new IllegalStateException("No next page.");
+                    }
+                    ++currentPage;
+                    return currentPage;
+                }
+
+                @Override
+                public int previousPage() {
+                    if (!hasPreviousPage()) {
+                        throw new IllegalStateException("No previous page.");
+                    }
+                    --currentPage;
+                    return currentPage;
+                }
+
+                @Override
+                public boolean hasNextItem() {
+                    throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                }
+
+                @Override
+                public boolean hasPreviousItem() {
+                    throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                }
+
+                @Override
+                public int nextItem() {
+                    throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                }
+
+                @Override
+                public int previousItem() {
+                    throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                }
+
+                @Override
+                public int currentItem() {
+                    throw new UnsupportedOperationException("Not supported, not a searchable source.");
+                }
+
+                @Override
+                public String getMarkup() {
                     try {
-                        String content = StringEscapeUtils.escapeHtml(getSolrContent(selectedNode, this));
+                        String content = StringEscapeUtils.escapeHtml(getSolrContent(selectedNode, currentPage, hasChunks));
                         return "<pre>" + content.trim() + "</pre>";
                     } catch (SolrServerException ex) {
                         logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
@@ -119,35 +180,44 @@ public class ExtractedContentViewer implements DataContentViewer {
                 }
 
                 @Override
-                public int getNumberPages() {
-                    final Server solrServer = KeywordSearch.getServer();
-                    int numChunks = 0;
-                    try {
-                        numChunks = solrServer.queryNumFileChunks(contentID);
+                public LinkedHashMap<Integer, Integer> getHitsPages() {
+                    return null;
+                }
 
+                @Override
+                public int getNumberPages() {
+                    if (inited) {
+                        return this.numPages;
+                    }
+
+                    final Server solrServer = KeywordSearch.getServer();
+
+                    try {
+                        numPages = solrServer.queryNumFileChunks(contentID);
+                        if (numPages == 0) {
+                            numPages = 1;
+                            hasChunks = false;
+                        }
+                        else {
+                            hasChunks = true;
+                        }
+                        inited = true;
                     } catch (SolrServerException ex) {
                         logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
 
                     } catch (NoOpenCoreException ex) {
                         logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
                     }
-                    return numChunks;
+                    return numPages;
                 }
             };
 
             currentSource = newSource;
             sources.add(newSource);
 
-            //init paging for all sources for this node, if not inited
-            for (MarkupSource source : sources) {
-                if (!paging.isTracked(source)) {
-                    int numPages = source.getNumberPages();
-                    paging.add(source, numPages);
-                }
-            }
 
-            final int totalPages = paging.getTotalPages(newSource);
-            final int currentPage = paging.getCurrentPage(newSource);
+            final int totalPages = currentSource.getNumberPages();
+            final int currentPage = currentSource.getCurrentPage();
 
             updatePageControls(currentPage, totalPages);
         }
@@ -162,8 +232,8 @@ public class ExtractedContentViewer implements DataContentViewer {
             @Override
             public void run() {
                 MarkupSource source = panel.getSelectedSource();
-                if (source != null) {
-                    panel.scrollToAnchor(source.getAnchorPrefix() + Long.toString(find.getCurrentIndexI(source)));
+                if (source != null && source.isSearchable()) {
+                    panel.scrollToAnchor(source.getAnchorPrefix() + Integer.toString(source.currentItem()));
                 }
             }
         });
@@ -187,7 +257,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     @Override
     public Component getComponent() {
         if (panel == null) {
-            panel = new ExtractedContentPanel(this);
+            panel = new ExtractedContentPanel();
             panel.addPrevMatchControlListener(new PrevFindActionListener());
             panel.addNextMatchControlListener(new NextFindActionListener());
             panel.addPrevPageControlListener(new PrevPageActionListener());
@@ -266,17 +336,18 @@ public class ExtractedContentViewer implements DataContentViewer {
      * @return the extracted content
      * @throws SolrServerException if something goes wrong
      */
-    private String getSolrContent(Node node, MarkupSource source) throws SolrServerException {
+    private String getSolrContent(Node node, int currentPage, boolean hasChunks) throws SolrServerException {
         Content contentObj = node.getLookup().lookup(Content.class);
-        
+
         final Server solrServer = KeywordSearch.getServer();
 
-        //if no paging, curChunk is 0
-        int curPage = paging.getCurrentPage(source);
+        int chunkId = 0;
+        if (hasChunks)
+            chunkId = currentPage;
 
         String content = null;
         try {
-            content = (String) solrServer.getSolrContent(contentObj, curPage);
+            content = (String) solrServer.getSolrContent(contentObj, chunkId);
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Couldn't get text content.", ex);
             return "";
@@ -284,39 +355,26 @@ public class ExtractedContentViewer implements DataContentViewer {
         return content;
     }
 
-    /**
-     * figure out text to show from the page number and source
-     * 
-     * @param source the current source
-     * @return text for the source and the current page num
-     */
-  
-    String getDisplayText(MarkupSource source) {
-        currentSource = source;
-        int pageNum = paging.getCurrentPage(currentSource);
-        return source.getMarkup(pageNum);
-    }
-
     private class NextFindActionListener implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
             MarkupSource source = panel.getSelectedSource();
-            if (find.hasNext(source)) {
-                long indexVal = find.getNext(source);
+            if (source.hasNextItem()) {
+                int indexVal = source.nextItem();
 
                 //scroll
-                panel.scrollToAnchor(source.getAnchorPrefix() + Long.toString(indexVal));
+                panel.scrollToAnchor(source.getAnchorPrefix() + Integer.toString(indexVal));
 
                 //update display
-                panel.updateCurrentMatchDisplay(find.getCurrentIndexI(source) + 1);
-                panel.updateTotaMatcheslDisplay(find.getCurrentIndexTotal(source));
+                panel.updateCurrentMatchDisplay(source.currentItem());
+                panel.updateTotaMatcheslDisplay(source.getNumberHits());
 
                 //update controls if needed
-                if (!find.hasNext(source)) {
+                if (!source.hasNextItem()) {
                     panel.enableNextMatchControl(false);
                 }
-                if (find.hasPrevious(source)) {
+                if (source.hasPreviousItem()) {
                     panel.enablePrevMatchControl(true);
                 }
             }
@@ -328,21 +386,21 @@ public class ExtractedContentViewer implements DataContentViewer {
         @Override
         public void actionPerformed(ActionEvent e) {
             MarkupSource source = panel.getSelectedSource();
-            if (find.hasPrevious(source)) {
-                long indexVal = find.getPrevious(source);
+            if (source.hasPreviousItem()) {
+                int indexVal = source.previousItem();
 
                 //scroll
-                panel.scrollToAnchor(source.getAnchorPrefix() + Long.toString(indexVal));
+                panel.scrollToAnchor(source.getAnchorPrefix() + Integer.toString(indexVal));
 
                 //update display
-                panel.updateCurrentMatchDisplay(find.getCurrentIndexI(source) + 1);
-                panel.updateTotaMatcheslDisplay(find.getCurrentIndexTotal(source));
+                panel.updateCurrentMatchDisplay(source.currentItem());
+                panel.updateTotaMatcheslDisplay(source.getNumberHits());
 
                 //update controls if needed
-                if (!find.hasPrevious(source)) {
+                if (!source.hasPreviousItem()) {
                     panel.enablePrevMatchControl(false);
                 }
-                if (find.hasNext(source)) {
+                if (source.hasNextItem()) {
                     panel.enableNextMatchControl(true);
                 }
             }
@@ -353,46 +411,56 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            MarkupSource source = panel.getSelectedSource();
 
-            //setup find controls
-            if (source != null && source.isSearchable()) {
-                find.init(source);
-                panel.updateCurrentMatchDisplay(find.getCurrentIndexI(source) + 1);
-                panel.updateTotaMatcheslDisplay(find.getCurrentIndexTotal(source));
+            currentSource = panel.getSelectedSource();
 
-                if (find.hasNext(source)) {
-                    panel.enableNextMatchControl(true);
-                } else {
-                    panel.enableNextMatchControl(false);
-                }
+            if (currentSource == null) {
+                //TODO might need to reset something
+                return;
+            }
 
-                if (find.hasPrevious(source)) {
-                    panel.enablePrevMatchControl(true);
-                } else {
-                    panel.enablePrevMatchControl(false);
-                }
+            final int totalPages = currentSource.getNumberPages();
+            final int currentPage = currentSource.getCurrentPage();
+
+            updatePageControls(currentPage, totalPages);
+            updateSearchControls();
+
+        }
+    }
+
+    private void updateSearchControls() {
+        //setup search controls
+        if (currentSource != null && currentSource.isSearchable()) {
+            //TODO might need to scroll
+
+            panel.updateCurrentMatchDisplay(currentSource.currentItem());
+            panel.updateTotaMatcheslDisplay(currentSource.getNumberHits());
+
+            if (currentSource.hasNextItem()) {
+                panel.enableNextMatchControl(true);
             } else {
                 panel.enableNextMatchControl(false);
+            }
+
+            if (currentSource.hasPreviousItem()) {
+                panel.enablePrevMatchControl(true);
+            } else {
                 panel.enablePrevMatchControl(false);
             }
 
-
+        } else {
+            panel.enableNextMatchControl(false);
+            panel.enablePrevMatchControl(false);
         }
     }
 
     private void updatePageControls(int currentPage, int totalPages) {
 
-        if (totalPages == 0) {
-            //no chunks case
-            panel.updateTotalPageslDisplay(1);
-            panel.updateCurrentPageDisplay(1);
-        } else {
-            panel.updateTotalPageslDisplay(totalPages);
-            panel.updateCurrentPageDisplay(currentPage);
-        }
+        panel.updateTotalPageslDisplay(totalPages);
+        panel.updateCurrentPageDisplay(currentPage);
 
-        if (totalPages < 2) {
+
+        if (totalPages == 1) {
             panel.enableNextPageControl(false);
             panel.enablePrevPageControl(false);
         } else {
@@ -416,8 +484,8 @@ public class ExtractedContentViewer implements DataContentViewer {
         @Override
         public void actionPerformed(ActionEvent e) {
 
-            if (paging.hasNext(currentSource)) {
-                paging.next(currentSource);
+            if (currentSource.hasNextPage()) {
+                currentSource.nextPage();
 
                 //set new text
                 panel.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -425,15 +493,17 @@ public class ExtractedContentViewer implements DataContentViewer {
                 panel.setCursor(null);
 
                 //update display
-                panel.updateCurrentPageDisplay(paging.getCurrentPage(currentSource));
+                panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
 
                 //update controls if needed
-                if (!paging.hasNext(currentSource)) {
+                if (!currentSource.hasNextPage()) {
                     panel.enableNextPageControl(false);
                 }
-                if (paging.hasPrevious(currentSource)) {
+                if (currentSource.hasPreviousPage()) {
                     panel.enablePrevPageControl(true);
                 }
+
+                updateSearchControls();
             }
         }
     }
@@ -442,8 +512,8 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (paging.hasPrevious(currentSource)) {
-                paging.previous(currentSource);
+            if (currentSource.hasPreviousPage()) {
+                currentSource.previousPage();
 
                 //set new text
                 panel.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -451,15 +521,17 @@ public class ExtractedContentViewer implements DataContentViewer {
                 panel.setCursor(null);
 
                 //update display
-                panel.updateCurrentPageDisplay(paging.getCurrentPage(currentSource));
+                panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
 
                 //update controls if needed
-                if (!paging.hasPrevious(currentSource)) {
+                if (!currentSource.hasPreviousPage()) {
                     panel.enablePrevPageControl(false);
                 }
-                if (paging.hasNext(currentSource)) {
+                if (currentSource.hasNextPage()) {
                     panel.enableNextPageControl(true);
                 }
+
+                updateSearchControls();
             }
         }
     }

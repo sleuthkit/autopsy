@@ -259,7 +259,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 }
 
                 final String highlightQueryEscaped = getHighlightQuery(tcq, literal_query, tcqRes, f);
-                toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, previewChunk));
+                toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, previewChunk, tcqRes));
             }
             //write to bb
             new ResultWriter(tcqRes, tcq, listName).execute();
@@ -329,10 +329,11 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             final Content content = thingContent.getContent();
             final String queryStr = thingContent.getQueryStr();
             final int previewChunk = thingContent.getPreviewChunk();
+            Map<String, List<ContentHit>> hits = thingContent.getHits();
 
             Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
             //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
-            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr, !thingContent.getQuery().isEscaped(), false);
+            HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, queryStr, !thingContent.getQuery().isEscaped(), false, hits);
             return new KeywordSearchFilterNode(highlights, kvNode, queryStr, previewChunk);
 
         }
@@ -400,7 +401,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                     final int previewChunkId = uniqueMatches.get(f);
                     Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                     AbstractFsContentNode.fillPropertyMap(resMap, (File) f);
-                    toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, keywordQuery, thing.getQuery(), previewChunkId));
+                    toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, keywordQuery, thing.getQuery(), previewChunkId, matchesRes));
 
                 }
                 //write to bb
@@ -415,10 +416,12 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 final Content content = thingContent.getContent();
                 final String query = thingContent.getQueryStr();
                 final int previewChunk = thingContent.getPreviewChunk();
+                final Map<String, List<ContentHit>> hits = thingContent.getHits();
+                
 
                 Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
                 //wrap in KeywordSearchFilterNode for the markup content
-                HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query, !thingContent.getQuery().isEscaped());
+                HighlightedMatchesSource highlights = new HighlightedMatchesSource(content, query, !thingContent.getQuery().isEscaped(), hits);
                 return new KeywordSearchFilterNode(highlights, kvNode, query, previewChunk);
             }
         }
@@ -433,6 +436,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         private String queryStr;
         private KeywordSearchQuery query;
         private int previewChunk;
+        private Map<String, List<ContentHit>> hits;
 
         Content getContent() {
             return content;
@@ -445,12 +449,17 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         int getPreviewChunk() {
             return previewChunk;
         }
+        
+        Map<String, List<ContentHit>> getHits() {
+            return hits;
+        }
 
-        public KeyValueQueryContent(String name, Map<String, Object> map, int id, Content content, String queryStr, KeywordSearchQuery query, int previewChunk) {
+        public KeyValueQueryContent(String name, Map<String, Object> map, int id, Content content, String queryStr, KeywordSearchQuery query, int previewChunk, Map<String, List<ContentHit>> hits) {
             super(name, map, id, query);
             this.content = content;
             this.queryStr = queryStr;
             this.previewChunk = previewChunk;
+            this.hits = hits;
         }
     }
 
