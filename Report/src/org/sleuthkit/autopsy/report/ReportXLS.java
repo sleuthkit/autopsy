@@ -62,7 +62,7 @@ public class ReportXLS implements ReportModule {
     }
 
     @Override
-    public String generateReport(ReportConfiguration reportconfig, ReportFilter rr) throws ReportModuleException {
+    public String generateReport(ReportConfiguration reportconfig) throws ReportModuleException {
         config = reportconfig;
         ReportGen reportobj = new ReportGen();
         reportobj.populateReport(reportconfig);
@@ -386,10 +386,6 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                 }
-
-
-                cc++;
-                rr.progBarSet(cc);
             }
 
 

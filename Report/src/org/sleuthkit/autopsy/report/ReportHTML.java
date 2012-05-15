@@ -67,7 +67,7 @@ public class ReportHTML implements ReportModule{
     }
     
     @Override
-    public String generateReport(ReportConfiguration reportconfig, ReportFilter rr) throws ReportModuleException {
+    public String generateReport(ReportConfiguration reportconfig) throws ReportModuleException {
         config = reportconfig;
       ReportGen reportobj = new ReportGen();
        reportobj.populateReport(reportconfig);
@@ -239,7 +239,6 @@ public class ReportHTML implements ReportModule{
                 if (ReportFilter.cancel == true) {
                     break;
                 }
-                int cc = 0;
 
                 if (alt > 0) {
                     altRow = " class=\"alt\"";
@@ -286,7 +285,7 @@ public class ReportHTML implements ReportModule{
                     }
                     value = ReportUtils.insertPeriodically(value, "<br>", 30);
                     attributes.put(type, value);
-                    cc++;
+                  
                 }
 
 
@@ -370,8 +369,6 @@ public class ReportHTML implements ReportModule{
                     artifact.append("</tr>");
                     nodeDevice.append(artifact);
                 }
-                cc++;
-                rr.progBarSet(cc);
             }
             //Add them back in order
             //formatted_Report.append(nodeGen);

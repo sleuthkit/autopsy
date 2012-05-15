@@ -59,7 +59,7 @@ public class ReportXML implements ReportModule {
     }
 
     @Override
-    public String generateReport(ReportConfiguration reportconfig, ReportFilter rr) throws ReportModuleException {
+    public String generateReport(ReportConfiguration reportconfig) throws ReportModuleException {
         ReportGen reportobj = new ReportGen();
         reportobj.populateReport(reportconfig);
         HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
@@ -177,8 +177,7 @@ public class ReportXML implements ReportModule {
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                     nodeDevice.addContent(artifact);
                 }
-                cc++;
-                rr.progBarSet(cc);
+         
                 //end of master loop
             }
 

@@ -41,7 +41,7 @@ public class ReportPanelAction {
 
     private static final String ACTION_NAME = "Report Preview";
     private StringBuilder viewReport = new StringBuilder();
-
+    private int cc = 0;
     public ReportPanelAction() {
     }
 
@@ -62,12 +62,11 @@ public class ReportPanelAction {
                     rr.progBarStartText();
                 }
             });
-            report.populateReport(reportconfig);
             SwingUtilities.invokeLater(new Runnable() {
 
                 @Override
                 public void run() {
-                    rr.progBarCount(2 * report.Results.size());
+                    rr.progBarCount(classList.size());
                 }
             });
             //Turn our results into the appropriate xml/html reports
@@ -78,13 +77,13 @@ public class ReportPanelAction {
                 public void run() {
                     
                     for (String s : classList) {
-                        
+                        cc++;
                         try {
                             Class reportclass = Class.forName(s);
                             Object reportObject = reportclass.newInstance();
-                            Class[] argTypes = new Class[] { ReportConfiguration.class, ReportFilter.class};
+                            Class[] argTypes = new Class[] { ReportConfiguration.class};
                             Method generatereport = reportclass.getDeclaredMethod("generateReport",argTypes);
-                            Object invoke = generatereport.invoke(reportObject,reportconfig,rr);
+                            Object invoke = generatereport.invoke(reportObject,reportconfig);
                             String path = invoke.toString();
                             Class[] argTypes2 = new Class[] { String.class};
                             Method getpreview = reportclass.getMethod("getPreview",argTypes2);
@@ -94,10 +93,11 @@ public class ReportPanelAction {
                             {
                                 getpreview.invoke(reportObject,path);
                             }
-
+                            
                         } catch (Exception e) {
                            
                         }
+                        rr.progBarSet(cc);
                     }
 
 //                    StopWatch a = new StopWatch();
@@ -151,7 +151,7 @@ public class ReportPanelAction {
                 // initialize panel with loaded settings   
 
                 //Set the temporary label to let the user know its done and is waiting on the report
-                rr.progBarText();
+               
                 final ReportPanel panel = new ReportPanel();
 
 
@@ -173,7 +173,8 @@ public class ReportPanelAction {
                 double h = popUpWindow.getSize().getHeight();
                 popUpWindow.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
 
-                reportThread.join();
+                reportThread.join(); 
+                rr.progBarText();
                 rr.progBarDone();
                 panel.setFinishedReportText();
                 popUpWindow.setVisible(true);

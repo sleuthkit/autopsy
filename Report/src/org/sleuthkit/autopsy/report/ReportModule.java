@@ -32,7 +32,7 @@ public interface ReportModule {
      * @return absolute file path to the report generated
      * @throws ReportModuleException if report generation failed
      */
-    public String generateReport(ReportConfiguration config, ReportFilter rr) throws ReportModuleException;
+    public String generateReport(ReportConfiguration config) throws ReportModuleException;
 
     /**
      * This saves a copy of the report (current one) to another place specified

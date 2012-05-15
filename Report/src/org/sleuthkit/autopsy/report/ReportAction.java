@@ -104,7 +104,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                ReportPanel.this.actionPerformed(e);
+                ReportAction.this.actionPerformed(e);
             }
         });
 
