@@ -75,6 +75,7 @@ public class ReportFilter extends javax.swing.JPanel {
         progBar = new javax.swing.JProgressBar();
         jButton1 = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
+        updateLabel = new javax.swing.JLabel();
 
         jButton2.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jButton2.text")); // NOI18N
         jButton2.setActionCommand(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jButton2.actionCommand")); // NOI18N
@@ -110,6 +111,9 @@ public class ReportFilter extends javax.swing.JPanel {
             }
         });
 
+        updateLabel.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.updateLabel.text")); // NOI18N
+        updateLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.updateLabel.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -119,18 +123,21 @@ public class ReportFilter extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jButton1)
-                        .addContainerGap())
+                        .addGap(18, 18, 18)
+                        .addComponent(updateLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(progBar, javax.swing.GroupLayout.DEFAULT_SIZE, 221, Short.MAX_VALUE)
+                        .addComponent(progBar, javax.swing.GroupLayout.DEFAULT_SIZE, 220, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelButton)
-                        .addGap(24, 24, 24))))
+                        .addComponent(cancelButton)))
+                .addGap(24, 24, 24))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(19, 19, 19)
-                .addComponent(jButton1)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton1)
+                    .addComponent(updateLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -225,6 +232,18 @@ private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         progBar.setString("Querying Database for Report Results...");
     }
 
+    public void setUpdateLabel(final String text) {
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                updateLabel.setText(text);
+                updateLabel.repaint();
+            }
+        });
+
+    }
+
     public void progBarText() {
 
         progBar.setString("Populating Report - Please wait...");
@@ -259,5 +278,6 @@ private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JProgressBar progBar;
+    private javax.swing.JLabel updateLabel;
     // End of variables declaration//GEN-END:variables
 }

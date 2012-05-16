@@ -50,8 +50,7 @@ public class Report {
         Case currentCase = Case.getCurrentCase(); // get the most updated case
         SleuthkitCase tempDb = currentCase.getSleuthkitCase();
         try {
-            ReportUtils util = new ReportUtils();
-            util.copy(new FileInputStream(currentCase.getCaseDirectory() + File.separator + "autopsy.db"), new FileOutputStream(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db"));
+            tempDb.copyCaseDB(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
             dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", "jdbc:sqlite:" + currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_keyword;");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_preview;");
