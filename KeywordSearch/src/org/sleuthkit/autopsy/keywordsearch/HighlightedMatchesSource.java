@@ -57,7 +57,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     //stores all pages/chunks that have hits as key, and number of hits as a value, or 0 if yet unknown
     private LinkedHashMap<Integer, Integer> hitsPages;
     //stored page num -> current hit number mapping
-    private HashMap<Integer,Integer> pagesToHits;
+    private HashMap<Integer, Integer> pagesToHits;
     private List<Integer> pages;
     private Map<String, List<ContentHit>> hits = null; //original hits that may get passed in
     private String originalQuery = null; //or original query if hits are not available
@@ -84,8 +84,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         this(content, solrQuery, isRegex);
         this.originalQuery = originalQuery;
     }
-    
-    
+
     HighlightedMatchesSource(Content content, String solrQuery, boolean isRegex, Map<String, List<ContentHit>> hits) {
         this(content, solrQuery, isRegex);
         this.hits = hits;
@@ -109,10 +108,12 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             logger.log(Level.WARNING, "Could not get number pages for content: " + content.getId());
             return;
         }
-        
-        if (this.numberPages == 0)
+
+        if (this.numberPages == 0) {
             hasChunks = false;
-        else hasChunks = true;
+        } else {
+            hasChunks = true;
+        }
 
         //if has chunks, get pages with hits
         if (hasChunks) {
@@ -121,10 +122,12 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                 //reperform search query for the content to get matching chunks info
                 KeywordSearchQuery chunksQuery = null;
                 Keyword keywordQuery = new Keyword(this.originalQuery, !isRegex);
-                if (this.isRegex)
-                    //TODO optimize, query only for content.getId()
+                if (this.isRegex) //TODO optimize, query only for content.getId()
+                {
                     chunksQuery = new TermComponentQuery(keywordQuery);
-                else chunksQuery = new LuceneQuery(keywordQuery);
+                } else {
+                    chunksQuery = new LuceneQuery(keywordQuery);
+                }
                 try {
                     hits = chunksQuery.performQuery();
                 } catch (NoOpenCoreException ex) {
@@ -138,8 +141,9 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             for (Collection<ContentHit> hitCol : hits.values()) {
                 for (ContentHit hit : hitCol) {
                     int chunkID = hit.getChunkId();
-                    if (chunkID != 0)
+                    if (chunkID != 0) {
                         pagesSorted.add(chunkID);
+                    }
                 }
             }
 
@@ -152,15 +156,14 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                 pagesToHits.put(page, 0); //set current hit to 0th
             }
 
-        }
-        else {
+        } else {
             //no chunks
             this.numberPages = 1;
             this.currentPage = 1;
             hitsPages.put(1, 0);
             pages.add(1);
             pagesToHits.put(1, 0);
-            
+
         }
 
         inited = true;
@@ -186,15 +189,15 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     public boolean hasNextPage() {
         final int numPages = pages.size();
         int idx = pages.indexOf(this.currentPage);
-        return idx < numPages-1;
-        
+        return idx < numPages - 1;
+
     }
 
     @Override
     public boolean hasPreviousPage() {
         int idx = pages.indexOf(this.currentPage);
         return idx > 0;
-        
+
     }
 
     @Override
@@ -203,7 +206,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             throw new IllegalStateException("No next page.");
         }
         int idx = pages.indexOf(this.currentPage);
-        currentPage = pages.get(idx+1);
+        currentPage = pages.get(idx + 1);
         return currentPage;
     }
 
@@ -213,7 +216,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             throw new IllegalStateException("No previous page.");
         }
         int idx = pages.indexOf(this.currentPage);
-        currentPage = pages.get(idx-1);
+        currentPage = pages.get(idx - 1);
         return currentPage;
     }
 
@@ -232,7 +235,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         if (!hasNextItem()) {
             throw new IllegalStateException("No next item.");
         }
-        int cur = pagesToHits.get(currentPage) +1;
+        int cur = pagesToHits.get(currentPage) + 1;
         pagesToHits.put(currentPage, cur);
         return cur;
     }
@@ -242,7 +245,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         if (!hasPreviousItem()) {
             throw new IllegalStateException("No previous item.");
         }
-        int cur = pagesToHits.get(currentPage) -1;
+        int cur = pagesToHits.get(currentPage) - 1;
         pagesToHits.put(currentPage, cur);
         return cur;
     }
@@ -251,7 +254,6 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
     public int currentItem() {
         return pagesToHits.get(currentPage);
     }
-    
 
     @Override
     public LinkedHashMap<Integer, Integer> getHitsPages() {
@@ -378,7 +380,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         final String insertPost = "'></a>";
         int count = 0;
         while ((index = buf.indexOf(searchToken, searchOffset)) >= 0) {
-            String insertString = insertPre + Integer.toString(count+1) + insertPost;
+            String insertString = insertPre + Integer.toString(count + 1) + insertPost;
             int insertStringLen = insertString.length();
             buf.insert(index, insertString);
             searchOffset = index + indexSearchTokLen + insertStringLen; //next offset past this anchor
@@ -387,9 +389,10 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
         //store total hits for this page, now that we know it
         this.hitsPages.put(this.currentPage, count);
-        if (this.currentItem() == 0 && this.hasNextItem())
-                this.nextItem();
-        
+        if (this.currentItem() == 0 && this.hasNextItem()) {
+            this.nextItem();
+        }
+
         return buf.toString();
     }
     //dummy instance for Lookup only

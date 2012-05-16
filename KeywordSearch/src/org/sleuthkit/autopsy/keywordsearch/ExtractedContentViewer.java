@@ -372,8 +372,17 @@ public class ExtractedContentViewer implements DataContentViewer {
         @Override
         public void actionPerformed(ActionEvent e) {
             MarkupSource source = panel.getSelectedSource();
-            if (source.hasNextItem()) {
-                int indexVal = source.nextItem();
+            final boolean hasNextItem = source.hasNextItem();
+            final boolean hasNextPage = source.hasNextPage();
+            int indexVal = 0;
+            if (hasNextItem || hasNextPage) {
+                if (!hasNextItem) {
+                    //flip the page
+                    nextPage();
+                    indexVal = source.currentItem();
+                } else {
+                    indexVal = source.nextItem();
+                }
 
                 //scroll
                 panel.scrollToAnchor(source.getAnchorPrefix() + Integer.toString(indexVal));
@@ -383,10 +392,10 @@ public class ExtractedContentViewer implements DataContentViewer {
                 panel.updateTotaMatcheslDisplay(source.getNumberHits());
 
                 //update controls if needed
-                if (!source.hasNextItem()) {
+                if (!source.hasNextItem() && !source.hasNextPage()) {
                     panel.enableNextMatchControl(false);
                 }
-                if (source.hasPreviousItem()) {
+                if (source.hasPreviousItem() || source.hasPreviousPage()) {
                     panel.enablePrevMatchControl(true);
                 }
             }
@@ -398,8 +407,17 @@ public class ExtractedContentViewer implements DataContentViewer {
         @Override
         public void actionPerformed(ActionEvent e) {
             MarkupSource source = panel.getSelectedSource();
-            if (source.hasPreviousItem()) {
-                int indexVal = source.previousItem();
+            final boolean hasPreviousItem = source.hasPreviousItem();
+            final boolean hasPreviousPage = source.hasPreviousPage();
+            int indexVal = 0;
+            if (hasPreviousItem || hasPreviousPage) {
+                if (!hasPreviousItem) {
+                    //flip the page
+                    previousPage();
+                    indexVal = source.currentItem();
+                } else {
+                    indexVal = source.previousItem();
+                }
 
                 //scroll
                 panel.scrollToAnchor(source.getAnchorPrefix() + Integer.toString(indexVal));
@@ -409,10 +427,10 @@ public class ExtractedContentViewer implements DataContentViewer {
                 panel.updateTotaMatcheslDisplay(source.getNumberHits());
 
                 //update controls if needed
-                if (!source.hasPreviousItem()) {
+                if (!source.hasPreviousItem() && !source.hasPreviousPage()) {
                     panel.enablePrevMatchControl(false);
                 }
-                if (source.hasNextItem()) {
+                if (source.hasNextItem() || source.hasNextPage()) {
                     panel.enableNextMatchControl(true);
                 }
             }
@@ -443,18 +461,17 @@ public class ExtractedContentViewer implements DataContentViewer {
     private void updateSearchControls() {
         //setup search controls
         if (currentSource != null && currentSource.isSearchable()) {
-            //TODO might need to scroll
 
             panel.updateCurrentMatchDisplay(currentSource.currentItem());
             panel.updateTotaMatcheslDisplay(currentSource.getNumberHits());
 
-            if (currentSource.hasNextItem()) {
+            if (currentSource.hasNextItem() || currentSource.hasNextPage()) {
                 panel.enableNextMatchControl(true);
             } else {
                 panel.enableNextMatchControl(false);
             }
 
-            if (currentSource.hasPreviousItem()) {
+            if (currentSource.hasPreviousItem() || currentSource.hasPreviousPage()) {
                 panel.enablePrevMatchControl(true);
             } else {
                 panel.enablePrevMatchControl(false);
@@ -491,35 +508,67 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     }
 
+    private void nextPage() {
+        if (currentSource.hasNextPage()) {
+            currentSource.nextPage();
+
+            //set new text
+            panel.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            panel.refreshCurrentMarkup();
+            panel.setCursor(null);
+
+            //update display
+            panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
+
+            //scroll to current selection
+            ExtractedContentViewer.this.scrollToCurrentHit();
+
+            //update controls if needed
+            if (!currentSource.hasNextPage()) {
+                panel.enableNextPageControl(false);
+            }
+            if (currentSource.hasPreviousPage()) {
+                panel.enablePrevPageControl(true);
+            }
+
+            updateSearchControls();
+        }
+    }
+
+    private void previousPage() {
+        if (currentSource.hasPreviousPage()) {
+            currentSource.previousPage();
+
+            //set new text
+            panel.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            panel.refreshCurrentMarkup();
+            panel.setCursor(null);
+
+            //update display
+            panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
+
+            //scroll to current selection
+            ExtractedContentViewer.this.scrollToCurrentHit();
+
+            //update controls if needed
+            if (!currentSource.hasPreviousPage()) {
+                panel.enablePrevPageControl(false);
+            }
+            if (currentSource.hasNextPage()) {
+                panel.enableNextPageControl(true);
+            }
+
+            updateSearchControls();
+
+
+        }
+    }
+
     class NextPageActionListener implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-
-            if (currentSource.hasNextPage()) {
-                currentSource.nextPage();
-
-                //set new text
-                panel.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                panel.refreshCurrentMarkup();
-                panel.setCursor(null);
-
-                //update display
-                panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
-
-                //scroll to current selection
-                ExtractedContentViewer.this.scrollToCurrentHit();
-
-                //update controls if needed
-                if (!currentSource.hasNextPage()) {
-                    panel.enableNextPageControl(false);
-                }
-                if (currentSource.hasPreviousPage()) {
-                    panel.enablePrevPageControl(true);
-                }
-
-                updateSearchControls();
-            }
+            nextPage();
         }
     }
 
@@ -527,30 +576,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (currentSource.hasPreviousPage()) {
-                currentSource.previousPage();
-
-                //set new text
-                panel.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                panel.refreshCurrentMarkup();
-                panel.setCursor(null);
-
-                //update display
-                panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
-
-                //scroll to current selection
-                ExtractedContentViewer.this.scrollToCurrentHit();
-                
-                //update controls if needed
-                if (!currentSource.hasPreviousPage()) {
-                    panel.enablePrevPageControl(false);
-                }
-                if (currentSource.hasNextPage()) {
-                    panel.enableNextPageControl(true);
-                }
-
-                updateSearchControls();
-            }
+            previousPage();
         }
     }
 }
