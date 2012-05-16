@@ -46,8 +46,9 @@ import org.sleuthkit.datamodel.TskData;
  *
  * @author Alex
  */
-public class ReportHTML implements ReportModule{
+public class ReportHTML implements ReportModule {
     //Declare our publically accessible formatted Report, this will change everytime they run a Report
+
     public static StringBuilder formatted_Report = new StringBuilder();
     private static StringBuilder unformatted_header = new StringBuilder();
     private static StringBuilder formatted_header = new StringBuilder();
@@ -55,22 +56,21 @@ public class ReportHTML implements ReportModule{
     private ReportConfiguration config;
     private static ReportHTML instance = null;
 
-     ReportHTML(){
-        
+    ReportHTML() {
     }
-     
-     public static synchronized ReportHTML getDefault() {
+
+    public static synchronized ReportHTML getDefault() {
         if (instance == null) {
             instance = new ReportHTML();
         }
         return instance;
     }
-    
+
     @Override
     public String generateReport(ReportConfiguration reportconfig) throws ReportModuleException {
         config = reportconfig;
-      ReportGen reportobj = new ReportGen();
-       reportobj.populateReport(reportconfig);
+        ReportGen reportobj = new ReportGen();
+        reportobj.populateReport(reportconfig);
         HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
         //This is literally a terrible way to count up all the types of artifacts, and doesn't include any added ones. 
         //Unlike the XML Report, which is dynamic, this is formatted and needs to be redone later instead of being hardcoded.
@@ -269,23 +269,20 @@ public class ReportHTML implements ReportModule{
                     String value = "";
                     Integer type = tempatt.getAttributeTypeID();
                     if (type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()) || type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())) {
-                            try{
-                        SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                        value = sdf.format(new java.util.Date((tempatt.getValueLong())));
-                            }
-                            catch(Exception ex){
-                                
-                            } 
+                        try {
+                            SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                            value = sdf.format(new java.util.Date((tempatt.getValueLong())));
+                        } catch (Exception ex) {
+                        }
                     } else {
                         value = tempatt.getValueString();
                     }
-                    if(value == null || value.isEmpty())
-                    {
+                    if (value == null || value.isEmpty()) {
                         value = "";
                     }
                     value = ReportUtils.insertPeriodically(value, "<br>", 30);
                     attributes.put(type, value);
-                  
+
                 }
 
 
@@ -373,7 +370,7 @@ public class ReportHTML implements ReportModule{
             //Add them back in order
             //formatted_Report.append(nodeGen);
             // formatted_Report.append("</tbody></table>");
-            
+
             if (countWebBookmark > 0) {
                 formatted_Report.append(nodeWebBookmark);
                 formatted_Report.append("</tbody></table>");
@@ -422,51 +419,51 @@ public class ReportHTML implements ReportModule{
             // unformatted_header.append(formatted_Report);
             htmlPath = currentCase.getCaseDirectory() + "/Reports/" + caseName + "-" + datenotime + ".html";
             this.save(htmlPath);
-            
+
         } catch (Exception e) {
 
             Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Exception occurred", e);
         }
         return htmlPath;
     }
-    
+
     @Override
-     public String getName(){
-     String name = "HTML";   
-     return name;   
+    public String getName() {
+        String name = "HTML";
+        return name;
     }
-    
- 
+
     @Override
-    public void save(String path)
-    {
-        try{
-         Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path), "UTF-8"));
+    public void save(String path) {
+        try {
+            Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path), "UTF-8"));
             out.write(formatted_header.toString());
             out.flush();
             out.close();
+        } catch (IOException e) {
+            Logger.getLogger(ReportHTML.class.getName()).log(Level.SEVERE, "Could not write out HTML report!", e);
         }
-        catch(IOException e){
-             Logger.getLogger(ReportHTML.class.getName()).log(Level.SEVERE, "Could not write out HTML report!", e);
-        }
-        
-    }
-   
-    @Override
-      public String getReportType(){
-          String type = "HTML";
-        return type;
-      }
 
- 
+    }
+
     @Override
-    public ReportConfiguration GetReportConfiguration(){
+    public String getReportType() {
+        String type = "HTML";
+        return type;
+    }
+       @Override
+    public String getExtension() {
+        String ext = ".html";
+        return ext;
+    }
+
+    @Override
+    public ReportConfiguration GetReportConfiguration() {
         return config;
     }
 
-    
     @Override
-    public String getReportTypeDescription(){
+    public String getReportTypeDescription() {
         String desc = "This is an html formatted report that is meant to be viewed in a modern browser.";
         return desc;
     }
@@ -475,7 +472,4 @@ public class ReportHTML implements ReportModule{
     public void getPreview(String path) {
         BrowserControl.openUrl(path);
     }
-
-    
-
 }

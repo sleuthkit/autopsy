@@ -177,7 +177,7 @@ public class ReportXML implements ReportModule {
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                     nodeDevice.addContent(artifact);
                 }
-         
+
                 //end of master loop
             }
 
@@ -233,6 +233,12 @@ public class ReportXML implements ReportModule {
         String type = "XML";
         return type;
     }
+    
+    @Override
+    public String getExtension() {
+        String ext = ".xml";
+        return ext;
+    }
 
     @Override
     public ReportConfiguration GetReportConfiguration() {
@@ -268,8 +274,8 @@ public class ReportXML implements ReportModule {
             return img.getName();
         }
 
-        //@Override
-        public String visit(File file) {
+        @Override
+        public String visit(org.sleuthkit.datamodel.File file) {
             return file.getName();
         }
     }
