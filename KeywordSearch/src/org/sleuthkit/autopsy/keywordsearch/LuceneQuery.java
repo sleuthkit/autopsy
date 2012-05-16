@@ -248,7 +248,7 @@ public class LuceneQuery implements KeywordSearchQuery {
                         //file chunk result
                         final long fileID = Long.parseLong(resultID.substring(0, sepIndex));
                         final int chunkId = Integer.parseInt(resultID.substring(sepIndex+1));
-                        logger.log(Level.INFO, "file id: " + fileID + ", chunkID: " + chunkId);
+                        //logger.log(Level.INFO, "file id: " + fileID + ", chunkID: " + chunkId);
                         
                         try {
                             FsContent resultFsContent = sc.getFsContentById(fileID);
