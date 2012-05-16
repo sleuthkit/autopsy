@@ -127,7 +127,7 @@ public interface MarkupSource {
     
     
     /**
-     * get a map storing which pages have matches to their number, or -1 if unknown
+     * get a map storing which pages have matches to their number, or 0 if unknown
      * @return map storing pages with matches, or null if not supported
      */
     LinkedHashMap<Integer,Integer> getHitsPages();

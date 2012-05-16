@@ -168,6 +168,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
             List<BlackboardAttribute> attributes = artifact.getAttributes();
             String keyword = null;
             String regexp = null;
+            String origQuery = null;
             for (BlackboardAttribute att : attributes) {
                 if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                     keyword = att.getValueString();
@@ -178,7 +179,10 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
             }
             if (keyword != null) {
                 boolean isRegexp = (regexp != null && ! regexp.equals(""));
-                return highlightFactory.createInstance(content, keyword, isRegexp);
+                if (isRegexp)
+                    origQuery = regexp;
+                else origQuery = keyword;
+                return highlightFactory.createInstance(content, keyword, isRegexp, origQuery);
             }
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex);

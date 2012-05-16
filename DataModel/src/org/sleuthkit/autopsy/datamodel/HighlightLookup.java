@@ -20,10 +20,15 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.sleuthkit.datamodel.Content;
 
+
 /**
- *
- * @author dfickling
+ * Lookup interface to get instance of a HighlightedMatchesSource
+ * 
+ * @param c content for which to get highlights
+ * @param keywordHitQuery keyword hit that needs to be highlighted
+ * @param isRegex whether the original query was a regex query
+ * @param originalQuery (regex or literal) that may need to be performed again to get all ContentHit results
  */
 public interface HighlightLookup {
-    public HighlightLookup createInstance(Content c, String s, boolean isRegex);
+    public HighlightLookup createInstance(Content c, String keywordHitQuery, boolean isRegex, String originalQuery);
 }

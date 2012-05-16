@@ -197,8 +197,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                         if (numPages == 0) {
                             numPages = 1;
                             hasChunks = false;
-                        }
-                        else {
+                        } else {
                             hasChunks = true;
                         }
                         inited = true;
@@ -216,8 +215,14 @@ public class ExtractedContentViewer implements DataContentViewer {
             sources.add(newSource);
 
 
+            //init pages
             final int totalPages = currentSource.getNumberPages();
-            final int currentPage = currentSource.getCurrentPage();
+            int currentPage = currentSource.getCurrentPage();
+            if (currentPage == 0 && currentSource.hasNextPage()) {
+                currentSource.nextPage();
+                ++currentPage;
+            }
+
 
             updatePageControls(currentPage, totalPages);
         }
@@ -226,15 +231,21 @@ public class ExtractedContentViewer implements DataContentViewer {
         // first source will be the default displayed
         setPanel(sources);
         // If node has been selected before, return to the previous position
+        scrollToCurrentHit();
+    }
+
+    private void scrollToCurrentHit() {
+        final MarkupSource source = panel.getSelectedSource();
+        if (source == null || !source.isSearchable()) {
+            return;
+        }
+
         // using invokeLater to wait for ComboBox selection to complete
         EventQueue.invokeLater(new Runnable() {
 
             @Override
             public void run() {
-                MarkupSource source = panel.getSelectedSource();
-                if (source != null && source.isSearchable()) {
-                    panel.scrollToAnchor(source.getAnchorPrefix() + Integer.toString(source.currentItem()));
-                }
+                panel.scrollToAnchor(source.getAnchorPrefix() + Integer.toString(source.currentItem()));
             }
         });
     }
@@ -342,8 +353,9 @@ public class ExtractedContentViewer implements DataContentViewer {
         final Server solrServer = KeywordSearch.getServer();
 
         int chunkId = 0;
-        if (hasChunks)
+        if (hasChunks) {
             chunkId = currentPage;
+        }
 
         String content = null;
         try {
@@ -495,6 +507,9 @@ public class ExtractedContentViewer implements DataContentViewer {
                 //update display
                 panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
 
+                //scroll to current selection
+                ExtractedContentViewer.this.scrollToCurrentHit();
+
                 //update controls if needed
                 if (!currentSource.hasNextPage()) {
                     panel.enableNextPageControl(false);
@@ -523,6 +538,9 @@ public class ExtractedContentViewer implements DataContentViewer {
                 //update display
                 panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
 
+                //scroll to current selection
+                ExtractedContentViewer.this.scrollToCurrentHit();
+                
                 //update controls if needed
                 if (!currentSource.hasPreviousPage()) {
                     panel.enablePrevPageControl(false);
