@@ -205,7 +205,7 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             if (jFileChooser1.getSelectedFile() != null) {
                 String path = jFileChooser1.getSelectedFile().toString();
                 for (Map.Entry<ReportModule, String> entry : reports.entrySet()) {
-                    exportReport(path, entry.getKey().getExtention(), entry.getKey());
+                    exportReport(path, entry.getKey().getExtension(), entry.getKey());
                 }
             }
         }

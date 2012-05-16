@@ -425,7 +425,7 @@ public class ReportXLS implements ReportModule {
         return type;
     }
        @Override
-    public String getExtention() {
+    public String getExtension() {
         String ext = ".xlsx";
         return ext;
     }

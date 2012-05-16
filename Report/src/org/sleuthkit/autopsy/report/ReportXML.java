@@ -235,7 +235,7 @@ public class ReportXML implements ReportModule {
     }
     
     @Override
-    public String getExtention() {
+    public String getExtension() {
         String ext = ".xml";
         return ext;
     }

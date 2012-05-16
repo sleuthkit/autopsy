@@ -79,11 +79,11 @@ public interface ReportModule {
     public void getPreview(String path);
     
         /**
-     * Calls to the report module to execute a method to get the extention
+     * Calls to the report module to execute a method to get the extension
      * that is used for the report
      *
-     * @return String the extention the file will be saved as
+     * @return String the extension the file will be saved as
      *
      */
-    public String getExtention();
+    public String getExtension();
 }

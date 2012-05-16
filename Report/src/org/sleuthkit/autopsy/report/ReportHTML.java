@@ -452,7 +452,7 @@ public class ReportHTML implements ReportModule {
         return type;
     }
        @Override
-    public String getExtention() {
+    public String getExtension() {
         String ext = ".html";
         return ext;
     }
