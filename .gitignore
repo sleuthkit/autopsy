@@ -14,9 +14,11 @@
 /KeywordSearch/release/solr/solr/lib/
 /KeywordSearch/release/solr/start.jar
 /KeywordSearch/release/solr/webapps/solr.war
-
 /DataModel/release/modules/ext/sqlite-jdbc-3.7.2.jar
 /DataModel/release/modules/lib/zlib.dll
 /branding_spear
 /installer_spear
 Bundle_*.properties
+/branding/core/core.jar/org/netbeans/core/startup/Bundle.properties
+/branding/modules/org-netbeans-core-windows.jar/org/netbeans/core/windows/view/ui/Bundle.properties
+/CoreUtils/src/org/sleuthkit/autopsy/coreutils/Bundle.properties
