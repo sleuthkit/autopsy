@@ -137,7 +137,9 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             TreeSet<Integer> pagesSorted = new TreeSet<Integer>();
             for (Collection<ContentHit> hitCol : hits.values()) {
                 for (ContentHit hit : hitCol) {
-                    pagesSorted.add(hit.getChunkId());
+                    int chunkID = hit.getChunkId();
+                    if (chunkID != 0)
+                        pagesSorted.add(chunkID);
                 }
             }
 
@@ -182,14 +184,17 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public boolean hasNextPage() {
+        final int numPages = pages.size();
         int idx = pages.indexOf(this.currentPage);
-        return idx < pages.size()-1;
+        return idx < numPages-1;
+        
     }
 
     @Override
     public boolean hasPreviousPage() {
-         int idx = pages.indexOf(this.currentPage);
+        int idx = pages.indexOf(this.currentPage);
         return idx > 0;
+        
     }
 
     @Override
