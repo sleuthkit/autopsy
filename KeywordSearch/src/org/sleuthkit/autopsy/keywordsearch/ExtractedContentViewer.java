@@ -220,11 +220,10 @@ public class ExtractedContentViewer implements DataContentViewer {
             int currentPage = currentSource.getCurrentPage();
             if (currentPage == 0 && currentSource.hasNextPage()) {
                 currentSource.nextPage();
-                ++currentPage;
             }
 
 
-            updatePageControls(currentPage, totalPages);
+            updatePageControls();
         }
 
 
@@ -452,7 +451,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             final int totalPages = currentSource.getNumberPages();
             final int currentPage = currentSource.getCurrentPage();
 
-            updatePageControls(currentPage, totalPages);
+            updatePageControls();
             updateSearchControls();
 
         }
@@ -483,8 +482,12 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
     }
 
-    private void updatePageControls(int currentPage, int totalPages) {
+    private void updatePageControls() {
+        if (currentSource == null)
+            return;
 
+        final int currentPage = currentSource.getCurrentPage();
+        final int totalPages = currentSource.getNumberPages();
         panel.updateTotalPageslDisplay(totalPages);
         panel.updateCurrentPageDisplay(currentPage);
 
@@ -493,13 +496,13 @@ public class ExtractedContentViewer implements DataContentViewer {
             panel.enableNextPageControl(false);
             panel.enablePrevPageControl(false);
         } else {
-            if (currentPage < totalPages) {
+            if (currentSource.hasNextPage()) {
                 panel.enableNextPageControl(true);
             } else {
                 panel.enableNextPageControl(false);
             }
 
-            if (currentPage > 1) {
+            if (currentSource.hasPreviousPage()) {
                 panel.enablePrevPageControl(true);
             } else {
                 panel.enablePrevPageControl(false);
