@@ -65,6 +65,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
     private boolean isEscaped;
     private List<Term> terms;
     private Keyword keywordQuery = null;
+    private KeywordQueryFilter filter = null;
 
     public TermComponentQuery(Keyword keywordQuery) {
         this.keywordQuery = keywordQuery;
@@ -74,6 +75,12 @@ public class TermComponentQuery implements KeywordSearchQuery {
         terms = null;
     }
 
+    
+    @Override
+    public void setFilter(KeywordQueryFilter filter) {
+        this.filter = filter;
+    }
+    
     @Override
     public void escape() {
         queryEscaped = Pattern.quote(termsQuery);
@@ -231,6 +238,8 @@ public class TermComponentQuery implements KeywordSearchQuery {
             final String queryStr = filesQueryB.toString();
 
             LuceneQuery filesQuery = new LuceneQuery(queryStr);
+            if (filter != null)
+                filesQuery.setFilter(filter);
             try {
                 Map<String, List<ContentHit>> subResults = filesQuery.performQuery();
                 Set<ContentHit> filesResults = new HashSet<ContentHit>();

@@ -55,6 +55,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     private String queryEscaped;
     private boolean isEscaped;
     private Keyword keywordQuery = null;
+    private KeywordQueryFilter filter = null;
     //use different highlight Solr fields for regex and literal search
     static final String HIGHLIGHT_FIELD_LITERAL = Server.Schema.CONTENT.toString();
     static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.CONTENT.toString();
@@ -73,6 +74,11 @@ public class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
+    public void setFilter(KeywordQueryFilter filter) {
+        this.filter = filter;
+    }
+
+    @Override
     public void escape() {
         queryEscaped = KeywordSearchUtil.escapeLuceneQuery(query, true, false);
         isEscaped = true;
@@ -87,8 +93,6 @@ public class LuceneQuery implements KeywordSearchQuery {
     public boolean isLiteral() {
         return true;
     }
-    
-    
 
     @Override
     public String getEscapedQueryString() {
@@ -117,7 +121,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     @Override
     public void execute() {
         escape();
-   
+
         final Map<String, List<ContentHit>> matches;
 
         try {
@@ -132,10 +136,10 @@ public class LuceneQuery implements KeywordSearchQuery {
             KeywordSearchUtil.displayDialog("Keyword Search", "No results for keyword: " + query, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             return;
         }
-        
+
         //map of unique fs hit and chunk id or 0
-        LinkedHashMap<FsContent,Integer> fsMatches = ContentHit.flattenResults(matches);
-   
+        LinkedHashMap<FsContent, Integer> fsMatches = ContentHit.flattenResults(matches);
+
         //get listname
         String listName = "";
 
@@ -221,8 +225,11 @@ public class LuceneQuery implements KeywordSearchQuery {
         q.setQuery(queryEscaped);
         q.setRows(ROWS_PER_FETCH);
         q.setFields(Server.Schema.ID.toString());
+        if (filter != null) {
+            q.addFilterQuery(filter.toString());
+        }
 
-        
+
         for (int start = 0; !allMatchesFetched; start = start + ROWS_PER_FETCH) {
             q.setStart(start);
 
@@ -243,23 +250,23 @@ public class LuceneQuery implements KeywordSearchQuery {
                     final String resultID = (String) resultDoc.getFieldValue(Server.Schema.ID.toString());
 
                     final int sepIndex = resultID.indexOf('_');
-                    
+
                     if (sepIndex != -1) {
                         //file chunk result
                         final long fileID = Long.parseLong(resultID.substring(0, sepIndex));
-                        final int chunkId = Integer.parseInt(resultID.substring(sepIndex+1));
+                        final int chunkId = Integer.parseInt(resultID.substring(sepIndex + 1));
                         //logger.log(Level.INFO, "file id: " + fileID + ", chunkID: " + chunkId);
-                        
+
                         try {
                             FsContent resultFsContent = sc.getFsContentById(fileID);
                             matches.add(new ContentHit(resultFsContent, chunkId));
-                            
+
                         } catch (TskException ex) {
                             logger.log(Level.WARNING, "Could not get the fscontent for keyword hit, ", ex);
                             //something wrong with case/db
                             return matches;
                         }
-                        
+
                     } else {
                         final long fileID = Long.parseLong(resultID);
 
@@ -299,8 +306,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     public static String querySnippet(String query, long contentID, boolean isRegex, boolean group) throws NoOpenCoreException {
         return querySnippet(query, contentID, 0, isRegex, group);
     }
-    
-    
+
     /**
      * return snippet preview context
      * @param query the keyword query for text to highlight. Lucene special cahrs should already be escaped.
@@ -341,14 +347,15 @@ public class LuceneQuery implements KeywordSearchQuery {
             //quote only if user supplies quotes
             q.setQuery(query);
         }
-        
+
         String contentIDStr = null;
-      
-        if (chunkID == 0)
+
+        if (chunkID == 0) {
             contentIDStr = Long.toString(contentID);
-        else
+        } else {
             contentIDStr = FileExtractedChild.getFileExtractChildId(contentID, chunkID);
-            
+        }
+
         String idQuery = Server.Schema.ID.toString() + ":" + contentIDStr;
         q.addFilterQuery(idQuery);
         q.addHighlightField(highlightField);

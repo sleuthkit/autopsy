@@ -41,6 +41,13 @@ public interface KeywordSearchQuery {
      */
     public Map<String,List<ContentHit>> performQuery() throws NoOpenCoreException;
     
+    
+    /**
+     * Set an optional filter to narrow down the search
+     * @param filter filter to set on the query
+     */
+    public void setFilter(KeywordQueryFilter filter);
+    
   
     
     /**

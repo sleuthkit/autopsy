@@ -31,8 +31,8 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.datamodel.HighlightLookup;
+import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -117,17 +117,29 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
         //if has chunks, get pages with hits
         if (hasChunks) {
+            //extract pages of interest, sorted
+            final long contentId = content.getId();
+            
             if (hits == null) {
                 //special case, aka in case of dir tree, we don't know which chunks
                 //reperform search query for the content to get matching chunks info
                 KeywordSearchQuery chunksQuery = null;
+                
+                /**
                 Keyword keywordQuery = new Keyword(this.originalQuery, !isRegex);
-                if (this.isRegex) //TODO optimize, query only for content.getId()
+                if (this.isRegex)
                 {
                     chunksQuery = new TermComponentQuery(keywordQuery);
                 } else {
                     chunksQuery = new LuceneQuery(keywordQuery);
+                    chunksQuery.escape();
                 }
+                 */
+                Keyword keywordQuery = new Keyword(this.keywordHitQuery, false);
+                chunksQuery = new LuceneQuery(keywordQuery);
+                chunksQuery.escape();
+                KeywordQueryFilter contentIdFilter = new KeywordQueryFilter(FilterType.CHUNK, contentId);
+                chunksQuery.setFilter(contentIdFilter);
                 try {
                     hits = chunksQuery.performQuery();
                 } catch (NoOpenCoreException ex) {
@@ -136,8 +148,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                 }
             }
 
-            //extract pages of interest, sorted
-            final long contentId = content.getId();
+            //organize the hits by page, filter as needed
             TreeSet<Integer> pagesSorted = new TreeSet<Integer>();
             for (Collection<ContentHit> hitCol : hits.values()) {
                 for (ContentHit hit : hitCol) {
