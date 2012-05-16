@@ -62,7 +62,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
     public static ReportConfiguration config;
 
     public ReportAction() {
-       setEnabled(false);
+        setEnabled(false);
         Case.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override
@@ -140,7 +140,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
             Object source = e.getItem();
             JCheckBox comp = (JCheckBox) source;
             String name = comp.getName();
-            BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.valueOf(name);
+            BlackboardArtifact.ARTIFACT_TYPE type = BlackboardArtifact.ARTIFACT_TYPE.fromLabel(name);
             if (e.getStateChange() == ItemEvent.DESELECTED) {
                 try {
                     config.setGenArtifactType(type, Boolean.FALSE);
@@ -155,8 +155,8 @@ public final class ReportAction extends CallableSystemAction implements Presente
             }
         }
     };
-    
-     private class previewListener implements ItemListener {
+
+    private class previewListener implements ItemListener {
 
         @Override
         public void itemStateChanged(ItemEvent e) {
@@ -172,7 +172,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
             }
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 String temp = buttan.getName();
-                temp = temp.substring(0, temp.length()-1);
+                temp = temp.substring(0, temp.length() - 1);
                 preview = temp;
             }
         }
@@ -202,7 +202,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
             reportList.clear();
             config = new ReportConfiguration();
             final JPanel filterpanel = new JPanel(new GridLayout(0, 2, 5, 5));
-            final JPanel artpanel = new JPanel(new GridLayout(0, 3, 5, 5));
+            final JPanel artpanel = new JPanel(new GridLayout(0, 3, 0, 0));
             SwingUtilities.invokeLater(new Runnable() {
 
                 @Override
@@ -214,7 +214,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
                     filterpanel.setAlignmentY(Component.TOP_ALIGNMENT);
                     filterpanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                     filterpanel.setSize(300, 100);
-                   ButtonGroup previewGroup = new ButtonGroup();
+                    ButtonGroup previewGroup = new ButtonGroup();
                     for (ReportModule m : Lookup.getDefault().lookupAll(ReportModule.class)) {
                         String name = m.getName();
                         String desc = m.getReportTypeDescription();
@@ -239,12 +239,13 @@ public final class ReportAction extends CallableSystemAction implements Presente
                     artpanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
                     artpanel.setAlignmentY(Component.TOP_ALIGNMENT);
                     artpanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                    artpanel.setSize(300, 100);
-                    for (BlackboardArtifact.ARTIFACT_TYPE a : panel.config.config.keySet()) {
+                    artpanel.setPreferredSize(new Dimension(300, 150));
+                    for (BlackboardArtifact.ARTIFACT_TYPE a : ReportFilter.config.config.keySet()) {
                         JCheckBox ce = new JCheckBox();
                         ce.setText(a.getDisplayName());
                         ce.setToolTipText(a.getDisplayName());
                         ce.setName(a.getLabel());
+                        ce.setPreferredSize(new Dimension(60, 30));
                         ce.setSelected(true);
                         ce.addItemListener(clistener);
                         artpanel.add(ce);
