@@ -84,9 +84,8 @@ public interface KeywordSearchQuery {
      * @param newFsHit fscontent for which to write results for this hit
      * @param listName listname
      * @return collection of results (with cached bb artifacts/attributes) created and written
-     * @throws NoOpenCoreException if could not write to bb because required query failed due to server error, this could be a notification to stop processing
      */
-    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) throws NoOpenCoreException;
+    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName);
        
 }
 
