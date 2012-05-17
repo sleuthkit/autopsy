@@ -67,7 +67,7 @@ public class ReportPanelAction {
 
                 @Override
                 public void run() {
-                    rr.progBarCount(classList.size()+1);
+                    rr.progBarCount(((classList.size())*2)+1);
                 }
             });
             // Advance the bar a bit so the user knows something is happening
@@ -87,6 +87,7 @@ public class ReportPanelAction {
                     reports.clear();
                     for (String s : classList) {
                         try {
+                            rr.progBarSet(cc);
                             final Class reportclass = Class.forName(s);
                             rr.setUpdateLabel("Running " + reportclass.getSimpleName() + " report...");
                             Object reportObject = reportclass.newInstance();
@@ -105,7 +106,7 @@ public class ReportPanelAction {
                             }
                             
                         } catch (Exception e) {
-                           
+                           Log.get(ReportFilterAction.class).log(Level.SEVERE, "Error generating " + s + "! Reason: ", e);
                         }
                     }
 

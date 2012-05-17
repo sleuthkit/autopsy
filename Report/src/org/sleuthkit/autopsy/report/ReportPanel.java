@@ -20,6 +20,7 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -68,6 +69,12 @@ public class ReportPanel extends javax.swing.JPanel {
         saveReport = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
 
+        setMinimumSize(new java.awt.Dimension(540, 252));
+
+        jPanel1.setMinimumSize(new java.awt.Dimension(650, 200));
+        jPanel1.setName(""); // NOI18N
+        jPanel1.setPreferredSize(new java.awt.Dimension(650, 200));
+
         jLabel1.setText(org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.jLabel1.text")); // NOI18N
         jLabel1.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
         jLabel1.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
@@ -91,15 +98,15 @@ public class ReportPanel extends javax.swing.JPanel {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jButton1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 338, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 501, Short.MAX_VALUE)
                         .addComponent(saveReport))
-                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 673, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap(150, Short.MAX_VALUE)
+                .addContainerGap(134, Short.MAX_VALUE)
                 .addComponent(jLabel1)
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -113,14 +120,14 @@ public class ReportPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 693, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(165, Short.MAX_VALUE)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(41, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -149,10 +156,11 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         String reportText = "<html>These reports were generated on " + dateFormat.format(date) + ". <br><br>";
         jLabel1.setText(reportText);
         final JPanel tpanel = new JPanel(new GridBagLayout());
-
+        tpanel.setMinimumSize(new Dimension(540,240));
         SwingUtilities.invokeLater(new Runnable() {
 
             GridBagConstraints c = new GridBagConstraints();
+           // c.
 
             @Override
             public void run() {
@@ -164,7 +172,7 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
                     c.gridwidth = 2;
                     c.gridx = 0;
                     c.gridy = cc;
-                    String tempText = entry.getKey().getName() + " report - " + entry.getValue() + "";
+                    String tempText = "<html>" + entry.getKey().getName() + " report <br> - " + entry.getValue() + "";
                     JLabel lb = new JLabel();
                     lb.setText(tempText);
                     tpanel.add(lb, c);
@@ -195,7 +203,6 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             }
         });
         this.add(tpanel, 0);
-
     }
 
     private void saveReportAction(HashMap<ReportModule, String> reports) {
