@@ -554,7 +554,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     final String listName = keywordToList.get(queryStr);
 
                     //DEBUG
-                    //logger.log(Level.INFO, "Searching: " + queryStr);
+                    logger.log(Level.INFO, "Searching: " + queryStr);
 
                     progress.progress(queryStr, numSearched);
 
@@ -626,10 +626,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             List<ContentHit> contentHitsAll = newResults.get(hitTerm);
                             Map<FsContent, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
                             for (final FsContent hitFile : contentHitsFlattened.keySet()) {
-                                if (this.isCancelled()) {
-                                    finalizeSearcher();
-                                    return null;
-                                }
 
                                 String snippet = null;
                                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery(), true, false);
