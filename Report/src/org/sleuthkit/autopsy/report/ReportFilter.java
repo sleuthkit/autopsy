@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class ReportFilter extends javax.swing.JPanel {
 
     public static ArrayList<Integer> filters = new ArrayList<Integer>();
-   public static ReportConfiguration config = new ReportConfiguration();
+    public static ReportConfiguration config = new ReportConfiguration();
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public final ReportFilter panel = this;
     ReportPanelAction rpa = new ReportPanelAction();
@@ -51,16 +51,14 @@ public class ReportFilter extends javax.swing.JPanel {
      * Creates new form ReportFilter
      */
     public ReportFilter() {
-        this.setLayout(new GridLayout(0,1));
+        this.setLayout(new GridLayout(0, 1));
         initComponents();
         cancel = false;
-        try{
-        config.getAllTypes();
-   
-        }
-        catch(ReportModuleException ex)
-        {
-              Logger.getLogger(Report.class.getName()).log(Level.SEVERE, "Exception occurred", ex);
+        try {
+            config.getAllTypes();
+
+        } catch (ReportModuleException ex) {
+            Logger.getLogger(Report.class.getName()).log(Level.SEVERE, "Exception occurred", ex);
         }
     }
 
@@ -77,6 +75,7 @@ public class ReportFilter extends javax.swing.JPanel {
         progBar = new javax.swing.JProgressBar();
         jButton1 = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
+        updateLabel = new javax.swing.JLabel();
 
         jButton2.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jButton2.text")); // NOI18N
         jButton2.setActionCommand(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.jButton2.actionCommand")); // NOI18N
@@ -112,6 +111,9 @@ public class ReportFilter extends javax.swing.JPanel {
             }
         });
 
+        updateLabel.setText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.updateLabel.text")); // NOI18N
+        updateLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ReportFilter.class, "ReportFilter.updateLabel.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -121,18 +123,21 @@ public class ReportFilter extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jButton1)
-                        .addContainerGap())
+                        .addGap(18, 18, 18)
+                        .addComponent(updateLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(progBar, javax.swing.GroupLayout.DEFAULT_SIZE, 221, Short.MAX_VALUE)
+                        .addComponent(progBar, javax.swing.GroupLayout.DEFAULT_SIZE, 220, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelButton)
-                        .addGap(24, 24, 24))))
+                        .addComponent(cancelButton)))
+                .addGap(24, 24, 24))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(19, 19, 19)
-                .addComponent(jButton1)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton1)
+                    .addComponent(updateLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -156,9 +161,8 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     String preview = ReportAction.preview;
     ArrayList<JCheckBox> reportList = ReportAction.reportList;
     ArrayList<String> classList = new ArrayList<String>();
-    for(JCheckBox box : reportList)
-    {
-        if(box.isSelected()){
+    for (JCheckBox box : reportList) {
+        if (box.isSelected()) {
             classList.add(box.getName());
 
         }
@@ -216,8 +220,7 @@ private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
             }
         });
     }
-    
-    
+
     public void progBarDone() {
         int max = progBar.getMaximum();
         progBar.setValue(max);
@@ -227,6 +230,18 @@ private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
     public void progBarStartText() {
         progBar.setIndeterminate(true);
         progBar.setString("Querying Database for Report Results...");
+    }
+
+    public void setUpdateLabel(final String text) {
+        SwingUtilities.invokeLater(new Runnable() {
+
+            @Override
+            public void run() {
+                updateLabel.setText(text);
+                updateLabel.repaint();
+            }
+        });
+
     }
 
     public void progBarText() {
@@ -258,12 +273,11 @@ private void jButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:e
         jButton2.addActionListener(e);
         cancelButton.addActionListener(e);
     }
-    
-    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JProgressBar progBar;
+    private javax.swing.JLabel updateLabel;
     // End of variables declaration//GEN-END:variables
 }

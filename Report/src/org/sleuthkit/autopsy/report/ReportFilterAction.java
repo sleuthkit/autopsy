@@ -50,7 +50,7 @@ class ReportFilterAction {
             cpane = frame.getContentPane();
             // initialize panel with loaded settings
             final ReportFilter panel = new ReportFilter();
-          
+
             // add the panel to the popup window
             popUpWindow.add(panel);
             popUpWindow.pack();

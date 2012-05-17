@@ -98,7 +98,6 @@ public interface KeywordSearchQuery {
      * @param snippet snippet preview with hit context, or null if there is no snippet
      * @param listName listname
      * @return collection of results (with cached bb artifacts/attributes) created and written
-     * @throws NoOpenCoreException if could not write to bb because required query failed due to server error, this could be a notification to stop processing
      */
     public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String snippet, String listName);
        

@@ -26,8 +26,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -41,7 +41,8 @@ public class ReportPanelAction {
 
     private static final String ACTION_NAME = "Report Preview";
     private StringBuilder viewReport = new StringBuilder();
-    private int cc = 0;
+    private int cc = 1;
+    private HashMap<ReportModule,String> reports = new HashMap<ReportModule,String>();
     public ReportPanelAction() {
     }
 
@@ -66,28 +67,37 @@ public class ReportPanelAction {
 
                 @Override
                 public void run() {
-                    rr.progBarCount(classList.size());
+                    rr.progBarCount(classList.size()+1);
                 }
             });
+            // Advance the bar a bit so the user knows something is happening
+             SwingUtilities.invokeLater(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                rr.progBarSet(1);
+                            }
+                        });
             //Turn our results into the appropriate xml/html reports
             //TODO: add a way for users to select what they will run when
             Thread reportThread = new Thread(new Runnable() {
 
                 @Override
                 public void run() {
-                    
+                    reports.clear();
                     for (String s : classList) {
-                        cc++;
                         try {
-                            Class reportclass = Class.forName(s);
+                            final Class reportclass = Class.forName(s);
+                            rr.setUpdateLabel("Running " + reportclass.getSimpleName() + " report...");
                             Object reportObject = reportclass.newInstance();
                             Class[] argTypes = new Class[] { ReportConfiguration.class};
                             Method generatereport = reportclass.getDeclaredMethod("generateReport",argTypes);
                             Object invoke = generatereport.invoke(reportObject,reportconfig);
+                            rr.progBarSet(cc);
                             String path = invoke.toString();
                             Class[] argTypes2 = new Class[] { String.class};
                             Method getpreview = reportclass.getMethod("getPreview",argTypes2);
-                            
+                            reports.put((ReportModule)reportObject,path);
                             
                             if(s == null ? preview == null : s.equals(preview))
                             {
@@ -97,7 +107,6 @@ public class ReportPanelAction {
                         } catch (Exception e) {
                            
                         }
-                        rr.progBarSet(cc);
                     }
 
 //                    StopWatch a = new StopWatch();
@@ -152,7 +161,7 @@ public class ReportPanelAction {
 
                 //Set the temporary label to let the user know its done and is waiting on the report
                
-                final ReportPanel panel = new ReportPanel();
+                final ReportPanel panel = new ReportPanel(this);
 
 
                 panel.setjButton1ActionListener(new ActionListener() {
@@ -186,5 +195,9 @@ public class ReportPanelAction {
         } catch (Exception ex) {
             Log.get(ReportFilterAction.class).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
         }
+    }
+    
+    public HashMap<ReportModule,String> getReports(){       
+        return reports;
     }
 }

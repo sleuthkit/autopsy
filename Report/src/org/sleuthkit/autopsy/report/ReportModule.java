@@ -48,7 +48,7 @@ public interface ReportModule {
      * @return
      */
     public String getReportType();
-    
+
     /**
      * Returns a basic string name for the report. What is 'officially' titled.
      *
@@ -68,12 +68,22 @@ public interface ReportModule {
      * module generates
      */
     public String getReportTypeDescription();
-    
-    
+
     /**
-     * Calls to the report module to execute a method to display the report that was generated. 
-     *@param String the path to the file
-     * 
+     * Calls to the report module to execute a method to display the report that
+     * was generated.
+     *
+     * @param String the path to the file
+     *
      */
     public void getPreview(String path);
+    
+        /**
+     * Calls to the report module to execute a method to get the extension
+     * that is used for the report
+     *
+     * @return String the extension the file will be saved as
+     *
+     */
+    public String getExtension();
 }

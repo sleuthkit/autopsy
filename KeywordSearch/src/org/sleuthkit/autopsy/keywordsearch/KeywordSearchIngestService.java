@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.IOException;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.datamodel.FsContentStringStream;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -28,6 +26,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingWorker;
@@ -76,12 +75,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private Map<Keyword, List<ContentHit>> currentResults;
     private volatile int messageID = 0;
     private boolean processedFiles;
-    private volatile boolean finalRun = false;
     private volatile boolean finalRunComplete = false;
     private final String hashDBServiceName = "Hash Lookup";
     private SleuthkitCase caseHandle = null;
     boolean initialized = false;
-    private final byte[] STRING_CHUNK_BUF = new byte[(int) MAX_STRING_CHUNK_SIZE];
 
     public enum IngestStatus {
 
@@ -167,8 +164,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         updateKeywords();
         //run one last search as there are probably some new files committed
         if (keywords != null && !keywords.isEmpty() && processedFiles == true) {
-            finalRun = true;
-            searcher = new Searcher(keywords);
+            searcher = new Searcher(keywords, true); //final searcher run
             searcher.execute();
         } else {
             finalRunComplete = true;
@@ -232,7 +228,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
 
         processedFiles = false;
-        finalRun = false;
         finalRunComplete = false;
         searcherDone = true; //make sure to start the initial searcher
         //keeps track of all results per run not to repeat reporting the same hits
@@ -515,15 +510,21 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         private List<Keyword> keywords;
         private ProgressHandle progress;
         private final Logger logger = Logger.getLogger(Searcher.class.getName());
+        private boolean finalRun = false;
 
         Searcher(List<Keyword> keywords) {
             this.keywords = keywords;
         }
 
+        Searcher(List<Keyword> keywords, boolean finalRun) {
+            this(keywords);
+            this.finalRun = finalRun;
+        }
+
         @Override
         protected Object doInBackground() throws Exception {
             logger.log(Level.INFO, "Starting new searcher");
-            
+
             //make sure other searchers are not spawned 
             searcherDone = false;
 
@@ -572,6 +573,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     //no reason to continue with next query if recovery failed
                     //or wait for recovery to kick in and run again later
                     //likely case has closed and threads are being interrupted
+                    return null;
+                } catch (CancellationException e) {
+                    logger.log(Level.INFO, "Cancel detected, bailing during keyword query: " + keywordQuery.getQuery());
                     return null;
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e);
@@ -709,7 +713,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             }
                             detailsSb.append("</table>");
 
-                            managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));                     
+                            managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
 
 
                         } //for each term hit
@@ -728,19 +732,25 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         @Override
         protected void done() {
-            super.done();
-            searcherDone = true;  //next searcher can start      
+            try {
+                super.get(); //block and get all exceptions thrown while doInBackground()      
 
-            progress.finish();
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Searcher exceptions occurred, while in background. ", ex);
+            } finally {
+                searcherDone = true;  //next searcher can start      
 
-            logger.log(Level.INFO, "Searcher done");
-            if (finalRun) {
-                logger.log(Level.INFO, "The final searcher in this ingest done.");
-                finalRunComplete = true;
-                keywords.clear();
-                keywordLists.clear();
-                keywordToList.clear();
-                managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
+                progress.finish();
+
+                logger.log(Level.INFO, "Searcher done");
+                if (finalRun) {
+                    logger.log(Level.INFO, "The final searcher in this ingest done.");
+                    finalRunComplete = true;
+                    keywords.clear();
+                    keywordLists.clear();
+                    keywordToList.clear();
+                    managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
+                }
             }
         }
     }
