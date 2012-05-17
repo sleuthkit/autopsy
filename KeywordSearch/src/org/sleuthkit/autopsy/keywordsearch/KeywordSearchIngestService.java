@@ -26,9 +26,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -576,6 +576,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     //no reason to continue with next query if recovery failed
                     //or wait for recovery to kick in and run again later
                     //likely case has closed and threads are being interrupted
+                    return null;
+                } catch (CancellationException e) {
+                    logger.log(Level.INFO, "Cancel detected, bailing during keyword query: " + keywordQuery.getQuery());
                     return null;
                 } catch (Exception e) {
                     logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e);
