@@ -525,11 +525,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         protected Object doInBackground() throws Exception {
             logger.log(Level.INFO, "Pending start of new searcher");
 
-            progress = ProgressHandleFactory.createHandle("Keyword Search" + (finalRun ? " (Final)" : ""), new Cancellable() {
+            progress = ProgressHandleFactory.createHandle("Keyword Search" + (finalRun ? " (Finalizing)" : ""), new Cancellable() {
 
                 @Override
                 public boolean cancel() {
-                    logger.log(Level.INFO, "Cancelling the searcher");
+                    logger.log(Level.INFO, "Cancelling the searcher by user.");
                     return Searcher.this.cancel(true);
                 }
             });
@@ -741,7 +741,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
 
         //perform all essential cleanup that needs to be done right AFTER doInBackground() returns
-        //without relying on done() method that is not guaranteed to run after background threads competes
+        //without relying on done() method that is not guaranteed to run after background thread completes
         //NEED to call this method always right before doInBackground() returns
         private void finalizeSearcher() {
             logger.log(Level.INFO, "Searcher finalizing");
