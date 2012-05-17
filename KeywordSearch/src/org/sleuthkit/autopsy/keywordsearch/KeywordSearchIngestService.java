@@ -81,8 +81,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,
-    };
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
     private Map<Long, IngestStatus> ingestStatus;
 
     public static synchronized KeywordSearchIngestService getDefault() {
@@ -548,6 +547,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 for (Keyword keywordQuery : keywords) {
                     if (this.isCancelled()) {
                         logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: " + keywordQuery.getQuery());
+                        finalizeSearcher();
                         return null;
                     }
                     final String queryStr = keywordQuery.getQuery();
@@ -577,9 +577,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                         //no reason to continue with next query if recovery failed
                         //or wait for recovery to kick in and run again later
                         //likely case has closed and threads are being interrupted
+                        finalizeSearcher();
                         return null;
                     } catch (CancellationException e) {
                         logger.log(Level.INFO, "Cancel detected, bailing during keyword query: " + keywordQuery.getQuery());
+                        
+                        finalizeSearcher();
                         return null;
                     } catch (Exception e) {
                         logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e);
@@ -624,6 +627,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             Map<FsContent, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
                             for (final FsContent hitFile : contentHitsFlattened.keySet()) {
                                 if (this.isCancelled()) {
+                                    finalizeSearcher();
                                     return null;
                                 }
 
@@ -635,6 +639,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                 } catch (NoOpenCoreException e) {
                                     logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
                                     //no reason to continie
+                                    finalizeSearcher();
                                     return null;
                                 } catch (Exception e) {
                                     logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
@@ -730,33 +735,33 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     }
                     progress.progress(queryStr, ++numSearched);
                 }
+                
+                finalizeSearcher();
             } //end synchronized block
 
             return null;
         }
 
+        //perform all essential cleanup that needs to be done right AFTER doInBackground() returns
+        //without relying on done() method that is not guaranteed to run after background threads competes
+        //NEED to call this method always right before doInBackground() returns
+        private void finalizeSearcher() {
+            searcherDone = true;  //next currentSearcher can start
+
+            if (finalRun) {
+                logger.log(Level.INFO, "The final searcher in this ingest done.");
+                finalRunComplete = true;
+                //keywords.clear();
+                //keywordLists.clear();
+                //keywordToList.clear();
+                managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
+            }
+        }
+
         @Override
         protected void done() {
-            try {
-                super.get(); //block and get all exceptions thrown while doInBackground()      
-
-            } catch (Exception ex) {
-                logger.log(Level.WARNING, "Searcher exceptions occurred, while in background. ", ex);
-            } finally {
-                searcherDone = true;  //next currentSearcher can start      
-
-                progress.finish();
-
-                logger.log(Level.INFO, "Searcher done");
-                if (finalRun) {
-                    logger.log(Level.INFO, "The final searcher in this ingest done.");
-                    finalRunComplete = true;
-                    //keywords.clear();
-                    //keywordLists.clear();
-                    //keywordToList.clear();
-                    managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
-                }
-            }
+            logger.log(Level.INFO, "Searcher done()");
+            progress.finish();
         }
     }
 
