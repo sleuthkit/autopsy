@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -73,6 +72,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private Searcher searcher;
     private volatile boolean searcherDone = true;
     private Map<Keyword, List<ContentHit>> currentResults;
+    private final Object currentResultsLock = new Object();
     private volatile int messageID = 0;
     private boolean processedFiles;
     private volatile boolean finalRunComplete = false;
@@ -82,7 +82,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,
+    };
     private Map<Long, IngestStatus> ingestStatus;
 
     public static synchronized KeywordSearchIngestService getDefault() {
@@ -584,40 +585,42 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
                 //calculate new results but substracting results already obtained in this run
                 Map<Keyword, List<ContentHit>> newResults = new HashMap<Keyword, List<ContentHit>>();
-
-                for (String termResult : queryResult.keySet()) {
-                    List<ContentHit> queryTermResults = queryResult.get(termResult);
-                    Keyword termResultK = new Keyword(termResult, !isRegex);
-                    List<ContentHit> curTermResults = currentResults.get(termResultK);
-                    if (curTermResults == null) {
-                        currentResults.put(termResultK, queryTermResults);
-                        newResults.put(termResultK, queryTermResults);
-                    } else {
-                        //some fscontent hits already exist for this keyword
-                        for (ContentHit res : queryTermResults) {
-                            if (! previouslyHit(curTermResults, res)) {
-                                //add to new results
-                                List<ContentHit> newResultsFs = newResults.get(termResultK);
-                                if (newResultsFs == null) {
-                                    newResultsFs = new ArrayList<ContentHit>();
-                                    newResults.put(termResultK, newResultsFs);
+                //ensure safe concurrent access, in a rare case of another active searcher
+                synchronized (currentResultsLock) {
+                    for (String termResult : queryResult.keySet()) {
+                        List<ContentHit> queryTermResults = queryResult.get(termResult);
+                        Keyword termResultK = new Keyword(termResult, !isRegex);
+                        List<ContentHit> curTermResults = currentResults.get(termResultK);
+                        if (curTermResults == null) {
+                            currentResults.put(termResultK, queryTermResults);
+                            newResults.put(termResultK, queryTermResults);
+                        } else {
+                            //some fscontent hits already exist for this keyword
+                            for (ContentHit res : queryTermResults) {
+                                if (!previouslyHit(curTermResults, res)) {
+                                    //add to new results
+                                    List<ContentHit> newResultsFs = newResults.get(termResultK);
+                                    if (newResultsFs == null) {
+                                        newResultsFs = new ArrayList<ContentHit>();
+                                        newResults.put(termResultK, newResultsFs);
+                                    }
+                                    newResultsFs.add(res);
+                                    curTermResults.add(res);
                                 }
-                                newResultsFs.add(res);
-                                curTermResults.add(res);
                             }
                         }
-                    }
 
+                    }
                 }
 
 
                 if (!newResults.isEmpty()) {
-                    
+
                     //write results to BB
                     Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>(); //new artifacts to report
                     for (final Keyword hitTerm : newResults.keySet()) {
                         List<ContentHit> contentHitsAll = newResults.get(hitTerm);
-                        Map<FsContent,Integer>contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
+                        Map<FsContent, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
                         for (final FsContent hitFile : contentHitsFlattened.keySet()) {
                             if (this.isCancelled()) {
                                 return null;
@@ -636,7 +639,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                 logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
                                 continue;
                             }
-                            
+
                             KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
 
                             if (written == null) {
@@ -746,15 +749,15 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 if (finalRun) {
                     logger.log(Level.INFO, "The final searcher in this ingest done.");
                     finalRunComplete = true;
-                    keywords.clear();
-                    keywordLists.clear();
-                    keywordToList.clear();
+                    //keywords.clear();
+                    //keywordLists.clear();
+                    //keywordToList.clear();
                     managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
                 }
             }
         }
     }
-    
+
     //check if fscontent already hit, ignore chunks
     private static boolean previouslyHit(List<ContentHit> contents, ContentHit hit) {
         boolean ret = false;
