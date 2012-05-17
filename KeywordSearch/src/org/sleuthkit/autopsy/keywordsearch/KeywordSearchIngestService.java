@@ -746,6 +746,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         //without relying on done() method that is not guaranteed to run after background threads competes
         //NEED to call this method always right before doInBackground() returns
         private void finalizeSearcher() {
+            logger.log(Level.INFO, "Finalizing the searcher.");
             searcherDone = true;  //next currentSearcher can start
 
             if (finalRun) {
