@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -74,7 +75,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private final Object searcherLock = new Object();
     private volatile int messageID = 0;
     private boolean processedFiles;
-    private volatile boolean finalRunComplete = false;
+    private volatile boolean finalSearcherDone = false;
     private final String hashDBServiceName = "Hash Lookup";
     private SleuthkitCase caseHandle = null;
     boolean initialized = false;
@@ -166,7 +167,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             currentSearcher = new Searcher(keywords, true); //final currentSearcher run
             currentSearcher.execute();
         } else {
-            finalRunComplete = true;
+            finalSearcherDone = true;
             managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
         }
 
@@ -227,7 +228,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
 
         processedFiles = false;
-        finalRunComplete = false;
+        finalSearcherDone = false;
         searcherDone = true; //make sure to start the initial currentSearcher
         //keeps track of all results per run not to repeat reporting the same hits
         currentResults = new HashMap<Keyword, List<ContentHit>>();
@@ -282,7 +283,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     @Override
     public boolean hasBackgroundJobsRunning() {
-        if (currentSearcher != null && searcherDone == false) {
+        if (currentSearcher != null && (searcherDone == false || finalSearcherDone == false)) {
             return true;
         } else {
             return false;
@@ -524,6 +525,18 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         protected Object doInBackground() throws Exception {
             logger.log(Level.INFO, "Pending start of new searcher");
 
+            progress = ProgressHandleFactory.createHandle("Keyword Search" + (finalRun ? " (Final)" : ""), new Cancellable() {
+
+                @Override
+                public boolean cancel() {
+                    logger.log(Level.INFO, "Cancelling the searcher");
+                    return Searcher.this.cancel(true);
+                }
+            });
+
+            progress.start();
+            progress.switchToIndeterminate();
+
             //block to ensure previous searcher is completely done with doInBackground()
             //even after previous searcher cancellation, we need to check this
             synchronized (searcherLock) {
@@ -531,18 +544,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                 //make sure other searchers are not spawned 
                 searcherDone = false;
 
-                progress = ProgressHandleFactory.createHandle("Keyword Search", new Cancellable() {
-
-                    @Override
-                    public boolean cancel() {
-                        logger.log(Level.INFO, "Cancelling the searcher");
-                        finalRunComplete = true;
-                        return Searcher.this.cancel(true);
-                    }
-                });
-
-                progress.start(keywords.size());
                 int numSearched = 0;
+                progress.switchToDeterminate(keywords.size());
 
                 for (Keyword keywordQuery : keywords) {
                     if (this.isCancelled()) {
@@ -626,11 +629,6 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             List<ContentHit> contentHitsAll = newResults.get(hitTerm);
                             Map<FsContent, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
                             for (final FsContent hitFile : contentHitsFlattened.keySet()) {
-                                if (this.isCancelled()) {
-                                    finalizeSearcher();
-                                    return null;
-                                }
-
                                 String snippet = null;
                                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery(), true, false);
                                 int chunkId = contentHitsFlattened.get(hitFile);
@@ -746,22 +744,23 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         //without relying on done() method that is not guaranteed to run after background threads competes
         //NEED to call this method always right before doInBackground() returns
         private void finalizeSearcher() {
+            logger.log(Level.INFO, "Searcher finalizing");
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    progress.finish();
+                }
+            });
             searcherDone = true;  //next currentSearcher can start
 
             if (finalRun) {
                 logger.log(Level.INFO, "The final searcher in this ingest done.");
-                finalRunComplete = true;
+                finalSearcherDone = true;
                 //keywords.clear();
                 //keywordLists.clear();
                 //keywordToList.clear();
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
             }
-        }
-
-        @Override
-        protected void done() {
-            logger.log(Level.INFO, "Searcher done()");
-            progress.finish();
         }
     }
 
