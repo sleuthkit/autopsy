@@ -85,7 +85,7 @@ public interface KeywordSearchQuery {
      * @param listName listname
      * @return collection of results (with cached bb artifacts/attributes) created and written
      */
-    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName);
+    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String listName) throws NoOpenCoreException;
        
 }
 
