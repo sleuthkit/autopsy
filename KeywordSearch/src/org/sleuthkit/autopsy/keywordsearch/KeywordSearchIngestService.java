@@ -69,10 +69,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     //private final Object lock = new Object();
     private Timer commitTimer;
     private Indexer indexer;
-    private Searcher searcher;
+    private Searcher currentSearcher;
     private volatile boolean searcherDone = true;
     private Map<Keyword, List<ContentHit>> currentResults;
-    private final Object currentResultsLock = new Object();
+    private final Object searcherLock = new Object();
     private volatile int messageID = 0;
     private boolean processedFiles;
     private volatile boolean finalRunComplete = false;
@@ -127,8 +127,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             updateKeywords();
             //start search if previous not running
             if (keywords != null && !keywords.isEmpty() && searcherDone) {
-                searcher = new Searcher(keywords);
-                searcher.execute();
+                currentSearcher = new Searcher(keywords);
+                currentSearcher.execute();
             }
         }
 
@@ -149,8 +149,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         //handle case if previous search running
         //cancel it, will re-run after final commit
         //note: cancellation of Searcher worker is graceful (between keywords)
-        if (searcher != null) {
-            searcher.cancel(false);
+        if (currentSearcher != null) {
+            currentSearcher.cancel(false);
         }
 
         logger.log(Level.INFO, "Running final index commit and search");
@@ -165,8 +165,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         updateKeywords();
         //run one last search as there are probably some new files committed
         if (keywords != null && !keywords.isEmpty() && processedFiles == true) {
-            searcher = new Searcher(keywords, true); //final searcher run
-            searcher.execute();
+            currentSearcher = new Searcher(keywords, true); //final currentSearcher run
+            currentSearcher.execute();
         } else {
             finalRunComplete = true;
             managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
@@ -181,9 +181,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         //stop timer
         commitTimer.stop();
-        //stop searcher
-        if (searcher != null) {
-            searcher.cancel(true);
+        //stop currentSearcher
+        if (currentSearcher != null) {
+            currentSearcher.cancel(true);
         }
 
         //commit uncommited files, don't search again
@@ -230,7 +230,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         processedFiles = false;
         finalRunComplete = false;
-        searcherDone = true; //make sure to start the initial searcher
+        searcherDone = true; //make sure to start the initial currentSearcher
         //keeps track of all results per run not to repeat reporting the same hits
         currentResults = new HashMap<Keyword, List<ContentHit>>();
 
@@ -284,7 +284,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     @Override
     public boolean hasBackgroundJobsRunning() {
-        if (searcher != null && searcherDone == false) {
+        if (currentSearcher != null && searcherDone == false) {
             return true;
         } else {
             return false;
@@ -524,69 +524,72 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         @Override
         protected Object doInBackground() throws Exception {
-            logger.log(Level.INFO, "Starting new searcher");
+            logger.log(Level.INFO, "Pending start of new searcher");
 
-            //make sure other searchers are not spawned 
-            searcherDone = false;
+            //block to ensure previous searcher is completely done with doInBackground()
+            //even after previous searcher cancellation, we need to check this
+            synchronized (searcherLock) {
+                logger.log(Level.INFO, "Started a new searcher");
+                //make sure other searchers are not spawned 
+                searcherDone = false;
 
-            progress = ProgressHandleFactory.createHandle("Keyword Search", new Cancellable() {
+                progress = ProgressHandleFactory.createHandle("Keyword Search", new Cancellable() {
 
-                @Override
-                public boolean cancel() {
-                    logger.log(Level.INFO, "Cancelling the searcher");
-                    finalRunComplete = true;
-                    return Searcher.this.cancel(true);
-                }
-            });
+                    @Override
+                    public boolean cancel() {
+                        logger.log(Level.INFO, "Cancelling the searcher");
+                        finalRunComplete = true;
+                        return Searcher.this.cancel(true);
+                    }
+                });
 
-            progress.start(keywords.size());
-            int numSearched = 0;
+                progress.start(keywords.size());
+                int numSearched = 0;
 
-            for (Keyword keywordQuery : keywords) {
-                if (this.isCancelled()) {
-                    logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: " + keywordQuery.getQuery());
-                    return null;
-                }
-                final String queryStr = keywordQuery.getQuery();
-                final String listName = keywordToList.get(queryStr);
+                for (Keyword keywordQuery : keywords) {
+                    if (this.isCancelled()) {
+                        logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: " + keywordQuery.getQuery());
+                        return null;
+                    }
+                    final String queryStr = keywordQuery.getQuery();
+                    final String listName = keywordToList.get(queryStr);
 
-                //DEBUG
-                //logger.log(Level.INFO, "Searching: " + queryStr);
+                    //DEBUG
+                    //logger.log(Level.INFO, "Searching: " + queryStr);
 
-                progress.progress(queryStr, numSearched);
+                    progress.progress(queryStr, numSearched);
 
-                KeywordSearchQuery del = null;
+                    KeywordSearchQuery del = null;
 
-                boolean isRegex = !keywordQuery.isLiteral();
-                if (!isRegex) {
-                    del = new LuceneQuery(keywordQuery);
-                    del.escape();
-                } else {
-                    del = new TermComponentQuery(keywordQuery);
-                }
+                    boolean isRegex = !keywordQuery.isLiteral();
+                    if (!isRegex) {
+                        del = new LuceneQuery(keywordQuery);
+                        del.escape();
+                    } else {
+                        del = new TermComponentQuery(keywordQuery);
+                    }
 
-                Map<String, List<ContentHit>> queryResult = null;
+                    Map<String, List<ContentHit>> queryResult = null;
 
-                try {
-                    queryResult = del.performQuery();
-                } catch (NoOpenCoreException ex) {
-                    logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), ex);
-                    //no reason to continue with next query if recovery failed
-                    //or wait for recovery to kick in and run again later
-                    //likely case has closed and threads are being interrupted
-                    return null;
-                } catch (CancellationException e) {
-                    logger.log(Level.INFO, "Cancel detected, bailing during keyword query: " + keywordQuery.getQuery());
-                    return null;
-                } catch (Exception e) {
-                    logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e);
-                    continue;
-                }
+                    try {
+                        queryResult = del.performQuery();
+                    } catch (NoOpenCoreException ex) {
+                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), ex);
+                        //no reason to continue with next query if recovery failed
+                        //or wait for recovery to kick in and run again later
+                        //likely case has closed and threads are being interrupted
+                        return null;
+                    } catch (CancellationException e) {
+                        logger.log(Level.INFO, "Cancel detected, bailing during keyword query: " + keywordQuery.getQuery());
+                        return null;
+                    } catch (Exception e) {
+                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e);
+                        continue;
+                    }
 
-                //calculate new results but substracting results already obtained in this run
-                Map<Keyword, List<ContentHit>> newResults = new HashMap<Keyword, List<ContentHit>>();
-                //ensure safe concurrent access, in a rare case of another active searcher
-                synchronized (currentResultsLock) {
+                    //calculate new results but substracting results already obtained in this run
+                    Map<Keyword, List<ContentHit>> newResults = new HashMap<Keyword, List<ContentHit>>();
+
                     for (String termResult : queryResult.keySet()) {
                         List<ContentHit> queryTermResults = queryResult.get(termResult);
                         Keyword termResultK = new Keyword(termResult, !isRegex);
@@ -609,126 +612,126 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                 }
                             }
                         }
-
                     }
-                }
 
 
-                if (!newResults.isEmpty()) {
 
-                    //write results to BB
-                    Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>(); //new artifacts to report
-                    for (final Keyword hitTerm : newResults.keySet()) {
-                        List<ContentHit> contentHitsAll = newResults.get(hitTerm);
-                        Map<FsContent, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
-                        for (final FsContent hitFile : contentHitsFlattened.keySet()) {
-                            if (this.isCancelled()) {
-                                return null;
-                            }
+                    if (!newResults.isEmpty()) {
 
-                            String snippet = null;
-                            final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery(), true, false);
-                            int chunkId = contentHitsFlattened.get(hitFile);
-                            try {
-                                snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, isRegex, true);
-                            } catch (NoOpenCoreException e) {
-                                logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
-                                //no reason to continie
-                                return null;
-                            } catch (Exception e) {
-                                logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
-                                continue;
-                            }
+                        //write results to BB
+                        Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>(); //new artifacts to report
+                        for (final Keyword hitTerm : newResults.keySet()) {
+                            List<ContentHit> contentHitsAll = newResults.get(hitTerm);
+                            Map<FsContent, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
+                            for (final FsContent hitFile : contentHitsFlattened.keySet()) {
+                                if (this.isCancelled()) {
+                                    return null;
+                                }
 
-                            KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
+                                String snippet = null;
+                                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery(), true, false);
+                                int chunkId = contentHitsFlattened.get(hitFile);
+                                try {
+                                    snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, isRegex, true);
+                                } catch (NoOpenCoreException e) {
+                                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
+                                    //no reason to continie
+                                    return null;
+                                } catch (Exception e) {
+                                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
+                                    continue;
+                                }
 
-                            if (written == null) {
-                                //logger.log(Level.INFO, "BB artifact for keyword not written: " + hitTerm.toString());
-                                continue;
-                            }
+                                KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
 
-                            newArtifacts.add(written.getArtifact());
+                                if (written == null) {
+                                    //logger.log(Level.INFO, "BB artifact for keyword not written: " + hitTerm.toString());
+                                    continue;
+                                }
 
-                            //generate a data message for each artifact
-                            StringBuilder subjectSb = new StringBuilder();
-                            StringBuilder detailsSb = new StringBuilder();
-                            //final int hitFiles = newResults.size();
+                                newArtifacts.add(written.getArtifact());
 
-                            if (!keywordQuery.isLiteral()) {
-                                subjectSb.append("RegExp hit: ");
-                            } else {
-                                subjectSb.append("Keyword hit: ");
-                            }
-                            //subjectSb.append("<");
-                            String uniqueKey = null;
-                            BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
-                            if (attr != null) {
-                                final String keyword = attr.getValueString();
-                                subjectSb.append(keyword);
-                                uniqueKey = keyword.toLowerCase();
-                            }
+                                //generate a data message for each artifact
+                                StringBuilder subjectSb = new StringBuilder();
+                                StringBuilder detailsSb = new StringBuilder();
+                                //final int hitFiles = newResults.size();
 
-                            //subjectSb.append(">");
-                            //String uniqueKey = queryStr;
+                                if (!keywordQuery.isLiteral()) {
+                                    subjectSb.append("RegExp hit: ");
+                                } else {
+                                    subjectSb.append("Keyword hit: ");
+                                }
+                                //subjectSb.append("<");
+                                String uniqueKey = null;
+                                BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
+                                if (attr != null) {
+                                    final String keyword = attr.getValueString();
+                                    subjectSb.append(keyword);
+                                    uniqueKey = keyword.toLowerCase();
+                                }
 
-                            //details
-                            detailsSb.append("<table border='0' cellpadding='4' width='280'>");
-                            //hit
-                            detailsSb.append("<tr>");
-                            detailsSb.append("<th>Keyword hit</th>");
-                            detailsSb.append("<td>").append(StringEscapeUtils.escapeHtml(attr.getValueString())).append("</td>");
-                            detailsSb.append("</tr>");
+                                //subjectSb.append(">");
+                                //String uniqueKey = queryStr;
 
-                            //preview
-                            attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
-                            if (attr != null) {
+                                //details
+                                detailsSb.append("<table border='0' cellpadding='4' width='280'>");
+                                //hit
                                 detailsSb.append("<tr>");
-                                detailsSb.append("<th>Preview</th>");
+                                detailsSb.append("<th>Keyword hit</th>");
                                 detailsSb.append("<td>").append(StringEscapeUtils.escapeHtml(attr.getValueString())).append("</td>");
                                 detailsSb.append("</tr>");
 
-                            }
-
-                            //file
-                            detailsSb.append("<tr>");
-                            detailsSb.append("<th>File</th>");
-                            detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
-                            detailsSb.append("</tr>");
-
-
-                            //list
-                            attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID());
-                            detailsSb.append("<tr>");
-                            detailsSb.append("<th>List</th>");
-                            detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
-                            detailsSb.append("</tr>");
-
-                            //regex
-                            if (!keywordQuery.isLiteral()) {
-                                attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
+                                //preview
+                                attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
                                 if (attr != null) {
                                     detailsSb.append("<tr>");
-                                    detailsSb.append("<th>RegEx</th>");
-                                    detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
+                                    detailsSb.append("<th>Preview</th>");
+                                    detailsSb.append("<td>").append(StringEscapeUtils.escapeHtml(attr.getValueString())).append("</td>");
                                     detailsSb.append("</tr>");
 
                                 }
-                            }
-                            detailsSb.append("</table>");
 
-                            managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+                                //file
+                                detailsSb.append("<tr>");
+                                detailsSb.append("<th>File</th>");
+                                detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
+                                detailsSb.append("</tr>");
 
 
-                        } //for each term hit
-                    }//for each file hit
+                                //list
+                                attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID());
+                                detailsSb.append("<tr>");
+                                detailsSb.append("<th>List</th>");
+                                detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
+                                detailsSb.append("</tr>");
 
-                    //update artifact browser
-                    if (!newArtifacts.isEmpty()) {
-                        IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+                                //regex
+                                if (!keywordQuery.isLiteral()) {
+                                    attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
+                                    if (attr != null) {
+                                        detailsSb.append("<tr>");
+                                        detailsSb.append("<th>RegEx</th>");
+                                        detailsSb.append("<td>").append(attr.getValueString()).append("</td>");
+                                        detailsSb.append("</tr>");
+
+                                    }
+                                }
+                                detailsSb.append("</table>");
+
+                                managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+
+
+                            } //for each term hit
+                        }//for each file hit
+
+                        //update artifact browser
+                        if (!newArtifacts.isEmpty()) {
+                            IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+                        }
                     }
+                    progress.progress(queryStr, ++numSearched);
                 }
-                progress.progress(queryStr, ++numSearched);
-            }
+            } //end synchronized block
 
             return null;
         }
@@ -741,7 +744,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Searcher exceptions occurred, while in background. ", ex);
             } finally {
-                searcherDone = true;  //next searcher can start      
+                searcherDone = true;  //next currentSearcher can start      
 
                 progress.finish();
 
