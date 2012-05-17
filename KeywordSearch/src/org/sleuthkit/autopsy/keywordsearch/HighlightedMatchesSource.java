@@ -135,9 +135,13 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                     chunksQuery.escape();
                 }
                  */
-                Keyword keywordQuery = new Keyword(this.keywordHitQuery, false);
+                String queryStr = KeywordSearchUtil.escapeLuceneQuery(this.keywordHitQuery, true, false);
+                if (isRegex) {
+                    //use white-space sep. field to get exact matches only of regex query result
+                    queryStr = Server.Schema.CONTENT_WS + ":" + "\"" + queryStr + "\"";
+                }
+                Keyword keywordQuery = new Keyword(queryStr, false);
                 chunksQuery = new LuceneQuery(keywordQuery);
-                chunksQuery.escape();
                 KeywordQueryFilter contentIdFilter = new KeywordQueryFilter(FilterType.CHUNK, contentId);
                 chunksQuery.setFilter(contentIdFilter);
                 try {
