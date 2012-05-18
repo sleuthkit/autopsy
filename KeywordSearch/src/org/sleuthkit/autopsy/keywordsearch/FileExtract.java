@@ -67,7 +67,7 @@ public class FileExtract {
             //break string into chunks 
             //Note: could use DataConversion.toString() since we are operating on fixed chunks
             //but FsContentStringStream handles string boundary case better
-            stringStream = new FsContentStringStream(sourceFile, FsContentStringStream.Encoding.UTF8, true);
+            stringStream = new FsContentStringStream(sourceFile, FsContentStringStream.Encoding.UTF8);
             long readSize = 0;
             
             while ((readSize = stringStream.read(STRING_CHUNK_BUF, 0, (int) MAX_STRING_CHUNK_SIZE)) != -1) {
