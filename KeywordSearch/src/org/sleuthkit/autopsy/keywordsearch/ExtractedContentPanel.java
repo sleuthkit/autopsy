@@ -369,7 +369,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * @param current, current hit to update the display with
      */
     void updateCurrentMatchDisplay(int current) {
-        hitCountLabel.setText(Integer.toString(current));
+        if (current == 0)
+            hitCountLabel.setText("-");
+        else hitCountLabel.setText(Integer.toString(current));
     }
 
     /**
@@ -377,7 +379,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * @param total total number of hits to update the display with
      */
     void updateTotaMatcheslDisplay(int total) {
-        hitTotalLabel.setText(Integer.toString(total));
+        if (total == 0)
+            hitTotalLabel.setText("-");
+        else hitTotalLabel.setText(Integer.toString(total));
     }
     
     
