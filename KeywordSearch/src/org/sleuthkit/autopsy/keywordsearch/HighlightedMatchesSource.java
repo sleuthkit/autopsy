@@ -164,7 +164,9 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             }
 
             //set page to first page having highlights
-            this.currentPage = pagesSorted.first();
+            if (pagesSorted.isEmpty())
+                this.currentPage = 0;
+            else this.currentPage = pagesSorted.first();
 
             for (Integer page : pagesSorted) {
                 hitsPages.put(page, 0); //unknown number of matches in the page
