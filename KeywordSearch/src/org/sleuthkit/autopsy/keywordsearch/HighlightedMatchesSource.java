@@ -240,11 +240,15 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public boolean hasNextItem() {
+        if (!this.pagesToHits.containsKey(currentPage))
+            return false;
         return this.pagesToHits.get(currentPage) < this.hitsPages.get(currentPage);
     }
 
     @Override
     public boolean hasPreviousItem() {
+        if (!this.pagesToHits.containsKey(currentPage))
+            return false;
         return this.pagesToHits.get(currentPage) > 1;
     }
 
@@ -270,6 +274,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public int currentItem() {
+        if (!this.pagesToHits.containsKey(currentPage))
+            return 0;
         return pagesToHits.get(currentPage);
     }
 
@@ -383,6 +389,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public int getNumberHits() {
+        if (!this.hitsPages.containsKey(this.currentPage))
+            return 0;
         return this.hitsPages.get(this.currentPage);
     }
 
