@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 
@@ -77,6 +78,17 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
             KeywordSearchUtil.displayDialog("Keyword Search Error", "No files are indexed, please index an image before searching", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             return;
         }
+        
+        //check if keyword search service ingest is running (indexing, etc)
+        if (IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault())) {
+            if (KeywordSearchUtil.displayConfirmDialog("Keyword Search Ingest in Progress", 
+                    "<html>Keyword Search Ingest is currently running.<br />"
+                    + "Not all files have been indexed and this search might yield incomplete results.<br />"
+                    + "Do you want to proceed with this search anyway?</html>"
+                    , KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false)
+                return;
+        }
+        
         KeywordSearchQueryManager man = null;
         if (isMultiwordQuery()) {
             final List<Keyword> keywords = getQueryList();
