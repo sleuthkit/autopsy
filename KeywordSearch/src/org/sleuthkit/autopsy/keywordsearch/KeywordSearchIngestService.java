@@ -526,11 +526,15 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         protected Object doInBackground() throws Exception {
             logger.log(Level.INFO, "Pending start of new searcher");
 
-            progress = ProgressHandleFactory.createHandle("Keyword Search" + (finalRun ? " (Finalizing)" : ""), new Cancellable() {
+            final String displayName = "Keyword Search" + (finalRun ? " (Finalizing)" : "");
+            progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
 
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Cancelling the searcher by user.");
+                    if (progress != null) {
+                        progress.setDisplayName(displayName + " (Cancelling...)");
+                    }
                     return Searcher.this.cancel(true);
                 }
             });
