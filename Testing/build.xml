@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- You may freely edit this file. See harness/README in the NetBeans platform -->
+<!-- for some information on what you could do (e.g. targets to override). -->
+<!-- If you delete this file and reopen the project it will be recreated. -->
+<project name="org.sleuthkit.autopsy.testing" default="netbeans" basedir=".">
+    <description>Builds, tests, and runs the project org.sleuthkit.autopsy.testing.</description>
+    <import file="nbproject/build-impl.xml"/>
+    
+    <target name="set-args">
+        <property name="img_path" value="C:\Users\dfickling\Desktop\test-data\64mb2.img"/>
+        <property name="known_bad_path" value="C:\Users\dfickling\Desktop\test-data\notable_files.txt"/>
+        <property name="nsrl_path" value="C:\Users\dfickling\Desktop\NSRLComplete.txt-md5.idx"/>
+        <property name="keyword_path" value="C:\Users\dfickling\Desktop\test-data\notable_words.xml"/>
+        <property name="gold_path" value="C:\Users\dfickling\Desktop\test-data\win7-ren.txt"/>
+        <property name="out_path" value="C:\Users\dfickling\Desktop\test-data"/>
+    </target>
+    
+    <target name="check-args"> <!-- remove dependency on set-args to get from script -->
+        <fail message="Missing required argument: img_path" unless="img_path"/>
+        <fail message="Missing required argument: gold_path" unless="gold_path"/>
+        <fail message="Missing required argument: out_path" unless="out_path"/>
+        <fail message="Missing required argument: known_bad_path" unless="known_bad_path"/>
+        <fail message="Missing required argument: nsrl_path" unless="nsrl_path"/>
+        <fail message="Missing required argument: keyword_path" unless="keyword_path"/>
+    </target>
+    
+    <target name="regression-test" depends="check-args,init,test-init,test-build" if="exists.test.qa-functional.src.dir">
+        <test test.type="qa-functional"/>
+    </target>
+    
+    <macrodef name="test">
+        <attribute name="test.type"/>
+        <attribute name="disable.apple.ui" default="false"/>
+        <sequential>
+            <property name="test.config" value="default"/>
+            <property name="test.config.default.includes" value="**/*Test.class"/>
+            <property name="test.config.${test.config}.includes" value="NOTHING"/>
+            <metaproperty name="test.includes" value="test.config.${test.config}.includes"/>
+            <property name="test.config.${test.config}.excludes" value=""/>
+            <metaproperty name="test.excludes" value="test.config.${test.config}.excludes"/>
+            <mkdir dir="${build.test.@{test.type}.results.dir}"/>
+            <junit fork="true" failureproperty="tests.failed" errorproperty="tests.failed" filtertrace="${test.filter.trace}" tempdir="${build.test.@{test.type}.results.dir}">
+                <batchtest todir="${build.test.@{test.type}.results.dir}">
+                    <fileset dir="${build.test.@{test.type}.classes.dir}" includes="${test.includes}" excludes="${test.excludes}"/>
+                </batchtest>
+                <classpath refid="test.@{test.type}.run.cp"/>
+                <syspropertyset refid="test.@{test.type}.properties"/>
+                <jvmarg line="${test.bootclasspath.prepend.args}"/>
+                <jvmarg line="${test.run.args}"/>
+                <sysproperty key="img_path" value="${img_path}"/>
+                <sysproperty key="gold_path" value="${gold_path}"/>
+                <sysproperty key="out_path" value="${out_path}"/>
+                <sysproperty key="known_bad_path" value="${known_bad_path}"/>
+                <sysproperty key="nsrl_path" value="${nsrl_path}"/>
+                <sysproperty key="keyword_path" value="${keyword_path}"/>
+                <!--needed to have tests NOT to steal focus when running, works in latest apple jdk update only.-->
+                <sysproperty key="apple.awt.UIElement" value="@{disable.apple.ui}"/>
+                <formatter type="brief" usefile="false"/>
+                <formatter type="xml"/>
+            </junit>
+            <fail message="Some tests failed; see details above.">
+                <condition>
+                    <and>
+                        <isset property="tests.failed"/>
+                        <isfalse value="${continue.after.failing.tests}"/>
+                    </and>
+                </condition>
+            </fail>
+        </sequential>
+    </macrodef>
+</project>
