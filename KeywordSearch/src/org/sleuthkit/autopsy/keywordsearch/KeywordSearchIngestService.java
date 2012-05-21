@@ -65,7 +65,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     private volatile boolean commitIndex = false; //whether to commit index next time
     private List<Keyword> keywords; //keywords to search
     private List<String> keywordLists; // lists currently being searched
-    private Map<String, String> keywordToList; //keyword to list name mapping
+    private Map<String, KeywordSearchList> keywordToList; //keyword to list name mapping
     //private final Object lock = new Object();
     private Timer commitTimer;
     private Indexer indexer;
@@ -219,7 +219,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         keywords = new ArrayList<Keyword>();
         keywordLists = new ArrayList<String>();
-        keywordToList = new HashMap<String, String>();
+        keywordToList = new HashMap<String, KeywordSearchList>();
 
         initKeywords();
 
@@ -357,7 +357,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             }
             for (Keyword keyword : list.getKeywords()) {
                 keywords.add(keyword);
-                keywordToList.put(keyword.getQuery(), listName);
+                keywordToList.put(keyword.getQuery(), list);
             }
 
         }
@@ -373,9 +373,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         keywordToList.clear();
 
         for (String name : keywordLists) {
-            for (Keyword k : loader.getList(name).getKeywords()) {
+            KeywordSearchList list = loader.getList(name);
+            for (Keyword k : list.getKeywords()) {
                 keywords.add(k);
-                keywordToList.put(k.getQuery(), name);
+                keywordToList.put(k.getQuery(), list);
             }
         }
     }
@@ -554,8 +555,9 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                         return null;
                     }
                     final String queryStr = keywordQuery.getQuery();
-                    final String listName = keywordToList.get(queryStr);
-
+                    final KeywordSearchList list = keywordToList.get(queryStr);
+                    final String listName = list.getName();
+                    
                     //DEBUG
                     //logger.log(Level.INFO, "Searching: " + queryStr);
 
@@ -624,7 +626,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                     if (!newResults.isEmpty()) {
 
                         //write results to BB
-                        Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>(); //new artifacts to report
+                        
+                        //new artifacts created, to report to listeners
+                        Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>(); 
+                        
                         for (final Keyword hitTerm : newResults.keySet()) {
                             List<ContentHit> contentHitsAll = newResults.get(hitTerm);
                             Map<FsContent, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
@@ -720,7 +725,10 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                 }
                                 detailsSb.append("</table>");
 
-                                managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+                                //check if should send messages on hits on this list
+                                if (list.getIngestMessages())
+                                    //post ingest inbox msg
+                                    managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
 
 
                             } //for each term hit

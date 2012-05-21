@@ -450,10 +450,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             return getValueAt(0, c).getClass();
         }
         
-        private void updateUseForIngest(KeywordSearchList list, boolean selected) {
-            // This causes an event to be fired which resyncs the list and makes user lose selection
-            listsHandle.addList(list.getName(), list.getKeywords(), selected);
-        }
 
         List<String> getAllLists() {
             List<String> ret = new ArrayList<String>();

@@ -256,6 +256,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         chRegex.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked);
         selectorsCombo.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked && chRegex.isSelected());
         useForIngestCheckbox.setEnabled(listSet && (!ingestOngoing || !inIngest));
+        ingestMessagesCheckbox.setEnabled(useForIngestCheckbox.isEnabled() && useForIngestCheckbox.isSelected());
         saveListButton.setEnabled(listSet);
         exportButton.setEnabled(listSet);
         deleteListButton.setEnabled(listSet && (!ingestOngoing || !inIngest) && !isLocked);
@@ -295,6 +296,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         addWordField = new javax.swing.JTextField();
         chRegex = new javax.swing.JCheckBox();
         selectorsCombo = new javax.swing.JComboBox();
+        ingestMessagesCheckbox = new javax.swing.JCheckBox();
         saveListButton = new javax.swing.JButton();
         exportButton = new javax.swing.JButton();
         deleteListButton = new javax.swing.JButton();
@@ -332,6 +334,11 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         });
 
         useForIngestCheckbox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.useForIngestCheckbox.text")); // NOI18N
+        useForIngestCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                useForIngestCheckboxActionPerformed(evt);
+            }
+        });
 
         addWordButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.addWordButton.text")); // NOI18N
         addWordButton.addActionListener(new java.awt.event.ActionListener() {
@@ -389,6 +396,9 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                 .addContainerGap())
         );
 
+        ingestMessagesCheckbox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.ingestMessagesCheckbox.text")); // NOI18N
+        ingestMessagesCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.ingestMessagesCheckbox.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout listEditorPanelLayout = new javax.swing.GroupLayout(listEditorPanel);
         listEditorPanel.setLayout(listEditorPanelLayout);
         listEditorPanelLayout.setHorizontalGroup(
@@ -404,17 +414,23 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                 .addContainerGap(34, Short.MAX_VALUE)
                 .addComponent(addKeywordPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(19, 19, 19))
+            .addGroup(listEditorPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(ingestMessagesCheckbox)
+                .addContainerGap(131, Short.MAX_VALUE))
         );
         listEditorPanelLayout.setVerticalGroup(
             listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, listEditorPanelLayout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 263, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 242, Short.MAX_VALUE)
                 .addGap(5, 5, 5)
                 .addComponent(addKeywordPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(deleteWordButton)
                     .addComponent(useForIngestCheckbox))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(ingestMessagesCheckbox)
                 .addContainerGap())
         );
 
@@ -629,6 +645,11 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
     private void chRegexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chRegexActionPerformed
         selectorsCombo.setEnabled(chRegex.isEnabled() && chRegex.isSelected());
     }//GEN-LAST:event_chRegexActionPerformed
+
+private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useForIngestCheckboxActionPerformed
+    ingestMessagesCheckbox.setEnabled(useForIngestCheckbox.isSelected());
+}//GEN-LAST:event_useForIngestCheckboxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel addKeywordPanel;
     private javax.swing.JButton addWordButton;
@@ -639,6 +660,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
     private javax.swing.JButton deleteListButton;
     private javax.swing.JButton deleteWordButton;
     private javax.swing.JButton exportButton;
+    private javax.swing.JCheckBox ingestMessagesCheckbox;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JTable keywordTable;
@@ -695,16 +717,18 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             KeywordSearchList oldList = loader.getList(currentKeywordList);
             List<Keyword> oldKeywords = oldList.getKeywords();
             boolean oldIngest = oldList.getUseForIngest();
+            boolean oldIngestMessages = oldList.getIngestMessages();
             List<Keyword> newKeywords = getAllKeywords();
             boolean newIngest = useForIngestCheckbox.isSelected();
-
-            if (!oldKeywords.equals(newKeywords) || oldIngest != newIngest) {
+            boolean newIngestMessages = ingestMessagesCheckbox.isSelected();
+           
+            if (!oldKeywords.equals(newKeywords) || oldIngest != newIngest || oldIngestMessages != newIngestMessages) {
                 /*boolean save = KeywordSearchUtil.displayConfirmDialog("Save List Changes",
                 "Do you want to save the changes you made to list " + currentKeywordList + "?",
                 KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);*/
                 boolean save = true;
                 if (save) {
-                    loader.addList(currentKeywordList, newKeywords, newIngest, oldList.isLocked());
+                    loader.addList(currentKeywordList, newKeywords, newIngest, newIngestMessages, oldList.isLocked());
                 }
             }
         }
@@ -825,7 +849,10 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
             deleteAll();
             addKeywords(keywords);
-            useForIngestCheckbox.setSelected(list.getUseForIngest());
+            boolean useForIngest = list.getUseForIngest();
+            useForIngestCheckbox.setSelected(useForIngest);
+            ingestMessagesCheckbox.setEnabled(useForIngest);
+            ingestMessagesCheckbox.setSelected(list.getIngestMessages());
         }
 
         void deleteAll() {
