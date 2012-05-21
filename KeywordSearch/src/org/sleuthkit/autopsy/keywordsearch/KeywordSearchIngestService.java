@@ -764,9 +764,12 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             if (finalRun) {
                 logger.log(Level.INFO, "The final searcher in this ingest done.");
                 finalSearcherDone = true;
-                //keywords.clear();
-                //keywordLists.clear();
-                //keywordToList.clear();
+                keywords.clear();
+                keywordLists.clear();
+                keywordToList.clear();
+                //reset current resuls earlier to potentially garbage collect sooner
+                currentResults = new HashMap<Keyword, List<ContentHit>>();
+                
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
             }
         }
