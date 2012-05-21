@@ -274,7 +274,7 @@ public class KeywordSearchListsXML {
     }
     
     boolean addList(String name, List<Keyword> newList) {
-        return addList(name, newList, false);
+        return addList(name, newList, true);
     }
     
 
