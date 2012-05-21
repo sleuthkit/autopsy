@@ -63,6 +63,7 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
 
     /** Creates new form HashDbMgmtPanel */
     private HashDbMgmtPanel() {
+        setName(HashDbMgmtAction.ACTION_NAME);
         notableTableModel = new HashSetTableModel();
         initComponents();
         customizeComponents();
@@ -293,9 +294,24 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                         JOptionPane.PLAIN_MESSAGE, null, null, derivedName);
                 
                 if(setName != null && !setName.equals("")) {
-                    HashDb newDb = new HashDb(setName, Arrays.asList(new String[] {filePath}), false);
-                    if(IndexStatus.isIngestible(newDb.status()))
-                            newDb.setUseForIngest(true);
+                    HashDb newDb = new HashDb(setName, Arrays.asList(new String[]{filePath}), false);
+                    int toIndex = JOptionPane.NO_OPTION;
+                    if (IndexStatus.isIngestible(newDb.status())) {
+                        newDb.setUseForIngest(true);
+                    } else {
+                        toIndex = JOptionPane.showConfirmDialog(this,
+                                "The database you added has no index.\n"
+                                + "It will not be used for ingest until you create one.\n"
+                                + "Would you like to do so now?", "No Index Exists", JOptionPane.YES_NO_OPTION);
+                    }
+
+                    if (toIndex == JOptionPane.YES_OPTION) {
+                        try {
+                            newDb.createIndex();
+                        } catch (TskException ex) {
+                            logger.log(Level.WARNING, "Error creating index", ex);
+                        }
+                    }
                     notableTableModel.newSet(newDb); // TODO: support multiple file paths
                 }
 
