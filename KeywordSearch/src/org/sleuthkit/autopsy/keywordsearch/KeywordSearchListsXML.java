@@ -67,6 +67,7 @@ public class KeywordSearchListsXML {
     private static final String LIST_CREATE_ATTR = "created";
     private static final String LIST_MOD_ATTR = "modified";
     private static final String LIST_USE_FOR_INGEST = "use_for_ingest";
+    private static final String LIST_INGEST_MSGS = "ingest_messages";
     private static final String KEYWORD_EL = "keyword";
     private static final String KEYWORD_LITERAL_ATTR = "literal";
     private static final String KEYWORD_SELECTOR_ATTR = "selector";
@@ -118,10 +119,10 @@ public class KeywordSearchListsXML {
         
         //urls.add(new Keyword("ssh://", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
         
-        addList("Phone Numbers", phones, true, true);
-        addList("IP Addresses", ips, true, true);
-        addList("Email Addresses", emails, true, true);
-        addList("URLs", urls, true, true);
+        addList("Phone Numbers", phones, true, true, true);
+        addList("IP Addresses", ips, true, true, true);
+        addList("Email Addresses", emails, true, true, true);
+        addList("URLs", urls, true, false, true); //disable messages for URLs list by default
     }
 
     /**
@@ -244,17 +245,17 @@ public class KeywordSearchListsXML {
      * @param useForIngest should this list be used for ingest
      * @return true if old list was replaced
      */
-    boolean addList(String name, List<Keyword> newList, boolean useForIngest, boolean locked) {
+    boolean addList(String name, List<Keyword> newList, boolean useForIngest, boolean ingestMessages, boolean locked) {
         boolean replaced = false;
         KeywordSearchList curList = getList(name);
         final Date now = new Date();
         if (curList == null) {
-            theLists.put(name, new KeywordSearchList(name, now, now, useForIngest, newList, locked));
+            theLists.put(name, new KeywordSearchList(name, now, now, useForIngest, ingestMessages, newList, locked));
             if(!locked)
                 save();
             changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
         } else {
-            theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, newList, locked));
+            theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, ingestMessages, newList, locked));
             if(!locked)
                 save();
             replaced = true;
@@ -264,17 +265,17 @@ public class KeywordSearchListsXML {
         return replaced;
     }
     
-    boolean addList(String name, List<Keyword> newList, boolean useForIngest) {
+    boolean addList(String name, List<Keyword> newList, boolean useForIngest, boolean ingestMessages) {
         KeywordSearchList curList = getList(name);
         if (curList == null) {
-            return addList(name, newList, useForIngest, false);
+            return addList(name, newList, useForIngest, ingestMessages, false);
         } else {
-            return addList(name, newList, curList.getUseForIngest(), false);
+            return addList(name, newList, curList.getUseForIngest(), ingestMessages, false);
         }
     }
     
     boolean addList(String name, List<Keyword> newList) {
-        return addList(name, newList, true);
+        return addList(name, newList, true, true);
     }
     
 
@@ -347,6 +348,7 @@ public class KeywordSearchListsXML {
                 String created = dateFormatter.format(list.getDateCreated());
                 String modified = dateFormatter.format(list.getDateModified());
                 String useForIngest = list.getUseForIngest().toString();
+                String ingestMessages = list.getIngestMessages().toString();
                 List<Keyword> keywords = list.getKeywords();
 
                 Element listEl = doc.createElement(LIST_EL);
@@ -354,6 +356,7 @@ public class KeywordSearchListsXML {
                 listEl.setAttribute(LIST_CREATE_ATTR, created);
                 listEl.setAttribute(LIST_MOD_ATTR, modified);
                 listEl.setAttribute(LIST_USE_FOR_INGEST, useForIngest);
+                listEl.setAttribute(LIST_INGEST_MSGS, ingestMessages);
 
                 for (Keyword keyword : keywords) {
                     Element keywordEl = doc.createElement(KEYWORD_EL);
@@ -399,11 +402,14 @@ public class KeywordSearchListsXML {
                 final String created = listEl.getAttribute(LIST_CREATE_ATTR);
                 final String modified = listEl.getAttribute(LIST_MOD_ATTR);
                 final String useForIngest = listEl.getAttribute(LIST_USE_FOR_INGEST);
+                final String ingestMessages = listEl.getAttribute(LIST_INGEST_MSGS);
+                
                 Date createdDate = dateFormatter.parse(created);
                 Date modDate = dateFormatter.parse(modified);
                 Boolean useForIngestBool = Boolean.parseBoolean(useForIngest);
+                Boolean ingestMessagesBool = Boolean.parseBoolean(ingestMessages);
                 List<Keyword> words = new ArrayList<Keyword>();
-                KeywordSearchList list = new KeywordSearchList(name, createdDate, modDate, useForIngestBool, words);
+                KeywordSearchList list = new KeywordSearchList(name, createdDate, modDate, useForIngestBool, ingestMessagesBool, words);
 
                 //parse all words
                 NodeList wordsNList = listEl.getElementsByTagName(KEYWORD_EL);
@@ -506,20 +512,22 @@ class KeywordSearchList {
     private Date created;
     private Date modified;
     private Boolean useForIngest;
+    private Boolean ingestMessages;
     private List<Keyword> keywords;
     private Boolean locked;
 
-    KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, List<Keyword> keywords, boolean locked) {
+    KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages, List<Keyword> keywords, boolean locked) {
         this.name = name;
         this.created = created;
         this.modified = modified;
         this.useForIngest = useForIngest;
+        this.ingestMessages = ingestMessages;
         this.keywords = keywords;
         this.locked = locked;
     }
     
-    KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, List<Keyword> keywords) {
-        this(name, created, modified, useForIngest, keywords, false);
+    KeywordSearchList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages, List<Keyword> keywords) {
+        this(name, created, modified, useForIngest, ingestMessages, keywords, false);
     }
 
 
@@ -562,6 +570,14 @@ class KeywordSearchList {
     
     void setUseForIngest(boolean use) {
         this.useForIngest = use;
+    }
+    
+    Boolean getIngestMessages() {
+        return ingestMessages;
+    }
+    
+    void setIngestMessages(boolean ingestMessages) {
+        this.ingestMessages = ingestMessages;
     }
 
     List<Keyword> getKeywords() {

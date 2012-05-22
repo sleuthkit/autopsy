@@ -938,11 +938,14 @@ public class IngestManager {
                 }
             });
 
-            progress = ProgressHandleFactory.createHandle("File Ingest", new Cancellable() {
+            final String displayName = "File Ingest";
+            progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
 
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Filed ingest cancelled by user.");
+                    if (progress != null)
+                        progress.setDisplayName(displayName + " (Cancelling...)");
                     return IngestFsContentThread.this.cancel(true);
                 }
             });
@@ -1073,11 +1076,15 @@ public class IngestManager {
 
         @Override
         protected Object doInBackground() throws Exception {
-            progress = ProgressHandleFactory.createHandle("Queueing Ingest", new Cancellable() {
+            
+            final String displayName = "Queueing Ingest";
+            progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
 
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Queueing ingest cancelled by user.");
+                    if (progress != null)
+                        progress.setDisplayName(displayName + " (Cancelling...)");
                     return EnqueueWorker.this.cancel(true);
                 }
             });
