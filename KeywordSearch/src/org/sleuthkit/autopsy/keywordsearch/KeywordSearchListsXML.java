@@ -119,10 +119,11 @@ public class KeywordSearchListsXML {
         
         //urls.add(new Keyword("ssh://", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
         
-        addList("Phone Numbers", phones, true, true, true);
-        addList("IP Addresses", ips, true, true, true);
-        addList("Email Addresses", emails, true, true, true);
-        addList("URLs", urls, true, false, true); //disable messages for URLs list by default
+        //disable messages for harcoded/locked lists
+        addList("Phone Numbers", phones, true, false, true);
+        addList("IP Addresses", ips, true, false, true);
+        addList("Email Addresses", emails, true, false, true);
+        addList("URLs", urls, true, false, true); 
     }
 
     /**
