@@ -1,0 +1,39 @@
+<html lang="en-us">
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<title>VerifyDesign New Project Tutorial</title>
+</head>
+
+<body>
+
+<h2>VerifyDesign New Project Tutorial</h2>
+
+This is by far the easiest tutorial.  Before you have any code, add this to your build.xml file.
+
+<pre>
+    &lt;verifydesign jar=&quot;yourjarname.jar&quot;
+                  design=&quot;design.xml&quot; 
+                  /&gt;
+</pre>
+
+Create your design.xml file from the design that is in your head or in documentation like so
+
+<pre>
+  &lt;design&gt;
+     &lt;package name=&quot;service1&quot; package=&quot;biz.xsoftware.service1&quot; subpackages=&quot;include&quot;/&gt;
+     &lt;package name=&quot;client1&quot;  package=&quot;biz.xsoftware.client1&quot;  depends=&quot;service1&quot;/&gt;
+     &lt;package name=&quot;service2&quot; package=&quot;biz.xsoftware.service2&quot;/&gt;
+     &lt;package name=&quot;client2&quot;  package=&quot;biz.xsoftware.client2&quot;  depends=&quot;service2&quot; subpackages=&quot;include&quot;/&gt;
+  &lt;/design&gt;
+</pre>
+
+From now on, when you run the build, if this is violated like service1 depending on client2 or something, the build will fail and you will catch the errors of violating the design before it is too late.  You can then guarantee things like only this package will depend on the JMS technology.  This way if you change JMS to something later, you know you only have to change that one package.
+
+<hr>
+    <p align="center">Copyright &copy; 2002-2004 Ant-Contrib Project. All
+    rights Reserved.</p>
+
+</body>
+</html>
+

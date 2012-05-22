@@ -1,4 +1,8 @@
 <project name="AutopsyTSKTargets">
+    
+    <!-- Need a way to specify TSK Debug versus Release -->
+    <property name="TSK_BUILD_TYPE">Release</property>
+    
     <target name="copyTSKLibs">
         <property environment="env"/>
         <condition property="ewfFound">
@@ -6,25 +10,37 @@
         </condition>
         <fail unless="ewfFound" message="LIBEWF_HOME must be set as an environment variable."/>
 
-        <!-- Need a way to specify Debug versus release -->
-        <copy file="${env.TSK_HOME}/win32/release/libtsk_jni.dll" tofile="${basedir}/DataModel/release/modules/lib/libtsk_jni.dll"/>
+        <copy file="${env.TSK_HOME}/win32/${TSK_BUILD_TYPE}/libtsk_jni.dll" tofile="${basedir}/DataModel/release/modules/lib/libtsk_jni.dll"/>
         <copy file="${env.LIBEWF_HOME}/msvscpp/Release/libewf.dll" tofile="${basedir}/DataModel/release/modules/lib/libewf.dll"/> 
         <copy file="${env.LIBEWF_HOME}/msvscpp/Release/zlib.dll" tofile="${basedir}/DataModel/release/modules/lib/zlib.dll"/>
     </target>
     
     <target name="copyExternalLibs">
         
+        <!-- Find CRT version we linked against from libtsk_jni manifest -->
+        <property name="libtsk.manifest.path">${env.TSK_HOME}/win32/tsk_jni/${TSK_BUILD_TYPE}/libtsk_jni.dll.intermediate.manifest</property>
+        <loadfile property="libtsk.manifest" srcFile="${libtsk.manifest.path}" />
+        <propertyregex property="CRT.version"
+             input="${libtsk.manifest}"
+             regexp=".*Microsoft\.VC90.*?version\s*?=\s*?'(.*?)'"
+             select="\1"
+             casesensitive="false" />      
+        <echo>Found CRT.version linked against: ${CRT.version}</echo>
+        
         <!-- Get C++ Runtime dlls -->
         <property environment="env"/>
-        <condition property="crtFound">
-            <isset property="env.CRT_HOME"/>
+        <condition property="crtDetected">
+            <isset property="CRT.version"/>
         </condition>
-        <fail unless="crtFound" message="CRT_HOME must be set as an environment variable."/>
+        <fail unless="crtDetected" message="CRT version not detected, check libtsk_jni manifest."/> 
+        
+        <property name="CRT.path">${thirdparty.dir}/crt/x86-32/${CRT.version}/crt.zip</property>
+        <available file="${CRT.path}"  property="crtFound"/>
+        
+        <fail unless="crtFound" message="Detected CRT version ${CRT.version} not found in the thirdparty repo."/>
 
-        <copy file="${env.CRT_HOME}/Microsoft.VC90.CRT.manifest" tofile="${zip-tmp}/${app.name}/${app.name}/modules/lib/Microsoft.VC90.CRT.manifest"/>
-        <copy file="${env.CRT_HOME}/msvcm90.dll" tofile="${zip-tmp}/${app.name}/${app.name}/modules/lib/msvcm90.dll"/> 
-        <copy file="${env.CRT_HOME}/msvcp90.dll" tofile="${zip-tmp}/${app.name}/${app.name}/modules/lib/msvcp90.dll"/> 
-        <copy file="${env.CRT_HOME}/msvcr90.dll" tofile="${zip-tmp}/${app.name}/${app.name}/modules/lib/msvcr90.dll"/> 
+        <!-- unzip from thirdparty repo to modules/lib in staged dir -->
+        <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/${app.name}/modules/lib"/>
     </target>
     
     <target name="autoAIPath" >

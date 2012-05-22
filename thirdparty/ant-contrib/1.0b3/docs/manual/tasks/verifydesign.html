@@ -1,0 +1,264 @@
+<html lang="en-us">
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<title>VerifyDesign Ant Task</title>
+</head>
+
+<body>
+
+<h2>VerifyDesign Ant Task</h2>
+<ul>
+  <li>Creator: Dean Hiller (<a href="mailto:dean@xsoftware.biz">dean@xsoftware.biz</a>)</li>
+  <li>Contributor: Matt Inger (thanks for some really awesome changes)</li>
+  <li>Contributor: Anthony Y Robins</li>
+</ul>
+<p>Feedback on task and documentation are welcome!</p>
+<h3>Description</h3>
+<p>Describe your design dependencies in an xml file, and this task will enforce them so they are not violated</p>
+<p>For example, if there are three packages in one source tree
+<ul>
+<li>biz.xsoftware.presentation</li>
+<li>biz.xsoftware.business</li>
+<li>biz.xsoftware.dataaccess</li>
+</ul>
+and naturally presentation should only depend on business package, and business should depend on dataaccess.  If you define your design this way and it is violated the build will fail when the verifydesign ant task is called.  For example, if I created a class in biz.xsoftware.presentation and that class depended on a class in biz.xsoftware.dataaccess, the build would fail.  This ensures the design actually follows what is documented(to some degree at least).  This is especially nice with automated builds</p>
+
+<h3>Getting Started</h3>
+Download bcel jar from this link <a href="http://jakarta.apache.org/site/binindex.cgi#bcel">Bcel download</a> as this ant task uses the jar built from the <a href="http://jakarta.apache.org/bcel/">bcel project</a> on jakarta.  Choose a directory to put in place of the XXXXXX below and add the ant-contrib jar as well as the bcel jar to that directory.  You should now be all set to use the verifydesign element in your build.xml file as well as any other ant-contrib tasks.  If you want to use this with 5.0jdk, you must download the bcel from the head of cvs until something better than 5.1 is released.  This version of ant-contrib will work with both 5.0jdk and 1.4 jdk.  1.3 and before is not tested.
+<pre>
+    &lt;taskdef resource=&quot;net/sf/antcontrib/antlib.xml&quot;&gt;
+        &lt;classpath&gt;
+           &lt;fileset dir=&quot;XXXXXX&quot;&gt;
+               &lt;include name=&quot;**/*.jar&quot;/&gt;
+           &lt;/fileset&gt;
+        &lt;/classpath&gt;
+    &lt;/taskdef&gt;
+</pre>
+
+Now, you can skip to the <a href="verifylegacytutorial.html">VerifyDesign Legacy Project Tutorial</a> which guides you through how to use this task if you already have alot of existing code, or you can start with the <a href="verifynewprojtutorial.html">VerifyDesign New Project Tutorial</a> where you don't have much code or any at all.
+
+<h3>Parameters</h3>
+<table border="1" cellpadding="2" cellspacing="0">
+  <tr>
+    <td valign="top"><b>Attribute</b></td>
+    <td valign="top"><b>Description</b></td>
+    <td align="center" valign="top"><b>Required</b></td>
+  </tr>
+  <tr>
+    <td valign="top">design</td>
+    <td valign="top">The file that specifies the design in xml format(Examples below)</td>
+    <td align="center" valign="top">required</td>
+  </tr>
+  <tr>
+    <td valign="top">jar</td>
+    <td valign="top">The jar file of who's design we want to validate</td>
+    <td align="center" valign="top">required</td>
+  </tr>
+  <tr>
+    <td valign="top">circularDesign</td>
+    <td valign="top">I strongly encourage you not to use this.  This turns on allowing circular dependencies.  There is always a way to get around circular dependencies, and I suggest you use it instead of introducing a circular dependency.  If you think you have found one you can't work around, send me mail and maybe I can give you some ideas.</td>
+    <td align="center" valign="top">optional(default=false)</td>
+  </tr>
+  <tr>
+    <td valign="top">deleteFiles</td>
+    <td valign="top">Deletes jar/class files upon build failure to prevent usage.  Use this option for new projects so the binaries are not used without the design being met. </td>
+    <td align="center" valign="top">optional(default=false)</td>
+  </tr>
+  <tr>
+    <td valign="top">fillInBuildException</td>
+    <td valign="top">Fills the BuildException with all the same errors reported in the logs.  This is for products like cruisecontrol who only see standard ant task logs and would miss reporting these errors otherwise(ie. instead it just reports build failed with look at the design errors)</td>
+    <td align="center" valign="top">optional(default=false)</td>
+  </tr>
+  <tr>
+    <td valign="top">needDeclarationsDefault</td>
+    <td valign="top">false is saying that for this particular package, no other package needs to declare that they depend on this package.  It is basically saying the needDeclarations attribute in the package element in the design file is whatever the value of this attribute is in the build.xml file if the design file does not override it.</td>
+    <td align="center" valign="top">optional(default=true)</td>
+  </tr>
+  <tr>
+    <td valign="top">needDependsDefault</td>
+    <td valign="top">false is saying that by default no package in the design file has to declare it's dependencies.  It is basically saying the needDepends attribute in the package element in the design file is whatever the value of this attribute is in the build.xml file if the design file does not override it.</td>
+    <td align="center" valign="top">optional(default=true)</td>
+  </tr>
+</table>
+
+<h3>Parameters specified as nested elements</h3>
+<p>No nested elements allowed
+
+
+</p>
+<h2>Design File</h2>
+<p>
+The design file is an xml based file specifying dependencies that are ok.  Any dependencies not specified will not be allowed and will make sure the build fails.  Examples of the contents of the design file can be found below.
+</p>
+
+<h3>design Root Element</h3>
+<p>The root element of the design file is 'design'.  Here are design's allowed subelements.</p>
+
+<table border="1" cellpadding="2" cellspacing="0">
+  <tr>
+    <td valign="top"><b>Subelement</b></td>
+    <td valign="top"><b>Description</b></td>
+    <td align="center" valign="top"><b>Required</b></td>
+  </tr>
+  <tr>
+    <td valign="top">package</td>
+    <td valign="top">subelement representing a package and it's dependencies</td>
+    <td align="center" valign="top">One or more Required</td>
+  </tr>
+</table>
+
+<h3>package SubElement</h3>
+<p>Here are package elements allowed attributes and subelements</p>
+
+<table border="1" cellpadding="2" cellspacing="0">
+  <tr>
+    <td valign="top"><b>Attribute</b></td>
+    <td valign="top"><b>Description</b></td>
+    <td align="center" valign="top"><b>Required</b></td>
+  </tr>
+  <tr>
+    <td valign="top">name</td>
+    <td valign="top">A smaller nickname for the package to reference in the depends subelement or attribute</td>
+    <td align="center" valign="top">Required</td>
+  </tr>
+  <tr>
+    <td valign="top">package</td>
+    <td valign="top">The package to compile such as biz.xsoftware.presentation</td>
+    <td align="center" valign="top">Required</td>
+  </tr>
+  <tr>
+    <td valign="top">depends</td>
+    <td valign="top">Contains one and only one 'name' of a package to depend on(taken from name attribute above).  If you want to specify more, use the depends subelement</td>
+    <td align="center" valign="top">Optional(Default=no dependencies)</td>
+  </tr>
+  <tr>
+    <td valign="top">subpackages</td>
+    <td valign="top">Can be set to include or exclude.  Basically allows classes in subpackages to be part of the package specified.(see examples below)</td>
+    <td align="center" valign="top">Optional(default=exclude)</td>
+  </tr>
+  <tr>
+    <td valign="top">needdeclarations</td>
+    <td valign="top">Can be set to true or false.  True means if other packages depend on this package, a depends subelement or attribute must exist stating the dependency.  False means other packages need not declare they depend on this package.  This should be used sparingly for things like java.lang.  By default &quot;java&quot; package and all subpackages are set to false.  This can be overridden if you need however so you can make sure only certain packages depend on java.util or something if you really need that.  (see examples below)</td>
+    <td align="center" valign="top">Optional(default=true)</td>
+  </tr>
+  <tr>
+    <td valign="top">needdepends</td>
+    <td valign="top">Can be set to true or false.  True means if this package depends on other packages, those dependencies must be defined(unless those other packages have needdeclarations set to false).  False means this package must list all the packages it depends on.  This is typically for legacy code where you don't want to deal with what this package depends on right now.  On a new project, I never use this.</td>
+    <td align="center" valign="top">Optional(default=true)</td>
+  </tr>
+</table>
+<br/>
+<table border="1" cellpadding="2" cellspacing="0">
+  <tr>
+    <td valign="top"><b>Subelement</b></td>
+    <td valign="top"><b>Description</b></td>
+    <td align="center" valign="top"><b>Required</b></td>
+  </tr>
+  <tr>
+    <td valign="top">depends</td>
+    <td valign="top">Contains one and only one 'name' of a package to depend on(taken from name attribute above)</td>
+    <td align="center" valign="top">One or more Optional</td>
+  </tr>
+</table>
+
+<h3>depends SubElement</h3>
+Contents contain the 'name' of a package found in the package element's name attribute
+
+<h3>Examples</h3>
+
+<h4>Ant's build.xml File</h4>
+<pre>
+  &lt;verifydesign jar=&quot;application.jar&quot; design=&quot;design.xml&quot;/&gt;
+</pre>
+<p>
+That is simple enough.  application.jar is the jar I am verifying the design of.  design.xml contains the design I want the jar file to adhere to.  There is no need to include third party jars(unless you want to verify their design which you shouldn't).  The design file can still define what your stuff depends on in those third party libraries without requiring those libraries to be present.    If it does not adhere to that design, the build fails.  Examples of a design.xml can be found further below.
+</p>
+<p>
+Another example equivalent to the above is below.  verifydesign takes a path like structure(see ant documentation).  <b>I  highly advise breaking the design on purpose and verifying that the build fails.  This ensures you have the ant task set up correctly.</b>
+</p>
+<pre>
+  &lt;verifydesign design=&quot;design.xml&quot;&gt;
+     &lt;path&gt;
+        &lt;pathelement jar=&quot;application.jar&quot;/&gt;
+     &lt;/path&gt;
+  &lt;/verifydesign&gt;
+</pre>
+
+One last example would be like so
+<pre>
+  &lt;verifydesign design=&quot;design.xml&quot;&gt;
+     &lt;path&gt;
+        &lt;fileset dir=&quot;${classesDir}&quot;&gt;
+            &lt;include name=&quot;**/*.class&quot;/&gt;
+        &lt;/fileset&gt;
+     &lt;/path&gt;
+  &lt;/verifydesign&gt;
+</pre>
+
+Now let's move on to define the contents of design.xml file.
+
+<h4>design.xml File</h4>
+
+<pre>
+These lines would be in dependencies.xml.....
+  &lt;design&gt;
+     &lt;package name=&quot;alljavax&quot; package=&quot;javax&quot; subpackages=&quot;include&quot; needdeclarations=&quot;false&quot;/&gt;
+     &lt;package name=&quot;util&quot; package=&quot;biz.xsoftware.util&quot; subpackages=&quot;include&quot;/&gt;
+     &lt;package name=&quot;dataaccess&quot; package=&quot;biz.xsoftware.dataaccess&quot;/&gt;
+     &lt;package name=&quot;business&quot; package=&quot;biz.xsoftware.business&quot; depends=&quot;dataaccess&quot;/&gt;
+     &lt;package name=&quot;presentation&quot; package=&quot;biz.xsoftware.presentation&quot;&gt;
+        &lt;depends&gt;business&lt;/depends&gt;
+        &lt;depends&gt;util&lt;/depends&gt;
+     &lt;/package&gt;
+  &lt;/design&gt;
+</pre>
+<p>Notice in this example, if biz.xsoftware.dataaccess.XYZClass depended on biz.xsoftware.util.Util, the build would fail since that package dependency is not defined.  Similarly, any class in biz.xsoftware.presentation cannot depend on any class in biz.xsoftware.dataaccess</p>
+<p>Also, notice that biz.xsoftware.presentation.Gui is allowed to depend on biz.xsoftware.util.pres.ClassInSubpackage because subpackages is set to include.  This allows subpackages of biz.xsoftware.util to also be included in the design without having to define every subpackage.</p>
+<p>Lastly, notice the first line so javax and all javax subpackages can be depended on without declaring them.  Use this sparingly though as sometimes you might want to isolate dependencies like depending on JMX to a certain package.  For example, you may want only biz.xsoftware.management to depend on JMX and nothing else to depend on it.  If you declare the same declaration I declared here for javax, you will not be able to guarantee that.</p>
+
+<h4>The wad design.xml file</h4>
+If you really want to, you could design for a wad.  This is not suggested and if you want to do this, don't use this ant task please.
+<pre>
+  &lt;design&gt;
+     &lt;package name=&quot;wad&quot; package=&quot;&lt;default package&gt;&quot; subpackages=&quot;include&quot;/&gt;
+  &lt;/design&gt;
+</pre>
+
+<h4>Including subpackages design.xml</h4>
+<pre>
+  &lt;design&gt;
+     &lt;package name=&quot;service1&quot; package=&quot;biz.xsoftware.service1&quot; subpackages=&quot;include&quot;/&gt;
+     &lt;package name=&quot;client1&quot;  package=&quot;biz.xsoftware.client1&quot;  depends=&quot;service1&quot;/&gt;
+     &lt;package name=&quot;service2&quot; package=&quot;biz.xsoftware.service2&quot;/&gt;
+     &lt;package name=&quot;client2&quot;  package=&quot;biz.xsoftware.client2&quot;  depends=&quot;service2&quot; subpackages=&quot;include&quot;/&gt;
+  &lt;/design&gt;
+</pre>
+<p>
+Note that here for service 1, classes in package biz.xsoftware.client1 can depend on any classes in biz.xsoftware.service1 and can also depend on classes in subpackages of biz.xsoftware.service1.
+</p>
+<p>
+Note that for service 2, classes in biz.xsoftware.client2 and client2's subpackages are all allowed to depend on classes in biz.xsoftware.service2.
+</p>
+<h4>One Design Note</h4>
+One big note to consider, there is one design dependency that verifydesign cannot see from the class file.  This is due to the String constants(This only happens with static final <b>Strings</b> and static final <b>primitives</b> being compiled into the class file.  Here is example code demonstrating this task cannot catch these dependencies....
+<pre>
+public class Client {
+    public void fakeMethod() {
+	     String s = Dependency.CONSTANT;  //verifydesign task can't tell this depends on
+		                                  //DependencyClass as that info is lost after compiling
+	}
+}
+
+public class DependencyClass {
+    public static final String CONSTANT = "asdf"; 
+}
+</pre>
+
+<hr>
+    <p align="center">Copyright &copy; 2002-2004 Ant-Contrib Project. All
+    rights Reserved.</p>
+
+</body>
+</html>
+

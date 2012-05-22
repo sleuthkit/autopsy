@@ -1,0 +1,178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Ant-contrib Tasks: Http Tasks</title>
+  </head>
+
+  <body>
+    <h1>HttpState</h1>
+    The &lt;httpState&gt; type allows the caller to create an HttpState
+    instance, and add it as a reference, or be nested as a subelement of
+    an &lt;httpClient&gt; element.
+    
+    <h2>Parameters</h2>
+    <table border="1" cellpadding="2" cellspacing="0">
+      <tr>
+        <th>Attribute</th>
+        <th>Description</th>
+        <th>Required</th>
+      </tr>
+      <tr>
+        <td valign="top"><i>id</i></td>
+        <td valign="top">The reference id to store this HttpState under.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>refId</i></td>
+        <td valign="top">The reference id of the HttpState which this element references.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+    </table>
+    
+    <h2>Parameters specified as Nested Elements</h2>
+    
+    <br />
+    <br />
+    <b>&lt;cookie&gt;</b><br />
+    <p>
+    Create a cookie.
+    </p>
+    <table border="1" cellpadding="2" cellspacing="0">
+      <tr>
+        <th>Attribute</th>
+        <th>Description</th>
+        <th>Required</th>
+      </tr>
+      <tr>
+        <td valign="top"><i>domain</i></td>
+        <td valign="top"></td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>path</i></td>
+        <td valign="top"></td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>name</i></td>
+        <td valign="top"></td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>value</i></td>
+        <td valign="top"></td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>secure</i></td>
+        <td valign="top"></td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>comment</i></td>
+        <td valign="top"></td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>expiryDate</i></td>
+        <td valign="top"></td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>version</i></td>
+        <td valign="top"></td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>domainAttributeSpecified</i></td>
+        <td valign="top"></td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>pathAttributeSpecified</i></td>
+        <td valign="top"></td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+    </table>
+    
+    <br />
+    <br />
+    <b>&lt;credentials&gt;</b><br />
+    <p>
+    Create authentication credentials.
+    </p>
+    <table border="1" cellpadding="2" cellspacing="0">
+      <tr>
+        <th>Attribute</th>
+        <th>Description</th>
+        <th>Required</th>
+      </tr>
+      <tr>
+        <td valign="top"><i>host</i></td>
+        <td valign="top">The host.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>port</i></td>
+        <td valign="top">The port.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>realm</i></td>
+        <td valign="top">The realm.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>scheme</i></td>
+        <td valign="top">The scheme.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>username</i></td>
+        <td valign="top">The username.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>password</i></td>
+        <td valign="top">The password.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+    </table>
+
+
+    <br />
+    <br />
+    <b>&lt;proxyCredentials&gt;</b><br />
+    <p>
+    Create proxy authentication credentials.
+    </p>
+    <table border="1" cellpadding="2" cellspacing="0">
+      <tr>
+        <th>Identitical to &lt;credentials&gt; element.</th>
+      </tr>
+    </table>
+
+    <h2>Examples</h2>
+
+
+    <hr>
+    <p align="center">Copyright &copy; 2002-2003 Ant-Contrib Project. All
+    rights Reserved.</p>
+
+    <pre>
+    <code>
+    &lt;httpState id="myState"&gt;
+       &lt;cookie name="loginId" value="username" realm="sourceforge.net" /&gt;
+    &lt;/httpState&gt;
+    
+    &lt;httpClient id="myClient" stateRefId="myState" /&gt;
+
+    &lt;httpClient id="myClient&gt;
+      &lt;httpState &gt;
+        &lt;cookie name="loginId" value="username" realm="sourceforge.net" /&gt;
+      &lt;/httpState&gt;
+    &lt;/httpClient&gt;
+    </code>
+    </pre>
+  </body>
+</html>

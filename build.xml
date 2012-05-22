@@ -13,9 +13,19 @@
     <condition property="os.family" value="windows">  
         <os family="windows"/>  
     </condition>  
-    <import file="build-${os.family}.xml"/>  
-
+    <import file="build-${os.family}.xml"/> 
     
+    <property name="thirdparty.dir" value="${basedir}/thirdparty" />
+
+    <!-- import ant-contrib tools -->
+    <property name="ant-contrib.dir" value="${thirdparty.dir}/ant-contrib/1.0b3" />
+    <property name="ant.contrib.jar" value="${ant-contrib.dir}/ant-contrib.jar" />
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="${ant.contrib.jar}"/>
+        </classpath>
+    </taskdef>
+
     <!-- This seems really bad to be hard coded, but I couldn't find a better solution -->
     <path id="jni-path">
         <pathelement location="./build/cluster/modules/org-sleuthkit-datamodel.jar"/>
@@ -178,7 +188,7 @@
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
         <antcall target="update-conf-file" />
         <delete file="${nbdist.dir}/${app.name}-${app.version}.zip"/>
-        <unzip src="${basedir}/thirdparty/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${nbdist.dir}/${app.name}-installer/gstreamer"/>
+        <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${nbdist.dir}/${app.name}-installer/gstreamer"/>
         <copy todir="${nbdist.dir}/${app.name}-installer/jre6">
             <fileset dir="${env.JRE_HOME}"/>
         </copy>
