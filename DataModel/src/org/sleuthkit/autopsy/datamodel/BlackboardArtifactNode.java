@@ -80,18 +80,24 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         
         ss.put(new NodeProperty("File Name",
                                 "File Name",
-                                "no description",
+                                NO_DESCR,
                                 associated.accept(new NameVisitor())));
         
-        ATTRIBUTE_TYPE[] attributeTypes = ATTRIBUTE_TYPE.values();
         for(Map.Entry<Integer, Object> entry : map.entrySet()){
-            if(attributeTypes.length > entry.getKey()){
-                ss.put(new NodeProperty(attributeTypes[entry.getKey()-1].getDisplayName(),
-                        attributeTypes[entry.getKey()-1].getDisplayName(),
+            ss.put(new NodeProperty(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(entry.getKey()).getDisplayName(),
+                        BlackboardAttribute.ATTRIBUTE_TYPE.fromID(entry.getKey()).getDisplayName(),
                         NO_DESCR,
                         entry.getValue()));
-            }
         }
+        
+        if(artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+            ss.put(new NodeProperty("File Path",
+                    "File Path",
+                    NO_DESCR,
+                    DataConversion.getformattedPath(ContentUtils.getDisplayPath(associated), 0, 1)));
+        }
+        
         return s;
     }
 
@@ -213,7 +219,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         }
         
     }
-    
+
     private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
         switch(type) {
             case TSK_WEB_BOOKMARK:
