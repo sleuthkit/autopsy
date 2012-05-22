@@ -46,14 +46,13 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  *
  * @author Alex
  */
-public class Firefox {
+public class Firefox extends Extract implements ExtractInterface {
 
     private static final String ffquery = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000) as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
     private static final String ffcookiequery = "SELECT name,value,host,expiry,(lastAccessed/1000) as lastAccessed,(creationTime/1000) as creationTime FROM moz_cookies";
     private static final String ff3cookiequery = "SELECT name,value,host,expiry,(lastAccessed/1000) as lastAccessed FROM moz_cookies";
     private static final String ffbookmarkquery = "SELECT fk, moz_bookmarks.title, url FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id";
     private static final String ffdownloadquery = "select target, source,(startTime/1000) as startTime, maxBytes  from moz_downloads";
-    public Logger logger = Logger.getLogger(this.getClass().getName());
     public int FireFoxCount = 0;
 
     public Firefox() {
@@ -61,35 +60,9 @@ public class Firefox {
 
     public void getffdb(List<String> image, IngestImageWorkerController controller) {
         //Make these seperate, this is for history
-        try {
-            Case currentCase = Case.getCurrentCase(); // get the most updated case
-            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-            String allFS = new String();
-            for (int i = 0; i < image.size(); i++) {
-                if (i == 0) {
-                    allFS += " AND (0";
-                }
-                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if (i == image.size() - 1) {
-                    allFS += ")";
-                }
-            }
-            List<FsContent> FFSqlitedb = null;
-            try {
-                ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%places.sqlite%' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'" + allFS);
-                FFSqlitedb = tempDb.resultSetToFsContents(rs);
-                Statement s = rs.getStatement();
-                rs.close();
-                if (s != null) {
-                    s.close();
-                    FireFoxCount = FFSqlitedb.size();
-                }
-                rs.close();
-                rs.getStatement().close();
-            } catch (SQLException ex) {
-                logger.log(Level.WARNING, "Error while trying to get Firefox SQLite db.", ex);
-            }
 
+            List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE '%places.sqlite%' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'");
+            
             int j = 0;
               if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
             {
@@ -157,10 +130,8 @@ public class Firefox {
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
           }
-        }
-        catch (Exception ex) {
-            logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-        }
+   
+   
 
         //COOKIES section
         // This gets the cookie info
