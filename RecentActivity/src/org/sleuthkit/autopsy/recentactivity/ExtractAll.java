@@ -35,8 +35,7 @@ public class ExtractAll {
                 if (controller.isCancelled())
                     return true;
                 
-                Chrome chre = new Chrome();
-                chre.getchdb(imgIds, controller);
+                Chrome chre = new Chrome(imgIds, controller);
                 controller.progress(3);
                 if (controller.isCancelled())
                     return true;

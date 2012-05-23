@@ -181,7 +181,6 @@ public class Firefox extends Extract implements ExtractInterface {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "FireFox"));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", ((result.get("host").toString() != null) ? result.get("host").toString() : "")));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", "", ((result.get("value").toString() != null) ? result.get("value").toString() : "")));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", ((result.get("name").toString() != null) ? result.get("name").toString() : "")));
                         String domain = Util.getBaseDomain(result.get("host").toString());
                         domain = domain.replaceFirst("^\\.+(?!$)", "");
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", domain));
