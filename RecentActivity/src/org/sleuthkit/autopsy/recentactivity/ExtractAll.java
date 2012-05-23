@@ -30,8 +30,7 @@ public class ExtractAll {
                 if (controller.isCancelled())
                     return true;
                
-                Firefox ffre = new Firefox();
-                ffre.getffdb(imgIds, controller);  
+                Firefox ffre = new Firefox(imgIds, controller);
                 controller.progress(2);
                 if (controller.isCancelled())
                     return true;

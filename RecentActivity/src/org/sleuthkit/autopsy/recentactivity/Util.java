@@ -216,7 +216,7 @@ public class Util {
         boolean found = false;
         ResultSet temprs;
         try {
-            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", connection);
+            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection);
             temprs = tempdbconnect.executeQry(query);
             while (temprs.next()) {
                 if (temprs.getString("name") == null ? column == null : temprs.getString("name").equals(column)) {
@@ -232,7 +232,7 @@ public class Util {
     public static ResultSet runQuery(String query, String connection) {
         ResultSet results = null;
         try {
-            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", connection);
+            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection);
             results = tempdbconnect.executeQry(query);
             tempdbconnect.closeConnection();
         } catch (Exception ex) {
