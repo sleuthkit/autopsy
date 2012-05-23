@@ -75,7 +75,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         }
         final String NO_DESCR = "no description";
 
-        Map<Integer, Object> map = new LinkedHashMap<Integer, Object>();
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
         fillPropertyMap(map, artifact);
         
         ss.put(new NodeProperty("File Name",
@@ -83,9 +83,9 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
                                 NO_DESCR,
                                 associated.accept(new NameVisitor())));
         
-        for(Map.Entry<Integer, Object> entry : map.entrySet()){
-            ss.put(new NodeProperty(BlackboardAttribute.ATTRIBUTE_TYPE.fromID(entry.getKey()).getDisplayName(),
-                        BlackboardAttribute.ATTRIBUTE_TYPE.fromID(entry.getKey()).getDisplayName(),
+        for(Map.Entry<String, Object> entry : map.entrySet()){
+            ss.put(new NodeProperty(entry.getKey(),
+                        entry.getKey(),
                         NO_DESCR,
                         entry.getValue()));
         }
@@ -106,30 +106,30 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
      * @param map, with preserved ordering, where property names/values are put
      * @param content to extract properties from
      */
-    public static void fillPropertyMap(Map<Integer, Object> map, BlackboardArtifact artifact) {
+    public static void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
         try {
             for(BlackboardAttribute attribute : artifact.getAttributes()){
                 if(attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID())
                     continue;
                 else switch(attribute.getValueType()){
                     case STRING:
-                        map.put(attribute.getAttributeTypeID(), attribute.getValueString());
+                        map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueString());
                         break;
                     case INTEGER:
-                        map.put(attribute.getAttributeTypeID(), attribute.getValueInt());
+                        map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueInt());
                         break;
                     case LONG:
                         if(attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID() ||
                                 attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
-                            map.put(attribute.getAttributeTypeID(), dateFormatter.format(new Date(attribute.getValueLong())));
+                            map.put(attribute.getAttributeTypeDisplayName(), dateFormatter.format(new Date(attribute.getValueLong())));
                         } else
-                            map.put(attribute.getAttributeTypeID(), attribute.getValueLong());
+                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueLong());
                         break;
                     case DOUBLE:
-                        map.put(attribute.getAttributeTypeID(), attribute.getValueDouble());
+                        map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueDouble());
                         break;
                     case BYTE:
-                        map.put(attribute.getAttributeTypeID(), attribute.getValueBytes());
+                        map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueBytes());
                         break;
                 }
             }
