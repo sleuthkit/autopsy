@@ -45,6 +45,7 @@ import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.FileSystemParent;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LayoutContent;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
@@ -202,6 +203,11 @@ class ViewContextAction extends AbstractAction {
         @Override
         public List<Content> visit(VolumeSystem vs) {
             return visit(vs.getParent());
+        }
+        
+        @Override
+        public List<Content> visit(LayoutContent lc) {
+            return lc.getParent().accept(this);
         }
     }
 }
