@@ -20,10 +20,10 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
@@ -51,12 +51,11 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     BlackboardArtifact artifact;
     Content associated;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
-    
-    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");;
+    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         super(Children.LEAF, getLookups(artifact));
-        
+
         this.artifact = artifact;
         this.associated = getAssociatedContent(artifact);
         this.setName(Long.toString(artifact.getArtifactID()));
@@ -119,11 +118,18 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
                         map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueInt());
                         break;
                     case LONG:
-                        if(attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID() ||
-                                attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
-                            map.put(attribute.getAttributeTypeDisplayName(), dateFormatter.format(new Date(attribute.getValueLong())));
-                        } else
+                        if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
+                                || attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
+                            long epoch = attribute.getValueLong();
+                            String time = "0000-00-00 00:00:00";
+                            if (epoch != 0) {
+                                dateFormatter.setTimeZone(getTimeZone(artifact));
+                                time = dateFormatter.format(new java.util.Date(epoch * 1000));
+                            }
+                            map.put(attribute.getAttributeTypeDisplayName(), time);
+                        } else {
                             map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueLong());
+                        }
                         break;
                     case DOUBLE:
                         map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueDouble());
@@ -164,7 +170,11 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         }
         throw new IllegalArgumentException("Couldn't get file from database");
     }
-    
+
+    private static TimeZone getTimeZone(BlackboardArtifact artifact) {
+        return getAssociatedContent(artifact).accept(new TimeZoneVisitor());
+    }
+
     private static HighlightLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
         if(artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())
             return null;
