@@ -32,6 +32,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
+import org.sleuthkit.datamodel.LayoutContent;
 
 /**
  * Abstract visitor for getting all the files from content
@@ -65,6 +66,11 @@ public abstract class GetFilesContentVisitor implements ContentVisitor<Collectio
     @Override
     public Collection<FsContent> visit(VolumeSystem vs) {
         return getAllFromChildren(vs);
+    }
+    
+    @Override
+    public Collection<FsContent> visit(LayoutContent lc) {
+        return null;
     }
 
     /**
