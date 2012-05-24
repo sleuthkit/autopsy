@@ -24,6 +24,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LayoutContent;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -31,36 +32,40 @@ import org.sleuthkit.datamodel.VolumeSystem;
  *
  * @author dfickling
  */
-class TimeZoneVisitor implements ContentVisitor<TimeZone>{
-    
-        @Override
-        public TimeZone visit(Directory drctr) {
-            return visit(drctr.getFileSystem());
-        }
+class TimeZoneVisitor implements ContentVisitor<TimeZone> {
 
-        @Override
-        public TimeZone visit(File file) {
-            return visit(file.getFileSystem());
-        }
+    @Override
+    public TimeZone visit(Directory drctr) {
+        return visit(drctr.getFileSystem());
+    }
 
-        @Override
-        public TimeZone visit(FileSystem fs) {
-            return fs.getParent().accept(this);
-        }
+    @Override
+    public TimeZone visit(File file) {
+        return visit(file.getFileSystem());
+    }
 
-        @Override
-        public TimeZone visit(Image image) {
-            return TimeZone.getTimeZone(image.getTimeZone());
-        }
+    @Override
+    public TimeZone visit(FileSystem fs) {
+        return fs.getParent().accept(this);
+    }
 
-        @Override
-        public TimeZone visit(Volume volume) {
-            return visit(volume.getParent());
-        }
+    @Override
+    public TimeZone visit(Image image) {
+        return TimeZone.getTimeZone(image.getTimeZone());
+    }
 
-        @Override
-        public TimeZone visit(VolumeSystem vs) {
-            return TimeZone.getTimeZone(vs.getParent().getTimeZone());
-        }
-    
+    @Override
+    public TimeZone visit(Volume volume) {
+        return visit(volume.getParent());
+    }
+
+    @Override
+    public TimeZone visit(VolumeSystem vs) {
+        return TimeZone.getTimeZone(vs.getParent().getTimeZone());
+    }
+
+    @Override
+    public TimeZone visit(LayoutContent lc) {
+        return lc.getParent().accept(this);
+    }
 }
