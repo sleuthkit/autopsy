@@ -54,7 +54,11 @@ public class Chrome extends Extract {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public int ChromeCount = 0;
 
-    public Chrome(List<String> image, IngestImageWorkerController controller) {
+    public Chrome() {
+        moduleName = "Chrome";
+    }
+    
+    public void process(List<String> image, IngestImageWorkerController controller) {
         this.getHistory(image, controller);
         this.getBookmark(image, controller);
         this.getCookie(image, controller);

@@ -42,6 +42,8 @@ abstract public class Extract {
     protected Case currentCase = Case.getCurrentCase(); // get the most updated case
     protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
     public final Logger logger = Logger.getLogger(this.getClass().getName());
+    protected ArrayList<String> errorMessages = null;
+    protected String moduleName = "";
 
     public List<FsContent> extractFiles(List<String> image, String query) {
 
@@ -114,5 +116,13 @@ abstract public class Extract {
         }
 
         return list;
+    }
+    
+    public ArrayList<String> getErrorMessage(){
+        return errorMessages;
+    }
+    
+    public void addErrorMessage(){
+        
     }
 }

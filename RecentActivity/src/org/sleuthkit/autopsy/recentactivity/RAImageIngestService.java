@@ -89,11 +89,13 @@ public final class RAImageIngestService implements IngestServiceImage {
                 controller.progress(2);
             }
             if (controller.isCancelled() == false) {
-                Chrome chre = new Chrome(fsIds, controller);
+                Chrome chre = new Chrome();
+                chre.process(imgIds, controller);
                 controller.progress(3);
             }
             if (controller.isCancelled() == false) {
-                ExtractIE eere = new ExtractIE(fsIds, controller);
+                ExtractIE eere = new ExtractIE();
+                eere.process(fsIds, controller);
                 eere.parsePascoResults();
                 controller.progress(4);
             }

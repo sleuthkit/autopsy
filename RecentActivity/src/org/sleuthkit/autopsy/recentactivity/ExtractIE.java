@@ -81,7 +81,11 @@ public class ExtractIE extends Extract { // implements BrowserActivity {
     public LinkedHashMap<String, Object> IE_OBJ;
     boolean pascoFound = false;
 
-    public ExtractIE(List<String> image, IngestImageWorkerController controller) {
+    public ExtractIE() {
+       moduleName = "Internet Explorer";
+    }
+    
+    public void process(List<String> image, IngestImageWorkerController controller) {
         this.getHistory(image, controller);
         this.getBookmark(image, controller);
         this.getCookie(image, controller);

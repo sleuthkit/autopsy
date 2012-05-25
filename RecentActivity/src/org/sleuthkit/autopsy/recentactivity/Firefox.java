@@ -54,6 +54,7 @@ public class Firefox extends Extract {
     public int FireFoxCount = 0;
 
     public Firefox() {
+         moduleName = "FireFox";
     }
     
     public void process(List<String> image, IngestImageWorkerController controller){
