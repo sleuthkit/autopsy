@@ -63,10 +63,7 @@ public final class RAImageIngestService implements IngestServiceImage {
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
         //logger.log(Level.INFO, "process() " + this.toString());
-
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
-
-        ExtractAll ext = new ExtractAll();
         Case currentCase = Case.getCurrentCase(); // get the most updated case
         SleuthkitCase sCurrentCase = currentCase.getSleuthkitCase();
         //long imageId = image.getId();
@@ -78,24 +75,28 @@ public final class RAImageIngestService implements IngestServiceImage {
         }
 
         try {
-            //do the work for(FileSystem img : imageFS )
-//            try {
-//                ResultSet artset = sCurrentCase.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
-//                int artcount = 0;
-//                while (artset.next()) {
-//                    artcount++;
-//                }
-//
-//                //  artset.beforeFirst();
-//                if (artcount > 0) {
-//                } else {
-//                    int artint = sCurrentCase.addArtifactType("TSK_SYS_INFO", "System Information");
-//                }
-//
-//            } catch (Exception e) {
-//            }
-            ext.extractToBlackboard(controller, fsIds);
+            controller.switchToDeterminate(4);
+            controller.progress(0);
 
+            if (controller.isCancelled() == false) {
+                ExtractRegistry eree = new ExtractRegistry();
+                eree.getregistryfiles(fsIds, controller);
+                controller.progress(1);
+            }
+            if (controller.isCancelled() == false) {
+                Firefox ffre = new Firefox();
+                ffre.process(fsIds, controller);
+                controller.progress(2);
+            }
+            if (controller.isCancelled() == false) {
+                Chrome chre = new Chrome(fsIds, controller);
+                controller.progress(3);
+            }
+            if (controller.isCancelled() == false) {
+                ExtractIE eere = new ExtractIE(fsIds, controller);
+                eere.parsePascoResults();
+                controller.progress(4);
+            }
 
 
         } catch (Exception e) {
