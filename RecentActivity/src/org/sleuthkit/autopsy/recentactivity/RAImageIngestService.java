@@ -47,6 +47,7 @@ public final class RAImageIngestService implements IngestServiceImage {
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
     private ArrayList<String> errors = null;
+    private StringBuilder subCompleted = new StringBuilder();
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
@@ -83,15 +84,13 @@ public final class RAImageIngestService implements IngestServiceImage {
                 ExtractRegistry eree = new ExtractRegistry();
                 eree.getregistryfiles(fsIds, controller);
                 controller.progress(1);
-                IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Registry extraction complete.");
-                managerProxy.postMessage(msg);
+                subCompleted.append("Registry extraction complete. <br>");
             }
             if (controller.isCancelled() == false) {
                 Firefox ffre = new Firefox();
                 ffre.process(fsIds, controller);
                 controller.progress(2);
-                IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Firefox extraction complete.");
-                managerProxy.postMessage(msg);
+                subCompleted.append("Firefox extraction complete. <br>");
                 if(ffre.errorMessages != null){
                 errors.addAll(ffre.errorMessages);
                 }
@@ -100,8 +99,7 @@ public final class RAImageIngestService implements IngestServiceImage {
                 Chrome chre = new Chrome();
                 chre.process(fsIds, controller);
                 controller.progress(3);
-                IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Chrome extraction complete.");
-                managerProxy.postMessage(msg);
+                subCompleted.append("Chrome extraction complete. <br>");
                 if(chre.errorMessages != null){
                 errors.addAll(chre.errorMessages);
                 }
@@ -113,9 +111,8 @@ public final class RAImageIngestService implements IngestServiceImage {
                 if(eere.errorMessages != null){
                 errors.addAll(eere.errorMessages);
                 }
+                subCompleted.append( "Internet Explorer extraction complete. <br>");
                 controller.progress(4);
-                IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Registry extraction complete.");
-                managerProxy.postMessage(msg);
             }
 
 
@@ -130,16 +127,16 @@ public final class RAImageIngestService implements IngestServiceImage {
     public void complete() {
         logger.log(Level.INFO, "complete() " + this.toString());
         StringBuilder errorMessage = new StringBuilder();
-        errorMessage.append("Completed!");
+        errorMessage.append(subCompleted).append("Recent activity ingest completed!");
         if (errors != null) {
-            errorMessage.append("\nThere were some errors extracting the data: \n");
+            errorMessage.append("<br>There were some errors extracting the data: <br>");
             for (String msg : errors) {
-                final IngestMessage error = IngestMessage.createMessage(++messageId, MessageType.INFO, this, msg);
+                final IngestMessage error = IngestMessage.createMessage(++messageId, MessageType.INFO, this, msg + "<br>");
                 managerProxy.postMessage(error);
             }
         }else
         {
-            errorMessage.append("\n No errors encountered.");
+            errorMessage.append("<br> No errors encountered.");
         }
         final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, errorMessage.toString());
         managerProxy.postMessage(msg);
