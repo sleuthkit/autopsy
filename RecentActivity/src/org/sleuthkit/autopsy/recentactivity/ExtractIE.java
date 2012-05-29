@@ -82,9 +82,9 @@ public class ExtractIE extends Extract { // implements BrowserActivity {
     boolean pascoFound = false;
 
     public ExtractIE() {
-       moduleName = "Internet Explorer";
+        moduleName = "Internet Explorer";
     }
-    
+
     public void process(List<String> image, IngestImageWorkerController controller) {
         this.getHistory(image, controller);
         this.getBookmark(image, controller);
@@ -135,7 +135,7 @@ public class ExtractIE extends Extract { // implements BrowserActivity {
                 IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-                 this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + Favorite.getName());
+                this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + Favorite.getName());
             }
 
         }
@@ -180,7 +180,7 @@ public class ExtractIE extends Extract { // implements BrowserActivity {
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, Cookie, bbattributes);
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-                 this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + Cookie.getName());
+                this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + Cookie.getName());
             }
 
         }
@@ -231,7 +231,7 @@ public class ExtractIE extends Extract { // implements BrowserActivity {
                 this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, Recent, bbattributes);
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-                 this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + Recent.getName());
+                this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + Recent.getName());
             }
 
         }
@@ -461,7 +461,7 @@ public class ExtractIE extends Extract { // implements BrowserActivity {
                                             bbart.addAttributes(bbattributes);
                                         } catch (Exception ex) {
                                             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-                                             this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + tempDb.getFsContentById(artObjId).getName());
+                                            this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + tempDb.getFsContentById(artObjId).getName());
                                         }
 
                                         //KeyValueThing

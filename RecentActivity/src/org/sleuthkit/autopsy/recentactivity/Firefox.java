@@ -54,10 +54,10 @@ public class Firefox extends Extract {
     public int FireFoxCount = 0;
 
     public Firefox() {
-         moduleName = "FireFox";
+        moduleName = "FireFox";
     }
-    
-    public void process(List<String> image, IngestImageWorkerController controller){
+
+    public void process(List<String> image, IngestImageWorkerController controller) {
         this.getHistory(image, controller);
         this.getBookmark(image, controller);
         this.getDownload(image, controller);
@@ -96,7 +96,7 @@ public class Firefox extends Extract {
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, FFSqlitedb.get(j), bbattributes);
                     } catch (Exception ex) {
                         logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
-                         this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
                 }
                 j++;
@@ -136,7 +136,7 @@ public class Firefox extends Extract {
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, FFSqlitedb.get(j), bbattributes);
                     } catch (Exception ex) {
                         logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
-                         this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
                 }
                 j++;
@@ -193,7 +193,7 @@ public class Firefox extends Extract {
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, FFSqlitedb.get(j), bbattributes);
                     } catch (Exception ex) {
                         logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
-                         this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
                 }
                 j++;
@@ -223,7 +223,7 @@ public class Firefox extends Extract {
                     dbFile.delete();
                     break;
                 }
-               
+
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, ffdownloadquery);
                 for (HashMap<String, Object> result : tempList) {
                     try {
@@ -238,7 +238,7 @@ public class Firefox extends Extract {
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, FFSqlitedb.get(j), bbattributes);
                     } catch (Exception ex) {
                         logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
-                         this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
                 }
                 j++;

@@ -139,7 +139,7 @@ public class Util {
             result = url.getHost();
         } catch (Exception e) 
         {
-             logger.log(Level.WARNING, "Error while trying to convert url to domain." + value, e);
+             logger.log(Level.WARNING, "Error while trying to convert url to domain. " + value, e);
         }
 
         return result;

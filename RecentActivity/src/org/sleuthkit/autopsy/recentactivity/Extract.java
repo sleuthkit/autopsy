@@ -82,7 +82,7 @@ abstract public class Extract {
             bbart.addAttributes(bbattributes);
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error while trying to add an artifact: " + ex);
-             this.addErrorMessage(this.getName() + ": Error while trying to add artifact to case for file:" + content.getName());
+            this.addErrorMessage(this.getName() + ": Error while trying to add artifact to case for file:" + content.getName());
         }
     }
 
@@ -119,16 +119,16 @@ abstract public class Extract {
 
         return list;
     }
-    
-    public ArrayList<String> getErrorMessage(){
+
+    public ArrayList<String> getErrorMessage() {
         return errorMessages;
     }
-    
-    public void addErrorMessage(String message){
+
+    public void addErrorMessage(String message) {
         errorMessages.add(message);
     }
-    
-    public String getName(){
+
+    public String getName() {
         return moduleName;
     }
 }

@@ -218,17 +218,17 @@ public class ExtractRegistry {
                             //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
                             //               bbart.addAttributes(bbattributes);
                         } else if ("usb".equals(context)) {
-                            
-                             Long utime = null;
+
+                            Long utime = null;
                             try {
-                               
+
                                 utime = Long.parseLong(name);
                                 String Tempdate = utime.toString() + "000";
-                                 utime = Long.valueOf(Tempdate);
+                                utime = Long.valueOf(Tempdate);
                             } catch (Exception e) {
                                 logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                             }
-                            
+
                             BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, utime));
                             String dev = artnode.getAttributeValue("dev");
@@ -240,7 +240,7 @@ public class ExtractRegistry {
                             try {
                                 Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(name).getTime();
                                 ftime = epochtime.longValue();
-                                
+
                             } catch (ParseException e) {
                                 logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                             }
@@ -260,21 +260,20 @@ public class ExtractRegistry {
                             if (name.contains("InstallDate")) {
                                 installdate = value;
                                 Long installtime = null;
-                            try {
-                                Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
-                                installtime = epochtime.longValue();
-                                String Tempdate = installtime.toString();
-                                 installtime = Long.valueOf(Tempdate);
-                            } catch (ParseException e) {
-                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
-                            }
+                                try {
+                                    Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
+                                    installtime = epochtime.longValue();
+                                    String Tempdate = installtime.toString();
+                                    installtime = Long.valueOf(Tempdate);
+                                } catch (ParseException e) {
+                                    logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
+                                }
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, winver));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, installtime));
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                 bbart.addAttributes(bbattributes);
                             }
                         } else {
-
 //                            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
 //                            bbart.addAttributes(bbattributes);
                         }

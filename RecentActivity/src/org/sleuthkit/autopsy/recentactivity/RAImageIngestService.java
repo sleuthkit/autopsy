@@ -88,19 +88,25 @@ public final class RAImageIngestService implements IngestServiceImage {
                 Firefox ffre = new Firefox();
                 ffre.process(fsIds, controller);
                 controller.progress(2);
+                if(ffre.errorMessages != null){
                 errors.addAll(ffre.errorMessages);
+                }
             }
             if (controller.isCancelled() == false) {
                 Chrome chre = new Chrome();
                 chre.process(fsIds, controller);
                 controller.progress(3);
+                if(chre.errorMessages != null){
                 errors.addAll(chre.errorMessages);
+                }
             }
             if (controller.isCancelled() == false) {
                 ExtractIE eere = new ExtractIE();
                 eere.process(fsIds, controller);
                 eere.parsePascoResults();
+                if(eere.errorMessages != null){
                 errors.addAll(eere.errorMessages);
+                }
                 controller.progress(4);
             }
 
@@ -115,15 +121,19 @@ public final class RAImageIngestService implements IngestServiceImage {
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete() " + this.toString());
-        StringBuilder errorMessage = null;
-        errorMessage.append("Completed! \n");
-        if(!errors.isEmpty()){
-            errorMessage.append("There were some errors extracting the data: \n");
-        for(String msg : errors){
-            errorMessage.append("\n").append(msg);
+        StringBuilder errorMessage = new StringBuilder();
+        errorMessage.append("Completed!");
+        if (errors != null) {
+            errorMessage.append("\nThere were some errors extracting the data: \n");
+            for (String msg : errors) {
+                final IngestMessage error = IngestMessage.createMessage(++messageId, MessageType.INFO, this, msg);
+                managerProxy.postMessage(error);
+            }
+        }else
+        {
+            errorMessage.append("\n No errors encountered.");
         }
-        }
-        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Completed");
+        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, errorMessage.toString());
         managerProxy.postMessage(msg);
 
         //service specific cleanup due to completion here
