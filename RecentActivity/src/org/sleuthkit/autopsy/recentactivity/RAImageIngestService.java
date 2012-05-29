@@ -66,7 +66,7 @@ public final class RAImageIngestService implements IngestServiceImage {
 
             if (controller.isCancelled() == false) {
                 ExtractRegistry eree = new ExtractRegistry();
-                eree.getregistryfiles(image, controller);
+                eree.process(image, controller);
                 controller.progress(1);
                 subCompleted.append("Registry extraction complete. <br>");
             }

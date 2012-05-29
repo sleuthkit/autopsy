@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JPanel;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -19,6 +20,8 @@ import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServiceImage;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.*;
@@ -27,7 +30,7 @@ import org.sleuthkit.datamodel.*;
  *
  * @author Alex \System32\Config
  */
-public class ExtractRegistry {
+public class ExtractRegistry  implements IngestServiceImage {
 
     public Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
@@ -292,5 +295,75 @@ public class ExtractRegistry {
             logger.log(Level.WARNING, "Error while trying to read into a registry file." + ex);
         }
         return true;
+    }
+
+    @Override
+    public void process(Image image, IngestImageWorkerController controller) {
+        this.getregistryfiles(image, controller);
+    }
+
+    @Override
+    public void init(IngestManagerProxy managerProxy) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void complete() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void stop() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String getName() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String getDescription() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public ServiceType getType() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasSimpleConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasAdvancedConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void saveSimpleConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public JPanel getSimpleConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public JPanel getAdvancedConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }
