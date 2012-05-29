@@ -19,7 +19,6 @@
 
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.Arrays;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
@@ -29,12 +28,12 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
+import org.sleuthkit.datamodel.LayoutFile;
 
 /**
  * Abstract subclass for ContentChildren and RootContentChildren implementations
@@ -107,6 +106,11 @@ abstract class AbstractContentChildren extends Keys<Object> {
         @Override
         public AbstractContentNode visit(BlackboardArtifact ba) {
             return defaultVisit(ba);
+        }
+        
+        @Override
+        public AbstractContentNode visit(LayoutFile lf) {
+            return new LayoutFileNode(lf);
         }
 
         @Override

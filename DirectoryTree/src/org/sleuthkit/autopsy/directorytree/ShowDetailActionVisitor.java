@@ -57,7 +57,8 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
         List<Action> actions = new ArrayList<Action>();
         
         actions.addAll(c.accept(instance));
-        
+        //TODO: fix this
+        /*
         while (c.isOnto()) {
             try {
                 List<? extends Content> children = c.getChildren();
@@ -71,7 +72,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
                 return actions;
             }
             actions.addAll(c.accept(instance));
-        }
+        }*/
         return actions;
     }
 

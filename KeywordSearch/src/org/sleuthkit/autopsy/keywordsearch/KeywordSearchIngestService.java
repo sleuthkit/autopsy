@@ -41,19 +41,20 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
+import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
 //service provider registered in layer.xml
-public final class KeywordSearchIngestService implements IngestServiceFsContent {
+public final class KeywordSearchIngestService implements IngestServiceAbstractFile {
 
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestService.class.getName());
     public static final String MODULE_NAME = "Keyword Search";
@@ -93,7 +94,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
     }
 
     @Override
-    public ProcessResult process(FsContent fsContent) {
+    public ProcessResult process(AbstractFile abstractFile) {
 
         if (initialized == false) //error initializing indexing/Solr
         {
@@ -102,11 +103,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         //check if we should skip this file according to HashDb service
         //if so do not index it, also postpone indexing and keyword search threads to later
-        IngestServiceFsContent.ProcessResult hashDBResult = managerProxy.getFsContentServiceResult(hashDBServiceName);
-        //logger.log(Level.INFO, "hashdb result: " + hashDBResult + "file: " + fsContent.getName());
-        if (hashDBResult == IngestServiceFsContent.ProcessResult.COND_STOP) {
+        IngestServiceAbstractFile.ProcessResult hashDBResult = managerProxy.getAbstractFileServiceResult(hashDBServiceName);
+        //logger.log(Level.INFO, "hashdb result: " + hashDBResult + "file: " + AbstractFile.getName());
+        if (hashDBResult == IngestServiceAbstractFile.ProcessResult.COND_STOP) {
             return ProcessResult.OK;
-        } else if (hashDBResult == IngestServiceFsContent.ProcessResult.ERROR) {
+        } else if (hashDBResult == IngestServiceAbstractFile.ProcessResult.ERROR) {
             //notify depending service that keyword search (would) encountered error for this file
             return ProcessResult.ERROR;
         }
@@ -131,7 +132,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
             }
         }
 
-        indexer.indexFile(fsContent);
+        indexer.indexFile(abstractFile);
         return ProcessResult.OK;
 
     }
@@ -249,7 +250,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
     @Override
     public ServiceType getType() {
-        return ServiceType.FsContent;
+        return ServiceType.AbstractFile;
     }
 
     @Override
@@ -426,19 +427,21 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
 
         }
 
-        private void indexFile(FsContent fsContent) {
-            final long size = fsContent.getSize();
-            //logger.log(Level.INFO, "Processing fsContent: " + fsContent.getName());
-            if (!fsContent.isFile()) {
+        private void indexFile(AbstractFile abstractFile) {
+            final long size = abstractFile.getSize();
+            //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
+            //TODO: not this
+            if(!(abstractFile instanceof File)) {
                 return;
             }
-            File file = (File) fsContent;
+            
+            File file = (File) abstractFile;
 
             boolean ingestible = Ingester.isIngestible(file);
 
             //limit size of entire file, do not limit strings
             if (size == 0 || (ingestible && size > MAX_INDEX_SIZE)) {
-                ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+                ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED);
                 return;
             }
 
@@ -609,7 +612,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                             currentResults.put(termResultK, queryTermResults);
                             newResults.put(termResultK, queryTermResults);
                         } else {
-                            //some fscontent hits already exist for this keyword
+                            //some AbstractFile hits already exist for this keyword
                             for (ContentHit res : queryTermResults) {
                                 if (!previouslyHit(curTermResults, res)) {
                                     //add to new results
@@ -636,8 +639,8 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                         
                         for (final Keyword hitTerm : newResults.keySet()) {
                             List<ContentHit> contentHitsAll = newResults.get(hitTerm);
-                            Map<FsContent, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
-                            for (final FsContent hitFile : contentHitsFlattened.keySet()) {
+                            Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
+                            for (final AbstractFile hitFile : contentHitsFlattened.keySet()) {
                                 String snippet = null;
                                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery(), true, false);
                                 int chunkId = contentHitsFlattened.get(hitFile);
@@ -705,7 +708,11 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
                                 //file
                                 detailsSb.append("<tr>");
                                 detailsSb.append("<th>File</th>");
-                                detailsSb.append("<td>").append(hitFile.getParentPath()).append(hitFile.getName()).append("</td>");
+                                if(hitFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
+                                    detailsSb.append("<td>").append(((FsContent)hitFile).getParentPath()).append(hitFile.getName()).append("</td>");
+                                } else {
+                                    detailsSb.append("<td>").append(hitFile.getName()).append("</td>");
+                                }
                                 detailsSb.append("</tr>");
 
 
@@ -779,7 +786,7 @@ public final class KeywordSearchIngestService implements IngestServiceFsContent 
         }
     }
 
-    //check if fscontent already hit, ignore chunks
+    //check if AbstractFile already hit, ignore chunks
     private static boolean previouslyHit(List<ContentHit> contents, ContentHit hit) {
         boolean ret = false;
         long hitId = hit.getId();

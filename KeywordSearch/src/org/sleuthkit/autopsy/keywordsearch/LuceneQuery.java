@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
@@ -138,7 +138,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         }
 
         //map of unique fs hit and chunk id or 0
-        LinkedHashMap<FsContent, Integer> fsMatches = ContentHit.flattenResults(matches);
+        LinkedHashMap<AbstractFile, Integer> fsMatches = ContentHit.flattenResults(matches);
 
         //get listname
         String listName = "";
@@ -160,7 +160,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String snippet, String listName) {
+    public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
 
         KeywordWriteResult writeResult = null;
@@ -258,11 +258,11 @@ public class LuceneQuery implements KeywordSearchQuery {
                         //logger.log(Level.INFO, "file id: " + fileID + ", chunkID: " + chunkId);
 
                         try {
-                            FsContent resultFsContent = sc.getFsContentById(fileID);
-                            matches.add(new ContentHit(resultFsContent, chunkId));
+                            AbstractFile resultAbstractFile = sc.getAbstractFileById(fileID);
+                            matches.add(new ContentHit(resultAbstractFile, chunkId));
 
                         } catch (TskException ex) {
-                            logger.log(Level.WARNING, "Could not get the fscontent for keyword hit, ", ex);
+                            logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex);
                             //something wrong with case/db
                             return matches;
                         }
@@ -271,10 +271,10 @@ public class LuceneQuery implements KeywordSearchQuery {
                         final long fileID = Long.parseLong(resultID);
 
                         try {
-                            FsContent resultFsContent = sc.getFsContentById(fileID);
-                            matches.add(new ContentHit(resultFsContent));
+                            AbstractFile resultAbstractFile = sc.getAbstractFileById(fileID);
+                            matches.add(new ContentHit(resultAbstractFile));
                         } catch (TskException ex) {
-                            logger.log(Level.WARNING, "Could not get the fscontent for keyword hit, ", ex);
+                            logger.log(Level.WARNING, "Could not get the AbstractFile for keyword hit, ", ex);
                             //something wrong with case/db
                             return matches;
                         }

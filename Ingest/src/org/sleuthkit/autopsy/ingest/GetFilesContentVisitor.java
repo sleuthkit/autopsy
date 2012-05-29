@@ -27,49 +27,49 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
-import org.sleuthkit.datamodel.LayoutContent;
+import org.sleuthkit.datamodel.LayoutFile;
 
 /**
  * Abstract visitor for getting all the files from content
  * TODO should be moved to utility module (needs resolve cyclic deps)
  */
-public abstract class GetFilesContentVisitor implements ContentVisitor<Collection<FsContent>> {
+public abstract class GetFilesContentVisitor implements ContentVisitor<Collection<AbstractFile>> {
 
     private static final Logger logger = Logger.getLogger(GetFilesContentVisitor.class.getName());
 
     @Override
-    public abstract Collection<FsContent> visit(File file);
+    public abstract Collection<AbstractFile> visit(File file);
 
     @Override
-    public abstract Collection<FsContent> visit(FileSystem fs);
+    public abstract Collection<AbstractFile> visit(FileSystem fs);
 
     @Override
-    public Collection<FsContent> visit(Directory drctr) {
+    public Collection<AbstractFile> visit(Directory drctr) {
         return getAllFromChildren(drctr);
     }
 
     @Override
-    public Collection<FsContent> visit(Image image) {
+    public Collection<AbstractFile> visit(Image image) {
         return getAllFromChildren(image);
     }
 
     @Override
-    public Collection<FsContent> visit(Volume volume) {
+    public Collection<AbstractFile> visit(Volume volume) {
         return getAllFromChildren(volume);
     }
 
     @Override
-    public Collection<FsContent> visit(VolumeSystem vs) {
+    public Collection<AbstractFile> visit(VolumeSystem vs) {
         return getAllFromChildren(vs);
     }
     
     @Override
-    public Collection<FsContent> visit(LayoutContent lc) {
+    public Collection<AbstractFile> visit(LayoutFile lc) {
         return null;
     }
 
@@ -79,8 +79,8 @@ public abstract class GetFilesContentVisitor implements ContentVisitor<Collectio
      * @param parent
      * @return 
      */
-    protected Collection<FsContent> getAllFromChildren(Content parent) {
-        Collection<FsContent> all = new ArrayList<FsContent>();
+    protected Collection<AbstractFile> getAllFromChildren(Content parent) {
+        Collection<AbstractFile> all = new ArrayList<AbstractFile>();
 
         try {
             for (Content child : parent.getChildren()) {

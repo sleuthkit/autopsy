@@ -22,7 +22,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.AbstractFile;
 
 public interface KeywordSearchQuery {
 
@@ -94,12 +94,12 @@ public interface KeywordSearchQuery {
      * write results to blackboard per single term and file hit
      * this method is useful if something else should keep track of partial results to write
      * @param termHit term for only which to write results
-     * @param newFsHit fscontent for which to write results for this hit
+     * @param newFsHit AbstractFile for which to write results for this hit
      * @param snippet snippet preview with hit context, or null if there is no snippet
      * @param listName listname
      * @return collection of results (with cached bb artifacts/attributes) created and written
      */
-    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String snippet, String listName);
+    public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName);
        
 }
 

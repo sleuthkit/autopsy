@@ -44,6 +44,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskData;
@@ -77,17 +78,17 @@ public class IngestManager {
     private volatile UpdateFrequency updateFrequency = UpdateFrequency.AVG;
     //queues
     private final ImageQueue imageQueue = new ImageQueue();   // list of services and images to analyze
-    private final FsContentQueue fsContentQueue = new FsContentQueue();
+    private final AbstractFileQueue AbstractFileQueue = new AbstractFileQueue();
     private final Object queuesLock = new Object();
     //workers
-    private IngestFsContentThread fsContentIngester;
+    private IngestAbstractFileThread AbstractFileIngester;
     private List<IngestImageThread> imageIngesters;
     private SwingWorker<Object,Void> queueWorker;
     //services
     final List<IngestServiceImage> imageServices = enumerateImageServices();
-    final List<IngestServiceFsContent> fsContentServices = enumerateFsContentServices();
+    final List<IngestServiceAbstractFile> AbstractFileServices = enumerateAbstractFileServices();
     // service return values
-    private final Map<String, IngestServiceFsContent.ProcessResult> fsContentServiceResults = new HashMap<String, IngestServiceFsContent.ProcessResult>();
+    private final Map<String, IngestServiceAbstractFile.ProcessResult> AbstractFileServiceResults = new HashMap<String, IngestServiceAbstractFile.ProcessResult>();
     //manager proxy
     final IngestManagerProxy managerProxy = new IngestManagerProxy(this);
     //notifications
@@ -140,12 +141,12 @@ public class IngestManager {
         pcs.firePropertyChange(SERVICE_HAS_DATA_EVT, serviceDataEvent, null);
     }
 
-    IngestServiceFsContent.ProcessResult getFsContentServiceResult(String serviceName) {
-        synchronized (fsContentServiceResults) {
-            if (fsContentServiceResults.containsKey(serviceName)) {
-                return fsContentServiceResults.get(serviceName);
+    IngestServiceAbstractFile.ProcessResult getAbstractFileServiceResult(String serviceName) {
+        synchronized (AbstractFileServiceResults) {
+            if (AbstractFileServiceResults.containsKey(serviceName)) {
+                return AbstractFileServiceResults.get(serviceName);
             } else {
-                return IngestServiceFsContent.ProcessResult.UNKNOWN;
+                return IngestServiceAbstractFile.ProcessResult.UNKNOWN;
             }
         }
     }
@@ -166,7 +167,7 @@ public class IngestManager {
         queueWorker.execute();
 
         ui.restoreMessages();
-        //logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + fsContentQueue.toString());
+        //logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + AbstractFileQueue.toString());
     }
 
     /**
@@ -187,15 +188,15 @@ public class IngestManager {
     /**
      * Starts the needed worker threads.
      * 
-     * if fsContent service is still running, do nothing and allow it to consume queue
-     * otherwise start /restart fsContent worker
+     * if AbstractFile service is still running, do nothing and allow it to consume queue
+     * otherwise start /restart AbstractFile worker
      * 
      * image workers run per (service,image).  Check if one for the (service,image) is already running
      * otherwise start/restart the worker
      */
     private synchronized void startAll() {
         logger.log(Level.INFO, "Image queue: " + this.imageQueue.toString());
-        logger.log(Level.INFO, "File queue: " + this.fsContentQueue.toString());
+        logger.log(Level.INFO, "File queue: " + this.AbstractFileQueue.toString());
 
         if (!ingestMonitor.isRunning()) {
             ingestMonitor.start();
@@ -243,30 +244,30 @@ public class IngestManager {
         //}
 
 
-        //fsContent ingester
-        boolean startFsContentIngester = false;
-        if (hasNextFsContent()) {
-            if (fsContentIngester
+        //AbstractFile ingester
+        boolean startAbstractFileIngester = false;
+        if (hasNextAbstractFile()) {
+            if (AbstractFileIngester
                     == null) {
-                startFsContentIngester = true;
-                logger.log(Level.INFO, "Starting initial FsContent ingester");
+                startAbstractFileIngester = true;
+                logger.log(Level.INFO, "Starting initial AbstractFile ingester");
             } //if worker had completed, restart it in case data is still enqueued
-            else if (fsContentIngester.isDone()) {
-                startFsContentIngester = true;
-                logger.log(Level.INFO, "Restarting fsContent ingester");
+            else if (AbstractFileIngester.isDone()) {
+                startAbstractFileIngester = true;
+                logger.log(Level.INFO, "Restarting AbstractFile ingester");
             }
         } else {
-            logger.log(Level.INFO, "no new FsContent enqueued, no ingester needed");
+            logger.log(Level.INFO, "no new AbstractFile enqueued, no ingester needed");
         }
 
-        if (startFsContentIngester) {
+        if (startAbstractFileIngester) {
             stats = new IngestManagerStats();
-            fsContentIngester = new IngestFsContentThread();
+            AbstractFileIngester = new IngestAbstractFileThread();
             //init all fs services, everytime new worker starts
-            for (IngestServiceFsContent s : fsContentServices) {
+            for (IngestServiceAbstractFile s : AbstractFileServices) {
                 s.init(managerProxy);
             }
-            fsContentIngester.execute();
+            AbstractFileIngester.execute();
         }
     }
 
@@ -281,13 +282,13 @@ public class IngestManager {
         }
 
         //empty queues
-        emptyFsContents();
+        emptyAbstractFiles();
         emptyImages();
 
         //stop service workers
-        if (fsContentIngester != null) {
+        if (AbstractFileIngester != null) {
             //send signals to all file services
-            for (IngestServiceFsContent s : this.fsContentServices) {
+            for (IngestServiceAbstractFile s : this.AbstractFileServices) {
                 if (isServiceRunning(s)) {
                     try {
                         s.stop();
@@ -298,11 +299,11 @@ public class IngestManager {
 
             }
             //stop fs ingester thread
-            boolean cancelled = fsContentIngester.cancel(true);
+            boolean cancelled = AbstractFileIngester.cancel(true);
             if (!cancelled) {
                 logger.log(Level.WARNING, "Unable to cancel file ingest worker");
             } else {
-                fsContentIngester = null;
+                AbstractFileIngester = null;
             }
         }
 
@@ -329,7 +330,7 @@ public class IngestManager {
     }
 
     /**
-     * test if any of image of fscontent ingesters are running
+     * test if any of image of AbstractFile ingesters are running
      * @return true if any service is running, false otherwise
      */
     public synchronized boolean isIngestRunning() {
@@ -353,7 +354,7 @@ public class IngestManager {
     }
 
     public synchronized boolean isFileIngestRunning() {
-        if (fsContentIngester != null && !fsContentIngester.isDone()) {
+        if (AbstractFileIngester != null && !AbstractFileIngester.isDone()) {
             return true;
         }
         return false;
@@ -387,10 +388,10 @@ public class IngestManager {
      */
     public boolean isServiceRunning(final IngestServiceAbstract service) {
 
-        if (service.getType() == IngestServiceAbstract.ServiceType.FsContent) {
+        if (service.getType() == IngestServiceAbstract.ServiceType.AbstractFile) {
 
             synchronized (queuesLock) {
-                if (fsContentQueue.hasServiceEnqueued((IngestServiceFsContent) service)) {
+                if (AbstractFileQueue.hasServiceEnqueued((IngestServiceAbstractFile) service)) {
                     //has work enqueued, so running
                     return true;
                 } else {
@@ -485,9 +486,9 @@ public class IngestManager {
     /**
      * helper to return all file/dir services managed (using Lookup API) sorted in Lookup position order
      */
-    public static List<IngestServiceFsContent> enumerateFsContentServices() {
-        List<IngestServiceFsContent> ret = new ArrayList<IngestServiceFsContent>();
-        for (IngestServiceFsContent list : Lookup.getDefault().lookupAll(IngestServiceFsContent.class)) {
+    public static List<IngestServiceAbstractFile> enumerateAbstractFileServices() {
+        List<IngestServiceAbstractFile> ret = new ArrayList<IngestServiceAbstractFile>();
+        for (IngestServiceAbstractFile list : Lookup.getDefault().lookupAll(IngestServiceAbstractFile.class)) {
             ret.add(list);
         }
         return ret;
@@ -509,46 +510,46 @@ public class IngestManager {
      * @param service
      * @param image 
      */
-    private void addFsContent(IngestServiceFsContent service, Collection<FsContent> fsContents) {
+    private void addAbstractFile(IngestServiceAbstractFile service, Collection<AbstractFile> AbstractFiles) {
         synchronized (queuesLock) {
-            for (FsContent fsContent : fsContents) {
-                fsContentQueue.enqueue(fsContent, service);
+            for (AbstractFile AbstractFile : AbstractFiles) {
+                AbstractFileQueue.enqueue(AbstractFile, service);
             }
         }
     }
 
     /**
      * get next file/dir and associated list of services to process
-     * the queue of FsContent to process is maintained internally 
+     * the queue of AbstractFile to process is maintained internally 
      * and could be dynamically sorted as data comes in
      */
-    private Map.Entry<FsContent, List<IngestServiceFsContent>> getNextFsContent() {
-        Map.Entry<FsContent, List<IngestServiceFsContent>> ret = null;
+    private Map.Entry<AbstractFile, List<IngestServiceAbstractFile>> getNextAbstractFile() {
+        Map.Entry<AbstractFile, List<IngestServiceAbstractFile>> ret = null;
         synchronized (queuesLock) {
-            ret = fsContentQueue.dequeue();
+            ret = AbstractFileQueue.dequeue();
         }
         return ret;
     }
 
-    private boolean hasNextFsContent() {
+    private boolean hasNextAbstractFile() {
         boolean ret = false;
         synchronized (queuesLock) {
-            ret = fsContentQueue.hasNext();
+            ret = AbstractFileQueue.hasNext();
         }
         return ret;
     }
 
-    private int getNumFsContents() {
+    private int getNumAbstractFiles() {
         int ret = 0;
         synchronized (queuesLock) {
-            ret = fsContentQueue.getCount();
+            ret = AbstractFileQueue.getCount();
         }
         return ret;
     }
 
-    private void emptyFsContents() {
+    private void emptyAbstractFiles() {
         synchronized (queuesLock) {
-            fsContentQueue.empty();
+            AbstractFileQueue.empty();
         }
     }
 
@@ -596,9 +597,9 @@ public class IngestManager {
     }
 
     /**
-     * Priority determination for FsContent
+     * Priority determination for AbstractFile
      */
-    private static class FsContentPriotity {
+    private static class AbstractFilePriotity {
 
         enum Priority {
 
@@ -620,8 +621,15 @@ public class IngestManager {
             highPriorityPaths.add(Pattern.compile("^\\/Windows\\/Temp", Pattern.CASE_INSENSITIVE));
         }
 
-        static Priority getPriority(final FsContent fsContent) {
-            final String path = fsContent.getParentPath();
+        static Priority getPriority(final AbstractFile abstractFile) {
+            if(!abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
+                return Priority.MEDIUM;
+            }
+            final String path = ((FsContent)abstractFile).getParentPath();
+            
+            if(path == null){
+                return Priority.MEDIUM;
+            }
 
             for (Pattern p : highPriorityPaths) {
                 Matcher m = p.matcher(path);
@@ -650,17 +658,17 @@ public class IngestManager {
     }
 
     /**
-     * manages queue of pending FsContent and list of associated IngestServiceFsContent to use on that content
-     * sorted based on FsContentPriotity
+     * manages queue of pending AbstractFile and list of associated IngestServiceAbstractFile to use on that content
+     * sorted based on AbstractFilePriotity
      */
-    private class FsContentQueue {
+    private class AbstractFileQueue {
 
-        final Comparator<FsContent> sorter = new Comparator<FsContent>() {
+        final Comparator<AbstractFile> sorter = new Comparator<AbstractFile>() {
 
             @Override
-            public int compare(FsContent q1, FsContent q2) {
-                FsContentPriotity.Priority p1 = FsContentPriotity.getPriority(q1);
-                FsContentPriotity.Priority p2 = FsContentPriotity.getPriority(q2);
+            public int compare(AbstractFile q1, AbstractFile q2) {
+                AbstractFilePriotity.Priority p1 = AbstractFilePriotity.getPriority(q1);
+                AbstractFilePriotity.Priority p2 = AbstractFilePriotity.getPriority(q2);
                 if (p1 == p2) {
                     return (int) (q2.getId() - q1.getId());
                 } else {
@@ -669,51 +677,51 @@ public class IngestManager {
 
             }
         };
-        final TreeMap<FsContent, List<IngestServiceFsContent>> fsContentUnits = new TreeMap<FsContent, List<IngestServiceFsContent>>(sorter);
+        final TreeMap<AbstractFile, List<IngestServiceAbstractFile>> AbstractFileUnits = new TreeMap<AbstractFile, List<IngestServiceAbstractFile>>(sorter);
 
-        void enqueue(FsContent fsContent, IngestServiceFsContent service) {
-            //fsContentUnits.put(fsContent, Collections.singletonList(service));
-            List<IngestServiceFsContent> services = fsContentUnits.get(fsContent);
+        void enqueue(AbstractFile AbstractFile, IngestServiceAbstractFile service) {
+            //AbstractFileUnits.put(AbstractFile, Collections.singletonList(service));
+            List<IngestServiceAbstractFile> services = AbstractFileUnits.get(AbstractFile);
             if (services == null) {
-                services = new ArrayList<IngestServiceFsContent>();
-                fsContentUnits.put(fsContent, services);
+                services = new ArrayList<IngestServiceAbstractFile>();
+                AbstractFileUnits.put(AbstractFile, services);
             }
             services.add(service);
         }
 
-        void enqueue(FsContent fsContent, List<IngestServiceFsContent> services) {
+        void enqueue(AbstractFile AbstractFile, List<IngestServiceAbstractFile> services) {
 
-            List<IngestServiceFsContent> oldServices = fsContentUnits.get(fsContent);
+            List<IngestServiceAbstractFile> oldServices = AbstractFileUnits.get(AbstractFile);
             if (oldServices == null) {
-                oldServices = new ArrayList<IngestServiceFsContent>();
-                fsContentUnits.put(fsContent, oldServices);
+                oldServices = new ArrayList<IngestServiceAbstractFile>();
+                AbstractFileUnits.put(AbstractFile, oldServices);
             }
             oldServices.addAll(services);
         }
 
         boolean hasNext() {
-            return !fsContentUnits.isEmpty();
+            return !AbstractFileUnits.isEmpty();
         }
 
         int getCount() {
-            return fsContentUnits.size();
+            return AbstractFileUnits.size();
         }
 
         void empty() {
-            fsContentUnits.clear();
+            AbstractFileUnits.clear();
         }
 
         /**
-         * Returns next FsContent and list of associated services
+         * Returns next AbstractFile and list of associated services
          * @return 
          */
-        Map.Entry<FsContent, List<IngestServiceFsContent>> dequeue() {
+        Map.Entry<AbstractFile, List<IngestServiceAbstractFile>> dequeue() {
             if (!hasNext()) {
-                throw new UnsupportedOperationException("FsContent processing queue is empty");
+                throw new UnsupportedOperationException("AbstractFile processing queue is empty");
             }
 
             //logger.log(Level.INFO, "DEQUE: " + remove.content.getParentPath() + " SIZE: " + toString());
-            return (fsContentUnits.pollFirstEntry());
+            return (AbstractFileUnits.pollFirstEntry());
         }
 
         /**
@@ -721,8 +729,8 @@ public class IngestManager {
          * @param service to check for 
          * @return true if the service is enqueued to do work
          */
-        boolean hasServiceEnqueued(IngestServiceFsContent service) {
-            for (List<IngestServiceFsContent> list : fsContentUnits.values()) {
+        boolean hasServiceEnqueued(IngestServiceAbstractFile service) {
+            for (List<IngestServiceAbstractFile> list : AbstractFileUnits.values()) {
                 if (list.contains(service)) {
                     return true;
                 }
@@ -732,12 +740,12 @@ public class IngestManager {
 
         @Override
         public synchronized String toString() {
-            return "FsContentQueue, size: " + Integer.toString(fsContentUnits.size());
+            return "AbstractFileQueue, size: " + Integer.toString(AbstractFileUnits.size());
         }
 
         public String printQueue() {
             StringBuilder sb = new StringBuilder();
-            /*for (QueueUnit<FsContent, IngestServiceFsContent> u : fsContentUnits) {
+            /*for (QueueUnit<AbstractFile, IngestServiceAbstractFile> u : AbstractFileUnits) {
             sb.append(u.toString());
             sb.append("\n");
             }*/
@@ -913,12 +921,12 @@ public class IngestManager {
         }
     }
 
-//ingester worker for fsContent queue
-//worker runs until fsContent queue is consumed
+//ingester worker for AbstractFile queue
+//worker runs until AbstractFile queue is consumed
 //and if needed, new instance is created and started when data arrives
-    private class IngestFsContentThread extends SwingWorker<Object,Void> {
+    private class IngestAbstractFileThread extends SwingWorker<Object,Void> {
 
-        private Logger logger = Logger.getLogger(IngestFsContentThread.class.getName());
+        private Logger logger = Logger.getLogger(IngestAbstractFileThread.class.getName());
         private ProgressHandle progress;
 
         @Override
@@ -932,7 +940,7 @@ public class IngestManager {
 
                 @Override
                 public void run() {
-                    for (IngestServiceFsContent s : fsContentServices) {
+                    for (IngestServiceAbstractFile s : AbstractFileServices) {
                         IngestManager.fireServiceEvent(SERVICE_STARTED_EVT, s.getName());
                     }
                 }
@@ -946,28 +954,28 @@ public class IngestManager {
                     logger.log(Level.INFO, "Filed ingest cancelled by user.");
                     if (progress != null)
                         progress.setDisplayName(displayName + " (Cancelling...)");
-                    return IngestFsContentThread.this.cancel(true);
+                    return IngestAbstractFileThread.this.cancel(true);
                 }
             });
 
             progress.start();
             progress.switchToIndeterminate();
-            int numFsContents = getNumFsContents();
-            progress.switchToDeterminate(numFsContents);
+            int numAbstractFiles = getNumAbstractFiles();
+            progress.switchToDeterminate(numAbstractFiles);
             int processedFiles = 0;
-            //process fscontents queue
-            while (hasNextFsContent()) {
-                Map.Entry<FsContent, List<IngestServiceFsContent>> unit = getNextFsContent();
+            //process AbstractFiles queue
+            while (hasNextAbstractFile()) {
+                Map.Entry<AbstractFile, List<IngestServiceAbstractFile>> unit = getNextAbstractFile();
                 //clear return values from services for last file
-                synchronized (fsContentServiceResults) {
-                    fsContentServiceResults.clear();
+                synchronized (AbstractFileServiceResults) {
+                    AbstractFileServiceResults.clear();
                 }
 
-                final FsContent fileToProcess = unit.getKey();
+                final AbstractFile fileToProcess = unit.getKey();
 
                 progress.progress(fileToProcess.getName(), processedFiles);
 
-                for (IngestServiceFsContent service : unit.getValue()) {
+                for (IngestServiceAbstractFile service : unit.getValue()) {
                     if (isCancelled()) {
                         logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
                         return null;
@@ -975,16 +983,16 @@ public class IngestManager {
 
 
                     try {
-                        IngestServiceFsContent.ProcessResult result = service.process(fileToProcess);
+                        IngestServiceAbstractFile.ProcessResult result = service.process(fileToProcess);
                         //handle unconditional stop
-                        if (result == IngestServiceFsContent.ProcessResult.STOP) {
+                        if (result == IngestServiceAbstractFile.ProcessResult.STOP) {
                             break;
                             //will skip other services and start to process next file
                         }
 
                         //store the result for subsequent services for this file
-                        synchronized (fsContentServiceResults) {
-                            fsContentServiceResults.put(service.getName(), result);
+                        synchronized (AbstractFileServiceResults) {
+                            AbstractFileServiceResults.put(service.getName(), result);
                         }
 
                     } catch (Exception e) {
@@ -992,16 +1000,16 @@ public class IngestManager {
                         stats.addError(service);
                     }
                 }
-                int newFsContents = getNumFsContents();
-                if (newFsContents > numFsContents) {
+                int newAbstractFiles = getNumAbstractFiles();
+                if (newAbstractFiles > numAbstractFiles) {
                     //update progress bar if new enqueued
-                    numFsContents = newFsContents + processedFiles + 1;
+                    numAbstractFiles = newAbstractFiles + processedFiles + 1;
                     progress.switchToIndeterminate();
-                    progress.switchToDeterminate(numFsContents);
+                    progress.switchToDeterminate(numAbstractFiles);
                 }
                 ++processedFiles;
-                --numFsContents;
-            } //end of this fsContent
+                --numAbstractFiles;
+            } //end of this AbstractFile
             logger.log(Level.INFO, "Done background processing");
             return null;
         }
@@ -1012,7 +1020,7 @@ public class IngestManager {
                 super.get(); //block and get all exceptions thrown while doInBackground()
                 //notify services of completion
                 if (!this.isCancelled()) {
-                    for (IngestServiceFsContent s : fsContentServices) {
+                    for (IngestServiceAbstractFile s : AbstractFileServices) {
                         s.complete();
                         IngestManager.fireServiceEvent(SERVICE_COMPLETED_EVT, s.getName());
                     }
@@ -1045,7 +1053,7 @@ public class IngestManager {
         }
 
         private void handleInterruption() {
-            for (IngestServiceFsContent s : fsContentServices) {
+            for (IngestServiceAbstractFile s : AbstractFileServices) {
                 if (isServiceRunning(s)) {
                     try {
                         s.stop();
@@ -1057,7 +1065,7 @@ public class IngestManager {
                 IngestManager.fireServiceEvent(SERVICE_STOPPED_EVT, s.getName());
             }
             //empty queues
-            emptyFsContents();
+            emptyAbstractFiles();
         }
     }
 
@@ -1103,21 +1111,21 @@ public class IngestManager {
                 super.get(); //block and get all exceptions thrown while doInBackground()      
             } catch (CancellationException e) {
                 //task was cancelled
-                handleInterruption();
+                handleInterruption(e);
             } catch (InterruptedException ex) {
-                handleInterruption();
+                handleInterruption(ex);
             } catch (ExecutionException ex) {
-                handleInterruption();
+                handleInterruption(ex);
 
 
             } catch (Exception ex) {
-                handleInterruption();
+                handleInterruption(ex);
 
             } finally {
                 //queing end
                 if (this.isCancelled()) {
                     //empty queues
-                    handleInterruption();
+                    handleInterruption(new Exception());
                 } else {
                     //start ingest workers
                     startAll();
@@ -1130,7 +1138,7 @@ public class IngestManager {
             int processed = 0;
             for (Image image : images) {
                 final String imageName = image.getName();
-                Collection<FsContent> fsContents = null;
+                Collection<AbstractFile> AbstractFiles = null;
                 for (IngestServiceAbstract service : services) {
                     if (isCancelled()) {
                         logger.log(Level.INFO, "Terminating ingest queueing due to cancellation.");
@@ -1153,34 +1161,35 @@ public class IngestManager {
 
                             //addImage((IngestServiceImage) service, image);
                             break;
-                        case FsContent:
-                            if (fsContents == null) {
+                        case AbstractFile:
+                            if (AbstractFiles == null) {
                                 long start = System.currentTimeMillis();
-                                fsContents = new GetAllFilesContentVisitor().visit(image);
+                                AbstractFiles = new GetAllFilesContentVisitor().visit(image);
                                 logger.info("Get all files took " + (System.currentTimeMillis() - start) + "ms");
                             }
-                            //enqueue the same singleton fscontent service
-                            logger.log(Level.INFO, "Adding image " + image.getName() + " with " + fsContents.size() + " number of fsContent to service " + service.getName());
-                            addFsContent((IngestServiceFsContent) service, fsContents);
+                            //enqueue the same singleton AbstractFile service
+                            logger.log(Level.INFO, "Adding image " + image.getName() + " with " + AbstractFiles.size() + " number of AbstractFile to service " + service.getName());
+                            addAbstractFile((IngestServiceAbstractFile) service, AbstractFiles);
                             break;
                         default:
                             logger.log(Level.SEVERE, "Unexpected service type: " + service.getType().name());
                     }
                     progress.progress(serviceName + " " + imageName, ++processed);
                 }
-                if (fsContents != null) {
-                    fsContents.clear();
+                if (AbstractFiles != null) {
+                    AbstractFiles.clear();
                 }
             }
 
-            //logger.log(Level.INFO, fsContentQueue.printQueue());
+            //logger.log(Level.INFO, AbstractFileQueue.printQueue());
 
             progress.progress("Sorting files", processed);
         }
 
-        private void handleInterruption() {
+        private void handleInterruption(Exception ex) {
+            Logger.getLogger(EnqueueWorker.class.getName()).log(Level.INFO, "Exception!", ex);
             //empty queues
-            emptyFsContents();
+            emptyAbstractFiles();
             emptyImages();
         }
     }

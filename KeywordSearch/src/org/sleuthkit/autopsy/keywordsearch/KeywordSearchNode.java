@@ -24,14 +24,14 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Root Node for keyword search results
  */
 class KeywordSearchNode extends AbstractNode {
 
-    KeywordSearchNode(final Map<FsContent,Integer> keys, final String solrQuery) {
+    KeywordSearchNode(final Map<AbstractFile,Integer> keys, final String solrQuery) {
 
         super(new RootContentChildren(new ArrayList(keys.keySet())) {
 
@@ -45,7 +45,7 @@ class KeywordSearchNode extends AbstractNode {
                 int i = 0;
                 for (Node original : originalNodes) {
                     HighlightedMatchesSource markup = new HighlightedMatchesSource((Content)key, solrQuery, false);
-                    int previewChunk = keys.get((FsContent)key);
+                    int previewChunk = keys.get((AbstractFile)key);
                     filterNodes[i++] = new KeywordSearchFilterNode(markup, original, solrQuery, previewChunk);
                 }
 

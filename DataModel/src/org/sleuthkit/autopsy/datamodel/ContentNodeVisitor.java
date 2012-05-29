@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.datamodel;
  * Interface for visitor pattern on ContentNodes
  * @param <T> visit method return type
  */
-interface ContentNodeVisitor<T> {
+public interface ContentNodeVisitor<T> {
 
     T visit(DirectoryNode dn);
 
@@ -31,6 +31,8 @@ interface ContentNodeVisitor<T> {
     T visit(ImageNode in);
 
     T visit(VolumeNode vn);
+    
+    T visit(LayoutFileNode lcn);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -64,6 +66,11 @@ interface ContentNodeVisitor<T> {
         @Override
         public T visit(VolumeNode vn) {
             return defaultVisit(vn);
+        }
+        
+        @Override
+        public T visit(LayoutFileNode lcn) {
+            return defaultVisit(lcn);
         }
     }
 }

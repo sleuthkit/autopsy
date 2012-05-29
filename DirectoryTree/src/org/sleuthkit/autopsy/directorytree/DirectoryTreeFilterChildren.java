@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.datamodel.ImagesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
+import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;

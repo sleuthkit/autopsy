@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * ingest service that acts on every FsContent in image
  * 
  */
-public interface IngestServiceFsContent extends IngestServiceAbstract {
+public interface IngestServiceAbstractFile extends IngestServiceAbstract {
 
     public enum ProcessResult {
         UNKNOWN, //values unknown for the (service,last file)
@@ -40,5 +40,5 @@ public interface IngestServiceFsContent extends IngestServiceAbstract {
      * The service notifies viewers via IngestManager.postMessage()
      * and may also write results to the black-board as it is processing
      */
-    public ProcessResult process(FsContent fsContent);
+    public ProcessResult process(AbstractFile abstractFile);
 }

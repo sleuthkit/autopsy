@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
@@ -44,12 +44,12 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
     private static final Logger logger = Logger.getLogger(GetAllFilesContentVisitor.class.getName());
 
     @Override
-    public Collection<FsContent> visit(File file) {
-        return Collections.singleton((FsContent) file);
+    public Collection<AbstractFile> visit(File file) {
+        return Collections.singleton((AbstractFile) file);
     }
 
     @Override
-    public Collection<FsContent> visit(FileSystem fs) {
+    public Collection<AbstractFile> visit(FileSystem fs) {
         // Files in the database have a filesystem field, so it's quick to
         // get all the matching files for an entire filesystem with a query
 
@@ -60,7 +60,7 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
                 + ") AND (size > 0)";
         try {
             ResultSet rs = sc.runQuery(query);
-            List<FsContent> contents = sc.resultSetToFsContents(rs);
+            List<AbstractFile> contents = sc.resultSetToAbstractFiles(rs);
             Statement s = rs.getStatement();
             rs.close();
             if (s != null) {

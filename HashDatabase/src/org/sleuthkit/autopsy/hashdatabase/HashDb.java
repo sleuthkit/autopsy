@@ -228,7 +228,7 @@ public class HashDb implements Comparable<HashDb> {
         return this.name.compareTo(o.name);
     }
     
-    /* Thread that adds image/file and service pairs to queues */
+    /* Thread that creates a database's index */
     private class CreateIndex extends SwingWorker<Object,Void> {
 
         private ProgressHandle progress;

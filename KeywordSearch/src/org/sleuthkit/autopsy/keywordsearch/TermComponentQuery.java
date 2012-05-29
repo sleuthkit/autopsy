@@ -45,6 +45,7 @@ import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -166,7 +167,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public KeywordWriteResult writeToBlackBoard(String termHit, FsContent newFsHit, String snippet, String listName) {
+    public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
 
         if (snippet == null || snippet.equals("")) {

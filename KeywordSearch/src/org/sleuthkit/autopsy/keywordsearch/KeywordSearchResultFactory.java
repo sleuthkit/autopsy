@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
@@ -227,7 +228,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 logger.log(Level.WARNING, "Could not perform the query. ", ex);
                 return false;
             }
-            final Map<FsContent, Integer> hitContents = ContentHit.flattenResults(tcqRes);
+            final Map<AbstractFile, Integer> hitContents = ContentHit.flattenResults(tcqRes);
 
             //get listname
             String listName = "";
@@ -239,11 +240,10 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             final boolean literal_query = tcq.isEscaped();
 
             int resID = 0;
-            for (final FsContent f : hitContents.keySet()) {
+            for (final AbstractFile f : hitContents.keySet()) {
                 final int previewChunk = hitContents.get(f);
                 //get unique match result files
                 Map<String, Object> resMap = new LinkedHashMap<String, Object>();
-                AbstractFsContentNode.fillPropertyMap(resMap, f);
                 setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
 
                 if (true) {
@@ -268,7 +268,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             return true;
         }
 
-        private String getHighlightQuery(KeywordSearchQuery tcq, boolean literal_query, Map<String, List<ContentHit>> tcqRes, FsContent f) {
+        private String getHighlightQuery(KeywordSearchQuery tcq, boolean literal_query, Map<String, List<ContentHit>> tcqRes, AbstractFile f) {
             String highlightQueryEscaped = null;
             if (literal_query) {
                 //literal, treat as non-regex, non-term component query
@@ -391,13 +391,13 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 }
 
                 //get unique match result files
-                final Map<FsContent, Integer> uniqueMatches = ContentHit.flattenResults(matchesRes);
+                final Map<AbstractFile, Integer> uniqueMatches = ContentHit.flattenResults(matchesRes);
 
                 int resID = 0;
 
                 final KeywordSearchQuery origQuery = thing.getQuery();
 
-                for (final FsContent f : uniqueMatches.keySet()) {
+                for (final AbstractFile f : uniqueMatches.keySet()) {
                     final int previewChunkId = uniqueMatches.get(f);
                     Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                     AbstractFsContentNode.fillPropertyMap(resMap, (File) f);
@@ -515,8 +515,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 if (this.isCancelled()) {
                     break;
                 }
-                Map<FsContent, Integer> flattened = ContentHit.flattenResults(hits.get(hit));
-                for (FsContent f : flattened.keySet()) {
+                Map<AbstractFile, Integer> flattened = ContentHit.flattenResults(hits.get(hit));
+                for (AbstractFile f : flattened.keySet()) {
                     int chunkId = flattened.get(f);
                     final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit, true, false);
                     String snippet = null;

@@ -81,8 +81,8 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         for (final IngestServiceImage service : imageServices) {
             addService(service);
         }
-        Collection<IngestServiceFsContent> fsServices = IngestManager.enumerateFsContentServices();
-        for (final IngestServiceFsContent service : fsServices) {
+        Collection<IngestServiceAbstractFile> fsServices = IngestManager.enumerateAbstractFileServices();
+        for (final IngestServiceAbstractFile service : fsServices) {
             addService(service);
         }
 

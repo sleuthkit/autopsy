@@ -28,24 +28,30 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
+import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Hash;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
-public class HashDbIngestService implements IngestServiceFsContent {
+public class HashDbIngestService implements IngestServiceAbstractFile {
 
     private static HashDbIngestService instance = null;
     public final static String MODULE_NAME = "Hash Lookup";
     public final static String MODULE_DESCRIPTION = "Identifies known and notables files using supplied hash databases, such as a standard NSRL database.";
     private static final Logger logger = Logger.getLogger(HashDbIngestService.class.getName());
+    private Processor processor = new Processor();
     private IngestManagerProxy managerProxy;
     private SleuthkitCase skCase;
     private static int messageId = 0;
@@ -178,63 +184,19 @@ public class HashDbIngestService implements IngestServiceFsContent {
     }
 
     /**
-     * Process the given FsContent object
+     * Process the given AbstractFile object
      * 
-     * @param fsContent the object to be processed
+     * @param abstractFile the object to be processed
      * @return ProcessResult OK if file is unknown and should be processed further, otherwise STOP_COND if file is known
      */
     @Override
-    public ProcessResult process(FsContent fsContent) {
-        ProcessResult ret = ProcessResult.UNKNOWN;
-        boolean processFile = true;
-        if(fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
-            ret = ProcessResult.OK;
-            processFile = false;
-        }
-        if (processFile && (nsrlIsSet || knownBadIsSet)) {
-            String name = fsContent.getName();
-            try {
-                String md5Hash = Hash.calculateMd5(fsContent);
-                TskData.FileKnown status = TskData.FileKnown.UKNOWN;
-                boolean foundBad = false;
-                for (Map.Entry<Integer, HashDb> entry : knownBadSets.entrySet()) {
-                    status = skCase.knownBadLookupMd5(md5Hash, entry.getKey());
-                    if (status.equals(TskData.FileKnown.BAD)) {
-                        foundBad = true;
-                        count += 1;
-                        skCase.setKnown(fsContent, status);
-                        String hashSetName = entry.getValue().getName();
-                        processBadFile(fsContent, md5Hash, hashSetName);
-                    }
-                    ret = ProcessResult.OK;
-                }
-                if(!foundBad && nsrlIsSet) {
-                    status = skCase.nsrlLookupMd5(md5Hash);
-                    if (status.equals(TskData.FileKnown.KNOWN)) {
-                        skCase.setKnown(fsContent, status);
-                        ret = ProcessResult.COND_STOP;
-                    }
-                }
-            } catch (TskException ex) {
-                // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
-                logger.log(Level.WARNING, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
-                managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, this, "Hash Lookup Error: " + name,
-                        "Error encountered while updating the hash values for " + name + "."));
-                ret = ProcessResult.ERROR;
-            } catch (IOException ex) {
-                // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
-                logger.log(Level.WARNING, "Error reading file " + name, ex);
-                managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, this, "Read Error: " + name,
-                        "Error encountered while calculating the hash value for " + name + "."));
-                ret = ProcessResult.ERROR;
-            }
-        }
-        return ret;
+    public ProcessResult process(AbstractFile abstractFile) {
+        return abstractFile.accept(processor);
     }
 
     @Override
     public ServiceType getType() {
-        return ServiceType.FsContent;
+        return ServiceType.AbstractFile;
     }
     
     @Override
@@ -272,9 +234,9 @@ public class HashDbIngestService implements IngestServiceFsContent {
     public void saveSimpleConfiguration() {
     }
     
-    private void processBadFile(FsContent fsContent, String md5Hash, String hashSetName) {
+    private void processBadFile(AbstractFile abstractFile, String md5Hash, String hashSetName) {
         try {
-            BlackboardArtifact badFile = fsContent.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
+            BlackboardArtifact badFile = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
             BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID(), MODULE_NAME, "Known Bad", hashSetName);
             badFile.addAttribute(att2);
             BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), MODULE_NAME, "", md5Hash);
@@ -285,7 +247,7 @@ public class HashDbIngestService implements IngestServiceFsContent {
             //hit
             detailsSb.append("<tr>");
             detailsSb.append("<th>File Name</th>");
-            detailsSb.append("<td>").append(fsContent.getName()).append("</td>");
+            detailsSb.append("<td>").append(abstractFile.getName()).append("</td>");
             detailsSb.append("</tr>");
 
             detailsSb.append("<tr>");
@@ -301,13 +263,81 @@ public class HashDbIngestService implements IngestServiceFsContent {
             detailsSb.append("</table>");
 
             managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this,
-                    "Notable: " + fsContent.getName(),
+                    "Notable: " + abstractFile.getName(),
                     detailsSb.toString(),
-                    fsContent.getName() + md5Hash,
+                    abstractFile.getName() + md5Hash,
                     badFile));
             IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error creating blackboard artifact", ex);
+        }
+
+    }
+    
+    private class Processor extends ContentVisitor.Default<ProcessResult> {
+
+        @Override
+        protected ProcessResult defaultVisit(Content cntnt) {
+            return ProcessResult.OK;
+        }
+        
+        @Override
+        public ProcessResult visit(File f) {
+            return process(f);
+        }
+        
+        @Override
+        public ProcessResult visit(Directory d) {
+            return process(d);
+        }
+
+        private ProcessResult process(FsContent fsContent) {
+
+            ProcessResult ret = ProcessResult.UNKNOWN;
+            boolean processFile = true;
+            if (fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
+                ret = ProcessResult.OK;
+                processFile = false;
+            }
+            if (processFile && (nsrlIsSet || knownBadIsSet)) {
+                String name = fsContent.getName();
+                try {
+                    String md5Hash = Hash.calculateMd5(fsContent);
+                    TskData.FileKnown status = TskData.FileKnown.UKNOWN;
+                    boolean foundBad = false;
+                    for (Map.Entry<Integer, HashDb> entry : knownBadSets.entrySet()) {
+                        status = skCase.knownBadLookupMd5(md5Hash, entry.getKey());
+                        if (status.equals(TskData.FileKnown.BAD)) {
+                            foundBad = true;
+                            count += 1;
+                            skCase.setKnown(fsContent, status);
+                            String hashSetName = entry.getValue().getName();
+                            processBadFile(fsContent, md5Hash, hashSetName);
+                        }
+                        ret = ProcessResult.OK;
+                    }
+                    if (!foundBad && nsrlIsSet) {
+                        status = skCase.nsrlLookupMd5(md5Hash);
+                        if (status.equals(TskData.FileKnown.KNOWN)) {
+                            skCase.setKnown(fsContent, status);
+                            ret = ProcessResult.COND_STOP;
+                        }
+                    }
+                } catch (TskException ex) {
+                    // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
+                    logger.log(Level.WARNING, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
+                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestService.this, "Hash Lookup Error: " + name,
+                            "Error encountered while updating the hash values for " + name + "."));
+                    ret = ProcessResult.ERROR;
+                } catch (IOException ex) {
+                    // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
+                    logger.log(Level.WARNING, "Error reading file " + name, ex);
+                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestService.this, "Read Error: " + name,
+                            "Error encountered while calculating the hash value for " + name + "."));
+                    ret = ProcessResult.ERROR;
+                }
+            }
+            return ret;
         }
 
     }

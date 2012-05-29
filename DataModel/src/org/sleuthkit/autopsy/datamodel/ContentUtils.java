@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LayoutContent;
+import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
@@ -95,27 +95,7 @@ public final class ContentUtils {
 
         @Override
         protected String defaultVisit(Content cntnt) {
-            throw new UnsupportedOperationException("Can't get short name for given content type:" + cntnt.getClass());
-        }
-
-        @Override
-        public String visit(Directory dir) {
-            return DirectoryNode.nameForDirectory(dir);
-        }
-
-        @Override
-        public String visit(File f) {
-            return FileNode.nameForFile(f);
-        }
-
-        @Override
-        public String visit(Volume v) {
-            return VolumeNode.nameForVolume(v);
-        }
-
-        @Override
-        public String visit(Image i) {
-            return ImageNode.nameForImage(i);
+            return cntnt.getName();
         }
     }
     
@@ -127,7 +107,7 @@ public final class ContentUtils {
         }
         
         @Override
-        public List<String> visit(LayoutContent lay) {
+        public List<String> visit(LayoutFile lay) {
             return lay.getParent().accept(this);
         }
 

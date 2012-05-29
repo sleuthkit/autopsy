@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.FsContent;
@@ -250,7 +251,7 @@ public class ReportHTML implements ReportModule {
                 StringBuilder artifact = new StringBuilder("");
                 Long objId = entry.getKey().getObjectID();
                 //Content file = skCase.getContentById(objId);
-                FsContent file = skCase.getFsContentById(objId);
+                AbstractFile file = skCase.getAbstractFileById(objId);
 
                 Long filesize = file.getSize();
 

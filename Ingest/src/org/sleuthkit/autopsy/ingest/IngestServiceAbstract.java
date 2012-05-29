@@ -26,7 +26,7 @@ import java.beans.PropertyChangeListener;
  */
 public interface IngestServiceAbstract {
     
-    public enum ServiceType {Image, FsContent};
+    public enum ServiceType {Image, AbstractFile};
 
     /**
      * notification from manager that brand new processing should be initiated.

@@ -70,7 +70,11 @@
                   <Component id="prevPageButton" min="-2" pref="23" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
                   <Component id="nextPageButton" min="-2" pref="23" max="-2" attributes="0"/>
-                  <EmptySpace pref="366" max="32767" attributes="0"/>
+                  <EmptySpace type="separate" min="-2" max="-2" attributes="0"/>
+                  <Component id="goToPageLabel" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="goToPageTextField" min="-2" pref="79" max="-2" attributes="0"/>
+                  <EmptySpace pref="205" max="32767" attributes="0"/>
               </Group>
               <Component id="jScrollPane1" alignment="1" pref="622" max="32767" attributes="0"/>
           </Group>
@@ -88,6 +92,8 @@
                       <Component id="pageLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="nextPageButton" alignment="0" min="-2" pref="23" max="-2" attributes="0"/>
                       <Component id="prevPageButton" alignment="0" min="-2" pref="23" max="-2" attributes="0"/>
+                      <Component id="goToPageLabel" min="-2" max="-2" attributes="0"/>
+                      <Component id="goToPageTextField" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
                   <Component id="jScrollPane1" pref="401" max="32767" attributes="0"/>
@@ -227,6 +233,23 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="prevPageButtonActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JLabel" name="goToPageLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerString.goToPageLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="goToPageTextField">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerString.goToPageTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="goToPageTextFieldActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>

@@ -25,32 +25,32 @@ import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceAbstract.ServiceType;
-import org.sleuthkit.autopsy.ingest.IngestServiceFsContent;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Example implementation of a fscontent image ingest service 
  * 
  */
-public class ExampleFsContentIngestService implements IngestServiceFsContent {
+public class ExampleAbstractFileIngestService implements IngestServiceAbstractFile {
 
-    private static final Logger logger = Logger.getLogger(ExampleFsContentIngestService.class.getName());
-    private static ExampleFsContentIngestService instance = null;
+    private static final Logger logger = Logger.getLogger(ExampleAbstractFileIngestService.class.getName());
+    private static ExampleAbstractFileIngestService instance = null;
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
 
-    public static synchronized ExampleFsContentIngestService getDefault() {
+    public static synchronized ExampleAbstractFileIngestService getDefault() {
         if (instance == null) {
-            instance = new ExampleFsContentIngestService();
+            instance = new ExampleAbstractFileIngestService();
         }
         return instance;
     }
 
     @Override
-    public ProcessResult process(FsContent fsContent) {
+    public ProcessResult process(AbstractFile fsContent) {
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
 
-        //service specific FsContent processing code here
+        //service specific AbstractFile processing code here
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
@@ -69,12 +69,12 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
 
     @Override
     public String getName() {
-        return "Example FsContent Service";
+        return "Example AbstractFile Service";
     }
 
     @Override
     public String getDescription() {
-        return "Example FsContent Service description";
+        return "Example AbstractFile Service description";
     }
     
     
@@ -96,7 +96,7 @@ public class ExampleFsContentIngestService implements IngestServiceFsContent {
 
     @Override
     public ServiceType getType() {
-        return ServiceType.FsContent;
+        return ServiceType.AbstractFile;
     }
     
     @Override

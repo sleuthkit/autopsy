@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Represents result of keyword search query containing the Content it hit
@@ -29,19 +29,19 @@ import org.sleuthkit.datamodel.FsContent;
  */
 public class ContentHit {
 
-    private FsContent content;
+    private AbstractFile content;
     private int chunkID = 0;
 
-    ContentHit(FsContent content) {
+    ContentHit(AbstractFile content) {
         this.content = content;
     }
 
-    ContentHit(FsContent content, int chunkID) {
+    ContentHit(AbstractFile content, int chunkID) {
         this.content = content;
         this.chunkID = chunkID;
     }
 
-    FsContent getContent() {
+    AbstractFile getContent() {
         return content;
     }
 
@@ -83,10 +83,10 @@ public class ContentHit {
         return hash;
     }
 
-    static Map<FsContent, Integer> flattenResults(List<ContentHit> hits) {
-        Map<FsContent, Integer> ret = new LinkedHashMap<FsContent, Integer>();
+    static Map<AbstractFile, Integer> flattenResults(List<ContentHit> hits) {
+        Map<AbstractFile, Integer> ret = new LinkedHashMap<AbstractFile, Integer>();
         for (ContentHit h : hits) {
-            FsContent f = h.getContent();
+            AbstractFile f = h.getContent();
             if (!ret.containsKey(f)) {
                 ret.put(f, h.getChunkId());
             }
@@ -95,16 +95,16 @@ public class ContentHit {
         return ret;
     }
     
-    //flatten results to get unique fscontent per hit, with first chunk id encountered
-    static LinkedHashMap<FsContent, Integer> flattenResults(Map<String, List<ContentHit>> results) {
-        LinkedHashMap<FsContent, Integer> flattened = new LinkedHashMap<FsContent, Integer>();
+    //flatten results to get unique AbstractFile per hit, with first chunk id encountered
+    static LinkedHashMap<AbstractFile, Integer> flattenResults(Map<String, List<ContentHit>> results) {
+        LinkedHashMap<AbstractFile, Integer> flattened = new LinkedHashMap<AbstractFile, Integer>();
 
         for (String key : results.keySet()) {
             for (ContentHit hit : results.get(key)) {
-                FsContent fsContent = hit.getContent();
+                AbstractFile AbstractFile = hit.getContent();
                 //flatten, record first chunk encountered
-                if (!flattened.containsKey(fsContent)) {
-                    flattened.put(fsContent, hit.getChunkId());
+                if (!flattened.containsKey(AbstractFile)) {
+                    flattened.put(AbstractFile, hit.getChunkId());
                 }
             }
         }

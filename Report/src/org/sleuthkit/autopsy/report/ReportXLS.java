@@ -282,7 +282,7 @@ public class ReportXLS implements ReportModule {
                 }
                 int cc = 0;
                 Long objId = entry.getKey().getObjectID();
-                FsContent file = skCase.getFsContentById(objId);
+                AbstractFile file = skCase.getAbstractFileById(objId);
                 Long filesize = file.getSize();
                 TreeMap<Integer, String> attributes = new TreeMap<Integer, String>();
                 // Get all the attributes, line them up to be added. Place empty string placeholders for each attribute type

@@ -328,7 +328,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
         private void init() {
             //initialize groupings map with services
-            for (IngestServiceAbstract service : IngestManager.enumerateFsContentServices()) {
+            for (IngestServiceAbstract service : IngestManager.enumerateAbstractFileServices()) {
                 groupings.put(service, new HashMap<String, List<IngestMessageGroup>>());
             }
             for (IngestServiceAbstract service : IngestManager.enumerateImageServices()) {

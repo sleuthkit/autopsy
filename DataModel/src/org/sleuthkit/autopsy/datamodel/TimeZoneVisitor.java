@@ -24,7 +24,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.LayoutContent;
+import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -65,7 +65,7 @@ class TimeZoneVisitor implements ContentVisitor<TimeZone> {
     }
 
     @Override
-    public TimeZone visit(LayoutContent lc) {
+    public TimeZone visit(LayoutFile lc) {
         return lc.getParent().accept(this);
     }
 }
