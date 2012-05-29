@@ -105,7 +105,7 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
 
             for(HashDb db : hdbxml.getKnownBadSets()) {
                 IndexStatus status = db.status();
-                if (db.getUseForIngest() && IndexStatus.isIngestible(status)) { // TODO: should inform user that we won't use the db if it's not indexed
+                if (db.getUseForIngest() && IndexStatus.isIngestible(status)) {
                     knownBadIsSet = true;
                     int ret = skCase.addKnownBadDatabase(db.getDatabasePaths().get(0)); // TODO: support multiple paths
                     knownBadSets.put(ret, db);
@@ -285,11 +285,6 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
         public ProcessResult visit(File f) {
             return process(f);
         }
-        
-        @Override
-        public ProcessResult visit(Directory d) {
-            return process(d);
-        }
 
         private ProcessResult process(FsContent fsContent) {
 
@@ -324,13 +319,11 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
                         }
                     }
                 } catch (TskException ex) {
-                    // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
                     logger.log(Level.WARNING, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
                     managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestService.this, "Hash Lookup Error: " + name,
                             "Error encountered while updating the hash values for " + name + "."));
                     ret = ProcessResult.ERROR;
                 } catch (IOException ex) {
-                    // TODO: This shouldn't be at level INFO, but it needs to be to hide the popup
                     logger.log(Level.WARNING, "Error reading file " + name, ex);
                     managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestService.this, "Read Error: " + name,
                             "Error encountered while calculating the hash value for " + name + "."));

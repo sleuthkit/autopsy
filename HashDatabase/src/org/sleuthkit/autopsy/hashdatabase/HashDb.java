@@ -170,7 +170,6 @@ public class HashDb implements Comparable<HashDb> {
         indexing = true;
         CreateIndex creator = new CreateIndex();
         creator.execute();
-        //TODO: error checking
     }
 
     /**
@@ -252,27 +251,9 @@ public class HashDb implements Comparable<HashDb> {
         /* clean up or start the worker threads */
         @Override
         protected void done() {
-            try {
-                super.get(); //block and get all exceptions thrown while doInBackground()      
-            } catch (CancellationException e) {
-                //task was cancelled
-                handleInterruption(e);
-            } catch (InterruptedException ex) {
-                handleInterruption(ex);
-            } catch (ExecutionException ex) {
-                handleInterruption(ex);
-            } catch (Exception ex) {
-                handleInterruption(ex);
-            } finally {
-                indexing = false;
-                progress.finish();
-                HashDbMgmtPanel.getDefault().resync();
-            }
-        }
-        
-        private void handleInterruption(Exception ex) {
-            //TODO: something
-            Logger.getLogger(CreateIndex.class.getName()).log(Level.WARNING, "interrupted!", ex);
+            indexing = false;
+            progress.finish();
+            HashDbMgmtPanel.getDefault().resync();
         }
     }
 }

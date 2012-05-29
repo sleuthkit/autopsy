@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.LayoutFile;
  *
  * @author dfickling
  */
-public class LayoutFileNode extends AbstractContentNode<LayoutFile>{
+public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile>{
     
     public static enum LayoutContentPropertyType {
 
