@@ -49,6 +49,8 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private String timeZone;
     //whether to not process FAT filesystem orphans
     private boolean noFatOrphans;
+    //whether to not process unalloc space
+    private boolean noUnallocSpace;
     // task that will clean up the created database file if the wizard is cancelled before it finishes
     private AddImageAction.CleanupTask cleanupImage; // initialized to null in readSettings()
     // flag to control the availiablity of next action
@@ -189,6 +191,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
         timeZone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
         noFatOrphans = ((Boolean)settings.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
+        noUnallocSpace = ((Boolean)settings.getProperty(AddImageAction.NOUNALLOC_PROP)).booleanValue();
 
         component.changeProgressBarTextAndColor("", 0, Color.black);
 
@@ -256,7 +259,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
             });
             
             
-            process = currentCase.makeAddImageProcess(timeZone, noFatOrphans);
+            process = currentCase.makeAddImageProcess(timeZone, !noUnallocSpace, noFatOrphans);
             cancelledWhileRunning.enable();
             try {
                 process.run(imgPaths);

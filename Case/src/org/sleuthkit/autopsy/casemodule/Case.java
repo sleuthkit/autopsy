@@ -172,8 +172,8 @@ public class Case {
         }
     }
 
-    AddImageProcess makeAddImageProcess(String timezone, boolean noFatOrphans) {
-        return this.db.makeAddImageProcess(timezone, true, noFatOrphans);
+    AddImageProcess makeAddImageProcess(String timezone, boolean processUnallocSpace, boolean noFatOrphans) {
+        return this.db.makeAddImageProcess(timezone, processUnallocSpace, noFatOrphans);
     }
 
     /**
