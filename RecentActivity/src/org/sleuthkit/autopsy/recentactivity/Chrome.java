@@ -24,6 +24,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import javax.swing.JPanel;
+import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import java.util.logging.Level;
@@ -33,17 +35,19 @@ import java.io.File;
 import java.io.FileReader;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestServiceImage;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Image;
 
 /**
  *
  * @author Alex
  */
-public class Chrome extends Extract {
+public class Chrome extends Extract implements IngestServiceImage {
 
     private static final String chquery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
@@ -58,7 +62,8 @@ public class Chrome extends Extract {
         moduleName = "Chrome";
     }
 
-    public void process(List<String> image, IngestImageWorkerController controller) {
+    @Override
+    public void process(Image image, IngestImageWorkerController controller) {
         this.getHistory(image, controller);
         this.getBookmark(image, controller);
         this.getCookie(image, controller);
@@ -66,7 +71,7 @@ public class Chrome extends Extract {
         this.getDownload(image, controller);
     }
 
-    private void getHistory(List<String> image, IngestImageWorkerController controller) {
+    private void getHistory(Image image, IngestImageWorkerController controller) {
         //Make these seperate, this is for history
 
         List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'History' and name NOT LIKE '%journal%' AND parent_path LIKE '%Chrome%'");
@@ -108,7 +113,7 @@ public class Chrome extends Extract {
         }
     }
 
-    private void getBookmark(List<String> image, IngestImageWorkerController controller) {
+    private void getBookmark(Image image, IngestImageWorkerController controller) {
 
         //this is for bookmarks
         List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'Bookmarks' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'");
@@ -167,7 +172,7 @@ public class Chrome extends Extract {
 
     //COOKIES section
     // This gets the cookie info
-    private void getCookie(List<String> image, IngestImageWorkerController controller) {
+    private void getCookie(Image image, IngestImageWorkerController controller) {
 
         List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE '%Cookies%' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'");
 
@@ -213,7 +218,7 @@ public class Chrome extends Extract {
 
     //Downloads section
     // This gets the downloads info
-    private void getDownload(List<String> image, IngestImageWorkerController controller) {
+    private void getDownload(Image image, IngestImageWorkerController controller) {
 
         List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'History' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'");
 
@@ -261,7 +266,7 @@ public class Chrome extends Extract {
 
     //Login/Password section
     // This gets the user info
-    private void getLogin(List<String> image, IngestImageWorkerController controller) {
+    private void getLogin(Image image, IngestImageWorkerController controller) {
 
         List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'signons.sqlite' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'");
 
@@ -302,5 +307,65 @@ public class Chrome extends Extract {
             }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         }
+    }
+
+    @Override
+    public void init(IngestManagerProxy managerProxy) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void complete() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void stop() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String getDescription() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public ServiceType getType() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasSimpleConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasAdvancedConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void saveSimpleConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public JPanel getSimpleConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public JPanel getAdvancedConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

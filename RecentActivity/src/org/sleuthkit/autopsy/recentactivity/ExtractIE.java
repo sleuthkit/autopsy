@@ -38,11 +38,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 // TSK Imports
+import javax.swing.JPanel;
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -50,6 +52,7 @@ import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -59,8 +62,11 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.IngestServiceImage;
+import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Image;
 
-public class ExtractIE extends Extract { // implements BrowserActivity {
+public class ExtractIE extends Extract implements IngestServiceImage {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
     private String indexDatQueryStr = "select * from tsk_files where name LIKE '%index.dat%'";
@@ -85,16 +91,18 @@ public class ExtractIE extends Extract { // implements BrowserActivity {
         moduleName = "Internet Explorer";
     }
 
-    public void process(List<String> image, IngestImageWorkerController controller) {
+    @Override
+    public void process(Image image, IngestImageWorkerController controller) {
         this.getHistory(image, controller);
         this.getBookmark(image, controller);
         this.getCookie(image, controller);
         this.getRecentDocuments(image, controller);
+        this.parsePascoResults();
     }
 
     //Favorites section
     // This gets the favorite info
-    private void getBookmark(List<String> image, IngestImageWorkerController controller) {
+    private void getBookmark(Image image, IngestImageWorkerController controller) {
 
         List<FsContent> FavoriteList = this.extractFiles(image, favoriteQuery);
 
@@ -143,7 +151,7 @@ public class ExtractIE extends Extract { // implements BrowserActivity {
 
     //Cookies section
     // This gets the cookies info
-    private void getCookie(List<String> image, IngestImageWorkerController controller) {
+    private void getCookie(Image image, IngestImageWorkerController controller) {
 
         List<FsContent> CookiesList = this.extractFiles(image, cookiesQuery);
 
@@ -190,7 +198,7 @@ public class ExtractIE extends Extract { // implements BrowserActivity {
 
     //Recent Documents section
     // This gets the recent object info
-    private void getRecentDocuments(List<String> image, IngestImageWorkerController controller) {
+    private void getRecentDocuments(Image image, IngestImageWorkerController controller) {
 
         List<FsContent> RecentList = this.extractFiles(image, recentQuery);
 
@@ -244,7 +252,7 @@ public class ExtractIE extends Extract { // implements BrowserActivity {
         return IE_PASCO_LUT;
     }
 
-    private void getHistory(List<String> image, IngestImageWorkerController controller) {
+    private void getHistory(Image image, IngestImageWorkerController controller) {
         final Case currentCase = Case.getCurrentCase();
         final String caseDir = Case.getCurrentCase().getCaseDirectory();
         PASCO_RESULTS_PATH = Case.getCurrentCase().getTempDirectory() + File.separator + "results";
@@ -273,13 +281,20 @@ public class ExtractIE extends Extract { // implements BrowserActivity {
 
             Collection<FsContent> FsContentCollection = null;
             tempDb = currentCase.getSleuthkitCase();
+            Collection<FileSystem> imageFS = tempDb.getFileSystems(image);
+            List<String> fsIds = new LinkedList<String>();
+            for (FileSystem img : imageFS) {
+                Long tempID = img.getId();
+                fsIds.add(tempID.toString());
+            }
+
             String allFS = new String();
-            for (int i = 0; i < image.size(); i++) {
+            for (int i = 0; i < fsIds.size(); i++) {
                 if (i == 0) {
                     allFS += " AND (0";
                 }
-                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if (i == image.size() - 1) {
+                allFS += " OR fs_obj_id = '" + fsIds.get(i) + "'";
+                if (i == fsIds.size() - 1) {
                     allFS += ")";
                 }
             }
@@ -490,5 +505,65 @@ public class ExtractIE extends Extract { // implements BrowserActivity {
         }
 
         IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+    }
+
+    @Override
+    public void init(IngestManagerProxy managerProxy) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void complete() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void stop() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String getDescription() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public ServiceType getType() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasSimpleConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasAdvancedConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void saveSimpleConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public JPanel getSimpleConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public JPanel getAdvancedConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

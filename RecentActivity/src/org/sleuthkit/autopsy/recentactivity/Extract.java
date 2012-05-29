@@ -27,13 +27,16 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
@@ -45,15 +48,22 @@ abstract public class Extract {
     protected ArrayList<String> errorMessages = null;
     protected String moduleName = "";
 
-    public List<FsContent> extractFiles(List<String> image, String query) {
-
+    public List<FsContent> extractFiles(Image image, String query) {
+        
+        Collection<FileSystem> imageFS = tskCase.getFileSystems(image);
+        List<String> fsIds = new LinkedList<String>();
+        for (FileSystem img : imageFS) {
+            Long tempID = img.getId();
+            fsIds.add(tempID.toString());
+        }
+        
         String allFS = new String();
-        for (int i = 0; i < image.size(); i++) {
+        for (int i = 0; i < fsIds.size(); i++) {
             if (i == 0) {
                 allFS += " AND (0";
             }
-            allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-            if (i == image.size() - 1) {
+            allFS += " OR fs_obj_id = '" + fsIds.get(i) + "'";
+            if (i == fsIds.size() - 1) {
                 allFS += ")";
             }
         }

@@ -22,29 +22,30 @@ package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
 import java.net.URLDecoder;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.casemodule.Case;
+import javax.swing.JPanel;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServiceImage;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.Image;
 
 /**
  *
  * @author Alex
  */
-public class Firefox extends Extract {
+public class Firefox extends Extract implements IngestServiceImage {
 
     private static final String ffquery = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000) as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
     private static final String ffcookiequery = "SELECT name,value,host,expiry,(lastAccessed/1000) as lastAccessed,(creationTime/1000) as creationTime FROM moz_cookies";
@@ -57,14 +58,15 @@ public class Firefox extends Extract {
         moduleName = "FireFox";
     }
 
-    public void process(List<String> image, IngestImageWorkerController controller) {
+    @Override
+    public void process(Image image, IngestImageWorkerController controller) {
         this.getHistory(image, controller);
         this.getBookmark(image, controller);
         this.getDownload(image, controller);
         this.getCookie(image, controller);
     }
 
-    private void getHistory(List<String> image, IngestImageWorkerController controller) {
+    private void getHistory(Image image, IngestImageWorkerController controller) {
         //Make these seperate, this is for history
 
         List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE '%places.sqlite%' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'");
@@ -106,7 +108,7 @@ public class Firefox extends Extract {
         }
     }
 
-    private void getBookmark(List<String> image, IngestImageWorkerController controller) {
+    private void getBookmark(Image image, IngestImageWorkerController controller) {
 
         //this is for bookmarks
         List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE '%places.sqlite%' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'");
@@ -148,7 +150,7 @@ public class Firefox extends Extract {
 
     //COOKIES section
     // This gets the cookie info
-    private void getCookie(List<String> image, IngestImageWorkerController controller) {
+    private void getCookie(Image image, IngestImageWorkerController controller) {
 
         List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE '%cookies.sqlite%' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'");
 
@@ -205,7 +207,7 @@ public class Firefox extends Extract {
 
     //Downloads section
     // This gets the downloads info
-    private void getDownload(List<String> image, IngestImageWorkerController controller) {
+    private void getDownload(Image image, IngestImageWorkerController controller) {
 
         List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'downloads.sqlite' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'");
 
@@ -246,5 +248,65 @@ public class Firefox extends Extract {
             }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
         }
+    }
+
+    @Override
+    public void init(IngestManagerProxy managerProxy) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void complete() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void stop() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String getDescription() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public ServiceType getType() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasSimpleConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasAdvancedConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void saveSimpleConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public JPanel getSimpleConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public JPanel getAdvancedConfiguration() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

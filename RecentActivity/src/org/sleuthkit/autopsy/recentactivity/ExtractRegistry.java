@@ -59,17 +59,24 @@ public class ExtractRegistry {
         RR_PATH = rrHome + File.separator + "rip.exe";
     }
 
-    public void getregistryfiles(List<String> image, IngestImageWorkerController controller) {
+    public void getregistryfiles(Image image, IngestImageWorkerController controller) {
         try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+            Collection<FileSystem> imageFS = tempDb.getFileSystems(image);
+            List<String> fsIds = new LinkedList<String>();
+            for (FileSystem img : imageFS) {
+                Long tempID = img.getId();
+                fsIds.add(tempID.toString());
+            }
+
             String allFS = new String();
-            for (int i = 0; i < image.size(); i++) {
+            for (int i = 0; i < fsIds.size(); i++) {
                 if (i == 0) {
                     allFS += " AND (0";
                 }
-                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if (i == image.size() - 1) {
+                allFS += " OR fs_obj_id = '" + fsIds.get(i) + "'";
+                if (i == fsIds.size() - 1) {
                     allFS += ")";
                 }
             }
