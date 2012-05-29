@@ -83,11 +83,15 @@ public final class RAImageIngestService implements IngestServiceImage {
                 ExtractRegistry eree = new ExtractRegistry();
                 eree.getregistryfiles(fsIds, controller);
                 controller.progress(1);
+                IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Registry extraction complete.");
+                managerProxy.postMessage(msg);
             }
             if (controller.isCancelled() == false) {
                 Firefox ffre = new Firefox();
                 ffre.process(fsIds, controller);
                 controller.progress(2);
+                IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Firefox extraction complete.");
+                managerProxy.postMessage(msg);
                 if(ffre.errorMessages != null){
                 errors.addAll(ffre.errorMessages);
                 }
@@ -96,6 +100,8 @@ public final class RAImageIngestService implements IngestServiceImage {
                 Chrome chre = new Chrome();
                 chre.process(fsIds, controller);
                 controller.progress(3);
+                IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Chrome extraction complete.");
+                managerProxy.postMessage(msg);
                 if(chre.errorMessages != null){
                 errors.addAll(chre.errorMessages);
                 }
@@ -108,6 +114,8 @@ public final class RAImageIngestService implements IngestServiceImage {
                 errors.addAll(eere.errorMessages);
                 }
                 controller.progress(4);
+                IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Registry extraction complete.");
+                managerProxy.postMessage(msg);
             }
 
 
