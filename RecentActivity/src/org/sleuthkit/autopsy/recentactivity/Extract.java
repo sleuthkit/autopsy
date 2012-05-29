@@ -70,6 +70,7 @@ abstract public class Extract {
             rs.getStatement().close();
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Error while trying to extract files for:" + this.getClass().getName(), ex);
+            this.addErrorMessage(this.getName() + ": Error while trying to extract files to analyze.");
         }
         return FFSqlitedb;
     }
@@ -81,6 +82,7 @@ abstract public class Extract {
             bbart.addAttributes(bbattributes);
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error while trying to add an artifact: " + ex);
+             this.addErrorMessage(this.getName() + ": Error while trying to add artifact to case for file:" + content.getName());
         }
     }
 
@@ -122,7 +124,11 @@ abstract public class Extract {
         return errorMessages;
     }
     
-    public void addErrorMessage(){
-        
+    public void addErrorMessage(String message){
+        errorMessages.add(message);
+    }
+    
+    public String getName(){
+        return moduleName;
     }
 }

@@ -20,7 +20,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,6 +46,7 @@ public final class RAImageIngestService implements IngestServiceImage {
     private static RAImageIngestService defaultInstance = null;
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
+    private ArrayList<String> errors = null;
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
@@ -87,16 +88,19 @@ public final class RAImageIngestService implements IngestServiceImage {
                 Firefox ffre = new Firefox();
                 ffre.process(fsIds, controller);
                 controller.progress(2);
+                errors.addAll(ffre.errorMessages);
             }
             if (controller.isCancelled() == false) {
                 Chrome chre = new Chrome();
-                chre.process(imgIds, controller);
+                chre.process(fsIds, controller);
                 controller.progress(3);
+                errors.addAll(chre.errorMessages);
             }
             if (controller.isCancelled() == false) {
                 ExtractIE eere = new ExtractIE();
                 eere.process(fsIds, controller);
                 eere.parsePascoResults();
+                errors.addAll(eere.errorMessages);
                 controller.progress(4);
             }
 
@@ -111,6 +115,14 @@ public final class RAImageIngestService implements IngestServiceImage {
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete() " + this.toString());
+        StringBuilder errorMessage = null;
+        errorMessage.append("Completed! \n");
+        if(!errors.isEmpty()){
+            errorMessage.append("There were some errors extracting the data: \n");
+        for(String msg : errors){
+            errorMessage.append("\n").append(msg);
+        }
+        }
         final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Completed");
         managerProxy.postMessage(msg);
 
