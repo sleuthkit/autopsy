@@ -47,6 +47,9 @@ public abstract class GetFilesContentVisitor implements ContentVisitor<Collectio
 
     @Override
     public abstract Collection<AbstractFile> visit(FileSystem fs);
+    
+    @Override
+    public abstract Collection<AbstractFile> visit(LayoutFile lc);
 
     @Override
     public Collection<AbstractFile> visit(Directory drctr) {
@@ -67,11 +70,6 @@ public abstract class GetFilesContentVisitor implements ContentVisitor<Collectio
     public Collection<AbstractFile> visit(VolumeSystem vs) {
         return getAllFromChildren(vs);
     }
-    
-    @Override
-    public Collection<AbstractFile> visit(LayoutFile lc) {
-        return null;
-    }
 
     /**
      * Aggregate all the matches from visiting the children Content objects of the
@@ -91,21 +89,5 @@ public abstract class GetFilesContentVisitor implements ContentVisitor<Collectio
         }
 
         return all;
-    }
-
-    /**
-     * Get the part of a file name after (not including) the last '.' and
-     * coerced to lowercase.
-     * @param fileName
-     * @return the file extension, or an empty string if there is none
-     */
-    protected static String getExtension(String fileName) {
-        int lastDot = fileName.lastIndexOf(".");
-
-        if (lastDot >= 0) {
-            return fileName.substring(lastDot + 1, fileName.length()).toLowerCase();
-        } else {
-            return "";
-        }
     }
 }

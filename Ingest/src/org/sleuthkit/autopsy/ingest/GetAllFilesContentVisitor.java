@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
@@ -45,7 +46,12 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
 
     @Override
     public Collection<AbstractFile> visit(File file) {
-        return Collections.singleton((AbstractFile) file);
+        return Collections.<AbstractFile>singleton(file);
+    }
+    
+    @Override
+    public Collection<AbstractFile> visit(LayoutFile lf) {
+        return Collections.<AbstractFile>singleton(lf);
     }
 
     @Override
