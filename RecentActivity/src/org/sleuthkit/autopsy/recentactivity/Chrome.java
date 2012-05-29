@@ -45,12 +45,12 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
  */
 public class Chrome extends Extract {
 
-    public static final String chquery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
+    private static final String chquery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
-    public static final String chcookiequery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
-    public static final String chbookmarkquery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count,urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
-    public static final String chdownloadquery = "select full_path, url, start_time, received_bytes from downloads";
-    public static final String chloginquery = "select origin_url, username_value, signon_realm from logins";
+    private static final String chcookiequery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
+    private static final String chbookmarkquery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count,urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
+    private static final String chdownloadquery = "select full_path, url, start_time, received_bytes from downloads";
+    private static final String chloginquery = "select origin_url, username_value, signon_realm from logins";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public int ChromeCount = 0;
 
