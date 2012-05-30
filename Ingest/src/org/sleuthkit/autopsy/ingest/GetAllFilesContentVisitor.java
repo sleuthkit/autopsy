@@ -43,6 +43,11 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
 class GetAllFilesContentVisitor extends GetFilesContentVisitor {
 
     private static final Logger logger = Logger.getLogger(GetAllFilesContentVisitor.class.getName());
+    private boolean getUnallocatedFiles;
+    
+    GetAllFilesContentVisitor(boolean getUnallocatedFiles) {
+        this.getUnallocatedFiles = getUnallocatedFiles;
+    }
 
     @Override
     public Collection<AbstractFile> visit(File file) {
@@ -61,11 +66,18 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
 
         SleuthkitCase sc = Case.getCurrentCase().getSleuthkitCase();
 
-        String query = "SELECT * FROM tsk_files WHERE fs_obj_id = " + fs.getId()
-                + " AND (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getMetaType()
-                + ") AND (size > 0)";
+        StringBuilder queryB = new StringBuilder();
+        queryB.append("SELECT * FROM tsk_files WHERE fs_obj_id = ").append(fs.getId());
+        queryB.append(" AND (meta_type = ").append(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getMetaType());
+        queryB.append(") AND (size > 0)");
+        if (getUnallocatedFiles == false) {
+            queryB.append( "AND (type = ");
+            queryB.append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType());
+            queryB.append(")");
+        }
+        
         try {
-            ResultSet rs = sc.runQuery(query);
+            ResultSet rs = sc.runQuery(queryB.toString());
             List<AbstractFile> contents = sc.resultSetToAbstractFiles(rs);
             Statement s = rs.getStatement();
             rs.close();

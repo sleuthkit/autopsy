@@ -76,6 +76,7 @@ public class IngestManager {
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private IngestManagerStats stats;
     private volatile UpdateFrequency updateFrequency = UpdateFrequency.AVG;
+    private boolean processUnallocSpace = true;
     //queues
     private final ImageQueue imageQueue = new ImageQueue();   // list of services and images to analyze
     private final AbstractFileQueue AbstractFileQueue = new AbstractFileQueue();
@@ -446,6 +447,22 @@ public class IngestManager {
     void setUpdateFrequency(UpdateFrequency frequency) {
         this.updateFrequency = frequency;
     }
+    
+    /**
+     * returns if manager is currently configured to process unalloc space
+     * @return true if process unaloc space is set
+     */
+    boolean getProcessUnallocSpace() {
+        return processUnallocSpace;
+    }
+    
+    /**
+     * Sets process unalloc space setting on the manager
+     * @param processUnallocSpace 
+     */
+    void setProcessUnallocSpace(boolean processUnallocSpace) {
+        this.processUnallocSpace = processUnallocSpace;
+    }
 
     /**
      * returns ingest summary report (how many files ingested, any errors, etc)
@@ -613,6 +630,8 @@ public class IngestManager {
             lowPriorityPaths.add(Pattern.compile("^\\/Windows", Pattern.CASE_INSENSITIVE));
 
             mediumPriorityPaths.add(Pattern.compile("^\\/Program Files", Pattern.CASE_INSENSITIVE));
+            mediumPriorityPaths.add(Pattern.compile("^pagefile", Pattern.CASE_INSENSITIVE));
+            mediumPriorityPaths.add(Pattern.compile("^hiberfil", Pattern.CASE_INSENSITIVE));
 
             highPriorityPaths.add(Pattern.compile("^\\/Users", Pattern.CASE_INSENSITIVE));
             highPriorityPaths.add(Pattern.compile("^\\/Documents and Settings", Pattern.CASE_INSENSITIVE));
@@ -1138,7 +1157,7 @@ public class IngestManager {
             int processed = 0;
             for (Image image : images) {
                 final String imageName = image.getName();
-                Collection<AbstractFile> AbstractFiles = null;
+                Collection<AbstractFile> files = null;
                 for (IngestServiceAbstract service : services) {
                     if (isCancelled()) {
                         logger.log(Level.INFO, "Terminating ingest queueing due to cancellation.");
@@ -1162,22 +1181,22 @@ public class IngestManager {
                             //addImage((IngestServiceImage) service, image);
                             break;
                         case AbstractFile:
-                            if (AbstractFiles == null) {
+                            if (files == null) {
                                 long start = System.currentTimeMillis();
-                                AbstractFiles = new GetAllFilesContentVisitor().visit(image);
+                                files = new GetAllFilesContentVisitor(processUnallocSpace).visit(image);
                                 logger.info("Get all files took " + (System.currentTimeMillis() - start) + "ms");
                             }
                             //enqueue the same singleton AbstractFile service
-                            logger.log(Level.INFO, "Adding image " + image.getName() + " with " + AbstractFiles.size() + " number of AbstractFile to service " + service.getName());
-                            addAbstractFile((IngestServiceAbstractFile) service, AbstractFiles);
+                            logger.log(Level.INFO, "Adding image " + image.getName() + " with " + files.size() + " number of AbstractFile to service " + service.getName());
+                            addAbstractFile((IngestServiceAbstractFile) service, files);
                             break;
                         default:
                             logger.log(Level.SEVERE, "Unexpected service type: " + service.getType().name());
                     }
                     progress.progress(serviceName + " " + imageName, ++processed);
                 }
-                if (AbstractFiles != null) {
-                    AbstractFiles.clear();
+                if (files != null) {
+                    files.clear();
                 }
             }
 

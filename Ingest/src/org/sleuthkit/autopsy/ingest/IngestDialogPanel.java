@@ -148,6 +148,8 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 }
             }
         });
+        
+        processUnallocCheckbox.setSelected(manager.getProcessUnallocSpace());
 
     }
 
@@ -156,15 +158,21 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         timeRadioButton2.setEnabled(enabled);
         timeRadioButton3.setEnabled(enabled);
     }
+    
+    private void setProcessUnallocSpaceEnabled(boolean enabled) {
+        processUnallocCheckbox.setEnabled(enabled);
+    }
 
     @Override
     public void paint(Graphics g) {
         super.paint(g);
         if (manager.isIngestRunning()) {
             setTimeSettingEnabled(false);
+            setProcessUnallocSpaceEnabled(false);
 
         } else {
             setTimeSettingEnabled(true);
+            setProcessUnallocSpaceEnabled(true);
         }
     }
 
@@ -196,6 +204,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         timeRadioButton2 = new javax.swing.JRadioButton();
         timeRadioButton1 = new javax.swing.JRadioButton();
         timeLabel = new javax.swing.JLabel();
+        processUnallocCheckbox = new javax.swing.JCheckBox();
 
         setPreferredSize(new java.awt.Dimension(522, 257));
 
@@ -273,23 +282,34 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         timeLabel.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.timeLabel.text")); // NOI18N
         timeLabel.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.timeLabel.toolTipText")); // NOI18N
 
+        processUnallocCheckbox.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.processUnallocCheckbox.text")); // NOI18N
+
         javax.swing.GroupLayout timePanelLayout = new javax.swing.GroupLayout(timePanel);
         timePanel.setLayout(timePanelLayout);
         timePanelLayout.setHorizontalGroup(
             timePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(timePanelLayout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(timePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(timeRadioButton3)
-                    .addComponent(timeRadioButton1)
-                    .addComponent(timeLabel)
-                    .addComponent(timeRadioButton2))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(timePanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(timePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(timeRadioButton2)
+                            .addComponent(timeRadioButton3)))
+                    .addGroup(timePanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(timeLabel))
+                    .addComponent(processUnallocCheckbox)
+                    .addGroup(timePanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(timeRadioButton1)))
+                .addContainerGap(10, Short.MAX_VALUE))
         );
         timePanelLayout.setVerticalGroup(
             timePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, timePanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
+                .addComponent(processUnallocCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 15, Short.MAX_VALUE)
                 .addComponent(timeLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(timeRadioButton1)
@@ -297,7 +317,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 .addComponent(timeRadioButton2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(timeRadioButton3)
-                .addGap(20, 20, 20))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -320,7 +340,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 111, Short.MAX_VALUE)
+                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 90, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(timePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
@@ -350,6 +370,7 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JCheckBox processUnallocCheckbox;
     private javax.swing.JScrollPane servicesScrollPane;
     private javax.swing.JTable servicesTable;
     private javax.swing.JPanel simplePanel;
@@ -416,6 +437,10 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
     private boolean timeSelectionEnabled() {
         return timeRadioButton1.isEnabled() && timeRadioButton2.isEnabled() && timeRadioButton3.isEnabled();
     }
+    
+    private boolean processUnallocSpaceEnabled() {
+        return processUnallocCheckbox.isEnabled();
+    }
 
     private UpdateFrequency getSelectedTimeValue() {
         if (timeRadioButton1.isSelected()) {
@@ -469,6 +494,10 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
         //update ingest freq. refresh
         if (timeSelectionEnabled()) {
             manager.setUpdateFrequency(getSelectedTimeValue());
+        }
+        //update ingest proc. unalloc space
+        if (processUnallocSpaceEnabled() ) {
+            manager.setProcessUnallocSpace(processUnallocCheckbox.isSelected());
         }
     }
 
