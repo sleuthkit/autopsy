@@ -1,6 +1,22 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ /*
+ *
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2012 42six Solutions.
+ * Contact: aebadirad <at> 42six <dot> com
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.recentactivity;
 
@@ -30,7 +46,7 @@ import org.sleuthkit.datamodel.*;
  *
  * @author Alex \System32\Config
  */
-public class ExtractRegistry  implements IngestServiceImage {
+public class ExtractRegistry implements IngestServiceImage {
 
     public Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
@@ -62,7 +78,7 @@ public class ExtractRegistry  implements IngestServiceImage {
         RR_PATH = rrHome + File.separator + "rip.exe";
     }
 
-    public void getregistryfiles(Image image, IngestImageWorkerController controller) {
+    private void getregistryfiles(Image image, IngestImageWorkerController controller) {
         try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
@@ -319,51 +335,49 @@ public class ExtractRegistry  implements IngestServiceImage {
 
     @Override
     public String getName() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return "Registry";
     }
 
     @Override
     public String getDescription() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return "Extracts activity from the Windows registry utilizing RegRipper.";
     }
 
     @Override
     public ServiceType getType() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return ServiceType.Image;
     }
 
     @Override
     public boolean hasSimpleConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return false;
     }
 
     @Override
     public boolean hasAdvancedConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return false;
     }
 
     @Override
-    public void saveSimpleConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public javax.swing.JPanel getSimpleConfiguration() {
+        return null;
+    }
+
+    @Override
+    public javax.swing.JPanel getAdvancedConfiguration() {
+        return null;
     }
 
     @Override
     public void saveAdvancedConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public JPanel getSimpleConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void saveSimpleConfiguration() {
     }
 
     @Override
-    public JPanel getAdvancedConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public boolean hasBackgroundJobsRunning() {
+        return false;
     }
 }

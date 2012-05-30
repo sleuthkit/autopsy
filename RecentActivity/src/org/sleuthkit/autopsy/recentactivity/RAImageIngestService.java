@@ -65,28 +65,28 @@ public final class RAImageIngestService implements IngestServiceImage {
             controller.progress(0);
 
             if (controller.isCancelled() == false) {
-                ExtractRegistry eree = new ExtractRegistry();
-                eree.process(image, controller);
+            //    ExtractRegistry eree = new ExtractRegistry();
+            //    eree.process(image, controller);
                 controller.progress(1);
                 subCompleted.append("Registry extraction complete. <br>");
             }
             if (controller.isCancelled() == false) {
-                Firefox ffre = new Firefox();
-                ffre.process(image, controller);
+            //    Firefox ffre = new Firefox();
+            //    ffre.process(image, controller);
                 controller.progress(2);
                 subCompleted.append("Firefox extraction complete. <br>");
-                if(ffre.errorMessages != null){
-                errors.addAll(ffre.errorMessages);
-                }
+            //    if(ffre.errorMessages != null){
+            //    errors.addAll(ffre.errorMessages);
+            //    }
             }
             if (controller.isCancelled() == false) {
-                Chrome chre = new Chrome();
-                chre.process(image, controller);
+            //    Chrome chre = new Chrome();
+             //   chre.process(image, controller);
                 controller.progress(3);
                 subCompleted.append("Chrome extraction complete. <br>");
-                if(chre.errorMessages != null){
-                errors.addAll(chre.errorMessages);
-                }
+            //    if(chre.errorMessages != null){
+            //    errors.addAll(chre.errorMessages);
+             //   }
             }
             if (controller.isCancelled() == false) {
                 ExtractIE eere = new ExtractIE();

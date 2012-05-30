@@ -267,46 +267,44 @@ public class Firefox extends Extract implements IngestServiceImage {
 
     @Override
     public String getDescription() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return "Extracts activity from the Mozilla FireFox browser.";
     }
 
     @Override
     public ServiceType getType() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public boolean hasBackgroundJobsRunning() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return ServiceType.Image;
     }
 
     @Override
     public boolean hasSimpleConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return false;
     }
 
     @Override
     public boolean hasAdvancedConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return false;
     }
 
     @Override
-    public void saveSimpleConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public javax.swing.JPanel getSimpleConfiguration() {
+        return null;
+    }
+
+    @Override
+    public javax.swing.JPanel getAdvancedConfiguration() {
+        return null;
     }
 
     @Override
     public void saveAdvancedConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public JPanel getSimpleConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void saveSimpleConfiguration() {
     }
 
     @Override
-    public JPanel getAdvancedConfiguration() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public boolean hasBackgroundJobsRunning() {
+        return false;
     }
 }
