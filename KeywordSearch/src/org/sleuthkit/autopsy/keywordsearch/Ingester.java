@@ -85,18 +85,28 @@ public class Ingester {
     }
 
     /**
-     * Sends a file to Solr to have its content extracted and added to the
+     * Sends a stream to Solr to have its content extracted and added to the
      * index. commit() should be called once you're done ingesting files.
      * 
-     * @param fcs File FsContentStringStream to ingest
+     * @param afscs File AbstractFileStringContentStream to ingest
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(FsContentStringContentStream fcs) throws IngesterException {
-        Map<String, String> params = getContentFields(fcs.getFsContent());
-        ingest(fcs, params, fcs.getFsContent().getSize());
+    void ingest(AbstractFileStringContentStream afscs) throws IngesterException {
+        Map<String, String> params = getContentFields(afscs.getSourceContent());
+        ingest(afscs, params, afscs.getSourceContent().getSize());
     }
 
+    /**
+     * Sends a FileExtract to Solr to have its content extracted and added to the
+     * index. commit() should be called once you're done ingesting files.
+     * FileExtract represents a parent of extracted file with actual content.  
+     * The parent itself has no content, only meta data and is used to associate the extracted FileExtractedChild
+     * 
+     * @param fe FileExtract to ingest
+     * @throws IngesterException if there was an error processing a specific
+     * file, but the Solr server is probably fine.
+     */
     void ingest(FileExtract fe) throws IngesterException {
         Map<String, String> params = getContentFields(fe.getSourceFile());
 
@@ -105,7 +115,15 @@ public class Ingester {
         ingest(new NullContentStream(fe.getSourceFile()), params, 0);
     }
 
-    //chunk stream
+    /**
+     * Sends a FileExtractedChild to Solr and its extracted content stream to be added to the
+     * index. commit() should be called once you're done ingesting files.
+     * FileExtractedChild represents a file chunk and its chunk content.
+     * 
+     * @param fec FileExtractedChild to ingest
+     * @throws IngesterException if there was an error processing a specific
+     * file, but the Solr server is probably fine.
+     */
     void ingest(FileExtractedChild fec, ByteContentStream bcs) throws IngesterException {
         AbstractContent sourceContent = bcs.getSourceContent();
         Map<String, String> params = getContentFields(sourceContent);

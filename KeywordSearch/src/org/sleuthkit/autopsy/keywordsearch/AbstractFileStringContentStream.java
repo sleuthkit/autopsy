@@ -26,29 +26,30 @@ import java.util.logging.Logger;
 import org.apache.solr.common.util.ContentStream;
 import org.sleuthkit.autopsy.datamodel.AbstractFileStringStream;
 import org.sleuthkit.autopsy.datamodel.AbstractFileStringStream.Encoding;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.AbstractContent;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Converter from FsContent into String with specific encoding
+ * Converter from AbstractContent into String with specific encoding
  * Then, an adapter back to Solr' ContentStream (which is a specific InputStream), 
  * using the same encoding
  */
-public class FsContentStringContentStream implements ContentStream {
+public class AbstractFileStringContentStream implements ContentStream {
     //input
 
-    private FsContent content;
+    private AbstractFile content;
     private Encoding encoding;
     //converted
     private AbstractFileStringStream stream;
-    private static Logger logger = Logger.getLogger(FsContentStringContentStream.class.getName());
+    private static Logger logger = Logger.getLogger(AbstractFileStringContentStream.class.getName());
 
-    public FsContentStringContentStream(FsContent content, Encoding encoding) {
+    public AbstractFileStringContentStream(AbstractFile content, Encoding encoding) {
         this.content = content;
         this.encoding = encoding;
         this.stream = new AbstractFileStringStream(content, encoding);
     }
 
-    public FsContent getFsContent() {
+    public AbstractContent getSourceContent() {
         return content;
     }
 
