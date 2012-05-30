@@ -42,7 +42,7 @@ public class ByteContentStream implements ContentStream {
     
     private InputStream stream;
 
-    private static Logger logger = Logger.getLogger(FsContentStringContentStream.class.getName());
+    private static Logger logger = Logger.getLogger(ByteContentStream.class.getName());
 
     public ByteContentStream(byte [] content, long contentSize, AbstractContent aContent, Encoding encoding) {
         this.content = content;
