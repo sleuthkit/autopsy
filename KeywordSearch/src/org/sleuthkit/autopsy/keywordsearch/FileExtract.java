@@ -20,13 +20,12 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.datamodel.FsContentStringStream;
+import org.sleuthkit.autopsy.datamodel.AbstractFileStringStream;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.File;
 
 
@@ -39,12 +38,12 @@ public class FileExtract {
     public static final long MAX_CHUNK_SIZE = 10 * 1024 * 1024L;
     private static final Logger logger = Logger.getLogger(FileExtract.class.getName());
     private static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;
-    private File sourceFile;
+    private AbstractFile sourceFile;
     
     //single static buffer for all extractions.  Safe, indexing can only happen in one thread
     private static final byte[] STRING_CHUNK_BUF = new byte[(int) MAX_STRING_CHUNK_SIZE];
     
-    public FileExtract(File sourceFile) {
+    public FileExtract(AbstractFile sourceFile) {
         this.sourceFile = sourceFile;
         numChunks = 0; //unknown until indexing is done
     }
@@ -53,7 +52,7 @@ public class FileExtract {
         return this.numChunks;
     }
     
-    public File getSourceFile() {
+    public AbstractFile getSourceFile() {
         return sourceFile;
     }
     
@@ -61,13 +60,13 @@ public class FileExtract {
     public boolean index(Ingester ingester) throws IngesterException {
         boolean success = false;
 
-        FsContentStringStream stringStream = null;
+        AbstractFileStringStream stringStream = null;
         try {
             success = true;
             //break string into chunks 
             //Note: could use DataConversion.toString() since we are operating on fixed chunks
             //but FsContentStringStream handles string boundary case better
-            stringStream = new FsContentStringStream(sourceFile, FsContentStringStream.Encoding.UTF8);
+            stringStream = new AbstractFileStringStream(sourceFile, AbstractFileStringStream.Encoding.UTF8);
             long readSize = 0;
             
             while ((readSize = stringStream.read(STRING_CHUNK_BUF, 0, (int) MAX_STRING_CHUNK_SIZE)) != -1) {
@@ -140,7 +139,7 @@ class FileExtractedChild {
     
     public boolean index(Ingester ingester, byte[] content, long contentSize) throws IngesterException {
         boolean success = true;
-        ByteContentStream bcs = new ByteContentStream(content, contentSize, parent.getSourceFile(), FsContentStringStream.Encoding.UTF8);
+        ByteContentStream bcs = new ByteContentStream(content, contentSize, parent.getSourceFile(), AbstractFileStringStream.Encoding.UTF8);
         try {
             ingester.ingest(this, bcs);
             //logger.log(Level.INFO, "Ingesting string chunk: " + this.getName() + ": " + chunkID);

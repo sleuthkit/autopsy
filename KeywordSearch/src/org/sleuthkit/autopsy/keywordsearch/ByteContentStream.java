@@ -25,7 +25,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.logging.Logger;
 import org.apache.solr.common.util.ContentStream;
-import org.sleuthkit.autopsy.datamodel.FsContentStringStream.Encoding;
+import org.sleuthkit.autopsy.datamodel.AbstractFileStringStream.Encoding;
+import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
@@ -36,16 +37,16 @@ public class ByteContentStream implements ContentStream {
     //input
     private byte[] content; //extracted subcontent
     private long contentSize;
-    private FsContent fsContent; //origin
+    private AbstractContent aContent; //origin
     private Encoding encoding;
     
     private InputStream stream;
 
     private static Logger logger = Logger.getLogger(FsContentStringContentStream.class.getName());
 
-    public ByteContentStream(byte [] content, long contentSize, FsContent fsContent, Encoding encoding) {
+    public ByteContentStream(byte [] content, long contentSize, AbstractContent aContent, Encoding encoding) {
         this.content = content;
-        this.fsContent = fsContent;
+        this.aContent = aContent;
         this.encoding = encoding;
         stream = new ByteArrayInputStream(content, 0, (int)contentSize);
     }
@@ -54,8 +55,8 @@ public class ByteContentStream implements ContentStream {
         return content;
     }
     
-    public FsContent getFsContent() {
-        return fsContent;
+    public AbstractContent getSourceContent() {
+        return aContent;
     }
 
 
@@ -66,7 +67,7 @@ public class ByteContentStream implements ContentStream {
 
     @Override
     public String getName() {
-        return fsContent.getName();
+        return aContent.getName();
     }
 
     @Override
@@ -82,7 +83,7 @@ public class ByteContentStream implements ContentStream {
 
     @Override
     public String getSourceInfo() {
-        return "File:" + fsContent.getId();
+        return "File:" + aContent.getId();
     }
 
     @Override

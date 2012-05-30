@@ -39,8 +39,20 @@ import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.ContentStream;
+import org.sleuthkit.datamodel.AbstractContent;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
+import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  * Handles indexing files on a Solr core.
@@ -51,6 +63,7 @@ public class Ingester {
     private boolean uncommitedIngests = false;
     private final ExecutorService upRequestExecutor = Executors.newSingleThreadExecutor();
     private final Server solrServer = KeywordSearch.getServer();
+    private final GetContentFieldsV getContentFieldsV = new GetContentFieldsV();
     // TODO: use a more robust method than checking file extension
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
     static final String[] ingestibleExtensions = {"tar", "jar", "zip", "gzip", "bzip2",
@@ -59,8 +72,6 @@ public class Ingester {
         "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
 
-    Ingester() {
-    }
 
     @Override
     @SuppressWarnings("FinalizeDeclaration")
@@ -82,12 +93,12 @@ public class Ingester {
      * file, but the Solr server is probably fine.
      */
     void ingest(FsContentStringContentStream fcs) throws IngesterException {
-        Map<String, String> params = getFsContentFields(fcs.getFsContent());
+        Map<String, String> params = getContentFields(fcs.getFsContent());
         ingest(fcs, params, fcs.getFsContent().getSize());
     }
 
     void ingest(FileExtract fe) throws IngesterException {
-        Map<String, String> params = getFsContentFields(fe.getSourceFile());
+        Map<String, String> params = getContentFields(fe.getSourceFile());
 
         params.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(fe.getNumChunks()));
 
@@ -96,12 +107,12 @@ public class Ingester {
 
     //chunk stream
     void ingest(FileExtractedChild fec, ByteContentStream bcs) throws IngesterException {
-        FsContent sourceFsContent = bcs.getFsContent();
-        Map<String, String> params = getFsContentFields(sourceFsContent);
+        AbstractContent sourceContent = bcs.getSourceContent();
+        Map<String, String> params = getContentFields(sourceContent);
 
-        //overwrite, TODO set separately
+        //overwrite id with the chunk id
         params.put(Server.Schema.ID.toString(), 
-                FileExtractedChild.getFileExtractChildId(sourceFsContent.getId(), fec.getChunkId()));
+        FileExtractedChild.getFileExtractChildId(sourceContent.getId(), fec.getChunkId()));
     
         ingest(bcs, params, FileExtract.MAX_CHUNK_SIZE);
     }
@@ -115,7 +126,7 @@ public class Ingester {
      * file, but the Solr server is probably fine.
      */
     void ingest(FsContent f) throws IngesterException {
-        ingest(new FscContentStream(f), getFsContentFields(f), f.getSize());
+        ingest(new FscContentStream(f), getContentFields(f), f.getSize());
     }
 
     /**
@@ -123,15 +134,43 @@ public class Ingester {
      * @param fsc FsContent to get fields from
      * @return the map
      */
-    private Map<String, String> getFsContentFields(FsContent fsc) {
-        Map<String, String> fields = new HashMap<String, String>();
-        fields.put(Server.Schema.ID.toString(), Long.toString(fsc.getId()));
-        fields.put(Server.Schema.FILE_NAME.toString(), fsc.getName());
-        fields.put(Server.Schema.CTIME.toString(), fsc.getCtimeAsDate());
-        fields.put(Server.Schema.ATIME.toString(), fsc.getAtimeAsDate());
-        fields.put(Server.Schema.MTIME.toString(), fsc.getMtimeAsDate());
-        fields.put(Server.Schema.CRTIME.toString(), fsc.getMtimeAsDate());
-        return fields;
+    private Map<String, String> getContentFields(AbstractContent fsc) {
+        return fsc.accept(getContentFieldsV);
+    }
+    
+    private class GetContentFieldsV extends ContentVisitor.Default<Map<String, String>> {
+
+        @Override
+        protected Map<String, String> defaultVisit(Content cntnt) {
+            return new HashMap<String, String>();
+        }
+
+        @Override
+        public Map<String, String> visit(File f) {
+            Map<String, String> params = getCommonFields(f);
+            params.put(Server.Schema.CTIME.toString(), f.getCtimeAsDate());
+            params.put(Server.Schema.ATIME.toString(), f.getAtimeAsDate());
+            params.put(Server.Schema.MTIME.toString(), f.getMtimeAsDate());
+            params.put(Server.Schema.CRTIME.toString(), f.getMtimeAsDate());
+            return params;
+        }
+
+        @Override
+        public Map<String, String> visit(LayoutFile lf) {
+            return getCommonFields(lf);
+        }
+        
+        private Map<String, String> getCommonFields(AbstractFile af) {
+            Map<String, String> params = new HashMap<String, String>();
+            params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
+            params.put(Server.Schema.FILE_NAME.toString(), af.getName());
+            return params;
+        }
+
+        @Override
+        public Map<String, String> visit(Directory d) {
+            throw new IllegalArgumentException("Indexing directories not supported");
+        } 
     }
 
     /**
@@ -316,20 +355,20 @@ public class Ingester {
      */
     private static class NullContentStream implements ContentStream {
 
-        FsContent f;
+        AbstractContent aContent;
 
-        NullContentStream(FsContent f) {
-            this.f = f;
+        NullContentStream(AbstractContent aContent) {
+            this.aContent = aContent;
         }
 
         @Override
         public String getName() {
-            return f.getName();
+            return aContent.getName();
         }
 
         @Override
         public String getSourceInfo() {
-            return "File:" + f.getId();
+            return "File:" + aContent.getId();
         }
 
         @Override
@@ -369,20 +408,29 @@ public class Ingester {
     }
 
     /**
-     * Determine if the fscontent is ingestible/indexable by keyword search
-     * Note: currently only checks by extension, could be a more robust check.
-     * @param fsContent
+     * Determine if the file is ingestible/indexable by keyword search
+     * Note: currently only checks by extension and abstract type, could be a more robust check.
+     * @param aFile
      * @return true if it is ingestible, false otherwise
      */
-    static boolean isIngestible(FsContent fsContent) {
-        boolean ingestible = false;
+    static boolean isIngestible(AbstractFile aFile) {
+        boolean isIngestible = false;
+        TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
+        if (aType.equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || aType.equals(TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))
+                return isIngestible;
+        
+        FsContent fsContent = (FsContent) aFile;
+        if (fsContent.isDir())
+            return isIngestible;
+        
         final String fileName = fsContent.getName();
-        for (String ext : ingestibleExtensions) {
+        for (final String ext : ingestibleExtensions) {
             if (fileName.toLowerCase().endsWith(ext)) {
-                ingestible = true;
+                isIngestible = true;
                 break;
             }
         }
-        return ingestible;
+        return isIngestible;
     }
 }

@@ -67,7 +67,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private List<Keyword> keywords; //keywords to search
     private List<String> keywordLists; // lists currently being searched
     private Map<String, KeywordSearchList> keywordToList; //keyword to list name mapping
-    //private final Object lock = new Object();
     private Timer commitTimer;
     private Indexer indexer;
     private Searcher currentSearcher;
@@ -83,7 +82,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,
+    };
     private Map<Long, IngestStatus> ingestStatus;
 
     public static synchronized KeywordSearchIngestService getDefault() {
@@ -411,50 +411,32 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private class Indexer {
 
         private final Logger logger = Logger.getLogger(Indexer.class.getName());
-        private static final String DELETED_MSG = "The file is an unallocated or orphan file (deleted) and entire content is no longer recoverable. ";
 
-        private boolean extractAndIngest(File file) {
+        private boolean extractAndIngest(AbstractFile aFile) {
             boolean indexed = false;
-            FileExtract fe = new FileExtract(file);
+            FileExtract fe = new FileExtract(aFile);
             try {
                 indexed = fe.index(ingester);
             } catch (IngesterException ex) {
-                logger.log(Level.WARNING, "Error extracting strings and indexing file: " + file.getName(), ex);
+                logger.log(Level.WARNING, "Error extracting strings and indexing file: " + aFile.getName(), ex);
                 indexed = false;
             }
-
             return indexed;
-
         }
 
-        private void indexFile(AbstractFile abstractFile) {
-            final long size = abstractFile.getSize();
+        private void indexFile(AbstractFile aFile) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
-            //TODO: not this
-            if(!(abstractFile instanceof File)) {
-                return;
-            }
-            
-            File file = (File) abstractFile;
+            boolean ingestibleFile = Ingester.isIngestible(aFile);
 
-            boolean ingestible = Ingester.isIngestible(file);
-
+            final long size = aFile.getSize();
             //limit size of entire file, do not limit strings
-            if (size == 0 || (ingestible && size > MAX_INDEX_SIZE)) {
-                ingestStatus.put(abstractFile.getId(), IngestStatus.SKIPPED);
+            if (size == 0 || (ingestibleFile && size > MAX_INDEX_SIZE)) {
+                ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
                 return;
             }
 
-
-            final String fileName = file.getName();
-
-            String deletedMessage = "";
-            if ((file.getMeta_flags() & (TskData.TSK_FS_META_FLAG_ENUM.ORPHAN.getMetaFlag() | TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getMetaFlag())) != 0) {
-                deletedMessage = DELETED_MSG;
-            }
-
-            if (ingestible == true) {
-
+            if (ingestibleFile == true) {
+                File file = (File) aFile;
                 try {
                     //logger.log(Level.INFO, "indexing: " + fsContent.getName());
                     ingester.ingest(file);
@@ -462,50 +444,28 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 } catch (IngesterException e) {
                     ingestStatus.put(file.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
-                    boolean processed = processNonIngestible(file);
-                    //postIngestibleErrorMessage(processed, fileName, deletedMessage);
+                    processNonIngestible(file);
 
                 } catch (Exception e) {
                     ingestStatus.put(file.getId(), IngestStatus.SKIPPED);
                     //try to extract strings
-                    boolean processed = processNonIngestible(file);
-
-                    //postIngestibleErrorMessage(processed, fileName, deletedMessage);
-
+                    processNonIngestible(file);
                 }
             } else {
-                boolean processed = processNonIngestible(file);
-                //postNonIngestibleErrorMessage(processed, fsContent, deletedMessage);
+                processNonIngestible(aFile);
 
             }
         }
 
-        private void postNonIngestibleErrorMessage(boolean stringsExtracted, File file, String deletedMessage) {
-            String fileName = file.getName();
-            if (!stringsExtracted) {
-                managerProxy.postMessage(IngestMessage.createMessage(++messageID, IngestMessage.MessageType.INFO, KeywordSearchIngestService.instance, "Skipped indexing strings: " + fileName, "Skipped extracting string content from this file (of unsupported format) due to the file size.  The file will not be included in the search results.<br />File: " + fileName));
-            }
-
-        }
-
-        private void postIngestibleErrorMessage(boolean stringsExtracted, String fileName, String deletedMessage) {
-            if (stringsExtracted) {
-                managerProxy.postMessage(IngestMessage.createWarningMessage(++messageID, KeywordSearchIngestService.instance, "Indexed strings only: " + fileName, "Error encountered extracting file content. " + deletedMessage + "Used string extraction to index strings for partial analysis on this file.<br />File: " + fileName));
-            } else {
-                managerProxy.postMessage(IngestMessage.createErrorMessage(++messageID, KeywordSearchIngestService.instance, "Error indexing: " + fileName, "Error encountered extracting file content and strings from this file. " + deletedMessage + "The file will not be included in the search results.<br />File: " + fileName));
-            }
-        }
-
-        private boolean processNonIngestible(File file) {
-            if (!extractAndIngest(file)) {
-                logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + file.getName() + "' (id: " + file.getId() + ").");
-                ingestStatus.put(file.getId(), IngestStatus.SKIPPED);
+        private boolean processNonIngestible(AbstractFile aFile) {
+            if (!extractAndIngest(aFile)) {
+                logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
+                ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
                 return false;
             } else {
-                ingestStatus.put(file.getId(), IngestStatus.EXTRACTED_INGESTED);
+                ingestStatus.put(aFile.getId(), IngestStatus.EXTRACTED_INGESTED);
                 return true;
             }
-
         }
     }
 
@@ -564,7 +524,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                     final String queryStr = keywordQuery.getQuery();
                     final KeywordSearchList list = keywordToList.get(queryStr);
                     final String listName = list.getName();
-                    
+
                     //DEBUG
                     //logger.log(Level.INFO, "Searching: " + queryStr);
 
@@ -593,7 +553,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                         return null;
                     } catch (CancellationException e) {
                         logger.log(Level.INFO, "Cancel detected, bailing during keyword query: " + keywordQuery.getQuery());
-                        
+
                         finalizeSearcher();
                         return null;
                     } catch (Exception e) {
@@ -633,10 +593,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                     if (!newResults.isEmpty()) {
 
                         //write results to BB
-                        
+
                         //new artifacts created, to report to listeners
-                        Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>(); 
-                        
+                        Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>();
+
                         for (final Keyword hitTerm : newResults.keySet()) {
                             List<ContentHit> contentHitsAll = newResults.get(hitTerm);
                             Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
@@ -708,8 +668,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                                 //file
                                 detailsSb.append("<tr>");
                                 detailsSb.append("<th>File</th>");
-                                if(hitFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
-                                    detailsSb.append("<td>").append(((FsContent)hitFile).getParentPath()).append(hitFile.getName()).append("</td>");
+                                if (hitFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
+                                    detailsSb.append("<td>").append(((FsContent) hitFile).getParentPath()).append(hitFile.getName()).append("</td>");
                                 } else {
                                     detailsSb.append("<td>").append(hitFile.getName()).append("</td>");
                                 }
@@ -737,9 +697,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                                 detailsSb.append("</table>");
 
                                 //check if should send messages on hits on this list
-                                if (list.getIngestMessages())
-                                    //post ingest inbox msg
+                                if (list.getIngestMessages()) //post ingest inbox msg
+                                {
                                     managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+                                }
 
 
                             } //for each term hit
@@ -752,7 +713,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                     }
                     progress.progress(queryStr, ++numSearched);
                 }
-                
+
                 finalizeSearcher();
             } //end synchronized block
 
@@ -765,6 +726,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         private void finalizeSearcher() {
             logger.log(Level.INFO, "Searcher finalizing");
             SwingUtilities.invokeLater(new Runnable() {
+
                 @Override
                 public void run() {
                     progress.finish();
@@ -780,7 +742,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 keywordToList.clear();
                 //reset current resuls earlier to potentially garbage collect sooner
                 currentResults = new HashMap<Keyword, List<ContentHit>>();
-                
+
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
             }
         }
