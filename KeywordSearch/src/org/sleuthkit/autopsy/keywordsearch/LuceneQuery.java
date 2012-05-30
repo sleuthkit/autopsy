@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -34,12 +33,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
-import org.openide.nodes.Node;
-import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWriter;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -118,41 +112,6 @@ public class LuceneQuery implements KeywordSearchQuery {
         return results;
     }
 
-    @Override
-    public void execute() {
-        escape();
-
-        final Map<String, List<ContentHit>> matches;
-
-        try {
-            matches = performQuery();
-        } catch (NoOpenCoreException ex) {
-            return;
-        }
-
-        String pathText = "Keyword query: " + query;
-
-        if (matches.isEmpty()) {
-            KeywordSearchUtil.displayDialog("Keyword Search", "No results for keyword: " + query, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-            return;
-        }
-
-        //map of unique fs hit and chunk id or 0
-        LinkedHashMap<AbstractFile, Integer> fsMatches = ContentHit.flattenResults(matches);
-
-        //get listname
-        String listName = "";
-
-        Node rootNode = new KeywordSearchNode(fsMatches, queryEscaped);
-        Node filteredRootNode = new TableFilterNode(rootNode, true);
-
-        TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, filteredRootNode, matches.size());
-        searchResultWin.requestActive(); // make it the active top component
-
-        //write to bb
-        new ResultWriter(matches, this, listName).execute();
-
-    }
 
     @Override
     public boolean validate() {

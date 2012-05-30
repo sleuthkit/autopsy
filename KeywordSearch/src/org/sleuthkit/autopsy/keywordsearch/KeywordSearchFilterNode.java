@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
@@ -27,7 +26,6 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.PropertySupport;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;

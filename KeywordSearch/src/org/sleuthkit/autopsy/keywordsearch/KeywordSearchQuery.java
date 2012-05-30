@@ -48,12 +48,6 @@ public interface KeywordSearchQuery {
      */
     public void setFilter(KeywordQueryFilter filter);
     
-  
-    
-    /**
-     * execute the query and publish results
-     */
-    public void execute();
     
     /**
      * escape the query string and use the escaped string in the query
