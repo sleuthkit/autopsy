@@ -21,8 +21,10 @@ package org.sleuthkit.autopsy.datamodel;
 import java.text.SimpleDateFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * Abstract class that implements the commonality between File and Directory
@@ -216,7 +218,10 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
      * @param content to extract properties from
      */
     public static void fillPropertyMap(Map<String, Object> map, FsContent content) {
-        dateFormatter.setTimeZone(content.accept(new TimeZoneVisitor()));
+        try {
+            dateFormatter.setTimeZone(TimeZone.getTimeZone(content.getImage().getTimeZone()));
+        } catch (TskException ex) {
+        }
         map.put(FsContentPropertyType.NAME.toString(), content.getName());
         map.put(FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
         map.put(FsContentPropertyType.MOD_TIME.toString(),  epochToString(content.getMtime()));

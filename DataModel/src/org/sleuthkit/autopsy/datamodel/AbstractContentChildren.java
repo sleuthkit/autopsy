@@ -79,11 +79,6 @@ abstract class AbstractContentChildren extends Keys<Object> {
         }
 
         @Override
-        public AbstractContentNode visit(FileSystem fs) {
-            return defaultVisit(fs);
-        }
-
-        @Override
         public AbstractContentNode visit(Image image) {
             return new ImageNode(image);
         }
@@ -91,21 +86,6 @@ abstract class AbstractContentChildren extends Keys<Object> {
         @Override
         public AbstractContentNode visit(Volume volume) {
             return new VolumeNode(volume);
-        }
-
-        @Override
-        public AbstractContentNode visit(VolumeSystem vs) {
-            return defaultVisit(vs);
-        }
-
-        @Override
-        public AbstractContentNode visit(BlackboardArtifact.ARTIFACT_TYPE a) {
-            return defaultVisit(a);
-        }
-
-        @Override
-        public AbstractContentNode visit(BlackboardArtifact ba) {
-            return defaultVisit(ba);
         }
         
         @Override
@@ -115,7 +95,7 @@ abstract class AbstractContentChildren extends Keys<Object> {
 
         @Override
         protected AbstractContentNode defaultVisit(SleuthkitVisitableItem di) {
-            throw new UnsupportedOperationException("No Node defined for the given DisplayableItem");
+            throw new UnsupportedOperationException("No Node defined for the given SleuthkitItem");
         }
     }
     

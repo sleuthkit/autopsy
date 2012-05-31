@@ -108,7 +108,9 @@ public final class ContentUtils {
         
         @Override
         public List<String> visit(LayoutFile lay) {
-            return lay.getParent().accept(this);
+            List<String> path = lay.getParent().accept(this);
+            path.add(toString.visit(lay));
+            return path;
         }
 
         @Override
