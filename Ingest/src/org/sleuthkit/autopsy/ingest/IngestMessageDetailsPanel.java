@@ -24,10 +24,15 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JMenuItem;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer;
 import org.sleuthkit.autopsy.ingest.IngestMessagePanel.IngestMessageGroup;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * Details panel within IngestMessagePanel
@@ -53,14 +58,7 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals(BlackboardResultViewer.FINISHED_DISPLAY_EVT)) {
-                   // SwingUtilities.invokeLater(new Runnable() {
-                     //   @Override
-                       // public void run() {
                             artifactViewerFinished();
-                        //}
-                        
-                   
-                    //});
                 }
             }
             
@@ -259,9 +257,27 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
                 this.messageDetailsPane.setText("");
             }
             //show artifact/content only for a message group with a single message
-            if (messageGroup.getData() != null && messageGroup.getCount() == 1) {
+            BlackboardArtifact artifact = messageGroup.getData();;
+            if (artifact != null && messageGroup.getCount() == 1) {
                 viewArtifactButton.setEnabled(true);
-                viewContentButton.setEnabled(true);
+                
+                //check file type
+                long objId = artifact.getObjectID();
+                AbstractFile file = null;
+                try {
+                    file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(objId);
+                } catch (TskException ex) {
+                   
+                }
+                if (file == null) {
+                    viewContentButton.setEnabled(false);
+                } 
+                else if (! file.getType().equals(TSK_DB_FILES_TYPE_ENUM.FS)) {
+                    viewContentButton.setEnabled(false);
+                }
+                else {
+                    viewContentButton.setEnabled(true);
+                }
             } else {
                 viewArtifactButton.setEnabled(false);
                 viewContentButton.setEnabled(false);
@@ -271,5 +287,6 @@ class IngestMessageDetailsPanel extends javax.swing.JPanel {
             viewContentButton.setEnabled(false);
             messageDetailsPane.setText("");
         }
+        
     }
 }

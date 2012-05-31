@@ -20,13 +20,13 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractFileStringStream;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.File;
 
 
 /**
@@ -42,6 +42,13 @@ public class FileExtract {
     
     //single static buffer for all extractions.  Safe, indexing can only happen in one thread
     private static final byte[] STRING_CHUNK_BUF = new byte[(int) MAX_STRING_CHUNK_SIZE];
+    private static final int BOM_LEN = 3;
+    static {
+        //prepend UTF-8 BOM to start of the buffer
+            STRING_CHUNK_BUF[0] = (byte)0xEF;
+            STRING_CHUNK_BUF[1] = (byte)0xBB;
+            STRING_CHUNK_BUF[2] = (byte)0xBF;
+    }
     
     public FileExtract(AbstractFile sourceFile) {
         this.sourceFile = sourceFile;
@@ -69,14 +76,14 @@ public class FileExtract {
             stringStream = new AbstractFileStringStream(sourceFile, AbstractFileStringStream.Encoding.UTF8);
             long readSize = 0;
             
-            while ((readSize = stringStream.read(STRING_CHUNK_BUF, 0, (int) MAX_STRING_CHUNK_SIZE)) != -1) {
-                 //FileOutputStream debug = new FileOutputStream("c:\\temp\\" + sourceFile.getName() + Integer.toString(this.numChunks+1));
+            while ((readSize = stringStream.read(STRING_CHUNK_BUF, BOM_LEN, (int) MAX_STRING_CHUNK_SIZE - BOM_LEN)) != -1) {
+                //FileOutputStream debug = new FileOutputStream("c:\\temp\\" + sourceFile.getName() + Integer.toString(this.numChunks+1));
                 //debug.write(STRING_CHUNK_BUF, 0, (int)readSize);
                 
                 FileExtractedChild chunk = new FileExtractedChild(this, this.numChunks + 1);
                 
                 try {
-                    chunk.index(ingester, STRING_CHUNK_BUF, readSize);
+                    chunk.index(ingester, STRING_CHUNK_BUF, readSize + BOM_LEN);
                     ++this.numChunks;
                 } catch (IngesterException ingEx) {
                     success = false;
