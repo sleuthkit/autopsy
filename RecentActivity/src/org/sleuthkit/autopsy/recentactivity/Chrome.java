@@ -24,233 +24,108 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.sleuthkit.autopsy.casemodule.Case;
+import javax.swing.JPanel;
+import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import java.sql.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.*;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestServiceImage;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Image;
 
 /**
  *
  * @author Alex
  */
-public class Chrome {
+public class Chrome extends Extract implements IngestServiceImage {
 
-    public static final String chquery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
+    private static final String chquery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
-    public static final String chcookiequery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
-    public static final String chbookmarkquery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count,urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
-    public static final String chdownloadquery = "select full_path, url, start_time, received_bytes from downloads";
-    public static final String chloginquery = "select origin_url, username_value, signon_realm from logins";
+    private static final String chcookiequery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
+    private static final String chbookmarkquery = "SELECT starred.title, urls.url, starred.date_added, starred.date_modified, urls.typed_count,urls._last_visit_time FROM starred INNER JOIN urls ON urls.id = starred.url_id";
+    private static final String chdownloadquery = "select full_path, url, start_time, received_bytes from downloads";
+    private static final String chloginquery = "select origin_url, username_value, signon_realm from logins";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public int ChromeCount = 0;
 
     public Chrome() {
+        moduleName = "Chrome";
     }
 
-    public void getchdb(List<String> image, IngestImageWorkerController controller) {
+    @Override
+    public void process(Image image, IngestImageWorkerController controller) {
+        this.getHistory(image, controller);
+        this.getBookmark(image, controller);
+        this.getCookie(image, controller);
+        this.getLogin(image, controller);
+        this.getDownload(image, controller);
+    }
 
-        try {
-            Case currentCase = Case.getCurrentCase(); // get the most updated case
-            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-            List<FsContent> FFSqlitedb = null;
-            Map<String, Object> kvs = new LinkedHashMap<String, Object>();
-            String allFS = new String();
-            for (int i = 0; i < image.size(); i++) {
-                if (i == 0) {
-                    allFS += " AND (0";
-                }
-                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if (i == image.size() - 1) {
-                    allFS += ")";
-                }
-            }
+    private void getHistory(Image image, IngestImageWorkerController controller) {
+        //Make these seperate, this is for history
 
-            try {
-                ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' and name NOT LIKE '%journal%' AND parent_path LIKE '%Chrome%'" + allFS);
-                FFSqlitedb = tempDb.resultSetToFsContents(rs);
-                ChromeCount = FFSqlitedb.size();
-                rs.close();
-                rs.getStatement().close();
-            } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-            }
-            int j = 0;
-            if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
-            {
+        List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'History' and name NOT LIKE '%journal%' AND parent_path LIKE '%Chrome%'");
+
+        int j = 0;
+        if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
-                String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
-                String connectionString = "jdbc:sqlite:" + temps;
+                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 try {
-                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to write to disk.{0}", ex);
+                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
                     dbFile.delete();
                     break;
                 }
-                try {
-                    dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", connectionString);
-                    ResultSet temprs = tempdbconnect.executeQry(chquery);
-
-                    while (temprs.next()) {
-                        try {
-                            String domain = Util.extractDomain(temprs.getString("url"));
-                            BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", temprs.getString("url")));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Accessed", (temprs.getLong("last_visit_time") / 10000)));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", "", temprs.getString("from_visit")));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "", ((temprs.getString("title") != null) ? temprs.getString("title") : "")));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Chrome"));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", domain));
-                            bbart.addAttributes(bbattributes);
-                        } catch (Exception ex) {
-                            logger.log(Level.WARNING, "Error while trying to insert BB artifact.{0}", ex);
-                        }
-
+                List<HashMap<String, Object>> tempList = this.dbConnect(temps, chquery);
+                for (HashMap<String, Object> result : tempList) {
+                    try {
+                        Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", "", ((result.get("url").toString() != null) ? result.get("url").toString() : "")));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", ((Long.valueOf(result.get("last_visit_time").toString())) / 10000)));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "Recent Activity", "", ((result.get("from_visit").toString() != null) ? result.get("from_visit").toString() : "")));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "Recent Activity", "", ((result.get("title").toString() != null) ? result.get("title").toString() : "")));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "", "Chrome"));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", "", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
+                        this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, FFSqlitedb.get(j), bbattributes);
+                    } catch (Exception ex) {
+                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
+                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
-                    tempdbconnect.closeConnection();
-                    temprs.close();
-
-                } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex);
                 }
-
                 j++;
                 dbFile.delete();
             }
-           }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
-        } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
         }
+    }
 
+    private void getBookmark(Image image, IngestImageWorkerController controller) {
 
-        //COOKIES section
-        // This gets the cookie info
-        try {
-            Case currentCase = Case.getCurrentCase(); // get the most updated case
-            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-            String allFS = new String();
-            for (int i = 0; i < image.size(); i++) {
-                if (i == 0) {
-                    allFS += " AND (0";
-                }
-                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if (i == image.size() - 1) {
-                    allFS += ")";
-                }
-            }
-            List<FsContent> FFSqlitedb = null;
-            try {
-                ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE '%Cookies%' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'" + allFS);
-                FFSqlitedb = tempDb.resultSetToFsContents(rs);
-                rs.close();
-                rs.getStatement().close();
-            } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-            }
-            int j = 0;
-            if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
-            {
+        //this is for bookmarks
+        List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'Bookmarks' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'");
+
+        int j = 0;
+        if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
-                String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
-                String connectionString = "jdbc:sqlite:" + temps;
+                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 try {
-                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to write IO.{0}", ex);
-                }
-                File dbFile = new File(temps);
-                if (controller.isCancelled()) {
-                    dbFile.delete();
-                    break;
-                }
-                try {
-                    dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", connectionString);
-                    ResultSet temprs = tempdbconnect.executeQry(chcookiequery);
-                    while (temprs.next()) {
-                        try {
-                            BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE);
-                            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                            String domain = temprs.getString("host_key");
-                            domain = domain.replaceFirst("^\\.+(?!$)", "");
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", temprs.getString("host_key")));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", (temprs.getLong("last_access_utc") / 10000)));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", "", temprs.getString("value")));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", ((temprs.getString("name") != null) ? temprs.getString("name") : "")));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Chrome"));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", domain));
-                            bbart.addAttributes(bbattributes);
-                        } catch (Exception ex) {
-                            logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-                        }
-                    }
-                    tempdbconnect.closeConnection();
-                    temprs.close();
-
-                } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex);
-                }
-                j++;
-                dbFile.delete();
-            }
-           }
-            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
-        } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
-        }
-
-
-        //BOokmarks section
-        // This gets the bm info
-        try {
-            Case currentCase = Case.getCurrentCase(); // get the most updated case
-            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-            String allFS = new String();
-            for (int i = 0; i < image.size(); i++) {
-                if (i == 0) {
-                    allFS += " AND (0";
-                }
-                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if (i == image.size() - 1) {
-                    allFS += ")";
-                }
-            }
-            List<FsContent> FFSqlitedb = null;
-            try {
-                ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'Bookmarks' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'" + allFS);
-                FFSqlitedb = tempDb.resultSetToFsContents(rs);
-                rs.close();
-                rs.getStatement().close();
-            } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-            }
-            int j = 0;
-            if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
-            {
-            while (j < FFSqlitedb.size()) {
-                String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
-                try {
-                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
-                } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to write IO {0}", ex);
+                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -274,182 +149,221 @@ public class Chrome {
                             String domain = Util.extractDomain(url);
                             BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
                             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (date / 10000)));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", url));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "", name));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Chrome"));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", domain));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", (date / 10000)));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", "", url));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "Recent Activity", "", name));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "", "Chrome"));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", "", domain));
                             bbart.addAttributes(bbattributes);
                         } catch (Exception ex) {
                             logger.log(Level.WARNING, "Error while trying to insert BB artifact{0}", ex);
+                            this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                         }
                     }
-
-
                 } catch (Exception ex) {
                     logger.log(Level.WARNING, "Error while trying to read into the Bookmarks for Chrome." + ex);
                 }
                 j++;
                 dbFile.delete();
             }
-            }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
-        } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
         }
+    }
 
+    //COOKIES section
+    // This gets the cookie info
+    private void getCookie(Image image, IngestImageWorkerController controller) {
 
-        //Downloads section
-        // This gets the downloads info
-        try {
-            Case currentCase = Case.getCurrentCase(); // get the most updated case
-            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-            List<FsContent> FFSqlitedb = null;
-            String allFS = new String();
-            for (int i = 0; i < image.size(); i++) {
-                if (i == 0) {
-                    allFS += " AND (0";
-                }
-                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if (i == image.size() - 1) {
-                    allFS += ")";
-                }
-            }
-            try {
-                ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'History' and name NOT LIKE '%journal%' and  parent_path LIKE '%Chrome%'" + allFS);
-                FFSqlitedb = tempDb.resultSetToFsContents(rs);
-                rs.close();
-                rs.getStatement().close();
-            } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-            }
-            int j = 0;
-            if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
-            {
+        List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE '%Cookies%' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'");
+
+        int j = 0;
+        if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
-                String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
-                String connectionString = "jdbc:sqlite:" + temps;
+                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 try {
-                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
+                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
                     dbFile.delete();
                     break;
                 }
-                try {
-                    dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", connectionString);
-                    ResultSet temprs = tempdbconnect.executeQry(chdownloadquery);
-                    while (temprs.next()) {
-                        try {
-                            BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
-                            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                            String domain = Util.extractDomain(temprs.getString("url"));
-                            Long time = temprs.getLong("start_time");
-                            String Tempdate = time.toString() + "000";
-                            time = Long.valueOf(Tempdate);
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", time));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", ((temprs.getString("url") != null) ? temprs.getString("url") : "")));
-                            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity","", ((temprs.getString("title") != null) ? temprs.getString("title").replaceAll("'", "''") : "")));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", "", temprs.getString("full_path")));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", "", Util.findID(temprs.getString("full_path"))));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", domain));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Chrome"));
-                            bbart.addAttributes(bbattributes);
-                        } catch (Exception ex) {
-                            logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-                        }
 
+                List<HashMap<String, Object>> tempList = this.dbConnect(temps, chcookiequery);
+                for (HashMap<String, Object> result : tempList) {
+                    try {
+                        Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "Recent Activity", "Title", ((result.get("name").toString() != null) ? result.get("name").toString() : "")));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "Recent Activity", "Last Visited", ((Long.valueOf(result.get("last_access_utc").toString())) / 10000)));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "Recent Activity", "", ((result.get("value").toString() != null) ? result.get("value").toString() : "")));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "", "Chrome"));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", "", ((result.get("host_key").toString() != null) ? result.get("host_key").toString() : "")));
+                        String domain = result.get("host_key").toString();
+                        domain = domain.replaceFirst("^\\.+(?!$)", "");
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", "", domain));
+                        this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, FFSqlitedb.get(j), bbattributes);
+                    } catch (Exception ex) {
+                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
+                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
-                    tempdbconnect.closeConnection();
-                    temprs.close();
-                    IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
-
-                } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex);
                 }
                 j++;
                 dbFile.delete();
             }
-           }
-        } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
+            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
         }
+    }
 
+    //Downloads section
+    // This gets the downloads info
+    private void getDownload(Image image, IngestImageWorkerController controller) {
 
-        //Login/Password section
-        // This gets the user info
-        try {
-            Case currentCase = Case.getCurrentCase(); // get the most updated case
-            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-            String allFS = new String();
-            for (int i = 0; i < image.size(); i++) {
-                if (i == 0) {
-                    allFS += " AND (0";
-                }
-                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if (i == image.size() - 1) {
-                    allFS += ")";
-                }
-            }
-            List<FsContent> FFSqlitedb = null;
-            try {
-                ResultSet rs = tempDb.runQuery("select * from tsk_files where name LIKE 'signons.sqlite' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'" + allFS);
-                FFSqlitedb = tempDb.resultSetToFsContents(rs);
-                rs.close();
-                rs.getStatement().close();
-            } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-            }
-            int j = 0;
-            if(FFSqlitedb != null && !FFSqlitedb.isEmpty())
-            {
+        List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'History' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'");
+
+        int j = 0;
+        if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
-                String temps = currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db";
-                String connectionString = "jdbc:sqlite:" + temps;
+                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 try {
-                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + "\\" + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
+                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
                     dbFile.delete();
                     break;
                 }
-                try {
-                    dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", connectionString);
-                    ResultSet temprs = tempdbconnect.executeQry(chloginquery);
-                    while (temprs.next()) {
-                        try {
-                            BlackboardArtifact bbart = FFSqlitedb.get(j).newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-                            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", ((temprs.getString("origin_url") != null) ? temprs.getString("origin_url") : "")));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "RecentActivity", "", ((temprs.getString("username_value") != null) ? temprs.getString("username_value").replaceAll("'", "''") : "")));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", "", temprs.getString("signon_realm")));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", Util.extractDomain(((temprs.getString("origin_url") != null) ? temprs.getString("origin_url") : ""))));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Chrome"));
-                            bbart.addAttributes(bbattributes);
-                        } catch (Exception ex) {
-                            logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-                        }
-                    }
-                    tempdbconnect.closeConnection();
-                    temprs.close();
 
-                } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex);
+                List<HashMap<String, Object>> tempList = this.dbConnect(temps, chdownloadquery);
+                for (HashMap<String, Object> result : tempList) {
+                    try {
+                        Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", "", (result.get("full_path").toString())));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "Recent Activity", "", Util.findID((result.get("full_path").toString()))));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", "", ((result.get("url").toString() != null) ? result.get("url").toString() : "")));
+                        Long time = (Long.valueOf(result.get("start_time").toString()));
+                        String Tempdate = time.toString() + "000";
+                        time = Long.valueOf(Tempdate);
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", time));
+                        String domain = Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "");
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", "", domain));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "", "Chrome"));
+                        this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, FFSqlitedb.get(j), bbattributes);
+                    } catch (Exception ex) {
+                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
+                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    }
                 }
                 j++;
                 dbFile.delete();
             }
-           }
+            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
+        }
+    }
+
+    //Login/Password section
+    // This gets the user info
+    private void getLogin(Image image, IngestImageWorkerController controller) {
+
+        List<FsContent> FFSqlitedb = this.extractFiles(image, "select * from tsk_files where name LIKE 'signons.sqlite' and name NOT LIKE '%journal%' and parent_path LIKE '%Chrome%'");
+
+        int j = 0;
+        if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
+            while (j < FFSqlitedb.size()) {
+                String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                try {
+                    ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
+                } catch (Exception ex) {
+                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                }
+                File dbFile = new File(temps);
+                if (controller.isCancelled()) {
+                    dbFile.delete();
+                    break;
+                }
+                List<HashMap<String, Object>> tempList = this.dbConnect(temps, chquery);
+                for (HashMap<String, Object> result : tempList) {
+                    try {
+                        Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", "", ((result.get("origin_url").toString() != null) ? result.get("origin_url").toString() : "")));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", ((Long.valueOf(result.get("last_visit_time").toString())) / 10000)));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "Recent Activity", "", ((result.get("from_visit").toString() != null) ? result.get("from_visit").toString() : "")));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "Recent Activity", "", ((result.get("title").toString() != null) ? result.get("title").toString() : "")));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "", "Chrome"));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", "", (Util.extractDomain((result.get("origin_url").toString() != null) ? result.get("url").toString() : ""))));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "Recent Activity", "", ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : "")));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", "", result.get("signon_realm").toString()));
+                        this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, FFSqlitedb.get(j), bbattributes);
+                    } catch (Exception ex) {
+                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
+                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    }
+                }
+                j++;
+                dbFile.delete();
+            }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
-        } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error while trying to get Chrome SQLite db.", ex);
         }
+    }
 
+    @Override
+    public void init(IngestManagerProxy managerProxy) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void complete() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void stop() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String getDescription() {
+        return "Extracts activity from the Google Chrome browser.";
+    }
+
+    @Override
+    public ServiceType getType() {
+        return ServiceType.Image;
+    }
+
+    @Override
+    public boolean hasSimpleConfiguration() {
+        return false;
+    }
+
+    @Override
+    public boolean hasAdvancedConfiguration() {
+        return false;
+    }
+
+    @Override
+    public javax.swing.JPanel getSimpleConfiguration() {
+        return null;
+    }
+
+    @Override
+    public javax.swing.JPanel getAdvancedConfiguration() {
+        return null;
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+    }
+
+    @Override
+    public void saveSimpleConfiguration() {
+    }
+
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        return false;
     }
 }

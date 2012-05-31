@@ -20,21 +20,15 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import java.sql.ResultSet;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceImage;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.FileSystem;
 
 /**
  * Recent activity image ingest service
@@ -46,6 +40,8 @@ public final class RAImageIngestService implements IngestServiceImage {
     private static RAImageIngestService defaultInstance = null;
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
+    private ArrayList<String> errors = null;
+    private StringBuilder subCompleted = new StringBuilder();
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
@@ -63,39 +59,44 @@ public final class RAImageIngestService implements IngestServiceImage {
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
         //logger.log(Level.INFO, "process() " + this.toString());
-
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
-
-        ExtractAll ext = new ExtractAll();
-        Case currentCase = Case.getCurrentCase(); // get the most updated case
-        SleuthkitCase sCurrentCase = currentCase.getSleuthkitCase();
-        //long imageId = image.getId();
-        Collection<FileSystem> imageFS = sCurrentCase.getFileSystems(image);
-        List<String> fsIds = new LinkedList<String>();
-        for (FileSystem img : imageFS) {
-            Long tempID = img.getId();
-            fsIds.add(tempID.toString());
-        }
-
         try {
-            //do the work for(FileSystem img : imageFS )
-//            try {
-//                ResultSet artset = sCurrentCase.runQuery("SELECT * from blackboard_artifact_types WHERE type_name = 'TSK_SYS_INFO'");
-//                int artcount = 0;
-//                while (artset.next()) {
-//                    artcount++;
-//                }
-//
-//                //  artset.beforeFirst();
-//                if (artcount > 0) {
-//                } else {
-//                    int artint = sCurrentCase.addArtifactType("TSK_SYS_INFO", "System Information");
-//                }
-//
-//            } catch (Exception e) {
-//            }
-            ext.extractToBlackboard(controller, fsIds);
+            controller.switchToDeterminate(4);
+            controller.progress(0);
 
+            if (controller.isCancelled() == false) {
+                ExtractRegistry eree = new ExtractRegistry();
+                eree.process(image, controller);
+                controller.progress(1);
+                subCompleted.append("Registry extraction complete. <br>");
+            }
+            if (controller.isCancelled() == false) {
+                Firefox ffre = new Firefox();
+                ffre.process(image, controller);
+                controller.progress(2);
+                subCompleted.append("Firefox extraction complete. <br>");
+                if(ffre.errorMessages != null){
+                errors.addAll(ffre.errorMessages);
+                }
+            }
+            if (controller.isCancelled() == false) {
+                Chrome chre = new Chrome();
+                chre.process(image, controller);
+                controller.progress(3);
+                subCompleted.append("Chrome extraction complete. <br>");
+                if(chre.errorMessages != null){
+                errors.addAll(chre.errorMessages);
+                }
+            }
+            if (controller.isCancelled() == false) {
+                ExtractIE eere = new ExtractIE();
+                eere.process(image, controller);
+                if(eere.errorMessages != null){
+                errors.addAll(eere.errorMessages);
+                }
+                subCompleted.append( "Internet Explorer extraction complete. <br>");
+                controller.progress(4);
+            }
 
 
         } catch (Exception e) {
@@ -108,7 +109,24 @@ public final class RAImageIngestService implements IngestServiceImage {
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete() " + this.toString());
-        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Completed");
+        StringBuilder errorMessage = new StringBuilder();
+        String errorsFound = "";
+        errorMessage.append(subCompleted);
+        int i = 0;
+        if (errors != null) {
+            errorMessage.append("<br>There were some errors extracting the data: <br>");
+            for (String msg : errors) {
+                i++;
+                final IngestMessage error = IngestMessage.createMessage(++messageId, MessageType.INFO, this, msg + "<br>");
+                managerProxy.postMessage(error);
+            }
+            errorsFound = i + " errors found!";
+        }else
+        {
+            errorMessage.append("<br> No errors encountered.");
+            errorsFound = "No errors reported";
+        }
+        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Completed - " + errorsFound, errorMessage.toString());
         managerProxy.postMessage(msg);
 
         //service specific cleanup due to completion here
@@ -128,7 +146,6 @@ public final class RAImageIngestService implements IngestServiceImage {
     public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init() " + this.toString());
         this.managerProxy = managerProxy;
-
         //service specific initialization here
 
     }

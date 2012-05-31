@@ -34,14 +34,10 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.*;
 
 /**
  *
@@ -56,6 +52,8 @@ public class ReportHTML implements ReportModule {
     private static String htmlPath = "";
     private ReportConfiguration config;
     private static ReportHTML instance = null;
+    private Case currentCase = Case.getCurrentCase(); // get the most updated case
+    private SleuthkitCase skCase = currentCase.getSleuthkitCase();
 
     ReportHTML() {
     }
@@ -129,301 +127,315 @@ public class ReportHTML implements ReportModule {
             }
         }
 
+
+        String ingestwarning = "<h2 style=\"color: red;\">Warning, this report was run before ingest services completed!</h2>";
+
+        String caseName = currentCase.getName();
+        Integer imagecount = currentCase.getImageIDs().length;
+        Integer totalfiles = 0;
+        Integer totaldirs = 0;
         try {
-            String ingestwarning = "<h2 style=\"color: red;\">Warning, this report was run before ingest services completed!</h2>";
-            Case currentCase = Case.getCurrentCase(); // get the most updated case
-            SleuthkitCase skCase = currentCase.getSleuthkitCase();
-            String caseName = currentCase.getName();
-            Integer imagecount = currentCase.getImageIDs().length;
-            Integer totalfiles = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG);
-            Integer totaldirs = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR);
-            int reportsize = report.size();
-            Integer filesystemcount = currentCase.getRootObjectsCount();
-            DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-            DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
-            Date date = new Date();
-            String datetime = datetimeFormat.format(date);
-            String datenotime = dateFormat.format(date);
-            String CSS = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"><style>"
-                    + "body {padding: 30px; margin: 0; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;} "
-                    + "h1 {font-size: 26px; color: #005577; margin: 0 0 20px 0;} "
-                    + "h2 {font-size: 20px; font-weight: normal; color: #0077aa; margin: 40px 0 10px 0; padding: 0 0 10px 0; border-bottom: 1px solid #dddddd;} "
-                    + "h3 {font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;} "
-                    + "p {margin: 0 0 20px 0;} table {width: 100%; padding: 0; margin: 0; border-collapse: collapse; border-bottom: 1px solid #e5e5e5;} "
-                    + "table thead th {display: table-cell; text-align: left; padding: 8px 16px; background: #e5e5e5; color: #777;font-size: 11px;text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede;} "
-                    + "table tr th:nth-child(1) {text-align: center; width: 60px;} "
-                    + "table td {display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif;} "
-                    + "table tr:nth-child(even) td {background: #f3f3f3;} "
-                    + "table tr td:nth-child(1) {text-align: left; width: 60px; background: #f3f3f3;} "
-                    + "table tr:nth-child(even) td:nth-child(1) {background: #eaeaea;}"
-                    + "</style>";
-            //Add additional header information
-            String header = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"><html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\" xml:lang=\"en\"><head><title>Autopsy Report for Case: " + caseName + "</title>";
-            formatted_header.append(header);
-            formatted_header.append(CSS);
+            totaldirs = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR);
+            totalfiles = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG);
+        } catch (TskException ex) {
+            Logger.getLogger(ReportHTML.class.getName()).log(Level.SEVERE, "Could not get FsContentType counts from TSK ", ex);
+        }
 
-            //do for unformatted
-            String simpleCSS = "<style>"
-                    + "body {padding: 30px; margin: 0; background: #FFFFFF; color: #535353;} "
-                    + "h1 {font-size: 26px; color: #005577; margin: 0 0 20px 0;} "
-                    + "h2 {font-size: 20px; font-weight: normal; color: #0077aa; margin: 40px 0 10px 0; padding: 0 0 10px 0; border-bottom: 1px solid #dddddd;} "
-                    + "h3 {font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;} "
-                    + "p {margin: 0 0 20px 0;} table {width: 100%; padding: 0; margin: 0; border-collapse: collapse; border-bottom: 1px solid #e5e5e5;} "
-                    + "table thead th {display: table-cell; text-align: left; padding: 4px 8px; background: #e5e5e5; color: #777;font-size: 11px; width: 80px; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede;} "
-                    + "table tr th {text-align: left; width: 80px;} "
-                    + "table td {width: 100px; font-size: 8px; display: table-cell; padding: 4px 8px;} "
-                    + "table tr {text-align: left; width: 60px; background: #f3f3f3;} "
-                    + "tr.alt td{ background-color: #FFFFFF;}"
-                    + "</style>";
-            unformatted_header.append(header);
-            unformatted_header.append(simpleCSS);
-            //formatted_Report.append("<link rel=\"stylesheet\" href=\"" + rrpath + "Report.css\" type=\"text/css\" />");
-            formatted_Report.append("</head><body><div id=\"main\"><div id=\"content\">");
-            // Add summary information now
 
-            formatted_Report.append("<h1>Report for Case: ").append(caseName).append("</h1>");
-            if (IngestManager.getDefault().isIngestRunning()) {
-                formatted_Report.append(ingestwarning);
-            }
-            formatted_Report.append("<h2>Case Summary</h2><p>HTML Report Generated by <strong>Autopsy 3</strong> on ").append(datetime).append("<ul>");
-            formatted_Report.append("<li># of Images: ").append(imagecount).append("</li>");
-            formatted_Report.append("<li>FileSystems: ").append(filesystemcount).append("</li>");
-            formatted_Report.append("<li># of Files: ").append(totalfiles.toString()).append("</li>");
-            formatted_Report.append("<li># of Dirs: ").append(totaldirs.toString()).append("</li>");
-            formatted_Report.append("<li># of Artifacts: ").append(reportsize).append("</li></ul>");
 
-            formatted_Report.append("<br /><table><thead><tr><th>Section</th><th>Count</th></tr></thead><tbody>");
-            if (countWebBookmark > 0) {
-                formatted_Report.append("<tr><td><a href=\"#bookmark\">Web Bookmarks</a></td><td>").append(countWebBookmark).append("</td></tr>");
-            }
-            if (countWebCookie > 0) {
-                formatted_Report.append("<tr><td><a href=\"#cookie\">Web Cookies</a></td><td>").append(countWebCookie).append("</td></tr>");
-            }
-            if (countWebHistory > 0) {
-                formatted_Report.append("<tr><td><a href=\"#history\">Web History</a></td><td>").append(countWebHistory).append("</td></tr>");
-            }
-            if (countWebDownload > 0) {
-                formatted_Report.append("<tr><td><a href=\"#download\">Web Downloads</a></td><td>").append(countWebDownload).append("</td></tr>");
-            }
-            if (countRecentObjects > 0) {
-                formatted_Report.append("<tr><td><a href=\"#recent\">Recent Documents</a></td><td>").append(countRecentObjects).append("</td></tr>");
-            }
-            if (countInstalled > 0) {
-                formatted_Report.append("<tr><td><a href=\"#installed\">Installed Programs</a></td><td>").append(countInstalled).append("</td></tr>");
-            }
-            if (countKeyword > 0) {
-                formatted_Report.append("<tr><td><a href=\"#keyword\">Keyword Hits</a></td><td>").append(countKeyword).append("</td></tr>");
-            }
-            if (countHash > 0) {
-                formatted_Report.append("<tr><td><a href=\"#hash\">Hash Hits</a></td><td>").append(countHash).append("</td></tr>");
-            }
-            if (countDevice > 0) {
-                formatted_Report.append("<tr><td><a href=\"#device\">Attached Devices</a></td><td>").append(countDevice).append("</td></tr>");
-            }
-            formatted_Report.append("</tbody></table><br />");
-            String tableHeader = "<table><thead><tr>";
-            StringBuilder nodeGen = new StringBuilder("<h3>General Information (").append(countGen).append(")</h3>").append(tableHeader).append("<th>Attribute</th><th>Value</th></tr></thead><tbody>");
-            StringBuilder nodeWebBookmark = new StringBuilder("<h3><a name=\"bookmark\">Web Bookmarks (").append(countWebBookmark).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Title</th><th>Program</th></tr></thead><tbody>");
-            StringBuilder nodeWebCookie = new StringBuilder("<h3><a name=\"cookie\">Web Cookies (").append(countWebCookie).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Date</th><th>Name</th><th>Value</th><th>Program</th></tr></thead><tbody>");
-            StringBuilder nodeWebHistory = new StringBuilder("<h3><a name=\"history\">Web History (").append(countWebHistory).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Date</th><th>Referrer</th><th>Title</th><th>Program</th></tr></thead><tbody>");
-            StringBuilder nodeWebDownload = new StringBuilder("<h3><a name=\"download\">Web Downloads (").append(countWebDownload).append(")</h3>").append(tableHeader).append("<th>File</th><th>Source</th><th>Time</th><th>Program</th></tr></thead><tbody>");
-            StringBuilder nodeRecentObjects = new StringBuilder("<h3><a name=\"recent\">Recent Documents (").append(countRecentObjects).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Path</th><th>Related Shortcut</th></tr></thead><tbody>");
-            StringBuilder nodeTrackPoint = new StringBuilder("<h3><a name=\"track\">Track Points (").append(countTrackPoint).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Attribute</th><th>Value</th></tr></thead><tbody>");
-            StringBuilder nodeInstalled = new StringBuilder("<h3><a name=\"installed\">Installed Programs (").append(countInstalled).append(")</h3>").append(tableHeader).append("<th>Program Name</th><th>Install Date/Time</th></tr></thead><tbody>");
-            StringBuilder nodeKeyword = new StringBuilder("<h3><a name=\"keyword\">Keyword Search Hits (").append(countKeyword).append(")</h3>");
-            StringBuilder nodeHash = new StringBuilder("<h3><a name=\"hash\">Hashset Hit (").append(countHash).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Size</th><th>Hashset Name</th></tr></thead><tbody>");
-            StringBuilder nodeDevice = new StringBuilder("<h3><a name=\"device\">Attached Devices (").append(countHash).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Serial #</th><th>Time</th></tr></thead><tbody>");
+        int reportsize = report.size();
+        Integer filesystemcount = currentCase.getRootObjectsCount();
+        DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
+        Date date = new Date();
+        String datetime = datetimeFormat.format(date);
+        String datenotime = dateFormat.format(date);
+        String CSS = "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"><style>"
+                + "body {padding: 30px; margin: 0; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;} "
+                + "h1 {font-size: 26px; color: #005577; margin: 0 0 20px 0;} "
+                + "h2 {font-size: 20px; font-weight: normal; color: #0077aa; margin: 40px 0 10px 0; padding: 0 0 10px 0; border-bottom: 1px solid #dddddd;} "
+                + "h3 {font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;} "
+                + "p {margin: 0 0 20px 0;} table {width: 100%; padding: 0; margin: 0; border-collapse: collapse; border-bottom: 1px solid #e5e5e5;} "
+                + "table thead th {display: table-cell; text-align: left; padding: 8px 16px; background: #e5e5e5; color: #777;font-size: 11px;text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede;} "
+                + "table tr th:nth-child(1) {text-align: center; width: 60px;} "
+                + "table td {display: table-cell; padding: 8px 16px; font: 13px/20px Arial, Helvetica, sans-serif;} "
+                + "table tr:nth-child(even) td {background: #f3f3f3;} "
+                + "table tr td:nth-child(1) {text-align: left; width: 60px; background: #f3f3f3;} "
+                + "table tr:nth-child(even) td:nth-child(1) {background: #eaeaea;}"
+                + "</style>";
+        //Add additional header information
+        String header = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"><html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\" xml:lang=\"en\"><head><title>Autopsy Report for Case: " + caseName + "</title>";
+        formatted_header.append(header);
+        formatted_header.append(CSS);
 
-            int alt = 0;
-            String altRow = "";
-            for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
+        //do for unformatted
+        String simpleCSS = "<style>"
+                + "body {padding: 30px; margin: 0; background: #FFFFFF; color: #535353;} "
+                + "h1 {font-size: 26px; color: #005577; margin: 0 0 20px 0;} "
+                + "h2 {font-size: 20px; font-weight: normal; color: #0077aa; margin: 40px 0 10px 0; padding: 0 0 10px 0; border-bottom: 1px solid #dddddd;} "
+                + "h3 {font-size: 16px;color: #0077aa; margin: 40px 0 10px 0;} "
+                + "p {margin: 0 0 20px 0;} table {width: 100%; padding: 0; margin: 0; border-collapse: collapse; border-bottom: 1px solid #e5e5e5;} "
+                + "table thead th {display: table-cell; text-align: left; padding: 4px 8px; background: #e5e5e5; color: #777;font-size: 11px; width: 80px; border-top: 1px solid #dedede; border-bottom: 2px solid #dedede;} "
+                + "table tr th {text-align: left; width: 80px;} "
+                + "table td {width: 100px; font-size: 8px; display: table-cell; padding: 4px 8px;} "
+                + "table tr {text-align: left; width: 60px; background: #f3f3f3;} "
+                + "tr.alt td{ background-color: #FFFFFF;}"
+                + "</style>";
+        unformatted_header.append(header);
+        unformatted_header.append(simpleCSS);
+        //formatted_Report.append("<link rel=\"stylesheet\" href=\"" + rrpath + "Report.css\" type=\"text/css\" />");
+        formatted_Report.append("</head><body><div id=\"main\"><div id=\"content\">");
+        // Add summary information now
+
+        formatted_Report.append("<h1>Report for Case: ").append(caseName).append("</h1>");
+        if (IngestManager.getDefault().isIngestRunning()) {
+            formatted_Report.append(ingestwarning);
+        }
+        formatted_Report.append("<h2>Case Summary</h2><p>HTML Report Generated by <strong>Autopsy 3</strong> on ").append(datetime).append("<ul>");
+        formatted_Report.append("<li># of Images: ").append(imagecount).append("</li>");
+        formatted_Report.append("<li>FileSystems: ").append(filesystemcount).append("</li>");
+        formatted_Report.append("<li># of Files: ").append(totalfiles.toString()).append("</li>");
+        formatted_Report.append("<li># of Dirs: ").append(totaldirs.toString()).append("</li>");
+        formatted_Report.append("<li># of Artifacts: ").append(reportsize).append("</li></ul>");
+
+        formatted_Report.append("<br /><table><thead><tr><th>Section</th><th>Count</th></tr></thead><tbody>");
+        if (countWebBookmark > 0) {
+            formatted_Report.append("<tr><td><a href=\"#bookmark\">Web Bookmarks</a></td><td>").append(countWebBookmark).append("</td></tr>");
+        }
+        if (countWebCookie > 0) {
+            formatted_Report.append("<tr><td><a href=\"#cookie\">Web Cookies</a></td><td>").append(countWebCookie).append("</td></tr>");
+        }
+        if (countWebHistory > 0) {
+            formatted_Report.append("<tr><td><a href=\"#history\">Web History</a></td><td>").append(countWebHistory).append("</td></tr>");
+        }
+        if (countWebDownload > 0) {
+            formatted_Report.append("<tr><td><a href=\"#download\">Web Downloads</a></td><td>").append(countWebDownload).append("</td></tr>");
+        }
+        if (countRecentObjects > 0) {
+            formatted_Report.append("<tr><td><a href=\"#recent\">Recent Documents</a></td><td>").append(countRecentObjects).append("</td></tr>");
+        }
+        if (countInstalled > 0) {
+            formatted_Report.append("<tr><td><a href=\"#installed\">Installed Programs</a></td><td>").append(countInstalled).append("</td></tr>");
+        }
+        if (countKeyword > 0) {
+            formatted_Report.append("<tr><td><a href=\"#keyword\">Keyword Hits</a></td><td>").append(countKeyword).append("</td></tr>");
+        }
+        if (countHash > 0) {
+            formatted_Report.append("<tr><td><a href=\"#hash\">Hash Hits</a></td><td>").append(countHash).append("</td></tr>");
+        }
+        if (countDevice > 0) {
+            formatted_Report.append("<tr><td><a href=\"#device\">Attached Devices</a></td><td>").append(countDevice).append("</td></tr>");
+        }
+        formatted_Report.append("</tbody></table><br />");
+        String tableHeader = "<table><thead><tr>";
+        StringBuilder nodeGen = new StringBuilder("<h3>General Information (").append(countGen).append(")</h3>").append(tableHeader).append("<th>Attribute</th><th>Value</th></tr></thead><tbody>");
+        StringBuilder nodeWebBookmark = new StringBuilder("<h3><a name=\"bookmark\">Web Bookmarks (").append(countWebBookmark).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Title</th><th>Program</th></tr></thead><tbody>");
+        StringBuilder nodeWebCookie = new StringBuilder("<h3><a name=\"cookie\">Web Cookies (").append(countWebCookie).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Date</th><th>Name</th><th>Value</th><th>Program</th></tr></thead><tbody>");
+        StringBuilder nodeWebHistory = new StringBuilder("<h3><a name=\"history\">Web History (").append(countWebHistory).append(")</h3>").append(tableHeader).append("<th>URL</th><th>Date</th><th>Referrer</th><th>Title</th><th>Program</th></tr></thead><tbody>");
+        StringBuilder nodeWebDownload = new StringBuilder("<h3><a name=\"download\">Web Downloads (").append(countWebDownload).append(")</h3>").append(tableHeader).append("<th>File</th><th>Source</th><th>Time</th><th>Program</th></tr></thead><tbody>");
+        StringBuilder nodeRecentObjects = new StringBuilder("<h3><a name=\"recent\">Recent Documents (").append(countRecentObjects).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Path</th><th>Related Shortcut</th></tr></thead><tbody>");
+        StringBuilder nodeTrackPoint = new StringBuilder("<h3><a name=\"track\">Track Points (").append(countTrackPoint).append(")</h3>").append(tableHeader).append("<th>Artifact ID</th><th>Name</th><th>Size</th><th>Attribute</th><th>Value</th></tr></thead><tbody>");
+        StringBuilder nodeInstalled = new StringBuilder("<h3><a name=\"installed\">Installed Programs (").append(countInstalled).append(")</h3>").append(tableHeader).append("<th>Program Name</th><th>Install Date/Time</th></tr></thead><tbody>");
+        StringBuilder nodeKeyword = new StringBuilder("<h3><a name=\"keyword\">Keyword Search Hits (").append(countKeyword).append(")</h3>");
+        StringBuilder nodeHash = new StringBuilder("<h3><a name=\"hash\">Hashset Hit (").append(countHash).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Size</th><th>Hashset Name</th></tr></thead><tbody>");
+        StringBuilder nodeDevice = new StringBuilder("<h3><a name=\"device\">Attached Devices (").append(countHash).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Serial #</th><th>Time</th></tr></thead><tbody>");
+
+        int alt = 0;
+        String altRow = "";
+        for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
+            if (ReportFilter.cancel == true) {
+                break;
+            }
+
+            if (alt > 0) {
+                altRow = " class=\"alt\"";
+                alt = 0;
+            } else {
+                altRow = "";
+                alt++;
+            }
+            StringBuilder artifact = new StringBuilder("");
+            Long objId = entry.getKey().getObjectID();
+            //Content file = skCase.getContentById(objId);
+            AbstractFile file = null;
+            try {
+                file = skCase.getAbstractFileById(objId);
+            } catch (TskException ex) {
+                Logger.getLogger(ReportHTML.class.getName()).log(Level.SEVERE, "Could not get AbstractFile from TSK ", ex);
+            }
+
+            Long filesize = file.getSize();
+
+
+            TreeMap<Integer, String> attributes = new TreeMap<Integer, String>();
+            // Get all the attributes, line them up to be added. Place empty string placeholders for each attribute type
+            int n;
+            for (n = 1; n <= 35; n++) {
+                attributes.put(n, "");
+
+            }
+            for (BlackboardAttribute tempatt : entry.getValue()) {
                 if (ReportFilter.cancel == true) {
                     break;
                 }
-
-                if (alt > 0) {
-                    altRow = " class=\"alt\"";
-                    alt = 0;
+                String value = "";
+                Integer type = tempatt.getAttributeTypeID();
+                if (type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()) || type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())) {
+                    try {
+                        SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                        value = sdf.format(new java.util.Date((tempatt.getValueLong())));
+                    } catch (Exception ex) {
+                    }
                 } else {
-                    altRow = "";
-                    alt++;
+                    value = tempatt.getValueString();
                 }
-                StringBuilder artifact = new StringBuilder("");
-                Long objId = entry.getKey().getObjectID();
-                //Content file = skCase.getContentById(objId);
-                AbstractFile file = skCase.getAbstractFileById(objId);
+                if (value == null || value.isEmpty()) {
+                    value = "";
+                }
+                value = ReportUtils.insertPeriodically(value, "<br>", 30);
+                attributes.put(type, value);
 
-                Long filesize = file.getSize();
-
-
-                TreeMap<Integer, String> attributes = new TreeMap<Integer, String>();
-                // Get all the attributes, line them up to be added. Place empty string placeholders for each attribute type
-                int n;
-                for (n = 1; n <= 35; n++) {
-                    attributes.put(n, "");
-
-                }
-                for (BlackboardAttribute tempatt : entry.getValue()) {
-                    if (ReportFilter.cancel == true) {
-                        break;
-                    }
-                    String value = "";
-                    Integer type = tempatt.getAttributeTypeID();
-                    if (type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()) || type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())) {
-                        try {
-                            SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                            value = sdf.format(new java.util.Date((tempatt.getValueLong())));
-                        } catch (Exception ex) {
-                        }
-                    } else {
-                        value = tempatt.getValueString();
-                    }
-                    if (value == null || value.isEmpty()) {
-                        value = "";
-                    }
-                    value = ReportUtils.insertPeriodically(value, "<br>", 30);
-                    attributes.put(type, value);
-
-                }
-
-
-                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
-
-                    artifact.append("</tr>");
-                    nodeGen.append(artifact);
-                }
-                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
-                    artifact.append("</tr>");
-                    nodeWebBookmark.append(artifact);
-                }
-                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
-                    artifact.append("</tr>");
-                    nodeWebCookie.append(artifact);
-                }
-                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
-                    artifact.append("</tr>");
-                    nodeWebHistory.append(artifact);
-                }
-                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
-                    artifact.append("</tr>");
-                    nodeWebDownload.append(artifact);
-                }
-                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()) {
-                    //artifact.append("<tr><td>").append(objId.toString());
-                    artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</strong></td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(file.getName()).append("</td>");
-                    artifact.append("</tr>");
-                    nodeRecentObjects.append(artifact);
-                }
-                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td>").append(objId.toString());
-                    artifact.append("</td><td><strong>").append(file.getName().toString()).append("</strong></td>");
-                    artifact.append("<td>").append(filesize.toString()).append("</td>");
-                    artifact.append("</tr>");
-                    nodeTrackPoint.append(artifact);
-                }
-                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</strong></td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>");
-                    artifact.append("</tr>");
-                    nodeInstalled.append(artifact);
-                }
-                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                    //  artifact.append("<table><thead><tr><th>Artifact ID</th><th>Name</th><th>Size</th>");
-                    //    artifact.append("</tr></table>");
-                    //    nodeKeyword.append(artifact);
-                }
-                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                    // artifact.append("<tr><td>").append(objId.toString());
-                    artifact.append("<tr").append(altRow).append("><td><strong>").append(file.getName().toString()).append("</strong></td>");
-                    artifact.append("<td>").append(filesize.toString()).append("</td>");
-                    //artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_INTERESTING_FILE.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID())).append("</td>");
-                    artifact.append("</tr>");
-                    nodeHash.append(artifact);
-                }
-                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
-                    artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID())).append("</strong></td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID())).append("</td>");
-                    artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>");
-                    artifact.append("</tr>");
-                    nodeDevice.append(artifact);
-                }
             }
-            //Add them back in order
-            //formatted_Report.append(nodeGen);
+
+
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
+
+                artifact.append("</tr>");
+                nodeGen.append(artifact);
+            }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
+                artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
+                artifact.append("</tr>");
+                nodeWebBookmark.append(artifact);
+            }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
+                artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
+                artifact.append("</tr>");
+                nodeWebCookie.append(artifact);
+            }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
+                artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
+                artifact.append("</tr>");
+                nodeWebHistory.append(artifact);
+            }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
+                artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
+                artifact.append("</tr>");
+                nodeWebDownload.append(artifact);
+            }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()) {
+                //artifact.append("<tr><td>").append(objId.toString());
+                artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</strong></td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID())).append("</td>");
+                artifact.append("<td>").append(file.getName()).append("</td>");
+                artifact.append("</tr>");
+                nodeRecentObjects.append(artifact);
+            }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getTypeID()) {
+                artifact.append("<tr").append(altRow).append("><td>").append(objId.toString());
+                artifact.append("</td><td><strong>").append(file.getName().toString()).append("</strong></td>");
+                artifact.append("<td>").append(filesize.toString()).append("</td>");
+                artifact.append("</tr>");
+                nodeTrackPoint.append(artifact);
+            }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
+                artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</strong></td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>");
+                artifact.append("</tr>");
+                nodeInstalled.append(artifact);
+            }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                //  artifact.append("<table><thead><tr><th>Artifact ID</th><th>Name</th><th>Size</th>");
+                //    artifact.append("</tr></table>");
+                //    nodeKeyword.append(artifact);
+            }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                // artifact.append("<tr><td>").append(objId.toString());
+                artifact.append("<tr").append(altRow).append("><td><strong>").append(file.getName().toString()).append("</strong></td>");
+                artifact.append("<td>").append(filesize.toString()).append("</td>");
+                //artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_INTERESTING_FILE.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID())).append("</td>");
+                artifact.append("</tr>");
+                nodeHash.append(artifact);
+            }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
+                artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID())).append("</strong></td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>");
+                artifact.append("</tr>");
+                nodeDevice.append(artifact);
+            }
+        }
+        //Add them back in order
+        //formatted_Report.append(nodeGen);
+        // formatted_Report.append("</tbody></table>");
+
+        if (countWebBookmark > 0) {
+            formatted_Report.append(nodeWebBookmark);
+            formatted_Report.append("</tbody></table>");
+        }
+        if (countWebCookie > 0) {
+            formatted_Report.append(nodeWebCookie);
+            formatted_Report.append("</tbody></table>");
+        }
+        if (countWebHistory > 0) {
+            formatted_Report.append(nodeWebHistory);
+            formatted_Report.append("</tbody></table>");
+        }
+        if (countWebDownload > 0) {
+            formatted_Report.append(nodeWebDownload);
+            formatted_Report.append("</tbody></table>");
+        }
+        if (countRecentObjects > 0) {
+            formatted_Report.append(nodeRecentObjects);
+            formatted_Report.append("</tbody></table>");
+        }
+        // formatted_Report.append(nodeTrackPoint);
+        //formatted_Report.append("</tbody></table>");
+        if (countInstalled > 0) {
+            formatted_Report.append(nodeInstalled);
+            formatted_Report.append("</tbody></table>");
+        }
+        if (countKeyword > 0) {
+            formatted_Report.append(nodeKeyword);
+            Report keywords = new Report();
+            formatted_Report.append(keywords.getGroupedKeywordHit());
+            // "<table><thead><tr><th>Artifact ID</th><th>Name</th><th>Size</th>
             // formatted_Report.append("</tbody></table>");
+        }
+        if (countHash > 0) {
+            formatted_Report.append(nodeHash);
+            formatted_Report.append("</tbody></table>");
+        }
+        if (countDevice > 0) {
+            formatted_Report.append(nodeDevice);
+            formatted_Report.append("</tbody></table>");
+        }
+        //end of master loop
 
-            if (countWebBookmark > 0) {
-                formatted_Report.append(nodeWebBookmark);
-                formatted_Report.append("</tbody></table>");
-            }
-            if (countWebCookie > 0) {
-                formatted_Report.append(nodeWebCookie);
-                formatted_Report.append("</tbody></table>");
-            }
-            if (countWebHistory > 0) {
-                formatted_Report.append(nodeWebHistory);
-                formatted_Report.append("</tbody></table>");
-            }
-            if (countWebDownload > 0) {
-                formatted_Report.append(nodeWebDownload);
-                formatted_Report.append("</tbody></table>");
-            }
-            if (countRecentObjects > 0) {
-                formatted_Report.append(nodeRecentObjects);
-                formatted_Report.append("</tbody></table>");
-            }
-            // formatted_Report.append(nodeTrackPoint);
-            //formatted_Report.append("</tbody></table>");
-            if (countInstalled > 0) {
-                formatted_Report.append(nodeInstalled);
-                formatted_Report.append("</tbody></table>");
-            }
-            if (countKeyword > 0) {
-                formatted_Report.append(nodeKeyword);
-                Report keywords = new Report();
-                formatted_Report.append(keywords.getGroupedKeywordHit());
-                // "<table><thead><tr><th>Artifact ID</th><th>Name</th><th>Size</th>
-                // formatted_Report.append("</tbody></table>");
-            }
-            if (countHash > 0) {
-                formatted_Report.append(nodeHash);
-                formatted_Report.append("</tbody></table>");
-            }
-            if (countDevice > 0) {
-                formatted_Report.append(nodeDevice);
-                formatted_Report.append("</tbody></table>");
-            }
-            //end of master loop
-
-            formatted_Report.append("</div></div></body></html>");
-            formatted_header.append(formatted_Report);
-            // unformatted_header.append(formatted_Report);
+        formatted_Report.append("</div></div></body></html>");
+        formatted_header.append(formatted_Report);
+        // unformatted_header.append(formatted_Report);
+        try {
             htmlPath = currentCase.getCaseDirectory() + "/Reports/" + caseName + "-" + datenotime + ".html";
             this.save(htmlPath);
 
         } catch (Exception e) {
 
-            Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Exception occurred", e);
+            Logger.getLogger(ReportHTML.class.getName()).log(Level.SEVERE, "Could not write out HTML report! ", e);
         }
         return htmlPath;
     }
@@ -452,7 +464,8 @@ public class ReportHTML implements ReportModule {
         String type = "HTML";
         return type;
     }
-       @Override
+
+    @Override
     public String getExtension() {
         String ext = ".html";
         return ext;
