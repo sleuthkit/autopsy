@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Color;
 import java.awt.EventQueue;
+import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -349,7 +350,9 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
                 AddImageVisualPanel2 panel = getComponent();
                 if (panel != null) {
-                    SwingUtilities.getWindowAncestor(panel).toFront();
+                    Window w = SwingUtilities.getWindowAncestor(panel);
+                    if (w!= null)
+                        w.toFront();
                 }
 
                 setDbCreated(true);
