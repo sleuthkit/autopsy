@@ -475,7 +475,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                                             bbart.addAttributes(bbattributes);
                                         } catch (Exception ex) {
                                             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-                                            this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + tempDb.getFsContentById(artObjId).getName());
+                                            this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + tempDb.getAbstractFileById(artObjId).getName());
                                         }
 
                                         //KeyValueThing
