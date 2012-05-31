@@ -93,11 +93,11 @@ public class ExtractIE extends Extract implements IngestServiceImage {
 
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
-     //   this.getHistory(image, controller);
+        this.getHistory(image, controller);
         this.getBookmark(image, controller);
         this.getCookie(image, controller);
         this.getRecentDocuments(image, controller);
-     //   this.parsePascoResults();
+        this.parsePascoResults();
     }
 
     //Favorites section
