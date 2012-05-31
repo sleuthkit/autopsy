@@ -20,9 +20,11 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Color;
 import java.awt.EventQueue;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JProgressBar;
@@ -31,10 +33,13 @@ import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -57,9 +62,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private boolean imgAdded; // initalized to false in readSettings()
     private AddImageProcess process;
     private AddImgTask addImageTask;
-    
     private static final Logger logger = Logger.getLogger(AddImageWizardPanel2.class.getName());
-    
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
@@ -190,8 +193,8 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         imgAdded = false;
         imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
         timeZone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
-        noFatOrphans = ((Boolean)settings.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
-        noUnallocSpace = ((Boolean)settings.getProperty(AddImageAction.NOUNALLOC_PROP)).booleanValue();
+        noFatOrphans = ((Boolean) settings.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
+        noUnallocSpace = ((Boolean) settings.getProperty(AddImageAction.NOUNALLOC_PROP)).booleanValue();
 
         component.changeProgressBarTextAndColor("", 0, Color.black);
 
@@ -236,7 +239,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
          * @throws Exception 
          */
         @Override
-        protected Integer doInBackground() throws Exception {
+        protected Integer doInBackground() {
             this.setProgress(0);
 
             // Add a cleanup task to interupt the backgroud process if the
@@ -249,23 +252,38 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 }
             };
 
-            //lock DB for writes in EWT thread
-            //wait until lock acquired in EWT
-            EventQueue.invokeAndWait(new Runnable() {
-                @Override
-                public void run() {
-                    SleuthkitCase.dbWriteLock();
-                }
-            });
-            
-            
+
+            try {
+                //lock DB for writes in EWT thread
+                //wait until lock acquired in EWT
+                EventQueue.invokeAndWait(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        SleuthkitCase.dbWriteLock();
+                    }
+                });
+            } catch (InterruptedException ex) {
+                logger.log(Level.WARNING, "Errors occurred while running add image, could not acquire lock. ", ex);
+                return 0;
+
+            } catch (InvocationTargetException ex) {
+                logger.log(Level.WARNING, "Errors occurred while running add image, could not acquire lock. ", ex);
+                return 0;
+            }
+
+
             process = currentCase.makeAddImageProcess(timeZone, !noUnallocSpace, noFatOrphans);
             cancelledWhileRunning.enable();
             try {
                 process.run(imgPaths);
-            } catch (TskException ex) {
+            } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Errors occurred while running add image. ", ex);
-                //do not rethrow
+                //critical core/system error and process needs to be interrupted
+                interrupted = true;
+                //TODO show record and add error count to add image summary stats dialog
+            } catch (TskDataException ex) {
+                logger.log(Level.WARNING, "Errors occurred while running add image. ", ex);
                 //TODO show record and add error count to add image summary stats dialog
             } finally {
                 // process is over, doesn't need to be dealt with if cancel happens
@@ -285,18 +303,28 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
             // attempt actions that might fail and force the process to stop
             try {
-                // get() will throw any expetions that were thrown in the background task
+                // get() will block until doInBackground done and throw any exceptions that were thrown in the background task
                 get();
+            } catch (InterruptedException e) {
+            } catch (ExecutionException e) {
+            } finally {
                 if (interrupted) {
                     try {
-                        process.revert();
+                        try {
+                            process.revert();
+                        } catch (TskCoreException ex) {
+                            Exceptions.printStackTrace(ex);
+                        }
                     } finally {
                         //unlock db write within EWT thread
                         SleuthkitCase.dbWriteUnlock();
                     }
                     return;
                 }
+            }
 
+
+            try {
                 // When everything happens without an error:
 
                 // the add-image process needs to be reverted if the wizard doesn't finish
@@ -319,11 +347,18 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
                 // Get attention for the process finish
                 java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
-                SwingUtilities.getWindowAncestor(getComponent()).toFront();
+                AddImageVisualPanel2 panel = getComponent();
+                if (panel != null) {
+                    SwingUtilities.getWindowAncestor(panel).toFront();
+                }
 
                 setDbCreated(true);
 
             } catch (Exception ex) {
+                //handle unchecked exceptions post image add
+
+                logger.log(Level.WARNING, "Unexpected errors occurred while running add image. ", ex);
+
                 getComponent().changeProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
 
                 // Log error/display warning
