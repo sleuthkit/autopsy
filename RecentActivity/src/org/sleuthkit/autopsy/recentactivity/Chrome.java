@@ -84,6 +84,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
                     logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -126,6 +127,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
                     logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -184,6 +186,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
                     logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -230,6 +233,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
                     logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
