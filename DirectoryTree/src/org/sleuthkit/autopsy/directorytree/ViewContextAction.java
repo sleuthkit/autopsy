@@ -61,6 +61,10 @@ class ViewContextAction extends AbstractAction {
     public ViewContextAction(String title, BlackboardArtifactNode node) {
         super(title);
         this.content = node.getLookup().lookup(Content.class);
+        // Disable this action if the file is a layout file (we don't show those in the tree)
+        if(node.getLookup().lookup(LayoutFile.class) != null) {
+            this.setEnabled(false);
+        }
     }
     
     public ViewContextAction(String title, AbstractFsContentNode node) {
@@ -178,14 +182,7 @@ class ViewContextAction extends AbstractAction {
 
         @Override
         public List<Content> visit(FileSystem fs) {
-            FileSystemParent parent = fs.getParent();
-            if (parent instanceof Image) {
-                return visit((Image) parent);
-            } else if (parent instanceof Volume) {
-                return visit((Volume) parent);
-            } else {
-                throw new UnsupportedOperationException("Unsupported Parent");
-            }
+            return fs.getParent().accept(this);
         }
 
         @Override

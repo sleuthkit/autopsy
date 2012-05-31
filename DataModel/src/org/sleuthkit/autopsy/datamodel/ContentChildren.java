@@ -19,8 +19,10 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.LayoutFile;
 
 /**
  * Class for Children of all ContentNodes. Handles creating child ContentNodes.
@@ -38,6 +40,16 @@ class ContentChildren extends AbstractContentChildren {
     @Override
     protected void addNotify() {
         List<Content> children = ContentHierarchyVisitor.getChildren(parent);
+        /*
+        // To not display LayoutFiles
+        Iterator<Content> it = children.iterator();
+        while(it.hasNext()) {
+            Content child = it.next();
+            if(child instanceof LayoutFile) {
+                it.remove();
+            }
+        }
+        */
         setKeys(children.subList(0, Math.min(children.size(), MAX_CHILD_COUNT)));
     }
 

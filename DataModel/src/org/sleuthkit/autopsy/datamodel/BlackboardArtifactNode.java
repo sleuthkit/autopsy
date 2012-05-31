@@ -59,7 +59,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         this.artifact = artifact;
         this.associated = getAssociatedContent(artifact);
         this.setName(Long.toString(artifact.getArtifactID()));
-        this.setDisplayName(associated.accept(new NameVisitor()));
+        this.setDisplayName(associated.getName());
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID())));
         
     }
@@ -80,7 +80,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         ss.put(new NodeProperty("File Name",
                                 "File Name",
                                 NO_DESCR,
-                                associated.accept(new NameVisitor())));
+                                associated.getName()));
         
         for(Map.Entry<String, Object> entry : map.entrySet()){
             ss.put(new NodeProperty(entry.getKey(),
@@ -172,7 +172,11 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     }
 
     private static TimeZone getTimeZone(BlackboardArtifact artifact) {
-        return getAssociatedContent(artifact).accept(new TimeZoneVisitor());
+        try {
+            return TimeZone.getTimeZone(getAssociatedContent(artifact).getImage().getTimeZone());
+        } catch(TskException ex) {
+            return TimeZone.getDefault();
+        }
     }
 
     private static HighlightLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
@@ -204,30 +208,6 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
             logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex);
         }
         return null;
-    }
-    
-    private class NameVisitor extends SleuthkitItemVisitor.Default<String> {
-        
-        @Override
-        public String visit(Image img) {
-            return img.getName();
-        }
-        
-        @Override
-        public String visit(Directory d) {
-            return d.getName();
-        }
-        
-        @Override
-        public String visit(File f) {
-            return f.getName();
-        }
-
-        @Override
-        protected String defaultVisit(SleuthkitVisitableItem svi) {
-            return "n/a";
-        }
-        
     }
 
     private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
