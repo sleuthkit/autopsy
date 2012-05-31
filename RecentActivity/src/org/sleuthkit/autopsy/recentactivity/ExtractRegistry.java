@@ -1,6 +1,22 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ /*
+ *
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2012 42six Solutions.
+ * Contact: aebadirad <at> 42six <dot> com
+ * Project Contact/Architect: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.recentactivity;
 
@@ -12,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JPanel;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -19,6 +36,8 @@ import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServiceImage;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.*;
@@ -27,7 +46,7 @@ import org.sleuthkit.datamodel.*;
  *
  * @author Alex \System32\Config
  */
-public class ExtractRegistry {
+public class ExtractRegistry implements IngestServiceImage {
 
     public Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
@@ -59,17 +78,24 @@ public class ExtractRegistry {
         RR_PATH = rrHome + File.separator + "rip.exe";
     }
 
-    public void getregistryfiles(List<String> image, IngestImageWorkerController controller) {
+    private void getregistryfiles(Image image, IngestImageWorkerController controller) {
         try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+            Collection<FileSystem> imageFS = tempDb.getFileSystems(image);
+            List<String> fsIds = new LinkedList<String>();
+            for (FileSystem img : imageFS) {
+                Long tempID = img.getId();
+                fsIds.add(tempID.toString());
+            }
+
             String allFS = new String();
-            for (int i = 0; i < image.size(); i++) {
+            for (int i = 0; i < fsIds.size(); i++) {
                 if (i == 0) {
                     allFS += " AND (0";
                 }
-                allFS += " OR fs_obj_id = '" + image.get(i) + "'";
-                if (i == image.size() - 1) {
+                allFS += " OR fs_obj_id = '" + fsIds.get(i) + "'";
+                if (i == fsIds.size() - 1) {
                     allFS += ")";
                 }
             }
@@ -218,17 +244,17 @@ public class ExtractRegistry {
                             //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
                             //               bbart.addAttributes(bbattributes);
                         } else if ("usb".equals(context)) {
-                            
-                             Long utime = null;
+
+                            Long utime = null;
                             try {
-                               
+
                                 utime = Long.parseLong(name);
                                 String Tempdate = utime.toString() + "000";
-                                 utime = Long.valueOf(Tempdate);
+                                utime = Long.valueOf(Tempdate);
                             } catch (Exception e) {
                                 logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                             }
-                            
+
                             BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, utime));
                             String dev = artnode.getAttributeValue("dev");
@@ -240,7 +266,7 @@ public class ExtractRegistry {
                             try {
                                 Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(name).getTime();
                                 ftime = epochtime.longValue();
-                                
+
                             } catch (ParseException e) {
                                 logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                             }
@@ -260,21 +286,20 @@ public class ExtractRegistry {
                             if (name.contains("InstallDate")) {
                                 installdate = value;
                                 Long installtime = null;
-                            try {
-                                Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
-                                installtime = epochtime.longValue();
-                                String Tempdate = installtime.toString();
-                                 installtime = Long.valueOf(Tempdate);
-                            } catch (ParseException e) {
-                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
-                            }
+                                try {
+                                    Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
+                                    installtime = epochtime.longValue();
+                                    String Tempdate = installtime.toString();
+                                    installtime = Long.valueOf(Tempdate);
+                                } catch (ParseException e) {
+                                    logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
+                                }
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, winver));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, installtime));
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                 bbart.addAttributes(bbattributes);
                             }
                         } else {
-
 //                            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
 //                            bbart.addAttributes(bbattributes);
                         }
@@ -286,5 +311,73 @@ public class ExtractRegistry {
             logger.log(Level.WARNING, "Error while trying to read into a registry file." + ex);
         }
         return true;
+    }
+
+    @Override
+    public void process(Image image, IngestImageWorkerController controller) {
+        this.getregistryfiles(image, controller);
+    }
+
+    @Override
+    public void init(IngestManagerProxy managerProxy) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void complete() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void stop() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String getName() {
+        return "Registry";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Extracts activity from the Windows registry utilizing RegRipper.";
+    }
+
+    @Override
+    public ServiceType getType() {
+        return ServiceType.Image;
+    }
+
+    @Override
+    public boolean hasSimpleConfiguration() {
+        return false;
+    }
+
+    @Override
+    public boolean hasAdvancedConfiguration() {
+        return false;
+    }
+
+    @Override
+    public javax.swing.JPanel getSimpleConfiguration() {
+        return null;
+    }
+
+    @Override
+    public javax.swing.JPanel getAdvancedConfiguration() {
+        return null;
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+    }
+
+    @Override
+    public void saveSimpleConfiguration() {
+    }
+
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        return false;
     }
 }
