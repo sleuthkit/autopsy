@@ -128,7 +128,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
             }
             String name = Favorite.getName();
             Long datetime = Favorite.getCrtime();
-            String Tempdate = datetime.toString() + "000";
+            String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
             String domain = Util.getBaseDomain(url);
             try {
@@ -172,7 +172,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
             String value = values.length > 1 ? values[1] : "";
             String name = values.length > 0 ? values[0] : "";
             Long datetime = Cookie.getCrtime();
-            String Tempdate = datetime.toString() + "000";
+            String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
             String domain = url;
             domain = domain.replaceFirst("^\\.+(?!$)", "");
@@ -226,7 +226,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
             String path = Util.getPath(recentString);
             String name = Util.getFileName(path);
             Long datetime = Recent.getCrtime();
-            String Tempdate = datetime.toString() + "000";
+            String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
             try {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -452,6 +452,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                                             try {
                                                 Long epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(actime).getTime();
                                                 ftime = epochtime.longValue();
+                                                ftime = ftime/1000;
                                             } catch (ParseException e) {
                                                 logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e.getMessage());
                                             }
