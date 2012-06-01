@@ -220,7 +220,7 @@ public class ExtractRegistry implements IngestServiceImage {
                     Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
                     time = epochtime.longValue();
                     String Tempdate = time.toString();
-                    time = Long.valueOf(Tempdate);
+                    time = Long.valueOf(Tempdate)/1000;
                 } catch (ParseException e) {
                     logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                 }
@@ -249,8 +249,9 @@ public class ExtractRegistry implements IngestServiceImage {
                             try {
 
                                 utime = Long.parseLong(name);
-                                String Tempdate = utime.toString() + "000";
+                                String Tempdate = utime.toString();
                                 utime = Long.valueOf(Tempdate);
+                                utime = utime;
                             } catch (Exception e) {
                                 logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                             }
@@ -266,7 +267,7 @@ public class ExtractRegistry implements IngestServiceImage {
                             try {
                                 Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(name).getTime();
                                 ftime = epochtime.longValue();
-
+                                ftime = ftime/1000;
                             } catch (ParseException e) {
                                 logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                             }
@@ -290,7 +291,7 @@ public class ExtractRegistry implements IngestServiceImage {
                                     Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
                                     installtime = epochtime.longValue();
                                     String Tempdate = installtime.toString();
-                                    installtime = Long.valueOf(Tempdate);
+                                    installtime = Long.valueOf(Tempdate)/1000;
                                 } catch (ParseException e) {
                                     logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
                                 }

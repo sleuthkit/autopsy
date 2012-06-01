@@ -47,11 +47,11 @@ import org.sleuthkit.datamodel.Image;
  */
 public class Firefox extends Extract implements IngestServiceImage {
 
-    private static final String ffquery = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000) as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
-    private static final String ffcookiequery = "SELECT name,value,host,expiry,(lastAccessed/1000) as lastAccessed,(creationTime/1000) as creationTime FROM moz_cookies";
-    private static final String ff3cookiequery = "SELECT name,value,host,expiry,(lastAccessed/1000) as lastAccessed FROM moz_cookies";
+    private static final String ffquery = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000000) as visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0";
+    private static final String ffcookiequery = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed,(creationTime/1000000) as creationTime FROM moz_cookies";
+    private static final String ff3cookiequery = "SELECT name,value,host,expiry,(lastAccessed/1000000) as lastAccessed FROM moz_cookies";
     private static final String ffbookmarkquery = "SELECT fk, moz_bookmarks.title, url FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id";
-    private static final String ffdownloadquery = "select target, source,(startTime/1000) as startTime, maxBytes  from moz_downloads";
+    private static final String ffdownloadquery = "select target, source,(startTime/1000000) as startTime, maxBytes  from moz_downloads";
     public int FireFoxCount = 0;
 
     public Firefox() {
