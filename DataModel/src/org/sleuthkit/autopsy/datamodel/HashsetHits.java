@@ -62,8 +62,12 @@ public class HashsetHits implements AutopsyVisitableItem {
         hashSetHitsMap.clear();
         try {
             int setNameId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
-            String query = "select value_text,artifact_id,attribute_type_id from blackboard_attributes where " + 
-                    "attribute_type_id=" + setNameId;
+            int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID();
+            String query = "SELECT value_text,blackboard_attributes.artifact_id,attribute_type_id "
+                    + "FROM blackboard_attributes,blackboard_artifacts WHERE " 
+                    + "attribute_type_id=" + setNameId 
+                    + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id"
+                    + " AND blackboard_artifacts.artifact_type_id=" + artId;
             ResultSet rs = skCase.runQuery(query);
             while(rs.next()){
                 String value = rs.getString("value_text");

@@ -115,10 +115,14 @@ public class KeywordHits implements AutopsyVisitableItem {
             int setId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
             int wordId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID();
             int regexId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID();
-            String query = "select value_text,artifact_id,attribute_type_id from blackboard_attributes where " + 
-                    "attribute_type_id=" + setId + " or " +
-                    "attribute_type_id=" + wordId + " or " + 
-                    "attribute_type_id=" + regexId;
+            int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID();
+            String query = "SELECT blackboard_attributes.value_text,blackboard_attributes.artifact_id,"
+                    + "blackboard_attributes.attribute_type_id FROM blackboard_attributes,blackboard_artifacts WHERE " + 
+                    "(blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id AND "
+                    + "blackboard_artifacts.artifact_type_id=" + artId 
+                    + ") AND (attribute_type_id=" + setId + " OR " +
+                    "attribute_type_id=" + wordId + " OR " + 
+                    "attribute_type_id=" + regexId + ")";
             ResultSet rs = skCase.runQuery(query);
             while(rs.next()){
                 String value = rs.getString("value_text");
