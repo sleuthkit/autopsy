@@ -164,6 +164,14 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
                 return "Known";
             }
         },
+        MD5HASH {
+
+
+            @Override
+            public String toString() {
+                return "MD5 Hash";
+            }
+        },
             }
     
     private boolean directoryBrowseMode;
@@ -239,6 +247,7 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         map.put(FsContentPropertyType.TYPE_DIR.toString(), content.getDirTypeAsString());
         map.put(FsContentPropertyType.TYPE_META.toString(), content.getMetaTypeAsString());
         map.put(FsContentPropertyType.KNOWN.toString(), content.getKnown().getName());
+        map.put(FsContentPropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
     }
     
     private static String epochToString(long epoch) {

@@ -297,7 +297,10 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
             if (processFile && (nsrlIsSet || knownBadIsSet)) {
                 String name = fsContent.getName();
                 try {
-                    String md5Hash = Hash.calculateMd5(fsContent);
+                    String md5Hash = fsContent.getMd5Hash();
+                    if (md5Hash == null || md5Hash.isEmpty()) {
+                        md5Hash = Hash.calculateMd5(fsContent);
+                    }
                     TskData.FileKnown status = TskData.FileKnown.UKNOWN;
                     boolean foundBad = false;
                     for (Map.Entry<Integer, HashDb> entry : knownBadSets.entrySet()) {
