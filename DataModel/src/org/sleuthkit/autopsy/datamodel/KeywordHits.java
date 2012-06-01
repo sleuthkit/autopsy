@@ -83,7 +83,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             long id = art.getKey();
             Map<Long, String> attributes = art.getValue();
             // I think we can use attributes.remove(...) here?
-            String listName = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID()));
+            String listName = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
             String word = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()));
             String reg = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()));
             if(listName != null) {
@@ -112,7 +112,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     private void initArtifacts() {
         artifacts.clear();
         try {
-            int setId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID();
+            int setId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
             int wordId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID();
             int regexId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID();
             String query = "select value_text,artifact_id,attribute_type_id from blackboard_attributes where " + 

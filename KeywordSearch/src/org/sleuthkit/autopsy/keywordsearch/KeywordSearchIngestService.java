@@ -677,7 +677,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
 
                                 //list
-                                attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SET.getTypeID());
+                                attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
                                 detailsSb.append("<tr>");
                                 detailsSb.append("<th>List</th>");
                                 detailsSb.append("<td>").append(attr.getValueString()).append("</td>");

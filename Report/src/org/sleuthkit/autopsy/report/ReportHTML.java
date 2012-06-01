@@ -367,7 +367,7 @@ public class ReportHTML implements ReportModule {
                 artifact.append("<tr").append(altRow).append("><td><strong>").append(file.getName().toString()).append("</strong></td>");
                 artifact.append("<td>").append(filesize.toString()).append("</td>");
                 //artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_INTERESTING_FILE.getTypeID())).append("</td>");
-                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID())).append("</td>");
                 artifact.append("</tr>");
                 nodeHash.append(artifact);
             }
