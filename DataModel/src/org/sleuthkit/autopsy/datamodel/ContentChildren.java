@@ -40,7 +40,7 @@ class ContentChildren extends AbstractContentChildren {
     @Override
     protected void addNotify() {
         List<Content> children = ContentHierarchyVisitor.getChildren(parent);
-        /*
+        
         // To not display LayoutFiles
         Iterator<Content> it = children.iterator();
         while(it.hasNext()) {
@@ -49,7 +49,7 @@ class ContentChildren extends AbstractContentChildren {
                 it.remove();
             }
         }
-        */
+        
         setKeys(children.subList(0, Math.min(children.size(), MAX_CHILD_COUNT)));
     }
 

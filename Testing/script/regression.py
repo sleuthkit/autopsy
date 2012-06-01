@@ -35,6 +35,8 @@ def testAddImageIngest(inFile):
   if os.path.exists(os.path.join(outDir,testCaseName)):
     shutil.rmtree(os.path.join(outDir,testCaseName))
   os.makedirs(os.path.join(outDir,testCaseName))
+  if not os.path.exists(inDir):
+    markError("input dir does not exist", inFile)
 
   cwd = wgetcwd()
   testInFile = wabspath(inFile)
@@ -90,16 +92,20 @@ def testCompareToGold(inFile):
   testC = testConn.cursor()
 
   print("Comparing Artifacts: ")
-  goldC.execute("select count(*) from blackboard_artifacts")
-  goldArtifacts = goldC.fetchone()[0]
-  testC.execute("select count(*) from blackboard_artifacts")
-  testArtifacts = testC.fetchone()[0]
-  if(goldArtifacts != testArtifacts):
-      errString = "Artifact counts do not match!: "
+
+  # Keep range in sync with number of items in ARTIFACT_TYPE enum
+  for type_id in range(1, 13):
+    goldC.execute("select count(*) from blackboard_artifacts where artifact_type_id=%d" % type_id)
+    goldArtifacts = goldC.fetchone()[0]
+    testC.execute("select count(*) from blackboard_artifacts where artifact_type_id=%d" % type_id)
+    testArtifacts = testC.fetchone()[0]
+    if(goldArtifacts != testArtifacts):
+      errString = str("Artifact counts do not match for type id %d!: " % type_id)
       errString += str("Gold: %d, Test: %d" % (goldArtifacts, testArtifacts))
       markError(errString, inFile)
-  else:
-      print("Artifact counts match!")
+    else:
+      print("Artifact counts for artifact type id %d match!" % type_id)
+
   print("Comparing Attributes: ")
   goldC.execute("select count(*) from blackboard_attributes")
   goldAttributes = goldC.fetchone()[0]
@@ -237,6 +243,9 @@ def main():
   if hadErrors == True:
     print "**********************************************"
     print "Tests complete: There were errors"
+  else:
+    print "**********************************************"
+    print "Tests complete: All tests passed"
 
   for k,v in results.items():
     print k
