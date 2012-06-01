@@ -227,6 +227,8 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         private Case currentCase;
         // true if the process was requested to stop
         private boolean interrupted = false;
+        private boolean hasCritError = false;
+        private String errorString = null;
 
         protected AddImgTask() {
             this.progressBar = getComponent().getCrDbProgressBar();
@@ -242,6 +244,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         @Override
         protected Integer doInBackground() {
             this.setProgress(0);
+            
 
             // Add a cleanup task to interupt the backgroud process if the
             // wizard exits while the background process is running.
@@ -249,7 +252,8 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
                 @Override
                 void cleanup() throws Exception {
-                    addImageTask.interrupt();
+                    logger.log(Level.INFO, "Add image process interrupted.");
+                    addImageTask.interrupt(); //it might take time to truly interrupt
                 }
             };
 
@@ -281,11 +285,11 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Errors occurred while running add image. ", ex);
                 //critical core/system error and process needs to be interrupted
-                interrupted = true;
-                //TODO show record and add error count to add image summary stats dialog
+                hasCritError = true;
+                errorString = ex.getMessage();
             } catch (TskDataException ex) {
                 logger.log(Level.WARNING, "Errors occurred while running add image. ", ex);
-                //TODO show record and add error count to add image summary stats dialog
+                errorString = ex.getMessage();
             } finally {
                 // process is over, doesn't need to be dealt with if cancel happens
                 cancelledWhileRunning.disable();
@@ -303,22 +307,26 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
             progressBar.setIndeterminate(false);
 
             // attempt actions that might fail and force the process to stop
+
             try {
-                // get() will block until doInBackground done and throw any exceptions that were thrown in the background task
+                //get() will block until doInBackground done and throw any exceptions 
+                //that were thrown in the background task
+                //if process was stopped, stop should have been complete (otherwise, unsafe to revert() )
                 get();
             } catch (InterruptedException e) {
             } catch (ExecutionException e) {
             } finally {
-                if (interrupted) {
-                    try {
-                        try {
-                            process.revert();
-                        } catch (TskCoreException ex) {
-                            Exceptions.printStackTrace(ex);
+                if (interrupted || hasCritError) {
+                    logger.log(Level.INFO, "Handling errors or interruption that occured in add image process");
+                    revert();
+                    if (hasCritError) {
+                        StringBuilder errMsgB = new StringBuilder();
+                        errMsgB.append("<html>*Failed to add image");
+                        if (errorString != null) {
+                            errMsgB.append(": <br />").append(errorString);
                         }
-                    } finally {
-                        //unlock db write within EWT thread
-                        SleuthkitCase.dbWriteUnlock();
+                        errMsgB.append("</html>");
+                        getComponent().changeProgressBarTextAndColor(errMsgB.toString(), 0, Color.black);
                     }
                     return;
                 }
@@ -331,15 +339,10 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 // the add-image process needs to be reverted if the wizard doesn't finish
                 cleanupImage = action.new CleanupTask() {
                     //note, CleanupTask runs inside EWT thread
-
                     @Override
                     void cleanup() throws Exception {
-                        try {
-                            process.revert();
-                        } finally {
-                            //unlock db write within EWT thread
-                            SleuthkitCase.dbWriteUnlock();
-                        }
+                        logger.log(Level.INFO, "Running cleanup task after add image process");
+                        revert();
                     }
                 };
                 cleanupImage.enable();
@@ -351,8 +354,9 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 AddImageVisualPanel2 panel = getComponent();
                 if (panel != null) {
                     Window w = SwingUtilities.getWindowAncestor(panel);
-                    if (w!= null)
+                    if (w != null) {
                         w.toFront();
+                    }
                 }
 
                 setDbCreated(true);
@@ -360,7 +364,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
             } catch (Exception ex) {
                 //handle unchecked exceptions post image add
 
-                logger.log(Level.WARNING, "Unexpected errors occurred while running add image. ", ex);
+                logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex);
 
                 getComponent().changeProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
 
@@ -374,9 +378,25 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         void interrupt() throws Exception {
             interrupted = true;
             try {
-                process.stop();
+                logger.log(Level.INFO, "interrupt() add image process");
+                process.stop();  //it might take time to truly stop processing and writing to db
             } catch (TskException ex) {
                 throw new Exception("Error stopping add-image process.", ex);
+            }
+        }
+
+        //runs in EWT
+        void revert() {
+            try {
+                logger.log(Level.INFO, "Revert after add image process");
+                try {
+                    process.revert();
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Error reverting add image process", ex);
+                }
+            } finally {
+                //unlock db write within EWT thread
+                SleuthkitCase.dbWriteUnlock();
             }
         }
     }

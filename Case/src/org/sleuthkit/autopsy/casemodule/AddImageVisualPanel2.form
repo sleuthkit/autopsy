@@ -46,7 +46,7 @@
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Component id="crDbProgressBar" min="-2" pref="24" max="-2" attributes="1"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
-              <Component id="progressLabel" min="-2" pref="12" max="-2" attributes="0"/>
+              <Component id="progressLabel" pref="12" max="32767" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
