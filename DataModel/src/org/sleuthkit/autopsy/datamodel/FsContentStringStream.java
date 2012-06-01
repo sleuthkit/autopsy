@@ -47,7 +47,6 @@ public class FsContentStringStream extends InputStream {
     //args
     private FsContent content;
     private String encoding;
-    private boolean preserveOnBuffBoundary;
     
     //internal data
     private long contentOffset = 0; //offset in fscontent read into curReadBuf
@@ -61,7 +60,7 @@ public class FsContentStringStream extends InputStream {
     private int tempStringLen = 0;
     private boolean isEOF = false;
     private boolean stringAtTempBoundary = false; //if temp has part of string that didn't make it in previous read()
-    private boolean stringAtBufBoundary = false; //if continue string from prev read 
+    private boolean stringAtBufBoundary = false; //if read buffer has string being processed, continue as string from prev read() in next read()
     private boolean inString = false; //if current temp has min chars required
     private static final byte[] oneCharBuf = new byte[1];
     private final int MIN_PRINTABLE_CHARS = 4; //num. of chars needed to qualify as a char string
@@ -77,7 +76,7 @@ public class FsContentStringStream extends InputStream {
     public FsContentStringStream(FsContent content, Encoding encoding, boolean preserveOnBuffBoundary) {
         this.content = content;
         this.encoding = encoding.toString();
-        this.preserveOnBuffBoundary = preserveOnBuffBoundary;
+        //this.preserveOnBuffBoundary = preserveOnBuffBoundary;
         //logger.log(Level.INFO, "FILE: " + content.getParentPath() + "/" + content.getName());
     }
     
@@ -110,16 +109,12 @@ public class FsContentStringStream extends InputStream {
         if (isEOF) {
             return -1;
         }
+        
 
         if (stringAtTempBoundary) {
             //append entire temp string residual from previous read()
             //because qualified string was broken down into 2 parts
-            curString.append(tempString);
-            curStringLen += tempStringLen;
-
-            //reset temp
-            tempString = new StringBuilder();
-            tempStringLen = 0;
+            appendResetTemp();
 
             stringAtTempBoundary = false;
             //there could be more to this string in fscontent/buffer
@@ -127,6 +122,8 @@ public class FsContentStringStream extends InputStream {
 
         boolean singleConsecZero = false; //preserve the current sequence of chars if 1 consecutive zero char
         int newCurLen = curStringLen + tempStringLen;
+        
+        
         while (newCurLen < len) {
             //need to extract more strings
             if (readBufOffset > bytesInReadBuf - 1) {
@@ -208,7 +205,7 @@ public class FsContentStringStream extends InputStream {
         //check if temp still has chars to qualify as a string
         //we might need to break up temp into 2 parts for next read() call
         //consume as many as possible to fill entire user buffer
-        if (!this.preserveOnBuffBoundary && tempStringLen >= MIN_PRINTABLE_CHARS) {
+        if (tempStringLen >= MIN_PRINTABLE_CHARS) {
             if (newCurLen > len) {
                 int appendChars = len - curStringLen;
                 //save part for next user read(), need to break up temp string

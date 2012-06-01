@@ -61,11 +61,14 @@ public class IngestImageThread extends SwingWorker<Object,Void> {
 
         logger.log(Level.INFO, "Starting background processing");
 
-        progress = ProgressHandleFactory.createHandle(service.getName() + " image id:" + image.getId(), new Cancellable() {
+        final String displayName = service.getName() + " image id:" + image.getId();
+        progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
 
             @Override
             public boolean cancel() {
                 logger.log(Level.INFO, "Image ingest service " + service.getName() + " cancelled by user.");
+                if (progress != null)
+                        progress.setDisplayName(displayName + " (Cancelling...)");
                 return IngestImageThread.this.cancel(true);
             }
         });

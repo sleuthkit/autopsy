@@ -1,0 +1,244 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Ant-contrib Tasks: For</title>
+  </head>
+
+  <body>
+    <h1>For</h1>
+
+    <p>The for task iterates over a list, a list of paths, or
+      any type that has a public iterator() method.
+      The list will be evaluated first.
+      Nested paths are evaluated in the order they
+      appear in the task.
+      Nested types will then be evalulated.
+    </p>
+    <p>
+      This task is the same as the &lt;foreach&gt; task, except that
+      <ul>
+        <li>it uses a nested sequential for each iteration; and
+        <li>it implements an additional &quot;keepgoing&quot; attribute.
+      </ul>
+      &lt;for&gt; makes use of ant's macrodef task, so the @{} notation
+      is used for parameter substition.
+    </p>
+    <p><em>
+      This task only works for ant version greater than or equal
+      to ant 1.6.0.
+      </em>
+    </p>
+
+    <h2>Parameters</h2>
+    <table border="1" cellpadding="2" cellspacing="0">
+      <tr>
+        <th>Attribute</th>
+        <th>Description</th>
+        <th>Required</th>
+      </tr>
+      <tr>
+        <td valign="top">list</td>
+        <td valign="top">The list of values to process, with the
+        delimiter character, indicated by the &quot;delimiter&quot;
+        attribute, separating each value.</td>
+        <td align="center" valign="top" rowspan="2">Yes, one of these need to
+          be set, unless a nested path
+          has been specified.</td>
+      </tr>
+      <tr>
+        <td valign="top">end</td>
+        <td valign="top">
+          Sets the ending index value. If this attribute is
+          set, the &lt;for&gt; task will loop from "start" (default 1)
+          to "end", using "step" (default 1) increments.
+        </td>
+      </tr>
+      <tr>
+        <td valign="top">param</td>
+        <td valign="top">Name of the parameter to pass the tokens or
+        files in as to the sequential.</td>
+        <td align="center" valign="top">Yes</td>
+      </tr>
+      <tr>
+        <td valign="top">delimiter</td>
+        <td valign="top">The delimiter characters that separates the
+        values in the &quot;list&quot; attribute.  Each character in the
+        supplied string can act as a delimiter.  This follows the semantics
+        of the StringTokenizer class.</td>
+        <td align="center" valign="top">No, defaults to &quot;,&quot;.</td>
+      </tr>
+      <tr>
+        <td valign="top">parallel</td>
+        <td valign="top">If <code>true</code>, all iterations of the nested
+          &lt;sequential&gt;
+          will execute in parallel.  Defaults to <code>false</code>,
+        which forces sequential execution of the iterations.  It is up to
+        the caller to ensure that parallel execution is safe.
+        <td align="center" valign="top">No</td>
+      </tr>
+      <tr>
+        <td valign="top">keepgoing</td>
+        <td valign="top">If <code>true</code>, all iterations of the called
+          &lt;sequential&gt; will be executed, even if a task in one or more of them fails.
+          Defaults
+          to <code>false</code>, which forces execution to stop as soon as a
+          task fails.  At the end, if any iterator has failed, the &lt;for&gt;
+          task will fail, otherwise &lt;for&gt; will succeed.
+          <p>
+            Note that execution does not proceed keepgoing from one task
+            to the next within the &lt;sequential&gt, but rather from one iteration to the
+            next.
+          </p>
+          <p>It is up to the caller to ensure that keepgoing execution is safe.</p>
+        </td>
+        <td align="center" valign="top">No</td>
+      </tr>
+      <tr>
+        <td valign="top">threadCount</td>
+        <td valign="top">The maximum number of allowable threads when executing
+            in parallel.
+        <td align="center" valign="top">No. Defaults to 5.</td>
+      </tr>
+      <tr>
+        <td valign="top">trim</td>
+        <td valign="top">If <code>true</code>, any leading or trailing
+        whitespace will be removed from the list item before it is passed
+        to the sequential.
+        </td>
+        <td align="center" valign="top">No. Defaults to false.</td>
+      </tr>
+      <tr>
+        <td valign="top">begin</td>
+        <td valign="top">
+          Sets the starting index value. This in only used
+          if the "end" attribute is set.
+        </td>
+        <td align="center" valign="top">No. Defaults to "1".</td>
+      </tr>
+      <tr>
+        <td valign="top">step</td>
+        <td valign="top">
+          Sets the index increment step.
+          This in only used if the "end" attribute is set.
+        </td>
+        <td align="center" valign="top">No. Defaults to "1".</td>
+      </tr>
+    </table>
+
+    <h2>Parameters specified as nested elements</h2>
+
+    <a name="path"><h3>path</h3></a>
+
+    <p><a href="http://ant.apache.org/manual/using.html#path">Path</a>s
+    are used to select sets of files or directories to iterate over.</p>
+
+    <p>Using a path allows you to determine the order by which files
+    are considered by using
+    <a href="http://ant.apache.org/manual/CoreTypes/filelist.html">filelist</a>s
+    or explicit <code>pathelements</code>.  You also can specify
+    whether you want to iterate over files or directories by chosing
+    either filesets or
+    <a href="http://ant.apache.org/manual/CoreTypes/dirset.html">dirset</a>s.</p>
+    <a name="fileset"><h3>fileset</h3></a>
+    <p><a href="http://ant.apache.org/manual/CoreTypes/fileset.html">FileSet</a>s
+    are used to select sets of files to iterate over.
+    </p>
+    <a name="fileset"><h3>dirset</h3></a>
+    <p><a href="http://ant.apache.org/manual/CoreTypes/dirset.html">DirSet</a>s
+    are used to select sets of directories to iterate over.
+    </p>
+
+    <a name="seqential"><h3>sequential</h3></a>
+    This is the list of tasks to be run for each iteration of
+    the list.
+    <h3>Example</h3>
+    <p>
+      To print out the first five letters of the latin alphabet:
+    </p>
+    <blockquote>
+      <pre>
+&lt;echo message="The first five letters of the alphabet are:"/&gt;
+&lt;for list="a,b,c,d,e" param="letter"&gt;
+  &lt;sequential&gt;
+    &lt;echo&gt;Letter @{letter}&lt;/echo&gt;
+  &lt;/sequential&gt;
+&lt;/for&gt;
+        </pre>
+      </blockquote>
+      <p>
+        A more complicated example to to iterate over a set
+        of c++ source files and invoke the &lt;cc&gt; task on them:
+      </p>
+      <blockquote>
+        <pre>
+&lt;for param="file"&gt;
+  &lt;path&gt;
+    &lt;fileset dir="${test.dir}/mains" includes="*.cpp"/&gt;
+  &lt;/path&gt;
+  &lt;sequential&gt;
+    &lt;propertyregex override="yes"
+      property="program"  input="@{file}"
+      regexp=".*/([^\.]*)\.cpp" replace="\1"/&gt;
+    &lt;mkdir dir="${obj.dir}/${program}"/&gt;
+    &lt;mkdir dir="${build.bin.dir}"/&gt;
+    &lt;cc link="executable" objdir="${obj.dir}/${program}"
+        outfile="${build.bin.dir}/${program}"&gt;
+      &lt;compiler refid="compiler.options"/&gt;
+      &lt;fileset file="@{file}"/&gt;
+      &lt;linker refid="linker-libs"/&gt;
+    &lt;/cc&gt;
+  &lt;/sequential&gt;
+&lt;/for&gt;
+        </pre>
+      </blockquote>
+    The preceding example will stop as soon as one of the &lt;cc&gt; tasks fails.
+    If you change the first line of the example to
+        <pre>    &lt;for param="file" keepgoing="true"&gt;</pre>
+    All iterations will be executed, and then &lt;for&gt; will fail if any one
+    or more of the &lt;cc&gt; tasks failed.
+    <p>
+      The following example embeds an outofdate type and iterates over
+      the sources that are newer than their corresponding targets.
+    </p>
+
+      <pre>
+    &lt;ac:for param="xmlfile" xmlns:ac="antlib:net.sf.antcontrib"&gt;
+      &lt;ac:outofdate&gt;
+        &lt;ac:sourcefiles&gt;
+          &lt;ac:fileset dir="${basedir}/xdocs" includes="**/*.xml"/&gt;
+        &lt;/ac:sourcefiles&gt;
+        &lt;ac:mapper dir="${basedir}/xdocs"
+                   type="glob" from="*.xml" to="${basedir}/docs/*.html"/&gt;
+      &lt;/ac:outofdate&gt;
+      &lt;ac:sequential&gt;
+        &lt;echo&gt;Need to generate a target html file from source file @{xmlfile}&lt;/echo&gt;
+      &lt;/ac:sequential&gt;
+    &lt;/ac:for&gt;
+      </pre>
+
+    <p>
+      The following example loops from one to ten.
+    </p>
+    <pre>
+    &lt;ac:for param="i" end="10"&gt;
+      &lt;sequential&gt;
+        &lt;echo&gt;i is @{i}&lt;/echo&gt;
+      &lt;/sequential&gt;
+    &lt;/ac:for&gt;
+    </pre>
+    <p>
+      The following example counts down from 10 to 0 in steps of -2.
+    </p>
+    <pre>
+    &lt;ac:for param="i" begin="10" step="-2" end="0"&gt;
+      &lt;sequential&gt;
+        &lt;echo&gt;i is @{i}&lt;/echo&gt;
+      &lt;/sequential&gt;
+    &lt;/ac:for&gt;
+    </pre>
+    <hr>
+    <p align="center">Copyright &copy; 2003-2006 Ant-Contrib Project. All
+    rights Reserved.</p>
+
+  </body>
+</html>

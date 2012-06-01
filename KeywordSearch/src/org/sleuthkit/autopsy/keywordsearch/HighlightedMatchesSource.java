@@ -135,9 +135,13 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                     chunksQuery.escape();
                 }
                  */
-                Keyword keywordQuery = new Keyword(this.keywordHitQuery, false);
+                String queryStr = KeywordSearchUtil.escapeLuceneQuery(this.keywordHitQuery, true, false);
+                if (isRegex) {
+                    //use white-space sep. field to get exact matches only of regex query result
+                    queryStr = Server.Schema.CONTENT_WS + ":" + "\"" + queryStr + "\"";
+                }
+                Keyword keywordQuery = new Keyword(queryStr, false);
                 chunksQuery = new LuceneQuery(keywordQuery);
-                chunksQuery.escape();
                 KeywordQueryFilter contentIdFilter = new KeywordQueryFilter(FilterType.CHUNK, contentId);
                 chunksQuery.setFilter(contentIdFilter);
                 try {
@@ -160,7 +164,9 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             }
 
             //set page to first page having highlights
-            this.currentPage = pagesSorted.first();
+            if (pagesSorted.isEmpty())
+                this.currentPage = 0;
+            else this.currentPage = pagesSorted.first();
 
             for (Integer page : pagesSorted) {
                 hitsPages.put(page, 0); //unknown number of matches in the page
@@ -234,11 +240,15 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public boolean hasNextItem() {
+        if (!this.pagesToHits.containsKey(currentPage))
+            return false;
         return this.pagesToHits.get(currentPage) < this.hitsPages.get(currentPage);
     }
 
     @Override
     public boolean hasPreviousItem() {
+        if (!this.pagesToHits.containsKey(currentPage))
+            return false;
         return this.pagesToHits.get(currentPage) > 1;
     }
 
@@ -264,6 +274,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public int currentItem() {
+        if (!this.pagesToHits.containsKey(currentPage))
+            return 0;
         return pagesToHits.get(currentPage);
     }
 
@@ -377,6 +389,8 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
 
     @Override
     public int getNumberHits() {
+        if (!this.hitsPages.containsKey(this.currentPage))
+            return 0;
         return this.hitsPages.get(this.currentPage);
     }
 

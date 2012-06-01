@@ -5,8 +5,9 @@ We plan to address the following issues in future releases.
 General:
 - Only a single instance of the application can be started at once.  
 There is no check if another instance is already running.  Running a second instance will cause issues.
+- Only a single case can be opened at a time.
 
 Keyword search module:
 - Keyword search module does not currently search unallocated space,
-- Keyword search maximum size of files to be indexed and searched is 100MB,
-- Keyword search maximum size of unknown types of files to be indexed and searched (using string extraction) is 1MB.
+- Keyword search maximum size of files of known types to be indexed and searched is 100MB.  There is no limit on size of unknown file types indexed using string extraction.
+

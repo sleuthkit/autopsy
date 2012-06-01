@@ -736,6 +736,7 @@ public class Case {
         TimeZone zone = TimeZone.getTimeZone(timezoneID);
         int offset = zone.getRawOffset() / 1000;
         int hour = offset / 3600;
+        int min = (offset % 3600) / 60;
 
         DateFormat dfm = new SimpleDateFormat("z");
         dfm.setTimeZone(zone);
@@ -744,6 +745,9 @@ public class Case {
         String second = dfm.format(new GregorianCalendar(2011, 6, 6).getTime()).substring(0, 3); // make it only 3 letters code
         int mid = hour * -1;
         result = first + Integer.toString(mid);
+        if (min != 0) {
+            result = result + ":" + Integer.toString(min);
+        }
         if (hasDaylight) {
             result = result + second;
         }

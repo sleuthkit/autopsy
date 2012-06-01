@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>Ant-contrib Tasks: Http Tasks</title>
+  </head>
+
+  <body>
+    <h1>Post-Method</h1>
+    The &lt;post-method&gt; task allows the caller to use the HTTP POST
+    method to send data to an arbitrary url.  This data can be one of the
+    following:
+    <ul>
+    <li>Name/Value pairs</li>
+    <li>File content</li>
+    <li>Text content</li>
+    <li>Multi-part content</li>
+    </ul>
+    This method inherits the <a href="method_task_common.html">
+    Common Method</a> attributes and subelements.  It also contains
+    the following additional attributes and subelements:
+
+
+    <h2>Parameters</h2>
+    <table border="1" cellpadding="2" cellspacing="0">
+      <tr>
+        <th>Attribute</th>
+        <th>Description</th>
+        <th>Required</th>
+      </tr>
+      <tr>
+        <td valign="top"><i>multipart</i></td>
+        <td valign="top">Should multipart content be forced, even if
+          only a single file or text part is specified.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>parameters</td>
+        <td valign="top">A java .properties file which contains post parameters.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+    </table>
+    
+    <h2>Parameters specified as Nested Elements</h2>
+    
+
+    <br />
+    <br />
+    <b>&lt;parameter&gt;</b><br />
+    <p>
+    Create a text post parameter.
+    </p>
+    <table border="1" cellpadding="2" cellspacing="0">
+      <tr>
+        <th>Attribute</th>
+        <th>Description</th>
+        <th>Required</th>
+      </tr>
+      <tr>
+        <td valign="top"><i>name</i></td>
+        <td valign="top">The parameter name.</td>
+        <td align="center" valign="top">Yes.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>value</i></td>
+        <td valign="top">The parameter value.</td>
+        <td align="center" valign="top">Yes.</td>
+      </tr>
+    </table>
+
+    <br />
+    <br />
+    <b>&lt;file&gt;</b><br />
+    <p>
+    Add a File part to the request.
+    </p>
+    <table border="1" cellpadding="2" cellspacing="0">
+      <tr>
+        <th>Attribute</th>
+        <th>Description</th>
+        <th>Required</th>
+      </tr>
+      <tr>
+        <td valign="top"><i>name</i></td>
+        <td valign="top">The parameter name.</td>
+        <td align="center" valign="top">Yes.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>path</i></td>
+        <td valign="top">The file path to send.</td>
+        <td align="center" valign="top">Yes.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>contentType</i></td>
+        <td valign="top">The content type of the file.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>charSet</i></td>
+        <td valign="top">The character set.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+    </table>
+
+    <br />
+    <br />
+    <b>&lt;text&gt;</b><br />
+    <p>
+    Add a Text part to the request.
+    </p>
+    <table border="1" cellpadding="2" cellspacing="0">
+      <tr>
+        <th>Attribute</th>
+        <th>Description</th>
+        <th>Required</th>
+      </tr>
+      <tr>
+        <td valign="top"><i>name</i></td>
+        <td valign="top">The parameter name.</td>
+        <td align="center" valign="top">Yes.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>value</i></td>
+        <td valign="top">The string value to send.  This may
+        also be specified as nested text to this element.</td>
+        <td align="center" valign="top">Yes.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>contentType</i></td>
+        <td valign="top">The content type of the file.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+      <tr>
+        <td valign="top"><i>charSet</i></td>
+        <td valign="top">The character set.</td>
+        <td align="center" valign="top">No.</td>
+      </tr>
+    </table>
+
+
+    <h2>Examples</h2>
+
+
+    <hr>
+    <p align="center">Copyright &copy; 2002-2003 Ant-Contrib Project. All
+    rights Reserved.</p>
+
+  </body>
+</html>

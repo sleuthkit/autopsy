@@ -16,11 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.openide.util.Lookup;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
@@ -32,6 +33,8 @@ import org.openide.windows.WindowManager;
  * @author jantonius
  */
 public class CoreComponentControl {
+
+    private static final Logger logger = Logger.getLogger(CoreComponentControl.class.getName());
 
     /**
      * Opens all TopComponent windows that are needed ({@link DataExplorer}, {@link DataResult}, and
@@ -45,7 +48,11 @@ public class CoreComponentControl {
         for (DataExplorer de : dataExplorers) {
             TopComponent explorerWin = de.getTopComponent();
             Mode m = WindowManager.getDefault().findMode("explorer");
-            m.dockInto(explorerWin); // redock into the explorer mode
+            if (m != null) {
+                m.dockInto(explorerWin); // redock into the explorer mode
+            } else {
+                logger.log(Level.WARNING, "Could not find explorer mode and dock explorer window");
+            }
             explorerWin.open(); // open that top component
         }
 
@@ -53,7 +60,12 @@ public class CoreComponentControl {
         DataContent dc = Lookup.getDefault().lookup(DataContent.class);
         TopComponent contentWin = dc.getTopComponent();
         Mode m = WindowManager.getDefault().findMode("output");
-        m.dockInto(contentWin); // redock into the output mode
+        if (m != null) {
+            m.dockInto(contentWin); // redock into the output mode
+        } else {
+            logger.log(Level.WARNING, "Could not find output mode and dock content window");
+        }
+
         contentWin.open(); // open that top component
     }
 

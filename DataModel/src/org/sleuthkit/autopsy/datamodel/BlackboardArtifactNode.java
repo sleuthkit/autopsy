@@ -20,10 +20,10 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
@@ -51,12 +51,11 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     BlackboardArtifact artifact;
     Content associated;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
-    
-    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");;
+    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         super(Children.LEAF, getLookups(artifact));
-        
+
         this.artifact = artifact;
         this.associated = getAssociatedContent(artifact);
         this.setName(Long.toString(artifact.getArtifactID()));
@@ -75,23 +74,29 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         }
         final String NO_DESCR = "no description";
 
-        Map<Integer, Object> map = new LinkedHashMap<Integer, Object>();
+        Map<String, Object> map = new LinkedHashMap<String, Object>();
         fillPropertyMap(map, artifact);
         
         ss.put(new NodeProperty("File Name",
                                 "File Name",
-                                "no description",
+                                NO_DESCR,
                                 associated.accept(new NameVisitor())));
         
-        ATTRIBUTE_TYPE[] attributeTypes = ATTRIBUTE_TYPE.values();
-        for(Map.Entry<Integer, Object> entry : map.entrySet()){
-            if(attributeTypes.length > entry.getKey()){
-                ss.put(new NodeProperty(attributeTypes[entry.getKey()-1].getDisplayName(),
-                        attributeTypes[entry.getKey()-1].getDisplayName(),
+        for(Map.Entry<String, Object> entry : map.entrySet()){
+            ss.put(new NodeProperty(entry.getKey(),
+                        entry.getKey(),
                         NO_DESCR,
                         entry.getValue()));
-            }
         }
+        
+        if(artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
+                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+            ss.put(new NodeProperty("File Path",
+                    "File Path",
+                    NO_DESCR,
+                    DataConversion.getformattedPath(ContentUtils.getDisplayPath(associated), 0, 1)));
+        }
+        
         return s;
     }
 
@@ -100,30 +105,37 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
      * @param map, with preserved ordering, where property names/values are put
      * @param content to extract properties from
      */
-    public static void fillPropertyMap(Map<Integer, Object> map, BlackboardArtifact artifact) {
+    public static void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
         try {
             for(BlackboardAttribute attribute : artifact.getAttributes()){
                 if(attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID())
                     continue;
                 else switch(attribute.getValueType()){
                     case STRING:
-                        map.put(attribute.getAttributeTypeID(), attribute.getValueString());
+                        map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueString());
                         break;
                     case INTEGER:
-                        map.put(attribute.getAttributeTypeID(), attribute.getValueInt());
+                        map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueInt());
                         break;
                     case LONG:
-                        if(attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID() ||
-                                attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
-                            map.put(attribute.getAttributeTypeID(), dateFormatter.format(new Date(attribute.getValueLong())));
-                        } else
-                            map.put(attribute.getAttributeTypeID(), attribute.getValueLong());
+                        if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
+                                || attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
+                            long epoch = attribute.getValueLong();
+                            String time = "0000-00-00 00:00:00";
+                            if (epoch != 0) {
+                                dateFormatter.setTimeZone(getTimeZone(artifact));
+                                time = dateFormatter.format(new java.util.Date(epoch * 1000));
+                            }
+                            map.put(attribute.getAttributeTypeDisplayName(), time);
+                        } else {
+                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueLong());
+                        }
                         break;
                     case DOUBLE:
-                        map.put(attribute.getAttributeTypeID(), attribute.getValueDouble());
+                        map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueDouble());
                         break;
                     case BYTE:
-                        map.put(attribute.getAttributeTypeID(), attribute.getValueBytes());
+                        map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueBytes());
                         break;
                 }
             }
@@ -158,7 +170,11 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         }
         throw new IllegalArgumentException("Couldn't get file from database");
     }
-    
+
+    private static TimeZone getTimeZone(BlackboardArtifact artifact) {
+        return getAssociatedContent(artifact).accept(new TimeZoneVisitor());
+    }
+
     private static HighlightLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
         if(artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())
             return null;
@@ -213,7 +229,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         }
         
     }
-    
+
     private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
         switch(type) {
             case TSK_WEB_BOOKMARK:

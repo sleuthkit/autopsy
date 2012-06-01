@@ -67,7 +67,7 @@ public class FileExtract {
             //break string into chunks 
             //Note: could use DataConversion.toString() since we are operating on fixed chunks
             //but FsContentStringStream handles string boundary case better
-            stringStream = new FsContentStringStream(sourceFile, FsContentStringStream.Encoding.UTF8, true);
+            stringStream = new FsContentStringStream(sourceFile, FsContentStringStream.Encoding.UTF8);
             long readSize = 0;
             
             while ((readSize = stringStream.read(STRING_CHUNK_BUF, 0, (int) MAX_STRING_CHUNK_SIZE)) != -1) {
@@ -82,6 +82,7 @@ public class FileExtract {
                 } catch (IngesterException ingEx) {
                     success = false;
                     logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);   
+                    throw ingEx; //need to rethrow/return to signal error and move on
                 } 
                 //debug.close();    
             }
@@ -98,7 +99,7 @@ public class FileExtract {
                 try {
                     stringStream.close();
                 } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
+                    logger.log(Level.WARNING, "Error closing string stream, file: " + sourceFile.getName(), ex);
                 }
             }
         }

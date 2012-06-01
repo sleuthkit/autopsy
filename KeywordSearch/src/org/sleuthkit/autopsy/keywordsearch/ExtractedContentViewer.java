@@ -479,6 +479,8 @@ public class ExtractedContentViewer implements DataContentViewer {
         } else {
             panel.enableNextMatchControl(false);
             panel.enablePrevMatchControl(false);
+            panel.updateCurrentMatchDisplay(0);
+            panel.updateTotaMatcheslDisplay(0);
         }
     }
 
