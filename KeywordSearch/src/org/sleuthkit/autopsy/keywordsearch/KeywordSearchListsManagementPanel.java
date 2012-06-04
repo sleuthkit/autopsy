@@ -119,10 +119,12 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         listsTable = new javax.swing.JTable();
         newListButton = new javax.swing.JButton();
         importButton = new javax.swing.JButton();
+        skipNSRLCheckBox = new javax.swing.JCheckBox();
 
         setMinimumSize(new java.awt.Dimension(200, 0));
         setPreferredSize(new java.awt.Dimension(200, 297));
 
+        jScrollPane1.setBorder(null);
         jScrollPane1.setPreferredSize(new java.awt.Dimension(200, 402));
 
         listsTable.setModel(tableModel);
@@ -131,7 +133,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         listsTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(listsTable);
 
-        newListButton.setBackground(new java.awt.Color(204, 204, 204));
         newListButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.newListButton.text")); // NOI18N
         newListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -139,11 +140,19 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
             }
         });
 
-        importButton.setBackground(new java.awt.Color(204, 204, 204));
         importButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.importButton.text")); // NOI18N
         importButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 importButtonActionPerformed(evt);
+            }
+        });
+
+        skipNSRLCheckBox.setSelected(true);
+        skipNSRLCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.skipNSRLCheckBox.text")); // NOI18N
+        skipNSRLCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.skipNSRLCheckBox.toolTipText")); // NOI18N
+        skipNSRLCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                skipNSRLCheckBoxActionPerformed(evt);
             }
         });
 
@@ -153,22 +162,25 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(skipNSRLCheckBox)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(19, 19, 19)
+                        .addGap(18, 18, 18)
                         .addComponent(newListButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(importButton))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 274, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE)
                 .addGap(0, 0, 0)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newListButton)
-                    .addComponent(importButton)))
+                    .addComponent(importButton))
+                .addGap(2, 2, 2)
+                .addComponent(skipNSRLCheckBox))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -266,11 +278,16 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_importButtonActionPerformed
 
+    private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipNSRLCheckBoxActionPerformed
+        KeywordSearchIngestService.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
+    }//GEN-LAST:event_skipNSRLCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton importButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable listsTable;
     private javax.swing.JButton newListButton;
+    private javax.swing.JCheckBox skipNSRLCheckBox;
     // End of variables declaration//GEN-END:variables
 
     
