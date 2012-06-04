@@ -8,6 +8,7 @@ There is no check if another instance is already running.  Running a second inst
 - Only a single case can be opened at a time.
 
 Keyword search module:
-- Keyword search module does not currently search unallocated space,
-- Keyword search maximum size of files of known types to be indexed and searched is 100MB.  There is no limit on size of unknown file types indexed using string extraction.
+- Keyword search maximum size of files of known types to be indexed and searched is 100MB.  
+There is no limit on size of unknown file types indexed using string extraction.
+- Currently we extract only English strings from files of unknown types.
 
