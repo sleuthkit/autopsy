@@ -116,7 +116,7 @@ public class ReportXML implements ReportModule {
                 Long filesize = cont.getSize();
                 try {
                     artifact.setAttribute("ID", objId.toString());
-                    artifact.setAttribute("Name", cont.accept(new NameVisitor()));
+                    artifact.setAttribute("Name", cont.getName());
                     artifact.setAttribute("Size", filesize.toString());
                 } catch (Exception e) {
                     Logger.getLogger(ReportXML.class.getName()).log(Level.WARNING, "Visitor content exception occurred:", e);
@@ -257,26 +257,5 @@ public class ReportXML implements ReportModule {
         return desc;
     }
 
-    private class NameVisitor extends ContentVisitor.Default<String> {
-
-        @Override
-        protected String defaultVisit(Content cntnt) {
-            throw new UnsupportedOperationException("Not supported for " + cntnt.toString());
-        }
-
-        @Override
-        public String visit(Directory dir) {
-            return dir.getName();
-        }
-
-        @Override
-        public String visit(Image img) {
-            return img.getName();
-        }
-
-        @Override
-        public String visit(org.sleuthkit.datamodel.File file) {
-            return file.getName();
-        }
-    }
+    
 }
