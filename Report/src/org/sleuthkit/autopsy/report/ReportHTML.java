@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
@@ -291,7 +292,7 @@ public class ReportHTML implements ReportModule {
                     value = "";
                 }
                 value = ReportUtils.insertPeriodically(value, "<br>", 30);
-                attributes.put(type, value);
+                attributes.put(type, StringUtils.replaceEach(value, new String[]{"&", "\"", "<", ">"}, new String[]{"&amp;", "&quot;", "&lt;", "&gt;"}));
 
             }
 
