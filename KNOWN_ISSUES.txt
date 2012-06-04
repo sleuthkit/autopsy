@@ -12,3 +12,6 @@ Keyword search module:
 There is no limit on size of unknown file types indexed using string extraction.
 - Currently we extract only English strings from files of unknown types.
 
+Installation:
+- Installer version currently supports only Windows OS (XP or newer),
+- Currently only 32 bit version of Autopsy is provided with the installer (works on 64 bit Windows OS)
