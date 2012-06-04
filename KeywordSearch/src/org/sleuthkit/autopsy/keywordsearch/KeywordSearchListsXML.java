@@ -267,12 +267,7 @@ public class KeywordSearchListsXML {
     }
     
     boolean addList(String name, List<Keyword> newList, boolean useForIngest, boolean ingestMessages) {
-        KeywordSearchList curList = getList(name);
-        if (curList == null) {
-            return addList(name, newList, useForIngest, ingestMessages, false);
-        } else {
-            return addList(name, newList, curList.getUseForIngest(), ingestMessages, false);
-        }
+        return addList(name, newList, useForIngest, ingestMessages, false);
     }
     
     boolean addList(String name, List<Keyword> newList) {

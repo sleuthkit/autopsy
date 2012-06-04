@@ -81,6 +81,8 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
         listsTable = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
+        jSeparator2 = new javax.swing.JSeparator();
+        skipKnownCheckBox = new javax.swing.JCheckBox();
 
         setPreferredSize(new java.awt.Dimension(172, 57));
 
@@ -101,15 +103,27 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
 
         jLabel1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.jLabel1.text")); // NOI18N
 
+        skipKnownCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.skipKnownCheckBox.text")); // NOI18N
+        skipKnownCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.skipKnownCheckBox.toolTipText")); // NOI18N
+        skipKnownCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                skipKnownCheckBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSeparator1, javax.swing.GroupLayout.DEFAULT_SIZE, 172, Short.MAX_VALUE)
+            .addComponent(jSeparator1, javax.swing.GroupLayout.DEFAULT_SIZE, 295, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(133, Short.MAX_VALUE))
+            .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 295, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(skipKnownCheckBox)
+                .addContainerGap())
             .addComponent(listsScrollPane, 0, 0, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -118,15 +132,27 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 4, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 118, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(skipKnownCheckBox)
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void skipKnownCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipKnownCheckBoxActionPerformed
+        KeywordSearchIngestService.getDefault().setSkipKnown(skipKnownCheckBox.isSelected());
+    }//GEN-LAST:event_skipKnownCheckBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JScrollPane listsScrollPane;
     private javax.swing.JTable listsTable;
+    private javax.swing.JCheckBox skipKnownCheckBox;
     // End of variables declaration//GEN-END:variables
 
     private void reloadLists() {
@@ -163,6 +189,7 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
 
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+            
             KeywordSearchList list = KeywordSearchIngestSimplePanel.this.lists.get(rowIndex);
             if(columnIndex == 0){
                 KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();

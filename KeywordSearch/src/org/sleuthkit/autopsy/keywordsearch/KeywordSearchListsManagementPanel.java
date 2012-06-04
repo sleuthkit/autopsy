@@ -81,29 +81,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         listsTable.setRowSelectionAllowed(true);
         tableModel.resync();
 
-        KeywordSearchListsXML.getCurrent().addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_ADDED.toString())) {
-                    tableModel.resync();
-                    for(int i = 0; i<listsTable.getRowCount(); i++){
-                            String name = (String) listsTable.getValueAt(i, 0);
-                            if(((String) evt.getNewValue()).equals(name))
-                                listsTable.getSelectionModel().setSelectionInterval(i, i);
-                    }
-                } else if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_DELETED.toString())) {
-                    tableModel.resync();
-                    if(listsTable.getRowCount() > 0)
-                        listsTable.getSelectionModel().setSelectionInterval(0, 0);
-                    else
-                        listsTable.getSelectionModel().clearSelection();
-                } else if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_UPDATED.toString())) {
-                    tableModel.resync((String) evt.getNewValue()); //changed list name
-                }
-            }
-        });
-
     }
 
     /** This method is called from within the constructor to
@@ -173,7 +150,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void newListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newListButtonActionPerformed
-        KeywordSearchEditListPanel.getDefault().save();
         KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
         String listName = (String) JOptionPane.showInputDialog(null, "New keyword list name:", "New Keyword List", JOptionPane.PLAIN_MESSAGE, null, null, "");
         if (listName == null || listName.trim().equals("")) {
@@ -199,7 +175,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_newListButtonActionPerformed
 
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
-        KeywordSearchEditListPanel.getDefault().save();
         final String FEATURE_NAME = "Keyword List Import";
 
         JFileChooser chooser = new JFileChooser();
@@ -280,7 +255,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         //data
 
         private KeywordSearchListsXML listsHandle = KeywordSearchListsXML.getCurrent();
-        private Set<TableEntry> listData = new TreeSet<TableEntry>();
 
         @Override
         public int getColumnCount() {
@@ -289,7 +263,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
 
         @Override
         public int getRowCount() {
-            return listData.size();
+            return listsHandle.getNumberLists();
         }
 
         @Override
@@ -299,13 +273,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            TableEntry entry = null;
-            //iterate until row
-            Iterator<TableEntry> it = listData.iterator();
-            for (int i = 0; i <= rowIndex; ++i) {
-                entry = it.next();
-            }
-            return (Object) entry.name;
+            return listsHandle.getListNames().get(rowIndex);
         }
 
         @Override
@@ -323,27 +291,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
             return getValueAt(0, c).getClass();
         }
 
-        List<String> getAllLists() {
-            List<String> ret = new ArrayList<String>();
-            for (TableEntry e : listData) {
-                ret.add(e.name);
-            }
-            return ret;
-        }
-
-        List<String> getSelectedLists(int[] selected) {
-            List<String> ret = new ArrayList<String>();
-            for(int i = 0; i < selected.length; i++){
-                ret.add((String) getValueAt(0, selected[i]));
-            }
-            return ret;
-        }
-
-        boolean listExists(String list) {
-            List<String> all = getAllLists();
-            return all.contains(list);
-        }
-
         //delete selected from handle, events are fired from the handle
         void deleteSelected(int[] selected) {
             List<String> toDel = new ArrayList<String>();
@@ -353,68 +300,15 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
             for (String del : toDel) {
                 listsHandle.deleteList(del);
             }
-
         }
 
         //resync model from handle, then update table
         void resync() {
-            listData.clear();
-            addLists(listsHandle.getListsL());
             fireTableDataChanged();
-        }
-
-        //resync single model entry from handle
-        void resync(String listName) {
-            TableEntry found = null;
-            for (TableEntry e : listData) {
-                if (e.name.equals(listName)) {
-                    found = e;
-                    break;
-                }
-            }
-            if (found != null) {
-                listData.remove(found);
-                addList(listsHandle.getList(listName));
-            }
-        }
-
-        //add list to the model
-        private void addList(KeywordSearchList list) {
-            if (!listExists(list.getName())) {
-                listData.add(new TableEntry(list));
-            }
-        }
-
-        //add lists to the model
-        private void addLists(List<KeywordSearchList> lists) {
-            for (KeywordSearchList list : lists) {
-                if (!listExists(list.getName())) {
-                    listData.add(new TableEntry(list));
-                }
-            }
-        }
-
-        //single model entry
-        class TableEntry implements Comparable<TableEntry> {
-
-            String name;
-
-            TableEntry(KeywordSearchList list) {
-                this.name = list.getName();
-            }
-
-            @Override
-            public int compareTo(TableEntry te) {
-                return this.name.compareTo(te.name);
-            }
         }
     }
     
     void addListSelectionListener(ListSelectionListener l) {
         listsTable.getSelectionModel().addListSelectionListener(l);
-    }
-    
-    List<String> getAllLists() {
-        return tableModel.getAllLists();
     }
 }

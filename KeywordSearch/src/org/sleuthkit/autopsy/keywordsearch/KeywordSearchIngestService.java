@@ -78,6 +78,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private volatile boolean finalSearcherDone = false;
     private final String hashDBServiceName = "Hash Lookup";
     private SleuthkitCase caseHandle = null;
+    private boolean skipKnown = false;
     boolean initialized = false;
 
     public enum IngestStatus {
@@ -105,7 +106,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         //if so do not index it, also postpone indexing and keyword search threads to later
         IngestServiceAbstractFile.ProcessResult hashDBResult = managerProxy.getAbstractFileServiceResult(hashDBServiceName);
         //logger.log(Level.INFO, "hashdb result: " + hashDBResult + "file: " + AbstractFile.getName());
-        if (hashDBResult == IngestServiceAbstractFile.ProcessResult.COND_STOP) {
+        if (hashDBResult == IngestServiceAbstractFile.ProcessResult.COND_STOP && skipKnown) {
             return ProcessResult.OK;
         } else if (hashDBResult == IngestServiceAbstractFile.ProcessResult.ERROR) {
             //notify depending service that keyword search (would) encountered error for this file
@@ -275,7 +276,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     @Override
     public void saveAdvancedConfiguration() {
-        KeywordSearchConfigurationPanel.getDefault().editListPanel.save();
     }
 
     @Override
@@ -759,5 +759,9 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             }
         }
         return ret;
+    }
+    
+    void setSkipKnown(boolean skip) {
+        this.skipKnown = skip;
     }
 }
