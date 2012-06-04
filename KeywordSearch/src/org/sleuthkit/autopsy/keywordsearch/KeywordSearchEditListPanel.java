@@ -27,6 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -644,7 +645,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         currentKeywordList = null;
         initButtons();
         deleter.deleteList(toDelete);
-        tableModel.resync();
     }//GEN-LAST:event_deleteListButtonActionPerformed
 
     private void chRegexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chRegexActionPerformed
@@ -779,8 +779,11 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
 
         //delete selected from handle, events are fired from the handle
         void deleteSelected(int[] selected) {
-            List<Keyword> keywords = currentKeywordList.getKeywords();
-            keywords.remove(selected[0]);
+            List<Keyword> words = currentKeywordList.getKeywords();
+            Arrays.sort(selected);
+            for(int arrayi = selected.length-1; arrayi >= 0; arrayi--) {
+                words.remove(selected[arrayi]);
+            }
             resync();
         }
 
