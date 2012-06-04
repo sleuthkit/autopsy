@@ -282,6 +282,7 @@ public class ReportXLS implements ReportModule {
                 int cc = 0;
                 Long objId = entry.getKey().getObjectID();
                 AbstractFile file = skCase.getAbstractFileById(objId);
+                String filename = file.getName();
                 Long filesize = file.getSize();
                 TreeMap<Integer, String> attributes = new TreeMap<Integer, String>();
                 // Get all the attributes, line them up to be added. Place empty string placeholders for each attribute type
@@ -296,9 +297,8 @@ public class ReportXLS implements ReportModule {
                     }
                     String value = "";
                     int type = tempatt.getAttributeTypeID();
-                    if (tempatt.getValueString() == null || "null".equals(tempatt.getValueString())) {
-                    } else if (type == 2 || type == 33) {
-                        value = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date((tempatt.getValueLong()) * 1000));
+                   if (tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID() || tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
+                        value = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date((tempatt.getValueLong()) * 1000)).toString();
                     } else {
                         value = tempatt.getValueString();
                     }
@@ -367,7 +367,7 @@ public class ReportXLS implements ReportModule {
                     countedKeyword++;
                     Row temp = sheetKeyword.createRow(countedKeyword);
                     temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()));
-                    temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    temp.createCell(1).setCellValue(filename);
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID()));
                     temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
                 }
