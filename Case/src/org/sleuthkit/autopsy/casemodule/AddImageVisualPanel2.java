@@ -85,7 +85,7 @@ final class AddImageVisualPanel2 extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.jLabel5.text")); // NOI18N
 
-        crDbLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        crDbLabel.setFont(new java.awt.Font("Tahoma", 1, 14));
         org.openide.awt.Mnemonics.setLocalizedText(crDbLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.crDbLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(progressLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.progressLabel.text")); // NOI18N
@@ -104,7 +104,7 @@ final class AddImageVisualPanel2 extends JPanel {
                             .addComponent(crDbLabel)
                             .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 552, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel5))
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addGap(0, 16, Short.MAX_VALUE))
                     .addComponent(crDbProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, 568, Short.MAX_VALUE)
                     .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 568, Short.MAX_VALUE))
                 .addContainerGap())
@@ -121,7 +121,7 @@ final class AddImageVisualPanel2 extends JPanel {
                 .addGap(18, 18, 18)
                 .addComponent(crDbProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 12, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 12, Short.MAX_VALUE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
