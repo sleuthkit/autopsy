@@ -34,7 +34,6 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
@@ -281,11 +280,10 @@ public class ReportHTML implements ReportModule {
                 String value = "";
                 Integer type = tempatt.getAttributeTypeID();
                 if (type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()) || type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())) {
-                    try {
+                    
                         SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                        value = sdf.format(new java.util.Date((tempatt.getValueLong())));
-                    } catch (Exception ex) {
-                    }
+                        value = sdf.format(new java.util.Date((tempatt.getValueLong() * 1000)));
+                   
                 } else {
                     value = tempatt.getValueString();
                 }

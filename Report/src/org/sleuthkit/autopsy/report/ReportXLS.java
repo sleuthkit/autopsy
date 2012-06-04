@@ -21,7 +21,6 @@
 package org.sleuthkit.autopsy.report;
 
 import java.awt.Desktop;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.File;
@@ -214,7 +213,7 @@ public class ReportXLS implements ReportModule {
             sheetKeyword.getRow(0).createCell(0).setCellValue("Keyword");
             sheetKeyword.getRow(0).createCell(1).setCellValue("File Name");
             sheetKeyword.getRow(0).createCell(2).setCellValue("Preview");
-            sheetKeyword.getRow(0).createCell(3).setCellValue("Keyword LIst");
+            sheetKeyword.getRow(0).createCell(3).setCellValue("Keyword List");
 
             sheetRecent.setDefaultColumnStyle(1, defaultstyle);
             sheetRecent.createRow(0).setRowStyle(style);
