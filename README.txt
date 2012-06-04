@@ -68,7 +68,7 @@ License: http://www.gnu.org/licenses/gpl.html
 Web page: http://sourceforge.net/projects/odessa/files/Pasco/
 
 * Advanced installer 9.0 (Freeware)
-(not embedded in Autopsy, but used to generate Autopsy installer.  
+(not embedded in Autopsy, but used to generate Autopsy installer.)
 If you want to generate Autopsy installer, you will need to install the freeware version of Advanced Installer software)
 
 Web page: http://www.advancedinstaller.com/
