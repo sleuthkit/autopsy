@@ -60,6 +60,24 @@ public class KeywordSearchUtil {
     }
 
     /**
+     * Return a quoted version of the query if the original query is not quoted
+     * @param query the query to check if it is quoted
+     * @return quoted query
+     */
+    public static String quoteQuery(String query) {
+        //ensure a single pair of quotes around the query
+        final int length = query.length();
+        if (length > 1 && query.charAt(0) == '"' 
+                && query.charAt(length - 1) == '"') {
+            return query;
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("\"").append(query).append("\"");
+        return sb.toString();
+    }
+
+    /**
      * Perform standard escaping / encoding into UTF-8 before sending over net
      * @param query to be encoded
      * @param escapeLuceneChars if true perform first escaping of Lucene specific special chars
@@ -143,5 +161,4 @@ public class KeywordSearchUtil {
             return false;
         }
     }
-
 }
