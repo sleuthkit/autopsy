@@ -78,7 +78,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private volatile boolean finalSearcherDone = false;
     private final String hashDBServiceName = "Hash Lookup";
     private SleuthkitCase caseHandle = null;
-    private boolean skipKnown = false;
+    private boolean skipKnown = true;
     boolean initialized = false;
 
     public enum IngestStatus {

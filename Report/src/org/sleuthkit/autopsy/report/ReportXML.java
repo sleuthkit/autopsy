@@ -32,7 +32,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.jdom.Comment;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -129,7 +129,7 @@ public class ReportXML implements ReportModule {
                     Element attribute = new Element("Attribute").setAttribute("Type", tempatt.getAttributeTypeDisplayName());
                     String tempvalue = tempatt.getValueString();
                     //INVALID_XML_CHARS.matcher(tempvalue).replaceAll("");
-                    Element value = new Element("Value").setText(tempvalue);
+                    Element value = new Element("Value").setText(StringEscapeUtils.escapeXml(tempvalue));
                     attribute.addContent(value);
                     Element context = new Element("Context").setText(StringEscapeUtils.escapeXml(tempatt.getContext()));
                     attribute.addContent(context);

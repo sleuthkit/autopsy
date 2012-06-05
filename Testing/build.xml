@@ -47,6 +47,7 @@
                 <syspropertyset refid="test.@{test.type}.properties"/>
                 <jvmarg line="${test.bootclasspath.prepend.args}"/>
                 <jvmarg line="${test.run.args}"/>
+                <jvmarg line="-Xmx1024m"/>
                 <sysproperty key="img_path" value="${img_path}"/>
                 <sysproperty key="gold_path" value="${gold_path}"/>
                 <sysproperty key="out_path" value="${out_path}"/>
