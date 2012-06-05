@@ -112,12 +112,12 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
             .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 274, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(nsrlNameLabel))
-                    .addComponent(jLabel2))
-                .addContainerGap(143, Short.MAX_VALUE))
+                .addComponent(jLabel2)
+                .addContainerGap(159, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(53, 53, 53)
+                .addComponent(nsrlNameLabel)
+                .addContainerGap(110, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -160,7 +160,8 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         @Override
         public int getRowCount() {
-            return xmlHandle.getKnownBadSets().size();
+            int size = xmlHandle.getKnownBadSets().size();
+            return size == 0 ? 1 : size;
         }
 
         @Override
@@ -170,11 +171,19 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
-            if(columnIndex == 0) {
-                return db.getUseForIngest();
+            if (xmlHandle.getKnownBadSets().isEmpty()) {
+                if (columnIndex == 0) {
+                    return "";
+                } else {
+                    return "No notable databases set.";
+                }
             } else {
-                return db.getName();
+                HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
+                if (columnIndex == 0) {
+                    return db.getUseForIngest();
+                } else {
+                    return db.getName();
+                }
             }
         }
         
