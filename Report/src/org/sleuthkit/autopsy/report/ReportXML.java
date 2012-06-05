@@ -129,7 +129,7 @@ public class ReportXML implements ReportModule {
                     Element attribute = new Element("Attribute").setAttribute("Type", tempatt.getAttributeTypeDisplayName());
                     String tempvalue = tempatt.getValueString();
                     //INVALID_XML_CHARS.matcher(tempvalue).replaceAll("");
-                    Element value = new Element("Value").setText(tempvalue);
+                    Element value = new Element("Value").setText(StringEscapeUtils.escapeXml(tempvalue));
                     attribute.addContent(value);
                     Element context = new Element("Context").setText(StringEscapeUtils.escapeXml(tempatt.getContext()));
                     attribute.addContent(context);
