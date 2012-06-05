@@ -18,9 +18,9 @@ needed even if you have a 64-bit system).
 
 5) Set LIBEWF_HOME environment variable to root directory of LIBEWF
 
-6) Download and build release version of Sleuth Kit (TSK) 3.3.  You
+6) Download and build release version of Sleuth Kit (TSK) 4.0.  You
 need to build the tsk_jni project.
-- At the time of this writing, 3.3 is not released.  You can get it from either
+- At the time of this writing, 4.0 is not released.  You can get it from either
 -- GIT: git://github.com/sleuthkit/sleuthkit.git
 -- SVN: http://svn.github.com/sleuthkit/sleuthkit.git
 
