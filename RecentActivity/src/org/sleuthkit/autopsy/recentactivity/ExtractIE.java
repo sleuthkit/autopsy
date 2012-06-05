@@ -44,7 +44,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 // TSK Imports
-import javax.swing.JPanel;
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
