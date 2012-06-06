@@ -133,6 +133,7 @@ class Server {
     // TODO: DEFAULT_CORE_NAME needs to be replaced with unique names to support multiple open cases
     public static final String CORE_EVT = "CORE_EVT";
     private String javaPath = "java";
+    private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
 
     public enum CORE_EVT_STATES {
@@ -235,7 +236,10 @@ class Server {
     void start() {
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
         try {
-            curSolrProcess = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar", null, solrFolder);
+            final String MAX_SOLR_MEM_MB_PAR = " -Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m"; 
+            final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar";
+            logger.log(Level.INFO, "Starting Solr using: " + SOLR_START_CMD);
+            curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
             try {
                 //block, give time to fully stary the process
                 //so if it's restarted solr operations can be resumed seamlessly
