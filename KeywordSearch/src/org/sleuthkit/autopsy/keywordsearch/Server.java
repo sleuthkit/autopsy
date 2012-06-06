@@ -132,6 +132,7 @@ class Server {
     private static final String DEFAULT_CORE_NAME = "coreCase";
     // TODO: DEFAULT_CORE_NAME needs to be replaced with unique names to support multiple open cases
     public static final String CORE_EVT = "CORE_EVT";
+    public static final char ID_CHUNK_SEP = '_';
     private String javaPath = "java";
     private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
@@ -565,7 +566,7 @@ class Server {
             q.setQuery("*:*");
             String filterQuery = Schema.ID.toString() + ":" + contentID;
             if (chunkID != 0)
-                filterQuery = filterQuery + "_" + chunkID;
+                filterQuery = filterQuery + Server.ID_CHUNK_SEP + chunkID;
             q.addFilterQuery(filterQuery);
             q.setFields(Schema.CONTENT.toString());
             try {
@@ -619,7 +620,8 @@ class Server {
          * @throws SolrServerException 
          */
         private int queryNumFileChunks(long contentID) throws SolrServerException {
-            SolrQuery q = new SolrQuery("id:" + Long.toString(contentID) + "_*");
+            final SolrQuery q = 
+                    new SolrQuery(Server.Schema.ID + ":" + Long.toString(contentID) + Server.ID_CHUNK_SEP + "*");
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
         }

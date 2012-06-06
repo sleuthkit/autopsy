@@ -222,7 +222,7 @@ public class LuceneQuery implements KeywordSearchQuery {
                 for (SolrDocument resultDoc : resultList) {
                     final String resultID = (String) resultDoc.getFieldValue(Server.Schema.ID.toString());
 
-                    final int sepIndex = resultID.indexOf('_');
+                    final int sepIndex = resultID.indexOf(Server.ID_CHUNK_SEP);
 
                     if (sepIndex != -1) {
                         //file chunk result

@@ -143,8 +143,13 @@ public class Ingester {
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(FsContent f) throws IngesterException {
-        ingest(new FscContentStream(f), getContentFields(f), f.getSize());
+    void ingest(FsContent fsContent) throws IngesterException {
+        if (fsContent.isDir() ) {
+            ingest(new NullContentStream(fsContent), getContentFields(fsContent), 0);
+        }
+        else {
+            ingest(new FscContentStream(fsContent), getContentFields(fsContent), fsContent.getSize());
+        }
     }
 
     /**
@@ -196,7 +201,7 @@ public class Ingester {
      * 
      * @param ContentStream to ingest
      * @param fields content specific fields
-     * @param size size of the content
+     * @param size size of the content - used to determine the Solr timeout, not used to populate meta-data
      * @throws IngesterException if there was an error processing a specific
      * content, but the Solr server is probably fine.
      */
@@ -427,12 +432,14 @@ public class Ingester {
 
     /**
      * Determine if the file is ingestible/indexable by keyword search
-     * Note: currently only checks by extension and abstract type, could be a more robust check.
+     * Ingestible abstract file is either a directory, or an allocated file with supported extensions.
+     * Note: currently only checks by extension and abstract type, it does not check actual file content.
      * @param aFile
      * @return true if it is ingestible, false otherwise
      */
     static boolean isIngestible(AbstractFile aFile) {
         boolean isIngestible = false;
+        
         TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
         if (aType.equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || aType.equals(TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))
@@ -440,7 +447,8 @@ public class Ingester {
         
         FsContent fsContent = (FsContent) aFile;
         if (fsContent.isDir())
-            return isIngestible;
+            //we index dir name, not content
+            return true;
         
         final String fileName = fsContent.getName();
         for (final String ext : ingestibleExtensions) {
