@@ -358,7 +358,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         String content = null;
         try {
-            content = (String) solrServer.getSolrContent(contentObj, chunkId);
+            content = solrServer.getSolrContent(contentObj, chunkId);
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Couldn't get text content.", ex);
             return "";
