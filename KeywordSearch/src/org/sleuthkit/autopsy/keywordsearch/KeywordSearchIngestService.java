@@ -64,10 +64,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private static final long MAX_INDEX_SIZE = 100 * (1 << 10) * (1 << 10);
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
+    private volatile boolean runSearcher = false; //whether to run searcher next time
     private List<Keyword> keywords; //keywords to search
     private List<String> keywordLists; // lists currently being searched
     private Map<String, KeywordSearchList> keywordToList; //keyword to list name mapping
     private Timer commitTimer;
+    private Timer searchTimer;
     private Indexer indexer;
     private Searcher currentSearcher;
     private volatile boolean searcherDone = true;
@@ -83,8 +85,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     public enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,
-    };
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
     private Map<Long, IngestStatus> ingestStatus;
 
     public static synchronized KeywordSearchIngestService getDefault() {
@@ -117,19 +118,22 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             processedFiles = true;
         }
 
-        //check if time to commit and previous search is not running
+        //check if time to commit
         //commiting while searching causes performance issues
-        if (commitIndex && searcherDone) {
+        if (commitIndex) {
             logger.log(Level.INFO, "Commiting index");
             commit();
             commitIndex = false;
             indexChangeNotify();
 
-            updateKeywords();
-            //start search if previous not running
-            if (keywords != null && !keywords.isEmpty() && searcherDone) {
-                currentSearcher = new Searcher(keywords);
-                currentSearcher.execute();
+            //after commit, check if time to run searcher
+            if (searcherDone && runSearcher) {
+                updateKeywords();
+                //start search if previous not running
+                if (keywords != null && !keywords.isEmpty()) {
+                    currentSearcher = new Searcher(keywords);
+                    currentSearcher.execute();//searcher will stop time and restart timer when done
+                }
             }
         }
 
@@ -241,10 +245,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         logger.log(Level.INFO, "Using refresh interval (ms): " + commitIntervalMs);
 
         commitTimer = new Timer(commitIntervalMs, new CommitTimerAction());
+        searchTimer = new Timer(commitIntervalMs, new SearchTimerAction());
 
         initialized = true;
 
         commitTimer.start();
+        searchTimer.start();
 
         managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Started"));
     }
@@ -405,6 +411,19 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         }
     }
 
+    //CommitTimerAction to run by commitTimer
+    //sets a flag for indexer to commit after indexing next file
+    private class SearchTimerAction implements ActionListener {
+
+        private final Logger logger = Logger.getLogger(SearchTimerAction.class.getName());
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            runSearcher = true;
+            logger.log(Level.INFO, "SearchTimer awake");
+        }
+    }
+
     //Indexer thread that processes files in the queue
     //commits when timer expires
     //sleeps if nothing in the queue
@@ -436,22 +455,28 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             }
 
             if (ingestibleFile == true) {
-                File file = (File) aFile;
+                //we know it's an allocated file or dir (FsContent)
+                FsContent fileDir = (FsContent) aFile;
                 try {
                     //logger.log(Level.INFO, "indexing: " + fsContent.getName());
-                    ingester.ingest(file);
-                    ingestStatus.put(file.getId(), IngestStatus.INGESTED);
+                    ingester.ingest(fileDir);
+                    ingestStatus.put(fileDir.getId(), IngestStatus.INGESTED);
                 } catch (IngesterException e) {
-                    ingestStatus.put(file.getId(), IngestStatus.SKIPPED);
-                    //try to extract strings
-                    processNonIngestible(file);
+                    ingestStatus.put(fileDir.getId(), IngestStatus.SKIPPED);
+                    //try to extract strings if not a dir
+                    if (fileDir.isFile() == true) {
+                        processNonIngestible(fileDir);
+                    }
 
                 } catch (Exception e) {
-                    ingestStatus.put(file.getId(), IngestStatus.SKIPPED);
-                    //try to extract strings
-                    processNonIngestible(file);
+                    ingestStatus.put(fileDir.getId(), IngestStatus.SKIPPED);
+                    //try to extract strings if not a dir
+                    if (fileDir.isFile() == true) {
+                        processNonIngestible(fileDir);
+                    }
                 }
             } else {
+                //unallocated or unsupported type by Solr
                 processNonIngestible(aFile);
 
             }
@@ -511,6 +536,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 logger.log(Level.INFO, "Started a new searcher");
                 //make sure other searchers are not spawned 
                 searcherDone = false;
+                runSearcher = false;
+                searchTimer.stop();
 
                 int numSearched = 0;
                 progress.switchToDeterminate(keywords.size());
@@ -745,6 +772,9 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
             }
+            else {
+                searchTimer.start(); //start counting time for a new searcher to start
+            }
         }
     }
 
@@ -760,7 +790,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         }
         return ret;
     }
-    
+
     void setSkipKnown(boolean skip) {
         this.skipKnown = skip;
     }
