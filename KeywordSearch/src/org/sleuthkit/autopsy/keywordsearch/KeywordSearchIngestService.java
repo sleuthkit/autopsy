@@ -150,13 +150,20 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         //logger.log(Level.INFO, "complete()");
         commitTimer.stop();
-
+        
         //handle case if previous search running
         //cancel it, will re-run after final commit
         //note: cancellation of Searcher worker is graceful (between keywords)
         if (currentSearcher != null) {
-            currentSearcher.cancel(false);
+            //currentSearcher.cancelSearcher(false);
+            currentSearcher.cancel(true);
         }
+        
+        //cancel searcher timer, ensure unwanted searcher does not start 
+        //before we start the final one
+        if (searchTimer.isRunning())
+            searchTimer.stop();
+        runSearcher = false;
 
         logger.log(Level.INFO, "Running final index commit and search");
         //final commit
@@ -188,8 +195,14 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         commitTimer.stop();
         //stop currentSearcher
         if (currentSearcher != null) {
+            //currentSearcher.cancelSearcher(true);
             currentSearcher.cancel(true);
         }
+        
+        //cancel searcher timer, ensure unwanted searcher does not start 
+        if (searchTimer.isRunning())
+            searchTimer.stop();
+        runSearcher = false;
 
         //commit uncommited files, don't search again
         commit();
@@ -509,6 +522,18 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             this(keywords);
             this.finalRun = finalRun;
         }
+        
+        /**
+         * Method to cancel searcher, which sets the flag on the thread to stop
+         * and performs cleanup
+         * @param interrupt
+         * @return 
+         */
+        public boolean cancelSearcherXXX(boolean interrupt) {
+            boolean success = this.cancel(interrupt);
+            finalizeSearcher();
+            return success;
+        }
 
         @Override
         protected Object doInBackground() throws Exception {
@@ -524,6 +549,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                         progress.setDisplayName(displayName + " (Cancelling...)");
                     }
                     return Searcher.this.cancel(true);
+                    //return cancelSearcher(true);
                 }
             });
 
@@ -537,7 +563,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 //make sure other searchers are not spawned 
                 searcherDone = false;
                 runSearcher = false;
-                searchTimer.stop();
+                if (searchTimer.isRunning())
+                    searchTimer.stop();
 
                 int numSearched = 0;
                 progress.switchToDeterminate(keywords.size());
@@ -635,7 +662,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                                     snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, isRegex, true);
                                 } catch (NoOpenCoreException e) {
                                     logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
-                                    //no reason to continie
+                                    //no reason to continue
                                     finalizeSearcher();
                                     return null;
                                 } catch (Exception e) {
@@ -746,6 +773,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
             return null;
         }
+        
+        
 
         //perform all essential cleanup that needs to be done right AFTER doInBackground() returns
         //without relying on done() method that is not guaranteed to run after background thread completes
