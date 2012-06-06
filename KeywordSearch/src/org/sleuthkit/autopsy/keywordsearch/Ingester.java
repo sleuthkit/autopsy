@@ -192,7 +192,12 @@ public class Ingester {
 
         @Override
         public Map<String, String> visit(Directory d) {
-            throw new IllegalArgumentException("Indexing directories not supported");
+            Map<String, String> params = getCommonFields(d);
+            params.put(Server.Schema.CTIME.toString(), d.getCtimeAsDate());
+            params.put(Server.Schema.ATIME.toString(), d.getAtimeAsDate());
+            params.put(Server.Schema.MTIME.toString(), d.getMtimeAsDate());
+            params.put(Server.Schema.CRTIME.toString(), d.getMtimeAsDate());
+            return params;
         } 
     }
 
