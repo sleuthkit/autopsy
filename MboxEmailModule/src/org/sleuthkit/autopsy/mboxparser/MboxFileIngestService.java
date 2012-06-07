@@ -56,7 +56,7 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
         try {
             byte[] t = new byte[(int) 128];
             int byteRead = fsContent.read(t, 0, 128);
-            isMbox = mbox.detectMediaTypeFromBytes(t, fsContent.getName());
+            isMbox = mbox.isValidMimeTypeMbox(t);
         } catch (TskException ex) {
             Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -66,7 +66,8 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
             try {
                 ReadContentInputStream contentStream = new ReadContentInputStream(fsContent);
                 mbox.parse(contentStream);
-
+               String content = mbox.getContent();
+               String blah = new String();
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
             } catch (IOException ex) {

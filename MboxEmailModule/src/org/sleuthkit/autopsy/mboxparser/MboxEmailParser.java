@@ -5,6 +5,7 @@ import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MimeTypes;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.mbox.MboxParser;
@@ -23,6 +24,11 @@ public class MboxEmailParser {
     private String mimeType;   
     private Parser parser;
     private ParseContext context;
+    
+    public MboxEmailParser() 
+    {
+        this.tika = new Tika();
+    }
     
     public MboxEmailParser(InputStream inStream) 
     {
@@ -82,5 +88,13 @@ public class MboxEmailParser {
     public String detectMediaTypeFromBytes(byte[] firstFewBytes, String inDocName)
     {
         return this.tika.detect(firstFewBytes, inDocName);
+    }
+    
+    
+    public boolean isValidMimeTypeMbox(byte[] buffer)
+    {
+        String outMimeType = this.tika.detect(buffer);
+        
+        return outMimeType.equals(MimeTypes.OCTET_STREAM) ? true : (outMimeType.equals(MimeTypes.PLAIN_TEXT) ? true : outMimeType.equals(MimeTypes.XML));
     }
 }
