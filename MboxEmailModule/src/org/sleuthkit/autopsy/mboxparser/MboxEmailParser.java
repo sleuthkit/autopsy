@@ -3,6 +3,7 @@ package org.sleuthkit.autopsy.mboxparser;
 import java.io.*;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
@@ -19,7 +20,15 @@ public class MboxEmailParser {
     private Tika tika;
     private Metadata metadata;
     private ContentHandler contentHandler;
-    private String mimeType;
+    private String mimeType;   
+    private Parser parser;
+    private ParseContext context;
+    
+    public MboxEmailParser(InputStream inStream) 
+    {
+        this.tika = new Tika();
+        this.stream = inStream;
+    }
     
     public MboxEmailParser(String filepath) 
     {
@@ -29,25 +38,28 @@ public class MboxEmailParser {
     
     private void init() throws IOException
     {        
-        this.metadata = new Metadata();        
-        this.mimeType = tika.detect(this.stream);     
+        this.metadata = new Metadata();           
+        //Set MIME Type    
+        this.mimeType = tika.detect(this.stream);  
+        this.parser   = new MboxParser();   
+        this.context  = new ParseContext();
+        this.contentHandler = new BodyContentHandler();
+        //Seems like setting this causes the metadata not to output all of it.
+        this.metadata.set(Metadata.CONTENT_TYPE, this.mimeType);
     }
     
     public void parse() throws FileNotFoundException, IOException, SAXException, TikaException
     {   
         init();
-       // this.metadata = new Metadata();
-        
-        //String mimeType = tika.detect(this.stream);
-        this.contentHandler = new BodyContentHandler();
-        Parser parser = new MboxParser();
-        ParseContext context = new ParseContext();
-        
-        //Set MIME Type
-        //Seems like setting this causes the metadata not to output all of it.
-        this.metadata.set(Metadata.CONTENT_TYPE, this.mimeType);
-        
+        // this.metadata = new Metadata();        
+        //String mimeType = tika.detect(this.stream);        
         parser.parse(this.stream,this.contentHandler, this.metadata, context);
+    }
+    
+    public void parse(InputStream inStream) throws FileNotFoundException, IOException, SAXException, TikaException
+    {   
+        init();        
+        parser.parse(inStream,this.contentHandler, this.metadata, context);
     }
     
     public Metadata getMetadata()
