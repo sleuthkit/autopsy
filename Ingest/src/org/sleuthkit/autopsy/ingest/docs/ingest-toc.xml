@@ -5,7 +5,7 @@ and open the template in the editor.
 -->
 <!DOCTYPE toc PUBLIC "-//Sun Microsystems Inc.//DTD JavaHelp TOC Version 2.0//EN" "http://java.sun.com/products/javahelp/toc_2_0.dtd">
 <toc version="2.0">
-    <tocitem text="org.sleuthkit.autopsy.ingest">
+    <tocitem text="Ingest">
         <tocitem text="About Ingest" target="org.sleuthkit.autopsy.ingest.about"/>
     </tocitem>
 </toc>
