@@ -24,23 +24,17 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
 
 /**
  *
@@ -103,6 +97,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
                 }
             }
         });
+        this.skipNSRLCheckBox.setSelected(KeywordSearchIngestService.getDefault().getSkipKnown());
 
     }
 

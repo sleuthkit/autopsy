@@ -810,4 +810,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     void setSkipKnown(boolean skip) {
         this.skipKnown = skip;
     }
+    
+    boolean getSkipKnown() {
+        return skipKnown;
+    }
 }
