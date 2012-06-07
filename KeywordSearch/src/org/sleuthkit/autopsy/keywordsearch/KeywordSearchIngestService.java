@@ -70,6 +70,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private Map<String, KeywordSearchList> keywordToList; //keyword to list name mapping
     private Timer commitTimer;
     private Timer searchTimer;
+    private static final int COMMIT_INTERVAL_MS = 60 * 1000;
     private Indexer indexer;
     private Searcher currentSearcher;
     private volatile boolean searcherDone = true;
@@ -118,24 +119,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             processedFiles = true;
         }
 
-        //check if time to commit
-        //commiting while searching causes performance issues
-        if (commitIndex) {
-            logger.log(Level.INFO, "Commiting index");
-            commit();
-            commitIndex = false;
-            indexChangeNotify();
-
-            //after commit, check if time to run searcher
-            if (searcherDone && runSearcher) {
-                updateKeywords();
-                //start search if previous not running
-                if (keywords != null && !keywords.isEmpty()) {
-                    currentSearcher = new Searcher(keywords);
-                    currentSearcher.execute();//searcher will stop time and restart timer when done
-                }
-            }
-        }
+        checkRunCommitSearch();
 
         indexer.indexFile(abstractFile);
         return ProcessResult.OK;
@@ -154,10 +138,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         //handle case if previous search running
         //cancel it, will re-run after final commit
         //note: cancellation of Searcher worker is graceful (between keywords)
+        /*
         if (currentSearcher != null) {
-            //currentSearcher.cancelSearcher(false);
             currentSearcher.cancel(true);
         }
+        //do not cancel, let it complete as we can't always trap and handle cancellation  
+        */
         
         //cancel searcher timer, ensure unwanted searcher does not start 
         //before we start the final one
@@ -195,7 +181,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         commitTimer.stop();
         //stop currentSearcher
         if (currentSearcher != null) {
-            //currentSearcher.cancelSearcher(true);
             currentSearcher.cancel(true);
         }
         
@@ -254,11 +239,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         indexer = new Indexer();
 
-        final int commitIntervalMs = managerProxy.getUpdateFrequency() * 60 * 1000;
-        logger.log(Level.INFO, "Using refresh interval (ms): " + commitIntervalMs);
+        final int searcherIntervalMs = managerProxy.getUpdateFrequency() * 60 * 1000;
+        logger.log(Level.INFO, "Using commit interval (ms): " + KeywordSearchIngestService.COMMIT_INTERVAL_MS);
+        logger.log(Level.INFO, "Using searcher interval (ms): " + searcherIntervalMs);
 
-        commitTimer = new Timer(commitIntervalMs, new CommitTimerAction());
-        searchTimer = new Timer(commitIntervalMs, new SearchTimerAction());
+        commitTimer = new Timer(KeywordSearchIngestService.COMMIT_INTERVAL_MS, new CommitTimerAction());
+        searchTimer = new Timer(searcherIntervalMs, new SearchTimerAction());
 
         initialized = true;
 
@@ -410,6 +396,27 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             keywordLists.add(name);
         }
     }
+    
+    private void checkRunCommitSearch() {
+        //check if time to commit
+        //commiting while searching causes performance issues
+        if (commitIndex) {
+            logger.log(Level.INFO, "Commiting index");
+            commit();
+            commitIndex = false;
+            indexChangeNotify();
+
+            //after commit, check if time to run searcher
+            if (searcherDone && runSearcher) {
+                updateKeywords();
+                //start search if previous not running
+                if (keywords != null && !keywords.isEmpty()) {
+                    currentSearcher = new Searcher(keywords);
+                    currentSearcher.execute();//searcher will stop time and restart timer when done
+                }
+            }
+        }
+    }
 
     //CommitTimerAction to run by commitTimer
     //sets a flag for indexer to commit after indexing next file
@@ -523,17 +530,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             this.finalRun = finalRun;
         }
         
-        /**
-         * Method to cancel searcher, which sets the flag on the thread to stop
-         * and performs cleanup
-         * @param interrupt
-         * @return 
-         */
-        public boolean cancelSearcherXXX(boolean interrupt) {
-            boolean success = this.cancel(interrupt);
-            finalizeSearcher();
-            return success;
-        }
 
         @Override
         protected Object doInBackground() throws Exception {
@@ -549,7 +545,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                         progress.setDisplayName(displayName + " (Cancelling...)");
                     }
                     return Searcher.this.cancel(true);
-                    //return cancelSearcher(true);
                 }
             });
 
