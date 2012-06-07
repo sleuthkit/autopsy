@@ -226,16 +226,12 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
      * @param content to extract properties from
      */
     public static void fillPropertyMap(Map<String, Object> map, FsContent content) {
-        try {
-            dateFormatter.setTimeZone(TimeZone.getTimeZone(content.getImage().getTimeZone()));
-        } catch (TskException ex) {
-        }
         map.put(FsContentPropertyType.NAME.toString(), content.getName());
         map.put(FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
-        map.put(FsContentPropertyType.MOD_TIME.toString(),  epochToString(content.getMtime()));
-        map.put(FsContentPropertyType.CHANGED_TIME.toString(), epochToString(content.getCtime()));
-        map.put(FsContentPropertyType.ACCESS_TIME.toString(), epochToString(content.getAtime()));
-        map.put(FsContentPropertyType.CREATED_TIME.toString(), epochToString(content.getCrtime()));
+        map.put(FsContentPropertyType.MOD_TIME.toString(),  ContentUtils.getStringTime(content.getMtime(), content));
+        map.put(FsContentPropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
+        map.put(FsContentPropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
+        map.put(FsContentPropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
         map.put(FsContentPropertyType.SIZE.toString(), content.getSize());
         map.put(FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlagsAsString());
         map.put(FsContentPropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
@@ -248,13 +244,5 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         map.put(FsContentPropertyType.TYPE_META.toString(), content.getMetaTypeAsString());
         map.put(FsContentPropertyType.KNOWN.toString(), content.getKnown().getName());
         map.put(FsContentPropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
-    }
-    
-    private static String epochToString(long epoch) {
-        String time = "0000-00-00 00:00:00 (UTC)";
-        if (epoch != 0) {
-            time = dateFormatter.format(new java.util.Date(epoch * 1000));
-        }
-        return time;
     }
 }
