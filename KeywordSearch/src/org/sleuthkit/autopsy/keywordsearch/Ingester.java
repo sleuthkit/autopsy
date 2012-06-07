@@ -133,7 +133,7 @@ public class Ingester {
         params.put(Server.Schema.ID.toString(), 
         FileExtractedChild.getFileExtractChildId(sourceContent.getId(), fec.getChunkId()));
     
-        ingest(bcs, params, FileExtract.MAX_CHUNK_SIZE);
+        ingest(bcs, params, FileExtract.MAX_STRING_CHUNK_SIZE);
     }
 
     /**

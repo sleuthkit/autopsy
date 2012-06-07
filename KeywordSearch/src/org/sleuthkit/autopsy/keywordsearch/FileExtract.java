@@ -20,7 +20,6 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,14 +29,15 @@ import org.sleuthkit.datamodel.AbstractFile;
 
 
 /**
- * Utility to extract and index a file as file chunks
+ * Utility to extract strings and index a file with string content as chunks
+ * associated with the original parent file
  */
-public class FileExtract {
+class FileExtract {
     
+    KeywordSearchIngestService service;
     private int numChunks;
-    public static final long MAX_CHUNK_SIZE = 10 * 1024 * 1024L;
     private static final Logger logger = Logger.getLogger(FileExtract.class.getName());
-    private static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;
+    static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;
     private AbstractFile sourceFile;
     
     //single static buffer for all extractions.  Safe, indexing can only happen in one thread
@@ -50,7 +50,8 @@ public class FileExtract {
             STRING_CHUNK_BUF[2] = (byte)0xBF;
     }
     
-    public FileExtract(AbstractFile sourceFile) {
+    public FileExtract(KeywordSearchIngestService service, AbstractFile sourceFile) {
+        this.service = service;
         this.sourceFile = sourceFile;
         numChunks = 0; //unknown until indexing is done
     }
@@ -90,6 +91,11 @@ public class FileExtract {
                     logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);   
                     throw ingEx; //need to rethrow/return to signal error and move on
                 } 
+                
+                //check if need invoke commit/search between chunks
+                //not to delay commit if timer has gone off
+                service.checkRunCommitSearch();
+                
                 //debug.close();    
             }
             
@@ -115,7 +121,7 @@ public class FileExtract {
     }
 }
 /**
- * Represents each string chunk, a child of FileExtracted file
+ * Represents each string chunk to be indexed, a child of FileExtracted file
  */
 class FileExtractedChild {
     
@@ -159,6 +165,6 @@ class FileExtractedChild {
     }
     
     public static String getFileExtractChildId(long parentID, int childID) {
-        return Long.toString(parentID) + "_" + Integer.toString(childID);
+        return Long.toString(parentID) + Server.ID_CHUNK_SEP + Integer.toString(childID);
     }
 }

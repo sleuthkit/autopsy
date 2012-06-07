@@ -47,7 +47,6 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -70,9 +69,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private Map<String, KeywordSearchList> keywordToList; //keyword to list name mapping
     private Timer commitTimer;
     private Timer searchTimer;
-    private static final int COMMIT_INTERVAL_MS = 60 * 1000;
+    //private static final int COMMIT_INTERVAL_MS = 10 * 60 * 1000;
     private Indexer indexer;
     private Searcher currentSearcher;
+    private Searcher finalSearcher;
     private volatile boolean searcherDone = true;
     private Map<Keyword, List<ContentHit>> currentResults;
     private final Object searcherLock = new Object();
@@ -137,13 +137,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         
         //handle case if previous search running
         //cancel it, will re-run after final commit
-        //note: cancellation of Searcher worker is graceful (between keywords)
-        /*
+        //note: cancellation of Searcher worker is graceful (between keywords)        
         if (currentSearcher != null) {
-            currentSearcher.cancel(true);
-        }
-        //do not cancel, let it complete as we can't always trap and handle cancellation  
-        */
+            //currentSearcher.cancel(true);
+        }    
         
         //cancel searcher timer, ensure unwanted searcher does not start 
         //before we start the final one
@@ -155,16 +152,13 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         //final commit
         commit();
 
-        //signal a potential change in number of indexed files
-        indexChangeNotify();
-
         postIndexSummary();
 
         updateKeywords();
         //run one last search as there are probably some new files committed
         if (keywords != null && !keywords.isEmpty() && processedFiles == true) {
-            currentSearcher = new Searcher(keywords, true); //final currentSearcher run
-            currentSearcher.execute();
+            finalSearcher = new Searcher(keywords, true); //final searcher run
+            finalSearcher.execute();
         } else {
             finalSearcherDone = true;
             managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
@@ -192,7 +186,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         //commit uncommited files, don't search again
         commit();
 
-        indexChangeNotify();
         //postSummary();
     }
 
@@ -239,12 +232,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         indexer = new Indexer();
 
-        final int searcherIntervalMs = managerProxy.getUpdateFrequency() * 60 * 1000;
-        logger.log(Level.INFO, "Using commit interval (ms): " + KeywordSearchIngestService.COMMIT_INTERVAL_MS);
-        logger.log(Level.INFO, "Using searcher interval (ms): " + searcherIntervalMs);
+        final int updateIntervalMs = managerProxy.getUpdateFrequency() * 60 * 1000;
+        logger.log(Level.INFO, "Using commit interval (ms): " + updateIntervalMs);
+        logger.log(Level.INFO, "Using searcher interval (ms): " + updateIntervalMs);
 
-        commitTimer = new Timer(KeywordSearchIngestService.COMMIT_INTERVAL_MS, new CommitTimerAction());
-        searchTimer = new Timer(searcherIntervalMs, new SearchTimerAction());
+        commitTimer = new Timer(updateIntervalMs, new CommitTimerAction());
+        searchTimer = new Timer(updateIntervalMs, new SearchTimerAction());
 
         initialized = true;
 
@@ -289,19 +282,20 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     @Override
     public boolean hasBackgroundJobsRunning() {
-        if (currentSearcher != null && (searcherDone == false || finalSearcherDone == false)) {
+        if ( (currentSearcher != null && searcherDone == false) 
+            || (finalSearcherDone == false)) {
             return true;
         } else {
             return false;
         }
-
-        //no need to check timer thread
 
     }
 
     private void commit() {
         if (initialized) {
             ingester.commit();
+            //signal a potential change in number of indexed files
+            indexChangeNotify();
         }
     }
 
@@ -397,14 +391,13 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         }
     }
     
-    private void checkRunCommitSearch() {
+    void checkRunCommitSearch() {
         //check if time to commit
         //commiting while searching causes performance issues
         if (commitIndex) {
             logger.log(Level.INFO, "Commiting index");
             commit();
             commitIndex = false;
-            indexChangeNotify();
 
             //after commit, check if time to run searcher
             if (searcherDone && runSearcher) {
@@ -412,7 +405,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 //start search if previous not running
                 if (keywords != null && !keywords.isEmpty()) {
                     currentSearcher = new Searcher(keywords);
-                    currentSearcher.execute();//searcher will stop time and restart timer when done
+                    currentSearcher.execute();//searcher will stop timer and restart timer when done
                 }
             }
         }
@@ -453,7 +446,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         private boolean extractAndIngest(AbstractFile aFile) {
             boolean indexed = false;
-            FileExtract fe = new FileExtract(aFile);
+            final FileExtract fe = new FileExtract(KeywordSearchIngestService.this, aFile);
             try {
                 indexed = fe.index(ingester);
             } catch (IngesterException ex) {
@@ -535,8 +528,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         protected Object doInBackground() throws Exception {
             logger.log(Level.INFO, "Pending start of new searcher");
 
-            final String displayName = "Keyword Search" + (finalRun ? " (Finalizing)" : "");
-            progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+            final String displayName = "Keyword Search" + (finalRun ? " - Finalizing" : "");
+            progress = ProgressHandleFactory.createHandle(displayName + (" (Pending)"), new Cancellable() {
 
                 @Override
                 public boolean cancel() {
@@ -553,8 +546,9 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
             //block to ensure previous searcher is completely done with doInBackground()
             //even after previous searcher cancellation, we need to check this
-            synchronized (searcherLock) {
+            synchronized(searcherLock) {
                 logger.log(Level.INFO, "Started a new searcher");
+                progress.setDisplayName(displayName);
                 //make sure other searchers are not spawned 
                 searcherDone = false;
                 runSearcher = false;
@@ -636,8 +630,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                             }
                         }
                     }
-
-
 
                     if (!newResults.isEmpty()) {
 
