@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
@@ -75,7 +77,9 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private Searcher finalSearcher;
     private volatile boolean searcherDone = true;
     private Map<Keyword, List<ContentHit>> currentResults;
-    private final Object searcherLock = new Object();
+    //private final Object searcherLock = new Object();
+    private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
+    private static final Lock searcherLock = rwLock.writeLock(); 
     private volatile int messageID = 0;
     private boolean processedFiles;
     private volatile boolean finalSearcherDone = false;
@@ -139,7 +143,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         //cancel it, will re-run after final commit
         //note: cancellation of Searcher worker is graceful (between keywords)        
         if (currentSearcher != null) {
-            //currentSearcher.cancel(true);
+            currentSearcher.cancel(false);
         }    
         
         //cancel searcher timer, ensure unwanted searcher does not start 
@@ -546,7 +550,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
             //block to ensure previous searcher is completely done with doInBackground()
             //even after previous searcher cancellation, we need to check this
-            synchronized(searcherLock) {
+            searcherLock.lock();
+            try {
                 logger.log(Level.INFO, "Started a new searcher");
                 progress.setDisplayName(displayName);
                 //make sure other searchers are not spawned 
@@ -561,7 +566,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 for (Keyword keywordQuery : keywords) {
                     if (this.isCancelled()) {
                         logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: " + keywordQuery.getQuery());
-                        finalizeSearcher();
+                        //finalizeSearcher();
                         return null;
                     }
                     final String queryStr = keywordQuery.getQuery();
@@ -592,12 +597,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                         //no reason to continue with next query if recovery failed
                         //or wait for recovery to kick in and run again later
                         //likely case has closed and threads are being interrupted
-                        finalizeSearcher();
+                        //finalizeSearcher();
                         return null;
                     } catch (CancellationException e) {
                         logger.log(Level.INFO, "Cancel detected, bailing during keyword query: " + keywordQuery.getQuery());
 
-                        finalizeSearcher();
+                        //finalizeSearcher();
                         return null;
                     } catch (Exception e) {
                         logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e);
@@ -650,7 +655,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                                 } catch (NoOpenCoreException e) {
                                     logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
                                     //no reason to continue
-                                    finalizeSearcher();
+                                    //finalizeSearcher();
                                     return null;
                                 } catch (Exception e) {
                                     logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
@@ -660,7 +665,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                                 KeywordWriteResult written = del.writeToBlackBoard(hitTerm.getQuery(), hitFile, snippet, listName);
 
                                 if (written == null) {
-                                    //logger.log(Level.INFO, "BB artifact for keyword not written: " + hitTerm.toString());
+                                    logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: " + hitFile + ", hit: " + hitTerm.toString());
                                     continue;
                                 }
 
@@ -755,8 +760,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                     progress.progress(queryStr, ++numSearched);
                 }
 
-                finalizeSearcher();
+                //finalizeSearcher();
             } //end synchronized block
+            finally {
+                finalizeSearcher();
+                searcherLock.unlock();
+            }
 
             return null;
         }
@@ -778,6 +787,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             searcherDone = true;  //next currentSearcher can start
 
             if (finalRun) {
+                //this is the final searcher
                 logger.log(Level.INFO, "The final searcher in this ingest done.");
                 finalSearcherDone = true;
                 keywords.clear();
@@ -789,7 +799,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
             }
             else {
-                searchTimer.start(); //start counting time for a new searcher to start
+                //start counting time for a new searcher to start
+                //unless final searcher is pending
+                if (finalSearcher != null)
+                    searchTimer.start(); 
             }
         }
     }
@@ -809,5 +822,9 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     void setSkipKnown(boolean skip) {
         this.skipKnown = skip;
+    }
+    
+    boolean getSkipKnown() {
+        return skipKnown;
     }
 }

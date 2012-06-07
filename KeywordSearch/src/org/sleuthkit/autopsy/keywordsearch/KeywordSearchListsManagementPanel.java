@@ -24,23 +24,17 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
 
 /**
  *
@@ -103,6 +97,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
                 }
             }
         });
+        this.skipNSRLCheckBox.setSelected(KeywordSearchIngestService.getDefault().getSkipKnown());
 
     }
 
@@ -210,12 +205,13 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_newListButtonActionPerformed
 
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
+
         final String FEATURE_NAME = "Keyword List Import";
 
         JFileChooser chooser = new JFileChooser();
-        final String EXTENSION = "xml";
+        final String[] EXTENSION = new String[]{"xml", "txt"};
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "Keyword List XML file", EXTENSION);
+                "Keyword List File", EXTENSION);
         chooser.setFileFilter(filter);
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
@@ -228,8 +224,15 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
 
             //force append extension if not given
             String fileAbs = selFile.getAbsolutePath();
-
-            final KeywordSearchListsXML reader = new KeywordSearchListsXML(fileAbs);
+            
+            final KeywordSearchListsAbstract reader;
+            
+            if(KeywordSearchUtil.isXMLList(fileAbs)) {
+                reader = new KeywordSearchListsXML(fileAbs);
+            } else {
+                reader = new KeywordSearchListsEncase(fileAbs);
+            }
+            
             if (!reader.load()) {
                 KeywordSearchUtil.displayDialog(FEATURE_NAME, "Error importing keyword list from file " + fileAbs, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;

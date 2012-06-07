@@ -162,10 +162,6 @@ public class TermComponentQuery implements KeywordSearchQuery {
     public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
 
-        if (snippet == null || snippet.equals("")) {
-            return null;
-        }
-
         //there is match actually in this file, create artifact only then
         BlackboardArtifact bba = null;
         KeywordWriteResult writeResult = null;
@@ -188,7 +184,8 @@ public class TermComponentQuery implements KeywordSearchQuery {
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, "", listName));
 
         //preview
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+        if (snippet != null)
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
 
         //regex keyword
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", termsQuery));
