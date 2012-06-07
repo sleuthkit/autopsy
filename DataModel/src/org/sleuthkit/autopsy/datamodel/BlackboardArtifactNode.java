@@ -18,12 +18,10 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.AbstractNode;
@@ -35,11 +33,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitItemVisitor;
-import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -51,7 +44,6 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     BlackboardArtifact artifact;
     Content associated;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
-    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         super(Children.LEAF, getLookups(artifact));
@@ -105,7 +97,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
      * @param map, with preserved ordering, where property names/values are put
      * @param content to extract properties from
      */
-    public static void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
+    private void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
         try {
             for(BlackboardAttribute attribute : artifact.getAttributes()){
                 if(attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID())
@@ -120,13 +112,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
                     case LONG:
                         if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
                                 || attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
-                            long epoch = attribute.getValueLong();
-                            String time = "0000-00-00 00:00:00";
-                            if (epoch != 0) {
-                                dateFormatter.setTimeZone(getTimeZone(artifact));
-                                time = dateFormatter.format(new java.util.Date(epoch * 1000));
-                            }
-                            map.put(attribute.getAttributeTypeDisplayName(), time);
+                            map.put(attribute.getAttributeTypeDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
                         } else {
                             map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueLong());
                         }
@@ -169,14 +155,6 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
             logger.log(Level.WARNING, "Getting file failed", ex);
         }
         throw new IllegalArgumentException("Couldn't get file from database");
-    }
-
-    private static TimeZone getTimeZone(BlackboardArtifact artifact) {
-        try {
-            return TimeZone.getTimeZone(getAssociatedContent(artifact).getImage().getTimeZone());
-        } catch(TskException ex) {
-            return TimeZone.getDefault();
-        }
     }
 
     private static HighlightLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
