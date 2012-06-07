@@ -1,6 +1,3 @@
-
-
-
 /*
  * Autopsy Forensic Browser
  *
@@ -20,15 +17,21 @@
  * limitations under the License.
  */
 package org.sleuthkit.autopsy.mboxparser;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.tika.exception.TikaException;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceAbstract.*;
 import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
 import org.sleuthkit.datamodel.AbstractFile;
-
+import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.TskException;
+import org.xml.sax.SAXException;
 
 public class MboxFileIngestService implements IngestServiceAbstractFile {
 
@@ -47,18 +50,38 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
     @Override
     public ProcessResult process(AbstractFile fsContent) {
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
+        MboxEmailParser mbox = new MboxEmailParser();
+        boolean isMbox = false;
 
-        //service specific AbstractFile processing code here
         try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
+            byte[] t = new byte[(int) 128];
+            int byteRead = fsContent.read(t, 0, 128);
+            isMbox = mbox.detectMediaTypeFromBytes(t, fsContent.getName());
+        } catch (TskException ex) {
+            Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        return ProcessResult.OK;
-    }
 
-    @Override
-    public void complete() {
+        if (isMbox) {
+            try {
+                ReadContentInputStream contentStream = new ReadContentInputStream(fsContent);
+                mbox.parse(contentStream);
+
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (IOException ex) {
+                Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (SAXException ex) {
+                Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (TikaException ex) {
+                Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    
+    return ProcessResult.OK ;
+}
+@Override
+        public void complete() {
         logger.log(Level.INFO, "complete()");
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
 
@@ -66,19 +89,19 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
     }
 
     @Override
-    public String getName() {
+        public String getName() {
         return "Mbox Parser";
     }
 
     @Override
-    public String getDescription() {
+        public String getDescription() {
         return "This class parses through a file to determine if it is an mbox file and if so, populates an email artifact for it in the blackboard.";
     }
     
     
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+        public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init()");
         this.managerProxy = managerProxy;
 
@@ -86,48 +109,48 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
     }
 
     @Override
-    public void stop() {
+        public void stop() {
         logger.log(Level.INFO, "stop()");
 
         //service specific cleanup due interruption here
     }
 
     @Override
-    public ServiceType getType() {
+        public ServiceType getType() {
         return ServiceType.Image;
     }
     
     @Override
-    public boolean hasSimpleConfiguration() {
+        public boolean hasSimpleConfiguration() {
         return false;
     }
     
     @Override
-    public boolean hasAdvancedConfiguration() {
+        public boolean hasAdvancedConfiguration() {
         return false;
     }
 
     @Override
-    public javax.swing.JPanel getSimpleConfiguration() {
+        public javax.swing.JPanel getSimpleConfiguration() {
         return null;
     }
     
     @Override
-    public javax.swing.JPanel getAdvancedConfiguration() {
+        public javax.swing.JPanel getAdvancedConfiguration() {
         return null;
     }
     
     @Override
-    public boolean hasBackgroundJobsRunning() {
+        public boolean hasBackgroundJobsRunning() {
         return false;
     }
     
     
     @Override
-    public void saveAdvancedConfiguration() {
+        public void saveAdvancedConfiguration() {
     }
     
     @Override
-    public void saveSimpleConfiguration() {
+        public void saveSimpleConfiguration() {
     }
 }
