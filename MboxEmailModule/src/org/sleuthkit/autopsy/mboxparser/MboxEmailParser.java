@@ -4,9 +4,9 @@ import java.io.*;
 import java.util.ArrayList;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MimeTypes;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.mbox.MboxParser;
@@ -106,7 +106,7 @@ public class MboxEmailParser {
     {
         String outMimeType = this.tika.detect(buffer);
         
-        return outMimeType.equals(MimeTypes.OCTET_STREAM) ? true : (outMimeType.equals(MimeTypes.PLAIN_TEXT) ? true : outMimeType.equals(MimeTypes.XML));
+        return outMimeType.equals( MediaType.application("mbox").getType());
     }
     
     //This assumes the file/stream was parsed since we are looking at the metadata
@@ -164,5 +164,10 @@ public class MboxEmailParser {
     public String getRecipientAddress()
     {
         return this.metadata.get(Metadata.MESSAGE_RECIPIENT_ADDRESS);
+    }
+    
+    public String getMboxSupportedMediaType()
+    {
+        return MediaType.application("mbox").getType();
     }
 }
