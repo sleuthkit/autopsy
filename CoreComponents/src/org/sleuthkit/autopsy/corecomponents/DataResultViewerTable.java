@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
 import org.openide.nodes.AbstractNode;
@@ -241,8 +242,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
                 this.getAllChildPropertyHeadersRec(selectedNode, 100);
                 List<Node.Property> props = new ArrayList<Node.Property>(propertiesAcc);
-                if(props.size() > 0)
-                    props.remove(0);
+                if(props.size() > 0) {
+                    Node.Property prop = props.remove(0);
+                    ((DefaultOutlineModel)ov.getOutline().getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
+                }
 
 
                 // *********** Make the TreeTableView to be sortable ***************
