@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.mboxparser;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.tika.exception.TikaException;
@@ -29,6 +30,9 @@ import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServiceAbstract.*;
 import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskException;
 import org.xml.sax.SAXException;
@@ -49,7 +53,7 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
 
     @Override
     public ProcessResult process(AbstractFile fsContent) {
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
+        
         MboxEmailParser mbox = new MboxEmailParser();
         boolean isMbox = false;
 
@@ -63,11 +67,19 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
 
 
         if (isMbox) {
+            managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
             try {
                 ReadContentInputStream contentStream = new ReadContentInputStream(fsContent);
                 mbox.parse(contentStream);
-               String content = mbox.getContent();
-               String blah = new String();
+                String content = mbox.getContent();
+                String subject = mbox.getSubject();
+                String from = mbox.getFrom();
+                String to = mbox.getTo();
+                String cc = mbox.getCC();
+                String bcc = mbox.getBCC(); 
+                String ctype = mbox.getContenType();
+                Long   datetime = mbox.getDateCreated(); 
+
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
             } catch (IOException ex) {
@@ -78,11 +90,22 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
                 Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
+
+        return ProcessResult.OK;
+    }
     
-    return ProcessResult.OK ;
-}
-@Override
-        public void complete() {
+    public void addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, FsContent content, Collection<BlackboardAttribute> bbattributes) {
+
+        try {
+            BlackboardArtifact bbart = content.newArtifact(type);
+            bbart.addAttributes(bbattributes);
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "Error while trying to add an artifact: " + ex);
+        }
+    }
+
+    @Override
+    public void complete() {
         logger.log(Level.INFO, "complete()");
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
 
@@ -90,68 +113,66 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
     }
 
     @Override
-        public String getName() {
+    public String getName() {
         return "Mbox Parser";
     }
 
     @Override
-        public String getDescription() {
+    public String getDescription() {
         return "This class parses through a file to determine if it is an mbox file and if so, populates an email artifact for it in the blackboard.";
     }
-    
-    
 
     @Override
-        public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init()");
         this.managerProxy = managerProxy;
+         this.managerProxy.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));
 
         //service specific initialization here
     }
 
     @Override
-        public void stop() {
+    public void stop() {
         logger.log(Level.INFO, "stop()");
 
         //service specific cleanup due interruption here
     }
 
     @Override
-        public ServiceType getType() {
-        return ServiceType.Image;
+    public ServiceType getType() {
+        return ServiceType.AbstractFile;
     }
-    
+
     @Override
-        public boolean hasSimpleConfiguration() {
-        return false;
-    }
-    
-    @Override
-        public boolean hasAdvancedConfiguration() {
+    public boolean hasSimpleConfiguration() {
         return false;
     }
 
     @Override
-        public javax.swing.JPanel getSimpleConfiguration() {
-        return null;
-    }
-    
-    @Override
-        public javax.swing.JPanel getAdvancedConfiguration() {
-        return null;
-    }
-    
-    @Override
-        public boolean hasBackgroundJobsRunning() {
+    public boolean hasAdvancedConfiguration() {
         return false;
     }
-    
-    
+
     @Override
-        public void saveAdvancedConfiguration() {
+    public javax.swing.JPanel getSimpleConfiguration() {
+        return null;
     }
-    
+
     @Override
-        public void saveSimpleConfiguration() {
+    public javax.swing.JPanel getAdvancedConfiguration() {
+        return null;
+    }
+
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        return false;
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+    }
+
+    @Override
+    public void saveSimpleConfiguration() {
     }
 }
