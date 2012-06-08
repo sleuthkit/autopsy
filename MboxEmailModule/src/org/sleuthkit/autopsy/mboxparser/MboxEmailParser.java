@@ -1,6 +1,7 @@
 package org.sleuthkit.autopsy.mboxparser;
 
 import java.io.*;
+import java.util.ArrayList;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
@@ -24,6 +25,16 @@ public class MboxEmailParser {
     private String mimeType;   
     private Parser parser;
     private ParseContext context;
+    
+    private static ArrayList<String> tikaMimeTypes;
+    
+    static
+    {
+        tikaMimeTypes = new ArrayList<String>();       
+        tikaMimeTypes.add(MimeTypes.OCTET_STREAM);
+        tikaMimeTypes.add(MimeTypes.PLAIN_TEXT);
+        tikaMimeTypes.add(MimeTypes.XML);
+    }
     
     public MboxEmailParser() 
     {
@@ -96,5 +107,62 @@ public class MboxEmailParser {
         String outMimeType = this.tika.detect(buffer);
         
         return outMimeType.equals(MimeTypes.OCTET_STREAM) ? true : (outMimeType.equals(MimeTypes.PLAIN_TEXT) ? true : outMimeType.equals(MimeTypes.XML));
+    }
+    
+    //This assumes the file/stream was parsed since we are looking at the metadata
+    public boolean isValidMboxType()
+    {
+        return this.metadata.get(Metadata.DATE_CREATED).equals("application/mbox");
+    }
+    
+    //Get email subject
+    public String getSubject()
+    {
+        return this.metadata.get(Metadata.SUBJECT);
+    }
+    
+    public String getTitle()
+    {
+        return this.metadata.get(Metadata.TITLE);
+    }
+    
+    public String getDateCreated()
+    {
+        return this.metadata.get(Metadata.DATE_CREATED);
+    }
+    
+    public String getContenType()
+    {
+        return this.metadata.get(Metadata.CONTENT_TYPE);
+    }
+    
+    public String getContenEncoding()
+    {
+        return this.metadata.get(Metadata.CONTENT_ENCODING);
+    }
+    
+    public String getFrom()
+    {
+        return this.metadata.get(Metadata.MESSAGE_FROM);
+    }
+    
+    public String getTo()
+    {
+        return this.metadata.get(Metadata.MESSAGE_TO);
+    }
+    
+    public String getCC()
+    {
+        return this.metadata.get(Metadata.MESSAGE_CC);
+    }
+    
+    public String getBCC()
+    {
+        return this.metadata.get(Metadata.MESSAGE_BCC);
+    }
+    
+    public String getRecipientAddress()
+    {
+        return this.metadata.get(Metadata.MESSAGE_RECIPIENT_ADDRESS);
     }
 }
