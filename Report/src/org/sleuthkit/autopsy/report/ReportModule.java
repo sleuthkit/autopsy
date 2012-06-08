@@ -73,7 +73,7 @@ public interface ReportModule {
      * Calls to the report module to execute a method to display the report that
      * was generated.
      *
-     * @param String the path to the file
+     * @param path The string path to the file
      *
      */
     public void getPreview(String path);
