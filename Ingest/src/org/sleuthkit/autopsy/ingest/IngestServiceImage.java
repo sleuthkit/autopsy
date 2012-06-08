@@ -23,7 +23,7 @@ import org.sleuthkit.datamodel.Image;
 /**
  * 
  * Ingest service that acts on entire image 
- * Image ingest services run in own thread in the background
+ * Image ingest services run each in its own background thread
  * in parallel to the file processing ingest pipeline and other image ingest modules
  */
 public interface IngestServiceImage extends IngestServiceAbstract {

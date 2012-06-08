@@ -18,12 +18,15 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
@@ -48,7 +51,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
@@ -251,9 +253,37 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
                 try {
                     String snippet;
-                    //TODO reuse snippet in ResultWriter
-                    snippet = LuceneQuery.querySnippet(tcq.getEscapedQueryString(), f.getId(), previewChunk, !literal_query, true);
-                    setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
+                    
+                    String snippetQuery = null;
+
+                    if (literal_query) {
+                        snippetQuery = tcq.getEscapedQueryString();
+                    } else {
+                        //in regex, to generate the preview snippet
+                        //just pick any term that hit that file (since we are compressing result view)
+                        String hit = null;
+                        //find the first hit for this file 
+                        for (String hitKey : tcqRes.keySet()) {
+                            List<ContentHit> chits = tcqRes.get(hitKey);
+                            for (ContentHit chit : chits) {
+                                if (chit.getContent().equals(f)) {
+                                    hit = hitKey;
+                                    break;
+                                }
+                            }
+                            if (hit != null) {
+                                break;
+                            }
+                        }
+                        if (hit != null) {
+                            snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit, true, false);
+                        }
+                    }
+
+                    if (snippetQuery != null) {
+                        snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), previewChunk, !literal_query, true);
+                        setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
+                    }
                 } catch (NoOpenCoreException ex) {
                     logger.log(Level.WARNING, "Could not perform the snippet query. ", ex);
                     return false;
@@ -267,6 +297,9 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, highlightQueryEscaped, tcq, previewChunk, tcqRes));
             }
             //write to bb
+            //cannot reuse snippet in ResultWriter
+            //because for regex searches in UI we compress results by showing a file per regex once (even if multiple term hits)
+            //whereas in bb we write every hit per file separately
             new ResultWriter(tcqRes, tcq, listName).execute();
 
 
@@ -474,6 +507,9 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
     static class ResultWriter extends SwingWorker<Object, Void> {
 
         private static List<ResultWriter> writers = new ArrayList<ResultWriter>();
+        //lock utilized to enqueue writers and limit execution to 1 at a time
+        private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
+        private static final Lock writerLock = rwLock.writeLock();
         private ProgressHandle progress;
         private KeywordSearchQuery query;
         private String listName;
@@ -488,11 +524,17 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
         }
 
-        @Override
-        protected void done() {
-            super.done();
+        protected void finalizeWorker() {
             deregisterWriter(this);
-            progress.finish();
+
+            EventQueue.invokeLater(new Runnable() {
+
+                @Override
+                public void run() {
+                    progress.finish();
+                }
+            });
+
 
             if (!this.isCancelled() && !na.isEmpty()) {
                 IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
@@ -501,47 +543,55 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
         @Override
         protected Object doInBackground() throws Exception {
-            registerWriter(this);
-            final String queryStr = query.getQueryString();
-            final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
-            progress = ProgressHandleFactory.createHandle("Saving results: " + queryDisp, new Cancellable() {
+            registerWriter(this); //register (synchronized on class) outside of writerLock to prevent deadlock
 
-                @Override
-                public boolean cancel() {
-                    return ResultWriter.this.cancel(true);
-                }
-            });
+            //block until previous writer is done
+            writerLock.lock();
+            try {
+                final String queryStr = query.getQueryString();
+                final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
+                progress = ProgressHandleFactory.createHandle("Saving results: " + queryDisp, new Cancellable() {
 
-            progress.start(hits.keySet().size());
-            int processedFiles = 0;
-            for (final String hit : hits.keySet()) {
-                progress.progress(hit, ++processedFiles);
-                if (this.isCancelled()) {
-                    break;
-                }
-                Map<AbstractFile, Integer> flattened = ContentHit.flattenResults(hits.get(hit));
-                for (AbstractFile f : flattened.keySet()) {
-                    int chunkId = flattened.get(f);
-                    final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit, true, false);
-                    String snippet = null;
-                    try {
-                        snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), chunkId, !query.isLiteral(), true);
-                    } catch (NoOpenCoreException e) {
-                        logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
-                        //no reason to continie
-                        return null;
-                    } catch (Exception e) {
-                        logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
-                        continue;
+                    @Override
+                    public boolean cancel() {
+                        return ResultWriter.this.cancel(true);
                     }
-                    if (snippet != null) {
-                        KeywordWriteResult written = query.writeToBlackBoard(hit, f, snippet, listName);
-                        if (written != null) {
-                            na.add(written.getArtifact());
+                });
+
+                progress.start(hits.keySet().size());
+                int processedFiles = 0;
+                for (final String hit : hits.keySet()) {
+                    progress.progress(hit, ++processedFiles);
+                    if (this.isCancelled()) {
+                        break;
+                    }
+                    Map<AbstractFile, Integer> flattened = ContentHit.flattenResults(hits.get(hit));
+                    for (AbstractFile f : flattened.keySet()) {
+                        int chunkId = flattened.get(f);
+                        final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit, true, false);
+                        String snippet = null;
+                        try {
+                            snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), chunkId, !query.isLiteral(), true);
+                        } catch (NoOpenCoreException e) {
+                            logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
+                            //no reason to continie
+                            return null;
+                        } catch (Exception e) {
+                            logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e);
+                            continue;
+                        }
+                        if (snippet != null) {
+                            KeywordWriteResult written = query.writeToBlackBoard(hit, f, snippet, listName);
+                            if (written != null) {
+                                na.add(written.getArtifact());
+                            }
                         }
                     }
-                }
 
+                }
+            } finally {
+                writerLock.unlock();
+                finalizeWorker();
             }
 
 
