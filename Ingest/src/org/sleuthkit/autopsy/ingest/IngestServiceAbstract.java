@@ -19,51 +19,66 @@
 
 package org.sleuthkit.autopsy.ingest;
 
-import java.beans.PropertyChangeListener;
 
 /**
  * Base interface for ingest services
  */
 public interface IngestServiceAbstract {
     
-    public enum ServiceType {Image, AbstractFile};
+    /**
+     * Possible service types for the implementing classes
+     */
+    public enum ServiceType {
+        /**
+         * Image type service
+         */
+        Image,  
+        
+        /**
+         * AbstractFile type service
+         */
+        AbstractFile
+    };
 
     /**
-     * notification from manager that brand new processing should be initiated.
+     * Notification from manager that brand new ingest should be initiated.
      * Service loads its configuration and performs initialization
-     * called once per new worker thread
+     * Invoked once per new worker thread, per ingest
      * 
-     * @param IngestManagerProxy interface to manager for posting messages, getting configurations
+     * @param IngestManagerProxy manager facade for posting messages, getting configurations
      */
     public void init(IngestManagerProxy managerProxy);
 
     /**
-     * notification from manager that there is no more content to process and all work is done.
-     * Service performs any clean-up, notifies viewers and may also write results to the black-board
+     * Notification from manager that there is no more content to process and all work is done.
+     * Service performs any clean-up of internal resources, and finalizes processing to produce complete result
+     * Service also posts ingest message indicating it is done, and posts ingest stats and errors in the details of the message.
      */
     public void complete();
 
     /**
-     * notification from manager to stop processing due to some interruption (user, error, exception)
+     * Notification from manager to stop processing due to some interruption (user, error, exception)
+     * Service performs any clean-up of internal resources
+     * It may also discard any pending results, but it should ensure it is in a defined state so that ingest can be rerun later.
      */
     public void stop();
 
     /**
-     * get specific name of the service
-     * should be unique across services, a user-friendly name of the service shown in GUI
+     * Gets specific name of the service
+     * The name should be unique across services
      * @return unique service name
      */
     public String getName();
     
     /**
-     * get user-friendly description of the service
+     * Gets user-friendly description of the service
      * @return service description
      */
     public String getDescription();
     
     /**
-     * 
-     * @return specialization of the service
+     * Returns type of the service
+     * @return service type
      */
     public ServiceType getType();
     
@@ -72,50 +87,59 @@ public interface IngestServiceAbstract {
      * This method provides insight to the manager if the service has truly completed its work or not.
      *
      * 
-     * @return true if any background threads/workers managed by this service are still running
-     * false if all work has been done, or if background threads are not managed by this service
+     * @return true if any background threads/workers managed by this service are still running or are pending to be run,
+     * false if all work has been done, or if background threads are not used/managed by this service
      */
     public boolean hasBackgroundJobsRunning();
     
     
     /**
-     * @return does this service have a simple configuration?
+     * There are 2 levels of configuration a service can implement: simple and advanced.
+     * Provides info if the module implements simple configuration.
+     * 
+     * @return true if this service has a simple configuration
      */
     public boolean hasSimpleConfiguration();
     
     /**
-     * @return does this service have advanced configuration?
+     * There are 2 levels of configuration a service can implement: simple and advanced.
+     * Provides info if the module implements advanced configuration.
+     * 
+     * @return true if this service has an advanced configuration
      */
     public boolean hasAdvancedConfiguration();
     
     /**	
-     * Opportunity for the module to save its configuration options from from the getSimpleConfiguration() JPanel into the module
-     * This is invoked by the framework e.g. when simple configuration panel is going out of scope
+     * If module implements simple configuration panel
+     * it should read its current state and make it persistent / save it in this method
+     * so that the new configuration will be in effect during the ingest.
      */
     public void saveSimpleConfiguration();
 
-    /** Opportunity for the module to save its configuration options from from the getAdvancedConfiguration() JPanel into the module
-     * This is invoked by the framework e.g. when advanced configuration dialog is going out of scope	
+    /**	
+     * If module implements advanced configuration panel
+     * it should read its current state and make it persistent / save it in this method
+     * so that the new configuration will be in effect during the ingest.
      */
     public void saveAdvancedConfiguration();
 
     /**
-     * Provides basic module configuration to the user (available e.g. via the add image wizard)
-     * Only basic configuration should be exposed in this panel due to its size limitation
+     * Implements simple module configuration exposed to the user before ingest starts
+     * Only basic, most frequently used configuration options should be exposed in this panel due to size limitation
      * More options, if any, should be available via userConfigureAdvanced()
      * The module is responsible for preserving / saving its configuration state
-     * In addition, userConfigureSave() can be used
+     * In addition, saveSimpleConfiguration() can be used
      * 
-     * @return JPanel containing basic configuration widgets or null
+     * @return JPanel containing basic configuration widgets or null if simple configuration is not available
      */
     public javax.swing.JPanel getSimpleConfiguration();
     
      /**
-     * Provides advanced module configuration to the user (available e.g. via the add image wizard)
+     * Implements advanced module configuration exposed to the user before ingest starts
      * The module is responsible for preserving / saving its configuration state
-     * In addition, userConfigureAdvancedSave() can be used
+     * In addition, saveAdvancedConfiguration() can be used
      * 
-     * @return JPanel containing basic configuration widgets or null
+     * @return JPanel containing advanced configuration widgets or null if advanced configuration is not available
      */
     public javax.swing.JPanel getAdvancedConfiguration();
 }
