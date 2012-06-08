@@ -30,10 +30,10 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
  * Visitor for getting all the files/unalloc files / dirs to ingest
@@ -53,6 +53,11 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
     }
     
     @Override
+    public Collection<AbstractFile> visit(Directory drctr) {
+        return Collections.<AbstractFile>singleton(drctr);
+    }
+    
+    @Override
     public Collection<AbstractFile> visit(LayoutFile lf) {
         return Collections.<AbstractFile>singleton(lf);
     }
@@ -65,8 +70,8 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
         SleuthkitCase sc = Case.getCurrentCase().getSleuthkitCase();
 
         StringBuilder queryB = new StringBuilder();
-        queryB.append("SELECT * FROM tsk_files WHERE (fs_obj_id = ").append(fs.getId());
-        queryB.append(") AND (size > 0)");
+        queryB.append("SELECT * FROM tsk_files WHERE ( (fs_obj_id = ").append(fs.getId());
+        queryB.append(") OR (fs_obj_id = NULL) ) AND (size > 0)");
         queryB.append(" AND ( (meta_type = ").append(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getMetaType());
         queryB.append(") OR (meta_type = ").append(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getMetaType());
         queryB.append( " AND (name != '.') AND (name != '..')");
