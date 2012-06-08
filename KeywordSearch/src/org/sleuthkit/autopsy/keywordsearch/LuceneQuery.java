@@ -196,6 +196,7 @@ public class LuceneQuery implements KeywordSearchQuery {
             sb.append(field).append(":").append(groupedQuery);
             theQueryStr = sb.toString();
         }
+        
         q.setQuery(theQueryStr);
         q.setRows(ROWS_PER_FETCH);
         q.setFields(Server.Schema.ID.toString());
@@ -335,7 +336,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         q.setHighlightSimplePost("&raquo;");
         q.setHighlightSnippets(1);
         q.setHighlightFragsize(SNIPPET_LENGTH);
-        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //analyze all content 
+        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //analyze all content SLOW! consider lowering
 
         try {
             QueryResponse response = solrServer.query(q);
