@@ -49,6 +49,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 /**
  *
@@ -89,7 +90,8 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             public String toString() {
                 return "Context";
             }
-        },}
+        },
+    }
     private Presentation presentation;
     private List<Keyword> queries;
     private Collection<KeyValueQuery> things;
@@ -246,16 +248,18 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 Map<String, Object> resMap = new LinkedHashMap<String, Object>();
                 setCommonProperty(resMap, CommonPropertyTypes.MATCH, f.getName());
 
-                if (true) {
-                    try {
-                        String snippet;
-                        //TODO reuse snippet in ResultWriter
-                        snippet = LuceneQuery.querySnippet(tcq.getEscapedQueryString(), f.getId(), previewChunk, !literal_query, true);
-                        setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
-                    } catch (NoOpenCoreException ex) {
-                        logger.log(Level.WARNING, "Could not perform the snippet query. ", ex);
-                        return false;
-                    }
+                try {
+                    String snippet;
+                    //TODO reuse snippet in ResultWriter
+                    snippet = LuceneQuery.querySnippet(tcq.getEscapedQueryString(), f.getId(), previewChunk, !literal_query, true);
+                    setCommonProperty(resMap, CommonPropertyTypes.CONTEXT, snippet);
+                } catch (NoOpenCoreException ex) {
+                    logger.log(Level.WARNING, "Could not perform the snippet query. ", ex);
+                    return false;
+                }
+
+                if (f.getType() == TSK_DB_FILES_TYPE_ENUM.FS) {
+                    AbstractFsContentNode.fillPropertyMap(resMap, (FsContent) f);
                 }
 
                 final String highlightQueryEscaped = getHighlightQuery(tcq, literal_query, tcqRes, f);
@@ -362,10 +366,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         }
 
         /**
-         * factory produces 2nd level child nodes showing files with *approximate* matches
-         * since they rely on underlying Lucene query to get details
-         * To implement exact regex match detail view, we need to extract files content
-         * returned by Lucene and further narrow down by applying a Java regex
+         * Child factory that produces 2nd level child nodes showing files with matches
          */
         class ResultFilesChildFactory extends ChildFactory<KeyValueQuery> {
 
@@ -400,7 +401,9 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 for (final AbstractFile f : uniqueMatches.keySet()) {
                     final int previewChunkId = uniqueMatches.get(f);
                     Map<String, Object> resMap = new LinkedHashMap<String, Object>();
-                    AbstractFsContentNode.fillPropertyMap(resMap, (File) f);
+                    if (f.getType() == TSK_DB_FILES_TYPE_ENUM.FS) {
+                        AbstractFsContentNode.fillPropertyMap(resMap, (FsContent) f);
+                    }
                     toPopulate.add(new KeyValueQueryContent(f.getName(), resMap, ++resID, f, keywordQuery, thing.getQuery(), previewChunkId, matchesRes));
 
                 }
@@ -417,7 +420,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                 final String query = thingContent.getQueryStr();
                 final int previewChunk = thingContent.getPreviewChunk();
                 final Map<String, List<ContentHit>> hits = thingContent.getHits();
-                
+
 
                 Node kvNode = new KeyValueNode(thingContent, Children.LEAF, Lookups.singleton(content));
                 //wrap in KeywordSearchFilterNode for the markup content
@@ -449,7 +452,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         int getPreviewChunk() {
             return previewChunk;
         }
-        
+
         Map<String, List<ContentHit>> getHits() {
             return hits;
         }
