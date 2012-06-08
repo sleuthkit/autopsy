@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentatio
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
@@ -67,28 +68,28 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
             @Override
             public String toString() {
-                return "Keyword";
+                return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getDisplayName();
             }
         },
         REGEX {
 
             @Override
             public String toString() {
-                return "Regex";
+                return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getDisplayName();
             }
         },
         MATCH {
 
             @Override
             public String toString() {
-                return "Match";
+                return "File Name";
             }
         },
         CONTEXT {
 
             @Override
             public String toString() {
-                return "Context";
+                return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getDisplayName();
             }
         },
     }
