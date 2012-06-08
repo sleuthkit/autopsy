@@ -24,23 +24,18 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.Component;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableCellRenderer;
 
 /**
  *
@@ -103,6 +98,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
                 }
             }
         });
+        this.skipNSRLCheckBox.setSelected(KeywordSearchIngestService.getDefault().getSkipKnown());
 
     }
 
@@ -124,13 +120,17 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         setMinimumSize(new java.awt.Dimension(200, 0));
         setPreferredSize(new java.awt.Dimension(200, 297));
 
-        jScrollPane1.setBorder(null);
         jScrollPane1.setPreferredSize(new java.awt.Dimension(200, 402));
 
         listsTable.setModel(tableModel);
         listsTable.setShowHorizontalLines(false);
         listsTable.setShowVerticalLines(false);
         listsTable.getTableHeader().setReorderingAllowed(false);
+        listsTable.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                listsTableKeyPressed(evt);
+            }
+        });
         jScrollPane1.setViewportView(listsTable);
 
         newListButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.newListButton.text")); // NOI18N
@@ -174,7 +174,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
                 .addGap(0, 0, 0)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newListButton)
@@ -210,12 +210,13 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_newListButtonActionPerformed
 
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
+
         final String FEATURE_NAME = "Keyword List Import";
 
         JFileChooser chooser = new JFileChooser();
-        final String EXTENSION = "xml";
+        final String[] EXTENSION = new String[]{"xml", "txt"};
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "Keyword List XML file", EXTENSION);
+                "Keyword List File", EXTENSION);
         chooser.setFileFilter(filter);
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
@@ -228,8 +229,15 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
 
             //force append extension if not given
             String fileAbs = selFile.getAbsolutePath();
-
-            final KeywordSearchListsXML reader = new KeywordSearchListsXML(fileAbs);
+            
+            final KeywordSearchListsAbstract reader;
+            
+            if(KeywordSearchUtil.isXMLList(fileAbs)) {
+                reader = new KeywordSearchListsXML(fileAbs);
+            } else {
+                reader = new KeywordSearchListsEncase(fileAbs);
+            }
+            
             if (!reader.load()) {
                 KeywordSearchUtil.displayDialog(FEATURE_NAME, "Error importing keyword list from file " + fileAbs, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
@@ -281,6 +289,18 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
     private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipNSRLCheckBoxActionPerformed
         KeywordSearchIngestService.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
     }//GEN-LAST:event_skipNSRLCheckBoxActionPerformed
+
+    private void listsTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_listsTableKeyPressed
+        if(evt.getKeyCode() == KeyEvent.VK_DELETE) {
+            int[] selected = listsTable.getSelectedRows();
+            if(selected.length == 0) {
+                return;
+            }
+            KeywordSearchListsXML deleter = KeywordSearchListsXML.getCurrent();
+            String listName = deleter.getListNames().get(selected[0]);
+            KeywordSearchListsXML.getCurrent().deleteList(listName);
+        }
+    }//GEN-LAST:event_listsTableKeyPressed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton importButton;

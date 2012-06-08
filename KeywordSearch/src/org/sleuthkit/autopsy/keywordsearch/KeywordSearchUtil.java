@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.logging.Level;
@@ -160,5 +161,15 @@ public class KeywordSearchUtil {
         } else {
             return false;
         }
+    }
+    
+    /**
+     * Is the Keyword Search list at absPath an XML list?
+     * @param absPath
+     * @return yes or no
+     */
+    static boolean isXMLList(String absPath) {
+        //TODO: make this more robust, if necessary
+        return new File(absPath).getName().endsWith(".xml");
     }
 }

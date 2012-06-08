@@ -120,16 +120,5 @@ public class KeywordSearchConfigurationPanel extends javax.swing.JPanel {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JSplitPane mainSplitPane;
     // End of variables declaration//GEN-END:variables
-
-    void save() {
-        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
-        KeywordSearchIngestService service = KeywordSearchIngestService.getDefault();
-        if (IngestManager.getDefault().isServiceRunning(service)) {
-            for (KeywordSearchList list : loader.getListsL()) {
-                if (list.getUseForIngest()) {
-                    service.addToKeywordLists(list.getName());
-                }
-            }
-        }
-    }
+    
 }

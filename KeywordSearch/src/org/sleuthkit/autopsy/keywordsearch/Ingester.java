@@ -39,6 +39,7 @@ import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.ContentStream;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -132,7 +133,7 @@ public class Ingester {
         params.put(Server.Schema.ID.toString(), 
         FileExtractedChild.getFileExtractChildId(sourceContent.getId(), fec.getChunkId()));
     
-        ingest(bcs, params, FileExtract.MAX_CHUNK_SIZE);
+        ingest(bcs, params, FileExtract.MAX_STRING_CHUNK_SIZE);
     }
 
     /**
@@ -171,10 +172,10 @@ public class Ingester {
         @Override
         public Map<String, String> visit(File f) {
             Map<String, String> params = getCommonFields(f);
-            params.put(Server.Schema.CTIME.toString(), f.getCtimeAsDate());
-            params.put(Server.Schema.ATIME.toString(), f.getAtimeAsDate());
-            params.put(Server.Schema.MTIME.toString(), f.getMtimeAsDate());
-            params.put(Server.Schema.CRTIME.toString(), f.getMtimeAsDate());
+            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTime(f.getCtime(), f));
+            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTime(f.getAtime(), f));
+            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTime(f.getMtime(), f));
+            params.put(Server.Schema.CRTIME.toString(),ContentUtils.getStringTime(f.getCrtime(), f));
             return params;
         }
 
@@ -193,10 +194,10 @@ public class Ingester {
         @Override
         public Map<String, String> visit(Directory d) {
             Map<String, String> params = getCommonFields(d);
-            params.put(Server.Schema.CTIME.toString(), d.getCtimeAsDate());
-            params.put(Server.Schema.ATIME.toString(), d.getAtimeAsDate());
-            params.put(Server.Schema.MTIME.toString(), d.getMtimeAsDate());
-            params.put(Server.Schema.CRTIME.toString(), d.getMtimeAsDate());
+            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTime(d.getCtime(), d));
+            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTime(d.getAtime(), d));
+            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTime(d.getMtime(), d));
+            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTime(d.getCrtime(), d));
             return params;
         } 
     }

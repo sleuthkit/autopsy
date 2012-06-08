@@ -18,11 +18,15 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -34,6 +38,7 @@ public class ArtifactStringContent implements StringContent {
 
     BlackboardArtifact wrapped;
     static final Logger logger = Logger.getLogger(ArtifactStringContent.class.getName());
+    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public ArtifactStringContent(BlackboardArtifact art) {
         wrapped = art;
@@ -63,23 +68,33 @@ public class ArtifactStringContent implements StringContent {
                 buffer.append(attr.getAttributeTypeDisplayName());
                 buffer.append("</td>");
                 buffer.append("<td>");
-                switch (attr.getValueType()) {
-                    case STRING:
-                        buffer.append(attr.getValueString());
-                        break;
-                    case INTEGER:
-                        buffer.append(attr.getValueInt());
-                        break;
-                    case LONG:
-                        buffer.append(attr.getValueLong());
-                        break;
-                    case DOUBLE:
-                        buffer.append(attr.getValueDouble());
-                        break;
-                    case BYTE:
-                        buffer.append(Arrays.toString(attr.getValueBytes()));
-                        break;
-
+                if (attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
+                        || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
+                    long epoch = attr.getValueLong();
+                    String time = "0000-00-00 00:00:00";
+                    if (epoch != 0) {
+                        dateFormatter.setTimeZone(getTimeZone(wrapped));
+                        time = dateFormatter.format(new java.util.Date(epoch * 1000));
+                    }
+                    buffer.append(time);
+                } else {
+                    switch (attr.getValueType()) {
+                        case STRING:
+                            buffer.append(attr.getValueString());
+                            break;
+                        case INTEGER:
+                            buffer.append(attr.getValueInt());
+                            break;
+                        case LONG:
+                            buffer.append(attr.getValueLong());
+                            break;
+                        case DOUBLE:
+                            buffer.append(attr.getValueDouble());
+                            break;
+                        case BYTE:
+                            buffer.append(Arrays.toString(attr.getValueBytes()));
+                            break;
+                    }
                 }
                 if (!"".equals(attr.getContext())) {
                     buffer.append(" (");
@@ -94,6 +109,23 @@ public class ArtifactStringContent implements StringContent {
             return buffer.toString();
         } catch (TskException ex) {
             return "Error getting content";
+        }
+    }
+    
+    private static Content getAssociatedContent(BlackboardArtifact artifact){
+        try {
+            return artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "Getting file failed", ex);
+        }
+        throw new IllegalArgumentException("Couldn't get file from database");
+    }
+
+    private static TimeZone getTimeZone(BlackboardArtifact artifact) {
+        try {
+            return TimeZone.getTimeZone(getAssociatedContent(artifact).getImage().getTimeZone());
+        } catch(TskException ex) {
+            return TimeZone.getDefault();
         }
     }
 }
