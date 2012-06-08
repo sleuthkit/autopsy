@@ -69,7 +69,7 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
         queryB.append(") AND (size > 0)");
         queryB.append(" AND ( (meta_type = ").append(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getMetaType());
         queryB.append(") OR (meta_type = ").append(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getMetaType());
-        queryB.append( "AND (name != '.') AND (name != '..')");
+        queryB.append( " AND (name != '.') AND (name != '..')");
         queryB.append(") )");
         if (getUnallocatedFiles == false) {
             queryB.append( "AND (type = ");
