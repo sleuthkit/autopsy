@@ -75,16 +75,6 @@ If you want to generate Autopsy installer, you will need to install the freeware
 Web page: http://www.advancedinstaller.com/
 
 
-CONTRIBUTORS
-
-The primary development of Autopsy 3 has been done at Basis Technology. The following people have developed code in the project:
-* Anthony Lawrence
-* James Antonius
-* Peter Martel
-* Adam Malinowski
-* Dick Fickling
-
-
 FEEDBACK
 
 Send any bug reports or feature requests to the sleuthkit-users e-mail list.
