@@ -40,7 +40,6 @@ class KeywordSearchConfigurationAction extends CallableSystemAction{
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                panel.save();
                 dialog.close();
             }
         });

@@ -388,12 +388,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     List<String> getKeywordLists() {
         return keywordLists == null ? new ArrayList<String>() : keywordLists;
     }
-
-    void addToKeywordLists(String name) {
-        if (!keywordLists.contains(name)) {
-            keywordLists.add(name);
-        }
-    }
     
     void checkRunCommitSearch() {
         //check if time to commit
