@@ -112,7 +112,7 @@ public class MboxEmailParser {
     //This assumes the file/stream was parsed since we are looking at the metadata
     public boolean isValidMboxType()
     {
-        return this.metadata.get(Metadata.DATE_CREATED).equals("application/mbox");
+        return this.metadata.get(Metadata.CONTENT_TYPE).equals("application/mbox");
     }
     
     //Get email subject
