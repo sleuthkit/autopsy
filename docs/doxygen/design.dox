@@ -2,9 +2,17 @@
 
 \section design_overview Overview
 
-Talk about the various pieces, etc.
+Talk about the various pieces and how things are working behind the scenes (in order of anlaysis).
+- Wizards are used to create case and images (all from org.sleuthkit.autopsy.casemodule)
+- DB is created
+- Ingest modules are run (org.sleuthkit.autopsy.ingest.IngestManager)
+- Ingest modules post results to the blackboard and inbox
+- Tree displays blackboard contents
+- Data is encapsulated into nodes and passed to table and content viewers
+- Reports can be generated
 
-It will refer to the org.sleuthkit.autopsy.casemodule, org.sleuthkit.autopsy.ingest.IngestManager, etc.
+\subsection design_overview_sub Sub-Section
+This was added for reference.
 
 */
 
