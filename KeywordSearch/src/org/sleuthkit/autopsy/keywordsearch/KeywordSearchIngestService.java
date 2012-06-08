@@ -442,12 +442,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     List<String> getKeywordLists() {
         return keywordLists == null ? new ArrayList<String>() : keywordLists;
     }
-
-    void addToKeywordLists(String name) {
-        if (!keywordLists.contains(name)) {
-            keywordLists.add(name);
-        }
-    }
     
     /**
      * Check if time to commit, if so, run commit.
@@ -903,5 +897,9 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
      */
     void setSkipKnown(boolean skip) {
         this.skipKnown = skip;
+    }
+    
+    boolean getSkipKnown() {
+        return skipKnown;
     }
 }

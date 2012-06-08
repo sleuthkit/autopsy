@@ -270,7 +270,7 @@ public abstract class KeywordSearchListsAbstract {
     boolean deleteList(String name) {
         boolean deleted = false;
         KeywordSearchList delList = getList(name);
-        if (delList != null) {
+        if (delList != null && !delList.isLocked()) {
             theLists.remove(name);
             deleted = save();
         }
