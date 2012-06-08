@@ -101,10 +101,10 @@ public class ContentHit {
 
         for (String key : results.keySet()) {
             for (ContentHit hit : results.get(key)) {
-                AbstractFile AbstractFile = hit.getContent();
+                AbstractFile abstractFile = hit.getContent();
                 //flatten, record first chunk encountered
-                if (!flattened.containsKey(AbstractFile)) {
-                    flattened.put(AbstractFile, hit.getChunkId());
+                if (!flattened.containsKey(abstractFile)) {
+                    flattened.put(abstractFile, hit.getChunkId());
                 }
             }
         }
