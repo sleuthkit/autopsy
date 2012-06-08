@@ -1,0 +1,10 @@
+/*! \page design_page General Design 
+
+\section design_overview Overview
+
+Talk about the various pieces, etc.
+
+It will refer to the org.sleuthkit.autopsy.casemodule, org.sleuthkit.autopsy.ingest.IngestManager, etc.
+
+*/
+
