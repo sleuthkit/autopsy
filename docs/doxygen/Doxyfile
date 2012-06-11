@@ -690,7 +690,7 @@ INPUT_ENCODING         = UTF-8
 # *.hxx *.hpp *.h++ *.idl *.odl *.cs *.php *.php3 *.inc *.m *.mm *.dox *.py
 # *.f90 *.f *.for *.vhd *.vhdl
 
-FILE_PATTERNS          = *.java
+FILE_PATTERNS          = *.java *.dox
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.
@@ -1561,7 +1561,8 @@ SKIP_FUNCTION_MACROS   = YES
 # NOT include the path). If a tag file is not located in the directory in which
 # doxygen is run, you must also specify the path to the tagfile here.
 
-TAGFILES               = qtools_docs/qtools.tag=../../qtools_docs/html
+#TAGFILES               = $(TSK_HOME)/tskjni_doxygen.tag=http://www.sleuthkit.org/sleuthkit/docs/jni-docs
+# Adding that in, gives lots of errors and the class list goes away....
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create
 # a tag file that is based on the input files it reads.
