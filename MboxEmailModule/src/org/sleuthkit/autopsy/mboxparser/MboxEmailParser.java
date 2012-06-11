@@ -102,11 +102,9 @@ public class MboxEmailParser {
     }
     
     
-    public boolean isValidMimeTypeMbox(byte[] buffer)
+    public boolean isValidMbox(byte[] buffer)
     {
-        String outMimeType = this.tika.detect(buffer);
-        
-        return outMimeType.equals( MediaType.application("mbox").getType());
+        return (new String(buffer)).startsWith("From ");
     }
     
     //This assumes the file/stream was parsed since we are looking at the metadata
