@@ -24,6 +24,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -119,13 +120,17 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         setMinimumSize(new java.awt.Dimension(200, 0));
         setPreferredSize(new java.awt.Dimension(200, 297));
 
-        jScrollPane1.setBorder(null);
         jScrollPane1.setPreferredSize(new java.awt.Dimension(200, 402));
 
         listsTable.setModel(tableModel);
         listsTable.setShowHorizontalLines(false);
         listsTable.setShowVerticalLines(false);
         listsTable.getTableHeader().setReorderingAllowed(false);
+        listsTable.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                listsTableKeyPressed(evt);
+            }
+        });
         jScrollPane1.setViewportView(listsTable);
 
         newListButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.newListButton.text")); // NOI18N
@@ -169,7 +174,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
                 .addGap(0, 0, 0)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newListButton)
@@ -284,6 +289,18 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
     private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipNSRLCheckBoxActionPerformed
         KeywordSearchIngestService.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
     }//GEN-LAST:event_skipNSRLCheckBoxActionPerformed
+
+    private void listsTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_listsTableKeyPressed
+        if(evt.getKeyCode() == KeyEvent.VK_DELETE) {
+            int[] selected = listsTable.getSelectedRows();
+            if(selected.length == 0) {
+                return;
+            }
+            KeywordSearchListsXML deleter = KeywordSearchListsXML.getCurrent();
+            String listName = deleter.getListNames().get(selected[0]);
+            KeywordSearchListsXML.getCurrent().deleteList(listName);
+        }
+    }//GEN-LAST:event_listsTableKeyPressed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton importButton;

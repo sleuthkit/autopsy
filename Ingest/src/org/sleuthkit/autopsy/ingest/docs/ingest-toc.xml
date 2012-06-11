@@ -7,5 +7,6 @@ and open the template in the editor.
 <toc version="2.0">
     <tocitem text="Ingest">
         <tocitem text="About Ingest" target="org.sleuthkit.autopsy.ingest.about"/>
+        <tocitem text="Message Inbox" target="org.sleuthkit.autopsy.ingest.inbox"/>
     </tocitem>
 </toc>

@@ -448,8 +448,8 @@
          this cache will not be autowarmed.  
       -->
     <documentCache class="solr.LRUCache"
-                   size="512"
-                   initialSize="512"
+                   size="16"
+                   initialSize="16"
                    autowarmCount="0"/>
     
     <!-- Field Value Cache
@@ -521,12 +521,12 @@
         then documents 0 through 49 will be collected and cached.  Any further
         requests in that range can be satisfied via the cache.  
      -->
-   <queryResultWindowSize>20</queryResultWindowSize>
+   <queryResultWindowSize>5</queryResultWindowSize>
 
    <!-- Maximum number of documents to cache for any entry in the
         queryResultCache. 
      -->
-   <queryResultMaxDocsCached>200</queryResultMaxDocsCached>
+   <queryResultMaxDocsCached>16</queryResultMaxDocsCached>
 
    <!-- Query Related Event Listeners
 

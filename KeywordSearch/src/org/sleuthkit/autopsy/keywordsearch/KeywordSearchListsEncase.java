@@ -19,27 +19,98 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.JOptionPane;
 
 /**
- *
  * @author dfickling
+ * KeywordSearchListsEncase adds support for Encase tab-delimited
+ * keyword list exports to Autopsy.
+ * 
+ * load() does the I/O operation, converting lines from the text file to
+ * an unsorted list of EncaseFileEntrys
+ * The next step is to recreate the original folder hierarchy,
+ * and finally the EncaseFileEntries are converted to KeywordSearchLists
+ * 
  */
 public class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
     
+    ArrayList<EncaseFileEntry> entriesUnsorted;
+    EncaseFileEntry rootEntry;
+    
     public KeywordSearchListsEncase(String encasePath) {
         super(encasePath);
+    }
+    
+    /**
+     * Follow the EncaseFileEntry hierarchy starting with given entry
+     * Create list for each Folder entry, add keyword for each Expression
+     * @param entry
+     * @param parentPath 
+     */
+    private void doCreateListsFromEntries(EncaseFileEntry entry, String parentPath) {
+        String name;
+        if(parentPath.isEmpty()) {
+            name = entry.name;
+        } else {
+            name = parentPath + "/" + entry.name;
+        }
+        
+        List<Keyword> children = new ArrayList<Keyword>();
+        for(EncaseFileEntry child : entry.children) {
+            switch(child.type) {
+                case Folder:
+                    doCreateListsFromEntries(child, name);
+                    break;
+                case Expression:
+                    if(child.flags.contains(EncaseFlag.pg)) { // Skip GREP keywords
+                        break;
+                    }
+                    children.add(new Keyword(child.value, true));
+                    break;
+            }
+        }
+        // Give each list a unique name
+        if(theLists.containsKey(name)) {
+            int i = 2;
+            while(theLists.containsKey(name + "(" + i + ")")) {
+                i+=1;
+            }
+            name = name + "(" + i + ")";
+        }
+        // Don't create lists if there are no keywords
+        if (!children.isEmpty()) {
+            KeywordSearchList newList = new KeywordSearchList(name, new Date(), new Date(),
+                    true, true, children);
+            theLists.put(name, newList);
+        }
+    }
+    
+    /** 
+     * Convert entriesUnsorted (a list of childless and parentless EncaseFileEntries) into an EncaseFileEntry structure
+     */
+    private void doCreateEntryStructure(EncaseFileEntry parent) {
+        if (!parent.isFull()) {
+            EncaseFileEntry child = entriesUnsorted.remove(0);
+            child.hasParent = true;
+            child.parent = parent;
+            parent.addChild(child);
+            if(!child.isFull()) {
+                doCreateEntryStructure(child);
+            }
+            if (!parent.isFull()) {
+                doCreateEntryStructure(parent);
+            }
+        }
+        if (parent.hasParent) {
+            doCreateEntryStructure(parent.parent);
+        }
     }
 
     @Override
@@ -50,43 +121,100 @@ public class KeywordSearchListsEncase extends KeywordSearchListsAbstract{
     @Override
     public boolean load() {
         try {
-            File theFile = new File(filePath);
             BufferedReader readBuffer = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), "utf-16"));
-            String line;
-            // If any terms are grep terms, we'll show the user a dialog at the end.
-            boolean anyGrep = false;
-            List<Keyword> words = new ArrayList<Keyword>();
-            while ((line = readBuffer.readLine()) != null) {
-                String[] tabDelim = line.split("\t");
-                if (tabDelim.length > 2) {
-                    String expr = tabDelim[2];
-                    if (tabDelim.length > 8) {
-                        boolean literal = tabDelim[8].isEmpty() || !tabDelim[8].equals("1");
-                        anyGrep = anyGrep || !literal;
-                        //TODO: Stop skipping non-literal search terms
-                        if (!expr.isEmpty() && !expr.equals("t") && literal) {
-                            words.add(new Keyword(expr, literal));
-                        }
+            String structLine;
+            String metaLine;
+            entriesUnsorted = new ArrayList<EncaseFileEntry>();
+            for(int line = 1; line < 6; line++) {
+                readBuffer.readLine();
+            }
+            while ((structLine = readBuffer.readLine()) != null && (metaLine = readBuffer.readLine()) != null) {
+                String[] structArr = structLine.split("\t");
+                String[] metaArr = metaLine.split("\t");
+                EncaseMetaType type = EncaseMetaType.getType(metaArr[0]);
+                String childCount = structArr[1];
+                String name = metaArr[1];
+                String value = metaArr[2];
+                ArrayList<EncaseFlag> flags = new ArrayList<EncaseFlag>();
+                for(int i = 0; i < 17; i++) {
+                    if(metaArr.length < i+4) {
+                        continue;
+                    }
+                    if(!metaArr[i+3].equals("")) {
+                        flags.add(EncaseFlag.getFlag(i));
                     }
                 }
+                entriesUnsorted.add(new EncaseFileEntry(name, value, Integer.parseInt(childCount), false, null, type, flags));
             }
-            theLists.put(theFile.getName(), 
-                    new KeywordSearchList(theFile.getName(),
-                            new Date(theFile.lastModified()),
-                            new Date(theFile.lastModified()),
-                            true, true, words));
-            if(anyGrep) {
-                JOptionPane.showMessageDialog(null, "Importing grep (regular expression) keywords is not currently supported. Any that were in the list "
-                                                    + theFile.getName() + " have not been imported.");
-            }
-            
+            this.rootEntry = entriesUnsorted.remove(0);
+            doCreateEntryStructure(this.rootEntry);
+            doCreateListsFromEntries(this.rootEntry, "");
             return true;
+            
         } catch (FileNotFoundException ex) {
             logger.log(Level.INFO, "File at " + filePath + " does not exist!", ex);
         } catch (IOException ex) {
             logger.log(Level.INFO, "Failed to read file at " + filePath, ex);
         }
         return false;
+    }
+    
+    private enum EncaseMetaType {
+        Expression, Folder;
+        
+        static EncaseMetaType getType(String type) {
+            if(type.equals("5")) {
+                return Folder;
+            } else if(type.equals("")) {
+                return Expression;
+            } else {
+                throw new IllegalArgumentException("Unsupported EncaseMetaType: " + type);
+            }
+        }
+    }
+    
+    /*
+     * Flags for EncaseFileEntries.
+     * p8 = UTF-8
+     * p7 = UTF-7
+     * pg = GREP
+     */
+    private enum EncaseFlag {
+        pc, pu, pb, p8, p7, pg, an, ph, or, di, um, st, ww, pr, lo, ta, cp;
+        
+        static EncaseFlag getFlag(int i) {
+            return EncaseFlag.values()[i];
+        }
+    }
+    
+    /**
+     * An entry in the Encase keyword list file.
+     */
+    private class EncaseFileEntry {
+        String name;
+        String value;
+        int childCount;
+        List<EncaseFileEntry> children;
+        EncaseFileEntry parent;
+        EncaseMetaType type;
+        boolean hasParent;
+        ArrayList<EncaseFlag> flags;
+        EncaseFileEntry(String name, String value, int childCount, boolean hasParent, EncaseFileEntry parent, EncaseMetaType type, ArrayList<EncaseFlag> flags) {
+            this.name = name;
+            this.value = value;
+            this.childCount = childCount;
+            this.children = new ArrayList<EncaseFileEntry>();
+            this.hasParent = hasParent;
+            this.parent = parent;
+            this.type = type;
+            this.flags = flags;
+        }
+        boolean isFull() {
+            return children.size() == childCount;
+        }
+        void addChild(EncaseFileEntry child) {
+            children.add(child);
+        }
     }
     
 }

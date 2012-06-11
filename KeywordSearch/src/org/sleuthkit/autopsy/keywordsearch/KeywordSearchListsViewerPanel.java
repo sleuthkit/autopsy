@@ -158,12 +158,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
                 }
             }
         });
-        ingestListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                addToIngestAction(e);
-            }
-        };
         searchListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -326,12 +320,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             search();
         } finally {
             setCursor(null);
-        }
-    }
-    
-    private void addToIngestAction(ActionEvent e) {
-        for(KeywordSearchList list : listsTableModel.getSelectedListsL()){
-            KeywordSearchIngestService.getDefault().addToKeywordLists(list.getName());
         }
     }
     

@@ -91,8 +91,8 @@ public abstract class KeywordSearchListsAbstract {
         //urls.add(new Keyword("ssh://", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
 
         //disable messages for harcoded/locked lists
-        addList("Phone Numbers", phones, true, false, true);
-        addList("IP Addresses", ips, true, false, true);
+        addList("Phone Numbers", phones, false, false, true);
+        addList("IP Addresses", ips, false, false, true);
         addList("Email Addresses", emails, true, false, true);
         addList("URLs", urls, true, false, true);
     }
@@ -270,7 +270,7 @@ public abstract class KeywordSearchListsAbstract {
     boolean deleteList(String name) {
         boolean deleted = false;
         KeywordSearchList delList = getList(name);
-        if (delList != null) {
+        if (delList != null && !delList.isLocked()) {
             theLists.remove(name);
             deleted = save();
         }
