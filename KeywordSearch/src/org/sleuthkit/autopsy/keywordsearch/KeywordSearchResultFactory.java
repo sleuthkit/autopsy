@@ -509,7 +509,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
         private static List<ResultWriter> writers = new ArrayList<ResultWriter>();
         //lock utilized to enqueue writers and limit execution to 1 at a time
         private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
-        private static final Lock writerLock = rwLock.writeLock();
+        //private static final Lock writerLock = rwLock.writeLock();
         private ProgressHandle progress;
         private KeywordSearchQuery query;
         private String listName;
@@ -546,7 +546,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
             registerWriter(this); //register (synchronized on class) outside of writerLock to prevent deadlock
 
             //block until previous writer is done
-            writerLock.lock();
+            //writerLock.lock();
             try {
                 final String queryStr = query.getQueryString();
                 final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
@@ -590,7 +590,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
                 }
             } finally {
-                writerLock.unlock();
+                //writerLock.unlock();
                 finalizeWorker();
             }
 
