@@ -216,7 +216,7 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
         optionsLabel1 = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(559, 328));
-        setPreferredSize(new java.awt.Dimension(588, 308));
+        setPreferredSize(new java.awt.Dimension(588, 328));
 
         org.openide.awt.Mnemonics.setLocalizedText(rawSingle, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.rawSingle.text")); // NOI18N
         rawSingle.setRequestFocusEnabled(false);
@@ -281,6 +281,9 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(noFatOrphansCheckbox))
                     .addComponent(imgTypeLabel)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
@@ -291,9 +294,6 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
                     .addComponent(multipleSelectLabel)
                     .addComponent(imgInfoLabel)
                     .addComponent(jLabel1)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(noFatOrphansCheckbox))
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                         .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                             .addComponent(timeZoneLabel)
@@ -329,16 +329,16 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
                     .addComponent(imgPathBrowserButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(multipleSelectLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(17, 17, 17)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(timeZoneLabel)
                     .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addComponent(optionsLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(noFatOrphansCheckbox)
-                .addGap(13, 13, 13)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 28, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1)
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())

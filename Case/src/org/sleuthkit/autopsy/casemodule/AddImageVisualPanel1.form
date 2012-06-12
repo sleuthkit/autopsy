@@ -10,7 +10,7 @@
       <Dimension value="[559, 328]"/>
     </Property>
     <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-      <Dimension value="[588, 308]"/>
+      <Dimension value="[588, 328]"/>
     </Property>
   </Properties>
   <AuxValues>
@@ -31,6 +31,10 @@
           <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace min="10" pref="10" max="10" attributes="0"/>
+                      <Component id="noFatOrphansCheckbox" min="-2" max="-2" attributes="0"/>
+                  </Group>
                   <Component id="imgTypeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="10" pref="10" max="10" attributes="0"/>
@@ -43,10 +47,6 @@
                   <Component id="multipleSelectLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="imgInfoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="10" pref="10" max="10" attributes="0"/>
-                      <Component id="noFatOrphansCheckbox" min="-2" max="-2" attributes="0"/>
-                  </Group>
                   <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
                       <Group type="102" alignment="0" attributes="1">
                           <Component id="timeZoneLabel" min="-2" max="-2" attributes="0"/>
@@ -89,21 +89,21 @@
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="multipleSelectLabel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="17" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="timeZoneLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="timeZoneComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="27" max="32767" attributes="0"/>
+              <EmptySpace type="separate" max="-2" attributes="0"/>
               <Component id="optionsLabel1" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="noFatOrphansCheckbox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="13" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" attributes="0">
+              <EmptySpace pref="28" max="32767" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
