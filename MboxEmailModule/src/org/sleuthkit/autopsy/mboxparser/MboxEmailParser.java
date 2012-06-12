@@ -1,7 +1,11 @@
 package org.sleuthkit.autopsy.mboxparser;
 
 import java.io.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -102,11 +106,9 @@ public class MboxEmailParser {
     }
     
     
-    public boolean isValidMimeTypeMbox(byte[] buffer)
+    public boolean isValidMbox(byte[] buffer)
     {
-        String outMimeType = this.tika.detect(buffer);
-        
-        return outMimeType.equals( MediaType.application("mbox").getType());
+        return (new String(buffer)).startsWith("From ");
     }
     
     //This assumes the file/stream was parsed since we are looking at the metadata
@@ -126,9 +128,19 @@ public class MboxEmailParser {
         return this.metadata.get(Metadata.TITLE);
     }
     
-    public String getDateCreated()
+    public Long getDateCreated() 
     {
-        return this.metadata.get(Metadata.DATE_CREATED);
+        Long epochtime;
+        Long ftime = (long) 0;
+        try {
+            epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(this.metadata.get(Metadata.DATE_CREATED)).getTime();
+            ftime = epochtime.longValue();
+            ftime = ftime / 1000;
+        } catch (ParseException ex) {
+            Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return ftime;
     }
     
     public String getContenType()
