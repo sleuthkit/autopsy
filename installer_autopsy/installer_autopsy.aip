@@ -3,6 +3,7 @@
   <COMPONENT cid="caphyon.advinst.msicomp.MsiPropsComponent">
     <ROW Property="ALLUSERS" Value="2"/>
     <ROW Property="ARPCOMMENTS" Value="This installer database contains the logic and data required to install [|ProductName]." ValueLocId="*"/>
+    <ROW Property="ARPPRODUCTICON" Value="autopsy.exe" Type="8"/>
     <ROW Property="CTRLS" Value="1"/>
     <ROW Property="Manufacturer" Value="The Sleuthkit Project" ValueLocId="*"/>
     <ROW Property="ProductCode" Value="1033:{C9E41B51-285A-4E1A-B937-2F663300DCD7} " Type="16"/>
