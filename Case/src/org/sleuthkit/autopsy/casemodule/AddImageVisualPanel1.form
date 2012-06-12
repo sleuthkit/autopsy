@@ -28,7 +28,7 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
+          <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="imgTypeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -43,14 +43,9 @@
                   <Component id="multipleSelectLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="imgInfoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="optionsLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="10" pref="10" max="10" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="noFatOrphansCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="noProcessUnallocSpace" alignment="0" min="-2" max="-2" attributes="0"/>
-                      </Group>
+                      <Component id="noFatOrphansCheckbox" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
                       <Group type="102" alignment="0" attributes="1">
@@ -66,8 +61,10 @@
                           <Component id="imgPathBrowserButton" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
+                  <Component id="optionsLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace pref="39" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -97,16 +94,15 @@
                   <Component id="timeZoneLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="timeZoneComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace pref="27" max="32767" attributes="0"/>
               <Component id="optionsLabel1" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="noProcessUnallocSpace" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
-              <Component id="noFatOrphansCheckbox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+              <Component id="noFatOrphansCheckbox" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="13" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="1" attributes="0">
+                  <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                  <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
+              </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -244,16 +240,6 @@
           <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="AddImageVisualPanel1.noFatOrphansCheckbox.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="noProcessUnallocSpace">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/Bundle.properties" key="AddImageVisualPanel1.noProcessUnallocSpace.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="noProcessUnallocSpaceActionPerformed"/>
-      </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="optionsLabel1">
       <Properties>
