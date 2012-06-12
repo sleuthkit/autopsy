@@ -59,12 +59,13 @@ public class MboxEmailParser {
     
     private void init() throws IOException
     {        
+        this.tika.setMaxStringLength(10*1024*1024);
         this.metadata = new Metadata();           
         //Set MIME Type    
         this.mimeType = tika.detect(this.stream);  
         this.parser   = new MboxParser();   
         this.context  = new ParseContext();
-        this.contentHandler = new BodyContentHandler();
+        this.contentHandler = new BodyContentHandler(10*1024*1024);
         //Seems like setting this causes the metadata not to output all of it.
         this.metadata.set(Metadata.CONTENT_TYPE, this.mimeType);
     }
@@ -88,6 +89,7 @@ public class MboxEmailParser {
         return this.metadata;
     }
     
+    
     //Returns message content, i.e. plain text or html
     public String getContent()
     {
@@ -106,8 +108,8 @@ public class MboxEmailParser {
     }
     
     
-    public boolean isValidMbox(byte[] buffer)
-    {
+    public boolean isValidMimeTypeMbox(byte[] buffer)
+    {      
         return (new String(buffer)).startsWith("From ");
     }
     
@@ -132,8 +134,10 @@ public class MboxEmailParser {
     {
         Long epochtime;
         Long ftime = (long) 0;
+        
         try {
-            epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(this.metadata.get(Metadata.DATE_CREATED)).getTime();
+            String datetime = this.metadata.get(Metadata.DATE);
+            epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(datetime).getTime();
             ftime = epochtime.longValue();
             ftime = ftime / 1000;
         } catch (ParseException ex) {
