@@ -65,9 +65,10 @@ public class MboxEmailParser {
         this.mimeType = tika.detect(this.stream);  
         this.parser   = new MboxParser();   
         this.context  = new ParseContext();
-        this.contentHandler = new BodyContentHandler(10*1024*1024);
+        
+        this.contentHandler = new BodyContentHandler(-1);
         //Seems like setting this causes the metadata not to output all of it.
-        this.metadata.set(Metadata.CONTENT_TYPE, this.mimeType);
+       // this.metadata.set(Metadata.CONTENT_TYPE, this.mimeType);
     }
     
     public void parse() throws FileNotFoundException, IOException, SAXException, TikaException
@@ -82,6 +83,7 @@ public class MboxEmailParser {
     {   
         init();        
         parser.parse(inStream,this.contentHandler, this.metadata, context);
+        String blbha = "stop";
     }
     
     public Metadata getMetadata()
@@ -147,6 +149,21 @@ public class MboxEmailParser {
         return ftime;
     }
     
+    public String getApplication()
+    {   
+        String client;
+        String userAgent = "";
+        userAgent = this.metadata.get("MboxParser-user-agent");
+        if(userAgent.matches("(?i).*Thunderbird.*"))
+        {
+            client = "Thunderbird";
+        }
+        else{
+            client = "Unknown";
+        }
+        return client;
+    }
+    
     public String getContenType()
     {
         return this.metadata.get(Metadata.CONTENT_TYPE);
@@ -159,7 +176,7 @@ public class MboxEmailParser {
     
     public String getFrom()
     {
-        return this.metadata.get(Metadata.MESSAGE_FROM);
+        return this.metadata.get(Metadata.AUTHOR);
     }
     
     public String getTo()

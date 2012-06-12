@@ -77,6 +77,7 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
                 ReadContentInputStream contentStream = new ReadContentInputStream(fsContent);
                 mbox.parse(contentStream);
                 String content = mbox.getContent();
+                String client = mbox.getApplication();
                 String from = mbox.getFrom();
                 String to = mbox.getTo();
                 Long date = mbox.getDateCreated();
@@ -95,6 +96,7 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(), classname, "", date));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(), classname, "", date));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), classname, "", subject));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), classname, "", client));
                 BlackboardArtifact bbart;
                 try {
                     bbart = fsContent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
