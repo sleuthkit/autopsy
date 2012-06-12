@@ -39,10 +39,11 @@ command line or by opening the project in NetBeans.
 3) Get gstreamer Setup
 
 If Autopsy installer is not used, add the following entries to Windows PATH environment variable
-(replace GSTREAMER_INSTALL_DIR with the location of gstreamer install root directory):
-
+(replace GSTREAMER_INSTALL_DIR with the location of the gstreamer root directory):
     GSTREAMER_INSTALL_DIR\bin\;
     GSTREAMER_INSTALL_DIR\lib\gstreamer-0.10\;
+If you don't have gstreamer already, you can find a zipped gstreamer distribution in
+    AUTOPSYROOT/thirdparty/gstreamer
 
 
 4) Compile Autopsy
