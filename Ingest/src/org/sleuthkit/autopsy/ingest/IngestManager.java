@@ -314,6 +314,14 @@ public class IngestManager {
 
         for (IngestImageThread imageWorker : toStop) {
             IngestServiceImage s = imageWorker.getService();
+            
+            //stop the worker thread if thread is running
+            boolean cancelled = imageWorker.cancel(true);
+            if (!cancelled) {
+                logger.log(Level.INFO, "Unable to cancel image ingest worker for service: " + imageWorker.getService().getName() + " img: " + imageWorker.getImage().getName());
+            }
+            
+            //stop notification to service to cleanup resources
             if (isServiceRunning(s)) {
                 try {
                     imageWorker.getService().stop();
@@ -321,10 +329,7 @@ public class IngestManager {
                     logger.log(Level.WARNING, "Exception while stopping service: " + s.getName(), e);
                 }
             }
-            boolean cancelled = imageWorker.cancel(true);
-            if (!cancelled) {
-                logger.log(Level.WARNING, "Unable to cancel image ingest worker for service: " + imageWorker.getService().getName() + " img: " + imageWorker.getImage().getName());
-            }
+           
         }
 
         logger.log(Level.INFO, "stopped all");
