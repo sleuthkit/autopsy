@@ -1,3 +1,5 @@
+                   Last Updated: June 12, 2012
+
 This file outlines what it takes to build Autopsy from source.
 
 Note that it currently only works out of the box on Windows.  We
@@ -5,33 +7,48 @@ are working on getting the process working under non-WIndows systems.
 It generally works, but needs some custom mangling to find the
 correct C libraries.
 
+
 STEPS:
-1) Download and install 32-bit version of JDK (32-bit is currently
+1) Get Java Setup
+1a) Download and install 32-bit version of JDK (32-bit is currently
 needed even if you have a 64-bit system).
 
-2) Ensure that JDK_HOME is set to the root JDK directory. 
+1b) Ensure that JDK_HOME is set to the root JDK directory. 
 
-3) Download and install Netbeans IDE 7.0.1 (http://netbeans.org/)
+1c) Download and install Netbeans IDE 7.0.1 (http://netbeans.org/)
 
-4) Download and build the release version of Libewf2 (20120304 or later).  All you need is the dll file.  Note that you will get a launching error if you use libewf 1.
+
+2) Get Sleuth Kit Setup
+2a) Download and build the release version of Libewf2 (20120304 or later).  All you need is the dll file.  Note that you will get a launching error if you use libewf 1.
 - http://sourceforge.net/projects/libewf/
 
-5) Set LIBEWF_HOME environment variable to root directory of LIBEWF
+2b) Set LIBEWF_HOME environment variable to root directory of LIBEWF
 
-6) Download and build release version of Sleuth Kit (TSK) 4.0.  You
+2c) Download and build release version of Sleuth Kit (TSK) 4.0.  You
 need to build the tsk_jni project.
 - At the time of this writing, 4.0 is not released.  You can get it from either
 -- GIT: git://github.com/sleuthkit/sleuthkit.git
 -- SVN: http://svn.github.com/sleuthkit/sleuthkit.git
 
-7) Build the TSK JAR file by typing 'ant' in bindings/java from a
+2d) Build the TSK JAR file by typing 'ant' in bindings/java from a
 command line or by opening the project in NetBeans.
 
-8) Set TSK_HOME environment variable to the root directory of TSK
+2e) Set TSK_HOME environment variable to the root directory of TSK
 
-9) Start NetBean IDE and open the Autopsy project.
 
-10) Choose to build the Autopsy project / module.  It is the highest
+3) Get gstreamer Setup
+
+If Autopsy installer is not used, add the following entries to Windows PATH environment variable
+(replace GSTREAMER_INSTALL_DIR with the location of gstreamer install root directory):
+
+    GSTREAMER_INSTALL_DIR\bin\;
+    GSTREAMER_INSTALL_DIR\lib\gstreamer-0.10\;
+
+
+4) Compile Autopsy
+4a) Start NetBean IDE and open the Autopsy project.
+
+4b) Choose to build the Autopsy project / module.  It is the highest
 level project that will then cause the other modules to be compiled.
 
 
@@ -55,5 +72,4 @@ rebuild both the dll and the JAR file.
 
 ---------------
 Brian Carrier
-4/6/2012
 carrier <at> sleuthkit <dot> org
