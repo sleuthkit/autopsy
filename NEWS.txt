@@ -1,7 +1,7 @@
 3.0.0b3 (June 12, 2012)
-New Features:
+New Features (Funded by US Army Intelligence Center of Excellence (USAICoE)):
 - Ingest manager runs triage/ingest task after disk is added.
-- Keyword search (indexed via SOLR)
+- Basic keyword search (indexed via SOLR)
 - Recent activity extract (web artifacts, recent documents, devices, etc.)
 - Improved UI
 

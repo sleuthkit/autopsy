@@ -129,11 +129,27 @@ public abstract class KeywordSearchListsAbstract {
     }
 
     /**
-     * get list of all loaded keyword list names
+     * Get list names of all loaded keyword list names
      * @return List of keyword list names
      */
     List<String> getListNames() {
         return new ArrayList<String>(theLists.keySet());
+    }
+    
+    /**
+     * Get list names of all locked or unlocked loaded keyword list names
+     * @param locked true if look for locked lists, false otherwise
+     * @return List of keyword list names
+     */
+    List<String> getListNames(boolean locked) {
+        ArrayList<String> lists = new ArrayList<String>();
+        for (String listName : theLists.keySet()) {
+            KeywordSearchList list = theLists.get(listName);
+            if (locked == list.isLocked())
+                lists.add(listName);
+        }
+         
+        return lists;
     }
 
     /**
@@ -174,6 +190,21 @@ public abstract class KeywordSearchListsAbstract {
      */
     int getNumberLists() {
         return theLists.size();
+    }
+    
+    /**
+     * get number of unlocked or locked lists currently stored
+     * @param locked true if look for locked lists, false otherwise
+     * @return number of unlocked lists currently stored
+     */
+    int getNumberLists(boolean locked) {
+        int numLists = 0;
+        for (String listName : theLists.keySet()) {
+            KeywordSearchList list = theLists.get(listName);
+            if (locked == list.isLocked())
+                ++ numLists;
+        }
+        return numLists;
     }
 
     /**
