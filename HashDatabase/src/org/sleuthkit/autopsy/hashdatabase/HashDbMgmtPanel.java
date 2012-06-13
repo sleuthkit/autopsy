@@ -28,9 +28,7 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
@@ -95,9 +93,20 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
         fc.setMultiSelectionEnabled(false);
         
         TableColumn column1 = null;
+        final int width1 = jScrollPane1.getPreferredSize().width;
         for (int i = 0; i < notableHashSetTable.getColumnCount(); i++) {
             column1 = notableHashSetTable.getColumnModel().getColumn(i);
+            if (i == 0) {
+                column1.setPreferredWidth((int) (width1*.20));
+            }
+            if (i == 1) {
+                column1.setPreferredWidth((int) (width1*.57));
+            }
+            if (i == 2) {
+                column1.setPreferredWidth((int) (width1*.15));
+            }
             if (i == 3) {
+                column1.setPreferredWidth((int) (width1*.07));
                 column1.setCellRenderer(new CheckBoxRenderer());
             }
         }
@@ -223,14 +232,14 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1)
-                .addContainerGap(257, Short.MAX_VALUE))
+                .addContainerGap(405, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
                         .addComponent(nsrlNameLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 63, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 218, Short.MAX_VALUE)
                         .addComponent(indexNSRLButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(setNSRLButton)
@@ -238,16 +247,16 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                         .addComponent(removeNSRLButton))
                     .addComponent(jLabel2))
                 .addContainerGap())
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 389, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 534, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(addNotableButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 113, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 242, Short.MAX_VALUE)
                 .addComponent(removeNotableButton)
                 .addContainerGap())
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(ingestRunningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 369, Short.MAX_VALUE)
+                .addComponent(ingestRunningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 514, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -443,7 +452,7 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                 case 2:
                     return "Status";
                 default:
-                    return "Use For Ingest";
+                    return "Ingest";
             }
         }
 
@@ -559,7 +568,7 @@ public class HashDbMgmtPanel extends javax.swing.JPanel {
                 theButton.setEnabled(false);
                 break;
             default:
-                theButton.setText("No DB");
+                theButton.setText("Index");
                 theButton.setEnabled(false);
         }
         if (ingestRunning) {
