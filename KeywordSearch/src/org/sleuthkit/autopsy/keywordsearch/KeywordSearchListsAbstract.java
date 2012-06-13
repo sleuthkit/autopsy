@@ -127,6 +127,16 @@ public abstract class KeywordSearchListsAbstract {
         }
         return ret;
     }
+    
+    List<KeywordSearchList> getListsL(boolean locked) {
+        List<KeywordSearchList> ret = new ArrayList<KeywordSearchList>();
+        for (KeywordSearchList list : theLists.values()) {
+            if(list.isLocked().equals(locked)) {
+                ret.add(list);
+            }
+        }
+        return ret;
+    }
 
     /**
      * Get list names of all loaded keyword list names
