@@ -693,7 +693,7 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
             listSelectionModel.setSelectionInterval(index, index);
             KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
 
-            currentKeywordList = loader.getListsL().get(index);
+            currentKeywordList = loader.getListsL(false).get(index);
             tableModel.resync();
             initButtons();
         } else {

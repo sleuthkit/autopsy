@@ -214,7 +214,6 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
         settings.putProperty(AddImageAction.IMGPATHS_PROP, getComponent().getImagePaths());
         settings.putProperty(AddImageAction.TIMEZONE_PROP, getComponent().getSelectedTimezone()); // store the timezone
         settings.putProperty(AddImageAction.NOFATORPHANS_PROP, Boolean.valueOf(getComponent().getNoFatOrphans())); 
-        settings.putProperty(AddImageAction.NOUNALLOC_PROP, Boolean.valueOf(getComponent().getNoUnallocSpaceProcess())); 
         //settings.putProperty(AddImageAction.LOOKUPFILES_PROP, getComponent().getLookupFilesCheckboxChecked());
         //settings.putProperty(AddImageAction.SOLR_PROP, getComponent().getIndexImageCheckboxChecked());
         
