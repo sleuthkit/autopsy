@@ -44,9 +44,9 @@
     </target>
     
     <target name="autoAIPath" >
-        <available file="C:\Program Files (x86)\Caphyon\Advanced Installer 9.0.1\bin\x86\AdvancedInstaller.com"
+        <available file="C:\Program Files (x86)\Caphyon\Advanced Installer 9.2\bin\x86\AdvancedInstaller.com"
                     property="aiPath"
-                    value="C:\Program Files (x86)\Caphyon\Advanced Installer 9.0.1\bin\x86\AdvancedInstaller.com"/>
+                    value="C:\Program Files (x86)\Caphyon\Advanced Installer 9.2\bin\x86\AdvancedInstaller.com"/>
     </target>
     
     <target name="inputAIPath" unless="aiPath">
