@@ -93,8 +93,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
                         listsTable.getSelectionModel().setSelectionInterval(0, 0);
                     else
                         listsTable.getSelectionModel().clearSelection();
-                } else if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_UPDATED.toString())) {
-                    tableModel.resync(); //changed list name
                 }
             }
         });

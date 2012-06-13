@@ -272,6 +272,10 @@ public abstract class KeywordSearchListsAbstract {
     boolean addList(String name, List<Keyword> newList) {
         return addList(name, newList, true, true);
     }
+    
+    boolean addList(KeywordSearchList list) {
+        return addList(list.getName(), list.getKeywords(), list.getUseForIngest(), list.getIngestMessages(), list.isLocked());
+    }
 
     /**
      * write out multiple lists
