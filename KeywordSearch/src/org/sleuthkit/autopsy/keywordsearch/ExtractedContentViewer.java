@@ -37,6 +37,8 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.sleuthkit.autopsy.datamodel.HighlightLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.Directory;
 
 /**
  * Displays marked-up (HTML) content for a Node. The sources are all the 
@@ -312,6 +314,19 @@ public class ExtractedContentViewer implements DataContentViewer {
             panel.setSources(sources);
         }
     }
+    
+    private class IsDirVisitor extends ContentVisitor.Default<Boolean> {
+
+        @Override
+        protected Boolean defaultVisit(Content cntnt) {
+            return false; 
+        }
+       
+        @Override
+        public Boolean visit(Directory d) {
+            return true;
+        } 
+    }
 
     /**
      * Check if Solr has extracted content for a given node
@@ -323,10 +338,17 @@ public class ExtractedContentViewer implements DataContentViewer {
         if (content == null) {
             return false;
         }
+        
 
         final Server solrServer = KeywordSearch.getServer();
+        
+        boolean isDir = content.accept(new IsDirVisitor());
+        if (isDir)
+            return false;
 
         final long contentID = content.getId();
+        
+        
 
         try {
             return solrServer.queryIsIndexed(contentID);
