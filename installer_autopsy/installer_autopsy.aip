@@ -1439,6 +1439,7 @@
     <ROW File="Juba" Component_="Abidjan" FileName="Juba" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Africa\Juba" SelfReg="false" NextFile="Kampala"/>
     <ROW File="Jujuy" Component_="Buenos_Aires" FileName="Jujuy" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Argentina\Jujuy" SelfReg="false" NextFile="La_Rioja"/>
     <ROW File="Juneau" Component_="Adak" FileName="Juneau" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Juneau" SelfReg="false" NextFile="Louisville"/>
+    <ROW File="KNOWN_ISSUES.txt" Component_="README.txt" FileName="KNOWN_~1.txt|KNOWN_ISSUES.txt" Attributes="0" SourcePath="..\dist\autopsy-installer\KNOWN_ISSUES.txt" SelfReg="false"/>
     <ROW File="Kabul" Component_="Aden" FileName="Kabul" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Asia\Kabul" SelfReg="false" NextFile="Kamchatka"/>
     <ROW File="Kaliningrad" Component_="Amsterdam" FileName="Kalini~1|Kaliningrad" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Europe\Kaliningrad" SelfReg="false" NextFile="Kiev"/>
     <ROW File="Kamchatka" Component_="Aden" FileName="Kamcha~1|Kamchatka" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Asia\Kamchatka" SelfReg="false" NextFile="Karachi"/>
@@ -1728,7 +1729,7 @@
     <ROW File="Wake" Component_="Apia" FileName="Wake" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Pacific\Wake" SelfReg="false" NextFile="Wallis"/>
     <ROW File="Wallis" Component_="Apia" FileName="Wallis" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Pacific\Wallis" SelfReg="false" NextFile="PST8PDT"/>
     <ROW File="Warsaw" Component_="Amsterdam" FileName="Warsaw" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Europe\Warsaw" SelfReg="false" NextFile="Zaporozhye"/>
-    <ROW File="Welcome.html" Component_="COPYRIGHT" FileName="Welcom~1.htm|Welcome.html" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\Welcome.html" SelfReg="false"/>
+    <ROW File="Welcome.html" Component_="COPYRIGHT" FileName="Welcom~1.htm|Welcome.html" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\Welcome.html" SelfReg="false" NextFile="KNOWN_ISSUES.txt"/>
     <ROW File="Whitehorse" Component_="Adak" FileName="Whiteh~1|Whitehorse" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Whitehorse" SelfReg="false" NextFile="Winnipeg"/>
     <ROW File="Winamac" Component_="Indianapolis" FileName="Winamac" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\America\Indiana\Winamac" SelfReg="false" NextFile="Inuvik"/>
     <ROW File="Windhoek" Component_="Abidjan" FileName="Windhoek" Attributes="0" SourcePath="..\dist\autopsy-installer\jre6\lib\zi\Africa\Windhoek" SelfReg="false" NextFile="Adak"/>
