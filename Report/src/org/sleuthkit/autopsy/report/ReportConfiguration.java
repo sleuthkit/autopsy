@@ -115,7 +115,8 @@ public void setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type, Boolean va
        
        
        /** getters for generally supported report parts
-        * 
+        * @param type is a blackboardartifact type
+        * @return value is the artifact type   
         */
        public boolean getGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type) throws ReportModuleException {
         boolean value = false;
