@@ -32,6 +32,7 @@ public interface AutopsyItemVisitor<T> {
     T visit(RecentFiles.RecentFilesFilter rff);
     T visit(KeywordHits kh);
     T visit(HashsetHits hh);
+    T visit(EmailExtracted ee);
     T visit(Images i);
     T visit(Views v);
     T visit(Results r);
@@ -78,6 +79,11 @@ public interface AutopsyItemVisitor<T> {
         @Override
         public T visit(HashsetHits hh) {
             return defaultVisit(hh);
+        }
+        
+        @Override
+        public T visit(EmailExtracted ee) {
+            return defaultVisit(ee);
         }
         
         @Override
