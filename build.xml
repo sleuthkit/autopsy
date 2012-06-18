@@ -51,7 +51,7 @@
         <fail unless="jreFound" message="JRE_HOME must be set as an environment variable."/>
     </target>
 
-    <target name="getExternals" depends="findTSK,copyTSKLibs">
+    <target name="getExternals" depends="findTSK,copyTSKLibsToRelease">
         <property environment="env"/>
         <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel.jar" tofile="${basedir}/DataModel/release/modules/ext/Tsk_DataModel.jar"/>
 		 <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.7.2.jar" tofile="${basedir}/DataModel/release/modules/ext/sqlite-jdbc-3.7.2.jar"/>
@@ -77,7 +77,7 @@
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
-        <antcall target="copyExternalLibs"></antcall>
+        <antcall target="copyExternalLibsToZip"></antcall>
         
         <!-- step (4) zip again, but with the version numbers in the dir -->
         <zip destfile="${nbdist.dir}/${app.name}-${app.version}.zip">
