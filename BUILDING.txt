@@ -1,9 +1,9 @@
-                   Last Updated: June 12, 2012
+                   Last Updated: June 18, 2012
 
 This file outlines what it takes to build Autopsy from source.
 
 Note that it currently only works out of the box on Windows.  We
-are working on getting the process working under non-WIndows systems.
+are working on getting the process working under non-Windows systems.
 It generally works, but needs some custom mangling to find the
 correct C libraries.
 
@@ -35,15 +35,19 @@ command line or by opening the project in NetBeans.
 
 2e) Set TSK_HOME environment variable to the root directory of TSK
 
+2f) On Non-Windows systems, you will need to do a 'make install'
+from the TSK root directory to install the libraries and such in
+the needed places (i.e. '/usr/local').
 
-3) Get gstreamer Setup
 
-If Autopsy installer is not used, add the following entries to Windows PATH environment variable
-(replace GSTREAMER_INSTALL_DIR with the location of the gstreamer root directory):
-    GSTREAMER_INSTALL_DIR\bin\;
-    GSTREAMER_INSTALL_DIR\lib\gstreamer-0.10\;
-If you don't have gstreamer already, you can find a zipped gstreamer distribution in
-    AUTOPSYROOT/thirdparty/gstreamer
+3) Get gstreamer Setup.  gstreamer is used to view video files. You
+can either download it and install it or manually by unziping the
+version that is included in the 'thirdparty/gstreamer' folder.  You
+will need the 'bin' and 'lib/gstreamer-1.0' folders to be in your
+Windows PATH environment variable.
+
+NOTE: This has not been fully tested in non-Windows environments
+yet, so we don't have instructions for that yet.
 
 
 4) Compile Autopsy
@@ -57,15 +61,19 @@ BACKGROUND:
 Here are some notes to shed some light on what is going on during
 the build process.
 
-- Building the TSK library and JAR file place the files inside of
-the TSK directory.
-
-- NetBeans uses ant to build Autopsy.  The build target will locate
-TSK (and LIBEWF) based on the environment variables and copy the
+- NetBeans uses ant to build Autopsy.  The build target locates TSK
+(and LIBEWF) based on the environment variables and copies the
 needed JAR and library files into the DataModel module in the Autopsy
-project (see build-X.xml for details).   If you want to use the
-debug version of the TSK dll, then edit the copy line in the
-build-windows.xml file to copy from the Debug folder.
+project (see build-unix.xml and build-windows.xml in the root
+directory for details).   If you want to use the debug version of
+the TSK dll, then edit the copy line in the build-windows.xml file
+to copy from the Debug folder.
+
+- On a Windows system, the ant target copies all needed libraries
+to the autopsy folder.  On a Unix system, the ant taget copies only
+the JNI library and then relies on the other libraries (libtsk,
+libewf, zilb, etc.) to be installed on the system in their standard
+locations (i.e. /usr/local).
 
 - Everytime that you do a source code update of TSK, make sure you
 rebuild both the dll and the JAR file.
