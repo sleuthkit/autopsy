@@ -235,39 +235,41 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
     public void saveSimpleConfiguration() {
     }
     
-    private void processBadFile(AbstractFile abstractFile, String md5Hash, String hashSetName) {
+    private void processBadFile(AbstractFile abstractFile, String md5Hash, String hashSetName, boolean showInboxMessage) {
         try {
             BlackboardArtifact badFile = abstractFile.newArtifact(ARTIFACT_TYPE.TSK_HASHSET_HIT);
             BlackboardAttribute att2 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, "Known Bad", hashSetName);
             badFile.addAttribute(att2);
             BlackboardAttribute att3 = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HASH_MD5.getTypeID(), MODULE_NAME, "", md5Hash);
             badFile.addAttribute(att3);
-            StringBuilder detailsSb = new StringBuilder();
-            //details
-            detailsSb.append("<table border='0' cellpadding='4' width='280'>");
-            //hit
-            detailsSb.append("<tr>");
-            detailsSb.append("<th>File Name</th>");
-            detailsSb.append("<td>").append(abstractFile.getName()).append("</td>");
-            detailsSb.append("</tr>");
+            if (showInboxMessage) {
+                StringBuilder detailsSb = new StringBuilder();
+                //details
+                detailsSb.append("<table border='0' cellpadding='4' width='280'>");
+                //hit
+                detailsSb.append("<tr>");
+                detailsSb.append("<th>File Name</th>");
+                detailsSb.append("<td>").append(abstractFile.getName()).append("</td>");
+                detailsSb.append("</tr>");
 
-            detailsSb.append("<tr>");
-            detailsSb.append("<th>MD5 Hash</th>");
-            detailsSb.append("<td>").append(md5Hash).append("</td>");
-            detailsSb.append("</tr>");
+                detailsSb.append("<tr>");
+                detailsSb.append("<th>MD5 Hash</th>");
+                detailsSb.append("<td>").append(md5Hash).append("</td>");
+                detailsSb.append("</tr>");
 
-            detailsSb.append("<tr>");
-            detailsSb.append("<th>Hashset Name</th>");
-            detailsSb.append("<td>").append(hashSetName).append("</td>");
-            detailsSb.append("</tr>");
+                detailsSb.append("<tr>");
+                detailsSb.append("<th>Hashset Name</th>");
+                detailsSb.append("<td>").append(hashSetName).append("</td>");
+                detailsSb.append("</tr>");
 
-            detailsSb.append("</table>");
+                detailsSb.append("</table>");
 
-            managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this,
-                    "Notable: " + abstractFile.getName(),
-                    detailsSb.toString(),
-                    abstractFile.getName() + md5Hash,
-                    badFile));
+                managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this,
+                        "Notable: " + abstractFile.getName(),
+                        detailsSb.toString(),
+                        abstractFile.getName() + md5Hash,
+                        badFile));
+            }
             IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error creating blackboard artifact", ex);
@@ -315,7 +317,7 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
                             count += 1;
                             skCase.setKnown(fsContent, status);
                             String hashSetName = entry.getValue().getName();
-                            processBadFile(fsContent, md5Hash, hashSetName);
+                            processBadFile(fsContent, md5Hash, hashSetName, entry.getValue().getShowInboxMessages());
                         }
                         ret = ProcessResult.OK;
                     }

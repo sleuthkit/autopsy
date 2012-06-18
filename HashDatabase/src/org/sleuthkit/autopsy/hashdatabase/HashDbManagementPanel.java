@@ -102,14 +102,16 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
     }
 
     private void initUI(HashDb db) {
+        boolean useForIngestEnabled = db != null && !ingestRunning;
+        boolean useForIngestSelected = db != null && db.getUseForIngest();
+        boolean showInboxMessagesEnabled = db != null && !ingestRunning && useForIngestSelected;
+        boolean showInboxMessagesSelected = db != null && db.getShowInboxMessages();
+        boolean deleteButtonEnabled = db != null && !ingestRunning;
+        boolean importButtonEnabled = !ingestRunning;
         if (db == null) {
             setButtonFromIndexStatus(this.indexButton, IndexStatus.NONE);
             this.hashDbLocationLabel.setText("No database selected");
             this.hashDbNameLabel.setText("No database selected");
-            this.useForIngestCheckbox.setSelected(false);
-            this.useForIngestCheckbox.setEnabled(false);
-            this.showInboxMessagesCheckBox.setSelected(false);
-            this.showInboxMessagesCheckBox.setEnabled(useForIngestCheckbox.isSelected());
         } else {
             setButtonFromIndexStatus(this.indexButton, db.status());
             String shortenPath = db.getDatabasePaths().get(0);
@@ -120,28 +122,29 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
             }
             this.hashDbLocationLabel.setText(shortenPath);
             this.hashDbNameLabel.setText(db.getName());
-            this.useForIngestCheckbox.setSelected(db.getUseForIngest());
-            this.useForIngestCheckbox.setEnabled(true);
-            this.showInboxMessagesCheckBox.setSelected(db.getShowInboxMessages());
-            this.showInboxMessagesCheckBox.setEnabled(useForIngestCheckbox.isSelected());
         }
-        if(ingestRunning) {
-            setIngestRunning(ingestRunning);
-        }
+        this.useForIngestCheckbox.setSelected(useForIngestSelected);
+        this.useForIngestCheckbox.setEnabled(useForIngestEnabled);
+        this.showInboxMessagesCheckBox.setSelected(showInboxMessagesSelected);
+        this.showInboxMessagesCheckBox.setEnabled(showInboxMessagesEnabled);
+        this.deleteButton.setEnabled(deleteButtonEnabled);
+        this.importButton.setEnabled(!ingestRunning);
     }
     
     /**
      * Don't allow any changes if ingest is running
      */
     void setIngestRunning(boolean running) {
-        this.indexButton.setEnabled(!running);
-        this.useForIngestCheckbox.setEnabled(!running);
-        this.showInboxMessagesCheckBox.setEnabled(useForIngestCheckbox.isSelected());
         ingestRunning = running;
-        if(running)
+        if(running) {
             ingestRunningLabel.setText("Ingest is ongoing; some settings will be unavailable until it finishes.");
-        else
+        } else {
             ingestRunningLabel.setText("");
+        }
+        int selection = getSelection();
+        if(selection != -1) {
+            initUI(HashDbXML.getCurrent().getAllSets().get(selection));
+        }
     }
 
     /** This method is called from within the constructor to
@@ -197,6 +200,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         });
 
         deleteButton.setText(org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.deleteButton.text")); // NOI18N
+        deleteButton.setEnabled(false);
         deleteButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteButtonActionPerformed(evt);
@@ -207,9 +211,9 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         leftPanel.setLayout(leftPanelLayout);
         leftPanelLayout.setHorizontalGroup(
             leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 196, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 176, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, leftPanelLayout.createSequentialGroup()
-                .addContainerGap(30, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(importButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(deleteButton)
@@ -286,7 +290,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(indexButton))
                     .addComponent(ingestRunningLabel))
-                .addContainerGap(97, Short.MAX_VALUE))
+                .addContainerGap(117, Short.MAX_VALUE))
         );
         rightPanelLayout.setVerticalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
