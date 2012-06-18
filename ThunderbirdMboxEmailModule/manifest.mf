@@ -1,6 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: org.sleuthkit.autopsy.mboxparser
-OpenIDE-Module-Layer: org/sleuthkit/autopsy/mboxparser/layer.xml
-OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/mboxparser/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
-
