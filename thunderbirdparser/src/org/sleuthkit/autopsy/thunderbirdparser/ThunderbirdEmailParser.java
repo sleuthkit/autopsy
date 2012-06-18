@@ -114,14 +114,14 @@ public class ThunderbirdEmailParser {
     }
     
     //Get email subject
-    public String getSubject()
+    public ArrayList<String> getSubjects()
     {
-        return this.metadata.get(Metadata.SUBJECT);
+        return this.metadata.getValues(Metadata.SUBJECT);
     }
     
-    public String getTitle()
+    public ArrayList<String> getTitles()
     {
-        return this.metadata.get(Metadata.TITLE);
+        return this.metadata.getValues(Metadata.TITLE);
     }
     
     public Long getDateCreated() 
@@ -141,39 +141,39 @@ public class ThunderbirdEmailParser {
         return ftime;
     }
     
-    public String getContenType()
+    public ArrayList<String>  getContenType()
     {
-        return this.metadata.get(Metadata.CONTENT_TYPE);
+        return this.metadata.getValues(Metadata.CONTENT_TYPE);
     }
     
-    public String getContenEncoding()
+    public ArrayList<String>  getContenEncoding()
     {
-        return this.metadata.get(Metadata.CONTENT_ENCODING);
+        return this.metadata.getValues(Metadata.CONTENT_ENCODING);
     }
     
-    public String getFrom()
+    public ArrayList<String>  getFrom()
     {
-        return this.metadata.get(Metadata.AUTHOR);
+        return this.metadata.getValues(Metadata.AUTHOR);
     }
     
-    public String getTo()
+    public ArrayList<String>  getTo()
     {
-        return this.metadata.get(Metadata.MESSAGE_TO);
+        return this.metadata.getValues(Metadata.MESSAGE_TO);
     }
     
-    public String getCC()
+    public ArrayList<String>  getCC()
     {
-        return this.metadata.get(Metadata.MESSAGE_CC);
+        return this.metadata.getValues(Metadata.MESSAGE_CC);
     }
     
-    public String getBCC()
+    public ArrayList<String>  getBCC()
     {
-        return this.metadata.get(Metadata.MESSAGE_BCC);
+        return this.metadata.getValues(Metadata.MESSAGE_BCC);
     }
     
-    public String getRecipientAddress()
+    public ArrayList<String>  getRecipientAddress()
     {
-        return this.metadata.get(Metadata.MESSAGE_RECIPIENT_ADDRESS);
+        return this.metadata.getValues(Metadata.MESSAGE_RECIPIENT_ADDRESS);
     }
     
     public String getMboxSupportedMediaType()

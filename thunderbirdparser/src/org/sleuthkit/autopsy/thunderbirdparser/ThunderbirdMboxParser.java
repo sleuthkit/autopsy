@@ -40,6 +40,7 @@ public class ThunderbirdMboxParser  {
 
     private static final String EMAIL_HEADER_METADATA_PREFIX = "MboxParser-";
     private static final String EMAIL_FROMLINE_METADATA = EMAIL_HEADER_METADATA_PREFIX + "from";
+    private int numEmails = 0;
     
     private ThunderbirdXHTMLContentHandler xhtml =  null;
 
@@ -75,7 +76,6 @@ public class ThunderbirdMboxParser  {
         ThunderbirdMboxParser.ParseStates parseState = ThunderbirdMboxParser.ParseStates.START;
         String multiLine = null;
         boolean inQuote = false;
-        int numEmails = 0;
         
 
         // We're going to scan, line-by-line, for a line that starts with
@@ -249,5 +249,11 @@ public class ThunderbirdMboxParser  {
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.US);
         return dateFormat.parse(headerContent);
     }
+    
+    public int getNumberOfEmails()
+    {
+        return this.numEmails;
+    }
+            
 
 }
