@@ -1,11 +1,28 @@
 <project name="AutopsyTSKTargets">
-    <target name="copyTSKLibs">
-    <property environment="env"/>
-        <copy file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.dylib" tofile="${basedir}/DataModel/release/modules/lib/libtsk_jni.dylib"/>
-        <!-- <copy file="${env.TSK_HOME}/win32/libewf/msvscpp/Release/libewf.dll" tofile="${basedir}/DataModel/release/modules/lib/libewf.dll"/> 
-        <copy file="${env.TSK_HOME}/win32/libewf/msvscpp/zlib/zlib1.dll" tofile="${basedir}/DataModel/release/modules/lib/zlib1.dll"/> -->
+    <target name="testTSKLibs">
+        <property environment="env"/>
+        <available file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.dylib" property="tsk_dylib.present"/>
+        <available file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.so" property="tsk_so.present"/>
     </target>
-    <target name="copyExternalLibs">
+    
+    <!-- OS X -->
+    <target name="copyTskLibs_dylib" depends="testTSKLibs" if="tsk_dylib.present">
+        <property environment="env"/>
+        <copy file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.dylib" tofile="${basedir}/DataModel/release/modules/lib/libtsk_jni.jnilib"/>
+    </target>
+    
+    <!-- Non-OS X -->
+    <target name="copyTskLibs_so" depends="testTSKLibs" if="tsk_so.present">
+        <property environment="env"/>
+        <copy file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.so" tofile="${basedir}/DataModel/release/modules/lib/libtsk_jni.so"/>
+    </target>
+    
+    <target name="copyTSKLibsToRelease" depends="copyTskLibs_so,copyTskLibs_dylib">
+        <!-- depends targets take care of the actual copying since the file differs on OS X and Linux -->
+        <!-- This assumes that TSK, libewf, and zlib have been installed on the system and those libraries will be with normal loading approaches -->
+    </target>
+    
+    <target name="copyExternalLibsToZip">
     </target>
     
     <target name="build-installer-unix">

@@ -3,7 +3,7 @@
     <!-- Need a way to specify TSK Debug versus Release -->
     <property name="TSK_BUILD_TYPE">Release</property>
     
-    <target name="copyTSKLibs">
+    <target name="copyTSKLibsToRelease">
         <property environment="env"/>
         <condition property="ewfFound">
             <isset property="env.LIBEWF_HOME"/>
@@ -15,7 +15,7 @@
         <copy file="${env.LIBEWF_HOME}/msvscpp/Release/zlib.dll" tofile="${basedir}/DataModel/release/modules/lib/zlib.dll"/>
     </target>
     
-    <target name="copyExternalLibs">
+    <target name="copyExternalLibsToZip">
         
         <!-- Find CRT version we linked against from libtsk_jni manifest -->
         <property name="libtsk.manifest.path">${env.TSK_HOME}/win32/tsk_jni/${TSK_BUILD_TYPE}/libtsk_jni.dll.intermediate.manifest</property>
