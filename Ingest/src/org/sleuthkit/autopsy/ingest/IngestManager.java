@@ -314,6 +314,14 @@ public class IngestManager {
 
         for (IngestImageThread imageWorker : toStop) {
             IngestServiceImage s = imageWorker.getService();
+            
+            //stop the worker thread if thread is running
+            boolean cancelled = imageWorker.cancel(true);
+            if (!cancelled) {
+                logger.log(Level.INFO, "Unable to cancel image ingest worker for service: " + imageWorker.getService().getName() + " img: " + imageWorker.getImage().getName());
+            }
+            
+            //stop notification to service to cleanup resources
             if (isServiceRunning(s)) {
                 try {
                     imageWorker.getService().stop();
@@ -321,10 +329,7 @@ public class IngestManager {
                     logger.log(Level.WARNING, "Exception while stopping service: " + s.getName(), e);
                 }
             }
-            boolean cancelled = imageWorker.cancel(true);
-            if (!cancelled) {
-                logger.log(Level.WARNING, "Unable to cancel image ingest worker for service: " + imageWorker.getService().getName() + " img: " + imageWorker.getImage().getName());
-            }
+           
         }
 
         logger.log(Level.INFO, "stopped all");
@@ -955,15 +960,9 @@ public class IngestManager {
             stats.start();
 
             //notify main thread services started
-            SwingUtilities.invokeLater(new Runnable() {
-
-                @Override
-                public void run() {
-                    for (IngestServiceAbstractFile s : AbstractFileServices) {
-                        IngestManager.fireServiceEvent(SERVICE_STARTED_EVT, s.getName());
-                    }
-                }
-            });
+            for (IngestServiceAbstractFile s : AbstractFileServices) {
+                IngestManager.fireServiceEvent(SERVICE_STARTED_EVT, s.getName());
+            }
 
             final String displayName = "File Ingest";
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
@@ -1036,7 +1035,10 @@ public class IngestManager {
         @Override
         protected void done() {
             try {
+                Date d1 = new Date();
                 super.get(); //block and get all exceptions thrown while doInBackground()
+                Date d2 = new Date();
+                logger.log(Level.INFO, "File ingest get() took: " + (d2.getTime()-d1.getTime()) );
                 //notify services of completion
                 if (!this.isCancelled()) {
                     for (IngestServiceAbstractFile s : AbstractFileServices) {

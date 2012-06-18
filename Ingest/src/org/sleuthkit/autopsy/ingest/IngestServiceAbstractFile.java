@@ -21,11 +21,15 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * ingest service that acts on every FsContent in image
- * 
+ * Ingest service interface that acts on every AbstractFile in the image
  */
 public interface IngestServiceAbstractFile extends IngestServiceAbstract {
 
+    /**
+     * Return value resulting from processing AbstractFile
+     * Can be used by manager to stop processing the file, or by subsequent service
+     * in the pipeline as a hint to stop processing the file
+     */
     public enum ProcessResult {
         UNKNOWN, //values unknown for the (service,last file)
         OK, //subsequent service continues processing the file
@@ -35,10 +39,21 @@ public interface IngestServiceAbstractFile extends IngestServiceAbstract {
     };
     
     /**
-     * notification from manager to process file / directory.
-     * Service may choose to perform an action or enqueue processing of a group of FsContents.
-     * The service notifies viewers via IngestManager.postMessage()
-     * and may also write results to the black-board as it is processing
+     * Entry point to process file / directory by the service.
+     * 
+     * Service does all the processing work in this method.
+     * It may choose to skip the file if the file is not of interest to the service.
+     * Results of processing, such as extracted data or analysis results should be posted to the blackboard.
+     * 
+     * In a more advanced module, the module can enqueue the file 
+     * and postpone processing until more files of interest are available.
+     * 
+     * The service notifies the ingest inbox of interesting events (data, errors, warnings, infos) 
+     * by posting ingest messages
+     * The service notifies data viewers by firing events using IngestManager.fireServiceDataEvent
+     * 
+     * @param abstractFile file to process
+     * @return ProcessResult result of the processing that can be used in the pipeline as a hint whether to further process this file
      */
     public ProcessResult process(AbstractFile abstractFile);
 }

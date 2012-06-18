@@ -48,6 +48,12 @@ public interface KeywordSearchQuery {
      */
     public void setFilter(KeywordQueryFilter filter);
     
+    /**
+     * Set an optional field to narrow down the search
+     * @param field field to set on the query
+     */
+    public void setField(String field);
+    
     
     /**
      * escape the query string and use the escaped string in the query

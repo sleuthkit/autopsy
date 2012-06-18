@@ -138,6 +138,14 @@
                 <binary-origin>release/modules/ext/junit-3.8.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-logging-1.1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-1.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang-2.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/poi-ooxml-schemas-3.8-20120326.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-ooxml-schemas-3.8-20120326.jar</binary-origin>
             </class-path-extension>
@@ -166,20 +174,12 @@
                 <binary-origin>release/modules/ext/stax-api-1.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-logging-1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/log4j-1.2.13.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/log4j-1.2.13.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/xmlbeans-2.3.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/xmlbeans-2.3.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-lang3-3.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang3-3.1.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

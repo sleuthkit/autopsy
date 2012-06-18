@@ -21,35 +21,57 @@ package org.sleuthkit.autopsy.ingest;
 import org.netbeans.api.progress.ProgressHandle;
 
 /**
- * passed to the service as a limited way to control this worker
- * update progress bar, check if job is cancelled 
+ * Controller for image level ingest services
+ * Used by services to check task status and to post progress to
  */
 public class IngestImageWorkerController {
 
     private IngestImageThread worker;
     private ProgressHandle progress;
 
-    public IngestImageWorkerController(IngestImageThread worker, ProgressHandle progress) {
+    /**
+     * Instantiate the controller for the worker
+     * @param worker underlying image ingest thread
+     * @param progress the progress handle
+     */
+    IngestImageWorkerController(IngestImageThread worker, ProgressHandle progress) {
         this.worker = worker;
         this.progress = progress;
     }
 
+    /**
+     * Check if the task has been cancelled.  This should be polled by the service periodically
+     * And the service needs to act, i.e. break out of its processing loop and call its stop() to cleanup
+     * 
+     * @return true if the task has been cancelled, false otherwise
+     */
     public boolean isCancelled() {
         return worker.isCancelled();
     }
 
+    /**
+     * Update the progress bar and switch to determinate mode once number of total work units is known
+     * @param workUnits total number of work units for the image ingest task
+     */
     public void switchToDeterminate(int workUnits) {
         if (progress != null) {
             progress.switchToDeterminate(workUnits);
         }
     }
 
+    /**
+     * Update the progress bar and switch to non determinate mode if number of work units is not known
+     */
     public void switchToInDeterminate() {
         if (progress != null) {
             progress.switchToIndeterminate();
         }
     }
 
+    /**
+     * Update the progress bar with the number of work units performed, if in the determinate mode
+     * @param workUnits number of work units performed so far by the service
+     */
     public void progress(int workUnits) {
         if (progress != null) {
             progress.progress(worker.getImage().getName(), workUnits);

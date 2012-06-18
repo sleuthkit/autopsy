@@ -21,18 +21,30 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * ingest service that acts on entire image (such as Internet history)
  * 
+ * Ingest service that acts on entire image 
+ * Image ingest services run each in its own background thread
+ * in parallel to the file processing ingest pipeline and other image ingest modules
  */
 public interface IngestServiceImage extends IngestServiceAbstract {
 
+    
     /**
-     * notification from manager to process image
-     * The service notifies viewers via IngestManager.postMessage()
-     * and may also write results to the black-board as it is processing.
+     * Entry point to process the image by the service.
      * 
-     * @param image image to process
-     * @param controller controller to the worker, to update progress (if determinate) and check if cancelled
+     * Service does all the processing work in this method.
+     * It is responsible for extracting content of interest from the image (i.e. using DataModel API) and processing it.
+     * Results of processing, such as extracted data or analysis results, should be posted to the blackboard. 
+     * 
+     * The service notifies the ingest inbox of interesting events (data, errors, warnings, infos) 
+     * by posting ingest messages
+     * The service notifies data viewers by firing events using IngestManager.fireServiceDataEvent
+     * 
+     * The service is responsible for posting progress to controller
+     * And to periodically check controller if it should break out of the processing loop because task has been cancelled
+     * 
+     * @param image to process
+     * @param controller to post progress to and to use for checking if cancellation has occurred
      */
     public void process(Image image, IngestImageWorkerController controller);
 }

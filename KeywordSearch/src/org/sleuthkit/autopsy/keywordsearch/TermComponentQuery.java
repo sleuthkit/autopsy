@@ -22,35 +22,22 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import javax.swing.SwingWorker;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
-import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.api.progress.ProgressHandleFactory;
-import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
-import org.openide.nodes.Node;
-import org.openide.windows.TopComponent;
-import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskException;
 
 public class TermComponentQuery implements KeywordSearchQuery {
@@ -67,6 +54,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
     private List<Term> terms;
     private Keyword keywordQuery = null;
     private KeywordQueryFilter filter = null;
+    private String field = null;
 
     public TermComponentQuery(Keyword keywordQuery) {
         this.keywordQuery = keywordQuery;
@@ -76,12 +64,16 @@ public class TermComponentQuery implements KeywordSearchQuery {
         terms = null;
     }
 
-    
     @Override
     public void setFilter(KeywordQueryFilter filter) {
         this.filter = filter;
     }
-    
+
+    @Override
+    public void setField(String field) {
+        this.field = field;
+    }
+
     @Override
     public void escape() {
         queryEscaped = Pattern.quote(termsQuery);
@@ -109,7 +101,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
     public boolean isEscaped() {
         return isEscaped;
     }
-    
+
     @Override
     public boolean isLiteral() {
         return false;
@@ -170,10 +162,6 @@ public class TermComponentQuery implements KeywordSearchQuery {
     public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
 
-        if (snippet == null || snippet.equals("")) {
-            return null;
-        }
-
         //there is match actually in this file, create artifact only then
         BlackboardArtifact bba = null;
         KeywordWriteResult writeResult = null;
@@ -196,7 +184,8 @@ public class TermComponentQuery implements KeywordSearchQuery {
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, "", listName));
 
         //preview
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+        if (snippet != null)
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
 
         //regex keyword
         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", termsQuery));
@@ -224,7 +213,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public Map<String, List<ContentHit>> performQuery() throws NoOpenCoreException{
+    public Map<String, List<ContentHit>> performQuery() throws NoOpenCoreException {
         Map<String, List<ContentHit>> results = new HashMap<String, List<ContentHit>>();
 
         final SolrQuery q = createQuery();
@@ -232,15 +221,13 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
 
         for (Term term : terms) {
-            final String termS = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
+            final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
 
-            StringBuilder filesQueryB = new StringBuilder();
-            filesQueryB.append(TERMS_SEARCH_FIELD).append(":").append(termS);
-            final String queryStr = filesQueryB.toString();
-
-            LuceneQuery filesQuery = new LuceneQuery(queryStr);
-            if (filter != null)
+            LuceneQuery filesQuery = new LuceneQuery(termStr);
+            filesQuery.setField(TERMS_SEARCH_FIELD);
+            if (filter != null) {
                 filesQuery.setFilter(filter);
+            }
             try {
                 Map<String, List<ContentHit>> subResults = filesQuery.performQuery();
                 Set<ContentHit> filesResults = new HashSet<ContentHit>();
@@ -248,12 +235,10 @@ public class TermComponentQuery implements KeywordSearchQuery {
                     filesResults.addAll(subResults.get(key));
                 }
                 results.put(term.getTerm(), new ArrayList<ContentHit>(filesResults));
-            } 
-            catch (NoOpenCoreException e) {
+            } catch (NoOpenCoreException e) {
                 logger.log(Level.WARNING, "Error executing Solr query,", e);
                 throw e;
-            }
-            catch (RuntimeException e) {
+            } catch (RuntimeException e) {
                 logger.log(Level.WARNING, "Error executing Solr query,", e);
             }
 
@@ -262,5 +247,4 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
         return results;
     }
-   
 }

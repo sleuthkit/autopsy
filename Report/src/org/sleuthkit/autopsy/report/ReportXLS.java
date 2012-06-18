@@ -21,7 +21,6 @@
 package org.sleuthkit.autopsy.report;
 
 import java.awt.Desktop;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.File;
@@ -34,6 +33,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -214,7 +214,7 @@ public class ReportXLS implements ReportModule {
             sheetKeyword.getRow(0).createCell(0).setCellValue("Keyword");
             sheetKeyword.getRow(0).createCell(1).setCellValue("File Name");
             sheetKeyword.getRow(0).createCell(2).setCellValue("Preview");
-            sheetKeyword.getRow(0).createCell(3).setCellValue("Keyword LIst");
+            sheetKeyword.getRow(0).createCell(3).setCellValue("Keyword List");
 
             sheetRecent.setDefaultColumnStyle(1, defaultstyle);
             sheetRecent.createRow(0).setRowStyle(style);
@@ -283,6 +283,7 @@ public class ReportXLS implements ReportModule {
                 int cc = 0;
                 Long objId = entry.getKey().getObjectID();
                 AbstractFile file = skCase.getAbstractFileById(objId);
+                String filename = file.getName();
                 Long filesize = file.getSize();
                 TreeMap<Integer, String> attributes = new TreeMap<Integer, String>();
                 // Get all the attributes, line them up to be added. Place empty string placeholders for each attribute type
@@ -297,14 +298,13 @@ public class ReportXLS implements ReportModule {
                     }
                     String value = "";
                     int type = tempatt.getAttributeTypeID();
-                    if (tempatt.getValueString() == null || "null".equals(tempatt.getValueString())) {
-                    } else if (type == 2 || type == 33) {
-                        value = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date((tempatt.getValueLong()) * 1000));
+                   if (tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID() || tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
+                        value = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date((tempatt.getValueLong()) * 1000)).toString();
                     } else {
                         value = tempatt.getValueString();
                     }
 
-                    attributes.put(type, value);
+                    attributes.put(type, StringEscapeUtils.escapeXml(value));
                     cc++;
                 }
 
@@ -368,7 +368,7 @@ public class ReportXLS implements ReportModule {
                     countedKeyword++;
                     Row temp = sheetKeyword.createRow(countedKeyword);
                     temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()));
-                    temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
+                    temp.createCell(1).setCellValue(filename);
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID()));
                     temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
                 }

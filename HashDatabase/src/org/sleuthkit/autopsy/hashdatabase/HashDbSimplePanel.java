@@ -24,8 +24,6 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
@@ -39,12 +37,14 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     
     private static final Logger logger = Logger.getLogger(HashDbSimplePanel.class.getName());
     private HashTableModel knownBadTableModel;
+    private NSRLTableModel nsrlTableModel;
     private HashDb nsrl;
     private static boolean ingestRunning = false;
 
     /** Creates new form HashDbSimplePanel */
     public HashDbSimplePanel() {
         knownBadTableModel = new HashTableModel();
+        nsrlTableModel = new NSRLTableModel();
         initComponents();
         customizeComponents();
     }
@@ -55,18 +55,26 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     
     private void customizeComponents() {
         notableHashTable.setModel(knownBadTableModel);
+        jTable1.setModel(nsrlTableModel);
         
         notableHashTable.setTableHeader(null);
+        jTable1.setTableHeader(null);
         notableHashTable.setRowSelectionAllowed(false);
+        jTable1.setRowSelectionAllowed(false);
         //customize column witdhs
         final int width1 = jScrollPane1.getPreferredSize().width;
+        final int width2 = jScrollPane2.getPreferredSize().width;
         TableColumn column1 = null;
+        TableColumn column2 = null;
         for (int i = 0; i < notableHashTable.getColumnCount(); i++) {
             column1 = notableHashTable.getColumnModel().getColumn(i);
+            column2 = jTable1.getColumnModel().getColumn(i);
             if (i == 0) {
                 column1.setPreferredWidth(((int) (width1 * 0.15)));
+                column2.setPreferredWidth(((int) (width2 * 0.15)));
             } else {
                 column1.setPreferredWidth(((int) (width1 * 0.84)));
+                column2.setPreferredWidth(((int) (width2 * 0.84)));
             }
         }
         
@@ -86,7 +94,8 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         notableHashTable = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        nsrlNameLabel = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
 
         jScrollPane1.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
@@ -99,7 +108,12 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         jLabel2.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.jLabel2.text")); // NOI18N
 
-        nsrlNameLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.nsrlNameLabel.text")); // NOI18N
+        jScrollPane2.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+
+        jTable1.setBackground(new java.awt.Color(240, 240, 240));
+        jTable1.setShowHorizontalLines(false);
+        jTable1.setShowVerticalLines(false);
+        jScrollPane2.setViewportView(jTable1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -107,28 +121,25 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
-                .addContainerGap(142, Short.MAX_VALUE))
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 274, Short.MAX_VALUE)
+                .addComponent(jLabel2)
+                .addContainerGap(51, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(nsrlNameLabel))
-                    .addComponent(jLabel2))
-                .addContainerGap(143, Short.MAX_VALUE))
+                .addComponent(jLabel1)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 139, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 139, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(nsrlNameLabel)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 106, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 98, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -136,18 +147,45 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTable jTable1;
     private javax.swing.JTable notableHashTable;
-    private javax.swing.JLabel nsrlNameLabel;
     // End of variables declaration//GEN-END:variables
 
     private void reloadSets() {
         nsrl = HashDbXML.getCurrent().getNSRLSet();
-        if(nsrl == null) {
-            nsrlNameLabel.setText("No NSRL database set.");
-        } else {
-            nsrlNameLabel.setText(nsrl.getName());
-        }
+        nsrlTableModel.resync();
         knownBadTableModel.resync();
+    }
+    
+    private class NSRLTableModel extends AbstractTableModel {
+        
+        private void resync() {
+            fireTableDataChanged();
+        }
+        
+        @Override
+        public int getRowCount() {
+            return 1;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            if (columnIndex == 0) {
+                return "";
+            } else {
+                if(nsrl == null) {
+                    return "Not Configured";
+                } else {
+                    return nsrl.getName();
+                }
+            }
+        }
     }
 
     private class HashTableModel extends AbstractTableModel {
@@ -160,7 +198,8 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         @Override
         public int getRowCount() {
-            return xmlHandle.getKnownBadSets().size();
+            int size = xmlHandle.getKnownBadSets().size();
+            return size == 0 ? 1 : size;
         }
 
         @Override
@@ -170,11 +209,19 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
-            if(columnIndex == 0) {
-                return db.getUseForIngest();
+            if (xmlHandle.getKnownBadSets().isEmpty()) {
+                if (columnIndex == 0) {
+                    return "";
+                } else {
+                    return "Not Configured";
+                }
             } else {
-                return db.getName();
+                HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
+                if (columnIndex == 0) {
+                    return db.getUseForIngest();
+                } else {
+                    return db.getName();
+                }
             }
         }
         

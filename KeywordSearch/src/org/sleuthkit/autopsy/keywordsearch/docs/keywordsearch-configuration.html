@@ -1,0 +1,49 @@
+<!--
+Autopsy Forensic Browser
+
+Copyright 2011 Basis Technology Corp.
+Contact: carrier <at> sleuthkit <dot> org
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Keyword Search Configuration</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+        <h2>Keyword Search Configuration Dialog</h2>
+        <p>
+            The keyword search configuration dialog is used to add, remove, and modify keyword search lists.
+        </p>
+        <p>
+            To begin, select the 'New List' button and choose a name for the new Keyword List.
+            Once the list has been created, keywords can be added to it. Regular expressions are supported using
+            <a href="http://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html">Java Regex Syntax</a>.
+            Lists can be added to the keyword search ingest process; searches will happen at regular intervals as content is added to the index.
+        </p>
+        <h2>List Import and Export</h2>
+        <p>
+            Autopsy supports importing Encase tab-delimited lists as well as lists created previously with Autopsy.
+            For Encase lists, folder structure and hierarchy is currently ignored. This will be fixed in a future version.
+            There is currently no way to export lists for use with Encase. This will also be added in future releases.
+        </p>
+        <h2>NIST NSRL Support</h2>
+        <p>
+            The hash database ingest service can be configured to use the NIST NSRL hash database of known files.
+            The keyword search configuration dialog contains an option to skip keyword indexing and search on files found in the NSRL.
+        </p>
+            <img src="keywordsearch-configuration.png" alt="Keyword Search Configuration Dialog" />
+    </body>
+</html>

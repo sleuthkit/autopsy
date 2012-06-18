@@ -39,6 +39,7 @@ import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.ContentStream;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -132,7 +133,7 @@ public class Ingester {
         params.put(Server.Schema.ID.toString(), 
         FileExtractedChild.getFileExtractChildId(sourceContent.getId(), fec.getChunkId()));
     
-        ingest(bcs, params, FileExtract.MAX_CHUNK_SIZE);
+        ingest(bcs, params, FileExtract.MAX_STRING_CHUNK_SIZE);
     }
 
     /**
@@ -143,8 +144,13 @@ public class Ingester {
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(FsContent f) throws IngesterException {
-        ingest(new FscContentStream(f), getContentFields(f), f.getSize());
+    void ingest(FsContent fsContent) throws IngesterException {
+        if (fsContent.isDir() ) {
+            ingest(new NullContentStream(fsContent), getContentFields(fsContent), 0);
+        }
+        else {
+            ingest(new FscContentStream(fsContent), getContentFields(fsContent), fsContent.getSize());
+        }
     }
 
     /**
@@ -166,10 +172,10 @@ public class Ingester {
         @Override
         public Map<String, String> visit(File f) {
             Map<String, String> params = getCommonFields(f);
-            params.put(Server.Schema.CTIME.toString(), f.getCtimeAsDate());
-            params.put(Server.Schema.ATIME.toString(), f.getAtimeAsDate());
-            params.put(Server.Schema.MTIME.toString(), f.getMtimeAsDate());
-            params.put(Server.Schema.CRTIME.toString(), f.getMtimeAsDate());
+            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTime(f.getCtime(), f));
+            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTime(f.getAtime(), f));
+            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTime(f.getMtime(), f));
+            params.put(Server.Schema.CRTIME.toString(),ContentUtils.getStringTime(f.getCrtime(), f));
             return params;
         }
 
@@ -187,7 +193,12 @@ public class Ingester {
 
         @Override
         public Map<String, String> visit(Directory d) {
-            throw new IllegalArgumentException("Indexing directories not supported");
+            Map<String, String> params = getCommonFields(d);
+            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTime(d.getCtime(), d));
+            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTime(d.getAtime(), d));
+            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTime(d.getMtime(), d));
+            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTime(d.getCrtime(), d));
+            return params;
         } 
     }
 
@@ -196,7 +207,7 @@ public class Ingester {
      * 
      * @param ContentStream to ingest
      * @param fields content specific fields
-     * @param size size of the content
+     * @param size size of the content - used to determine the Solr timeout, not used to populate meta-data
      * @throws IngesterException if there was an error processing a specific
      * content, but the Solr server is probably fine.
      */
@@ -427,12 +438,14 @@ public class Ingester {
 
     /**
      * Determine if the file is ingestible/indexable by keyword search
-     * Note: currently only checks by extension and abstract type, could be a more robust check.
+     * Ingestible abstract file is either a directory, or an allocated file with supported extensions.
+     * Note: currently only checks by extension and abstract type, it does not check actual file content.
      * @param aFile
      * @return true if it is ingestible, false otherwise
      */
     static boolean isIngestible(AbstractFile aFile) {
         boolean isIngestible = false;
+        
         TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
         if (aType.equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || aType.equals(TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))
@@ -440,7 +453,8 @@ public class Ingester {
         
         FsContent fsContent = (FsContent) aFile;
         if (fsContent.isDir())
-            return isIngestible;
+            //we index dir name, not content
+            return true;
         
         final String fileName = fsContent.getName();
         for (final String ext : ingestibleExtensions) {

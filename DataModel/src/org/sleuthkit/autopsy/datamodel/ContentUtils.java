@@ -22,8 +22,10 @@ package org.sleuthkit.autopsy.datamodel;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.datamodel.Content;
@@ -45,6 +47,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 public final class ContentUtils {
     
     private final static Logger logger = Logger.getLogger(ContentUtils.class.getName());
+	private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     
     // don't instantiate
     private ContentUtils() {
@@ -62,6 +65,40 @@ public final class ContentUtils {
      */
     public static String[] getDisplayPath(Content content) {
         return content.accept(getDisplayPath).toArray(new String[]{});
+    }
+    
+    
+    /**
+     * Convert epoch seconds to a string value in the given time zone
+     * @param epochSeconds
+     * @param tzone
+     * @return 
+     */
+	public static String getStringTime(long epochSeconds, TimeZone tzone) {
+		String time = "0000-00-00 00:00:00";
+		if (epochSeconds != 0) {
+			dateFormatter.setTimeZone(tzone);
+			time = dateFormatter.format(new java.util.Date(epochSeconds * 1000));
+		}
+		return time;
+	}
+    
+    /**
+     * Convert epoch seconds to a string value (convenience method)
+     * @param epochSeconds
+     * @param c
+     * @return 
+     */
+	public static String getStringTime(long epochSeconds, Content c) {
+		return getStringTime(epochSeconds, getTimeZone(c));
+	}
+    
+    public static TimeZone getTimeZone(Content c) {
+        try {
+            return TimeZone.getTimeZone(c.getImage().getTimeZone());
+        } catch(TskException ex) {
+            return TimeZone.getDefault();
+        }
     }
     
     private static final SystemNameVisitor systemName = new SystemNameVisitor();

@@ -114,6 +114,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             public void valueChanged(ListSelectionEvent e) {
                 if (lsm.isSelectionEmpty() || currentKeywordList.isLocked()) {
                     deleteWordButton.setEnabled(false);
+                    return;
                 } else {
                     deleteWordButton.setEnabled(true);
                 }
@@ -529,6 +530,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
         //add & reset checkbox
         tableModel.addKeyword(keyword);
+        KeywordSearchListsXML.getCurrent().addList(currentKeywordList);
         chRegex.setSelected(false);
         addWordField.setText("");
 
@@ -584,6 +586,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
         tableModel.deleteSelected(keywordTable.getSelectedRows());
+        KeywordSearchListsXML.getCurrent().addList(currentKeywordList);
         initButtons();
     }//GEN-LAST:event_deleteWordButtonActionPerformed
 
@@ -693,11 +696,12 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
             listSelectionModel.setSelectionInterval(index, index);
             KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
 
-            currentKeywordList = loader.getListsL().get(index);
+            currentKeywordList = loader.getListsL(false).get(index);
             tableModel.resync();
             initButtons();
         } else {
             currentKeywordList = null;
+            tableModel.resync();
             initButtons();
         }
     }
@@ -737,6 +741,9 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             Object ret = null;
+            if(currentKeywordList == null) {
+                return "";
+            }
             Keyword word = currentKeywordList.getKeywords().get(rowIndex);
             switch (columnIndex) {
                 case 0:

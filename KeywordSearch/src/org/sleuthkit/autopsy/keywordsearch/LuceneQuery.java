@@ -50,6 +50,7 @@ public class LuceneQuery implements KeywordSearchQuery {
     private boolean isEscaped;
     private Keyword keywordQuery = null;
     private KeywordQueryFilter filter = null;
+    private String field = null;
     //use different highlight Solr fields for regex and literal search
     static final String HIGHLIGHT_FIELD_LITERAL = Server.Schema.CONTENT.toString();
     static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.CONTENT.toString();
@@ -70,6 +71,11 @@ public class LuceneQuery implements KeywordSearchQuery {
     @Override
     public void setFilter(KeywordQueryFilter filter) {
         this.filter = filter;
+    }
+    
+    @Override
+    public void setField(String field) {
+        this.field = field;
     }
 
     @Override
@@ -164,11 +170,11 @@ public class LuceneQuery implements KeywordSearchQuery {
         return null;
     }
 
+    
     /**
-     * Just perform the query and return result without updating the GUI
-     * This utility is used in this class, can be potentially reused by other classes
-     * @param query
-     * @return matches List
+     * Perform the query and return result
+     * @return list of ContentHit objects
+     * @throws NoOpenCoreException
      */
     private List<ContentHit> performLuceneQuery() throws NoOpenCoreException {
 
@@ -181,13 +187,22 @@ public class LuceneQuery implements KeywordSearchQuery {
 
         SolrQuery q = new SolrQuery();
 
-        q.setQuery(queryEscaped);
+        //set query, force quotes/grouping around all literal queries
+        final String groupedQuery = KeywordSearchUtil.quoteQuery(queryEscaped);
+        String theQueryStr = groupedQuery;
+        if (field != null) {
+            //use the optional field
+            StringBuilder sb = new StringBuilder();
+            sb.append(field).append(":").append(groupedQuery);
+            theQueryStr = sb.toString();
+        }
+        
+        q.setQuery(theQueryStr);
         q.setRows(ROWS_PER_FETCH);
         q.setFields(Server.Schema.ID.toString());
         if (filter != null) {
             q.addFilterQuery(filter.toString());
         }
-
 
         for (int start = 0; !allMatchesFetched; start = start + ROWS_PER_FETCH) {
             q.setStart(start);
@@ -208,7 +223,7 @@ public class LuceneQuery implements KeywordSearchQuery {
                 for (SolrDocument resultDoc : resultList) {
                     final String resultID = (String) resultDoc.getFieldValue(Server.Schema.ID.toString());
 
-                    final int sepIndex = resultID.indexOf('_');
+                    final int sepIndex = resultID.indexOf(Server.ID_CHUNK_SEP);
 
                     if (sepIndex != -1) {
                         //file chunk result
@@ -247,7 +262,6 @@ public class LuceneQuery implements KeywordSearchQuery {
                 throw ex;
             } catch (SolrServerException ex) {
                 logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
-                // TODO: handle bad query strings, among other issues
             }
 
         }
@@ -303,8 +317,8 @@ public class LuceneQuery implements KeywordSearchQuery {
             q.setQuery(sb.toString());
         } else {
             //simplify query/escaping and use default field
-            //quote only if user supplies quotes
-            q.setQuery(query);
+            //always force grouping/quotes
+            q.setQuery(KeywordSearchUtil.quoteQuery(query));
         }
 
         String contentIDStr = null;
@@ -322,7 +336,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         q.setHighlightSimplePost("&raquo;");
         q.setHighlightSnippets(1);
         q.setHighlightFragsize(SNIPPET_LENGTH);
-        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //analyze all content 
+        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //analyze all content SLOW! consider lowering
 
         try {
             QueryResponse response = solrServer.query(q);

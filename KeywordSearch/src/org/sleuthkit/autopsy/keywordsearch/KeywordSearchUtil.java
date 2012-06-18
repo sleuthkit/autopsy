@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.logging.Level;
@@ -57,6 +58,24 @@ public class KeywordSearchUtil {
             dirName = dirNameB.toString();
         }
         return dirName;
+    }
+
+    /**
+     * Return a quoted version of the query if the original query is not quoted
+     * @param query the query to check if it is quoted
+     * @return quoted query
+     */
+    public static String quoteQuery(String query) {
+        //ensure a single pair of quotes around the query
+        final int length = query.length();
+        if (length > 1 && query.charAt(0) == '"' 
+                && query.charAt(length - 1) == '"') {
+            return query;
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("\"").append(query).append("\"");
+        return sb.toString();
     }
 
     /**
@@ -143,5 +162,14 @@ public class KeywordSearchUtil {
             return false;
         }
     }
-
+    
+    /**
+     * Is the Keyword Search list at absPath an XML list?
+     * @param absPath
+     * @return yes or no
+     */
+    static boolean isXMLList(String absPath) {
+        //TODO: make this more robust, if necessary
+        return new File(absPath).getName().endsWith(".xml");
+    }
 }

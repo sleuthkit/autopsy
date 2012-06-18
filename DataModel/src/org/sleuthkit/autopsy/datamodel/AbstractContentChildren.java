@@ -130,6 +130,11 @@ abstract class AbstractContentChildren extends Keys<Object> {
         }
         
         @Override
+        public AbstractNode visit(EmailExtracted ee) {
+            return ee.new EmailExtractedRootNode();
+        }
+        
+        @Override
         public AbstractNode visit(Images i) {
             try {
                 return new ImagesNode(i.getSleuthkitCase().getRootObjects());
