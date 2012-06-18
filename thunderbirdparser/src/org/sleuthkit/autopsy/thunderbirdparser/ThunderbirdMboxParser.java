@@ -7,16 +7,12 @@ package org.sleuthkit.autopsy.thunderbirdparser;
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -43,6 +39,7 @@ public class ThunderbirdMboxParser  {
     private int numEmails = 0;
     
     private ThunderbirdXHTMLContentHandler xhtml =  null;
+    private ArrayList<String> xhtmlDocs = new ArrayList<String>();
 
     private enum ParseStates {
         START, IN_HEADER, IN_CONTENT
@@ -166,6 +163,8 @@ public class ThunderbirdMboxParser  {
         }
 
         xhtml.endDocument();
+        
+        xhtmlDocs.add(xhtml.toString());
     }
 
     private void endMessage(boolean inQuote) throws SAXException {
@@ -253,6 +252,11 @@ public class ThunderbirdMboxParser  {
     public int getNumberOfEmails()
     {
         return this.numEmails;
+    }
+    
+    public ArrayList<String> getXHTMLDocs()
+    {
+        return this.xhtmlDocs;
     }
             
 
