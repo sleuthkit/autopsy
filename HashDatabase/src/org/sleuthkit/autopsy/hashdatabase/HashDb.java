@@ -49,17 +49,23 @@ public class HashDb implements Comparable<HashDb> {
     private String name;
     private List<String> databasePaths; // TODO: Length limited to one for now...
     private boolean useForIngest;
+    private boolean showInboxMessages;
     private boolean indexing;
     
-    public HashDb(String name, List<String> databasePaths, boolean useForIngest) {
+    public HashDb(String name, List<String> databasePaths, boolean useForIngest, boolean showInboxMessages) {
         this.name = name;
         this.databasePaths = databasePaths;
         this.useForIngest = useForIngest;
+        this.showInboxMessages = showInboxMessages;
         this.indexing = false;
     }
     
     boolean getUseForIngest() {
         return useForIngest;
+    }
+    
+    boolean getShowInboxMessages() {
+        return showInboxMessages;
     }
     
     String getName() {
@@ -72,6 +78,10 @@ public class HashDb implements Comparable<HashDb> {
     
     void setUseForIngest(boolean useForIngest) {
         this.useForIngest = useForIngest;
+    }
+    
+    void setShowInboxMessages(boolean showInboxMessages) {
+        this.showInboxMessages = showInboxMessages;
     }
     
     void setName(String name) {
@@ -253,7 +263,7 @@ public class HashDb implements Comparable<HashDb> {
         protected void done() {
             indexing = false;
             progress.finish();
-            HashDbMgmtPanel.getDefault().resync();
+            HashDbManagementPanel.getDefault().resync();
         }
     }
 }
