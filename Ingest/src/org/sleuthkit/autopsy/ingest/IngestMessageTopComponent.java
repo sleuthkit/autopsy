@@ -145,6 +145,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
             for (int i = 0; i < tcs.length; ++i) {
                 if (tcs[i] == this) //already floating
                 {
+                    this.open();
                     return;
                 }
             }

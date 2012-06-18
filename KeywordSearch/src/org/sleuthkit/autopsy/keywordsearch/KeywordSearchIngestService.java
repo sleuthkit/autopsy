@@ -88,7 +88,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private volatile boolean searcherDone = true;
     private Map<Keyword, List<ContentHit>> currentResults;
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
-    private static final Lock searcherLock = rwLock.writeLock(); 
+    private static final Lock searcherLock = rwLock.writeLock();
     private volatile int messageID = 0;
     private boolean processedFiles;
     private volatile boolean finalSearcherDone = true;
@@ -99,7 +99,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     private enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,};
+        INGESTED, EXTRACTED_INGESTED, SKIPPED,
+    };
     private Map<Long, IngestStatus> ingestStatus;
 
     /**
@@ -161,18 +162,19 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         //logger.log(Level.INFO, "complete()");
         commitTimer.stop();
-        
+
         //handle case if previous search running
         //cancel it, will re-run after final commit
         //note: cancellation of Searcher worker is graceful (between keywords)        
         if (currentSearcher != null) {
             currentSearcher.cancel(false);
-        }    
-        
+        }
+
         //cancel searcher timer, ensure unwanted searcher does not start 
         //before we start the final one
-        if (searchTimer.isRunning())
+        if (searchTimer.isRunning()) {
             searchTimer.stop();
+        }
         runSearcher = false;
 
         logger.log(Level.INFO, "Running final index commit and search");
@@ -181,7 +183,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         postIndexSummary();
 
-        updateKeywords();
         //run one last search as there are probably some new files committed
         if (keywords != null && !keywords.isEmpty() && processedFiles == true) {
             finalSearcher = new Searcher(keywords, true); //final searcher run
@@ -208,10 +209,11 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         if (currentSearcher != null) {
             currentSearcher.cancel(true);
         }
-        
+
         //cancel searcher timer, ensure unwanted searcher does not start 
-        if (searchTimer.isRunning())
+        if (searchTimer.isRunning()) {
             searchTimer.stop();
+        }
         runSearcher = false;
         finalSearcherDone = true;
 
@@ -324,8 +326,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
      */
     @Override
     public boolean hasBackgroundJobsRunning() {
-        if ( (currentSearcher != null && searcherDone == false) 
-            || (finalSearcherDone == false)) {
+        if ((currentSearcher != null && searcherDone == false)
+                || (finalSearcherDone == false)) {
             return true;
         } else {
             return false;
@@ -416,34 +418,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         }
     }
 
-    /**
-     * Retrieve the updated keyword search lists from the XML loader
-     */
-    private void updateKeywords() {
-        KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
-
-        searcherLock.lock();
-        try {
-        keywords.clear();
-        keywordToList.clear();
-
-        for (String name : keywordLists) {
-            KeywordSearchList list = loader.getList(name);
-            for (Keyword k : list.getKeywords()) {
-                keywords.add(k);
-                keywordToList.put(k.getQuery(), list);
-            }
-        }
-        }
-        finally {
-            searcherLock.unlock();
-        }
-    }
-
     List<String> getKeywordLists() {
         return keywordLists == null ? new ArrayList<String>() : keywordLists;
     }
-    
+
     /**
      * Check if time to commit, if so, run commit.
      * Then run search if search timer is also set.
@@ -458,7 +436,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             //NOTE commit/searcher timings don't need to align
             //in worst case, we will run search next time after commit timer goes off, or at the end of ingest
             if (searcherDone && runSearcher) {
-                updateKeywords();
                 //start search if previous not running
                 if (keywords != null && !keywords.isEmpty()) {
                     currentSearcher = new Searcher(keywords);
@@ -483,7 +460,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         }
     }
 
-   /**
+    /**
      * SearchTimerAction to run by searchTimer
      * Sets a flag to indicate we are ready to search
      */
@@ -590,7 +567,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             this(keywords);
             this.finalRun = finalRun;
         }
-        
 
         @Override
         protected Object doInBackground() throws Exception {
@@ -621,10 +597,13 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 //make sure other searchers are not spawned 
                 searcherDone = false;
                 runSearcher = false;
-                if (searchTimer.isRunning())
+                if (searchTimer.isRunning()) {
                     searchTimer.stop();
+                }
 
                 int numSearched = 0;
+
+                updateKeywords();
                 progress.switchToDeterminate(keywords.size());
 
                 for (Keyword keywordQuery : keywords) {
@@ -822,21 +801,37 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             } //end try block
             catch (Exception ex) {
                 logger.log(Level.WARNING, "searcher exception occurred", ex);
-            }
-            finally {
+            } finally {
                 finalizeSearcher();
                 searcherLock.unlock();
             }
 
             return null;
         }
-        
-        
+
+        /**
+         * Retrieve the updated keyword search lists from the XML loader
+         */
+        private void updateKeywords() {
+            KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
+
+            keywords.clear();
+            keywordToList.clear();
+
+            for (String name : keywordLists) {
+                KeywordSearchList list = loader.getList(name);
+                for (Keyword k : list.getKeywords()) {
+                    keywords.add(k);
+                    keywordToList.put(k.getQuery(), list);
+                }
+            }
+
+
+        }
 
         //perform all essential cleanup that needs to be done right AFTER doInBackground() returns
         //without relying on done() method that is not guaranteed to run after background thread completes
         //NEED to call this method always right before doInBackground() returns
-        
         /**
          * Performs the cleanup that needs to be done right AFTER doInBackground() returns
          * without relying on done() method that is not guaranteed to run after background thread completes
@@ -864,12 +859,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 currentResults = new HashMap<Keyword, List<ContentHit>>();
 
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
-            }
-            else {
+            } else {
                 //start counting time for a new searcher to start
                 //unless final searcher is pending
-                if (finalSearcher != null)
-                    searchTimer.start(); 
+                if (finalSearcher != null) {
+                    searchTimer.start();
+                }
             }
         }
     }
@@ -899,7 +894,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     void setSkipKnown(boolean skip) {
         this.skipKnown = skip;
     }
-    
+
     boolean getSkipKnown() {
         return skipKnown;
     }

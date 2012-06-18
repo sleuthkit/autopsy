@@ -71,8 +71,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     static final String LOOKUPFILES_PROP = "lookupFiles";
     // boolean: whether or not to skip processing orphan files on FAT filesystems
     static final String NOFATORPHANS_PROP = "nofatorphans";
-    // boolean: whether or not to skip processing of unallocated space
-    static final String NOUNALLOC_PROP = "nounalloc";
+
     
     static final Logger logger = Logger.getLogger(AddImageAction.class.getName());
 

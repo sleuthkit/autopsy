@@ -1,17 +1,18 @@
-Known issues and limitations
+                           Known Issues
 
-We plan to address the following issues in future releases.
+                   Last Reviewed: June 12, 2012
 
-General:
-- Only a single instance of the application can be started at once.  
-There is no check if another instance is already running.  Running a second instance will cause issues.
-- Only a single case can be opened at a time.
 
-Keyword search module:
-- Keyword search maximum size of files of known types to be indexed and searched is 100MB.  
-There is no limit on size of unknown file types indexed using string extraction.
-- Currently we extract only English strings from files of unknown types.
+This lists the bugs and issues thare are known and could effect
+investigation results.  There are other minor interface bugs that
+are not listed here.
 
-Installation:
-- Installer version currently supports only Windows OS (XP or newer),
-- Currently only 32 bit version of Autopsy is provided with the installer (works on 64 bit Windows OS)
+Keyword Search module:
+- Slack space of files is not added to the index and therefore will
+not be searched.
+- Files larger than 100MB AND that are file types that are supported
+by Tika (word docs, PDF, HTML, JPEG, etc.) are not being added to
+the index.
+- For unknown file types, we extract UTF-8 (Ascii) and UTF-16 English
+strings. No non-English strings are extracted.
+- Comments and java script in HTML files are not being added to index.

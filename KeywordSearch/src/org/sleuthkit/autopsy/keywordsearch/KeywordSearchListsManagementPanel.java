@@ -93,8 +93,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
                         listsTable.getSelectionModel().setSelectionInterval(0, 0);
                     else
                         listsTable.getSelectionModel().clearSelection();
-                } else if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_UPDATED.toString())) {
-                    tableModel.resync(); //changed list name
                 }
             }
         });
@@ -192,9 +190,18 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         }
         boolean shouldAdd = false;
         if (writer.listExists(listName)) {
-            boolean replace = KeywordSearchUtil.displayConfirmDialog("New Keyword List", "Keyword List <" + listName + "> already exists, do you want to replace it?", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
-            if (replace) {
-                shouldAdd = true;
+            if (writer.getList(listName).isLocked() ) {
+                boolean replace = KeywordSearchUtil.displayConfirmDialog("New Keyword List", "Keyword List <" + listName 
+                        + "> already exists as a read-only list. Do you want to replace it for the duration of the program (the change will not be persistent).", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                if (replace) {
+                    shouldAdd = true;
+                }
+            }
+            else {
+                boolean replace = KeywordSearchUtil.displayConfirmDialog("New Keyword List", "Keyword List <" + listName + "> already exists, do you want to replace it?", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                if (replace) {
+                    shouldAdd = true;
+                }
             }
         } else {
             shouldAdd = true;
@@ -323,7 +330,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
 
         @Override
         public int getRowCount() {
-            return listsHandle.getNumberLists();
+            return listsHandle.getNumberLists(false);
         }
 
         @Override
@@ -333,7 +340,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            return listsHandle.getListNames().get(rowIndex);
+            return listsHandle.getListNames(false).get(rowIndex);
         }
 
         @Override
