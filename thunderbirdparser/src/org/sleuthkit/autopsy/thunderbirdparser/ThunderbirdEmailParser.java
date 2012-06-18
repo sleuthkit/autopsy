@@ -124,21 +124,24 @@ public class ThunderbirdEmailParser {
         return this.metadata.getValues(Metadata.TITLE);
     }
     
-    public Long getDateCreated() 
+    public ArrayList<Long> getDateCreated() 
     {
         Long epochtime;
         Long ftime = 0L;
-        
+        ArrayList<Long> dates = null;
         try {
-            String datetime = this.metadata.get(Metadata.DATE);
-            epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(datetime).getTime();
+            ArrayList<String> datetime = this.metadata.getValues(Metadata.DATE.toString());
+            for(String s : datetime){
+            epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(s).getTime();
             ftime = epochtime.longValue();
             ftime = ftime / 1000;
+            dates.add(ftime);
+        }
         } catch (ParseException ex) {
             Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        return ftime;
+        return dates;
     }
     
     public ArrayList<String>  getContenType()
