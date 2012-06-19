@@ -427,8 +427,13 @@ public class ThunderbirdMboxParser  {
         emailMetaContent.put("content", emailContent);
         emailMetaContent.put("date", metadata.get("date"));
         emailMetaContent.put(Metadata.SUBJECT, metadata.get(Metadata.SUBJECT));
-        
+        if(metadata.get(ThunderbirdMetadata.IDENTIFIER) == null){
+             Random r = new Random();
+            this.emails.put(metadata.get(Metadata.AUTHOR)+Long.toString(Math.abs(r.nextLong()), 36), emailMetaContent);
+        }
+        else{
         this.emails.put(metadata.get(ThunderbirdMetadata.IDENTIFIER), emailMetaContent);
+        }
     }
     
     public HashMap<String,Map<String,String>> getAllEmails()

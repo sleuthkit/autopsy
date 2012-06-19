@@ -44,6 +44,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.xml.sax.SAXException;
+import org.apache.commons.lang.StringEscapeUtils;
 
 public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFile {
 
@@ -76,34 +77,34 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
 
         if (isMbox) {
             managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
+            String emailId = "";
+            String content = "";
+            String from = "";
+            String to = "";
+            String stringDate = "";
+            Long date = 0L;
+            String subject = "";
+            String cc = "";
+            String bcc = "";
             try {
-                String emailId = "";
-                Map<String, String> propertyMap = new HashMap<String, String>();
-                String content = "";
-                String from = "";
-                String to = "";
-                String stringDate = "";
-                Long date = 0L;
-                String subject = "";
-                String cc = "";
-                String bcc = "";
                 ReadContentInputStream contentStream = new ReadContentInputStream(fsContent);
                 mbox.parse(contentStream);
-                HashMap<String, Map<String, String>> emailMap = new HashMap<String,Map<String,String>>();
+                HashMap<String, Map<String, String>> emailMap = new HashMap<String, Map<String, String>>();
                 emailMap = mbox.getAllEmails();
                 for (Entry<String, Map<String, String>> entry : emailMap.entrySet()) {
-                    emailId = ((entry.getKey().toString() != null) ? entry.getKey().toString() : "");
+                    Map<String, String> propertyMap = new HashMap<String, String>();
+                    emailId = ((entry.getKey() != null) ? entry.getKey() : "Not Available");
                     propertyMap = entry.getValue();
-                    content = ((propertyMap.get("content") != null) ? propertyMap.get("content") :"");
-                    from = ((propertyMap.get(Metadata.AUTHOR) != null) ? propertyMap.get(Metadata.AUTHOR) :"");
-                    to = ((propertyMap.get(Metadata.MESSAGE_TO) != null) ? propertyMap.get(Metadata.MESSAGE_TO) :"");
-                    stringDate = ((propertyMap.get("date") != null) ? propertyMap.get("date") :"");
-                    if(!"".equals(stringDate)){
-                    date = mbox.getDateCreated(stringDate);
+                    content = ((propertyMap.get("content") != null) ? propertyMap.get("content") : "");
+                    from = ((propertyMap.get(Metadata.AUTHOR) != null) ? propertyMap.get(Metadata.AUTHOR) : "");
+                    to = ((propertyMap.get(Metadata.MESSAGE_TO) != null) ? propertyMap.get(Metadata.MESSAGE_TO) : "");
+                    stringDate = ((propertyMap.get("date") != null) ? propertyMap.get("date") : "");
+                    if (!"".equals(stringDate)) {
+                        date = mbox.getDateCreated(stringDate);
                     }
-                    subject = ((propertyMap.get(Metadata.SUBJECT) != null) ? propertyMap.get(Metadata.SUBJECT) :"");
-                    cc = ((propertyMap.get(Metadata.MESSAGE_CC) != null) ? propertyMap.get(Metadata.MESSAGE_CC) :"");
-                    bcc =((propertyMap.get(Metadata.MESSAGE_BCC) != null) ? propertyMap.get(Metadata.MESSAGE_BCC) :"");
+                    subject = ((propertyMap.get(Metadata.SUBJECT) != null) ? propertyMap.get(Metadata.SUBJECT) : "");
+                    cc = ((propertyMap.get(Metadata.MESSAGE_CC) != null) ? propertyMap.get(Metadata.MESSAGE_CC) : "");
+                    bcc = ((propertyMap.get(Metadata.MESSAGE_BCC) != null) ? propertyMap.get(Metadata.MESSAGE_BCC) : "");
                 }
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -111,9 +112,9 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID(), classname, "", cc));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID(), classname, "", bcc));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID(), classname, "", from));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID(), classname, "", content));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID(), classname, "", content.replaceAll("\\<[^>]*>", "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID(), classname, "", content));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), classname, "", emailId));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), classname, "", StringEscapeUtils.escapeHtml(emailId)));
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_REPLY_ID.getTypeID(), classname, "",));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(), classname, "", date));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(), classname, "", date));
