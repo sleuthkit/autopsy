@@ -370,7 +370,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
 
         } catch (Exception e) {
             success = false;
-            logger.log(Level.SEVERE, "ExtractIE::executePasco() -> ", e.getMessage());
+            logger.log(Level.SEVERE, "ExtractIE::executePasco() -> ", e);
         }
 
         return success;
@@ -453,7 +453,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                                                 ftime = epochtime.longValue();
                                                 ftime = ftime / 1000;
                                             } catch (ParseException e) {
-                                                logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e.getMessage());
+                                                logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e);
                                             }
                                         }
 
@@ -497,7 +497,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                         boolean bDelete = file.delete();
                     }
                 } catch (IOException ioex) {
-                    logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", ioex.getMessage());
+                    logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", ioex);
                 }
 
             }
