@@ -21,6 +21,7 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
@@ -40,7 +41,7 @@ public final class RAImageIngestService implements IngestServiceImage {
     private static RAImageIngestService defaultInstance = null;
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
-    private ArrayList<String> errors = null;
+    private ArrayList<String> errors = new ArrayList<String>();
     private StringBuilder subCompleted = new StringBuilder();
 
     //public constructor is required
@@ -59,51 +60,22 @@ public final class RAImageIngestService implements IngestServiceImage {
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
         //logger.log(Level.INFO, "process() " + this.toString());
+        List<Extract> modules = new ArrayList<Extract>();
+        modules.add(new ExtractRegistry());
+        modules.add(new Firefox());
+        modules.add(new Chrome());
+        modules.add(new ExtractIE());
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
-        try {
-            controller.switchToDeterminate(4);
-            controller.progress(0);
-
-            if (controller.isCancelled() == false) {
-                ExtractRegistry eree = new ExtractRegistry();
-                eree.process(image, controller);
-                controller.progress(1);
-                subCompleted.append("Registry extraction complete. <br>");
-            }
-            if (controller.isCancelled() == false) {
-                Firefox ffre = new Firefox();
-                ffre.process(image, controller);
-                controller.progress(2);
-                subCompleted.append("Firefox extraction complete. <br>");
-                if(ffre.errorMessages != null){
-                errors.addAll(ffre.errorMessages);
-                }
-            }
-            if (controller.isCancelled() == false) {
-                Chrome chre = new Chrome();
-                chre.process(image, controller);
-                controller.progress(3);
-                subCompleted.append("Chrome extraction complete. <br>");
-                if(chre.errorMessages != null){
-                errors.addAll(chre.errorMessages);
-                }
-            }
-            if (controller.isCancelled() == false) {
-                ExtractIE eere = new ExtractIE();
-                eere.process(image, controller);
-                if(eere.errorMessages != null){
-                errors.addAll(eere.errorMessages);
-                }
-                subCompleted.append( "Internet Explorer extraction complete. <br>");
-                controller.progress(4);
-            }
-
-
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error extracting recent activity", e);
-            managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, this, "Error extracting recent activity data", null));
+        controller.switchToDeterminate(modules.size());
+        controller.progress(0);
+        
+        for(int i = 0; i < modules.size(); i++) {
+            Extract module = modules.get(i);
+            module.process(image, controller);
+            controller.progress(i+1);
+            subCompleted.append(module.getName()).append(" complete <br>");
+            errors.addAll(module.getErrorMessages());
         }
-
     }
 
     @Override
@@ -113,7 +85,7 @@ public final class RAImageIngestService implements IngestServiceImage {
         String errorsFound = "";
         errorMessage.append(subCompleted);
         int i = 0;
-        if (errors != null) {
+        if (!errors.isEmpty()) {
             errorMessage.append("<br>There were some errors extracting the data: <br>");
             for (String msg : errors) {
                 i++;
