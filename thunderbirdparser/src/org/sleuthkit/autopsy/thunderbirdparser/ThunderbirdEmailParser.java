@@ -85,9 +85,9 @@ public class ThunderbirdEmailParser {
     
     
     //Returns message content, i.e. plain text or html
-    public String getContent()
+    public ArrayList<String> getContent()
     {
-        return this.contentHandler.toString();
+        return this.parser.getXHTMLDocs();
     }
     
     public String detectEmailFileFormat(String filepath) throws IOException
@@ -128,9 +128,9 @@ public class ThunderbirdEmailParser {
     {
         Long epochtime;
         Long ftime = 0L;
-        ArrayList<Long> dates = null;
+        ArrayList<Long> dates = new ArrayList<Long>();
         try {
-            ArrayList<String> datetime = this.metadata.getValues(Metadata.DATE.toString());
+            ArrayList<String> datetime = this.metadata.getValues("date");
             for(String s : datetime){
             epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(s).getTime();
             ftime = epochtime.longValue();
@@ -156,7 +156,7 @@ public class ThunderbirdEmailParser {
     
     public ArrayList<String>  getFrom()
     {
-        return this.metadata.getValues(Metadata.AUTHOR);
+        return this.metadata.getValues(Metadata.CREATOR);
     }
     
     public ArrayList<String>  getTo()

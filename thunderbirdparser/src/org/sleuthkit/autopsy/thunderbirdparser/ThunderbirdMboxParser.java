@@ -200,7 +200,12 @@ public class ThunderbirdMboxParser  {
 
         if (headerTag.equalsIgnoreCase("From")) {
             metadata.add(ThunderbirdMetadata.AUTHOR, headerContent);
-            metadata.add(ThunderbirdMetadata.CREATOR, headerContent);
+             Matcher address = EMAIL_ADDRESS_PATTERN.matcher(headerContent);
+            if(address.find()) {
+        	metadata.add(ThunderbirdMetadata.CREATOR, address.group(1));
+            } else if(headerContent.indexOf('@') > -1) {
+        	metadata.add(ThunderbirdMetadata.CREATOR, headerContent);
+            }
         } else if (headerTag.equalsIgnoreCase("To") ||
         	headerTag.equalsIgnoreCase("Cc") ||
         	headerTag.equalsIgnoreCase("Bcc")) {

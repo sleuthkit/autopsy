@@ -37,7 +37,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
@@ -79,17 +78,17 @@ public class IngestManager {
     private boolean processUnallocSpace = true;
     //queues
     private final ImageQueue imageQueue = new ImageQueue();   // list of services and images to analyze
-    private final AbstractFileQueue AbstractFileQueue = new AbstractFileQueue();
+    private final AbstractFileQueue abstractFileQueue = new AbstractFileQueue();
     private final Object queuesLock = new Object();
     //workers
-    private IngestAbstractFileThread AbstractFileIngester;
+    private IngestAbstractFileThread abstractFileIngester;
     private List<IngestImageThread> imageIngesters;
     private SwingWorker<Object,Void> queueWorker;
     //services
     final List<IngestServiceImage> imageServices = enumerateImageServices();
-    final List<IngestServiceAbstractFile> AbstractFileServices = enumerateAbstractFileServices();
+    final List<IngestServiceAbstractFile> abstractFileServices = enumerateAbstractFileServices();
     // service return values
-    private final Map<String, IngestServiceAbstractFile.ProcessResult> AbstractFileServiceResults = new HashMap<String, IngestServiceAbstractFile.ProcessResult>();
+    private final Map<String, IngestServiceAbstractFile.ProcessResult> abstractFileServiceResults = new HashMap<String, IngestServiceAbstractFile.ProcessResult>();
     //manager proxy
     final IngestManagerProxy managerProxy = new IngestManagerProxy(this);
     //notifications
@@ -143,9 +142,9 @@ public class IngestManager {
     }
 
     IngestServiceAbstractFile.ProcessResult getAbstractFileServiceResult(String serviceName) {
-        synchronized (AbstractFileServiceResults) {
-            if (AbstractFileServiceResults.containsKey(serviceName)) {
-                return AbstractFileServiceResults.get(serviceName);
+        synchronized (abstractFileServiceResults) {
+            if (abstractFileServiceResults.containsKey(serviceName)) {
+                return abstractFileServiceResults.get(serviceName);
             } else {
                 return IngestServiceAbstractFile.ProcessResult.UNKNOWN;
             }
@@ -197,7 +196,7 @@ public class IngestManager {
      */
     private synchronized void startAll() {
         logger.log(Level.INFO, "Image queue: " + this.imageQueue.toString());
-        logger.log(Level.INFO, "File queue: " + this.AbstractFileQueue.toString());
+        logger.log(Level.INFO, "File queue: " + this.abstractFileQueue.toString());
 
         if (!ingestMonitor.isRunning()) {
             ingestMonitor.start();
@@ -248,12 +247,12 @@ public class IngestManager {
         //AbstractFile ingester
         boolean startAbstractFileIngester = false;
         if (hasNextAbstractFile()) {
-            if (AbstractFileIngester
+            if (abstractFileIngester
                     == null) {
                 startAbstractFileIngester = true;
                 logger.log(Level.INFO, "Starting initial AbstractFile ingester");
             } //if worker had completed, restart it in case data is still enqueued
-            else if (AbstractFileIngester.isDone()) {
+            else if (abstractFileIngester.isDone()) {
                 startAbstractFileIngester = true;
                 logger.log(Level.INFO, "Restarting AbstractFile ingester");
             }
@@ -263,12 +262,12 @@ public class IngestManager {
 
         if (startAbstractFileIngester) {
             stats = new IngestManagerStats();
-            AbstractFileIngester = new IngestAbstractFileThread();
+            abstractFileIngester = new IngestAbstractFileThread();
             //init all fs services, everytime new worker starts
-            for (IngestServiceAbstractFile s : AbstractFileServices) {
+            for (IngestServiceAbstractFile s : abstractFileServices) {
                 s.init(managerProxy);
             }
-            AbstractFileIngester.execute();
+            abstractFileIngester.execute();
         }
     }
 
@@ -287,9 +286,9 @@ public class IngestManager {
         emptyImages();
 
         //stop service workers
-        if (AbstractFileIngester != null) {
+        if (abstractFileIngester != null) {
             //send signals to all file services
-            for (IngestServiceAbstractFile s : this.AbstractFileServices) {
+            for (IngestServiceAbstractFile s : this.abstractFileServices) {
                 if (isServiceRunning(s)) {
                     try {
                         s.stop();
@@ -300,11 +299,11 @@ public class IngestManager {
 
             }
             //stop fs ingester thread
-            boolean cancelled = AbstractFileIngester.cancel(true);
+            boolean cancelled = abstractFileIngester.cancel(true);
             if (!cancelled) {
                 logger.log(Level.WARNING, "Unable to cancel file ingest worker");
             } else {
-                AbstractFileIngester = null;
+                abstractFileIngester = null;
             }
         }
 
@@ -360,7 +359,7 @@ public class IngestManager {
     }
 
     public synchronized boolean isFileIngestRunning() {
-        if (AbstractFileIngester != null && !AbstractFileIngester.isDone()) {
+        if (abstractFileIngester != null && !abstractFileIngester.isDone()) {
             return true;
         }
         return false;
@@ -397,7 +396,7 @@ public class IngestManager {
         if (service.getType() == IngestServiceAbstract.ServiceType.AbstractFile) {
 
             synchronized (queuesLock) {
-                if (AbstractFileQueue.hasServiceEnqueued((IngestServiceAbstractFile) service)) {
+                if (abstractFileQueue.hasServiceEnqueued((IngestServiceAbstractFile) service)) {
                     //has work enqueued, so running
                     return true;
                 } else {
@@ -535,7 +534,7 @@ public class IngestManager {
     private void addAbstractFile(IngestServiceAbstractFile service, Collection<AbstractFile> AbstractFiles) {
         synchronized (queuesLock) {
             for (AbstractFile AbstractFile : AbstractFiles) {
-                AbstractFileQueue.enqueue(AbstractFile, service);
+                abstractFileQueue.enqueue(AbstractFile, service);
             }
         }
     }
@@ -548,7 +547,7 @@ public class IngestManager {
     private Map.Entry<AbstractFile, List<IngestServiceAbstractFile>> getNextAbstractFile() {
         Map.Entry<AbstractFile, List<IngestServiceAbstractFile>> ret = null;
         synchronized (queuesLock) {
-            ret = AbstractFileQueue.dequeue();
+            ret = abstractFileQueue.dequeue();
         }
         return ret;
     }
@@ -556,7 +555,7 @@ public class IngestManager {
     private boolean hasNextAbstractFile() {
         boolean ret = false;
         synchronized (queuesLock) {
-            ret = AbstractFileQueue.hasNext();
+            ret = abstractFileQueue.hasNext();
         }
         return ret;
     }
@@ -564,14 +563,14 @@ public class IngestManager {
     private int getNumAbstractFiles() {
         int ret = 0;
         synchronized (queuesLock) {
-            ret = AbstractFileQueue.getCount();
+            ret = abstractFileQueue.getCount();
         }
         return ret;
     }
 
     private void emptyAbstractFiles() {
         synchronized (queuesLock) {
-            AbstractFileQueue.empty();
+            abstractFileQueue.empty();
         }
     }
 
@@ -960,7 +959,7 @@ public class IngestManager {
             stats.start();
 
             //notify main thread services started
-            for (IngestServiceAbstractFile s : AbstractFileServices) {
+            for (IngestServiceAbstractFile s : abstractFileServices) {
                 IngestManager.fireServiceEvent(SERVICE_STARTED_EVT, s.getName());
             }
 
@@ -985,8 +984,8 @@ public class IngestManager {
             while (hasNextAbstractFile()) {
                 Map.Entry<AbstractFile, List<IngestServiceAbstractFile>> unit = getNextAbstractFile();
                 //clear return values from services for last file
-                synchronized (AbstractFileServiceResults) {
-                    AbstractFileServiceResults.clear();
+                synchronized (abstractFileServiceResults) {
+                    abstractFileServiceResults.clear();
                 }
 
                 final AbstractFile fileToProcess = unit.getKey();
@@ -1009,8 +1008,8 @@ public class IngestManager {
                         }
 
                         //store the result for subsequent services for this file
-                        synchronized (AbstractFileServiceResults) {
-                            AbstractFileServiceResults.put(service.getName(), result);
+                        synchronized (abstractFileServiceResults) {
+                            abstractFileServiceResults.put(service.getName(), result);
                         }
 
                     } catch (Exception e) {
@@ -1041,7 +1040,7 @@ public class IngestManager {
                 logger.log(Level.INFO, "File ingest get() took: " + (d2.getTime()-d1.getTime()) );
                 //notify services of completion
                 if (!this.isCancelled()) {
-                    for (IngestServiceAbstractFile s : AbstractFileServices) {
+                    for (IngestServiceAbstractFile s : abstractFileServices) {
                         s.complete();
                         IngestManager.fireServiceEvent(SERVICE_COMPLETED_EVT, s.getName());
                     }
@@ -1074,7 +1073,7 @@ public class IngestManager {
         }
 
         private void handleInterruption() {
-            for (IngestServiceAbstractFile s : AbstractFileServices) {
+            for (IngestServiceAbstractFile s : abstractFileServices) {
                 if (isServiceRunning(s)) {
                     try {
                         s.stop();

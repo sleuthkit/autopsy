@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedAccountNode;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedFolderNode;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
@@ -45,6 +48,9 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(KeywordHitsKeywordNode khmln);
     T visit(HashsetHitsRootNode hhrn);
     T visit(HashsetHitsSetNode hhsn);
+    T visit(EmailExtractedRootNode eern);
+    T visit(EmailExtractedAccountNode eean);
+    T visit(EmailExtractedFolderNode eefn);
     T visit(ViewsNode vn);
     T visit(ResultsNode rn);
     T visit(ImagesNode in);
@@ -157,6 +163,21 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(HashsetHitsSetNode hhsn) {
             return defaultVisit(hhsn);
+        }
+        
+        @Override
+        public T visit(EmailExtractedRootNode eern) {
+            return defaultVisit(eern);
+        }
+        
+        @Override
+        public T visit(EmailExtractedAccountNode eean) {
+            return defaultVisit(eean);
+        }
+        
+        @Override
+        public T visit(EmailExtractedFolderNode eefn) {
+            return defaultVisit(eefn);
         }
         
         @Override

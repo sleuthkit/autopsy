@@ -60,6 +60,7 @@ public class HashDbXML {
     private static final String SET_NAME_ATTR = "name";
     private static final String SET_TYPE_ATTR = "type"; 
     private static final String SET_USE_FOR_INGEST_ATTR = "use_for_ingest";
+    private static final String SET_SHOW_INBOX_MESSAGES = "show_inbox_messages";
     private static final String PATH_EL = "hash_set_path";
     private static final String PATH_NUMBER_ATTR = "number";
     private static final String CUR_HASHSETS_FILE_NAME = "hashsets.xml";
@@ -94,7 +95,9 @@ public class HashDbXML {
     public List<HashDb> getAllSets() {
         List<HashDb> ret = new ArrayList<HashDb>();
         ret.addAll(knownBadSets);
-        ret.add(nsrlSet);
+        if(nsrlSet != null) {
+            ret.add(nsrlSet);
+        }
         return ret;
     }
     
@@ -117,6 +120,14 @@ public class HashDbXML {
      */
     public void addKnownBadSet(HashDb set) {
         knownBadSets.add(set);
+        save();
+    }
+    
+    /**
+     * Add a known bad hash set
+     */
+    public void addKnownBadSet(int index, HashDb set) {
+        knownBadSets.add(index, set);
         save();
     }
     
@@ -183,6 +194,7 @@ public class HashDbXML {
 
             for (HashDb set : knownBadSets) {
                 String useForIngest = Boolean.toString(set.getUseForIngest());
+                String showInboxMessages = Boolean.toString(set.getShowInboxMessages());
                 List<String> paths = set.getDatabasePaths();
                 String type = DBType.KNOWN_BAD.toString();
 
@@ -190,6 +202,7 @@ public class HashDbXML {
                 setEl.setAttribute(SET_NAME_ATTR, set.getName());
                 setEl.setAttribute(SET_TYPE_ATTR, type);
                 setEl.setAttribute(SET_USE_FOR_INGEST_ATTR, useForIngest);
+                setEl.setAttribute(SET_SHOW_INBOX_MESSAGES, showInboxMessages);
 
                 for (int i = 0; i < paths.size(); i++) {
                     String path = paths.get(i);
@@ -203,6 +216,7 @@ public class HashDbXML {
             
             if(nsrlSet != null) {
                 String useForIngest = Boolean.toString(nsrlSet.getUseForIngest());
+                String showInboxMessages = Boolean.toString(nsrlSet.getShowInboxMessages());
                 List<String> paths = nsrlSet.getDatabasePaths();
                 String type = DBType.NSRL.toString();
 
@@ -210,6 +224,7 @@ public class HashDbXML {
                 setEl.setAttribute(SET_NAME_ATTR, nsrlSet.getName());
                 setEl.setAttribute(SET_TYPE_ATTR, type);
                 setEl.setAttribute(SET_USE_FOR_INGEST_ATTR, useForIngest);
+                setEl.setAttribute(SET_SHOW_INBOX_MESSAGES, showInboxMessages);
 
                 for (int i = 0; i < paths.size(); i++) {
                     String path = paths.get(i);
@@ -249,7 +264,9 @@ public class HashDbXML {
             final String name = setEl.getAttribute(SET_NAME_ATTR);
             final String type = setEl.getAttribute(SET_TYPE_ATTR);
             final String useForIngest = setEl.getAttribute(SET_USE_FOR_INGEST_ATTR);
+            final String showInboxMessages = setEl.getAttribute(SET_SHOW_INBOX_MESSAGES);
             Boolean useForIngestBool = Boolean.parseBoolean(useForIngest);
+            Boolean showInboxMessagesBool = Boolean.parseBoolean(showInboxMessages);
             DBType typeDBType = DBType.valueOf(type);
             List<String> paths = new ArrayList<String>();
 
@@ -263,7 +280,7 @@ public class HashDbXML {
                 paths.add(path);
             }
             
-            HashDb set = new HashDb(name, paths, useForIngestBool);
+            HashDb set = new HashDb(name, paths, useForIngestBool, showInboxMessagesBool);
             
             if(typeDBType == DBType.KNOWN_BAD) {
                 knownBadSets.add(set);
