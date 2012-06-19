@@ -118,6 +118,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(), classname, "", date));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(), classname, "", date));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), classname, "", subject));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), classname, "", "/Account1/Folder1"));
                 BlackboardArtifact bbart;
                 try {
                     bbart = fsContent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
