@@ -14,6 +14,7 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -40,6 +41,8 @@ public class ThunderbirdMboxParser  {
     
     private ThunderbirdXHTMLContentHandler xhtml =  null;
     private ArrayList<String> xhtmlDocs = new ArrayList<String>();
+    
+    private HashMap<String, Map<String,String>> emails = new HashMap<String, Map<String,String>>();
 
     private enum ParseStates {
         START, IN_HEADER, IN_CONTENT
@@ -263,6 +266,173 @@ public class ThunderbirdMboxParser  {
     {
         return this.xhtmlDocs;
     }
-            
+    
+    
 
+            
+    public void parseMbox(
+            InputStream stream, ContentHandler handler,
+            ThunderbirdMetadata metadata, ParseContext context)
+            throws IOException, TikaException, SAXException {
+
+        InputStreamReader isr;
+        try {
+            // Headers are going to be 7-bit ascii
+            isr = new InputStreamReader(stream, "US-ASCII");
+        } catch (UnsupportedEncodingException e) {
+            throw new TikaException("US-ASCII is not supported!", e);
+        }
+
+        BufferedReader reader = new BufferedReader(isr);
+
+        metadata.set(Metadata.CONTENT_TYPE, MBOX_MIME_TYPE);
+        metadata.set(Metadata.CONTENT_ENCODING, "us-ascii");
+
+        xhtml = new ThunderbirdXHTMLContentHandler(handler, metadata);
+        xhtml.startDocument();
+
+        ThunderbirdMboxParser.ParseStates parseState = ThunderbirdMboxParser.ParseStates.START;
+        String multiLine = null;
+        String curLine = null;
+        boolean inQuote = false;
+        int tempEmailsCount = 0;
+        
+
+        // We're going to scan, line-by-line, for a line that starts with
+        // "From "
+        
+        while((curLine = reader.readLine()) != null)
+        {
+      
+            boolean newMessage = curLine.startsWith(MBOX_RECORD_DIVIDER);
+            if (newMessage) 
+            {
+                //At this point we should have the first email metadata
+                tempEmailsCount = numEmails;
+                if(numEmails > 0)
+                {
+                    xhtml.endDocument();
+                    formatEmailList(metadata,xhtml.toString());
+                    //let's clear the metatada and content
+                    metadata  = new ThunderbirdMetadata();
+                    handler = new BodyContentHandler(); 
+                    xhtml = new ThunderbirdXHTMLContentHandler(handler, metadata);  
+                    xhtml.startDocument();
+                }
+                    
+                numEmails += 1;
+                parseState = ThunderbirdMboxParser.ParseStates.IN_HEADER;
+                newMessage = false;   
+            }
+            //At this point we reached the last email
+//            else if ((this.emails != null && this.emails.size() < numEmails) && (tempEmailsCount > 0 && tempEmailsCount < numEmails))
+//            {
+//                xhtml.endDocument();
+//                formatEmailList(metadata,xhtml.toString());
+//                //let's clear the metatada and content
+//                metadata  = new ThunderbirdMetadata();
+//                handler = new BodyContentHandler(); 
+//                xhtml = new ThunderbirdXHTMLContentHandler(handler, metadata);  
+//                xhtml.startDocument();                
+//            }
+
+            if(parseState == ParseStates.START)
+            {
+                parseState = ThunderbirdMboxParser.ParseStates.IN_HEADER;
+                newMessage = false;                
+            }
+            else if (parseState == ParseStates.IN_HEADER)
+            {
+                //Start extracting metadata
+                if (newMessage) {
+                    saveHeaderInMetadata(numEmails, metadata, multiLine);
+                    //saveHeaderInMetadata(numEmails, metadata, curLine);
+                    multiLine = curLine;
+                }
+                //I think this is never going to be true
+                else if (curLine.length() == 0) 
+                {
+                    // Blank line is signal that we're transitioning to the content.
+                 
+                    saveHeaderInMetadata(numEmails, metadata, multiLine);
+                    parseState = ThunderbirdMboxParser.ParseStates.IN_CONTENT;
+
+                    // Mimic what PackageParser does between entries.
+                    xhtml.startElement("div", "class", "email-entry");
+                    xhtml.startElement("p");
+                    inQuote = false;
+                }
+                else if ((curLine.startsWith(" ") || curLine.startsWith("\t")) )
+                {
+                    multiLine += " " + curLine.trim();
+                }
+                else 
+                {
+                    saveHeaderInMetadata(numEmails, metadata, multiLine);
+                    multiLine = curLine;
+                }
+                
+            }
+            else if (parseState == ParseStates.IN_CONTENT)
+            {
+                if (newMessage) {
+                    endMessage(inQuote);
+                    parseState = ThunderbirdMboxParser.ParseStates.IN_HEADER;
+                    multiLine = curLine;
+                } else {
+                    boolean quoted = curLine.startsWith(">");
+                    if (inQuote) {
+                        if (!quoted) {
+                            xhtml.endElement("q");
+                            inQuote = false;
+                        }
+                    } else if (quoted) {
+                        xhtml.startElement("q");
+                        inQuote = true;
+                    }
+
+                    xhtml.characters(curLine);
+
+                    // For plain text email, each line is a real break position.
+                    xhtml.element("br", "");
+                }
+            }
+        }
+
+        if (parseState == ThunderbirdMboxParser.ParseStates.IN_HEADER) {
+            saveHeaderInMetadata(numEmails, metadata, multiLine);
+        } else if (parseState == ThunderbirdMboxParser.ParseStates.IN_CONTENT) {
+            endMessage(inQuote);
+        }
+        if (numEmails > this.emails.size())
+        {
+            //Grab the last email file metadata and content
+            xhtml.endDocument();
+            formatEmailList(metadata,xhtml.toString());
+        }
+
+        xhtml.endDocument();
+    }
+    
+    private void formatEmailList(ThunderbirdMetadata metadata, String emailContent)
+    {
+        Map<String,String> emailMetaContent = new HashMap<String,String>();
+        //HashMap<String,Map<String,String>> email = new HashMap<String,Map<String,String>>();
+        
+        //Fill the email metadata and content(message)
+        emailMetaContent.put(Metadata.MESSAGE_TO, metadata.get(Metadata.MESSAGE_TO));
+        emailMetaContent.put(Metadata.MESSAGE_CC, metadata.get(Metadata.MESSAGE_CC));
+        emailMetaContent.put(Metadata.MESSAGE_BCC, metadata.get(Metadata.MESSAGE_BCC));
+        emailMetaContent.put(Metadata.AUTHOR, metadata.get(Metadata.AUTHOR));
+        emailMetaContent.put("content", emailContent);
+        emailMetaContent.put("date", metadata.get("date"));
+        emailMetaContent.put(Metadata.SUBJECT, metadata.get(Metadata.SUBJECT));
+        
+        this.emails.put(metadata.get(ThunderbirdMetadata.IDENTIFIER), emailMetaContent);
+    }
+    
+    public HashMap<String,Map<String,String>> getAllEmails()
+    {
+        return this.emails;
+    }
 }
