@@ -362,8 +362,8 @@ class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr documents indexed
-     * without actually returning the documents
+     * Execute query that gets only number of all Solr files indexed
+     * without actually returning the files.  The result does not include chunks, only number of actual files.
      * @return int representing number of indexed files
      * @throws SolrServerException 
      */
@@ -373,6 +373,20 @@ class Server {
         }
 
         return currentCore.queryNumIndexedFiles();
+    }
+    
+     /**
+     * Execute query that gets only number of all Solr documents indexed (files and chunks)
+     * without actually returning the documents
+     * @return int representing number of indexed files (files and chunks)
+     * @throws SolrServerException 
+     */
+    public int queryNumIndexedDocuments() throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+
+        return currentCore.queryNumIndexedDocuments();
     }
 
     /**
@@ -588,12 +602,28 @@ class Server {
         }
 
         /**
-         * Execute query that gets only number of all Solr documents indexed
-         * without actually returning the documents
-         * @return int representing number of indexed files
+         * Execute query that gets only number of all Solr files (not chunks) indexed
+         * without actually returning the files
+         * 
+         * @return int representing number of indexed files (entire files, not chunks)
          * @throws SolrServerException 
          */
         private int queryNumIndexedFiles() throws SolrServerException {
+            SolrQuery q = new SolrQuery(Server.Schema.ID + ":*" + Server.ID_CHUNK_SEP + "*");
+            q.setRows(0);
+            int numChunks = (int) query(q).getResults().getNumFound();
+            return queryNumIndexedDocuments() - numChunks;
+        }
+        
+        /**
+         * Execute query that gets only number of all Solr documents indexed
+         * without actually returning the documents.  Documents include entire indexed files
+         * as well as chunks, which are treated as documents.
+         * 
+         * @return int representing number of indexed documents (entire files and chunks)
+         * @throws SolrServerException 
+         */
+        private int queryNumIndexedDocuments() throws SolrServerException {
             SolrQuery q = new SolrQuery("*:*");
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
