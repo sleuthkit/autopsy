@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.mboxparser;
+package org.sleuthkit.autopsy.thunderbirdparser;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -42,24 +42,24 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.xml.sax.SAXException;
 
-public class MboxFileIngestService implements IngestServiceAbstractFile {
+public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFile {
 
-    private static final Logger logger = Logger.getLogger(MboxFileIngestService.class.getName());
-    private static MboxFileIngestService instance = null;
+    private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName());
+    private static ThunderbirdMboxFileIngestService instance = null;
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
-    private static final String classname = "Mbox Parser";
+    private static final String classname = "Thunderbird Parser";
 
-    public static synchronized MboxFileIngestService getDefault() {
+    public static synchronized ThunderbirdMboxFileIngestService getDefault() {
         if (instance == null) {
-            instance = new MboxFileIngestService();
+            instance = new ThunderbirdMboxFileIngestService();
         }
         return instance;
     }
 
     @Override
     public ProcessResult process(AbstractFile fsContent) {
-        MboxEmailParser mbox = new MboxEmailParser();
+        ThunderbirdEmailParser mbox = new ThunderbirdEmailParser();
         boolean isMbox = false;
 
         try {
@@ -67,7 +67,7 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
             int byteRead = fsContent.read(t, 0, 128);
             isMbox = mbox.isValidMimeTypeMbox(t);
         } catch (TskException ex) {
-            Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
         }
 
 
@@ -77,7 +77,6 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
                 ReadContentInputStream contentStream = new ReadContentInputStream(fsContent);
                 mbox.parse(contentStream);
                 String content = mbox.getContent();
-                String client = mbox.getApplication();
                 String from = mbox.getFrom();
                 String to = mbox.getTo();
                 Long date = mbox.getDateCreated();
@@ -96,27 +95,25 @@ public class MboxFileIngestService implements IngestServiceAbstractFile {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(), classname, "", date));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(), classname, "", date));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), classname, "", subject));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), classname, "", client));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), classname, "", "/Account1/Inbox"));
                 BlackboardArtifact bbart;
                 try {
                     bbart = fsContent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
                     bbart.addAttributes(bbattributes);
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
 
 
                 IngestManager.fireServiceDataEvent(new ServiceDataEvent(classname, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
             } catch (FileNotFoundException ex) {
-                Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
             } catch (IOException ex) {
-                Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
             } catch (SAXException ex) {
-                Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
             } catch (TikaException ex) {
-                Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 

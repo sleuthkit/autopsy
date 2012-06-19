@@ -35,15 +35,18 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import java.sql.*;
 import org.sleuthkit.autopsy.recentactivity.dbconnect;
 
-/**
- *
- * @author Alex
- */
+
 public class Report {
 
     private void Report() {
     }
 
+    /**
+ * Returns all the keywords related artifact/attributes and groups them based on keyword
+ *
+ * @return  String table is a string of an html table
+ * 
+ */
     public String getGroupedKeywordHit() {
         StringBuilder table = new StringBuilder();
         HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>>();
@@ -102,6 +105,12 @@ public class Report {
         return table.toString();
     }
 
+    /**
+ * Returns a hashmap of associated blackboard artifacts/attributes that were requested by the config param
+ *
+ * @param  config is a ReportConfiguration object that has all the types of artifacts desired from the blackboard
+ * @return   reportMap a hashmap of all the artifacts for artifact types were input
+ */
     public HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> getAllTypes(ReportConfiguration config) {
         HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>>();
         Case currentCase = Case.getCurrentCase(); // get the most updated case

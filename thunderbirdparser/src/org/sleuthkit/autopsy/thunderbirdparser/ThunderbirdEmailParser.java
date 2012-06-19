@@ -1,4 +1,4 @@
-package org.sleuthkit.autopsy.mboxparser;
+package org.sleuthkit.autopsy.thunderbirdparser;
 
 import java.io.*;
 import java.text.ParseException;
@@ -12,22 +12,20 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MimeTypes;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
-import org.apache.tika.parser.mbox.MboxParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-public class MboxEmailParser {
+public class ThunderbirdEmailParser {
     
     
     private InputStream stream;
     //Tika object
     private Tika tika;
-    private Metadata metadata;
+    private ThunderbirdMetadata metadata;
     private ContentHandler contentHandler;
     private String mimeType;   
-    private Parser parser;
+    private ThunderbirdMboxParser parser;
     private ParseContext context;
     
     private static ArrayList<String> tikaMimeTypes;
@@ -40,18 +38,18 @@ public class MboxEmailParser {
         tikaMimeTypes.add(MimeTypes.XML);
     }
     
-    public MboxEmailParser() 
+    public ThunderbirdEmailParser() 
     {
         this.tika = new Tika();
     }
     
-    public MboxEmailParser(InputStream inStream) 
+    public ThunderbirdEmailParser(InputStream inStream) 
     {
         this.tika = new Tika();
         this.stream = inStream;
     }
     
-    public MboxEmailParser(String filepath) 
+    public ThunderbirdEmailParser(String filepath) 
     {
         this.tika = new Tika();
         this.stream = this.getClass().getResourceAsStream(filepath);
@@ -60,22 +58,17 @@ public class MboxEmailParser {
     private void init() throws IOException
     {        
         this.tika.setMaxStringLength(10*1024*1024);
-        this.metadata = new Metadata();           
+        this.metadata = new ThunderbirdMetadata();           
         //Set MIME Type    
-        this.mimeType = tika.detect(this.stream);  
-        this.parser   = new MboxParser();   
+        //this.mimeType = tika.detect(this.stream);  
+        this.parser   = new ThunderbirdMboxParser();   
         this.context  = new ParseContext();
-        
-        this.contentHandler = new BodyContentHandler(-1);
-        //Seems like setting this causes the metadata not to output all of it.
-       // this.metadata.set(Metadata.CONTENT_TYPE, this.mimeType);
+        this.contentHandler = new BodyContentHandler(10*1024*1024);
     }
     
     public void parse() throws FileNotFoundException, IOException, SAXException, TikaException
     {   
-        init();
-        // this.metadata = new Metadata();        
-        //String mimeType = tika.detect(this.stream);        
+        init();     
         parser.parse(this.stream,this.contentHandler, this.metadata, context);
     }
     
@@ -83,19 +76,18 @@ public class MboxEmailParser {
     {   
         init();        
         parser.parse(inStream,this.contentHandler, this.metadata, context);
-        String blbha = "stop";
     }
     
-    public Metadata getMetadata()
+    public ThunderbirdMetadata getMetadata()
     {
         return this.metadata;
     }
     
     
     //Returns message content, i.e. plain text or html
-    public String getContent()
+    public ArrayList<String> getContent()
     {
-        return this.contentHandler.toString();
+        return this.parser.getXHTMLDocs();
     }
     
     public String detectEmailFileFormat(String filepath) throws IOException
@@ -122,81 +114,69 @@ public class MboxEmailParser {
     }
     
     //Get email subject
-    public String getSubject()
+    public ArrayList<String> getSubjects()
     {
-        return this.metadata.get(Metadata.SUBJECT);
+        return this.metadata.getValues(Metadata.SUBJECT);
     }
     
-    public String getTitle()
+    public ArrayList<String> getTitles()
     {
-        return this.metadata.get(Metadata.TITLE);
+        return this.metadata.getValues(Metadata.TITLE);
     }
     
-    public Long getDateCreated() 
+    public ArrayList<Long> getDateCreated() 
     {
         Long epochtime;
-        Long ftime = (long) 0;
-        
+        Long ftime = 0L;
+        ArrayList<Long> dates = new ArrayList<Long>();
         try {
-            String datetime = this.metadata.get(Metadata.DATE);
-            epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(datetime).getTime();
+            ArrayList<String> datetime = this.metadata.getValues("date");
+            for(String s : datetime){
+            epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(s).getTime();
             ftime = epochtime.longValue();
             ftime = ftime / 1000;
+            dates.add(ftime);
+        }
         } catch (ParseException ex) {
-            Logger.getLogger(MboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        return ftime;
+        return dates;
     }
     
-    public String getApplication()
-    {   
-        String client;
-        String userAgent = "";
-        userAgent = this.metadata.get("MboxParser-user-agent");
-        if(userAgent.matches("(?i).*Thunderbird.*"))
-        {
-            client = "Thunderbird";
-        }
-        else{
-            client = "Unknown";
-        }
-        return client;
-    }
-    
-    public String getContenType()
+    public ArrayList<String>  getContenType()
     {
-        return this.metadata.get(Metadata.CONTENT_TYPE);
+        return this.metadata.getValues(Metadata.CONTENT_TYPE);
     }
     
-    public String getContenEncoding()
+    public ArrayList<String>  getContenEncoding()
     {
-        return this.metadata.get(Metadata.CONTENT_ENCODING);
+        return this.metadata.getValues(Metadata.CONTENT_ENCODING);
     }
     
-    public String getFrom()
+    public ArrayList<String>  getFrom()
     {
-        return this.metadata.get(Metadata.AUTHOR);
+        return this.metadata.getValues(Metadata.CREATOR);
     }
     
-    public String getTo()
+    public ArrayList<String>  getTo()
     {
-        return this.metadata.get(Metadata.MESSAGE_TO);
+        return this.metadata.getValues(Metadata.MESSAGE_TO);
     }
     
-    public String getCC()
+    public ArrayList<String>  getCC()
     {
-        return this.metadata.get(Metadata.MESSAGE_CC);
+        return this.metadata.getValues(Metadata.MESSAGE_CC);
     }
     
-    public String getBCC()
+    public ArrayList<String>  getBCC()
     {
-        return this.metadata.get(Metadata.MESSAGE_BCC);
+        return this.metadata.getValues(Metadata.MESSAGE_BCC);
     }
     
-    public String getRecipientAddress()
+    public ArrayList<String>  getRecipientAddress()
     {
-        return this.metadata.get(Metadata.MESSAGE_RECIPIENT_ADDRESS);
+        return this.metadata.getValues(Metadata.MESSAGE_RECIPIENT_ADDRESS);
     }
     
     public String getMboxSupportedMediaType()
