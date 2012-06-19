@@ -128,7 +128,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         this.showInboxMessagesCheckBox.setSelected(showInboxMessagesSelected);
         this.showInboxMessagesCheckBox.setEnabled(showInboxMessagesEnabled);
         this.deleteButton.setEnabled(deleteButtonEnabled);
-        this.importButton.setEnabled(!ingestRunning);
+        this.importButton.setEnabled(importButtonEnabled);
     }
     
     /**
@@ -141,6 +141,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         } else {
             ingestRunningLabel.setText("");
         }
+        
         int selection = getSelection();
         if(selection != -1) {
             initUI(HashDbXML.getCurrent().getAllSets().get(selection));
