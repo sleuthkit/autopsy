@@ -315,7 +315,7 @@ public class ThunderbirdMboxParser  {
                     formatEmailList(metadata,xhtml.toString());
                     //let's clear the metatada and content
                     metadata  = new ThunderbirdMetadata();
-                    handler = new BodyContentHandler(); 
+                    handler = new BodyContentHandler(10*1024*1024); 
                     xhtml = new ThunderbirdXHTMLContentHandler(handler, metadata);  
                     xhtml.startDocument();
                 }

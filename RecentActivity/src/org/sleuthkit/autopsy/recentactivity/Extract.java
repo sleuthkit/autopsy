@@ -109,7 +109,7 @@ abstract public class Extract {
      */
     public List dbConnect(String path, String query) {
         ResultSet temprs = null;
-        List list = null;
+        List list = new ArrayList();
         String connectionString = "jdbc:sqlite:" + path;
         try {
             dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", connectionString);

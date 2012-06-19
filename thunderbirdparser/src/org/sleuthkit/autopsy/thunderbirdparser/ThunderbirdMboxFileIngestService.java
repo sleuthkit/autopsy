@@ -22,9 +22,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Metadata;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -34,7 +38,6 @@ import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -74,15 +77,35 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
         if (isMbox) {
             managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
             try {
+                String emailId = "";
+                Map<String, String> propertyMap = new HashMap<String, String>();
+                String content = "";
+                String from = "";
+                String to = "";
+                String stringDate = "";
+                Long date = 0L;
+                String subject = "";
+                String cc = "";
+                String bcc = "";
                 ReadContentInputStream contentStream = new ReadContentInputStream(fsContent);
                 mbox.parse(contentStream);
-                String content = mbox.getContent();
-                String from = mbox.getFrom();
-                String to = mbox.getTo();
-                Long date = mbox.getDateCreated();
-                String subject = mbox.getSubject();
-                String cc = mbox.getCC();
-                String bcc = mbox.getBCC();
+                HashMap<String, Map<String, String>> emailMap = new HashMap<String,Map<String,String>>();
+                emailMap = mbox.getAllEmails();
+                for (Entry<String, Map<String, String>> entry : emailMap.entrySet()) {
+                    emailId = ((entry.getKey().toString() != null) ? entry.getKey().toString() : "");
+                    propertyMap = entry.getValue();
+                    content = ((propertyMap.get("content") != null) ? propertyMap.get("content") :"");
+                    from = ((propertyMap.get(Metadata.AUTHOR) != null) ? propertyMap.get(Metadata.AUTHOR) :"");
+                    to = ((propertyMap.get(Metadata.MESSAGE_TO) != null) ? propertyMap.get(Metadata.MESSAGE_TO) :"");
+                    stringDate = ((propertyMap.get("date") != null) ? propertyMap.get("date") :"");
+                    if(!"".equals(stringDate)){
+                    date = mbox.getDateCreated(stringDate);
+                    }
+                    subject = ((propertyMap.get(Metadata.SUBJECT) != null) ? propertyMap.get(Metadata.SUBJECT) :"");
+                    cc = ((propertyMap.get(Metadata.MESSAGE_CC) != null) ? propertyMap.get(Metadata.MESSAGE_CC) :"");
+                    bcc =((propertyMap.get(Metadata.MESSAGE_BCC) != null) ? propertyMap.get(Metadata.MESSAGE_BCC) :"");
+                }
+
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(), classname, "", to));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID(), classname, "", cc));
@@ -90,7 +113,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID(), classname, "", from));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID(), classname, "", content));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID(), classname, "", content));
-                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), classname, "",));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), classname, "", emailId));
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_REPLY_ID.getTypeID(), classname, "",));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(), classname, "", date));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(), classname, "", date));
@@ -130,7 +153,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
 
     @Override
     public String getName() {
-        return "Mbox Parser";
+        return "Thunderbird Parser";
     }
 
     @Override

@@ -138,11 +138,11 @@ public class Chrome extends Extract implements IngestServiceImage {
 
                     final JsonParser parser = new JsonParser();
                     JsonElement jsonElement = parser.parse(new FileReader(temps));
-                    JsonObject test = jsonElement.getAsJsonObject();
-                    JsonObject whatever = test.get("roots").getAsJsonObject();
-                    JsonObject whatever2 = whatever.get("bookmark_bar").getAsJsonObject();
-                    JsonArray whatever3 = whatever2.getAsJsonArray("children");
-                    for (JsonElement result : whatever3) {
+                    JsonObject jElement = jsonElement.getAsJsonObject();
+                    JsonObject jRoot = jElement.get("roots").getAsJsonObject();
+                    JsonObject jBookmark = jRoot.get("bookmark_bar").getAsJsonObject();
+                    JsonArray jBookmarkArray = jBookmark.getAsJsonArray("children");
+                    for (JsonElement result : jBookmarkArray) {
                         try {
                             JsonObject address = result.getAsJsonObject();
                             String url = address.get("url").getAsString();
