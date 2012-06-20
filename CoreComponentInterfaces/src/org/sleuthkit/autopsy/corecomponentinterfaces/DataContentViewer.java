@@ -74,8 +74,11 @@ public interface DataContentViewer {
      * @param node Node to check for preference
      * @param isSupported, true if the viewer is supported by the node
      * as determined by a previous check
-     * @return True if viewer preferred, else false
+     * @return an int (0-10) higher return means the viewer has higher priority
+     * 0 means not supported
+     * 1/2 means will display all supported
+     * 3-10 are prioritized by Content viewer developer
      */
-    public boolean isPreferred(Node node, boolean isSupported);
+    public int isPreferred(Node node, boolean isSupported);
 
 }

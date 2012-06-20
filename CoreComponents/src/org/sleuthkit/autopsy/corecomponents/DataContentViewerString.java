@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Viewer displays strings extracted from contents.
  */
-@ServiceProvider(service = DataContentViewer.class)
+@ServiceProvider(service = DataContentViewer.class, position=2)
 public class DataContentViewerString extends javax.swing.JPanel implements DataContentViewer {
 
     private static long currentOffset = 0;
@@ -241,7 +241,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
         String pageNumberStr = goToPageTextField.getText();
         int pageNumber = 0;
-        int maxPage = (int) (dataSource.getSize() / pageLength) + 1;
+        int maxPage = Math.round(dataSource.getSize() / pageLength);
         try {
             pageNumber = Integer.parseInt(pageNumberStr);
         } catch (NumberFormatException ex) {
@@ -320,7 +320,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 }
 
                 if (setVisible) {
-                    int totalPage = (int) (dataSource.getSize() / pageLength) + 1;
+                    int totalPage = Math.round(dataSource.getSize() / pageLength);
                     totalPageLabel.setText(Integer.toString(totalPage));
                     currentPageLabel.setText(Integer.toString(currentPage));
                     outputViewPane.setText(text); // set the output view
@@ -355,10 +355,16 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         nextPageButton.setVisible(isVisible);
         pageLabel.setVisible(isVisible);
         pageLabel2.setVisible(isVisible);
+        goToPageTextField.setVisible(isVisible);
+        goToPageLabel.setVisible(isVisible);
     }
 
     @Override
     public void setNode(Node selectedNode) {
+        if(!isSupported(selectedNode)) {
+            setDataView(null, 0, true);
+            return;
+        }
         if (selectedNode != null) {
             Lookup lookup = selectedNode.getLookup();
             Content content = lookup.lookup(Content.class);
@@ -421,14 +427,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     }
     
     @Override
-    public boolean isPreferred(Node node, boolean isSupported) {
+    public int isPreferred(Node node, boolean isSupported) {
         if(node != null && isSupported){
-            StringContent scontent = node.getLookup().lookup(StringContent.class);
-            if(scontent != null){
-                return true;
-            }
+            return 2;
+        } else {
+            return 0;
         }
-        return false;
     }
 
     @Override

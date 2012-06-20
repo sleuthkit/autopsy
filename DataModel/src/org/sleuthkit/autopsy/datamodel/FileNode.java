@@ -31,16 +31,6 @@ import org.sleuthkit.datamodel.TskData;
 public class FileNode extends AbstractFsContentNode<File> {
 
     /**
-     * Helper so that the display name and the name used in building the path
-     * are determined the same way.
-     * @param f File to get the name of
-     * @return short name for the File
-     */
-    static String nameForFile(File f) {
-        return f.getName();
-    }
-
-    /**
      * 
      * @param file underlying Content
      */
@@ -52,8 +42,6 @@ public class FileNode extends AbstractFsContentNode<File> {
         super(file, directoryBrowseMode);
         
         // set name, display name, and icon
-        String fileName = nameForFile(file);
-        this.setDisplayName(fileName);
         if (File.dirFlagToValue(file.getDir_flags()).equals(TskData.TSK_FS_NAME_FLAG_ENUM.TSK_FS_NAME_FLAG_UNALLOC.toString())) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
         } else {

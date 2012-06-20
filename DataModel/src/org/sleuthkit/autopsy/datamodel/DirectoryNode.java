@@ -27,16 +27,9 @@ import org.sleuthkit.datamodel.TskData;
  * Its children are more directories. 
  */
 public class DirectoryNode extends AbstractFsContentNode<Directory> {
-
-    /**
-     * Helper so that the display name and the name used in building the path
-     * are determined the same way.
-     * @param d Directory to get the name of
-     * @return short name for the directory
-     */
-    static String nameForDirectory(Directory d) {
-        return d.getName();
-    }
+    
+    public static final String DOTDOTDIR = "[parent folder]";
+    public static final String DOTDIR = "[current folder]";
     
     public DirectoryNode(Directory dir) {
         this(dir, true);
@@ -50,8 +43,6 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
         super(dir, directoryBrowseMode);
 
         // set name, display name, and icon
-        String dirName = nameForDirectory(dir);
-        this.setDisplayName(dirName);
         if (Directory.dirFlagToValue(dir.getDir_flags()).equals(TskData.TSK_FS_NAME_FLAG_ENUM.TSK_FS_NAME_FLAG_UNALLOC.toString())) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png");
         } else {
