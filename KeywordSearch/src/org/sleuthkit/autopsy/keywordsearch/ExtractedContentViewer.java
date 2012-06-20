@@ -52,6 +52,11 @@ public class ExtractedContentViewer implements DataContentViewer {
     private ExtractedContentPanel panel;
     private Node currentNode = null;
     private MarkupSource currentSource = null;
+    
+    //keep last content cached
+    private String curContent;
+    private long curContentId;
+    private int curContentChunk;
 
     public ExtractedContentViewer() {
     }
@@ -153,8 +158,9 @@ public class ExtractedContentViewer implements DataContentViewer {
                 @Override
                 public String getMarkup() {
                     try {
-                        String content = StringEscapeUtils.escapeHtml(getSolrContent(selectedNode, currentPage, hasChunks));
-                        return "<pre>" + content.trim() + "</pre>";
+                        curContent = StringEscapeUtils.escapeHtml(getSolrContent(selectedNode, currentPage, hasChunks));
+                        curContent = "<pre>" + curContent.trim() + "</pre>";
+                        return curContent;
                     } catch (SolrServerException ex) {
                         logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
                         return "";
@@ -314,18 +320,28 @@ public class ExtractedContentViewer implements DataContentViewer {
             panel.setSources(sources);
         }
     }
-    
+
+    //get current node content id, or 0 if not available
+    private long getNodeContentId() {
+        Content content = currentNode.getLookup().lookup(Content.class);
+        if (content == null) {
+            return 0;
+        }
+
+        return content.getId();
+    }
+
     private class IsDirVisitor extends ContentVisitor.Default<Boolean> {
 
         @Override
         protected Boolean defaultVisit(Content cntnt) {
-            return false; 
+            return false;
         }
-       
+
         @Override
         public Boolean visit(Directory d) {
             return true;
-        } 
+        }
     }
 
     /**
@@ -338,17 +354,18 @@ public class ExtractedContentViewer implements DataContentViewer {
         if (content == null) {
             return false;
         }
-        
+
 
         final Server solrServer = KeywordSearch.getServer();
-        
+
         boolean isDir = content.accept(new IsDirVisitor());
-        if (isDir)
+        if (isDir) {
             return false;
+        }
 
         final long contentID = content.getId();
-        
-        
+
+
 
         try {
             return solrServer.queryIsIndexed(contentID);
@@ -378,14 +395,25 @@ public class ExtractedContentViewer implements DataContentViewer {
             chunkId = currentPage;
         }
 
-        String content = null;
+        //check if cached
+        long contentId = getNodeContentId();
+        if (curContent != null) {
+            if (contentId == curContentId
+                    && curContentChunk == chunkId) {
+                return curContent;
+            }
+        }
+
+        //not cached
         try {
-            content = solrServer.getSolrContent(contentObj, chunkId);
+            curContent = solrServer.getSolrContent(contentObj, chunkId);
+            curContentId = contentId;
+            curContentChunk = chunkId;
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Couldn't get text content.", ex);
             return "";
         }
-        return content;
+        return curContent;
     }
 
     private class NextFindActionListener implements ActionListener {
@@ -507,8 +535,9 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     private void updatePageControls() {
-        if (currentSource == null)
+        if (currentSource == null) {
             return;
+        }
 
         final int currentPage = currentSource.getCurrentPage();
         final int totalPages = currentSource.getNumberPages();
