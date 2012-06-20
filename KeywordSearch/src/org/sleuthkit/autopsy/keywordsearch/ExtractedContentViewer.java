@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.Directory;
  * MarkupSource items in the selected Node's lookup, plus the content that
  * Solr extracted (if there is any).
  */
-@ServiceProvider(service = DataContentViewer.class)
+@ServiceProvider(service = DataContentViewer.class, position=4)
 public class ExtractedContentViewer implements DataContentViewer {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
@@ -304,10 +304,20 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     @Override
-    public boolean isPreferred(Node node,
+    public int isPreferred(Node node,
             boolean isSupported) {
         BlackboardArtifact art = node.getLookup().lookup(BlackboardArtifact.class);
-        return isSupported && (art == null || art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID());
+        if(isSupported) {
+            if(art == null) {
+                return 4;
+            } else if(art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                return 6;
+            } else {
+                return 4;
+            }
+        } else {
+            return 0;
+        }
     }
 
     /**

@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Viewer displays Artifacts associated with Contents
  */
-@ServiceProvider(service = DataContentViewer.class)
+@ServiceProvider(service = DataContentViewer.class, position=3)
 public class DataContentViewerArtifact extends javax.swing.JPanel implements DataContentViewer{
     
     private static int currentPage = 1;
@@ -314,12 +314,17 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     }
 
     @Override
-    public boolean isPreferred(Node node, boolean isSupported) {
+    public int isPreferred(Node node, boolean isSupported) {
         BlackboardArtifact art = node.getLookup().lookup(BlackboardArtifact.class);
-        if(art != null && art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())
-            return true;
-        else
-            return false;
+        if(isSupported) {
+            if(art == null) {
+                return 3;
+            } else {
+                return 5;
+            }
+        } else {
+            return 0;
+        }
     }
 
     private void customizeComponents(){

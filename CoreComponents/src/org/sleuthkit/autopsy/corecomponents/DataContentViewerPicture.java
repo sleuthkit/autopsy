@@ -178,8 +178,12 @@ public class DataContentViewerPicture extends javax.swing.JPanel implements Data
     }
     
     @Override
-    public boolean isPreferred(Node node, boolean isSupported) {
-        return isSupported;
+    public int isPreferred(Node node, boolean isSupported) {
+        if(isSupported) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
     @Override
