@@ -318,7 +318,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         BlackboardArtifact art = node.getLookup().lookup(BlackboardArtifact.class);
         if(isSupported) {
             if(art == null) {
-                return 1;
+                return 3;
             } else if(art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 return 3;
             } else {
