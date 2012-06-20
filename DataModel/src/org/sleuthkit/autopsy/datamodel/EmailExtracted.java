@@ -80,7 +80,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
                 final String account = parsedPath.get(MAIL_ACCOUNT);
                 final String folder = parsedPath.get(MAIL_FOLDER);
                 
-                Map<String,List<Long>> folders = accounts.get(folder);
+                Map<String,List<Long>> folders = accounts.get(account);
                 if (folders == null) {
                     folders = new LinkedHashMap<String,List<Long>>();
                     accounts.put(account, folders);
