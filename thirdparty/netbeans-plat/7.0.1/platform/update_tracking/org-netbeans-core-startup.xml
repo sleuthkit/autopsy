@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module codename="org.netbeans.core.startup">
+    <module_version install_time="1340220555569" last="true" origin="Ant" specification_version="1.31.1">
+        <file crc="2761274028" name="core/locale/core_ja.jar"/>
+        <file crc="3171101781" name="core/locale/core_pt_BR.jar"/>
+        <file crc="567631376" name="core/locale/core_ru.jar"/>
+        <file crc="4253603037" name="core/locale/core_zh_CN.jar"/>
+        <file crc="533600095" name="core/core.jar"/>
+    </module_version>
+</module>
