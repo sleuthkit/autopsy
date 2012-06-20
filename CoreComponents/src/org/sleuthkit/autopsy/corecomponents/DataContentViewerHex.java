@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Hex view of file contents.
  */
-@ServiceProvider(service = DataContentViewer.class)
+@ServiceProvider(service = DataContentViewer.class, position=1)
 public class DataContentViewerHex extends javax.swing.JPanel implements DataContentViewer {
 
     private static long currentOffset = 0;

@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Viewer displays strings extracted from contents.
  */
-@ServiceProvider(service = DataContentViewer.class)
+@ServiceProvider(service = DataContentViewer.class, position=2)
 public class DataContentViewerString extends javax.swing.JPanel implements DataContentViewer {
 
     private static long currentOffset = 0;
@@ -429,14 +429,10 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     @Override
     public int isPreferred(Node node, boolean isSupported) {
         if(node != null && isSupported){
-            StringContent scontent = node.getLookup().lookup(StringContent.class);
-            if(scontent != null){
-                return 3;
-            } else {
-                return 2;
-            }
+            return 2;
+        } else {
+            return 0;
         }
-        return 0;
     }
 
     @Override

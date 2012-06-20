@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Viewer displays Artifacts associated with Contents
  */
-@ServiceProvider(service = DataContentViewer.class)
+@ServiceProvider(service = DataContentViewer.class, position=3)
 public class DataContentViewerArtifact extends javax.swing.JPanel implements DataContentViewer{
     
     private static int currentPage = 1;
@@ -319,10 +319,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         if(isSupported) {
             if(art == null) {
                 return 3;
-            } else if(art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                return 3;
             } else {
-                return 4;
+                return 5;
             }
         } else {
             return 0;

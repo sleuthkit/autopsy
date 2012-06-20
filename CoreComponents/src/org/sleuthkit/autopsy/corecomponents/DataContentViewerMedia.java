@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.TskData;
  *
  * @author dfickling
  */
-@ServiceProvider(service = DataContentViewer.class)
+@ServiceProvider(service = DataContentViewer.class, position=5)
 public class DataContentViewerMedia extends javax.swing.JPanel implements DataContentViewer {
 
     private static final String[] IMAGES = new String[]{ ".jpg", ".jpeg", ".png", ".gif", ".jpe", ".bmp"};
@@ -303,7 +303,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     @Override
     public int isPreferred(Node node, boolean isSupported) {
         if(isSupported) {
-            return 5;
+            return 7;
         } else {
             return 0;
         }
