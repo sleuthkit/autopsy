@@ -4,9 +4,14 @@
 <!-- If you delete this file and reopen the project it will be recreated. -->
 <project name="Autopsy3" basedir=".">
     <description>Builds the module suite Autopsy3.</description>
+	
+	<!-- Netbeans RCP platform -->
+	<property name="netbeans-plat.version" value="7.0.1"/>
+	<property name="nbplatform.active.dir" value="${basedir}/thirdparty/netbeans-plat/${netbeans-plat.version}"/>
+	<property name="harness.dir" value="${nbplatform.active.dir}/harness"/>
+	
     <import file="nbproject/build-impl.xml"/>
 
-    
     <condition property="os.family" value="unix">  
         <os family="unix"/>  
     </condition>  
@@ -26,9 +31,27 @@
         </classpath>
     </taskdef>
 
+
+	<!-- Netbeans RCP platform download helper -->
+    <property name="netbeans-plat.dir"
+          value="${thirdparty.dir}/netbeans-plat/${netbeans-plat.version}"/>
+    <property name="bootstrap.url"
+          value="http://deadlock.netbeans.org/hudson/job/nbms-and-javadoc/lastStableBuild/artifact/nbbuild/netbeans/harness/tasks.jar"/>
+    <property name="netbeans.updatecenter.url"
+          value="http://updates.netbeans.org/netbeans/updates/${netbeans-plat.version}/uc/final/distribution/catalog.xml.gz"/>
+    <target name="download-netbeans-rcp" description="helper target to downloads netbeans platform">
+        <mkdir dir="${netbeans-plat.dir}/harness"/>
+        <get src="${bootstrap.url}" dest="${netbeans-plat.dir}/harness/tasks.jar" usetimestamp="true" verbose="true"/>
+        <taskdef name="autoupdate" classname="org.netbeans.nbbuild.AutoUpdate" classpath="${netbeans-plat.dir}/harness/tasks.jar"/>
+        <autoupdate installdir="${netbeans-plat.dir}" updatecenter="${netbeans.updatecenter.url}">
+            <modules includes=".*" clusters="harness[0-9]*"/>
+            <modules includes=".*" clusters="platform[0-9]*"/>
+        </autoupdate>
+    </target>
+
     <!-- This seems really bad to be hard coded, but I couldn't find a better solution -->
     <path id="jni-path">
-        <pathelement location="./build/cluster/modules/org-sleuthkit-datamodel.jar"/>
+        <pathelement location="${basedir}/build/cluster/modules/org-sleuthkit-datamodel.jar"/>
         <path refid="cluster.path.id" />
     </path>
 
