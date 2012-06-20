@@ -355,10 +355,16 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         nextPageButton.setVisible(isVisible);
         pageLabel.setVisible(isVisible);
         pageLabel2.setVisible(isVisible);
+        goToPageTextField.setVisible(isVisible);
+        goToPageLabel.setVisible(isVisible);
     }
 
     @Override
     public void setNode(Node selectedNode) {
+        if(!isSupported(selectedNode)) {
+            setDataView(null, 0, true);
+            return;
+        }
         if (selectedNode != null) {
             Lookup lookup = selectedNode.getLookup();
             Content content = lookup.lookup(Content.class);
@@ -421,14 +427,16 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     }
     
     @Override
-    public boolean isPreferred(Node node, boolean isSupported) {
+    public int isPreferred(Node node, boolean isSupported) {
         if(node != null && isSupported){
             StringContent scontent = node.getLookup().lookup(StringContent.class);
             if(scontent != null){
-                return true;
+                return 3;
+            } else {
+                return 2;
             }
         }
-        return false;
+        return 0;
     }
 
     @Override

@@ -304,10 +304,20 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     @Override
-    public boolean isPreferred(Node node,
+    public int isPreferred(Node node,
             boolean isSupported) {
         BlackboardArtifact art = node.getLookup().lookup(BlackboardArtifact.class);
-        return isSupported && (art == null || art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID());
+        if(isSupported) {
+            if(art == null) {
+                return 3;
+            } else if(art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                return 4;
+            } else {
+                return 3;
+            }
+        } else {
+            return 0;
+        }
     }
 
     /**

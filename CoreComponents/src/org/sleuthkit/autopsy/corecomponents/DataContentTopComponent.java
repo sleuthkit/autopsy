@@ -98,7 +98,7 @@ public final class DataContentTopComponent extends TopComponent implements DataC
             return this.wrapped.isSupported(node);
         }
         
-        boolean isPreferred(Node node, boolean isSupported) {
+        int isPreferred(Node node, boolean isSupported) {
             return this.wrapped.isPreferred(node, isSupported);
         }
     }
@@ -293,17 +293,10 @@ public final class DataContentTopComponent extends TopComponent implements DataC
 
         int totalTabs = dataContentTabbedPane.getTabCount();
         
-        List<DataContentViewer> dcvs = new ArrayList<DataContentViewer>();
-        dcvs.addAll(Lookup.getDefault().lookupAll(DataContentViewer.class));
-        for (int i = 0; i<dcvs.size(); i++){
-            DataContentViewer dcv = dcvs.get(i);
-            if(dcv.getTitle().equals("String View") && dataContentTabbedPane.getTabCount() > i){
-                dataContentTabbedPane.setSelectedIndex(i);
-            }
-        }
+        int maxPreferred = 0;
+        int indexOfPreferred = 0;
 
         if (totalTabs > 0) { // make sure there are tabs to reset
-            int tempIndex = dataContentTabbedPane.getSelectedIndex();
             for (int i = 0; i < totalTabs; i++) {
                 UpdateWrapper dcv = viewers.get(i);
                 dcv.resetComponent();             
@@ -312,25 +305,19 @@ public final class DataContentTopComponent extends TopComponent implements DataC
                 boolean dcvSupported = dcv.isSupported(selectedNode);
                 if (! dcvSupported) {
                     dataContentTabbedPane.setEnabledAt(i, false);
-
-                    // change the tab selection if it's the current selection
-                    if (tempIndex == i) {
-                        if (i > 0) {
-                            dataContentTabbedPane.setSelectedIndex(0);
-                        } else {
-                            dataContentTabbedPane.setSelectedIndex(1);
-                        }
-                    }
                 } else {
                     dataContentTabbedPane.setEnabledAt(i, true);
-                    if (dcv.isPreferred(selectedNode, dcvSupported))
-                        dataContentTabbedPane.setSelectedIndex(i);
+                    int currentPreferred = dcv.isPreferred(selectedNode, dcvSupported);
+                    if (currentPreferred > maxPreferred) {
+                        indexOfPreferred = i;
+                        maxPreferred = currentPreferred;
+                    }
                     
                 }
             }
-            int newIndex = dataContentTabbedPane.getSelectedIndex();
             // set the display of the tab
-            viewers.get(newIndex).setNode(selectedNode);
+            dataContentTabbedPane.setSelectedIndex(indexOfPreferred);
+            viewers.get(indexOfPreferred).setNode(selectedNode);
         }
     }
 

@@ -361,6 +361,10 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
     @Override
     public void setNode(Node selectedNode) {
+        if(!isSupported(selectedNode)) {
+            setDataView(null, 0, true);
+            return;
+        }
         if (selectedNode != null) {
             Content content = (selectedNode).getLookup().lookup(Content.class);
             if (content != null) {
@@ -413,6 +417,8 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         nextPageButton.setVisible(isVisible);
         pageLabel.setVisible(isVisible);
         pageLabel2.setVisible(isVisible);
+        goToPageTextField.setVisible(isVisible);
+        goToPageLabel.setVisible(isVisible);
     }
 
     @Override
@@ -430,8 +436,12 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }
     
     @Override
-    public boolean isPreferred(Node node, boolean isSupported) {
-        return false;
+    public int isPreferred(Node node, boolean isSupported) {
+        if(isSupported) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
     @Override

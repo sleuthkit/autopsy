@@ -172,6 +172,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         }
         File file = selectedNode.getLookup().lookup(File.class);
         setDataView(file);
+        if(file == null) {
+            return;
+        }
         boolean isVidOrAud = containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS);
         pauseButton.setVisible(isVidOrAud);
         progressLabel.setVisible(isVidOrAud);
@@ -179,8 +182,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     private void setDataView(File file) {
-        if(file == null)
+        if(file == null) {
+            setComponentsVisibility(false);
             return;
+        } else {
+             setComponentsVisibility(true);
+        }
         this.currentFile = file;
         
         if (containsExt(file.getName(), IMAGES)) {
@@ -195,6 +202,17 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             playbin2.setInputFile(ioFile);
             playbin2.play();
         }
+    }
+    /**
+     * To set the visibility of specific components in this class.
+     *
+     * @param isVisible  whether to show or hide the specific components
+     */
+    private void setComponentsVisibility(boolean isVisible) {
+        pauseButton.setVisible(isVisible);
+        progressLabel.setVisible(isVisible);
+        progressSlider.setVisible(isVisible);
+        videoPanel.setVisible(isVisible);
     }
 
     @Override
@@ -283,8 +301,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     }
 
     @Override
-    public boolean isPreferred(Node node, boolean isSupported) {
-        return isSupported;
+    public int isPreferred(Node node, boolean isSupported) {
+        if(isSupported) {
+            return 5;
+        } else {
+            return 0;
+        }
     }
     
     private static boolean containsExt(String name, String[] exts) {
