@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module codename="org.netbeans.libs.nbi.engine">
+    <module_version install_time="1340220517638" last="true" origin="Ant" specification_version="1.5.1">
+        <file crc="1767949405" name="modules/ext/locale/nbi-engine_ja.jar"/>
+        <file crc="830745116" name="modules/ext/locale/nbi-engine_pt_BR.jar"/>
+        <file crc="3295396386" name="modules/ext/locale/nbi-engine_ru.jar"/>
+        <file crc="604227512" name="modules/ext/locale/nbi-engine_zh_CN.jar"/>
+        <file crc="348196547" name="modules/locale/org-netbeans-libs-nbi-engine_ja.jar"/>
+        <file crc="726669400" name="modules/locale/org-netbeans-libs-nbi-engine_pt_BR.jar"/>
+        <file crc="3768484875" name="modules/locale/org-netbeans-libs-nbi-engine_ru.jar"/>
+        <file crc="3110838250" name="modules/locale/org-netbeans-libs-nbi-engine_zh_CN.jar"/>
+        <file crc="2987946696" name="config/Modules/org-netbeans-libs-nbi-engine.xml"/>
+        <file crc="2836837667" name="modules/ext/nbi-engine.jar"/>
+        <file crc="355649652" name="modules/org-netbeans-libs-nbi-engine.jar"/>
+    </module_version>
+</module>

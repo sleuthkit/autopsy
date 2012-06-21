@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module codename="org.openide.awt">
+    <module_version install_time="1340285929418" last="true" origin="Ant" specification_version="7.46.1">
+        <file crc="982591410" name="modules/locale/org-openide-awt_ja.jar"/>
+        <file crc="3797408667" name="modules/locale/org-openide-awt_pt_BR.jar"/>
+        <file crc="245191572" name="modules/locale/org-openide-awt_ru.jar"/>
+        <file crc="2686755952" name="modules/locale/org-openide-awt_zh_CN.jar"/>
+        <file crc="3208246121" name="config/Modules/org-openide-awt.xml"/>
+        <file crc="2037183536" name="modules/org-openide-awt.jar"/>
+    </module_version>
+</module>
