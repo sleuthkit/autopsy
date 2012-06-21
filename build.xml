@@ -7,7 +7,7 @@
 	
     <import file="nbproject/build-impl.xml"/>
     
-    <property name="netbeans-plat-version" value="7.0.1" />
+    <property name="netbeans-plat-version" value="7.2" />
     <property name="nbplatform.active.dir" value="${base.dir}/netbeans-plat/${netbeans-plat-version}" />
 
     <condition property="os.family" value="unix">  
