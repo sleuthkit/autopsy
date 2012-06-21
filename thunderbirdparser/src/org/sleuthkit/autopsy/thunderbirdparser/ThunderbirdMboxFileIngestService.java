@@ -20,23 +20,17 @@ package org.sleuthkit.autopsy.thunderbirdparser;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import mork.Dict;
-import mork.MorkDocument;
-import mork.Row;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -58,7 +52,6 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFile {
