@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module codename="org.openide.util.lookup">
+    <module_version install_time="1340285920081" last="true" origin="Ant" specification_version="8.15.1">
+        <file crc="3747862045" name="lib/locale/org-openide-util-lookup_ja.jar"/>
+        <file crc="3608286602" name="lib/locale/org-openide-util-lookup_pt_BR.jar"/>
+        <file crc="3559960663" name="lib/locale/org-openide-util-lookup_ru.jar"/>
+        <file crc="1445736587" name="lib/locale/org-openide-util-lookup_zh_CN.jar"/>
+        <file crc="2806580965" name="lib/org-openide-util-lookup.jar"/>
+    </module_version>
+</module>

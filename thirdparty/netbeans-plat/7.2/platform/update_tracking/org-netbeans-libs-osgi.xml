@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module codename="org.netbeans.libs.osgi">
+    <module_version install_time="1340285935866" last="true" origin="Ant" specification_version="1.9.1">
+        <file crc="1073244035" name="modules/locale/org-netbeans-libs-osgi_ja.jar"/>
+        <file crc="17982825" name="modules/locale/org-netbeans-libs-osgi_pt_BR.jar"/>
+        <file crc="549257362" name="modules/locale/org-netbeans-libs-osgi_ru.jar"/>
+        <file crc="2820040433" name="modules/locale/org-netbeans-libs-osgi_zh_CN.jar"/>
+        <file crc="3882420389" name="config/Modules/org-netbeans-libs-osgi.xml"/>
+        <file crc="3805933642" name="modules/ext/osgi.cmpn-4.2.jar"/>
+        <file crc="796619270" name="modules/ext/osgi.core-4.3.jar"/>
+        <file crc="3445840136" name="modules/org-netbeans-libs-osgi.jar"/>
+    </module_version>
+</module>

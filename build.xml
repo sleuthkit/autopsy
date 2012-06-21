@@ -86,6 +86,11 @@
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
         <antcall target="copyExternalLibsToZip"></antcall>
         
+        <propertyfile
+        file="${zip-tmp}/${app.name}/etc/${app.name}.conf">
+            <entry key="default_options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx1024m&quot;" />
+        </propertyfile>
+        
         <!-- step (4) zip again, but with the version numbers in the dir -->
         <zip destfile="${nbdist.dir}/${app.name}-${app.version}.zip">
             <zipfileset dir="${zip-tmp}/${app.name}"/>
@@ -193,7 +198,7 @@
     
     <target name="build-installer-dir" depends="findJRE,build-zip" >
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
-        <antcall target="update-conf-file" />
+        <antcall target="update-jdkhome" />
         <delete file="${nbdist.dir}/${app.name}-${app.version}.zip"/>
         <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${nbdist.dir}/${app.name}-installer/gstreamer"/>
         <copy todir="${nbdist.dir}/${app.name}-installer/jre6">
@@ -202,11 +207,10 @@
         <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${nbdist.dir}/${app.name}-installer/icon.ico" overwrite="true"/>
     </target>
     
-    <target name="update-conf-file" depends="getProps">
+    <target name="update-jdkhome" depends="getProps">
         <propertyfile
         file="${nbdist.dir}/${app.name}-installer/etc/${app.name}.conf">
             <entry key="jdkhome" value="&quot;jre6&quot;" />
-            <entry key="default_options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx1024m&quot;" />
         </propertyfile>
     </target>
     

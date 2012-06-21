@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module codename="org.netbeans.modules.apisupport.harness">
+    <module_version install_time="1340285923292" last="true" origin="Ant" specification_version="1.30.1">
+        <file crc="403136517" name="modules/locale/org-netbeans-modules-apisupport-harness_ja.jar"/>
+        <file crc="400812081" name="modules/locale/org-netbeans-modules-apisupport-harness_pt_BR.jar"/>
+        <file crc="1852651394" name="modules/locale/org-netbeans-modules-apisupport-harness_ru.jar"/>
+        <file crc="2524114787" name="modules/locale/org-netbeans-modules-apisupport-harness_zh_CN.jar"/>
+        <file crc="4274521544" name="README"/>
+        <file crc="2309339016" name="antlib/bindex-2.2.jar"/>
+        <file crc="623532342" name="antlib/jsearch-2.0_05.jar"/>
+        <file crc="3100915308" name="build.xml"/>
+        <file crc="3734783465" name="common.xml"/>
+        <file crc="2967796174" name="config/Modules/org-netbeans-modules-apisupport-harness.xml"/>
+        <file crc="1289644161" name="etc/Info.plist"/>
+        <file crc="271397868" name="etc/app.conf"/>
+        <file crc="2195682192" name="etc/applicationIcon.icns"/>
+        <file crc="43866191" name="jdk.xml"/>
+        <file crc="3108050047" name="jnlp.xml"/>
+        <file crc="1375340712" name="jnlp/jnlp-launcher.jar"/>
+        <file crc="467103129" name="launchers/app.exe"/>
+        <file crc="4293767465" name="launchers/app.sh"/>
+        <file crc="3006426155" name="launchers/app64.exe"/>
+        <file crc="1618502330" name="launchers/pre7_app.exe"/>
+        <file crc="2223057369" name="launchers/pre7_app_w.exe"/>
+        <file crc="1643695966" name="modules/org-netbeans-modules-apisupport-harness.jar"/>
+        <file crc="1644352092" name="no-testcoverage.xml"/>
+        <file crc="1048191305" name="osgi.xml"/>
+        <file crc="4206908813" name="run.xml"/>
+        <file crc="766439842" name="suite.xml"/>
+        <file crc="1678065069" name="tasks.jar"/>
+    </module_version>
+</module>
