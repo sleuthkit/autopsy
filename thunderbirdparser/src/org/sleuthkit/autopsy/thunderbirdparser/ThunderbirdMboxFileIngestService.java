@@ -127,16 +127,21 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
             }
            int index = 0;
            String replace = "";
+           boolean a = mboxPath.indexOf("/ImapMail/") > 0;
             boolean b = mboxPath.indexOf("/Mail/") > 0;
             if(b == true)
             {
              index = mboxPath.indexOf("/Mail/");
              replace = "/Mail";
             }
-            else
+            else if(a == true)
             {
              index = mboxPath.indexOf("/ImapMail/");   
              replace = "/ImapMail";
+            }
+            else{
+             replace = "";
+                
             }
             String folderPath = mboxPath.substring(index);
             folderPath = folderPath.replaceAll(replace, "");
