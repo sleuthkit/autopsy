@@ -6,6 +6,9 @@
     <description>Builds the module suite Autopsy3.</description>
 	
     <import file="nbproject/build-impl.xml"/>
+    
+    <property name="netbeans-plat-version" value="7.0.1" />
+    <property name="nbplatform.active.dir" value="${base.dir}/netbeans-plat/${netbeans-plat-version}" />
 
     <condition property="os.family" value="unix">  
         <os family="unix"/>  
@@ -57,7 +60,12 @@
         <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel.jar" tofile="${basedir}/DataModel/release/modules/ext/Tsk_DataModel.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.7.2.jar" tofile="${basedir}/DataModel/release/modules/ext/sqlite-jdbc-3.7.2.jar"/>
     </target>
-
+    
+     <target name="getJunit">
+        <property name="junit.dir" value="${thirdparty.dir}/junit" />
+         <unzip src="${junit.dir}/junit.zip" dest="${nbplatform.active.dir}"/>
+    </target>
+    
     <!-- This target will create a custom ZIP file for us.  It first uses the general
       ZIP target and then opens it up and adds in any files that we want.  This is where we customize the
       version number. -->
@@ -110,7 +118,7 @@
         <property name="app.version" value="${DSTAMP}"/>
     </target>
     
-    <target name="-init" depends="-taskdefs,-convert-old-project,getExternals,getProps">
+    <target name="-init" depends="-taskdefs,-convert-old-project,getExternals,getProps,getJunit">
         <convertclusterpath from="${cluster.path.evaluated}" to="cluster.path.final" id="cluster.path.id"/>
         <sortsuitemodules unsortedmodules="${modules}" sortedmodulesproperty="modules.sorted"/>
         <property name="cluster" location="build/cluster"/>
