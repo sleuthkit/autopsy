@@ -27,3 +27,5 @@ genfiles.properties
 /Testing/script/output/
 /Testing/script/gold/
 *~
+/netbeans-plat
+
