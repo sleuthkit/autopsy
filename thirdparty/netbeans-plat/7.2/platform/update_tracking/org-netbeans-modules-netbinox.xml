@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module codename="org.netbeans.modules.netbinox">
+    <module_version install_time="1340285940436" last="true" origin="Ant" specification_version="1.26.1">
+        <file crc="2747223810" name="modules/locale/org-netbeans-modules-netbinox_ja.jar"/>
+        <file crc="3989111281" name="modules/locale/org-netbeans-modules-netbinox_pt_BR.jar"/>
+        <file crc="3239365160" name="modules/locale/org-netbeans-modules-netbinox_ru.jar"/>
+        <file crc="3327767290" name="modules/locale/org-netbeans-modules-netbinox_zh_CN.jar"/>
+        <file crc="3482404302" name="config/Modules/org-netbeans-modules-netbinox.xml"/>
+        <file crc="3934468949" name="modules/ext/org.eclipse.osgi_3.7.1.R37x_v20110808-1106.jar"/>
+        <file crc="2980345832" name="modules/org-netbeans-modules-netbinox.jar"/>
+    </module_version>
+</module>

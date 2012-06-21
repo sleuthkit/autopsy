@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module codename="org.netbeans.modules.autoupdate.ui">
+    <module_version install_time="1340285943670" last="true" origin="Ant" specification_version="1.27.1">
+        <file crc="408699794" name="modules/locale/org-netbeans-modules-autoupdate-ui_ja.jar"/>
+        <file crc="2080721261" name="modules/locale/org-netbeans-modules-autoupdate-ui_pt_BR.jar"/>
+        <file crc="3695236360" name="modules/locale/org-netbeans-modules-autoupdate-ui_ru.jar"/>
+        <file crc="2981918477" name="modules/locale/org-netbeans-modules-autoupdate-ui_zh_CN.jar"/>
+        <file crc="123778612" name="config/Modules/org-netbeans-modules-autoupdate-ui.xml"/>
+        <file crc="2563211658" name="modules/org-netbeans-modules-autoupdate-ui.jar"/>
+    </module_version>
+</module>

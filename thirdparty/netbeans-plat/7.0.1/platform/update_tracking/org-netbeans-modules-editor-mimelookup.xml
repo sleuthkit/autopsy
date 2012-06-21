@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module codename="org.netbeans.modules.editor.mimelookup">
+    <module_version install_time="1340220542691" last="true" origin="Ant" specification_version="1.22.1">
+        <file crc="2254348566" name="modules/locale/org-netbeans-modules-editor-mimelookup_ja.jar"/>
+        <file crc="71606060" name="modules/locale/org-netbeans-modules-editor-mimelookup_pt_BR.jar"/>
+        <file crc="3375805027" name="modules/locale/org-netbeans-modules-editor-mimelookup_ru.jar"/>
+        <file crc="371722619" name="modules/locale/org-netbeans-modules-editor-mimelookup_zh_CN.jar"/>
+        <file crc="244035803" name="config/Modules/org-netbeans-modules-editor-mimelookup.xml"/>
+        <file crc="776946856" name="modules/org-netbeans-modules-editor-mimelookup.jar"/>
+    </module_version>
+</module>

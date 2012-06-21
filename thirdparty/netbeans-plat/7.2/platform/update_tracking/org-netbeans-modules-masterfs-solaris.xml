@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module codename="org.netbeans.modules.masterfs.solaris">
+    <module_version install_time="1340285920591" last="true" origin="Ant" specification_version="1.1.1">
+        <file crc="795400011" name="modules/locale/org-netbeans-modules-masterfs-solaris_ja.jar"/>
+        <file crc="2699553323" name="modules/locale/org-netbeans-modules-masterfs-solaris_pt_BR.jar"/>
+        <file crc="1478077194" name="modules/locale/org-netbeans-modules-masterfs-solaris_ru.jar"/>
+        <file crc="2049922324" name="modules/locale/org-netbeans-modules-masterfs-solaris_zh_CN.jar"/>
+        <file crc="124835977" name="config/Modules/org-netbeans-modules-masterfs-solaris.xml"/>
+        <file crc="3140691787" name="modules/org-netbeans-modules-masterfs-solaris.jar"/>
+    </module_version>
+</module>

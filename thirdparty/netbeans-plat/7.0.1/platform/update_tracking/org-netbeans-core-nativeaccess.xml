@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module codename="org.netbeans.core.nativeaccess">
+    <module_version install_time="1340220533354" last="true" origin="Ant" specification_version="1.12.1">
+        <file crc="1821312447" name="modules/locale/org-netbeans-core-nativeaccess_ja.jar"/>
+        <file crc="2323911278" name="modules/locale/org-netbeans-core-nativeaccess_pt_BR.jar"/>
+        <file crc="1572549153" name="modules/locale/org-netbeans-core-nativeaccess_ru.jar"/>
+        <file crc="2136285098" name="modules/locale/org-netbeans-core-nativeaccess_zh_CN.jar"/>
+        <file crc="1370516056" name="config/Modules/org-netbeans-core-nativeaccess.xml"/>
+        <file crc="19387817" name="modules/ext/platform-3.2.7.jar"/>
+        <file crc="1670445075" name="modules/org-netbeans-core-nativeaccess.jar"/>
+    </module_version>
+</module>
