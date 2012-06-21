@@ -62,7 +62,7 @@
     </target>
     
      <target name="getJunit">
-        <property name="junit.dir" value="${thirdparty.dir}/junit" />
+        <property name="junit.dir" value="${thirdparty.dir}/junit/${netbeans-plat-version}" />
          <unzip src="${junit.dir}/junit.zip" dest="${nbplatform.active.dir}"/>
     </target>
     
