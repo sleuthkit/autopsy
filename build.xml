@@ -4,11 +4,11 @@
 <!-- If you delete this file and reopen the project it will be recreated. -->
 <project name="Autopsy3" basedir=".">
     <description>Builds the module suite Autopsy3.</description>
-	
-	<!-- Netbeans RCP platform -->
-	<property name="netbeans-plat.version" value="7.0.1"/>
-	<property name="nbplatform.active.dir" value="${basedir}/thirdparty/netbeans-plat/${netbeans-plat.version}"/>
-	<property name="harness.dir" value="${nbplatform.active.dir}/harness"/>
+
+    <!-- Netbeans RCP platform -->
+    <property name="netbeans-plat.version" value="7.0.1"/>
+    <property name="nbplatform.active.dir" value="${basedir}/thirdparty/netbeans-plat/${netbeans-plat.version}"/>
+    <property name="harness.dir" value="${nbplatform.active.dir}/harness"/>
 	
     <import file="nbproject/build-impl.xml"/>
 
@@ -77,9 +77,7 @@
     <target name="getExternals" depends="findTSK,copyTSKLibsToRelease">
         <property environment="env"/>
         <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel.jar" tofile="${basedir}/DataModel/release/modules/ext/Tsk_DataModel.jar"/>
-		 <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.7.2.jar" tofile="${basedir}/DataModel/release/modules/ext/sqlite-jdbc-3.7.2.jar"/>
-        <!--<copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.6.20-javadoc.jar" tofile="${basedir}/DataModel/release/modules/ext/sqlite-jdbc-3.6.20-javadoc.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.6.20-sources.jar" tofile="${basedir}/DataModel/release/modules/ext/sqlite-jdbc-3.6.20-sources.jar"/> -->
+        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.7.2.jar" tofile="${basedir}/DataModel/release/modules/ext/sqlite-jdbc-3.7.2.jar"/>
     </target>
 
     <!-- This target will create a custom ZIP file for us.  It first uses the general
