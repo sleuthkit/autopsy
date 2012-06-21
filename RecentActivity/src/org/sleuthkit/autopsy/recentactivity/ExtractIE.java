@@ -376,7 +376,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
         return success;
     }
 
-    public void parsePascoResults() {
+    private void parsePascoResults() {
         if (pascoFound == false) {
             return;
         }
@@ -451,7 +451,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                                             try {
                                                 Long epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(actime).getTime();
                                                 ftime = epochtime.longValue();
-                                                ftime = ftime/1000;
+                                                ftime = ftime / 1000;
                                             } catch (ParseException e) {
                                                 logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e);
                                             }

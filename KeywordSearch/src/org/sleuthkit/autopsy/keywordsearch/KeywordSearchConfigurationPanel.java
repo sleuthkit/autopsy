@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2012 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,34 +17,19 @@
  * limitations under the License.
  */
 
-/*
- * KeywordSearchConfigurationPanel.java
- *
- * Created on Feb 28, 2012, 4:12:47 PM
- */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.util.logging.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-
 /**
- *
- * @author dfickling
+ * Container for KeywordSearchConfigurationPanelX tabs
  */
 public class KeywordSearchConfigurationPanel extends javax.swing.JPanel {
-
-    KeywordSearchListsManagementPanel listsManagementPanel;
-    KeywordSearchEditListPanel editListPanel;
-    private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel.class.getName());
-    private static final String KEYWORD_CONFIG_NAME = org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig");
-    private static KeywordSearchConfigurationPanel instance;
     
+    private static KeywordSearchConfigurationPanel instance = null;
+
     /** Creates new form KeywordSearchConfigurationPanel */
-    private KeywordSearchConfigurationPanel() {
-        
+    public KeywordSearchConfigurationPanel() {
         initComponents();
         customizeComponents();
-        setName(KEYWORD_CONFIG_NAME);
     }
     
     public static KeywordSearchConfigurationPanel getDefault() {
@@ -52,17 +37,12 @@ public class KeywordSearchConfigurationPanel extends javax.swing.JPanel {
             instance = new KeywordSearchConfigurationPanel();
         return instance;
     }
-
+    
     private void customizeComponents() {
-        listsManagementPanel = KeywordSearchListsManagementPanel.getDefault();
-        editListPanel = KeywordSearchEditListPanel.getDefault();
-
-        listsManagementPanel.addListSelectionListener(editListPanel);
+        setName("Keyword List Configuration");
+        tabbedPane.insertTab("Lists", null, KeywordSearchConfigurationPanel1.getDefault(), "List configuration", 0);
+        tabbedPane.insertTab("General", null, KeywordSearchConfigurationPanel2.getDefault(), "General configuration", 1);
         
-        mainSplitPane.setLeftComponent(listsManagementPanel);
-        mainSplitPane.setRightComponent(editListPanel);
-        mainSplitPane.revalidate();
-        mainSplitPane.repaint();
     }
 
     /** This method is called from within the constructor to
@@ -74,51 +54,20 @@ public class KeywordSearchConfigurationPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        mainSplitPane = new javax.swing.JSplitPane();
-        jPanel1 = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 242, Short.MAX_VALUE)
-        );
-
-        mainSplitPane.setLeftComponent(jPanel1);
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 291, Short.MAX_VALUE)
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 242, Short.MAX_VALUE)
-        );
-
-        mainSplitPane.setRightComponent(jPanel2);
+        tabbedPane = new javax.swing.JTabbedPane();
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JSplitPane mainSplitPane;
+    private javax.swing.JTabbedPane tabbedPane;
     // End of variables declaration//GEN-END:variables
-    
 }

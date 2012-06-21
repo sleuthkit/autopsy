@@ -26,10 +26,11 @@ import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedAccountNode;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedFolderNode;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedRootNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
-import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
@@ -37,7 +38,6 @@ import org.sleuthkit.autopsy.datamodel.ImagesNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
-import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
@@ -87,6 +87,9 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 || arg0 instanceof KeywordHitsRootNode
                 || arg0 instanceof KeywordHitsListNode
                 || arg0 instanceof HashsetHitsRootNode
+                || arg0 instanceof EmailExtractedRootNode
+                || arg0 instanceof EmailExtractedAccountNode
+                || arg0 instanceof EmailExtractedFolderNode
                 || arg0 instanceof ImagesNode
                 || arg0 instanceof ViewsNode
                 || arg0 instanceof ResultsNode)) {
@@ -99,6 +102,9 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 || arg0 instanceof RecentFilesFilterNode
                 || arg0 instanceof FileSearchFilterNode
                 || arg0 instanceof HashsetHitsSetNode
+                || arg0 instanceof EmailExtractedRootNode
+                || arg0 instanceof EmailExtractedAccountNode
+                || arg0 instanceof EmailExtractedFolderNode
                 )) {
             return new Node[]{this.copyNode(arg0, false)};
         } else {
