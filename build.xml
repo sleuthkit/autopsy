@@ -8,7 +8,8 @@
     <!-- Netbeans RCP platform -->
     <property name="netbeans-plat.version" value="7.0.1"/>
     <property name="nbplatform.active.dir" value="${basedir}/thirdparty/netbeans-plat/${netbeans-plat.version}"/>
-    <property name="harness.dir" value="${nbplatform.active.dir}/harness"/>
+    <!-- harness for bootstrapping -->
+    <property name="harness.dir" value="${basedir}/thirdparty/netbeans-plat/harness"/>
 	
     <import file="nbproject/build-impl.xml"/>
 
@@ -32,7 +33,7 @@
     </taskdef>
 
 
-	<!-- Netbeans RCP platform download helper -->
+    <!-- Netbeans RCP platform download helper -->
     <property name="netbeans-plat.dir"
           value="${thirdparty.dir}/netbeans-plat/${netbeans-plat.version}"/>
     <property name="bootstrap.url"
