@@ -43,6 +43,10 @@ public final class RAImageIngestService implements IngestServiceImage {
     private static int messageId = 0;
     private ArrayList<String> errors = new ArrayList<String>();
     private StringBuilder subCompleted = new StringBuilder();
+    private ExtractRegistry eree = null;
+    private Firefox ffre = null;
+    private Chrome chre = null;
+    private ExtractIE eere = null;
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
@@ -61,10 +65,10 @@ public final class RAImageIngestService implements IngestServiceImage {
     public void process(Image image, IngestImageWorkerController controller) {
         //logger.log(Level.INFO, "process() " + this.toString());
         List<Extract> modules = new ArrayList<Extract>();
-        modules.add(new ExtractRegistry());
-        modules.add(new Firefox());
-        modules.add(new Chrome());
-        modules.add(new ExtractIE());
+        modules.add(eree);
+        modules.add(ffre);
+        modules.add(chre);
+        modules.add(eere);
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
         controller.switchToDeterminate(modules.size());
         controller.progress(0);
@@ -118,15 +122,22 @@ public final class RAImageIngestService implements IngestServiceImage {
     public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init() " + this.toString());
         this.managerProxy = managerProxy;
-        //service specific initialization here
+        this.eere = new ExtractIE();
+        this.chre = new Chrome();
+        this.eree = new ExtractRegistry();
+        this.ffre = new Firefox();
 
     }
 
     @Override
     public void stop() {
-        logger.log(Level.INFO, "stop()");
-
-        //service specific cleanup due to interruption here
+        logger.log(Level.INFO, "RAImageIngetService::stop()");
+        //Order Matters
+        //ExtractRegistry stop        
+        this.eree.stop();
+        //ExtractIE stop
+        this.eere.stop();
+        logger.log(Level.INFO, "Recent Activity processes properly shutdown.");
     }
 
     @Override

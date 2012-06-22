@@ -331,7 +331,10 @@ public class ExtractRegistry extends Extract implements IngestServiceImage {
 
     @Override
     public void stop() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        if(JavaSystemCaller.Exec.getProcess() != null)
+        {
+            JavaSystemCaller.Exec.stop();
+        }
     }
 
     @Override
