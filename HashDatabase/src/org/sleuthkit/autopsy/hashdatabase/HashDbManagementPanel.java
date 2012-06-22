@@ -312,7 +312,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
                 .addComponent(useForIngestCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(showInboxMessagesCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 195, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 175, Short.MAX_VALUE)
                 .addComponent(ingestRunningLabel)
                 .addContainerGap())
         );
@@ -357,7 +357,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, new Object[]{"New Hash Set name:", nameTextField, nsrlCheckBox}, "New Hash Set", JOptionPane.PLAIN_MESSAGE);
                 String setName = nameTextField.getText();
                 if (setName != null && !setName.equals("")) {
-                    HashDb newDb = new HashDb(setName, Arrays.asList(new String[]{filePath}), false, false);
+                    HashDb newDb = new HashDb(setName, Arrays.asList(new String[]{filePath}), true, !nsrlCheckBox.isSelected());
                     int toIndex = JOptionPane.NO_OPTION;
                     if (IndexStatus.isIngestible(newDb.status())) {
                         newDb.setUseForIngest(true);
