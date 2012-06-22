@@ -5,7 +5,7 @@
         <file name="org-sleuthkit-autopsy-thunderbirdparser-ThunderbirdMboxFilervice.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestService.getDefault"/>
-            <attr name="position" intvalue="1100"/>
+            <attr name="position" intvalue="1050"/>
         </file>
     </folder>
-    </filesystem>
+</filesystem>

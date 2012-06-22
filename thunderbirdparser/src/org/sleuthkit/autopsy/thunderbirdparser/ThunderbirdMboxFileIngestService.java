@@ -18,8 +18,12 @@
  */
 package org.sleuthkit.autopsy.thunderbirdparser;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,6 +49,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.xml.sax.SAXException;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFile {
 
@@ -77,6 +85,80 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
 
         if (isMbox) {
             managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
+            String mboxName = fsContent.getName();
+            String msfName = mboxName + ".msf";
+            Long mboxId = fsContent.getId();
+            String mboxPath = "";
+            Long msfId = 0L;
+            Case currentCase = Case.getCurrentCase(); // get the most updated case
+            SleuthkitCase tskCase = currentCase.getSleuthkitCase();
+            try {
+                ResultSet rs = tskCase.runQuery("select parent_path from tsk_files where obj_id = '" + mboxId.toString() + "'");
+                mboxPath = rs.getString("parent_path");
+                Statement s = rs.getStatement();
+                rs.close();
+                if (s != null) {
+                    s.close();
+                }
+                rs.close();
+                rs.getStatement().close();
+
+                ResultSet resultset = tskCase.runQuery("select obj_id from tsk_files where parent_path = '" + mboxPath + "' and name = '" + msfName + "'");
+                msfId = resultset.getLong("obj_id");
+                Statement st = resultset.getStatement();
+                resultset.close();
+                if (st != null) {
+                    st.close();
+                }
+                resultset.close();
+                resultset.getStatement().close();
+
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "Error while trying to get parent path for:" + this.getClass().getName(), ex);
+            }
+
+            try {
+                Content msfContent = tskCase.getContentById(msfId);
+                ContentUtils.writeToFile(msfContent, new File(currentCase.getTempDirectory() + File.separator + msfName));
+            } catch (IOException ex) {
+                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Unable to obtain msf file for mbox parsing:" + this.getClass().getName(), ex);
+            }
+           int index = 0;
+           String replace = "";
+           boolean a = mboxPath.indexOf("/ImapMail/") > 0;
+            boolean b = mboxPath.indexOf("/Mail/") > 0;
+            if(b == true)
+            {
+             index = mboxPath.indexOf("/Mail/");
+             replace = "/Mail";
+            }
+            else if(a == true)
+            {
+             index = mboxPath.indexOf("/ImapMail/");   
+             replace = "/ImapMail";
+            }
+            else{
+             replace = "";
+                
+            }
+            String folderPath = mboxPath.substring(index);
+            folderPath = folderPath.replaceAll(replace, "");
+            folderPath = folderPath+mboxName;
+            folderPath = folderPath.replaceAll(".sbd", "");
+//            Reader reader = null;
+//            try {
+//                reader = new FileReader(currentCase.getTempDirectory() + File.separator + msfName);
+//            } catch (FileNotFoundException ex) {
+//                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+//            }
+//            MorkDocument morkDocument = new MorkDocument(reader);
+//            List<Dict> dicts = morkDocument.getDicts();
+//            for(Dict dict : dicts){
+//            String path = dict.getValue("81").toString();
+//             String account = dict.getValue("8D").toString();
+//                    }
             String emailId = "";
             String content = "";
             String from = "";
@@ -118,7 +200,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(), classname, "", date));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(), classname, "", date));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), classname, "", subject));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), classname, "", "/Account1/Folder1"));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), classname, "", folderPath));
                     BlackboardArtifact bbart;
                     try {
                         bbart = fsContent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
