@@ -240,8 +240,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
     private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
         String pageNumberStr = goToPageTextField.getText();
-        int pageNumber = 0;
-        int maxPage = Math.round(dataSource.getSize() / pageLength);
+        int pageNumber;
+        int maxPage = Math.round((dataSource.getSize()-1) / pageLength) + 1;
         try {
             pageNumber = Integer.parseInt(pageNumberStr);
         } catch (NumberFormatException ex) {
@@ -320,7 +320,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 }
 
                 if (setVisible) {
-                    int totalPage = Math.round(dataSource.getSize() / pageLength);
+                    int totalPage = Math.round((dataSource.getSize()-1) / pageLength) + 1;
                     totalPageLabel.setText(Integer.toString(totalPage));
                     currentPageLabel.setText(Integer.toString(currentPage));
                     outputViewPane.setText(text); // set the output view

@@ -257,7 +257,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
         String pageNumberStr = goToPageTextField.getText();
         int pageNumber = 0;
-        int maxPage = Math.round(dataSource.getSize() / pageLength);
+        int maxPage = Math.round((dataSource.getSize()-1) / pageLength) + 1;
         try {
             pageNumber = Integer.parseInt(pageNumberStr);
         } catch (NumberFormatException ex) {
@@ -333,7 +333,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 }
 
                 if (setVisible) {
-                    int totalPage = Math.round(dataSource.getSize() / pageLength);
+                    int totalPage = Math.round((dataSource.getSize()-1) / pageLength) + 1;
                     totalPageLabel.setText(Integer.toString(totalPage));
                     currentPageLabel.setText(Integer.toString(currentPage));
                     setComponentsVisibility(true); // shows the components that not needed
