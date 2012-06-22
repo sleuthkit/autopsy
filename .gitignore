@@ -28,4 +28,6 @@ genfiles.properties
 /Testing/script/gold/
 *~
 /netbeans-plat
+/docs/doxygen/doxygen_docs
+
 
