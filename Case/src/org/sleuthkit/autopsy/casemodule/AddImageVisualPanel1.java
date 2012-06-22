@@ -19,19 +19,17 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.List;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
-import javax.swing.JCheckBox;
-import javax.swing.event.DocumentEvent;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 
 /**
  * The "Add Image" wizard panel 1. This class is used to design the "form" of
@@ -42,17 +40,19 @@ import org.openide.NotifyDescriptor;
 final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
 
     private JFileChooser fc = new JFileChooser();
-    private FileFilter filter;
-    static final String[] imgExt = {".img", ".dd"};
-    static final String imgDesc = "Raw Images (*.img, *.dd)";
-    static GeneralFilter imgFilter = new GeneralFilter(imgExt, imgDesc, false);
-    static final String[] splitExt = {".*\\.[0-9][0-9][0-9]", ".*\\.[a-z][a-z]"};
-    static final String splitDesc = "Split Part (*.001, *.002, etc)";
-    static GeneralFilter splitFilter = new GeneralFilter(splitExt, splitDesc, true);
-    static final String[] encasExt = {".*\\.e[0-9][0-9]", ".*\\.e[a-z][a-z]"};
+    static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa"});
+    static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa)";
+    static GeneralFilter rawFilter = new GeneralFilter(rawExt, rawDesc);
+    static final List<String> encaseExt = Arrays.asList(new String[]{".e01", ".eaa"});
     static final String encaseDesc = "Encase Images (*.e01, *.eAA)";
-    static GeneralFilter encaseFilter = new GeneralFilter(encasExt, encaseDesc, true);
-    private boolean multi = false;
+    static GeneralFilter encaseFilter = new GeneralFilter(encaseExt, encaseDesc);
+    static final List<String> allExt = new ArrayList<String>();
+    {
+        allExt.addAll(rawExt);
+        allExt.addAll(encaseExt);
+    }
+    static final String allDesc = "All Supported Types";
+    static GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
     private AddImageWizardPanel1 wizPanel;
 
     /**
@@ -62,20 +62,15 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
     AddImageVisualPanel1(AddImageWizardPanel1 wizPanel) {
         initComponents();
         this.wizPanel = wizPanel;
-        fc.setDragEnabled(multi);
+        fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setMultiSelectionEnabled(multi);
-        fc.addChoosableFileFilter(imgFilter);
-        filter = imgFilter;
-        buttonGroup1.add(encase);
-        buttonGroup1.add(rawSingle);
-        buttonGroup1.add(rawSplit);
+        fc.setMultiSelectionEnabled(false);
+        fc.addChoosableFileFilter(allFilter);
+        fc.addChoosableFileFilter(rawFilter);
+        fc.addChoosableFileFilter(encaseFilter);
+        fc.setFileFilter(allFilter);
         imgPathTextField.getDocument().addDocumentListener(this);
         imgPathTextField.setText("");
-        jLabel1.setText("");
-        rawSingle.setSelected(true);
-        rawSplit.setSelected(false);
-        encase.setSelected(false);
         createTimeZoneList();
     }
 
@@ -91,16 +86,16 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
     }
 
     /**
-     * Gets the array of image paths from the Image Path Text Field.
+     * Gets the image path from the Image Path Text Field.
      *
-     * @return imagePaths  the array of image paths
+     * @return imagePath  the image path
      */
-    public String[] getImagePaths() {
-        String[] imgPath = Case.convertImgPath(imgPathTextField.getText());
-        if (Case.checkMultiplePathExist(imgPath)) {
+    public String getImagePath() {
+        String imgPath = imgPathTextField.getText();
+        if (Case.pathExists(imgPath)) {
             return imgPath;
         } else {
-            return new String[0];
+            return "";
         }
     }
 
@@ -114,27 +109,6 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
      */
     boolean getNoFatOrphans() {
         return noFatOrphansCheckbox.isSelected();
-    }
-    
-
-
-    /**
-     * Gets the type of the image that's selected.
-     *
-     * @return imgType  the type of the image that selected
-     */
-    public String getImgType() {
-        if (rawSingle.isSelected()) {
-            return "Raw Single";
-        }
-        if (rawSplit.isSelected()) {
-            return "Raw Split";
-        }
-        if (encase.isSelected()) {
-            return "EnCase";
-        } else {
-            return "Nothing Selected";
-        }
     }
 
     /**
@@ -197,56 +171,21 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
     private void initComponents() {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
-        rawSingle = new javax.swing.JRadioButton();
-        rawSplit = new javax.swing.JRadioButton();
-        imgTypeLabel = new javax.swing.JLabel();
-        encase = new javax.swing.JRadioButton();
         imgPathLabel = new javax.swing.JLabel();
-        multipleSelectLabel = new javax.swing.JLabel();
         imgPathTextField = new javax.swing.JTextField();
         imgPathBrowserButton = new javax.swing.JButton();
         this.imgPathBrowserButton.setDefaultCapable(true);
         this.imgPathBrowserButton.requestFocus();
         imgInfoLabel = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
         timeZoneComboBox = new javax.swing.JComboBox();
         timeZoneLabel = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         noFatOrphansCheckbox = new javax.swing.JCheckBox();
         optionsLabel1 = new javax.swing.JLabel();
 
-        setMinimumSize(new java.awt.Dimension(559, 328));
         setPreferredSize(new java.awt.Dimension(588, 328));
 
-        org.openide.awt.Mnemonics.setLocalizedText(rawSingle, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.rawSingle.text")); // NOI18N
-        rawSingle.setRequestFocusEnabled(false);
-        rawSingle.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rawSingleActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(rawSplit, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.rawSplit.text")); // NOI18N
-        rawSplit.setRequestFocusEnabled(false);
-        rawSplit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rawSplitActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(imgTypeLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.imgTypeLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(encase, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.encase.text")); // NOI18N
-        encase.setRequestFocusEnabled(false);
-        encase.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                encaseActionPerformed(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(imgPathLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.imgPathLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(multipleSelectLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.multipleSelectLabel.text")); // NOI18N
 
         imgPathTextField.setText(org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.imgPathTextField.text")); // NOI18N
 
@@ -257,11 +196,8 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
             }
         });
 
-        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14));
+        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(imgInfoLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.imgInfoLabel.text")); // NOI18N
-
-        jLabel1.setForeground(new java.awt.Color(255, 0, 51));
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.jLabel1.text")); // NOI18N
 
         timeZoneComboBox.setMaximumRowCount(30);
 
@@ -281,19 +217,7 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(noFatOrphansCheckbox))
-                    .addComponent(imgTypeLabel)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(rawSplit)
-                            .addComponent(rawSingle)
-                            .addComponent(encase)))
-                    .addComponent(multipleSelectLabel)
                     .addComponent(imgInfoLabel)
-                    .addComponent(jLabel1)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                         .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                             .addComponent(timeZoneLabel)
@@ -306,7 +230,10 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                             .addComponent(imgPathBrowserButton)))
                     .addComponent(optionsLabel1)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(noFatOrphansCheckbox)))
                 .addContainerGap(39, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -314,83 +241,24 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(imgInfoLabel)
-                .addGap(19, 19, 19)
-                .addComponent(imgTypeLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(rawSingle)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(rawSplit)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(encase)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(imgPathLabel)
                     .addComponent(imgPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(imgPathBrowserButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(multipleSelectLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(26, 26, 26)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(timeZoneLabel)
                     .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(optionsLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(noFatOrphansCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 18, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(25, 25, 25))
+                .addGap(18, 18, Short.MAX_VALUE)
+                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(20, 20, 20))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    /**
-     * When the "rawSingle" radio button is selected.
-     *
-     * @param evt  the action event
-     */
-    private void rawSingleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rawSingleActionPerformed
-        rawSingle.setSelected(true);
-        rawSplit.setSelected(false);
-        encase.setSelected(false);
-        multipleSelectLabel.setText("Single Image: Multiple Select Disabled");
-        filter = imgFilter;
-        multi = false;
-        this.updateUI(null);
-}//GEN-LAST:event_rawSingleActionPerformed
-
-    /**
-     * When the "rawSplit" radio button is selected.
-     *
-     * @param evt  the action event
-     */
-    private void rawSplitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rawSplitActionPerformed
-        rawSingle.setSelected(false);
-        rawSplit.setSelected(true);
-        encase.setSelected(false);
-        multipleSelectLabel.setText("Split Image: Multiple Select Enabled. Use Ctrl, Shift, "
-                + "or Drag to select multiple image parts");
-        filter = splitFilter;
-        multi = true;
-        updateUI(null);
-}//GEN-LAST:event_rawSplitActionPerformed
-
-    /**
-     * When the "encase" radio button is selected.
-     *
-     * @param evt  the action event
-     */
-    private void encaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_encaseActionPerformed
-        rawSingle.setSelected(false);
-        rawSplit.setSelected(false);
-        encase.setSelected(true);
-        multipleSelectLabel.setText("EnCase Image: Multiple Select Enabled. Use Ctrl, Shift, "
-                + "or Drag to select multiple image parts");
-        filter = encaseFilter;
-        multi = true;
-        updateUI(null);
-}//GEN-LAST:event_encaseActionPerformed
 
     /**
      * When the "Browse" button is pressed, open the file chooser window to
@@ -399,12 +267,7 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
      * @param evt  the action event
      */
     private void imgPathBrowserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imgPathBrowserButtonActionPerformed
-        fc.resetChoosableFileFilters();
-        fc.addChoosableFileFilter(filter);
-        fc.setFileFilter(filter);
-        fc.setMultiSelectionEnabled(multi);
-        fc.setDragEnabled(multi);
-
+        
         String oldText = imgPathTextField.getText();
         // set the current directory of the FileChooser if the ImagePath Field is valid
         File currentDir = new File(oldText);
@@ -414,39 +277,8 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
 
         int retval = fc.showOpenDialog(this);
         if (retval == JFileChooser.APPROVE_OPTION) {
-            File[] files = fc.getSelectedFiles();
-            String path = "";
-            if (multi) {
-                for (File file : files) {
-                    path = path + "\"" + file.getPath() + "\" ";
-                }
-                imgPathTextField.setText(path);
-            } else {
-                path = fc.getSelectedFile().getPath();
-                imgPathTextField.setText(path);
-            }
-            //if split image, and 1 chunk given, verify it's the first chunk
-            boolean invalidChunk = false;
-            String[] imgPath = Case.convertImgPath(imgPathTextField.getText());
-            if (imgPath.length == 1 && multi == true) {
-                if (!imgPath[0].matches(".*\\.0.*1$") //001
-                        && !imgPath[0].matches(".*\\.[aA]{1,}$") //aaa
-                        && !imgPath[0].matches(".*\\.[eE]{1}0.*1$") //E01
-                        ) {
-                    NotifyDescriptor nd = new NotifyDescriptor.Confirmation("You need to select either all chunks or only the first chunk of a split image to add the entire image correctly. Are you sure you want to use this selection?", "Warning: First image chunk not selected", NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
-                    nd.setValue(NotifyDescriptor.NO_OPTION);
-
-                    Object res = DialogDisplayer.getDefault().notify(nd);
-                    if (res != null && res == DialogDescriptor.NO_OPTION) {
-                        invalidChunk = true;
-                    }
-                }
-            }
-
-            if (invalidChunk) {
-                imgPathTextField.setText(oldText);
-                return;
-            }
+            String path = fc.getSelectedFile().getPath();
+            imgPathTextField.setText(path);
         }
 
 
@@ -455,19 +287,13 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
-    private javax.swing.JRadioButton encase;
     private javax.swing.JLabel imgInfoLabel;
     private javax.swing.JButton imgPathBrowserButton;
     private javax.swing.JLabel imgPathLabel;
     private static javax.swing.JTextField imgPathTextField;
-    private javax.swing.JLabel imgTypeLabel;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel multipleSelectLabel;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
     private javax.swing.JLabel optionsLabel1;
-    private static javax.swing.JRadioButton rawSingle;
-    private javax.swing.JRadioButton rawSplit;
     private javax.swing.JComboBox timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
     // End of variables declaration//GEN-END:variables
@@ -514,50 +340,13 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
      * @param e  the document event
      */
     public void updateUI(DocumentEvent e) {
-        String[] imgPath = Case.convertImgPath(imgPathTextField.getText());
-        boolean isExist = Case.checkMultiplePathExist(imgPath);
-        File imgFile = new File(imgPath[0]);
+        String imgPath = imgPathTextField.getText();
+        boolean isExist = Case.pathExists(imgPath);
+        File imgFile = new File(imgPath);
 
         // check if the given paths exist and those are paths to image files
-        boolean isImagePath = true;
-        for (int i = 0; i < imgPath.length; i++) {
-            File tempImgFile = new File(imgPath[i]);
-            isImagePath = isImagePath && (Case.isPhysicalDrive(imgPath[i]) || (tempImgFile.exists() && !tempImgFile.isDirectory()
-                    && (imgFilter.accept(tempImgFile) || splitFilter.accept(tempImgFile)
-                    || encaseFilter.accept(tempImgFile))));
-        }
+        boolean isImagePath = allFilter.accept(imgFile);
 
-
-        if (isImagePath) {
-            Case currentCase = Case.getCurrentCase();
-            File dbFile = new File(currentCase.getCaseDirectory() + File.separator + imgFile.getName() + ".db");
-
-            if (dbFile.exists()) {
-                String dbExist = "This database already exists. Do you want to overwrite the database?";
-                NotifyDescriptor d = new NotifyDescriptor.Confirmation(dbExist, "Warning: Overwrite Database", NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
-                d.setValue(NotifyDescriptor.NO_OPTION);
-
-                isExist = false;
-
-                Object res = DialogDisplayer.getDefault().notify(d);
-                if (res != null && res == DialogDescriptor.YES_OPTION) {
-                    isExist = dbFile.delete();
-                    if (!isExist) {
-                        jLabel1.setText("*Database for this image is already created and it can't be deleted because it's being used.");
-                    }
-                }
-                if (res != null && res == DialogDescriptor.NO_OPTION) {
-                    jLabel1.setText("*Database for this image exist. Either delete it or select another image.");
-                }
-            }
-        } else {
-            isExist = false;
-        }
-
-        if (isExist) {
-            jLabel1.setText("");
-        }
-
-        this.wizPanel.enableNextButton(isExist);
+        this.wizPanel.enableNextButton(isExist && isImagePath);
     }
 }
