@@ -102,8 +102,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
         String[] split = path.split(MAIL_PATH_SEPARATOR);
         if (split.length < 4) {
             logger.log(Level.WARNING, "Unexpected number of tokens when parsing email PATH: " 
-                    + split.length + ", will skip the email message");
-            return null;
+                    + split.length + ", will use defaults");
+            parsed.put(MAIL_ACCOUNT, "Default");
+            parsed.put(MAIL_FOLDER, "Default");
+            return parsed;
         }
 
         parsed.put(MAIL_ACCOUNT, split[2]);
