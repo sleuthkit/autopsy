@@ -100,12 +100,14 @@ public class EmailExtracted implements AutopsyVisitableItem {
     private static Map<String, String> parsePath(String path) {
         Map<String, String> parsed = new HashMap<String, String>();
         String[] split = path.split(MAIL_PATH_SEPARATOR);
-        if (split.length < 3) {
+        if (split.length < 4) {
+            logger.log(Level.WARNING, "Unexpected number of tokens when parsing email PATH: " 
+                    + split.length + ", will skip the email message");
             return null;
         }
 
-        parsed.put(MAIL_ACCOUNT, split[1]);
-        parsed.put(MAIL_FOLDER, split[2]);
+        parsed.put(MAIL_ACCOUNT, split[2]);
+        parsed.put(MAIL_FOLDER, split[3]);
         return parsed;
     }
 
@@ -117,10 +119,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
     /**
      * Mail root node showing all emails
      */
-    public class EmailExtractedRootNode extends AbstractNode implements DisplayableItemNode {
+    public class EmailExtractedRootNodeFlat extends AbstractNode implements DisplayableItemNode {
 
-        public EmailExtractedRootNode() {
-            super(Children.create(new EmailExtractedRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
+        public EmailExtractedRootNodeFlat() {
+            super(Children.create(new EmailExtractedRootChildrenFlat(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(LABEL_NAME);
             super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png");
@@ -129,7 +131,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this);
+            //return v.visit(this);
+            return null;
         }
 
         @Override
@@ -153,9 +156,9 @@ public class EmailExtracted implements AutopsyVisitableItem {
     /**
      * Mail root child node showing flattened emails
      */
-    private class EmailExtractedRootChildren extends ChildFactory<BlackboardArtifact> {
+    private class EmailExtractedRootChildrenFlat extends ChildFactory<BlackboardArtifact> {
 
-        private EmailExtractedRootChildren() {
+        private EmailExtractedRootChildrenFlat() {
             super();
         }
 
@@ -192,10 +195,10 @@ public class EmailExtracted implements AutopsyVisitableItem {
      * Mail root node grouping all mail accounts, supports account-> folder
      * structure
      */
-    public class EmailExtractedRootNodeMultiLevel extends AbstractNode implements DisplayableItemNode {
+    public class EmailExtractedRootNode extends AbstractNode implements DisplayableItemNode {
 
-        public EmailExtractedRootNodeMultiLevel() {
-            super(Children.create(new EmailExtractedRootChildrenMultiLevel(), true), Lookups.singleton(DISPLAY_NAME));
+        public EmailExtractedRootNode() {
+            super(Children.create(new EmailExtractedRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(LABEL_NAME);
             super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png");
@@ -204,8 +207,8 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            //return v.visit(this); TODO change
-            return null;
+            return v.visit(this); 
+            //return null;
         }
 
         @Override
@@ -229,7 +232,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     /**
      * Mail root child node creating each account node
      */
-    private class EmailExtractedRootChildrenMultiLevel extends ChildFactory<String> {
+    private class EmailExtractedRootChildren extends ChildFactory<String> {
 
         @Override
         protected boolean createKeys(List<String> list) {
