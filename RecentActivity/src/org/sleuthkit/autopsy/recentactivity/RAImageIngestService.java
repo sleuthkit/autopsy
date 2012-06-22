@@ -71,9 +71,14 @@ public final class RAImageIngestService implements IngestServiceImage {
         
         for(int i = 0; i < modules.size(); i++) {
             Extract module = modules.get(i);
-            module.process(image, controller);
+            try {
+                module.process(image, controller);
+                subCompleted.append(module.getName()).append(" complete <br>");
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Exception occurred in " + module.getName(), ex);
+                subCompleted.append(module.getName()).append(" failed - see log for details <br>");
+            }
             controller.progress(i+1);
-            subCompleted.append(module.getName()).append(" complete <br>");
             errors.addAll(module.getErrorMessages());
         }
     }
