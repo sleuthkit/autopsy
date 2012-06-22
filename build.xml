@@ -193,7 +193,7 @@
     </target>
     
     <target name="doxygen" description="build doxygen docs, requires doxygen in PATH" depends="-init,-hide-excluded-modules">
-        <exec executable="doxygenc" dir="${basedir}/docs/doxygen">
+        <exec executable="doxygen" dir="${basedir}/docs/doxygen">
             <arg value="Doxyfile"/>
         </exec>
     </target>
