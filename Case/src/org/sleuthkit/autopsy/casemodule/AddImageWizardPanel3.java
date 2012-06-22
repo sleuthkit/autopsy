@@ -178,7 +178,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     private void commitImage(WizardDescriptor settings) throws Exception {
 
-        String[] imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
+        String imgPath = (String) settings.getProperty(AddImageAction.IMGPATH_PROP);
         String timezone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
         settings.putProperty(AddImageAction.IMAGEID_PROP, "");
         SleuthkitJNI.CaseDbHandle.AddImageProcess process = (SleuthkitJNI.CaseDbHandle.AddImageProcess) settings.getProperty(AddImageAction.PROCESS_PROP);
@@ -196,7 +196,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
             SleuthkitCase.dbWriteUnlock();
 
             if (imageId != 0) {
-                newImage = Case.getCurrentCase().addImage(imgPaths, imageId, timezone);
+                newImage = Case.getCurrentCase().addImage(imgPath, imageId, timezone);
                 settings.putProperty(AddImageAction.IMAGEID_PROP, imageId);
             }
 
