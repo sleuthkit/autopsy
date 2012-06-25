@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskException;
 class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
     // the paths of the image files to be added
-    private String[] imgPaths;
+    private String imgPath;
     // the time zone where the image is added
     private String timeZone;
     //whether to not process FAT filesystem orphans
@@ -190,7 +190,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     public void readSettings(WizardDescriptor settings) {
         cleanupImage = null;
         imgAdded = false;
-        imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
+        imgPath = (String) settings.getProperty(AddImageAction.IMGPATH_PROP);
         timeZone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
         noFatOrphans = ((Boolean) settings.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
 
@@ -278,7 +278,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
             process = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
             cancelledWhileRunning.enable();
             try {
-                process.run(imgPaths);
+                process.run(new String[]{imgPath});
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Errors occurred while running add image. ", ex);
                 //critical core/system error and process needs to be interrupted

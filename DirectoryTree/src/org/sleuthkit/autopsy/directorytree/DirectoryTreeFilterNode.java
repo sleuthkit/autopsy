@@ -63,7 +63,6 @@ class DirectoryTreeFilterNode extends FilterNode {
         Content c = this.getLookup().lookup(Content.class);
         if (c != null) {
             actions.addAll(DirectoryTreeFilterNode.getDetailActions(c));
-            actions.add(collapseAll);
 
             Directory dir = this.getLookup().lookup(Directory.class);
             if (dir != null) {
@@ -83,6 +82,7 @@ class DirectoryTreeFilterNode extends FilterNode {
                 });
             }
         }
+        actions.add(collapseAll);
         return actions.toArray(new Action[actions.size()]);
     }
 

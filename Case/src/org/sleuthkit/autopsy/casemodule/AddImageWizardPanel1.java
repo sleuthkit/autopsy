@@ -22,20 +22,17 @@ package org.sleuthkit.autopsy.casemodule;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JCheckBox;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
-import org.sleuthkit.autopsy.coreutils.Log;
 
 /**
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
@@ -211,18 +208,16 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        settings.putProperty(AddImageAction.IMGPATHS_PROP, getComponent().getImagePaths());
+        settings.putProperty(AddImageAction.IMGPATH_PROP, getComponent().getImagePath());
         settings.putProperty(AddImageAction.TIMEZONE_PROP, getComponent().getSelectedTimezone()); // store the timezone
         settings.putProperty(AddImageAction.NOFATORPHANS_PROP, Boolean.valueOf(getComponent().getNoFatOrphans())); 
         //settings.putProperty(AddImageAction.LOOKUPFILES_PROP, getComponent().getLookupFilesCheckboxChecked());
         //settings.putProperty(AddImageAction.SOLR_PROP, getComponent().getIndexImageCheckboxChecked());
-        
+
         // Store the path to the first image selected into the properties file
-        if(getComponent().getImagePaths().length > 0){
-            String firstImage = getComponent().getImagePaths()[0];
-            String firstImagePath = firstImage.substring(0, firstImage.lastIndexOf(File.separator)+1);
-            AutopsyPropFile.getInstance().setProperty(PROP_LASTIMAGE, firstImagePath);
-        }
+        String firstImage = getComponent().getImagePath();
+        String firstImagePath = firstImage.substring(0, firstImage.lastIndexOf(File.separator) + 1);
+        AutopsyPropFile.getInstance().setProperty(PROP_LASTIMAGE, firstImagePath);
     }
 
 

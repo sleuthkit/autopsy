@@ -20,7 +20,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
-import java.util.regex.Pattern;
+import java.util.List;
 import javax.swing.filechooser.FileFilter;
 
 /**
@@ -28,14 +28,12 @@ import javax.swing.filechooser.FileFilter;
  */
 public class GeneralFilter extends FileFilter{
 
-    String[] ext;
+    List<String> extensions;
     String desc;
-    boolean isMultiple; // whether the filter can accept multiple files.
 
-    public GeneralFilter(String[] ext, String desc, boolean isMultiple){
-        this.ext = ext;
+    public GeneralFilter(List<String> ext, String desc){
+        this.extensions = ext;
         this.desc = desc;
-        this.isMultiple = isMultiple;
     }
 
     /**
@@ -48,23 +46,13 @@ public class GeneralFilter extends FileFilter{
     public boolean accept(File f) {
         if(f.isDirectory()){
             return true;
-        }
-        else{
+        } else {
             Boolean result = false;
             String name = f.getName().toLowerCase();
 
-            if(isMultiple){
-                for(int i = 0; i < ext.length; i++){
-                    String regex = ext[i];
-                    if (Pattern.matches(regex, name)){
-                        result = result || true;
-                    }
-                }
-            }
-            else{
-                for(int i = 0; i < ext.length; i++){
-                    if (name.endsWith(ext[i]))
-                        result = result || true;
+            for (String ext : extensions) {
+                if (name.endsWith(ext)) {
+                    result = result || true;
                 }
             }
             return result;

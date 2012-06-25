@@ -76,7 +76,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
     
     
     /** Creates new form CasePropertiesForm */
-    CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Long, List<String>> imgPaths) {
+    CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Long, String> imgPaths) {
         initComponents();
         caseNameTextField.setText(currentCase.getName());
         caseNumberTextField.setText(currentCase.getNumber());
@@ -94,7 +94,7 @@ class CasePropertiesForm extends javax.swing.JPanel{
         
         int i = 0;
         for(long key : imgPaths.keySet()){
-            String path = imgPaths.get(key).get(0);
+            String path = imgPaths.get(key);
             String shortenPath = shrinkPath(path, 70);
             rows[i++] = new String[]{shortenPath};
         }
