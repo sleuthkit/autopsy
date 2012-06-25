@@ -29,7 +29,6 @@ import java.util.logging.Logger;
  */
 public final class JavaSystemCaller {
 
-    private static final Logger logger = Logger.getLogger(JavaSystemCaller.class.getName());
     /**
      * Execute a system command. <br /> Default is 'ls' in current directory if
      * no parameters, or a system command (if Windows, it is automatically
@@ -50,7 +49,6 @@ public final class JavaSystemCaller {
 //        }
 //        logger.log(Level.INFO, "Final output: " + anOutput);
 //    }
-
     /**
      * Asynchronously read the output of a given input stream. <br /> Any
      * exception during execution of the command in managed in this thread.
@@ -59,6 +57,7 @@ public final class JavaSystemCaller {
      */
     public static class StreamGobbler extends Thread {
 
+        private static final Logger logger = Logger.getLogger(StreamGobbler.class.getName());
         private InputStream is;
         private String type;
         private StringBuffer output = new StringBuffer();
@@ -81,11 +80,11 @@ public final class JavaSystemCaller {
                 final BufferedReader br = new BufferedReader(isr);
                 String line = null;
                 while ((line = br.readLine()) != null) {
-                    logger.log(Level.INFO,this.type + ">" + line);
+                    logger.log(Level.INFO, this.type + ">" + line);
                     this.output.append(line + System.getProperty("line.separator"));
                 }
             } catch (final IOException ioe) {
-                logger.log(Level.SEVERE,ioe.getMessage());
+                logger.log(Level.SEVERE, ioe.getMessage());
             }
         }
 
@@ -108,7 +107,7 @@ public final class JavaSystemCaller {
      */
     public static final class Exec {
 
-        private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
+        private static final Logger logger = Logger.getLogger(Exec.class.getName());
         private static Process proc = null;
         private static String command = null;
         private static JavaSystemCaller.IShell aShell = null;
@@ -131,7 +130,7 @@ public final class JavaSystemCaller {
                 command = anExecEnvFactory.createCommandLine();
 
                 final Runtime rt = Runtime.getRuntime();
-                logger.log(Level.INFO,"Executing " + aShell.getShellCommand() + " " + command);
+                logger.log(Level.INFO, "Executing " + aShell.getShellCommand() + " " + command);
 
                 proc = rt.exec(aShell.getShellCommand() + " " + command);
                 try {
@@ -153,7 +152,7 @@ public final class JavaSystemCaller {
 
                 // any error???
                 final int exitVal = proc.waitFor();
-                logger.log(Level.INFO,"ExitValue: " + exitVal);
+                logger.log(Level.INFO, "ExitValue: " + exitVal);
 
                 output = outputGobbler.getOutput();
 
@@ -189,16 +188,14 @@ public final class JavaSystemCaller {
                 }
 
             } catch (InterruptedException intex) {
-                logger.log(Level.SEVERE,intex.getMessage());
+                logger.log(Level.SEVERE, intex.getMessage());
             } catch (IOException ioex) {
-                logger.log(Level.SEVERE,ioex.getMessage());
+                logger.log(Level.SEVERE, ioex.getMessage());
             }
         }
-        
-        
-        public static Process getProcess()
-        {
-           return proc;
+
+        public static Process getProcess() {
+            return proc;
         }
     }
 
