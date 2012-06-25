@@ -89,11 +89,10 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 || arg0 instanceof HashsetHitsRootNode
                 || arg0 instanceof EmailExtractedRootNode
                 || arg0 instanceof EmailExtractedAccountNode
-                || arg0 instanceof EmailExtractedFolderNode
                 || arg0 instanceof ImagesNode
                 || arg0 instanceof ViewsNode
                 || arg0 instanceof ResultsNode)) {
-            return new Node[]{this.copyNode(arg0)};
+            return new Node[]{this.copyNode(arg0, true)};
         } else if (arg0 != null
                 && (arg0 instanceof KeywordHitsKeywordNode
                 || (arg0 instanceof DirectoryNode
@@ -102,8 +101,6 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 || arg0 instanceof RecentFilesFilterNode
                 || arg0 instanceof FileSearchFilterNode
                 || arg0 instanceof HashsetHitsSetNode
-                || arg0 instanceof EmailExtractedRootNode
-                || arg0 instanceof EmailExtractedAccountNode
                 || arg0 instanceof EmailExtractedFolderNode
                 )) {
             return new Node[]{this.copyNode(arg0, false)};
@@ -142,7 +139,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
      */
     private static boolean isDotDirectory(DirectoryNode dir) {
         String name = dir.getDisplayName();
-        return name.equals(".") || name.equals("..");
+        return name.equals(DirectoryNode.DOTDIR) || name.equals(DirectoryNode.DOTDOTDIR);
     }
 
     /**

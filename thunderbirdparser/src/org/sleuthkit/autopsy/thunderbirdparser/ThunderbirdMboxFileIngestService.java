@@ -61,6 +61,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
     private static final String classname = "Thunderbird Parser";
+    private final String hashDBServiceName = "Hash Lookup";
 
     public static synchronized ThunderbirdMboxFileIngestService getDefault() {
         if (instance == null) {
@@ -74,11 +75,12 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
         ThunderbirdEmailParser mbox = new ThunderbirdEmailParser();
         boolean isMbox = false;
 
-        IngestServiceAbstractFile.ProcessResult thunderbirdResult = managerProxy.getAbstractFileServiceResult(classname);
+        IngestServiceAbstractFile.ProcessResult hashDBResult = 
+                managerProxy.getAbstractFileServiceResult(hashDBServiceName);
 
-        if (thunderbirdResult == IngestServiceAbstractFile.ProcessResult.COND_STOP) {
+        if (hashDBResult == IngestServiceAbstractFile.ProcessResult.COND_STOP) {
             return ProcessResult.OK; //file is known, stop processing it
-        } else if (thunderbirdResult == IngestServiceAbstractFile.ProcessResult.ERROR) {
+        } else if (hashDBResult == IngestServiceAbstractFile.ProcessResult.ERROR) {
             return ProcessResult.ERROR;  //file has read error, stop processing it
         }
 

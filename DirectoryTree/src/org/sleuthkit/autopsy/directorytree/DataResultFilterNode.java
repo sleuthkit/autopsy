@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
 import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
+import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
 import org.sleuthkit.autopsy.datamodel.ImageNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
@@ -154,7 +155,6 @@ public class DataResultFilterNode extends FilterNode{
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", vol));
             actions.addAll(ShowDetailActionVisitor.getActions(vol.getLookup().lookup(Content.class)));
-            actions.add(new ChangeViewAction("View", 0, vol));
             
             return actions;
         }
@@ -272,6 +272,11 @@ public class DataResultFilterNode extends FilterNode{
         }
         
         @Override
+        public AbstractAction visit(HashsetHitsSetNode hhsn) {
+            return openChild(hhsn);
+        }
+        
+        @Override
         public AbstractAction visit(EmailExtractedRootNode eern) {
             return openChild(eern);
         }
@@ -303,9 +308,9 @@ public class DataResultFilterNode extends FilterNode{
         
         @Override
         public AbstractAction visit(DirectoryNode dn){
-            if(dn.getDisplayName().equals(".."))
+            if(dn.getDisplayName().equals(DirectoryNode.DOTDOTDIR))
                 return openParent(dn);
-            else if(!dn.getDisplayName().equals("."))
+            else if(!dn.getDisplayName().equals(DirectoryNode.DOTDIR))
                 return openChild(dn);
             else
                 return null;

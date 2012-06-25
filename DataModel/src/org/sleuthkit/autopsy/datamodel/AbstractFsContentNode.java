@@ -186,6 +186,7 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
     // selecting a file filter (e.g. 'type' or 'recent'), it is false
     AbstractFsContentNode(T fsContent, boolean directoryBrowseMode) {
         super(fsContent);
+        this.setDisplayName(AbstractFsContentNode.getFsContentName(fsContent));
         this.directoryBrowseMode = directoryBrowseMode;
     }
     
@@ -226,7 +227,7 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
      * @param content to extract properties from
      */
     public static void fillPropertyMap(Map<String, Object> map, FsContent content) {
-        map.put(FsContentPropertyType.NAME.toString(), content.getName());
+        map.put(FsContentPropertyType.NAME.toString(), getFsContentName(content));
         map.put(FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
         map.put(FsContentPropertyType.MOD_TIME.toString(),  ContentUtils.getStringTime(content.getMtime(), content));
         map.put(FsContentPropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
@@ -244,5 +245,15 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         map.put(FsContentPropertyType.TYPE_META.toString(), content.getMetaTypeAsString());
         map.put(FsContentPropertyType.KNOWN.toString(), content.getKnown().getName());
         map.put(FsContentPropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
+    }
+    
+    static String getFsContentName(FsContent fsContent) {
+        String name = fsContent.getName();
+        if(name.equals("..")) {
+            name = DirectoryNode.DOTDOTDIR;
+        } else if(name.equals(".")) {
+            name = DirectoryNode.DOTDIR;
+        }
+        return name;
     }
 }

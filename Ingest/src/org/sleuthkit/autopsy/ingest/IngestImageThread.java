@@ -19,8 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 //ingester worker for image queue
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
+import java.awt.EventQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingWorker;
@@ -30,10 +29,10 @@ import org.openide.util.Cancellable;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * worker for every ingest image service
- * there is a separate instance per image / service pair
+ * worker for every ingest image service there is a separate instance per image
+ * / service pair
  */
-public class IngestImageThread extends SwingWorker<Object,Void> {
+public class IngestImageThread extends SwingWorker<Object, Void> {
 
     private Logger logger = Logger.getLogger(IngestImageThread.class.getName());
     private ProgressHandle progress;
@@ -63,12 +62,12 @@ public class IngestImageThread extends SwingWorker<Object,Void> {
 
         final String displayName = service.getName() + " image id:" + image.getId();
         progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
-
             @Override
             public boolean cancel() {
                 logger.log(Level.INFO, "Image ingest service " + service.getName() + " cancelled by user.");
-                if (progress != null)
-                        progress.setDisplayName(displayName + " (Cancelling...)");
+                if (progress != null) {
+                    progress.setDisplayName(displayName + " (Cancelling...)");
+                }
                 return IngestImageThread.this.cancel(true);
             }
         });
@@ -86,42 +85,41 @@ public class IngestImageThread extends SwingWorker<Object,Void> {
             service.process(image, controller);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Exception in service: " + service.getName() + " image: " + image.getName(), e);
-        }
-        logger.log(Level.INFO,
-                "Done background processing");
-        return null;
-    }
-
-    @Override
-    protected void done() {
-        try {
-            super.get(); //block and get all exceptions thrown while doInBackground()
-            //notify services of completion
-            if (!this.isCancelled()) {
-                service.complete();
-                IngestManager.fireServiceEvent(IngestManager.SERVICE_COMPLETED_EVT, service.getName());
-            }
-        } catch (CancellationException e) {
-            //task was cancelled
-            handleInterruption();
-        } catch (InterruptedException ex) {
-            handleInterruption();
-        } catch (ExecutionException ex) {
-            handleInterruption();
-            logger.log(Level.SEVERE, "Fatal error during image ingest from sevice: " + service.getName() + " image: " + image.getName(), ex);
-        } catch (Exception ex) {
-            handleInterruption();
-            logger.log(Level.SEVERE, "Fatal error during image ingest in service: " + service.getName() + " image: " + image.getName(), ex);
         } finally {
-            progress.finish();
+            logger.log(Level.INFO, "Done background processing");
+
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    progress.finish();
+                }
+            });
+
 
             //cleanup queues (worker and image/service)
             manager.removeImageIngestWorker(this);
+
+            if (!this.isCancelled()) {
+                logger.log(Level.INFO, "Service " + service.getName() + " completed");
+                try {
+                    service.complete();
+                }
+                catch (Exception e) {
+                    logger.log(Level.INFO, "Error completing the service " + service.getName(), e);
+                }
+                IngestManager.fireServiceEvent(IngestManager.SERVICE_COMPLETED_EVT, service.getName());
+            } else {
+                logger.log(Level.INFO, "Service " + service.getName() + " stopped");
+                try {
+                    service.stop();
+                }
+                catch (Exception e) {
+                    logger.log(Level.INFO, "Error stopping the service" + service.getName(), e);
+                }
+                IngestManager.fireServiceEvent(IngestManager.SERVICE_STOPPED_EVT, service.getName());
+            }
+
         }
-    }
-    
-    private void handleInterruption() {
-        service.stop();
-        IngestManager.fireServiceEvent(IngestManager.SERVICE_STOPPED_EVT, service.getName());
+        return null;
     }
 }
