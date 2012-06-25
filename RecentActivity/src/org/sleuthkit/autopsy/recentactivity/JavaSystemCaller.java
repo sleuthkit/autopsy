@@ -39,17 +39,16 @@ public final class JavaSystemCaller {
      * @throws IllegalArgumentException if one parameters is null or empty.
      * 'args' can be empty (default 'ls' performed then)
      */
-    public static void main(final String[] args) {
-        String anOutput = "";
-        if (args.length == 0) {
-            anOutput = JavaSystemCaller.Exec.execute("ls");
-        } else {
-            String[] someParameters = null;
-            anOutput = JavaSystemCaller.Exec.execute(args[0], someParameters);
-        }
-        System.out.println("Final output: " + anOutput);
-    }
-
+//    public static void main(final String[] args) {
+//        String anOutput = "";
+//        if (args.length == 0) {
+//            anOutput = JavaSystemCaller.Exec.execute("ls");
+//        } else {
+//            String[] someParameters = null;
+//            anOutput = JavaSystemCaller.Exec.execute(args[0], someParameters);
+//        }
+//        logger.log(Level.INFO, "Final output: " + anOutput);
+//    }
     /**
      * Asynchronously read the output of a given input stream. <br /> Any
      * exception during execution of the command in managed in this thread.
@@ -58,6 +57,7 @@ public final class JavaSystemCaller {
      */
     public static class StreamGobbler extends Thread {
 
+        private static final Logger logger = Logger.getLogger(StreamGobbler.class.getName());
         private InputStream is;
         private String type;
         private StringBuffer output = new StringBuffer();
@@ -80,11 +80,11 @@ public final class JavaSystemCaller {
                 final BufferedReader br = new BufferedReader(isr);
                 String line = null;
                 while ((line = br.readLine()) != null) {
-                    System.out.println(this.type + ">" + line);
+                    logger.log(Level.INFO, this.type + ">" + line);
                     this.output.append(line + System.getProperty("line.separator"));
                 }
             } catch (final IOException ioe) {
-                ioe.printStackTrace();
+                logger.log(Level.SEVERE, ioe.getMessage());
             }
         }
 
@@ -107,7 +107,7 @@ public final class JavaSystemCaller {
      */
     public static final class Exec {
 
-        private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
+        private static final Logger logger = Logger.getLogger(Exec.class.getName());
         private static Process proc = null;
         private static String command = null;
         private static JavaSystemCaller.IShell aShell = null;
@@ -130,7 +130,7 @@ public final class JavaSystemCaller {
                 command = anExecEnvFactory.createCommandLine();
 
                 final Runtime rt = Runtime.getRuntime();
-                System.out.println("Executing " + aShell.getShellCommand() + " " + command);
+                logger.log(Level.INFO, "Executing " + aShell.getShellCommand() + " " + command);
 
                 proc = rt.exec(aShell.getShellCommand() + " " + command);
                 try {
@@ -152,7 +152,7 @@ public final class JavaSystemCaller {
 
                 // any error???
                 final int exitVal = proc.waitFor();
-                System.out.println("ExitValue: " + exitVal);
+                logger.log(Level.INFO, "ExitValue: " + exitVal);
 
                 output = outputGobbler.getOutput();
 
@@ -178,7 +178,7 @@ public final class JavaSystemCaller {
         public static synchronized void stop() {
             try {
                 logger.log(Level.INFO, "Stopping Execution of: " + command);
-                //try graceful shutdown
+                //try to graceful shutdown
                 Process stop = Runtime.getRuntime().exec(aShell.getShellCommand() + " " + command);
                 stop.waitFor();
                 //if still running, forcefully stop it
@@ -187,17 +187,15 @@ public final class JavaSystemCaller {
                     proc = null;
                 }
 
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
+            } catch (InterruptedException intex) {
+                logger.log(Level.SEVERE, intex.getMessage());
+            } catch (IOException ioex) {
+                logger.log(Level.SEVERE, ioex.getMessage());
             }
         }
-        
-        
-        public static Process getProcess()
-        {
-           return proc;
+
+        public static Process getProcess() {
+            return proc;
         }
     }
 
