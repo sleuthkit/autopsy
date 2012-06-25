@@ -74,6 +74,14 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
         ThunderbirdEmailParser mbox = new ThunderbirdEmailParser();
         boolean isMbox = false;
 
+        IngestServiceAbstractFile.ProcessResult thunderbirdResult = managerProxy.getAbstractFileServiceResult(classname);
+
+        if (thunderbirdResult == IngestServiceAbstractFile.ProcessResult.COND_STOP) {
+            return ProcessResult.OK; //file is known, stop processing it
+        } else if (thunderbirdResult == IngestServiceAbstractFile.ProcessResult.ERROR) {
+            return ProcessResult.ERROR;  //file has read error, stop processing it
+        }
+
         try {
             byte[] t = new byte[(int) 128];
             int byteRead = fsContent.read(t, 0, 128);
@@ -125,27 +133,23 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Unable to obtain msf file for mbox parsing:" + this.getClass().getName(), ex);
             }
-           int index = 0;
-           String replace = "";
-           boolean a = mboxPath.indexOf("/ImapMail/") > 0;
+            int index = 0;
+            String replace = "";
+            boolean a = mboxPath.indexOf("/ImapMail/") > 0;
             boolean b = mboxPath.indexOf("/Mail/") > 0;
-            if(b == true)
-            {
-             index = mboxPath.indexOf("/Mail/");
-             replace = "/Mail";
-            }
-            else if(a == true)
-            {
-             index = mboxPath.indexOf("/ImapMail/");   
-             replace = "/ImapMail";
-            }
-            else{
-             replace = "";
-                
+            if (b == true) {
+                index = mboxPath.indexOf("/Mail/");
+                replace = "/Mail";
+            } else if (a == true) {
+                index = mboxPath.indexOf("/ImapMail/");
+                replace = "/ImapMail";
+            } else {
+                replace = "";
+
             }
             String folderPath = mboxPath.substring(index);
             folderPath = folderPath.replaceAll(replace, "");
-            folderPath = folderPath+mboxName;
+            folderPath = folderPath + mboxName;
             folderPath = folderPath.replaceAll(".sbd", "");
 //            Reader reader = null;
 //            try {
