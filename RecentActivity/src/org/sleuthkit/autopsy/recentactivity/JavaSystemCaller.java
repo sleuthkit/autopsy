@@ -157,7 +157,7 @@ public final class JavaSystemCaller {
                 output = outputGobbler.getOutput();
 
             } catch (final Throwable t) {
-                t.printStackTrace();
+                logger.log(Level.WARNING, "Error executing command: " + aCommand + " " + someParameters, t);
             }
             return output;
         }
