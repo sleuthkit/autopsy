@@ -264,9 +264,17 @@ public class JLNK {
     
     public String getBestPath() {
         if(localBasePathUnicode != null && !localBasePathUnicode.isEmpty()) {
-            return localBasePathUnicode;
+            if(commonPathSuffixUnicode != null) {
+                return localBasePathUnicode + commonPathSuffixUnicode;
+            } else if(commonPathSuffix != null) {
+                return localBasePathUnicode + commonPathSuffix;
+            }
         } else if(localBasePath != null && !localBasePath.isEmpty()) {
-            return localBasePath;
+            if(commonPathSuffixUnicode != null) {
+                return localBasePath + commonPathSuffixUnicode;
+            } else if(commonPathSuffix != null) {
+                return localBasePath + commonPathSuffix;
+            }
         } else if(netNameUnicode != null && !netNameUnicode.isEmpty()) {
             if(commonPathSuffixUnicode != null && !commonPathSuffixUnicode.isEmpty()) {
                 return netNameUnicode + "\\" + commonPathSuffixUnicode;
@@ -288,7 +296,7 @@ public class JLNK {
         }
         return "No preferred path found";
     }
-    
+   
     public String getBestName() {
         return new File(getBestPath()).getName(); // not very cross platform :(
     }
