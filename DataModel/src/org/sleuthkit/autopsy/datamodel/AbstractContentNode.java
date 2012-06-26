@@ -29,8 +29,9 @@ import org.sleuthkit.datamodel.TskException;
  * Interface class that all Data nodes inherit from.
  * Provides basic information such as ID, parent ID, etc.
  * @param <T> type of wrapped Content
+ * @param <E> type of object returned by visitor
  */
-abstract class AbstractContentNode<T extends Content> extends AbstractNode implements ContentNode {
+abstract class AbstractContentNode<T extends Content,E> extends AbstractNode implements ContentNode<E> {
     /**
      * Underlying Sleuth Kit Content object
      */

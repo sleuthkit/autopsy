@@ -21,10 +21,10 @@ package org.sleuthkit.autopsy.datamodel;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * Images nodes support
+ * @param <T> object type returned by autopsy item visitor
  */
-public class Images implements AutopsyVisitableItem{
+public class Images<T> implements AutopsyVisitableItem<T>{
     
     private SleuthkitCase skCase;
     

@@ -21,10 +21,10 @@ package org.sleuthkit.autopsy.datamodel;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * Recent files node support
+ * @param <T> type of object returned by the AutopsyItemVisitor visitor 
  */
-public class RecentFiles implements AutopsyVisitableItem {
+public class RecentFiles<T> implements AutopsyVisitableItem<T> {
     
     SleuthkitCase skCase;
     
@@ -66,9 +66,13 @@ public class RecentFiles implements AutopsyVisitableItem {
         }
 
         @Override
-        public <T> T accept(AutopsyItemVisitor<T> v) {
-            return v.visit(this);
+        public Object accept(AutopsyItemVisitor v) {
+            return v.visit(this); //TODO AAA
         }
+        
+        
+
+        
         
     }
     

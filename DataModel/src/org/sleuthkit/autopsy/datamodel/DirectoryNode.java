@@ -25,8 +25,9 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * This class is used to represent the "Node" for the directory.
  * Its children are more directories. 
+ * @param <T> type of the object returned by visitor
  */
-public class DirectoryNode extends AbstractFsContentNode<Directory> {
+public class DirectoryNode<T> extends AbstractFsContentNode<Directory,T> {
     
     public static final String DOTDOTDIR = "[parent folder]";
     public static final String DOTDIR = "[current folder]";
@@ -35,10 +36,6 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
         this(dir, true);
     }
 
-    /**
-     * 
-     * @param dir Underlying Content instance
-     */
     public DirectoryNode(Directory dir, boolean directoryBrowseMode) {
         super(dir, directoryBrowseMode);
 
@@ -70,4 +67,7 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
+    
+    
+
 }

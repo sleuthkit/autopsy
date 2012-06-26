@@ -25,10 +25,10 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * Node for the results view
+ * @param <T> type of the object returned by the DisplayableItemVisitor
  */
-public class ResultsNode extends AbstractNode implements DisplayableItemNode {
+public class ResultsNode<T> extends AbstractNode implements DisplayableItemNode<T> {
     
     public static final String NAME = "Results";
 

@@ -26,9 +26,10 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * This class is used to represent the "Node" for the file.
  * It has no children.
+ * @param <T> type of the object returned by visitor on this node
  *
  */
-public class FileNode extends AbstractFsContentNode<File> {
+public class FileNode<T> extends AbstractFsContentNode<File,T> {
 
     /**
      * 
