@@ -45,7 +45,8 @@ public interface IngestServiceAbstract {
      * Service loads its configuration and performs initialization
      * Invoked once per new worker thread, per ingest
      * 
-     * @param IngestManagerProxy manager facade for posting messages, getting configurations
+     * @param managerProxy manager facade that can be used by the service to communicate with the manager, e.g.
+     * for posting messages, getting configurations
      */
     public void init(IngestManagerProxy managerProxy);
 

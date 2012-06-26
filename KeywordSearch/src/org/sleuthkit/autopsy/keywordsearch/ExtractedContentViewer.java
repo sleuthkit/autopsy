@@ -390,8 +390,10 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     /**
      * Get extracted content for a node from Solr
-     * @param cNode a node that has extracted content in Solr (check with
+     * @param node a node that has extracted content in Solr (check with
      * solrHasContent(ContentNode))
+     * @param currentPage currently used page 
+     * @param hasChunks true if the content behind the node has multiple chunks. This means we need to address the content pages specially.
      * @return the extracted content
      * @throws SolrServerException if something goes wrong
      */

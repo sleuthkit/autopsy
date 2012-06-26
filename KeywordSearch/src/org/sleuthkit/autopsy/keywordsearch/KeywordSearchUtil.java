@@ -62,30 +62,32 @@ public class KeywordSearchUtil {
 
     /**
      * Return a quoted version of the query if the original query is not quoted
+     *
      * @param query the query to check if it is quoted
      * @return quoted query
      */
     public static String quoteQuery(String query) {
         //ensure a single pair of quotes around the query
         final int length = query.length();
-        if (length > 1 && query.charAt(0) == '"' 
+        if (length > 1 && query.charAt(0) == '"'
                 && query.charAt(length - 1) == '"') {
             return query;
         }
-        
+
         StringBuilder sb = new StringBuilder();
         sb.append("\"").append(query).append("\"");
         return sb.toString();
     }
 
     /**
-     * Perform standard escaping / encoding into UTF-8 before sending over net
+     * Perform standard escaping of Solr chars such as /+-&|!(){}[]^"~*?:\
+     * before sending over net does not escape the outter enclosing double
+     * quotes, if present
+     *
      * @param query to be encoded
-     * @param escapeLuceneChars if true perform first escaping of Lucene specific special chars
-     * such as /+-&|!(){}[]^"~*?:\ and treat the whole query as literal word
      * @return encoded query
      */
-    public static String escapeLuceneQuery(String query, boolean escapeLuceneChars, boolean encode) {
+    public static String escapeLuceneQuery(String query) {
         String queryEscaped = null;
         String inputString = query.trim();
 
@@ -93,39 +95,30 @@ public class KeywordSearchUtil {
             return inputString;
         }
 
-        if (escapeLuceneChars == true) {
-            final String ESCAPE_CHARS = "/+-&|!(){}[]^\"~*?:\\";
-            StringBuilder sb = new StringBuilder();
-            final int length = inputString.length();
+        final String ESCAPE_CHARS = "/+-&|!(){}[]^\"~*?:\\";
+        StringBuilder sb = new StringBuilder();
+        final int length = inputString.length();
 
-            //see if the quoery is quoted
-            boolean quotedQuery = false;
-            if (length > 1 && inputString.charAt(0) == '"' && inputString.charAt(length - 1) == '"') {
-                quotedQuery = true;
-            }
+        //see if the quoery is quoted
+        boolean quotedQuery = false;
+        if (length > 1 && inputString.charAt(0) == '"' && inputString.charAt(length - 1) == '"') {
+            quotedQuery = true;
+        }
 
-            for (int i = 0; i < length; ++i) {
-                final char c = inputString.charAt(i);
+        for (int i = 0; i < length; ++i) {
+            final char c = inputString.charAt(i);
 
-                if (ESCAPE_CHARS.contains(Character.toString(c))) {
-                    //escape if not outter quotes
-                    if (quotedQuery == false || (i > 0 && i < length - 1)) {
-                        sb.append("\\");
-                    }
+            if (ESCAPE_CHARS.contains(Character.toString(c))) {
+                //escape if not outter quotes
+                if (quotedQuery == false || (i > 0 && i < length - 1)) {
+                    sb.append("\\");
                 }
-                sb.append(c);
             }
-            queryEscaped = inputString = sb.toString();
+            sb.append(c);
         }
+        queryEscaped = inputString = sb.toString();
 
-        if (encode) {
-            try {
-                queryEscaped = URLEncoder.encode(inputString, "UTF-8");
-            } catch (UnsupportedEncodingException ex) {
-                logger.log(Level.SEVERE, "Error escaping URL query, should not happen.", ex);
-                queryEscaped = query;
-            }
-        }
+
         return queryEscaped;
     }
 
@@ -162,9 +155,10 @@ public class KeywordSearchUtil {
             return false;
         }
     }
-    
+
     /**
      * Is the Keyword Search list at absPath an XML list?
+     *
      * @param absPath
      * @return yes or no
      */

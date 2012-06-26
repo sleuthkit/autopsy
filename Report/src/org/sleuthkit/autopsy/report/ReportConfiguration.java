@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * sections and some modules may generate additional, specialized sections
  * 
 */
-class ReportConfiguration {
+public class ReportConfiguration {
 
     //base data structure
     Map<BlackboardArtifact.ARTIFACT_TYPE, Boolean> config = new EnumMap<BlackboardArtifact.ARTIFACT_TYPE, Boolean>(BlackboardArtifact.ARTIFACT_TYPE.class);

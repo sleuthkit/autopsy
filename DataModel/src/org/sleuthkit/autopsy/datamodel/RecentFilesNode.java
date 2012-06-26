@@ -26,9 +26,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Node for recent files
- * @param <T> type of the object returned by the DisplayableItemVisitor
  */
-public class RecentFilesNode<T> extends AbstractNode implements DisplayableItemNode<T>{
+public class RecentFilesNode extends AbstractNode implements DisplayableItemNode {
     
     private static final String NAME = "Recent Files";
     SleuthkitCase skCase;

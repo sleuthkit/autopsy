@@ -171,36 +171,6 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
     private javax.swing.JLabel matchLabel;
     private javax.swing.JLabel numberMatchLabel;
     // End of variables declaration//GEN-END:variables
-//    /**
-//     * Gets default instance. Do not use directly: reserved for *.settings files only,
-//     * i.e. deserialization routines; otherwise you could get a non-deserialized instance.
-//     * To obtain the singleton instance, use {@link #findInstance}.
-//     */
-//    public static synchronized DataResultTopComponent getDefault() {
-//        if (instance == null) {
-//            instance = new DataResultTopComponent();
-//        }
-//        return instance;
-//    }
-//
-//    /**
-//     * Obtain the DataResultTopComponent instance. Never call {@link #getDefault} directly!
-//     */
-//    public static synchronized DataResultTopComponent findInstance() {
-//        TopComponent win = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
-//        if (win == null) {
-//            Logger.getLogger(DataResultTopComponent.class.getName()).warning(
-//                    "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system.");
-//            return getDefault();
-//        }
-//        if (win instanceof DataResultTopComponent) {
-//            return (DataResultTopComponent) win;
-//        }
-//        Logger.getLogger(DataResultTopComponent.class.getName()).warning(
-//                "There seem to be multiple components with the '" + PREFERRED_ID
-//                + "' ID. That is a potential source of errors and unexpected behavior.");
-//        return getDefault();
-//    }
 
     @Override
     public int getPersistenceType() {

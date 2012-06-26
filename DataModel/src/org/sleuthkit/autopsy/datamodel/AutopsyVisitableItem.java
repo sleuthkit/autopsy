@@ -20,9 +20,8 @@ package org.sleuthkit.autopsy.datamodel;
 
 /**
  * Abstraction for certain top level items displayed in the GUI
- * @param <T> type of object returned by the visitor
  */
-public interface AutopsyVisitableItem<T> {
+public interface AutopsyVisitableItem {
 
     /**
      * visitor pattern support
