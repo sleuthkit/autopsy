@@ -344,9 +344,11 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
         boolean isExist = Case.pathExists(imgPath);
         File imgFile = new File(imgPath);
 
-        // check if the given paths exist and those are paths to image files
+        // check if the given path is to an image file
         boolean isImagePath = allFilter.accept(imgFile);
+        // check if the given path is to a physical drive
+        boolean isPhysicalDrive = Case.isPhysicalDrive(imgPath);
 
-        this.wizPanel.enableNextButton(isExist && isImagePath);
+        this.wizPanel.enableNextButton((isExist && isImagePath) || isPhysicalDrive);
     }
 }
