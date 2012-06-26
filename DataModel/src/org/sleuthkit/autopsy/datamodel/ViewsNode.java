@@ -27,10 +27,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  *
  * Node for the views
- * @param <T> type of the object returned by the DisplayableItemVisitor
  * 
  */
-public class ViewsNode<T> extends AbstractNode implements DisplayableItemNode<T> {
+public class ViewsNode extends AbstractNode implements DisplayableItemNode {
     
     public static final String NAME = "Views";
 

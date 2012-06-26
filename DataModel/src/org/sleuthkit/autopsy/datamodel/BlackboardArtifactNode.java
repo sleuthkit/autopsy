@@ -37,9 +37,8 @@ import org.sleuthkit.datamodel.TskException;
 
 /**
  * Node wrapping a blackboard artifact object
- * @param <T> type of the object returned by the DisplayableItemNodeVisitor
  */
-public class BlackboardArtifactNode<T> extends AbstractNode implements DisplayableItemNode<T>{
+public class BlackboardArtifactNode extends AbstractNode implements DisplayableItemNode{
     
     BlackboardArtifact artifact;
     Content associated;

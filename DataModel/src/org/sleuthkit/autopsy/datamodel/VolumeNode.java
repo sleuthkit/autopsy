@@ -25,9 +25,8 @@ import org.sleuthkit.datamodel.Volume;
 /**
  * This class is used to represent the "Node" for the volume. Its child is the
  * root directory of a file system
- * @param <T> type of the object returned by the ContentNodeVisitor
  */
-public class VolumeNode<T> extends AbstractContentNode<Volume, T> {
+public class VolumeNode extends AbstractContentNode<Volume> {
 
     /**
      * Helper so that the display name and the name used in building the path

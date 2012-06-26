@@ -26,9 +26,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Node for the extracted content
- * @param <T> type of the object returned by the DisplayableItemNodeVisitor
  */
-public class ExtractedContentNode<T> extends AbstractNode implements DisplayableItemNode<T>{
+public class ExtractedContentNode extends AbstractNode implements DisplayableItemNode{
     
     public static final String NAME = "Extracted Content";
     

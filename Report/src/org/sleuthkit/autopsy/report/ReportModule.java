@@ -20,7 +20,9 @@
  */
 package org.sleuthkit.autopsy.report;
 
-//interface every reporting module should implement
+/**
+ * interface every reporting module should implement
+ */
 public interface ReportModule {
 
     /**
@@ -28,9 +30,9 @@ public interface ReportModule {
      * the blackboard, extract needed information as specified in the config and
      * generate a report file
      *
-     * @param config specifiying parts that should be generated
+     * @param config specifying parts that should be generated
      * @return absolute file path to the report generated
-     * @throws ReportModuleException if report generation failed
+     * @throws ReportModuleException thrown when report generation failed
      */
     public String generateReport(ReportConfiguration config) throws ReportModuleException;
 
@@ -38,34 +40,38 @@ public interface ReportModule {
      * This saves a copy of the report (current one) to another place specified
      * by the user. Takes the input of where the path needs to be saved, include
      * filename and extention.
+     * 
+     * @param path file path where to save a copy of the report
+     * @throws ReportModuleException thrown if report saving failed
      */
-    public void save(String Path) throws ReportModuleException;
+    public void save(String path) throws ReportModuleException;
 
     /**
      * Returns a short description of report type/file format this module
      * generates for instance, "XML", "Excel"
      *
-     * @return
+     * @return the report type short description
      */
     public String getReportType();
 
     /**
      * Returns a basic string name for the report. What is 'officially' titled.
      *
-     * @return
+     * @return the report name
      */
     public String getName();
 
     /**
-     * Returns the reportconfiguration object that was created
+     * Returns the report configuration object that was created
      *
-     * @return
+     * @return the report configuration for this report
      */
     public ReportConfiguration GetReportConfiguration();
 
     /**
-     * Returns a one line human readable description of the type of report this
+     * Returns a one line user friendly description of the type of report this
      * module generates
+     * @return user-friendly report description
      */
     public String getReportTypeDescription();
 
@@ -73,14 +79,14 @@ public interface ReportModule {
      * Calls to the report module to execute a method to display the report that
      * was generated.
      *
-     * @param String the path to the file
+     * @param path the path to the file
      *
      */
     public void getPreview(String path);
-    
-        /**
-     * Calls to the report module to execute a method to get the extension
-     * that is used for the report
+
+    /**
+     * Calls to the report module to execute a method to get the extension that
+     * is used for the report
      *
      * @return String the extension the file will be saved as
      *

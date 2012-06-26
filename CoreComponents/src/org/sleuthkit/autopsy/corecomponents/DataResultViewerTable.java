@@ -193,6 +193,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * Gets regular Bean property set properties from all children and, recursively, subchildren of Node.
      * Note: won't work out the box for lazy load - you need to set all children props for the parent by hand
      * @param parent Node with at least one child to get properties from
+     * @param rows max number of rows to retrieve properties for (can be used for memory optimization)
      */
     private void getAllChildPropertyHeadersRec(Node parent, int rows) {
         for(int i = 0; i < Math.min(rows, parent.getChildren().getNodesCount()); i++){

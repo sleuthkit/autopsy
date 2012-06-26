@@ -27,9 +27,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Node for the file search filter
- * @param <T> type of the object returned by the DisplayableItemNodeVisitor
  */
-public class FileSearchFilterNode<T> extends AbstractNode implements DisplayableItemNode<T>{
+public class FileSearchFilterNode extends AbstractNode implements DisplayableItemNode {
     
     SearchFilters.SearchFilterInterface filter;
     SleuthkitCase skCase;

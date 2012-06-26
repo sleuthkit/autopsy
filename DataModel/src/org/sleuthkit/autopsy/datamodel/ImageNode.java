@@ -25,9 +25,8 @@ import org.sleuthkit.datamodel.Image;
 /**
  * This class is used to represent the "Node" for the image. The children of
  * this node are volumes.
- * @param <T> type of the object returned by the ContentNodeVisitor
  */
-public class ImageNode<T> extends AbstractContentNode<Image,T> {
+public class ImageNode extends AbstractContentNode<Image> {
 
     /**
      * Helper so that the display name and the name used in building the path

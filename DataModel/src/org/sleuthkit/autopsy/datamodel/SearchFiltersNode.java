@@ -26,9 +26,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Node for search filter
- * @param <T> type of the object returned by the DisplayableItemVisitor
  */
-public class SearchFiltersNode<T> extends AbstractNode implements DisplayableItemNode<T> {
+public class SearchFiltersNode extends AbstractNode implements DisplayableItemNode {
 
     private static final String FNAME = "File Types";
     private static final String DNAME = "Documents";
