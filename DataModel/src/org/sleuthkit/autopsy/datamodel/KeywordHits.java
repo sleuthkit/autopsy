@@ -42,9 +42,8 @@ import org.sleuthkit.datamodel.TskException;
 
 /**
  * Keyword hits node support
- * @param <T> type of object returned by AutopsyItemVisitor
  */
-public class KeywordHits<T> implements AutopsyVisitableItem<T> {
+public class KeywordHits implements AutopsyVisitableItem {
     
     private SleuthkitCase skCase;
     private static final Logger logger = Logger.getLogger(KeywordHits.class.getName());
@@ -149,7 +148,7 @@ public class KeywordHits<T> implements AutopsyVisitableItem<T> {
         return v.visit(this);
     }
     
-    public class KeywordHitsRootNode<T> extends AbstractNode implements DisplayableItemNode<T>{
+    public class KeywordHitsRootNode extends AbstractNode implements DisplayableItemNode{
 
         public KeywordHitsRootNode() {
             super(Children.create(new KeywordHitsRootChildren(), true), Lookups.singleton(KEYWORD_HITS));
@@ -196,11 +195,11 @@ public class KeywordHits<T> implements AutopsyVisitableItem<T> {
         
         @Override
         protected Node createNodeForKey(String key) {
-            return new KeywordHitsListNode<String>(key, topLevelMap.get(key));
+            return new KeywordHitsListNode(key, topLevelMap.get(key));
         }
     }
     
-    public class KeywordHitsListNode<T> extends AbstractNode implements DisplayableItemNode<T> {
+    public class KeywordHitsListNode extends AbstractNode implements DisplayableItemNode {
         
         private String name;
         private Map<String, Set<Long>> children;
@@ -264,11 +263,11 @@ public class KeywordHits<T> implements AutopsyVisitableItem<T> {
         
         @Override
         protected Node createNodeForKey(String key) {
-            return new KeywordHitsKeywordNode<String>(key, children.get(key));
+            return new KeywordHitsKeywordNode(key, children.get(key));
         }
     }
     
-    public class KeywordHitsKeywordNode<T> extends AbstractNode implements DisplayableItemNode<T> {
+    public class KeywordHitsKeywordNode extends AbstractNode implements DisplayableItemNode {
         
         private String name;
         private Set<Long> children;

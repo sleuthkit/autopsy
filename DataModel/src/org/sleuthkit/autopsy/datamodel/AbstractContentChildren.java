@@ -53,7 +53,7 @@ abstract class AbstractContentChildren extends Keys<Object> {
         if(key instanceof SleuthkitVisitableItem)
             return new Node[]{((SleuthkitVisitableItem) key).accept(new CreateSleuthkitNodeVisitor())};
         else
-            return new Node[]{((AutopsyVisitableItem<AbstractNode>) key).accept(new CreateAutopsyNodeVisitor())};
+            return new Node[]{((AutopsyVisitableItem) key).accept(new CreateAutopsyNodeVisitor())};
     }
     
     @Override
@@ -137,7 +137,7 @@ abstract class AbstractContentChildren extends Keys<Object> {
         @Override
         public AbstractNode visit(Images i) {
             try {
-                return new ImagesNode<AbstractNode>(i.getSleuthkitCase().getRootObjects());
+                return new ImagesNode(i.getSleuthkitCase().getRootObjects());
             } catch (TskException ex) {
                 return defaultVisit(i);
             }

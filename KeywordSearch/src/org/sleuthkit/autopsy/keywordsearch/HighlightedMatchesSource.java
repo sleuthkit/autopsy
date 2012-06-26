@@ -135,7 +135,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
                     chunksQuery.escape();
                 }
                  */
-                String queryStr = KeywordSearchUtil.escapeLuceneQuery(this.keywordHitQuery, true, false);
+                String queryStr = KeywordSearchUtil.escapeLuceneQuery(this.keywordHitQuery);
                 if (isRegex) {
                     //use white-space sep. field to get exact matches only of regex query result
                     queryStr = Server.Schema.CONTENT_WS + ":" + "\"" + queryStr + "\"";
@@ -298,12 +298,12 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
             //TODO a better way to mark it a compound highlight query
             final String findSubstr = LuceneQuery.HIGHLIGHT_FIELD_REGEX + ":";
             if (!highlightQuery.contains(findSubstr)) {
-                highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery, true, false);
+                highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery);
             }
         } else {
             highLightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
             //escape special lucene chars always for literal queries query
-            highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery, true, false);
+            highlightQuery = KeywordSearchUtil.escapeLuceneQuery(highlightQuery);
         }
 
         SolrQuery q = new SolrQuery();

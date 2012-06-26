@@ -687,7 +687,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                             Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
                             for (final AbstractFile hitFile : contentHitsFlattened.keySet()) {
                                 String snippet = null;
-                                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery(), true, false);
+                                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery());
                                 int chunkId = contentHitsFlattened.get(hitFile);
                                 try {
                                     snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, isRegex, true);
@@ -871,9 +871,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     /**
      * Checks if the content has already been hit previously
+     * 
      * @param previousHits the previous hits to check against
-     * @param new hit, that potentially had already been hit
-     * @return true if already hit
+     * @param hit a hit to check for,  that potentially had already been hit
+     * @return true if the potential hit has already been hit, false otherwise
      */
     private static boolean previouslyHit(List<ContentHit> previousHits, ContentHit hit) {
         boolean ret = false;

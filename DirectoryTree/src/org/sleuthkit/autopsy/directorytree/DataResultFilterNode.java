@@ -93,8 +93,7 @@ public class DataResultFilterNode extends FilterNode{
 
         List<Action> actions = new ArrayList<Action>();
         
-        final DisplayableItemNode<Action> originalNode;
-        originalNode = (DisplayableItemNode<Action>) this.getOriginal();
+        final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
         actions.addAll(originalNode.accept(getActionsDIV));
         
         //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
@@ -113,8 +112,8 @@ public class DataResultFilterNode extends FilterNode{
     public Action getPreferredAction() {
         // double click action(s) for volume node or directory node
         
-        final DisplayableItemNode<Action> originalNode;
-        originalNode = (DisplayableItemNode<Action>) this.getOriginal();
+        final DisplayableItemNode originalNode;
+        originalNode = (DisplayableItemNode) this.getOriginal();
         
         return originalNode.accept(getPreferredActionsDIV);
     }

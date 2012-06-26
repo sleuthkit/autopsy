@@ -158,6 +158,7 @@ public class IngestMessage {
     }
 
     //factory methods
+    
     /**
      * Create a simple message with a subject only
      * @param ID ID of the message, unique in the context of module that generated it
@@ -167,11 +168,11 @@ public class IngestMessage {
      * @param details message details to be displayed, or null
      * @return 
      */
-    public static IngestMessage createMessage(long ID, MessageType messageType, IngestServiceAbstract source, String subject, String detailsHtml) {
+    public static IngestMessage createMessage(long ID, MessageType messageType, IngestServiceAbstract source, String subject, String details) {
         if (messageType == null || source == null || subject == null) {
             throw new IllegalArgumentException("message type, source and subject cannot be null");
         }
-        return new IngestMessage(ID, messageType, source, subject, detailsHtml, null);
+        return new IngestMessage(ID, messageType, source, subject, details, null);
     }
 
     /**
@@ -222,7 +223,7 @@ public class IngestMessage {
      * @param ID ID of the message, unique in the context of module that generated it
      * @param source originating service
      * @param subject message subject to be displayed
-     * @param detailsHtml html formatted detailed message (without leading and closing <html> tags), for instance, a human-readable representation of the data. 
+     * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data. 
      * @param uniqueKey unique key determining uniqueness of the message, or null. Helps grouping similar messages and determine their importance.  Subsequent messages with the same uniqueKey will be treated with lower priority.
      * @param data data blackboard artifact associated with the message, the same as fired in ServiceDataEvent by the service
      * @return 
