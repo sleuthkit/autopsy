@@ -91,12 +91,7 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
      * @return imagePath  the image path
      */
     public String getImagePath() {
-        String imgPath = imgPathTextField.getText();
-        if (Case.pathExists(imgPath)) {
-            return imgPath;
-        } else {
-            return "";
-        }
+        return imgPathTextField.getText();
     }
 
     public JTextField getImagePathTextField() {
