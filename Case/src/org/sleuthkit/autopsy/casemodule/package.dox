@@ -1,0 +1,9 @@
+/**
+ * \package org.sleuthkit.autopsy.casemodule
+ * A case contains one or more disk images and is the highest-level unit of an investigation.  All data in a case will be stored in a single database and configuration file. A case must be open before analysis can occur. You will use a {@link org.sleuthkit.autopsy.casemodule.Case#Case Case} object to get access to the data being analyzed.
+ * Case settings are stored in an XML file.  See the {@link org.sleuthkit.autopsy.casemodule.XMLCaseManagement#XMLCaseManagement() XMLCaseManagement} class for more details.
+ * Currently, only one case can be opened at a time.  To determine the open case, use the static {@link org.sleuthkit.autopsy.casemodule.Case#getCurrentCase() Case.getCurrentCase()} method.  Once you have the object for the currently open case, {@link org.sleuthkit.autopsy.casemodule.Case#getRootObjects() Case.getRootObjects()} will return the top-level Sleuth Kit Content modules. You can then get their children to go down the tree of data types.
+ * To receive an event when cases are opened, closed, or changed, use the {@link org.sleuthkit.autopsy.casemodule.Case#addPropertyChangeListener(PropertyChangeListener) addPropertyChangeListener} method to register your class as a PropertyChangeListener.  THis is most commonly required when developing a new {@link org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer#DataExplorer() DataExplorer} module that needs to get data about the currently opened case.
+ */
+
+
