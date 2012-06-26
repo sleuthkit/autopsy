@@ -74,7 +74,7 @@
               <Component id="optionsLabel1" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="noFatOrphansCheckbox" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="separate" max="32767" attributes="0"/>
+              <EmptySpace type="separate" pref="117" max="32767" attributes="0"/>
               <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
           </Group>
