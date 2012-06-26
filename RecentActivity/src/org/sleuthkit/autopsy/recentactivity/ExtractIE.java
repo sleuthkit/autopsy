@@ -42,12 +42,12 @@ import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import jlnkparser.JLNK;
-import jlnkparser.JLnkParser;
 
 // TSK Imports
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.JLNK;
+import org.sleuthkit.autopsy.coreutils.JLnkParser;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
