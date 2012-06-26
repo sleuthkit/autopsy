@@ -40,7 +40,17 @@ import org.sleuthkit.datamodel.TskException;
 public class HashDb implements Comparable<HashDb> {
 
     public enum DBType{
-        NSRL, KNOWN_BAD;
+        NSRL("NSRL"), KNOWN_BAD("Known Bad");
+        
+        private String displayName;
+        
+        private DBType(String displayName) {
+            this.displayName = displayName;
+        }
+        
+        public String getDisplayName() {
+            return this.displayName;
+        }
     }
     
     // Suffix added to the end of a database name to get its index file
@@ -51,12 +61,14 @@ public class HashDb implements Comparable<HashDb> {
     private boolean useForIngest;
     private boolean showInboxMessages;
     private boolean indexing;
+    private DBType type;
     
-    public HashDb(String name, List<String> databasePaths, boolean useForIngest, boolean showInboxMessages) {
+    public HashDb(String name, List<String> databasePaths, boolean useForIngest, boolean showInboxMessages, DBType type) {
         this.name = name;
         this.databasePaths = databasePaths;
         this.useForIngest = useForIngest;
         this.showInboxMessages = showInboxMessages;
+        this.type = type;
         this.indexing = false;
     }
     
@@ -66,6 +78,10 @@ public class HashDb implements Comparable<HashDb> {
     
     boolean getShowInboxMessages() {
         return showInboxMessages;
+    }
+    
+    DBType getDbType() {
+        return type;
     }
     
     String getName() {
@@ -90,6 +106,10 @@ public class HashDb implements Comparable<HashDb> {
     
     void setDatabasePaths(List<String> databasePaths) {
         this.databasePaths = databasePaths;
+    }
+    
+    void setDbType(DBType type) {
+        this.type = type;
     }
     
     /**
