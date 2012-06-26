@@ -30,10 +30,10 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- *
- * @author dfickling
+ * Node encapsulating blackboard artifact type
+ * @param <T> type of object returned by visitor
  */
-public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNode{
+public class ArtifactTypeNode<T> extends AbstractNode implements DisplayableItemNode<T>{
     
     BlackboardArtifact.ARTIFACT_TYPE type;
     int childCount = 0;

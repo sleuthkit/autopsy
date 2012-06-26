@@ -21,16 +21,16 @@ package org.sleuthkit.autopsy.datamodel;
 /**
  * Interface class that all Data nodes inherit from.
  * Provides basic information such as ID, parent ID, etc.
+ * @param <T> type of the object returned by the DisplayableItemNodeVisitor
  */
 
-public interface ContentNode extends DisplayableItemNode{
+public interface ContentNode<T> extends DisplayableItemNode<T>{
 
     /**
      * Visitor pattern support.
      * 
-     * @param <T> visitor return type
      * @param v visitor
-     * @return visitor return value
+     * @return visitor's visit return value
      */
     <T> T accept(ContentNodeVisitor<T> v);
 }

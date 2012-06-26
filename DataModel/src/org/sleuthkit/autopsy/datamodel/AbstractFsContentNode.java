@@ -21,16 +21,16 @@ package org.sleuthkit.autopsy.datamodel;
 import java.text.SimpleDateFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TimeZone;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Abstract class that implements the commonality between File and Directory
  * Nodes (same properties).
+ * @param <T> sub type of FsContent to encapsulate by the node
+ * @param <E> type of object returned by visitor on this node
  */ 
-public abstract class AbstractFsContentNode<T extends FsContent> extends AbstractAbstractFileNode<T> {
+public abstract class AbstractFsContentNode<T extends FsContent,E> extends AbstractAbstractFileNode<T,E> {
 
     private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss (z)");
     
@@ -181,9 +181,14 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         this(fsContent, true);
     }
     
-    // The param 'directoryBrowseMode' refers to how the user caused this node
-    // to be created: if by browsing the image contents, it is true. If by
-    // selecting a file filter (e.g. 'type' or 'recent'), it is false
+    
+    /**
+     * Constructor
+     * @param fsContent the fsContent
+     * @param directoryBrowseMode how the user caused this node
+     * to be created: if by browsing the image contents, it is true. If by 
+     * selecting a file filter (e.g. 'type' or 'recent'), it is false
+     */
     AbstractFsContentNode(T fsContent, boolean directoryBrowseMode) {
         super(fsContent);
         this.setDisplayName(AbstractFsContentNode.getFsContentName(fsContent));
@@ -223,7 +228,8 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
 
     /**
      * Fill map with FsContent properties
-     * @param map, with preserved ordering, where property names/values are put
+     * 
+     * @param map map with preserved ordering, where property names/values are put
      * @param content to extract properties from
      */
     public static void fillPropertyMap(Map<String, Object> map, FsContent content) {

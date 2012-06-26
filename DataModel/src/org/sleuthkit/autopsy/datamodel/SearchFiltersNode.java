@@ -25,10 +25,10 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * Node for search filter
+ * @param <T> type of the object returned by the DisplayableItemVisitor
  */
-public class SearchFiltersNode extends AbstractNode implements DisplayableItemNode {
+public class SearchFiltersNode<T> extends AbstractNode implements DisplayableItemNode<T> {
 
     private static final String FNAME = "File Types";
     private static final String DNAME = "Documents";

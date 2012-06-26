@@ -24,8 +24,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Filters database results by file extension.
+ * @param <T> type of object returned by AutopsyItemVisitor
  */
-public class SearchFilters implements AutopsyVisitableItem{
+public class SearchFilters<T> implements AutopsyVisitableItem<T>{
 
     SleuthkitCase skCase;
 
@@ -53,7 +54,7 @@ public class SearchFilters implements AutopsyVisitableItem{
         }
 
         @Override
-        public <T> T accept(AutopsyItemVisitor<T> v) {
+        public Object accept(AutopsyItemVisitor v) {
             return v.visit(this);
         }
 
@@ -99,7 +100,7 @@ public class SearchFilters implements AutopsyVisitableItem{
         }
 
         @Override
-        public <T> T accept(AutopsyItemVisitor<T> v) {
+        public Object accept(AutopsyItemVisitor v) {
             return v.visit(this);
         }
 

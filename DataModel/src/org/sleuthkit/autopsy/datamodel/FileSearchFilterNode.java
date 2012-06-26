@@ -26,10 +26,10 @@ import org.sleuthkit.autopsy.datamodel.SearchFilters.FileSearchFilter;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * Node for the file search filter
+ * @param <T> type of the object returned by the DisplayableItemNodeVisitor
  */
-public class FileSearchFilterNode extends AbstractNode implements DisplayableItemNode{
+public class FileSearchFilterNode<T> extends AbstractNode implements DisplayableItemNode<T>{
     
     SearchFilters.SearchFilterInterface filter;
     SleuthkitCase skCase;

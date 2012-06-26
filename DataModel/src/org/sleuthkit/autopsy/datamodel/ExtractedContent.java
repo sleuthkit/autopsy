@@ -22,8 +22,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Parent of all Blackboard Artifacts to be displayed
+ * @param <T> object type returned by autopsy item visitor
  */
-public class ExtractedContent implements AutopsyVisitableItem{
+public class ExtractedContent<T> implements AutopsyVisitableItem<T>{
 
     SleuthkitCase skCase;
 

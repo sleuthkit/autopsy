@@ -21,11 +21,16 @@ package org.sleuthkit.autopsy.datamodel;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- *
- * @author dfickling
+ * An abstract node that encapsulates AbstractFile data
+ * @param <T> type of the AbstractFile to encapsulate
+ * @param E type of object returned from visitor
  */
-abstract class AbstractAbstractFileNode<T extends AbstractFile> extends AbstractContentNode<T> {
-    
+abstract class AbstractAbstractFileNode<T extends AbstractFile,E> extends AbstractContentNode<T,E> {
+   
+    /**
+     *  @param <T> type of the AbstractFile data to encapsulate
+     * @param abstractFile file to encapsulate
+     */
     AbstractAbstractFileNode(T abstractFile) {
         super(abstractFile);
     }

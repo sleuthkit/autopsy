@@ -25,10 +25,10 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.Content;
 
 /**
- *
- * @author dfickling
+ * Nodes for the images
+ * @param <T> type of the object returned by the DisplayableItemVisitor
  */
-public class ImagesNode extends AbstractNode implements DisplayableItemNode {
+public class ImagesNode<T> extends AbstractNode implements DisplayableItemNode<T> {
     
     public static final String NAME = "Images";
 

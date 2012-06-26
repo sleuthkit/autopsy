@@ -43,8 +43,9 @@ import org.sleuthkit.datamodel.TskException;
  * Email messages are grouped into parent folders, and the folders are grouped
  * into parent accounts if TSK_PATH is available to define the relationship
  * structure for every message
+ * @param <T> type of object returned by AutopsyItemVisitor
  */
-public class EmailExtracted implements AutopsyVisitableItem {
+public class EmailExtracted<T> implements AutopsyVisitableItem<T> {
 
     private static final String LABEL_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getLabel();
     private static final String DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getDisplayName();
@@ -121,7 +122,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     /**
      * Mail root node showing all emails
      */
-    public class EmailExtractedRootNodeFlat extends AbstractNode implements DisplayableItemNode {
+    public class EmailExtractedRootNodeFlat<T> extends AbstractNode implements DisplayableItemNode<T> {
 
         public EmailExtractedRootNodeFlat() {
             super(Children.create(new EmailExtractedRootChildrenFlat(), true), Lookups.singleton(DISPLAY_NAME));
@@ -197,7 +198,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
      * Mail root node grouping all mail accounts, supports account-> folder
      * structure
      */
-    public class EmailExtractedRootNode extends AbstractNode implements DisplayableItemNode {
+    public class EmailExtractedRootNode<T> extends AbstractNode implements DisplayableItemNode<T> {
 
         public EmailExtractedRootNode() {
             super(Children.create(new EmailExtractedRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
@@ -244,14 +245,14 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(String key) {
-            return new EmailExtractedAccountNode(key, accounts.get(key));
+            return new EmailExtractedAccountNode<AbstractNode>(key, accounts.get(key));
         }
     }
 
     /**
      * Account node representation
      */
-    public class EmailExtractedAccountNode extends AbstractNode implements DisplayableItemNode {
+    public class EmailExtractedAccountNode<T> extends AbstractNode implements DisplayableItemNode<T> {
 
         public EmailExtractedAccountNode(String name, Map<String, List<Long>> children) {
             super(Children.create(new EmailExtractedAccountChildrenNode(children), true), Lookups.singleton(name));
@@ -304,14 +305,14 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(String key) {
-            return new EmailExtractedFolderNode(key, folders.get(key));
+            return new EmailExtractedFolderNode<AbstractNode>(key, folders.get(key));
         }
     }
 
     /**
      * Node representing mail folder
      */
-    public class EmailExtractedFolderNode extends AbstractNode implements DisplayableItemNode {
+    public class EmailExtractedFolderNode<T> extends AbstractNode implements DisplayableItemNode<T> {
 
         public EmailExtractedFolderNode(String name, List<Long> children) {
             super(Children.create(new EmailExtractedFolderChildrenNode(children), true), Lookups.singleton(name));

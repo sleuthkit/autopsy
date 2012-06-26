@@ -21,10 +21,10 @@ package org.sleuthkit.autopsy.datamodel;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * Results node support
+ * @param <T> object type returned by autopsy item visitor
  */
-public class Results implements AutopsyVisitableItem {
+public class Results<T> implements AutopsyVisitableItem<T> {
     private SleuthkitCase skCase;
     
     public Results(SleuthkitCase skCase) {

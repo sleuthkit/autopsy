@@ -36,10 +36,10 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- *
- * @author dfickling
+ * Node wrapping a blackboard artifact object
+ * @param <T> type of the object returned by the DisplayableItemNodeVisitor
  */
-public class BlackboardArtifactNode extends AbstractNode implements DisplayableItemNode{
+public class BlackboardArtifactNode<T> extends AbstractNode implements DisplayableItemNode<T>{
     
     BlackboardArtifact artifact;
     Content associated;
@@ -94,8 +94,8 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
 
     /**
      * Fill map with Artifact properties
-     * @param map, with preserved ordering, where property names/values are put
-     * @param content to extract properties from
+     * @param map map with preserved ordering, where property names/values are put
+     * @param artifact to extract properties from
      */
     private void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
         try {
