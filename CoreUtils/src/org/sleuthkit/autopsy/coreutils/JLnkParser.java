@@ -121,6 +121,7 @@ public class JLnkParser {
             }
             if ((linkInfoFlags & LnkEnums.LinkInfoFlags.VolumeIDAndLocalBasePath.getFlag())
                     == LnkEnums.LinkInfoFlags.VolumeIDAndLocalBasePath.getFlag()) {
+                bb.position(startOfLinkInfo+volumeIdOffset);
                 int volumeIdSize = bb.getInt();
                 driveType = DriveType.valueOf(bb.getInt());
                 driveSerialNumber = bb.getInt();
@@ -135,6 +136,7 @@ public class JLnkParser {
             }
             if ((linkInfoFlags & LnkEnums.LinkInfoFlags.CommonNetworkRelativeLinkAndPathSuffix.getFlag())
                     == LnkEnums.LinkInfoFlags.CommonNetworkRelativeLinkAndPathSuffix.getFlag()) {
+                bb.position(startOfLinkInfo+commonNetworkRelativeLinkOffset);
                 int commonNetworkRelativeLinkSize = bb.getInt();
                 commonNetworkRelativeLinkFlags = bb.getInt();
                 int netNameOffset = bb.getInt();
