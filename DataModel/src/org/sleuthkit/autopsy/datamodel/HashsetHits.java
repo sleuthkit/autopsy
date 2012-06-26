@@ -42,9 +42,8 @@ import org.sleuthkit.datamodel.TskException;
 
 /**
  * Hash set hits node support
- * @param <T> type of object returned by AutopsyItemVisitor
  */
-public class HashsetHits<T> implements AutopsyVisitableItem<T> {
+public class HashsetHits implements AutopsyVisitableItem {
     
     private static final String HASHSET_HITS = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getLabel();
     private static final String DISPLAY_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getDisplayName();
@@ -94,9 +93,8 @@ public class HashsetHits<T> implements AutopsyVisitableItem<T> {
     
     /**
      * Node for the hash set hits 
-     *  @param <T> type of the object returned by the DisplayableItemNodeVisitor
      */
-    public class HashsetHitsRootNode<T> extends AbstractNode implements DisplayableItemNode<T>{
+    public class HashsetHitsRootNode extends AbstractNode implements DisplayableItemNode{
 
         public HashsetHitsRootNode() {
             super(Children.create(new HashsetHitsRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
@@ -139,11 +137,11 @@ public class HashsetHits<T> implements AutopsyVisitableItem<T> {
         
         @Override
         protected Node createNodeForKey(String key) {
-            return new HashsetHitsSetNode<AbstractNode>(key, hashSetHitsMap.get(key));
+            return new HashsetHitsSetNode(key, hashSetHitsMap.get(key));
         }
     }
     
-    public class HashsetHitsSetNode<T> extends AbstractNode implements DisplayableItemNode<T> {
+    public class HashsetHitsSetNode extends AbstractNode implements DisplayableItemNode {
         
         public HashsetHitsSetNode(String name, Set<Long> children) {
             super(Children.create(new HashsetHitsSetChildren(children), true), Lookups.singleton(name));

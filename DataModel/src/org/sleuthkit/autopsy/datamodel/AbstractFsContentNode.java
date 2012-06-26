@@ -27,10 +27,8 @@ import org.sleuthkit.datamodel.FsContent;
 /**
  * Abstract class that implements the commonality between File and Directory
  * Nodes (same properties).
- * @param <T> sub type of FsContent to encapsulate by the node
- * @param <E> type of object returned by visitor on this node
  */ 
-public abstract class AbstractFsContentNode<T extends FsContent,E> extends AbstractAbstractFileNode<T,E> {
+public abstract class AbstractFsContentNode<T extends FsContent> extends AbstractAbstractFileNode<T> {
 
     private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss (z)");
     

@@ -22,9 +22,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Results node support
- * @param <T> object type returned by autopsy item visitor
  */
-public class Results<T> implements AutopsyVisitableItem<T> {
+public class Results implements AutopsyVisitableItem {
     private SleuthkitCase skCase;
     
     public Results(SleuthkitCase skCase) {

@@ -30,9 +30,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Node for recent files filter
- * @param <T> type of the object returned by the DisplayableItemVisitor
  */
-public class RecentFilesFilterNode<T> extends AbstractNode implements DisplayableItemNode<T>{
+public class RecentFilesFilterNode extends AbstractNode implements DisplayableItemNode {
     
     SleuthkitCase skCase;
     RecentFilesFilter filter;

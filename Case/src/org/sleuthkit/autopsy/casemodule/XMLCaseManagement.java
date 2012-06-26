@@ -464,8 +464,10 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
      * Initialize the basic values for a new case management file.
      * Note: this is the schema version 1.0
      *
-     * @param parentPath  the name of the parent of the case directory.
+     * @param dirPath     case directory path         
      * @param caseName    the name of the config file to be located in the case directory
+     * @param examiner    examiner for the case (optional, can be empty string
+     * @param caseNumber  case number (optional), can be empty
      */
     protected void create(String dirPath, String caseName, String examiner, String caseNumber) throws Exception {
         clear(); // clear the previous data

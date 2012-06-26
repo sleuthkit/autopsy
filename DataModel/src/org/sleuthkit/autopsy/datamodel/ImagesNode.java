@@ -26,9 +26,8 @@ import org.sleuthkit.datamodel.Content;
 
 /**
  * Nodes for the images
- * @param <T> type of the object returned by the DisplayableItemVisitor
  */
-public class ImagesNode<T> extends AbstractNode implements DisplayableItemNode<T> {
+public class ImagesNode extends AbstractNode implements DisplayableItemNode {
     
     public static final String NAME = "Images";
 

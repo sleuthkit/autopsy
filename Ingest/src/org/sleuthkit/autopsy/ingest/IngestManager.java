@@ -528,13 +528,13 @@ public class IngestManager {
 
     /**
      * Queue up an image to be processed by a given File service.
-     * @param service
-     * @param image 
+     * @param service service for which to enqueue the files
+     * @param abstractFiles files to enqueue 
      */
-    private void addAbstractFile(IngestServiceAbstractFile service, Collection<AbstractFile> AbstractFiles) {
+    private void addAbstractFile(IngestServiceAbstractFile service, Collection<AbstractFile> abstractFiles) {
         synchronized (queuesLock) {
-            for (AbstractFile AbstractFile : AbstractFiles) {
-                abstractFileQueue.enqueue(AbstractFile, service);
+            for (AbstractFile abstractFile : abstractFiles) {
+                abstractFileQueue.enqueue(abstractFile, service);
             }
         }
     }

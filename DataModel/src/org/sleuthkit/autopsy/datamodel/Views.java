@@ -22,9 +22,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * View nodes support
- * @param <T> object type returned by autopsy item visitor
  */
-public class Views<T> implements AutopsyVisitableItem<T> {
+public class Views implements AutopsyVisitableItem {
     private SleuthkitCase skCase;
     
     public Views(SleuthkitCase skCase) {
