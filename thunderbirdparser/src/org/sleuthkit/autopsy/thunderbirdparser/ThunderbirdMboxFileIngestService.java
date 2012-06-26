@@ -61,6 +61,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
     private static final String classname = "Thunderbird Parser";
+    private final String hashDBServiceName = "Hash Lookup";
 
     public static synchronized ThunderbirdMboxFileIngestService getDefault() {
         if (instance == null) {
@@ -73,6 +74,15 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
     public ProcessResult process(AbstractFile fsContent) {
         ThunderbirdEmailParser mbox = new ThunderbirdEmailParser();
         boolean isMbox = false;
+
+        IngestServiceAbstractFile.ProcessResult hashDBResult = 
+                managerProxy.getAbstractFileServiceResult(hashDBServiceName);
+
+        if (hashDBResult == IngestServiceAbstractFile.ProcessResult.COND_STOP) {
+            return ProcessResult.OK; //file is known, stop processing it
+        } else if (hashDBResult == IngestServiceAbstractFile.ProcessResult.ERROR) {
+            return ProcessResult.ERROR;  //file has read error, stop processing it
+        }
 
         try {
             byte[] t = new byte[(int) 128];
@@ -125,27 +135,23 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Unable to obtain msf file for mbox parsing:" + this.getClass().getName(), ex);
             }
-           int index = 0;
-           String replace = "";
-           boolean a = mboxPath.indexOf("/ImapMail/") > 0;
+            int index = 0;
+            String replace = "";
+            boolean a = mboxPath.indexOf("/ImapMail/") > 0;
             boolean b = mboxPath.indexOf("/Mail/") > 0;
-            if(b == true)
-            {
-             index = mboxPath.indexOf("/Mail/");
-             replace = "/Mail";
-            }
-            else if(a == true)
-            {
-             index = mboxPath.indexOf("/ImapMail/");   
-             replace = "/ImapMail";
-            }
-            else{
-             replace = "";
-                
+            if (b == true) {
+                index = mboxPath.indexOf("/Mail/");
+                replace = "/Mail";
+            } else if (a == true) {
+                index = mboxPath.indexOf("/ImapMail/");
+                replace = "/ImapMail";
+            } else {
+                replace = "";
+
             }
             String folderPath = mboxPath.substring(index);
             folderPath = folderPath.replaceAll(replace, "");
-            folderPath = folderPath+mboxName;
+            folderPath = folderPath + mboxName;
             folderPath = folderPath.replaceAll(".sbd", "");
 //            Reader reader = null;
 //            try {
