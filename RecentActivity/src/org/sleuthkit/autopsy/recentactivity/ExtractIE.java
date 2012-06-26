@@ -64,8 +64,7 @@ import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestServiceImage;
-import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.*;
 
 public class ExtractIE extends Extract implements IngestServiceImage {
 
@@ -208,34 +207,15 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                 break;
             }
             Content fav = Recent;
-            byte[] t = new byte[(int) fav.getSize()];
-
-            int bytesRead = 0;
-            if (fav.getSize() > 0) {
-                try {
-                    bytesRead = fav.read(t, 0, fav.getSize()); // read the data
-                } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to retrieve content from the TSK .", ex);
-                }
-            }
-
-            // set the data on the bottom and show it
-            String recentString = new String();
-            if (bytesRead > 0) {
-                recentString = DataConversion.getString(t, bytesRead, 4);
-            }
-            String path = Util.getPath(recentString);
-            String name = Util.getFileName(path);
+            JLNK lnk = new JLnkParser(new ReadContentInputStream(fav), (int) fav.getSize()).parse();
+            String path = lnk.getBestPath();
             Long datetime = Recent.getCrtime();
-            String Tempdate = datetime.toString();
-            datetime = Long.valueOf(Tempdate);
             try {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", "Last Visited", path));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "", name));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", "", path));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "", Util.getFileName(path)));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", "", Util.findID(path)));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Date Created", datetime));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Windows Explorer"));
                 this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, Recent, bbattributes);
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
