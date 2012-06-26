@@ -43,8 +43,8 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
     static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa"});
     static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa)";
     static GeneralFilter rawFilter = new GeneralFilter(rawExt, rawDesc);
-    static final List<String> encaseExt = Arrays.asList(new String[]{".e01", ".eaa"});
-    static final String encaseDesc = "Encase Images (*.e01, *.eAA)";
+    static final List<String> encaseExt = Arrays.asList(new String[]{".e01"});
+    static final String encaseDesc = "Encase Images (*.e01)";
     static GeneralFilter encaseFilter = new GeneralFilter(encaseExt, encaseDesc);
     static final List<String> allExt = new ArrayList<String>();
     {
