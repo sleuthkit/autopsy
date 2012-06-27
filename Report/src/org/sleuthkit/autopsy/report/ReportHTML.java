@@ -230,7 +230,7 @@ public class ReportHTML implements ReportModule {
         if (countDevice > 0) {
             formatted_Report.append("<tr><td><a href=\"#device\">Attached Devices</a></td><td>").append(countDevice).append("</td></tr>");
         }
-        if (countDevice > 0) {
+        if (countEmail > 0) {
             formatted_Report.append("<tr><td><a href=\"#email\">Email Messages</a></td><td>").append(countEmail).append("</td></tr>");
         }
         formatted_Report.append("</tbody></table><br />");
@@ -371,12 +371,12 @@ public class ReportHTML implements ReportModule {
             }
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                 // artifact.append("<tr><td>").append(objId.toString());
-                artifact.append("<tr").append(altRow).append("><td><strong>").append(file.getName().toString()).append("</strong></td>");
-                artifact.append("<td>").append(filesize.toString()).append("</td>");
+               // artifact.append("<tr").append(altRow).append("><td><strong>").append(file.getName().toString()).append("</strong></td>");
+               // artifact.append("<td>").append(filesize.toString()).append("</td>");
                 //artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_INTERESTING_FILE.getTypeID())).append("</td>");
-                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID())).append("</td>");
-                artifact.append("</tr>");
-                nodeHash.append(artifact);
+               // artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID())).append("</td>");
+              //  artifact.append("</tr>");
+               // nodeHash.append(artifact);
             }
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                 artifact.append("<tr").append(altRow).append("><td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID())).append("</strong></td>");
@@ -435,15 +435,16 @@ public class ReportHTML implements ReportModule {
             formatted_Report.append(nodeDevice);
             formatted_Report.append("</tbody></table>");
         }
-        //end of master loop
+       
         if (countEmail > 0) {
             formatted_Report.append(nodeEmail);
             Report email = new Report();
             formatted_Report.append(email.getGroupedEmailHit());
         }
+        //end of master loop
         formatted_Report.append("</div></div></body></html>");
         formatted_header.append(formatted_Report);
-        // unformatted_header.append(formatted_Report);
+        // unformatted_header.append(formatted_Report); 
         try {
             htmlPath = currentCase.getCaseDirectory() + "/Reports/" + caseName + "-" + datenotime + ".html";
             this.save(htmlPath);

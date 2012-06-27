@@ -261,10 +261,11 @@ public class ReportXLS implements ReportModule {
             sheetEmail.getRow(0).createCell(0).setCellValue("From");
             sheetEmail.getRow(0).createCell(1).setCellValue("To");
             sheetEmail.getRow(0).createCell(2).setCellValue("Subject");
-            sheetEmail.getRow(0).createCell(3).setCellValue("Content");
-            sheetEmail.getRow(0).createCell(4).setCellValue("CC");
-            sheetEmail.getRow(0).createCell(4).setCellValue("BCC");
-            sheetEmail.getRow(0).createCell(4).setCellValue("Path");
+            sheetEmail.getRow(0).createCell(3).setCellValue("Date/Time");
+            sheetEmail.getRow(0).createCell(4).setCellValue("Content");
+            sheetEmail.getRow(0).createCell(5).setCellValue("CC");
+            sheetEmail.getRow(0).createCell(6).setCellValue("BCC");
+            sheetEmail.getRow(0).createCell(7).setCellValue("Path");
 
             for (int i = 0; i < wbtemp.getNumberOfSheets(); i++) {
                 Sheet tempsheet = wbtemp.getSheetAt(i);
@@ -289,6 +290,7 @@ public class ReportXLS implements ReportModule {
             int countedKeyword = 0;
             int countedHash = 0;
             int countedDevice = 0;
+            int countedEmail = 0;
 
             //start populating the sheets in the workbook
             for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
@@ -313,7 +315,7 @@ public class ReportXLS implements ReportModule {
                     }
                     String value = "";
                     int type = tempatt.getAttributeTypeID();
-                    if (tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID() || tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
+                    if (tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID() || tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID() || tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
                         value = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date((tempatt.getValueLong()) * 1000)).toString();
                     } else {
                         value = tempatt.getValueString();
@@ -400,6 +402,19 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
                     temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                }
+                
+                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                    countedEmail++;
+                    Row temp = sheetEmail.createRow(countedEmail);
+                    temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
+                    temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID()));
+                    temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID()));
+                    temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()));
+                    temp.createCell(4).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID()));
+                    temp.createCell(5).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()));
+                    temp.createCell(6).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()));
+                    temp.createCell(7).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
                 }
             }
 
