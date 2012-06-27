@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.testing;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 import javax.swing.JDialog;
 import javax.swing.JTextField;
@@ -135,29 +137,31 @@ public class RegressionTest extends JellyTestCase{
     
     public void testConfigureHash() {
         logger.info("Hash Configure");
-        JDialog jd = JDialogOperator.waitJDialog("Hash Database Configuration", false, false);
-        JDialogOperator jdo = new JDialogOperator(jd);
-        String databaseDir = System.getProperty("nsrl_path");
-        String badDir = System.getProperty("known_bad_path");
-        JButtonOperator jbo0 = new JButtonOperator(jdo, "Change");
-        jbo0.pushNoBlock();
-        JFileChooserOperator jfco0 = new JFileChooserOperator();
-        jfco0.chooseFile(databaseDir);
-        JButtonOperator jbo1 = new JButtonOperator(jdo, "Add Notable Database");
-        jbo1.pushNoBlock();
-        JFileChooserOperator jfco1 = new JFileChooserOperator();
-        jfco1.chooseFile(badDir);
-        JDialog jd2 = JDialogOperator.waitJDialog("New Hash Set", false, false);
-        JDialogOperator jdo2 = new JDialogOperator(jd2);
-        JButtonOperator jbo2 = new JButtonOperator(jdo2, "OK", 0);
-        jbo2.pushNoBlock();
+        JDialog hashMainDialog = JDialogOperator.waitJDialog("Hash Database Configuration", false, false);
+        JDialogOperator hashMainDialogOperator = new JDialogOperator(hashMainDialog);
+        List<String> databases = new ArrayList<String>();
+        databases.add(System.getProperty("nsrl_path"));
+        databases.add(System.getProperty("known_bad_path"));
+        for (String database : databases) {
+            JButtonOperator importButtonOperator = new JButtonOperator(hashMainDialogOperator, "Import");
+            importButtonOperator.pushNoBlock();
+            JDialog addDatabaseDialog = JDialogOperator.waitJDialog("Add Hash Database", false, false);
+            JDialogOperator addDatabaseDialogOperator = new JDialogOperator(addDatabaseDialog);
+            JButtonOperator browseButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "Browse", 0);
+            browseButtonOperator.pushNoBlock();
+            JFileChooserOperator fileChooserOperator = new JFileChooserOperator();
+            fileChooserOperator.chooseFile(database);
+            JButtonOperator okButtonOperator = new JButtonOperator(addDatabaseDialogOperator, "OK", 0);
+            okButtonOperator.pushNoBlock();
+            new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
+        }
         // Used if the database has no index
         //JDialog jd3 = JDialogOperator.waitJDialog("No Index Exists", false, false);
         //JDialogOperator jdo3 = new JDialogOperator(jd3);
         //JButtonOperator jbo3 = new JButtonOperator(jdo3, "Yes", 0);
-        //new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
+        new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         //jbo3.pushNoBlock();
-        JButtonOperator jbo4 = new JButtonOperator(jdo, "OK", 0);
+        JButtonOperator jbo4 = new JButtonOperator(hashMainDialogOperator, "OK", 0);
         jbo4.pushNoBlock();
     }
     
@@ -180,7 +184,7 @@ public class RegressionTest extends JellyTestCase{
         jbo0.pushNoBlock();
         JFileChooserOperator jfco0 = new JFileChooserOperator();
         jfco0.chooseFile(words);
-        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Use during triage / ingest", 0);
+        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Use during ingest", 0);
         jcbo.doClick();
         JButtonOperator jbo2 = new JButtonOperator(jdo, "OK", 0);
         jbo2.pushNoBlock();
