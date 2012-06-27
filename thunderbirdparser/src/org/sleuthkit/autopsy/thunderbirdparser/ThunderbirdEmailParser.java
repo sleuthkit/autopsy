@@ -124,7 +124,7 @@ public class ThunderbirdEmailParser {
                 ftime = ftime / 1000;
                 dates = ftime;
         } catch (ParseException ex) {
-            Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
         }
 
         return dates;

@@ -408,7 +408,7 @@ public class ReportXLS implements ReportModule {
             wb.write(fos);
             fos.close();
         } catch (IOException e) {
-            Logger.getLogger(ReportXLS.class.getName()).log(Level.SEVERE, "Could not write out XLS report!", e);
+            Logger.getLogger(ReportXLS.class.getName()).log(Level.WARNING, "Could not write out XLS report!", e);
         }
 
     }
@@ -447,7 +447,7 @@ public class ReportXLS implements ReportModule {
         try {
             Desktop.getDesktop().open(file);
         } catch (IOException e) {
-            Logger.getLogger(ReportXLS.class.getName()).log(Level.SEVERE, "Could not open XLS report! ", e);
+            Logger.getLogger(ReportXLS.class.getName()).log(Level.WARNING, "Could not open XLS report! ", e);
         }
     }
 }
