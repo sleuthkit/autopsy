@@ -94,10 +94,10 @@ public class HashDbXML {
      */
     public List<HashDb> getAllSets() {
         List<HashDb> ret = new ArrayList<HashDb>();
-        ret.addAll(knownBadSets);
         if(nsrlSet != null) {
             ret.add(nsrlSet);
         }
+        ret.addAll(knownBadSets);
         return ret;
     }
     

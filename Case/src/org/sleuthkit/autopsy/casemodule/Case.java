@@ -603,7 +603,7 @@ public class Case {
      * @return isExist  whether the path exists
      */
     public static boolean pathExists(String imgPath) {
-        return new File(imgPath).isFile() || isPhysicalDrive(imgPath);
+        return new File(imgPath).isFile();
     }
     
     /**
@@ -612,10 +612,8 @@ public class Case {
     private static final String pdisk = "\\\\.\\physicaldrive";
     private static final String dev = "/dev/";
     static boolean isPhysicalDrive(String path) {
-        int pdiskEnd = Math.min(path.length(), pdisk.length());
-        int devEnd = Math.min(path.length(), dev.length());
-        return path.substring(0, pdiskEnd).toLowerCase().equals(pdisk) ||
-                path.substring(0, devEnd).toLowerCase().equals(dev);
+        return path.toLowerCase().startsWith(pdisk) ||
+                path.toLowerCase().startsWith(dev);
     }
 
     /**

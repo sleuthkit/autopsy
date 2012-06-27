@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -53,7 +52,6 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
 
     private HashSetTableModel hashSetTableModel;
     private static final Logger logger = Logger.getLogger(HashDbManagementPanel.class.getName());
-    private JFileChooser fc = new JFileChooser();
     private static HashDbManagementPanel instance;
     private static boolean ingestRunning = false;
 
@@ -93,14 +91,6 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
                 }
             }
         });
-        
-        fc.setDragEnabled(false);
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        String[] EXTENSION = new String[] { "txt", "idx", "hash", "Hash" };
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                "Hash Database File", EXTENSION);
-        fc.setFileFilter(filter);
-        fc.setMultiSelectionEnabled(false);
     }
 
     private void initUI(HashDb db) {
@@ -213,18 +203,17 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         leftPanelLayout.setHorizontalGroup(
             leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 176, Short.MAX_VALUE)
-            .addGroup(leftPanelLayout.createSequentialGroup()
-                .addContainerGap()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, leftPanelLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(importButton)
-                .addContainerGap())
+                .addGap(55, 55, 55))
         );
         leftPanelLayout.setVerticalGroup(
             leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, leftPanelLayout.createSequentialGroup()
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 313, Short.MAX_VALUE)
                 .addGap(0, 0, 0)
-                .addComponent(importButton)
-                .addGap(0, 0, 0))
+                .addComponent(importButton))
         );
 
         jSplitPane1.setLeftComponent(leftPanel);
@@ -365,107 +354,75 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
         int selected = getSelection();
-        if(selected >= 0 && selected < HashDbXML.getCurrent().getKnownBadSets().size()) {
-            HashDbXML.getCurrent().removeKnownBadSetAt(selected);
+        HashDbXML xmlHandle = HashDbXML.getCurrent();
+        if (xmlHandle.getNSRLSet() != null) {
+            if (selected == 0) {
+                HashDbXML.getCurrent().removeNSRLSet();
+            } else {
+                HashDbXML.getCurrent().removeKnownBadSetAt(selected - 1);
+            }
         } else {
-            HashDbXML.getCurrent().removeNSRLSet();
+            HashDbXML.getCurrent().removeKnownBadSetAt(selected);
         }
         hashSetTableModel.resync();
     }//GEN-LAST:event_deleteButtonActionPerformed
 
-    private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
-        boolean nsrl = false;
-        int retval = fc.showOpenDialog(this);
-        if (retval == JFileChooser.APPROVE_OPTION) {
-            File f = fc.getSelectedFile();
-            try {
-                String filePath = f.getCanonicalPath();
-                if (HashDb.isIndexPath(filePath)) {
-                    filePath = HashDb.toDatabasePath(filePath);
-                }
-                String derivedName = SleuthkitJNI.getDatabaseName(filePath);
-                JCheckBox nsrlCheckBox = new JCheckBox("Set as NSRL", false);
-                JTextField nameTextField = new JTextField(derivedName);
-                JOptionPane.showMessageDialog(this, new Object[]{"New Hash Set name:", nameTextField, nsrlCheckBox}, "New Hash Set", JOptionPane.PLAIN_MESSAGE);
-                String setName = nameTextField.getText();
-                if (setName != null && !setName.equals("")) {
-                    nsrl = nsrlCheckBox.isSelected();
-                    HashDb newDb = new HashDb(setName, Arrays.asList(new String[]{filePath}), true, !nsrl, nsrl ? DBType.NSRL : DBType.KNOWN_BAD);
-                    int toIndex = JOptionPane.NO_OPTION;
-                    if (IndexStatus.isIngestible(newDb.status())) {
-                        newDb.setUseForIngest(true);
-                    } else {
-                        toIndex = JOptionPane.showConfirmDialog(this, "The database you added has no index.\n" + "It will not be used for ingest until you create one.\n" + "Would you like to do so now?", "No Index Exists", JOptionPane.YES_NO_OPTION);
-                    }
-                    if (toIndex == JOptionPane.YES_OPTION) {
-                        try {
-                            newDb.createIndex();
-                        } catch (TskException ex) {
-                            logger.log(Level.WARNING, "Error creating index", ex);
-                        }
-                    }
-                    if(nsrl) {
-                        HashDbXML.getCurrent().setNSRLSet(newDb);
-                    } else {
-                        HashDbXML.getCurrent().addKnownBadSet(newDb);
-                    }
-                }
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Couldn't get selected file path.", ex);
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "Invalid database: ", ex);
-                int tryAgain = JOptionPane.showConfirmDialog(this, "Database file you chose cannot be opened.\n" + "If it was just an index, please try to recreate it from the database.\n" + "Would you like to choose another database?", "Invalid File", JOptionPane.YES_NO_OPTION);
-                if (tryAgain == JOptionPane.YES_OPTION) {
-                    importButtonActionPerformed(null);
-                }
-            }
-        }
-        hashSetTableModel.resync();
-        int size = 0;
-        if(nsrl) {
-            size = HashDbXML.getCurrent().getAllSets().size();
-        } else {
-            size = HashDbXML.getCurrent().getKnownBadSets().size();
-        }
-        setSelection(size-1);
-    }//GEN-LAST:event_importButtonActionPerformed
-
     private void hashSetTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_hashSetTableKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
             int selected = getSelection();
-            if (selected >= 0 && selected < HashDbXML.getCurrent().getKnownBadSets().size()) {
-                HashDbXML.getCurrent().removeKnownBadSetAt(selected);
+            HashDbXML xmlHandle = HashDbXML.getCurrent();
+            if (xmlHandle.getNSRLSet() != null) {
+                if (selected == 0) {
+                    HashDbXML.getCurrent().removeNSRLSet();
+                } else {
+                    HashDbXML.getCurrent().removeKnownBadSetAt(selected - 1);
+                }
             } else {
-                HashDbXML.getCurrent().removeNSRLSet();
+                HashDbXML.getCurrent().removeKnownBadSetAt(selected);
             }
-            hashSetTableModel.resync();
         }
+        hashSetTableModel.resync();
     }//GEN-LAST:event_hashSetTableKeyPressed
 
     private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useForIngestCheckboxActionPerformed
         int selected = getSelection();
-        if (selected >= 0 && selected < HashDbXML.getCurrent().getKnownBadSets().size()) {
+        HashDbXML xmlHandle = HashDbXML.getCurrent();
+        if (xmlHandle.getNSRLSet() != null) {
+            if (selected == 0) {
+                HashDb current = HashDbXML.getCurrent().getNSRLSet();
+                current.setUseForIngest(useForIngestCheckbox.isSelected());
+                HashDbXML.getCurrent().setNSRLSet(current);
+            } else {
+                HashDb current = HashDbXML.getCurrent().getKnownBadSets().remove(selected - 1);
+                current.setUseForIngest(useForIngestCheckbox.isSelected());
+                HashDbXML.getCurrent().addKnownBadSet(selected - 1, current);
+                this.showInboxMessagesCheckBox.setEnabled(useForIngestCheckbox.isSelected());
+            }
+        } else {
             HashDb current = HashDbXML.getCurrent().getKnownBadSets().remove(selected);
             current.setUseForIngest(useForIngestCheckbox.isSelected());
             HashDbXML.getCurrent().addKnownBadSet(selected, current);
-        } else {
-            HashDb current = HashDbXML.getCurrent().getNSRLSet();
-            current.setUseForIngest(useForIngestCheckbox.isSelected());
-            HashDbXML.getCurrent().setNSRLSet(current);
+            this.showInboxMessagesCheckBox.setEnabled(useForIngestCheckbox.isSelected());
         }
-        this.showInboxMessagesCheckBox.setEnabled(useForIngestCheckbox.isSelected());
     }//GEN-LAST:event_useForIngestCheckboxActionPerformed
 
     private void showInboxMessagesCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showInboxMessagesCheckBoxActionPerformed
         int selected = getSelection();
-        if (selected >= 0 && selected < HashDbXML.getCurrent().getKnownBadSets().size()) {
+        HashDbXML xmlHandle = HashDbXML.getCurrent();
+        if (xmlHandle.getNSRLSet() != null) {
+            if (selected == 0) {
+                HashDb current = HashDbXML.getCurrent().getNSRLSet();
+                current.setShowInboxMessages(showInboxMessagesCheckBox.isSelected());
+                HashDbXML.getCurrent().setNSRLSet(current);
+            } else {
+                HashDb current = HashDbXML.getCurrent().getKnownBadSets().remove(selected - 1);
+                current.setShowInboxMessages(showInboxMessagesCheckBox.isSelected());
+                HashDbXML.getCurrent().addKnownBadSet(selected - 1, current);
+            }
+        } else {
             HashDb current = HashDbXML.getCurrent().getKnownBadSets().remove(selected);
             current.setShowInboxMessages(showInboxMessagesCheckBox.isSelected());
             HashDbXML.getCurrent().addKnownBadSet(selected, current);
-        } else {
-            HashDb current = HashDbXML.getCurrent().getNSRLSet();
-            current.setShowInboxMessages(showInboxMessagesCheckBox.isSelected());
-            HashDbXML.getCurrent().setNSRLSet(current);
         }
     }//GEN-LAST:event_showInboxMessagesCheckBoxActionPerformed
 
@@ -479,6 +436,10 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         }
         setButtonFromIndexStatus(indexButton, this.hashDbIndexStatusLabel, current.status());
     }//GEN-LAST:event_indexButtonActionPerformed
+
+    private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
+        importHashSet(evt);
+    }//GEN-LAST:event_importButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton deleteButton;
@@ -502,6 +463,16 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox useForIngestCheckbox;
     // End of variables declaration//GEN-END:variables
 
+    private void importHashSet(java.awt.event.ActionEvent evt) {
+        new HashDbAddDatabaseDialog().display();
+        hashSetTableModel.resync();
+        /*int size = 0;
+        if(!nsrl) {
+            size = HashDbXML.getCurrent().getKnownBadSets().size();
+        }
+        setSelection(size);*/
+    }
+    
     private class HashSetTableModel extends AbstractTableModel {
 
         private HashDbXML xmlHandle = HashDbXML.getCurrent();
@@ -523,8 +494,12 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            if(rowIndex == this.getRowCount()-1 && xmlHandle.getNSRLSet() != null) {
-                return xmlHandle.getNSRLSet().getName() + " (NSRL)";
+            if (xmlHandle.getNSRLSet() != null) {
+                if(rowIndex == 0) {
+                    return xmlHandle.getNSRLSet().getName() + " (NSRL)";
+                } else {
+                    return xmlHandle.getKnownBadSets().get(rowIndex-1).getName();
+                }
             } else {
                 return xmlHandle.getKnownBadSets().get(rowIndex).getName();
             }
