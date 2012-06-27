@@ -89,6 +89,7 @@ public class ReportHTML implements ReportModule {
         int countKeyword = 0;
         int countHash = 0;
         int countDevice = 0;
+        int countEmail = 0;
         for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
                 countGen++;
@@ -123,6 +124,9 @@ public class ReportHTML implements ReportModule {
                 countHash++;
             }
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
+                countDevice++;
+            }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
                 countDevice++;
             }
         }
@@ -226,6 +230,9 @@ public class ReportHTML implements ReportModule {
         if (countDevice > 0) {
             formatted_Report.append("<tr><td><a href=\"#device\">Attached Devices</a></td><td>").append(countDevice).append("</td></tr>");
         }
+        if (countDevice > 0) {
+            formatted_Report.append("<tr><td><a href=\"#email\">Email Messages</a></td><td>").append(countEmail).append("</td></tr>");
+        }
         formatted_Report.append("</tbody></table><br />");
         String tableHeader = "<table><thead><tr>";
         StringBuilder nodeGen = new StringBuilder("<h3>General Information (").append(countGen).append(")</h3>").append(tableHeader).append("<th>Attribute</th><th>Value</th></tr></thead><tbody>");
@@ -239,6 +246,7 @@ public class ReportHTML implements ReportModule {
         StringBuilder nodeKeyword = new StringBuilder("<h3><a name=\"keyword\">Keyword Search Hits (").append(countKeyword).append(")</h3>");
         StringBuilder nodeHash = new StringBuilder("<h3><a name=\"hash\">Hashset Hit (").append(countHash).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Size</th><th>Hashset Name</th></tr></thead><tbody>");
         StringBuilder nodeDevice = new StringBuilder("<h3><a name=\"device\">Attached Devices (").append(countHash).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Serial #</th><th>Time</th></tr></thead><tbody>");
+        StringBuilder nodeEmail = new StringBuilder("<h3><a name=\"email\">Email Messages (").append(countHash).append(")</h3>");
 
         int alt = 0;
         String altRow = "";
@@ -281,10 +289,10 @@ public class ReportHTML implements ReportModule {
                 String value = "";
                 Integer type = tempatt.getAttributeTypeID();
                 if (type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()) || type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())) {
-                    
-                        SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                        value = sdf.format(new java.util.Date((tempatt.getValueLong() * 1000)));
-                   
+
+                    SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+                    value = sdf.format(new java.util.Date((tempatt.getValueLong() * 1000)));
+
                 } else {
                     value = tempatt.getValueString();
                 }
@@ -377,6 +385,8 @@ public class ReportHTML implements ReportModule {
                 artifact.append("</tr>");
                 nodeDevice.append(artifact);
             }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+            }
         }
         //Add them back in order
         //formatted_Report.append(nodeGen);
@@ -417,14 +427,20 @@ public class ReportHTML implements ReportModule {
         }
         if (countHash > 0) {
             formatted_Report.append(nodeHash);
-            formatted_Report.append("</tbody></table>");
+            Report hashset = new Report();
+            formatted_Report.append(hashset.getGroupedHashsetHit());
         }
+
         if (countDevice > 0) {
             formatted_Report.append(nodeDevice);
             formatted_Report.append("</tbody></table>");
         }
         //end of master loop
-
+        if (countEmail > 0) {
+            formatted_Report.append(nodeEmail);
+            Report email = new Report();
+            formatted_Report.append(email.getGroupedEmailHit());
+        }
         formatted_Report.append("</div></div></body></html>");
         formatted_header.append(formatted_Report);
         // unformatted_header.append(formatted_Report);
