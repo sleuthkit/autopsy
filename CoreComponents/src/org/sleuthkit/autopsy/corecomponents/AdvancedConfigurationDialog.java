@@ -54,8 +54,14 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
     
     public void display(JPanel panel) {
         this.setTitle(panel.getName());
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
+        
+        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        applyButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        this.add(panel, 0);
+        this.pack();
+        
+        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         // set the popUp window / JFrame
         int w = this.getSize().width;
         int h = this.getSize().height;
@@ -63,10 +69,6 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
         
-        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        applyButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        this.add(panel, 0);
-        this.pack();
         this.setVisible(true);
     }
 
