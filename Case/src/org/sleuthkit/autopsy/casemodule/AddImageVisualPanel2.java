@@ -98,8 +98,13 @@ final class AddImageVisualPanel2 extends JPanel {
 
     
 
-    void setNonCriticalErrors(final String errors) {
-        progressLabel.setText("*Image added (non-critical image errors encountered). Click below to view the Add Image Log.");
+    void setErrors(final String errors, boolean critical) {
+        if (critical) {
+            progressLabel.setText("*Failed to add image (critical errors encountered). Click below to view the Add Image Log.");
+        }
+        else {
+            progressLabel.setText("*Image added (non-critical image errors encountered). Click below to view the Add Image Log.");
+        }
         errorButton = new JButton();
         errorButton.setText("View Log");
         infoPanel.add(errorButton);
