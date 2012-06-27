@@ -157,7 +157,7 @@ public class Report {
 
         return table.toString();
     }
-    
+
     /**
      * Returns all the hash lookups related artifact/attributes and groups them
      * based on hashset name
@@ -171,7 +171,7 @@ public class Report {
         Case currentCase = Case.getCurrentCase(); // get the most updated case
         SleuthkitCase tempDb = currentCase.getSleuthkitCase();
         try {
-                    tempDb.copyCaseDB(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
+            tempDb.copyCaseDB(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
             dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", "jdbc:sqlite:" + currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_keyword;");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_preview;");
@@ -179,10 +179,13 @@ public class Report {
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_list;");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_name;");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report;");
-            String temp1 = "CREATE TABLE report_keyword AS SELECT value_text as keyword,blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ";";
-            String temp2 = "CREATE TABLE report_preview AS SELECT value_text as preview, blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ";";
-            String temp3 = "CREATE TABLE report_exp AS SELECT value_text as exp, blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID() + ";";
-            String temp4 = "CREATE TABLE report_list AS SELECT value_text as list, blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ";";
+            String temp1 = "CREATE TABLE report_keyword AS SELECT value_text as keyword,blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID() + ";";
+            String temp2 = "CREATE TABLE report_preview AS SELECT value_text as preview, blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID() + ";";
+            String temp3 = "CREATE TABLE report_exp AS SELECT value_text as exp, blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID() + ";";
+            String temp4 = "CREATE TABLE report_list AS SELECT value_text as list, blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID() + ";";
+            String temp7 = "CREATE TABLE report_bcc AS SELECT value_text as bcc, blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID() + ";";
+            String temp8 = "CREATE TABLE report_path AS SELECT value_text as path, blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID() + ";";
+
             String temp5 = "CREATE TABLE report_name AS SELECT name, report_keyword.artifact_id from tsk_files,blackboard_artifacts, report_keyword WHERE blackboard_artifacts.artifact_id = report_keyword.artifact_id AND blackboard_artifacts.obj_id = tsk_files.obj_id;";
             String temp6 = "CREATE TABLE report AS SELECT keyword,preview,exp,list,name from report_keyword INNER JOIN report_preview ON report_keyword.artifact_id=report_preview.artifact_id INNER JOIN report_exp ON report_preview.artifact_id=report_exp.artifact_id INNER JOIN report_list ON report_exp.artifact_id=report_list.artifact_id INNER JOIN report_name ON report_list.artifact_id=report_name.artifact_id;";
             tempdbconnect.executeStmt(temp1);
@@ -191,6 +194,8 @@ public class Report {
             tempdbconnect.executeStmt(temp4);
             tempdbconnect.executeStmt(temp5);
             tempdbconnect.executeStmt(temp6);
+             tempdbconnect.executeStmt(temp7);
+            tempdbconnect.executeStmt(temp8);
             ResultSet uniqueresults = tempdbconnect.executeQry("SELECT keyword, exp, preview, list, name FROM report ORDER BY keyword ASC");
             String keyword = "";
             while (uniqueresults.next()) {

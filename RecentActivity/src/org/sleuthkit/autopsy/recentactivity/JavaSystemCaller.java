@@ -84,7 +84,7 @@ public final class JavaSystemCaller {
                     this.output.append(line + System.getProperty("line.separator"));
                 }
             } catch (final IOException ioe) {
-                logger.log(Level.SEVERE, ioe.getMessage());
+                logger.log(Level.WARNING, ioe.getMessage());
             }
         }
 
@@ -188,9 +188,9 @@ public final class JavaSystemCaller {
                 }
 
             } catch (InterruptedException intex) {
-                logger.log(Level.SEVERE, intex.getMessage());
+                logger.log(Level.WARNING, intex.getMessage());
             } catch (IOException ioex) {
-                logger.log(Level.SEVERE, ioex.getMessage());
+                logger.log(Level.WARNING, ioex.getMessage());
             }
         }
 

@@ -89,7 +89,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
             int byteRead = fsContent.read(t, 0, 128);
             isMbox = mbox.isValidMimeTypeMbox(t);
         } catch (TskException ex) {
-            Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
         }
 
 
@@ -131,9 +131,9 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
                 Content msfContent = tskCase.getContentById(msfId);
                 ContentUtils.writeToFile(msfContent, new File(currentCase.getTempDirectory() + File.separator + msfName));
             } catch (IOException ex) {
-                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Unable to obtain msf file for mbox parsing:" + this.getClass().getName(), ex);
+                logger.log(Level.WARNING, "Unable to obtain msf file for mbox parsing:" + this.getClass().getName(), ex);
             }
             int index = 0;
             String replace = "";
@@ -157,7 +157,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
 //            try {
 //                reader = new FileReader(currentCase.getTempDirectory() + File.separator + msfName);
 //            } catch (FileNotFoundException ex) {
-//                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+//                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
 //            }
 //            MorkDocument morkDocument = new MorkDocument(reader);
 //            List<Dict> dicts = morkDocument.getDicts();
@@ -212,18 +212,18 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
                         bbart = fsContent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
                         bbart.addAttributes(bbattributes);
                     } catch (TskCoreException ex) {
-                        Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
                     }
                     IngestManager.fireServiceDataEvent(new ServiceDataEvent(classname, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
                 }
             } catch (FileNotFoundException ex) {
-                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
             } catch (IOException ex) {
-                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
             } catch (SAXException ex) {
-                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
             } catch (TikaException ex) {
-                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
             }
         }
 

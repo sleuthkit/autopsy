@@ -242,7 +242,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
 
         final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false);
         if (pascoRoot == null) {
-            logger.log(Level.SEVERE, "Pasco2 not found");
+            logger.log(Level.WARNING, "Pasco2 not found");
             pascoFound = false;
             return;
         } else {
@@ -320,7 +320,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                 }
             }
         } catch (Exception ioex) {
-            logger.log(Level.SEVERE, "Error while trying to write index.dat files.", ioex);
+            logger.log(Level.WARNING, "Error while trying to write index.dat files.", ioex);
         }
 
         //bookmarks
@@ -352,7 +352,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
 
         } catch (Exception e) {
             success = false;
-            logger.log(Level.SEVERE, "ExtractIE::executePasco() -> ", e);
+            logger.log(Level.WARNING, "ExtractIE::executePasco() -> ", e);
         }
 
         return success;
@@ -435,7 +435,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                                                 ftime = epochtime.longValue();
                                                 ftime = ftime / 1000;
                                             } catch (ParseException e) {
-                                                logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e);
+                                                logger.log(Level.WARNING, "ExtractIE::parsePascosResults() -> ", e);
                                             }
                                         }
 
@@ -479,7 +479,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                         boolean bDelete = file.delete();
                     }
                 } catch (IOException ioex) {
-                    logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", ioex);
+                    logger.log(Level.WARNING, "ExtractIE::parsePascosResults() -> ", ioex);
                 }
 
             }

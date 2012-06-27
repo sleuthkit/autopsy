@@ -142,7 +142,7 @@ public class ReportHTML implements ReportModule {
             totaldirs = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR);
             totalfiles = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG);
         } catch (TskException ex) {
-            Logger.getLogger(ReportHTML.class.getName()).log(Level.SEVERE, "Could not get FsContentType counts from TSK ", ex);
+            Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Could not get FsContentType counts from TSK ", ex);
         }
 
 
@@ -269,7 +269,7 @@ public class ReportHTML implements ReportModule {
             try {
                 file = skCase.getAbstractFileById(objId);
             } catch (TskException ex) {
-                Logger.getLogger(ReportHTML.class.getName()).log(Level.SEVERE, "Could not get AbstractFile from TSK ", ex);
+                Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Could not get AbstractFile from TSK ", ex);
             }
 
             Long filesize = file.getSize();
@@ -450,7 +450,7 @@ public class ReportHTML implements ReportModule {
 
         } catch (Exception e) {
 
-            Logger.getLogger(ReportHTML.class.getName()).log(Level.SEVERE, "Could not write out HTML report! ", e);
+            Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Could not write out HTML report! ", e);
         }
         return htmlPath;
     }
@@ -469,7 +469,7 @@ public class ReportHTML implements ReportModule {
             out.flush();
             out.close();
         } catch (IOException e) {
-            Logger.getLogger(ReportHTML.class.getName()).log(Level.SEVERE, "Could not write out HTML report!", e);
+            Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Could not write out HTML report!", e);
         }
 
     }
