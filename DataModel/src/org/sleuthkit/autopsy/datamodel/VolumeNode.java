@@ -23,14 +23,15 @@ import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.Volume;
 
 /**
- * This class is used to represent the "Node" for the volume.
- * Its child is the root directory of a file system
+ * This class is used to represent the "Node" for the volume. Its child is the
+ * root directory of a file system
  */
 public class VolumeNode extends AbstractContentNode<Volume> {
 
     /**
      * Helper so that the display name and the name used in building the path
      * are determined the same way.
+     *
      * @param vol Volume to get the name of
      * @return short name for the Volume
      */
@@ -39,7 +40,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
     }
 
     /**
-     * 
+     *
      * @param vol underlying Content instance
      */
     public VolumeNode(Volume vol) {
@@ -48,7 +49,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         // set name, display name, and icon
         String volName = nameForVolume(vol);
 
-        long end = vol.getStart() + (vol.getSize()-1);
+        long end = vol.getStart() + (vol.getSize() - 1);
         String tempVolName = volName + " (" + vol.getDescription() + ": " + vol.getStart() + "-" + end + ")";
         this.setDisplayName(tempVolName);
 
@@ -91,7 +92,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
     public <T> T accept(ContentNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);

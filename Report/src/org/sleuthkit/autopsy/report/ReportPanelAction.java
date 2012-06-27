@@ -106,7 +106,7 @@ public class ReportPanelAction {
                             }
                             
                         } catch (Exception e) {
-                           Log.get(ReportFilterAction.class).log(Level.SEVERE, "Error generating " + s + "! Reason: ", e);
+                           Log.get(ReportFilterAction.class).log(Level.WARNING, "Error generating " + s + "! Reason: ", e);
                         }
                     }
 

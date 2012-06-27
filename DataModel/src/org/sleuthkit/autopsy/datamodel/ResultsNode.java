@@ -25,8 +25,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * Node for the results view
  */
 public class ResultsNode extends AbstractNode implements DisplayableItemNode {
     

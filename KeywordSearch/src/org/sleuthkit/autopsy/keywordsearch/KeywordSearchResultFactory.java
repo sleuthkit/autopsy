@@ -276,7 +276,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                             }
                         }
                         if (hit != null) {
-                            snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit, true, false);
+                            snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit);
                         }
                     }
 
@@ -338,7 +338,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                     int curTerm = 0;
                     for (String term : hitTerms) {
                         //escape subqueries, they shouldn't be escaped again later
-                        final String termS = KeywordSearchUtil.escapeLuceneQuery(term, true, false);
+                        final String termS = KeywordSearchUtil.escapeLuceneQuery(term);
                         highlightQuery.append("\"");
                         highlightQuery.append(termS);
                         highlightQuery.append("\"");
@@ -568,7 +568,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                     Map<AbstractFile, Integer> flattened = ContentHit.flattenResults(hits.get(hit));
                     for (AbstractFile f : flattened.keySet()) {
                         int chunkId = flattened.get(f);
-                        final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit, true, false);
+                        final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit);
                         String snippet = null;
                         try {
                             snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), chunkId, !query.isLiteral(), true);

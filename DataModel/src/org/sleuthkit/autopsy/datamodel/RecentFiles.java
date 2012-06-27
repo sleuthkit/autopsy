@@ -21,8 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * Recent files node support
  */
 public class RecentFiles implements AutopsyVisitableItem {
     
@@ -67,8 +66,9 @@ public class RecentFiles implements AutopsyVisitableItem {
 
         @Override
         public <T> T accept(AutopsyItemVisitor<T> v) {
-            return v.visit(this);
+            return v.visit(this); 
         }
+      
         
     }
     

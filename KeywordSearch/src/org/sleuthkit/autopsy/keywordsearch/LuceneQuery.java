@@ -80,7 +80,7 @@ public class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public void escape() {
-        queryEscaped = KeywordSearchUtil.escapeLuceneQuery(query, true, false);
+        queryEscaped = KeywordSearchUtil.escapeLuceneQuery(query);
         isEscaped = true;
     }
 

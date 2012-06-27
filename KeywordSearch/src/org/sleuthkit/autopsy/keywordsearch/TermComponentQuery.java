@@ -221,7 +221,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
 
         for (Term term : terms) {
-            final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm(), true, false);
+            final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
 
             LuceneQuery filesQuery = new LuceneQuery(termStr);
             //filesQuery.setField(TERMS_SEARCH_FIELD);

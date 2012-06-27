@@ -29,10 +29,9 @@ import org.sleuthkit.autopsy.datamodel.RecentFiles.RecentFilesFilter;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * Node for recent files filter
  */
-public class RecentFilesFilterNode extends AbstractNode implements DisplayableItemNode{
+public class RecentFilesFilterNode extends AbstractNode implements DisplayableItemNode {
     
     SleuthkitCase skCase;
     RecentFilesFilter filter;

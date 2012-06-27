@@ -21,8 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * Results node support
  */
 public class Results implements AutopsyVisitableItem {
     private SleuthkitCase skCase;

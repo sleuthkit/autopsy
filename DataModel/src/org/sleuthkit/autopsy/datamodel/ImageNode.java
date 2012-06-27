@@ -23,14 +23,15 @@ import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * This class is used to represent the "Node" for the image.
- * The children of this node are volumes.
+ * This class is used to represent the "Node" for the image. The children of
+ * this node are volumes.
  */
 public class ImageNode extends AbstractContentNode<Image> {
 
     /**
      * Helper so that the display name and the name used in building the path
      * are determined the same way.
+     *
      * @param i Image to get the name of
      * @return short name for the Image
      */
@@ -39,7 +40,7 @@ public class ImageNode extends AbstractContentNode<Image> {
     }
 
     /**
-     * @param img 
+     * @param img
      */
     public ImageNode(Image img) {
         super(img);
@@ -82,7 +83,7 @@ public class ImageNode extends AbstractContentNode<Image> {
     public <T> T accept(ContentNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);

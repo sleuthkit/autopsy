@@ -21,10 +21,8 @@ package org.sleuthkit.autopsy.datamodel;
 import java.text.SimpleDateFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TimeZone;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Abstract class that implements the commonality between File and Directory
@@ -181,9 +179,14 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         this(fsContent, true);
     }
     
-    // The param 'directoryBrowseMode' refers to how the user caused this node
-    // to be created: if by browsing the image contents, it is true. If by
-    // selecting a file filter (e.g. 'type' or 'recent'), it is false
+    
+    /**
+     * Constructor
+     * @param fsContent the fsContent
+     * @param directoryBrowseMode how the user caused this node
+     * to be created: if by browsing the image contents, it is true. If by 
+     * selecting a file filter (e.g. 'type' or 'recent'), it is false
+     */
     AbstractFsContentNode(T fsContent, boolean directoryBrowseMode) {
         super(fsContent);
         this.setDisplayName(AbstractFsContentNode.getFsContentName(fsContent));
@@ -223,7 +226,8 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
 
     /**
      * Fill map with FsContent properties
-     * @param map, with preserved ordering, where property names/values are put
+     * 
+     * @param map map with preserved ordering, where property names/values are put
      * @param content to extract properties from
      */
     public static void fillPropertyMap(Map<String, Object> map, FsContent content) {

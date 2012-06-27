@@ -112,7 +112,8 @@ public class DataResultFilterNode extends FilterNode{
     public Action getPreferredAction() {
         // double click action(s) for volume node or directory node
         
-        final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
+        final DisplayableItemNode originalNode;
+        originalNode = (DisplayableItemNode) this.getOriginal();
         
         return originalNode.accept(getPreferredActionsDIV);
     }
