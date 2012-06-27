@@ -33,13 +33,13 @@ my $VERSION = getVersion();
 sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
-	::logMsg("Launching officedocs v.".$VERSION);
-    ::rptMsg("officedocs v.".$VERSION); # 20110830 [fpi] + banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # 20110830 [fpi] + banner
-
+	#::logMsg("Launching officedocs v.".$VERSION);
+   # ::rptMsg("officedocs v.".$VERSION); # 20110830 [fpi] + banner
+   # ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # 20110830 [fpi] + banner
+	::rptMsg("<Office>");
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
-	::rptMsg("officedocs v.".$VERSION);
+	#::rptMsg("officedocs v.".$VERSION);
 # First, let's find out which version of Office is installed
 	my $version;
 	my $tag = 0;
@@ -53,7 +53,7 @@ sub pluginmain {
 	}
 	
 	if ($tag) {
-		::rptMsg("MSOffice version ".$version." located.");
+		#::rptMsg("MSOffice version ".$version." located.");
 		my $key_path = "Software\\Microsoft\\Office\\".$version;	                 
 		my $of_key = $root_key->get_subkey($key_path);
 		if ($of_key) {
@@ -64,16 +64,16 @@ sub pluginmain {
 				my $word_key = $of_key->get_subkey($word);
 				if ($word_key) {
 					::rptMsg($word);
-					::rptMsg("LastWrite Time ".gmtime($word_key->get_timestamp())." (UTC)");
-					::rptMsg("");
+					::rptMsg("<time> ".gmtime($word_key->get_timestamp())."</time><artifacts>");
+					#::rptMsg("");
 					my $value = $word_key->get_value("Value")->get_data();
 					my @data = split(/\00/,$value);
-					map{::rptMsg("$_");}@data;
+					#map{::rptMsg("$_");}@data;
 				}
 				else {
 #					::rptMsg("Could not access ".$word);
 				}
-				::rptMsg("");
+				#::rptMsg("");
 			}
 # Attempt to retrieve Excel docs
 			my $excel = 'Excel\\Recent Files';
@@ -126,22 +126,23 @@ sub pluginmain {
 					}
 				}
 				else {
-					::rptMsg($key_path."\\".$ppt." has no values.");
+					#::rptMsg($key_path."\\".$ppt." has no values.");
 				}		
 			}
 			else {
-				::rptMsg($key_path."\\".$ppt." not found.");
+				#::rptMsg($key_path."\\".$ppt." not found.");
 			}			
 		}
 		else {
-			::rptMsg("Could not access ".$key_path);
-			::logMsg("Could not access ".$key_path);
+			#::rptMsg("Could not access ".$key_path);
+			#::logMsg("Could not access ".$key_path);
 		}
 	}
 	else {
-		::logMsg("MSOffice version not found.");
-		::rptMsg("MSOffice version not found.");
+		#::logMsg("MSOffice version not found.");
+		#::rptMsg("MSOffice version not found.");
 	}
+	::rptMsg("</artifacts></Office>");
 }
 
 1;
