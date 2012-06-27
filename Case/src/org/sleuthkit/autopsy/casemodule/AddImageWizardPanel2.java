@@ -318,20 +318,13 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                     revert();
                     if (hasCritError) {
                         //core error
-                        StringBuilder errMsgB = new StringBuilder();
-                        errMsgB.append("<html>*Failed to add image");
-                        if (errorString != null) {
-                            errMsgB.append(": <br />").append(errorString);
-                        }
-                        errMsgB.append("</html>");
-                        getComponent().changeProgressBarTextAndColor(errMsgB.toString(), 0, Color.black);
+                         getComponent().setErrors(errorString, true);
                     }
-
                     return;
                 } else if (errorString != null) {
                     //data error (non-critical)
                     logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
-                    getComponent().setNonCriticalErrors(errorString);
+                    getComponent().setErrors(errorString, false);
                 }
             }
 
