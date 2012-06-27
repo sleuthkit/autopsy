@@ -149,7 +149,6 @@ public final class FileSearchTopComponent extends TopComponent implements DataEx
     /**
      * Action when the "Search" button is pressed.
      *
-     * @param evt  the action event
      */
     private void search() {
         // change the cursor to "waiting cursor" for this operation

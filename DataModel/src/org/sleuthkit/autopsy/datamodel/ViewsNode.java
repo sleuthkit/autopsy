@@ -26,7 +26,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  *
- * @author dfickling
+ * Node for the views
+ * 
  */
 public class ViewsNode extends AbstractNode implements DisplayableItemNode {
     

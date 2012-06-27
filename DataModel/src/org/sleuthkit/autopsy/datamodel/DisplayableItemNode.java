@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+
 /**
  * Interface for all displayable Nodes
  */
@@ -26,9 +27,8 @@ public interface DisplayableItemNode{
     /**
      * Visitor pattern support.
      * 
-     * @param <T> visitor return type
      * @param v visitor
-     * @return visitor return value
+     * @return visitor's visit return value
      */
     <T> T accept(DisplayableItemNodeVisitor<T> v);
 }

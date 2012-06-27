@@ -35,10 +35,6 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
         this(dir, true);
     }
 
-    /**
-     * 
-     * @param dir Underlying Content instance
-     */
     public DirectoryNode(Directory dir, boolean directoryBrowseMode) {
         super(dir, directoryBrowseMode);
 
@@ -70,4 +66,7 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
+    
+    
+
 }

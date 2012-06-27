@@ -30,8 +30,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- *
- * @author dfickling
+ * Node encapsulating blackboard artifact type
  */
 public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNode{
     

@@ -203,11 +203,12 @@ public class Ingester {
     }
 
     /**
-     * Common delegate method actually doing the work for objects implementing ContentStream
+     * Delegate method actually performing the indexing work for objects implementing ContentStream
      * 
-     * @param ContentStream to ingest
+     * @param cs ContentStream to ingest
      * @param fields content specific fields
      * @param size size of the content - used to determine the Solr timeout, not used to populate meta-data
+     * 
      * @throws IngesterException if there was an error processing a specific
      * content, but the Solr server is probably fine.
      */

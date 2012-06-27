@@ -25,10 +25,9 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * Node for recent files
  */
-public class RecentFilesNode extends AbstractNode implements DisplayableItemNode{
+public class RecentFilesNode extends AbstractNode implements DisplayableItemNode {
     
     private static final String NAME = "Recent Files";
     SleuthkitCase skCase;

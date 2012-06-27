@@ -71,8 +71,9 @@ public interface DataContentViewer {
     
      /**
      * Checks whether the given viewer is preferred for the Node
+     * 
      * @param node Node to check for preference
-     * @param isSupported, true if the viewer is supported by the node
+     * @param isSupported true if the viewer is supported by the node, false otherwise
      * as determined by a previous check
      * @return an int (0-10) higher return means the viewer has higher priority
      * 0 means not supported

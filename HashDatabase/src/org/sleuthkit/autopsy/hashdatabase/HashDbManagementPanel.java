@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -40,6 +41,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
+import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskException;
 
@@ -104,16 +106,18 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
     private void initUI(HashDb db) {
         boolean useForIngestEnabled = db != null && !ingestRunning;
         boolean useForIngestSelected = db != null && db.getUseForIngest();
-        boolean showInboxMessagesEnabled = db != null && !ingestRunning && useForIngestSelected;
+        boolean showInboxMessagesEnabled = db != null && !ingestRunning && useForIngestSelected && db.getDbType().equals(DBType.KNOWN_BAD);
         boolean showInboxMessagesSelected = db != null && db.getShowInboxMessages();
         boolean deleteButtonEnabled = db != null && !ingestRunning;
         boolean importButtonEnabled = !ingestRunning;
         if (db == null) {
-            setButtonFromIndexStatus(this.indexButton, IndexStatus.NONE);
+            setButtonFromIndexStatus(this.indexButton, this.hashDbIndexStatusLabel, IndexStatus.NONE);
             this.hashDbLocationLabel.setText("No database selected");
             this.hashDbNameLabel.setText("No database selected");
+            this.hashDbIndexStatusLabel.setText("No database selected");
+            this.hashDbTypeLabel.setText("No database selected");
         } else {
-            setButtonFromIndexStatus(this.indexButton, db.status());
+            setButtonFromIndexStatus(this.indexButton, this.hashDbIndexStatusLabel, db.status());
             String shortenPath = db.getDatabasePaths().get(0);
             this.hashDbLocationLabel.setToolTipText(shortenPath);
             if(shortenPath.length() > 50){
@@ -122,6 +126,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
             }
             this.hashDbLocationLabel.setText(shortenPath);
             this.hashDbNameLabel.setText(db.getName());
+            this.hashDbTypeLabel.setText(db.getDbType().getDisplayName());
         }
         this.useForIngestCheckbox.setSelected(useForIngestSelected);
         this.useForIngestCheckbox.setEnabled(useForIngestEnabled);
@@ -162,7 +167,6 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         hashSetTable = new javax.swing.JTable();
         importButton = new javax.swing.JButton();
-        deleteButton = new javax.swing.JButton();
         rightPanel = new javax.swing.JPanel();
         nameLabel = new javax.swing.JLabel();
         hashDbNameLabel = new javax.swing.JLabel();
@@ -173,6 +177,10 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         indexLabel = new javax.swing.JLabel();
         indexButton = new javax.swing.JButton();
         ingestRunningLabel = new javax.swing.JLabel();
+        hashDbIndexStatusLabel = new javax.swing.JLabel();
+        typeLabel = new javax.swing.JLabel();
+        hashDbTypeLabel = new javax.swing.JLabel();
+        deleteButton = new javax.swing.JButton();
 
         jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
 
@@ -200,34 +208,22 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
             }
         });
 
-        deleteButton.setText(org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.deleteButton.text")); // NOI18N
-        deleteButton.setEnabled(false);
-        deleteButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteButtonActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout leftPanelLayout = new javax.swing.GroupLayout(leftPanel);
         leftPanel.setLayout(leftPanelLayout);
         leftPanelLayout.setHorizontalGroup(
             leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 176, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, leftPanelLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(leftPanelLayout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(importButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(deleteButton)
-                .addGap(32, 32, 32))
+                .addContainerGap())
         );
         leftPanelLayout.setVerticalGroup(
             leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, leftPanelLayout.createSequentialGroup()
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 313, Short.MAX_VALUE)
                 .addGap(0, 0, 0)
-                .addGroup(leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(importButton)
-                    .addComponent(deleteButton))
+                .addComponent(importButton)
                 .addGap(0, 0, 0))
         );
 
@@ -269,29 +265,58 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
 
         ingestRunningLabel.setText(org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.ingestRunningLabel.text")); // NOI18N
 
+        hashDbIndexStatusLabel.setText(org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.hashDbIndexStatusLabel.text")); // NOI18N
+
+        typeLabel.setText(org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.typeLabel.text")); // NOI18N
+
+        hashDbTypeLabel.setText(org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.hashDbTypeLabel.text")); // NOI18N
+
+        deleteButton.setText(org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.deleteButton.text")); // NOI18N
+        deleteButton.setEnabled(false);
+        deleteButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout rightPanelLayout = new javax.swing.GroupLayout(rightPanel);
         rightPanel.setLayout(rightPanelLayout);
         rightPanelLayout.setHorizontalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(rightPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(showInboxMessagesCheckBox)
-                    .addComponent(useForIngestCheckbox)
+                .addGroup(rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(rightPanelLayout.createSequentialGroup()
-                        .addComponent(nameLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(hashDbNameLabel))
+                        .addGroup(rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(rightPanelLayout.createSequentialGroup()
+                                .addComponent(nameLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(hashDbNameLabel))
+                            .addGroup(rightPanelLayout.createSequentialGroup()
+                                .addComponent(locationLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(hashDbLocationLabel))
+                            .addGroup(rightPanelLayout.createSequentialGroup()
+                                .addComponent(ingestRunningLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(useForIngestCheckbox))
+                            .addGroup(rightPanelLayout.createSequentialGroup()
+                                .addComponent(typeLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(hashDbTypeLabel))
+                            .addGroup(rightPanelLayout.createSequentialGroup()
+                                .addGap(10, 10, 10)
+                                .addComponent(indexButton))
+                            .addGroup(rightPanelLayout.createSequentialGroup()
+                                .addComponent(indexLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(hashDbIndexStatusLabel)))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(rightPanelLayout.createSequentialGroup()
-                        .addComponent(locationLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(hashDbLocationLabel))
-                    .addGroup(rightPanelLayout.createSequentialGroup()
-                        .addComponent(indexLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(indexButton))
-                    .addComponent(ingestRunningLabel))
-                .addContainerGap(117, Short.MAX_VALUE))
+                        .addComponent(showInboxMessagesCheckBox)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)
+                        .addComponent(deleteButton)))
+                .addContainerGap())
         );
         rightPanelLayout.setVerticalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -306,15 +331,22 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
                     .addComponent(hashDbLocationLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(typeLabel)
+                    .addComponent(hashDbTypeLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(indexLabel)
-                    .addComponent(indexButton))
-                .addGap(7, 7, 7)
-                .addComponent(useForIngestCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(showInboxMessagesCheckBox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 175, Short.MAX_VALUE)
+                    .addComponent(hashDbIndexStatusLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(indexButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 138, Short.MAX_VALUE)
                 .addComponent(ingestRunningLabel)
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 36, Short.MAX_VALUE)
+                .addComponent(useForIngestCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(deleteButton)
+                    .addComponent(showInboxMessagesCheckBox)))
         );
 
         jSplitPane1.setRightComponent(rightPanel);
@@ -323,11 +355,11 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 494, Short.MAX_VALUE)
+            .addComponent(jSplitPane1)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
+            .addComponent(jSplitPane1)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -357,7 +389,8 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, new Object[]{"New Hash Set name:", nameTextField, nsrlCheckBox}, "New Hash Set", JOptionPane.PLAIN_MESSAGE);
                 String setName = nameTextField.getText();
                 if (setName != null && !setName.equals("")) {
-                    HashDb newDb = new HashDb(setName, Arrays.asList(new String[]{filePath}), true, !nsrlCheckBox.isSelected());
+                    nsrl = nsrlCheckBox.isSelected();
+                    HashDb newDb = new HashDb(setName, Arrays.asList(new String[]{filePath}), true, !nsrl, nsrl ? DBType.NSRL : DBType.KNOWN_BAD);
                     int toIndex = JOptionPane.NO_OPTION;
                     if (IndexStatus.isIngestible(newDb.status())) {
                         newDb.setUseForIngest(true);
@@ -371,8 +404,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
                             logger.log(Level.WARNING, "Error creating index", ex);
                         }
                     }
-                    if(nsrlCheckBox.isSelected()) {
-                        nsrl = true;
+                    if(nsrl) {
                         HashDbXML.getCurrent().setNSRLSet(newDb);
                     } else {
                         HashDbXML.getCurrent().addKnownBadSet(newDb);
@@ -445,13 +477,15 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error creating index", ex);
         }
-        setButtonFromIndexStatus(indexButton, current.status());
+        setButtonFromIndexStatus(indexButton, this.hashDbIndexStatusLabel, current.status());
     }//GEN-LAST:event_indexButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton deleteButton;
+    private javax.swing.JLabel hashDbIndexStatusLabel;
     private javax.swing.JLabel hashDbLocationLabel;
     private javax.swing.JLabel hashDbNameLabel;
+    private javax.swing.JLabel hashDbTypeLabel;
     private javax.swing.JTable hashSetTable;
     private javax.swing.JButton importButton;
     private javax.swing.JButton indexButton;
@@ -464,6 +498,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
     private javax.swing.JLabel nameLabel;
     private javax.swing.JPanel rightPanel;
     private javax.swing.JCheckBox showInboxMessagesCheckBox;
+    private javax.swing.JLabel typeLabel;
     private javax.swing.JCheckBox useForIngestCheckbox;
     // End of variables declaration//GEN-END:variables
 
@@ -515,7 +550,8 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         }
     }
     
-    static void setButtonFromIndexStatus(JButton theButton, IndexStatus status) {
+    static void setButtonFromIndexStatus(JButton theButton, JLabel theLabel, IndexStatus status) {
+        theLabel.setText(status.message());
         switch (status) {
             case INDEX_OUTDATED:
                 theButton.setText("Re-index");

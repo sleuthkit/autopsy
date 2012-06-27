@@ -43,8 +43,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.*;
 
 /**
- *
- * @author Alex \System32\Config
+ * Extracting windows registry data using regripper
  */
 public class ExtractRegistry extends Extract implements IngestServiceImage {
 

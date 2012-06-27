@@ -280,7 +280,7 @@ public class HashDbXML {
                 paths.add(path);
             }
             
-            HashDb set = new HashDb(name, paths, useForIngestBool, showInboxMessagesBool);
+            HashDb set = new HashDb(name, paths, useForIngestBool, showInboxMessagesBool, typeDBType);
             
             if(typeDBType == DBType.KNOWN_BAD) {
                 knownBadSets.add(set);

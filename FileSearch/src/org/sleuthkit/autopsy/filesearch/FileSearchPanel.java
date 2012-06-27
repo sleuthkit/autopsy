@@ -152,7 +152,6 @@ public class FileSearchPanel extends javax.swing.JPanel {
     /**
      * Action when the "Search" button is pressed.
      *
-     * @param evt  the action event
      */
     private void search() {
         // change the cursor to "waiting cursor" for this operation

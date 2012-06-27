@@ -43,8 +43,8 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
     static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa"});
     static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa)";
     static GeneralFilter rawFilter = new GeneralFilter(rawExt, rawDesc);
-    static final List<String> encaseExt = Arrays.asList(new String[]{".e01", ".eaa"});
-    static final String encaseDesc = "Encase Images (*.e01, *.eAA)";
+    static final List<String> encaseExt = Arrays.asList(new String[]{".e01"});
+    static final String encaseDesc = "Encase Images (*.e01)";
     static GeneralFilter encaseFilter = new GeneralFilter(encaseExt, encaseDesc);
     static final List<String> allExt = new ArrayList<String>();
     {
@@ -91,12 +91,7 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
      * @return imagePath  the image path
      */
     public String getImagePath() {
-        String imgPath = imgPathTextField.getText();
-        if (Case.pathExists(imgPath)) {
-            return imgPath;
-        } else {
-            return "";
-        }
+        return imgPathTextField.getText();
     }
 
     public JTextField getImagePathTextField() {
@@ -344,9 +339,11 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
         boolean isExist = Case.pathExists(imgPath);
         File imgFile = new File(imgPath);
 
-        // check if the given paths exist and those are paths to image files
+        // check if the given path is to an image file
         boolean isImagePath = allFilter.accept(imgFile);
+        // check if the given path is to a physical drive
+        boolean isPhysicalDrive = Case.isPhysicalDrive(imgPath);
 
-        this.wizPanel.enableNextButton(isExist && isImagePath);
+        this.wizPanel.enableNextButton((isExist && isImagePath) || isPhysicalDrive);
     }
 }
