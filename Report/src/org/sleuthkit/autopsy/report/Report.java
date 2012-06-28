@@ -124,7 +124,7 @@ public class Report {
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_hashset;");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_hashname;");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_hash;");
-            String temp1 = "CREATE TABLE report_hashset AS SELECT value_text as hashset,blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HASHSET_NAME.getTypeID() + ";";
+            String temp1 = "CREATE TABLE report_hashset AS SELECT value_text as hashset,blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ";";
             String temp5 = "CREATE TABLE report_hashname AS SELECT name, size, report_hashset.artifact_id from tsk_files,blackboard_artifacts, report_hashset WHERE blackboard_artifacts.artifact_id = report_hashset.artifact_id AND blackboard_artifacts.obj_id = tsk_files.obj_id;";
             String temp6 = "CREATE TABLE report_hash AS SELECT hashset,size,name from report_hashset INNER JOIN report_hashname ON report_hashset.artifact_id=report_hashname.artifact_id;";
             tempdbconnect.executeStmt(temp1);
@@ -215,7 +215,7 @@ public class Report {
                     table.append("<table><thead><tr><th>").append("Folder").append("</th><th>From</th><th>To</th><th>Subject</th><th>Date/Time</th><th>Content</th><th>CC</th><th>BCC</th><th>Path</th></tr><tbody>");
                 }
                 table.append("<tr><td>").append(uniqueresults.getString("name")).append("</td>");
-                table.append("<td>").append(uniqueresults.getString("author")).append("</td>").append("<td>").append(uniqueresults.getString("receiver")).append("<br />(").append(uniqueresults.getString("subject")).append(")").append("</td>");
+                table.append("<td>").append(uniqueresults.getString("receiver")).append("</td>").append("<td>").append(uniqueresults.getString("author")).append("</td><td>").append(uniqueresults.getString("subject")).append("</td>");
                 SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                 String value = sdf.format(new java.util.Date(uniqueresults.getLong("date") * 1000));
                 table.append("<td>").append(value).append("</td>");
