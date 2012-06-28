@@ -11,8 +11,131 @@ Talk about the various pieces and how things are working behind the scenes (in o
 - Data is encapsulated into nodes and passed to table and content viewers
 - Reports can be generated
 
-\subsection design_overview_sub Sub-Section
-This was added for reference.
+\subsection design_overview_sub1 Creating a case
+The first step in the work flow is creating a case.
+User is guided with the case creation wizard (invoked by NewCaseWizardAction) to enter the case name, base directory and optional case information.
+The base directory is the directory where all files associated with the case are stored. 
+The directory is self contained (besides referenced images files, which are stored separately) and could be later moved to another location or another machine by the user.
+The case directory contains:
+- a newly created, empty case SQLite TSK database, autopsy.db,
+- a case XML configuration file, named after the case name and .aut extension,
+- directory structure for temporary files, case log files, cache files, and module specific files.
+An example of module-specific directory is keywordsearch directory, created by the Keyword Search module.
+
+After case is created, currentCase singleton member variable in Case class is updated.  It contains access to higher-level case information stored in the case XML file.
+Also updated is SleuthkitCase handle to the TSK database.  
+In turn, SleuthkitCase contains a handle to SleuthkitJNI object, through which native sleuthkit API can be accessed.
+
+
+\subsection design_overview_sub2 Adding an image
+After case in created, user is guided to add an image to the case using the wizard invoked by AddImageAction.
+AddImageWizardIterator instantiates and manages the wizard panels (currently 4).
+
+User enters image information in the first panel AddImageWizardPanel1 (image path, image timezone and additional options).
+
+In the subsequent panel, AddImageWizardPanel2, a background worker thread is spawned in AddImgTask.
+
+Work is delegated to org.sleuthkit.datamodel.AddImageProcess, which calls native sleuthkit methods via SleuthkitJNI to: initialize, run and commit the new image.
+The entire process is performed within a database transaction and the transaction is not committed until user accepts the image in AddImageWizardPanel3.
+User can also interrupt the ongoing add image process, which results in a stop call to sleuthkit.  The call sets a special flag.  The flag is periodically checked by sleutkit code and if set, it will result in breaking out of any current loops and early return from sleuthkit.
+The worker thread in Autopsy will terminate and revert will be called to back out of the current transaction.
+
+Actual work in the process is done in the native sleuthkit library.  The library reads the image and populates the TSK SQLite database with the image metadata.
+Rows are inserted into the following tables: 
+- tsk_objects (all content objects are given their unique object IDs and are associated with parents),
+- tsk_file_layout (for block information for files, such as "special" files representing unallocated data),
+- tsk_image_info, tsk_image_names (to store image info, such as local image paths, block size and timezone),
+- tsk_vs_info (to store volume system information),
+- tsk_vs_parts (to store volume information),
+- tsk_fs_info (to store file system information),
+- tsk_files (to store all files and directories discovered and their attributes).
+
+After image has been processed successfully and after the user confirmation, the transaction is committed to the database.
+
+Errors from processing the image in sleuthkit are propagated using org.sleuthkit.datamodel.TskCoreException and org.sleuthkit.datamodel.TskDataException java exceptions.
+The errors are logged and critical errors are shown to the user in the wizard text panel.
+org.sleuthkit.datamodel.TskCoreException is handled by the wizard as a critical, unrecoverable error condition with TSK core, resulting in the interruption of the add image process.
+org.sleuthkit.datamodel.TskDataException, pertaining to an error associated with the data itself (such as invalid volume offset), is treated as a warning - the process still continues because there are likely data image that can be still read.
+ 
+\subsection design_overview_sub3 Concurrency
+
+Autopsy is a highly multi-threaded environment; Besides threads associated with the GUI and event dispatching, the application spawns threads to support concurrent user-driven processes.
+For instance, multiple image ingest services can be ran at the same time.  In addition, user may want  to add another image to the database while ingest is running on previously added images.
+During the add image process, a database lock is acquired using org.sleuthkit.autopsy.casemodule.SleuthkitCase.dbWriteLock() to ensure exclusive access to the database resource.
+Once the lock is acquired by the add image process, other Autopsy threads (such as ingest modules) will block for the duration of add image process.
+The database lock is implemented with SQLite database in mind, which does not support concurrent writes. The database lock is released with org.sleuthkit.autopsy.casemodule.SleuthkitCase.dbWriteUnlock() when the add image process has ended.
+The database lock is used for all database access methods in org.sleuthkit.autopsy.casemodule.SleuthkitCase.
+
+\subsection design_overview_sub4 Running ingest modules
+
+User has an option to run ingest modules after the image has been added using the wizard, and, optionally, 
+at any time ingest modules can be run or re-run.
+
+Ingest modules (also referred as ingest services) are designed as plugins that are separate from Autopsy core.
+Those standalone modules can be added to an existing Autopsy installation as jar files and they will be automatically recognized next time Autopsy starts.
+
+Every module generally has its own specific role.  The two main use cases for ingest modules are:
+- to extract information from the image and write result to blackboard
+- to analyze data already in blackboard and add more information to it.
+
+There may also be special-purpose ingest modules that run early in the ingest pipe-line, whose results are useful to other modules.
+One example of such module is Hash DB module, which determines which files are known; known files can be omitted from processing by subsequent modules in the pipeline (if chosen so), for performance reasons.
+
+Autopsy provides an ingest module framework in org.sleuthkit.autopsy.ingest package, located in a separate module.
+The framework provides:
+- interfaces every ingest module needs to implement:
+* org.sleuthkit.autopsy.ingest.IngestServiceImage (for modules that are interested in the image as a whole, or picking only specific data from the image of interest) 
+* org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile (for modules that need to process every file).
+
+The interfaces define methods to initialize, process passed in data, configure the ingest service, query the service state and finalize the service.
+
+- org.sleuthkit.autopsy.ingest.IngestManager, a facility responsible for discovery of ingest modules, enqueuing work to the modules, starting and stopping the ingest pipeline,sending messages and data to the user,
+- org.sleuthkit.autopsy.ingest.IngestManagerProxy, a facility used by the modules to communicate with the manager
+- additional classes to support threading, sending messages, ingest monitoring, ingest cancellation, progress bars,
+- a user interface component (Ingest Inbox) used to display interesting messages posted by ingest modules to the user,
+
+Most ingest modules typically require configuration before they are executed.
+The configuration methods are defined in the ingest modules interfaces.  
+Module configuration is decentralized and module-specific; every modules maintains its
+ own configuration state and is responsible for implementing its own JPanels to render
+ and present the configuration to the user.
+
+Ingest modules run in background threads. There is a single background thread for file-level ingest modules, within which every file ingest module runs series for every file.
+Image ingest modules run each in their own thread and thus can run in parallel (TODO we will change this in the future for performance reasons, and implement module dependencies better).  
+Every ingest thread is presented with a progress bar and can be cancelled by a user, or by the framework, in case of a critical event (such as Autopsy is terminating, or a system error).
+Ingest module can also implement its own internals threads for any special-purpose processing that can occur in parallel.
+However, the module is then responsible for creating, managing and tearing down the internal threads.
+An example of a module that maintains its own threads is the KeywordSearch module.
+
+- viewers (dir tree), or custom viewers also possible (keyword search)
+
+\subsection design_overview_sub5 Ingest modules posting results
+
+Ingest services, when running, provide a real-time updates to the user
+by periodically posting data results and messages to registered components.
+
+When a service posts data and results is module-implementation-specific.  
+In a simple case, service may notify of new data as soon as the data is available - the case for simple services that take a relatively short amount of time to execute and new data is expected to arrive in the order of seconds.
+
+Another possibility is to post data in fixed time-intervals (e.g. for service that takes minutes to produce results and service that maintain internal threads to perform work).
+There exist a global update setting that specifies maximum time interval for the service to post data.  
+User may adjust the interval for more frequent, real-time updates.  Services that post data in periodic intervals should obey this setting.  
+The setting is available to the module using getUpdateFrequency() method in org.sleuthkit.autopsy.ingest.IngestManagerProxy class.
+
+Data events registration and posting
+
+Ingest messages registration and posting
+
+\subsection design_overview_sub6 Result viewers (directory tree, table viewers, content viewers) 
+
+
+
+\subsection design_overview_sub7 Reports generation
+
+
+
+
+
+
 
 */
-
