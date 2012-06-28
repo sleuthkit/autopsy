@@ -140,7 +140,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Internet Explorer"));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", domain));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, Favorite, bbattributes);
-                IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+                IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
                 this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + Favorite.getName());
@@ -193,7 +193,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
 
         }
 
-        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+        IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
 
     //Recent Documents section
@@ -223,7 +223,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
             }
 
         }
-        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
+        IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
 
     }
 
@@ -485,7 +485,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
             }
         }
 
-        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+        IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 
     @Override

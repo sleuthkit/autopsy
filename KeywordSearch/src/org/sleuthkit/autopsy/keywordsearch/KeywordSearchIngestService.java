@@ -792,7 +792,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
                         //update artifact browser
                         if (!newArtifacts.isEmpty()) {
-                            IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+                            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                         }
                     }
                     progress.progress(queryStr, ++numSearched);
