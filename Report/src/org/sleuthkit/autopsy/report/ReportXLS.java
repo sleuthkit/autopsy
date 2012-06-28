@@ -79,6 +79,7 @@ public class ReportXLS implements ReportModule {
         int countKeyword = 0;
         int countHash = 0;
         int countDevice = 0;
+        int countEmail = 0;
         for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
                 countGen++;
@@ -115,6 +116,9 @@ public class ReportXLS implements ReportModule {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                 countDevice++;
             }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                countEmail++;
+            }
         }
 
         try {
@@ -146,6 +150,7 @@ public class ReportXLS implements ReportModule {
             Sheet sheetBookmark = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getDisplayName());
             Sheet sheetDownload = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getDisplayName());
             Sheet sheetHistory = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getDisplayName());
+            Sheet sheetEmail = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getDisplayName());
 
             //Bold/underline cell style for the top header rows
             CellStyle style = wbtemp.createCellStyle();
@@ -251,6 +256,17 @@ public class ReportXLS implements ReportModule {
             sheetHistory.getRow(0).createCell(3).setCellValue("Title");
             sheetHistory.getRow(0).createCell(4).setCellValue("Program");
 
+            sheetEmail.setDefaultColumnStyle(1, defaultstyle);
+            sheetEmail.createRow(0).setRowStyle(style);
+            sheetEmail.getRow(0).createCell(0).setCellValue("From");
+            sheetEmail.getRow(0).createCell(1).setCellValue("To");
+            sheetEmail.getRow(0).createCell(2).setCellValue("Subject");
+            sheetEmail.getRow(0).createCell(3).setCellValue("Date/Time");
+            sheetEmail.getRow(0).createCell(4).setCellValue("Content");
+            sheetEmail.getRow(0).createCell(5).setCellValue("CC");
+            sheetEmail.getRow(0).createCell(6).setCellValue("BCC");
+            sheetEmail.getRow(0).createCell(7).setCellValue("Path");
+
             for (int i = 0; i < wbtemp.getNumberOfSheets(); i++) {
                 Sheet tempsheet = wbtemp.getSheetAt(i);
                 tempsheet.setAutobreaks(true);
@@ -274,6 +290,7 @@ public class ReportXLS implements ReportModule {
             int countedKeyword = 0;
             int countedHash = 0;
             int countedDevice = 0;
+            int countedEmail = 0;
 
             //start populating the sheets in the workbook
             for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
@@ -298,7 +315,7 @@ public class ReportXLS implements ReportModule {
                     }
                     String value = "";
                     int type = tempatt.getAttributeTypeID();
-                   if (tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID() || tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
+                    if (tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID() || tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID() || tempatt.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
                         value = new java.text.SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new java.util.Date((tempatt.getValueLong()) * 1000)).toString();
                     } else {
                         value = tempatt.getValueString();
@@ -386,6 +403,19 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                 }
+                
+                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                    countedEmail++;
+                    Row temp = sheetEmail.createRow(countedEmail);
+                    temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
+                    temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID()));
+                    temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID()));
+                    temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()));
+                    temp.createCell(4).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID()));
+                    temp.createCell(5).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()));
+                    temp.createCell(6).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()));
+                    temp.createCell(7).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                }
             }
 
 
@@ -408,7 +438,7 @@ public class ReportXLS implements ReportModule {
             wb.write(fos);
             fos.close();
         } catch (IOException e) {
-            Logger.getLogger(ReportXLS.class.getName()).log(Level.SEVERE, "Could not write out XLS report!", e);
+            Logger.getLogger(ReportXLS.class.getName()).log(Level.WARNING, "Could not write out XLS report!", e);
         }
 
     }
@@ -424,7 +454,8 @@ public class ReportXLS implements ReportModule {
         String type = "XLS";
         return type;
     }
-       @Override
+
+    @Override
     public String getExtension() {
         String ext = ".xlsx";
         return ext;
@@ -447,7 +478,7 @@ public class ReportXLS implements ReportModule {
         try {
             Desktop.getDesktop().open(file);
         } catch (IOException e) {
-            Logger.getLogger(ReportXLS.class.getName()).log(Level.SEVERE, "Could not open XLS report! ", e);
+            Logger.getLogger(ReportXLS.class.getName()).log(Level.WARNING, "Could not open XLS report! ", e);
         }
     }
 }

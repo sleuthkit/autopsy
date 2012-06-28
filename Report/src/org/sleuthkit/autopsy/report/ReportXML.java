@@ -103,6 +103,7 @@ public class ReportXML implements ReportModule {
             Element nodeKeyword = new Element("Keyword-Search-Hits");
             Element nodeHash = new Element("Hashset-Hits");
             Element nodeDevice = new Element("Attached-Devices");
+            Element nodeEmail = new Element("Email-Messages");
             //remove bytes
             Pattern INVALID_XML_CHARS = Pattern.compile("[^\\u0009\\u000A\\u000D\\u0020-\\uD7FF\\uE000-\\uFFFD\uD800\uDC00-\uDBFF\uDFFF]");
             for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
@@ -177,6 +178,9 @@ public class ReportXML implements ReportModule {
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                     nodeDevice.addContent(artifact);
                 }
+                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                    nodeEmail.addContent(artifact);
+                }
 
                 //end of master loop
             }
@@ -193,6 +197,7 @@ public class ReportXML implements ReportModule {
             root.addContent(nodeKeyword);
             root.addContent(nodeHash);
             root.addContent(nodeDevice);
+            root.addContent(nodeEmail);
 
 
             //Export it the first time
