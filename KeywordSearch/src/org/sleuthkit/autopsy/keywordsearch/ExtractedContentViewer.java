@@ -365,6 +365,8 @@ public class ExtractedContentViewer implements DataContentViewer {
             return false;
         }
 
+        if (content.getSize() == 0)
+            return false;
 
         final Server solrServer = KeywordSearch.getServer();
 
@@ -374,8 +376,6 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         final long contentID = content.getId();
-
-
 
         try {
             return solrServer.queryIsIndexed(contentID);
