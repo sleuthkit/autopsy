@@ -215,7 +215,7 @@ public class Report {
                     table.append("<table><thead><tr><th>").append("Folder").append("</th><th>From</th><th>To</th><th>Subject</th><th>Date/Time</th><th>Content</th><th>CC</th><th>BCC</th><th>Path</th></tr><tbody>");
                 }
                 table.append("<tr><td>").append(uniqueresults.getString("name")).append("</td>");
-                table.append("<td>").append(uniqueresults.getString("receiver")).append("</td>").append("<td>").append(uniqueresults.getString("author")).append("<br />(").append(uniqueresults.getString("subject")).append(")").append("</td>");
+                table.append("<td>").append(uniqueresults.getString("receiver")).append("</td>").append("<td>").append(uniqueresults.getString("author")).append("</td><td>").append(uniqueresults.getString("subject")).append("</td>");
                 SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                 String value = sdf.format(new java.util.Date(uniqueresults.getLong("date") * 1000));
                 table.append("<td>").append(value).append("</td>");
