@@ -151,7 +151,7 @@ public class ExtractRegistry extends Extract implements IngestServiceImage {
         try {
 
             if (regFilePath.toLowerCase().contains("system")) {
-                type = "autopsystem";
+                type = "autopsysystem";
             }
             if (regFilePath.toLowerCase().contains("software")) {
                 type = "autopsysoftware";
