@@ -133,11 +133,11 @@ public class IngestManager {
         pcs.addPropertyChangeListener(l);
     }
 
-    public static synchronized void fireServiceEvent(String eventType, String serviceName) {
+    static synchronized void fireServiceEvent(String eventType, String serviceName) {
         pcs.firePropertyChange(eventType, serviceName, null);
     }
 
-    public static synchronized void fireServiceDataEvent(ServiceDataEvent serviceDataEvent) {
+    static synchronized void fireServiceDataEvent(ServiceDataEvent serviceDataEvent) {
         pcs.firePropertyChange(SERVICE_HAS_DATA_EVT, serviceDataEvent, null);
     }
 

@@ -214,7 +214,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
                     } catch (TskCoreException ex) {
                         Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
                     }
-                    IngestManager.fireServiceDataEvent(new ServiceDataEvent(classname, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
+                    IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent(classname, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
                 }
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);

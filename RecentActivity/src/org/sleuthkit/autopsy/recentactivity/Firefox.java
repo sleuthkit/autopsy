@@ -105,7 +105,7 @@ public class Firefox extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         }
     }
 
@@ -146,7 +146,7 @@ public class Firefox extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
         }
     }
 
@@ -204,7 +204,7 @@ public class Firefox extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
         }
     }
 
@@ -250,7 +250,7 @@ public class Firefox extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
+            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
         }
     }
 

@@ -270,7 +270,7 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
                         abstractFile.getName() + md5Hash,
                         badFile));
             }
-            IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
+            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error creating blackboard artifact", ex);
         }
