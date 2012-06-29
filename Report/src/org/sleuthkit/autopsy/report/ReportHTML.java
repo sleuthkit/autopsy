@@ -38,6 +38,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
+import java.io.File;
 
 /**
  *
@@ -150,7 +151,7 @@ public class ReportHTML implements ReportModule {
         int reportsize = report.size();
         Integer filesystemcount = currentCase.getRootObjectsCount();
         DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
+        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datetime = datetimeFormat.format(date);
         String datenotime = dateFormat.format(date);
@@ -446,7 +447,7 @@ public class ReportHTML implements ReportModule {
         formatted_header.append(formatted_Report);
         // unformatted_header.append(formatted_Report); 
         try {
-            htmlPath = currentCase.getCaseDirectory() + "/Reports/" + caseName + "-" + datenotime + ".html";
+            htmlPath = currentCase.getCaseDirectory() + File.separator + "Reports" + File.separator + caseName + "-" + datenotime + ".html";
             this.save(htmlPath);
 
         } catch (Exception e) {

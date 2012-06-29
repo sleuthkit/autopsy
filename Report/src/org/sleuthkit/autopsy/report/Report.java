@@ -34,6 +34,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.sleuthkit.autopsy.recentactivity.dbconnect;
 
 public class Report {
@@ -85,7 +86,8 @@ public class Report {
                     table.append("<table><thead><tr><th>").append("File Name").append("</th><th>Preview</th><th>Keyword List</th></tr><tbody>");
                 }
                 table.append("<tr><td>").append(uniqueresults.getString("name")).append("</td>");
-                table.append("<td>").append(uniqueresults.getString("preview")).append("</td>").append("<td>").append(uniqueresults.getString("list")).append("<br />(").append(uniqueresults.getString("exp")).append(")").append("</td>").append("</tr>");
+                String previewreplace = StringEscapeUtils.escapeHtml(uniqueresults.getString("preview"));
+                table.append("<td>").append(previewreplace.replaceAll("<!", "")).append("</td>").append("<td>").append(uniqueresults.getString("list")).append("<br />(").append(uniqueresults.getString("exp")).append(")").append("</td>").append("</tr>");
 
             }
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_keyword;");
@@ -98,7 +100,7 @@ public class Report {
 
             File f1 = new File(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
             boolean success = f1.delete();
-
+             table.append("</tbody></table><br /><br />");
         } catch (Exception e) {
             Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);
         }
@@ -148,10 +150,10 @@ public class Report {
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_hashname;");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_hash;");
             tempdbconnect.closeConnection();
-
+            
             File f1 = new File(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
             boolean success = f1.delete();
-
+             table.append("</tbody></table><br /><br />");
         } catch (Exception e) {
             Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);
         }
@@ -229,6 +231,7 @@ public class Report {
 
             File f1 = new File(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
             boolean success = f1.delete();
+             table.append("</tbody></table><br /><br />");
 
         } catch (Exception e) {
             Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);
