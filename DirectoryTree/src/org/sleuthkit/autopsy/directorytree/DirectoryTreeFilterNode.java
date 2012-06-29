@@ -71,6 +71,7 @@ class DirectoryTreeFilterNode extends FilterNode {
             }
             final Image img = this.getLookup().lookup(Image.class);
             if (img != null) {
+                actions.add(new FileSearchAction("Open File Search"));
                 actions.add(new AbstractAction("Restart Ingest Modules") {
 
                     @Override
