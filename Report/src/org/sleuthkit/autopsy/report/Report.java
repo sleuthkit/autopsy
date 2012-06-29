@@ -34,6 +34,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.sleuthkit.autopsy.recentactivity.dbconnect;
 
 public class Report {
@@ -85,7 +86,7 @@ public class Report {
                     table.append("<table><thead><tr><th>").append("File Name").append("</th><th>Preview</th><th>Keyword List</th></tr><tbody>");
                 }
                 table.append("<tr><td>").append(uniqueresults.getString("name")).append("</td>");
-                table.append("<td>").append(uniqueresults.getString("preview")).append("</td>").append("<td>").append(uniqueresults.getString("list")).append("<br />(").append(uniqueresults.getString("exp")).append(")").append("</td>").append("</tr>");
+                table.append("<td>").append(StringEscapeUtils.escapeHtml(uniqueresults.getString("preview"))).append("</td>").append("<td>").append(uniqueresults.getString("list")).append("<br />(").append(uniqueresults.getString("exp")).append(")").append("</td>").append("</tr>");
 
             }
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_keyword;");
