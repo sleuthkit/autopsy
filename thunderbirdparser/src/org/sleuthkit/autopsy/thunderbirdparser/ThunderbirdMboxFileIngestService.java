@@ -85,9 +85,11 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
         }
 
         try {
-            byte[] t = new byte[(int) 128];
-            int byteRead = fsContent.read(t, 0, Math.min(fsContent.getSize(),128));
-            isMbox = mbox.isValidMimeTypeMbox(t);
+            byte[] t = new byte[64];
+            if(fsContent.getSize() > 64) {
+                int byteRead = fsContent.read(t, 0, 64);
+                isMbox = mbox.isValidMimeTypeMbox(t);
+            }
         } catch (TskException ex) {
             Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
         }
