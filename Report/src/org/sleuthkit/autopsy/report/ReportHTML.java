@@ -246,7 +246,7 @@ public class ReportHTML implements ReportModule {
         StringBuilder nodeInstalled = new StringBuilder("<h3><a name=\"installed\">Installed Programs (").append(countInstalled).append(")</h3>").append(tableHeader).append("<th>Program Name</th><th>Install Date/Time</th></tr></thead><tbody>");
         StringBuilder nodeKeyword = new StringBuilder("<h3><a name=\"keyword\">Keyword Search Hits (").append(countKeyword).append(")</h3>");
         StringBuilder nodeHash = new StringBuilder("<h3><a name=\"hash\">Hashset Hit (").append(countHash).append(")</h3>");
-        StringBuilder nodeDevice = new StringBuilder("<h3><a name=\"device\">Attached Devices (").append(countHash).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Serial #</th><th>Time</th></tr></thead><tbody>");
+        StringBuilder nodeDevice = new StringBuilder("<h3><a name=\"device\">Attached Devices (").append(countDevice).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Serial #</th><th>Time</th></tr></thead><tbody>");
         StringBuilder nodeEmail = new StringBuilder("<h3><a name=\"email\">Email Messages (").append(countEmail).append(")</h3>");
 
         int alt = 0;
