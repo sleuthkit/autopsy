@@ -13,6 +13,11 @@
                 <attr name="position" intvalue="3662"/>
             </file>
         </folder>
+        <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.directorytree.FileSearchProvider"/>
+            <!--<attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.filesearch.FileSearchAction.getDefault"/>-->
+            <attr name="position" intvalue="250"/>
+        </file>
     </folder>
     <folder name="Menu">
         <folder name="Tools">
