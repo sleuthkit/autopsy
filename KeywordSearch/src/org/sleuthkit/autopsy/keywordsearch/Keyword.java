@@ -57,6 +57,13 @@ public class Keyword {
     }
 
     @Override
+    public String toString() {
+        return "Keyword{" + "query=" + query + ", isLiteral=" + isLiteral + ", keywordType=" + keywordType + '}';
+    }
+    
+    
+
+    @Override
     public boolean equals(Object obj) {
         if (obj == null) {
             return false;

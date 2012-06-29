@@ -99,6 +99,7 @@ final class AddImageVisualPanel2 extends JPanel {
     
 
     void setErrors(final String errors, boolean critical) {
+        crDbProgressBar.setValue(100); //always invoked when process completed
         if (critical) {
             progressLabel.setText("*Failed to add image (critical errors encountered). Click below to view the Add Image Log.");
         }

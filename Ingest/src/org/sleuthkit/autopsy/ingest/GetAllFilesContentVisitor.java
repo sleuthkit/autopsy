@@ -71,7 +71,7 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
 
         StringBuilder queryB = new StringBuilder();
         queryB.append("SELECT * FROM tsk_files WHERE ( (fs_obj_id = ").append(fs.getId());
-        queryB.append(") OR (fs_obj_id = NULL) ) AND (size > 0)");
+        queryB.append(") OR (fs_obj_id = NULL) )");
         queryB.append(" AND ( (meta_type = ").append(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getMetaType());
         queryB.append(") OR (meta_type = ").append(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getMetaType());
         queryB.append( " AND (name != '.') AND (name != '..')");

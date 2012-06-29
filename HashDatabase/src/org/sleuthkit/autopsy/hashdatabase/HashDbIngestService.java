@@ -293,7 +293,8 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
 
             ProcessResult ret = ProcessResult.UNKNOWN;
             boolean processFile = true;
-            if (fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
+            if (fsContent.getSize() == 0 
+                    || fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
                 ret = ProcessResult.OK;
                 processFile = false;
             }

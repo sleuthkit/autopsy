@@ -38,6 +38,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
@@ -55,14 +56,13 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * An ingest service on a file level
- * Performs indexing of allocated and Solr supported files,
- * string extraction and indexing of unallocated and not Solr supported files
- * Index commit is done periodically (determined by user set ingest update interval)
- * Runs a periodic keyword / regular expression search on currently configured lists for ingest
- * and writes results to blackboard
+ * An ingest service on a file level Performs indexing of allocated and Solr
+ * supported files, string extraction and indexing of unallocated and not Solr
+ * supported files Index commit is done periodically (determined by user set
+ * ingest update interval) Runs a periodic keyword / regular expression search
+ * on currently configured lists for ingest and writes results to blackboard
  * Reports interesting events to Inbox and to viewers
- * 
+ *
  * Registered as a service in layer.xml
  */
 public final class KeywordSearchIngestService implements IngestServiceAbstractFile {
@@ -92,19 +92,20 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private volatile int messageID = 0;
     private boolean processedFiles;
     private volatile boolean finalSearcherDone = true;
-    private final String hashDBServiceName = "Hash Lookup";
+    private final String hashDBServiceName = "Hash Lookup"; //NOTE this needs to match the HashDB service getName()
     private SleuthkitCase caseHandle = null;
     private boolean skipKnown = true;
     boolean initialized = false;
 
     private enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,
+        INGESTED, EXTRACTED_INGESTED, SKIPPED, INGESTED_META
     };
     private Map<Long, IngestStatus> ingestStatus;
 
     /**
      * Returns singleton instance of the service, creates one if needed
+     *
      * @return instance of the service
      */
     public static synchronized KeywordSearchIngestService getDefault() {
@@ -115,10 +116,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * Starts processing of every file provided by IngestManager.  
-     * Checks if it is time to commit and run search
+     * Starts processing of every file provided by IngestManager. Checks if it
+     * is time to commit and run search
+     *
      * @param abstractFile file/unallocated file/directory to process
-     * @return ProcessResult.OK in most cases and ERROR only if error in the pipeline, otherwise does not advice to stop the pipeline
+     * @return ProcessResult.OK in most cases and ERROR only if error in the
+     * pipeline, otherwise does not advice to stop the pipeline
      */
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
@@ -133,8 +136,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         IngestServiceAbstractFile.ProcessResult hashDBResult = managerProxy.getAbstractFileServiceResult(hashDBServiceName);
         //logger.log(Level.INFO, "hashdb result: " + hashDBResult + "file: " + AbstractFile.getName());
         if (hashDBResult == IngestServiceAbstractFile.ProcessResult.COND_STOP && skipKnown) {
+            //index meta-data only
+            indexer.indexFile(abstractFile, false);
             return ProcessResult.OK;
         } else if (hashDBResult == IngestServiceAbstractFile.ProcessResult.ERROR) {
+            //index meta-data only
+            indexer.indexFile(abstractFile, false);
             //notify depending service that keyword search (would) encountered error for this file
             return ProcessResult.ERROR;
         }
@@ -145,7 +152,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         checkRunCommitSearch();
 
-        indexer.indexFile(abstractFile);
+        //index the file and content (if the content is supported)
+        indexer.indexFile(abstractFile, true);
         return ProcessResult.OK;
 
     }
@@ -196,8 +204,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * Handle stop event (ingest interrupted)
-     * Cleanup resources, threads, timers
+     * Handle stop event (ingest interrupted) Cleanup resources, threads, timers
      */
     @Override
     public void stop() {
@@ -234,9 +241,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * Initializes the service for new ingest run
-     * Sets up threads, timers, retrieves settings, keyword lists to run on
-     * @param managerProxy 
+     * Initializes the service for new ingest run Sets up threads, timers,
+     * retrieves settings, keyword lists to run on
+     *
+     * @param managerProxy
      */
     @Override
     public void init(IngestManagerProxy managerProxy) {
@@ -320,9 +328,11 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * The services maintains background threads, return true if background threads are running
-     * or there are pending tasks to be run in the future, such as the final search post-ingest completion
-     * @return 
+     * The services maintains background threads, return true if background
+     * threads are running or there are pending tasks to be run in the future,
+     * such as the final search post-ingest completion
+     *
+     * @return
      */
     @Override
     public boolean hasBackgroundJobsRunning() {
@@ -353,12 +363,16 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
      */
     private void postIndexSummary() {
         int indexed = 0;
+        int indexed_meta = 0;
         int indexed_extr = 0;
         int skipped = 0;
         for (IngestStatus s : ingestStatus.values()) {
             switch (s) {
                 case INGESTED:
                     ++indexed;
+                    break;
+                case INGESTED_META:
+                    ++indexed_meta;
                     break;
                 case EXTRACTED_INGESTED:
                     ++indexed_extr;
@@ -373,6 +387,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         StringBuilder msg = new StringBuilder();
         msg.append("Indexed files: ").append(indexed).append("<br />Indexed strings: ").append(indexed_extr);
+        msg.append("<br />Indexed meta-data only: ").append(indexed_meta).append("<br />");
         msg.append("<br />Skipped files: ").append(skipped).append("<br />");
         String indexStats = msg.toString();
         logger.log(Level.INFO, "Keyword Indexing Completed: " + indexStats);
@@ -423,8 +438,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * Check if time to commit, if so, run commit.
-     * Then run search if search timer is also set.
+     * Check if time to commit, if so, run commit. Then run search if search
+     * timer is also set.
      */
     void checkRunCommitSearch() {
         if (commitIndex) {
@@ -446,8 +461,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * CommitTimerAction to run by commitTimer
-     * Sets a flag to indicate we are ready for commit
+     * CommitTimerAction to run by commitTimer Sets a flag to indicate we are
+     * ready for commit
      */
     private class CommitTimerAction implements ActionListener {
 
@@ -461,8 +476,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * SearchTimerAction to run by searchTimer
-     * Sets a flag to indicate we are ready to search
+     * SearchTimerAction to run by searchTimer Sets a flag to indicate we are
+     * ready to search
      */
     private class SearchTimerAction implements ActionListener {
 
@@ -477,7 +492,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     /**
      * File indexer, processes and indexes known/allocated files,
-     * unknown/unallocated files and directories accordingly 
+     * unknown/unallocated files and directories accordingly
      */
     private class Indexer {
 
@@ -495,42 +510,70 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             return indexed;
         }
 
-        private void indexFile(AbstractFile aFile) {
+        private void indexFile(AbstractFile aFile, boolean indexContent) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
-            boolean ingestibleFile = Ingester.isIngestible(aFile);
 
-            final long size = aFile.getSize();
-            //limit size of entire file, do not limit strings
-            if (size == 0 || (ingestibleFile && size > MAX_INDEX_SIZE)) {
-                ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+            FsContent fsContent = null;
+            //check if alloc fs file or dir
+            TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
+            if (aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
+                fsContent = (FsContent) aFile;
+            }
+
+            //if alloc fs file and not index content, or a dir, index meta data only
+            if (fsContent != null
+                    && (indexContent == false || fsContent.isDir())) {
+                try {
+                    ingester.ingest(fsContent, false); //meta-data only
+                    ingestStatus.put(aFile.getId(), IngestStatus.INGESTED_META);
+                } catch (IngesterException ex) {
+                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                    logger.log(Level.WARNING, "Unable to index meta-data for fsContent: " + fsContent.getId(), ex);
+                }
+
                 return;
             }
 
-            if (ingestibleFile == true) {
-                //we know it's an allocated file or dir (FsContent)
-                FsContent fileDir = (FsContent) aFile;
+            boolean ingestibleFile = Ingester.isIngestible(aFile);
+
+            final long size = aFile.getSize();
+            //if fs file, limit size of entire file, do not limit strings
+            if (fsContent != null && (size == 0 || (ingestibleFile && size > MAX_INDEX_SIZE))) {
+                //if fs file, index meta only, otherwise if unalloc, skip
+                try {
+                    ingester.ingest(fsContent, false); //meta-data only
+                    ingestStatus.put(aFile.getId(), IngestStatus.INGESTED_META);
+                } catch (IngesterException ex) {
+                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                    logger.log(Level.WARNING, "Unable to index meta-data for fsContent: " + fsContent.getId(), ex);
+                }
+
+                return;
+            }
+
+            if (fsContent != null && ingestibleFile == true) {
+                //we know it's an allocated fs file (FsContent) with supported content 
                 try {
                     //logger.log(Level.INFO, "indexing: " + fsContent.getName());
-                    ingester.ingest(fileDir);
-                    ingestStatus.put(fileDir.getId(), IngestStatus.INGESTED);
+                    ingester.ingest(fsContent, true);
+                    ingestStatus.put(fsContent.getId(), IngestStatus.INGESTED);
                 } catch (IngesterException e) {
-                    ingestStatus.put(fileDir.getId(), IngestStatus.SKIPPED);
-                    //try to extract strings if not a dir
-                    if (fileDir.isFile() == true) {
-                        processNonIngestible(fileDir);
+                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+                    //try to extract strings, if a file
+                    if (fsContent.isFile() == true) {
+                        processNonIngestible(fsContent);
                     }
 
                 } catch (Exception e) {
-                    ingestStatus.put(fileDir.getId(), IngestStatus.SKIPPED);
-                    //try to extract strings if not a dir
-                    if (fileDir.isFile() == true) {
-                        processNonIngestible(fileDir);
+                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+                    //try to extract strings if a file
+                    if (fsContent.isFile() == true) {
+                        processNonIngestible(fsContent);
                     }
                 }
             } else {
-                //unallocated or unsupported type by Solr
+                //unallocated file or unsupported content type by Solr
                 processNonIngestible(aFile);
-
             }
         }
 
@@ -547,10 +590,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * Searcher responsible for searching the current index and writing results to blackboard
-     * and the inbox.  Also, posts results to listeners as Ingest data events.
-     * Searches entire index, and keeps track of only new results to report and save.
-     * Runs as a background thread.
+     * Searcher responsible for searching the current index and writing results
+     * to blackboard and the inbox. Also, posts results to listeners as Ingest
+     * data events. Searches entire index, and keeps track of only new results
+     * to report and save. Runs as a background thread.
      */
     private class Searcher extends SwingWorker<Object, Void> {
 
@@ -574,7 +617,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
             final String displayName = "Keyword Search" + (finalRun ? " - Finalizing" : "");
             progress = ProgressHandleFactory.createHandle(displayName + (" (Pending)"), new Cancellable() {
-
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Cancelling the searcher by user.");
@@ -833,14 +875,14 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         //without relying on done() method that is not guaranteed to run after background thread completes
         //NEED to call this method always right before doInBackground() returns
         /**
-         * Performs the cleanup that needs to be done right AFTER doInBackground() returns
-         * without relying on done() method that is not guaranteed to run after background thread completes
-         * REQUIRED to call this method always right before doInBackground() returns
+         * Performs the cleanup that needs to be done right AFTER
+         * doInBackground() returns without relying on done() method that is not
+         * guaranteed to run after background thread completes REQUIRED to call
+         * this method always right before doInBackground() returns
          */
         private void finalizeSearcher() {
             logger.log(Level.INFO, "Searcher finalizing");
             SwingUtilities.invokeLater(new Runnable() {
-
                 @Override
                 public void run() {
                     progress.finish();
@@ -871,9 +913,9 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     /**
      * Checks if the content has already been hit previously
-     * 
+     *
      * @param previousHits the previous hits to check against
-     * @param hit a hit to check for,  that potentially had already been hit
+     * @param hit a hit to check for, that potentially had already been hit
      * @return true if the potential hit has already been hit, false otherwise
      */
     private static boolean previouslyHit(List<ContentHit> previousHits, ContentHit hit) {
@@ -890,7 +932,9 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     /**
      * Set the skip known files setting on the service
-     * @param skip true if skip, otherwise, will process known files as well, as reported by HashDB service
+     *
+     * @param skip true if skip, otherwise, will process known files as well, as
+     * reported by HashDB service
      */
     void setSkipKnown(boolean skip) {
         this.skipKnown = skip;
