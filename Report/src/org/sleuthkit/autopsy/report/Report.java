@@ -100,7 +100,7 @@ public class Report {
 
             File f1 = new File(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
             boolean success = f1.delete();
-
+             table.append("</tbody></table><br /><br />");
         } catch (Exception e) {
             Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);
         }
@@ -150,10 +150,10 @@ public class Report {
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_hashname;");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_hash;");
             tempdbconnect.closeConnection();
-
+            
             File f1 = new File(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
             boolean success = f1.delete();
-
+             table.append("</tbody></table><br /><br />");
         } catch (Exception e) {
             Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);
         }
@@ -231,6 +231,7 @@ public class Report {
 
             File f1 = new File(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
             boolean success = f1.delete();
+             table.append("</tbody></table><br /><br />");
 
         } catch (Exception e) {
             Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);
