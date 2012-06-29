@@ -124,8 +124,8 @@ public class Report {
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_hashset;");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_hashname;");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_hash;");
-            String temp1 = "CREATE TABLE report_hashset AS SELECT value_text as hashset,blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ";";
-            String temp5 = "CREATE TABLE report_hashname AS SELECT name, size, report_hashset.artifact_id from tsk_files,blackboard_artifacts, report_hashset WHERE blackboard_artifacts.artifact_id = report_hashset.artifact_id AND blackboard_artifacts.obj_id = tsk_files.obj_id;";
+            String temp1 = "CREATE TABLE report_hashset AS SELECT value_text as hashset,blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = '" + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "';";
+            String temp5 = "CREATE TABLE report_hashname AS SELECT name, size, report_hashset.artifact_id from tsk_files,blackboard_artifacts, report_hashset WHERE blackboard_artifacts.artifact_id = report_hashset.artifact_id AND blackboard_artifacts.obj_id = tsk_files.obj_id and blackboard_artifacts.artifact_type_id='" + BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID() + "';";
             String temp6 = "CREATE TABLE report_hash AS SELECT hashset,size,name from report_hashset INNER JOIN report_hashname ON report_hashset.artifact_id=report_hashname.artifact_id;";
             tempdbconnect.executeStmt(temp1);
             tempdbconnect.executeStmt(temp5);
