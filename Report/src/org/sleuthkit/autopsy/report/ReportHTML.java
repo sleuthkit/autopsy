@@ -151,7 +151,7 @@ public class ReportHTML implements ReportModule {
         int reportsize = report.size();
         Integer filesystemcount = currentCase.getRootObjectsCount();
         DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy");
+        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String datetime = datetimeFormat.format(date);
         String datenotime = dateFormat.format(date);
