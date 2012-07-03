@@ -74,8 +74,9 @@ def testCompareToGold(inFile):
 
   name = imageName(inFile)
   cwd = wgetcwd()
-  goldFile = os.path.join(cwd,goldDir,name,"standard.db")
-  testFile = os.path.join(cwd,outDir,name,"AutopsyTestCase","autopsy.db")
+  
+  goldFile = os.path.join("./",goldDir,name,"standard.db")  
+  testFile = os.path.join("./",outDir,name,"AutopsyTestCase","autopsy.db")
   if os.path.isfile(goldFile) == False:
     markError("No gold standard exists", inFile)
     return
@@ -134,8 +135,8 @@ def copyTestToGold(inFile):
   print "Recreating gold standard from results."
   inFile = imageName(inFile)
   cwd = wgetcwd()
-  goldFile = os.path.join(cwd,goldDir,inFile,"standard.db")
-  testFile = os.path.join(cwd,outDir,inFile,"AutopsyTestCase","autopsy.db")
+  goldFile = os.path.join("./",goldDir,inFile,"standard.db")
+  testFile = os.path.join("./",outDir,inFile,"AutopsyTestCase","autopsy.db")
   if os.path.exists(os.path.join(cwd,goldDir,inFile)):
       shutil.rmtree(os.path.join(cwd,goldDir,inFile))
   os.makedirs(os.path.join(cwd,goldDir,inFile))
