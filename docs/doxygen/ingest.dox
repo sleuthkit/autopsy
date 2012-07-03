@@ -2,7 +2,59 @@
 
 \section ingest_overview Overview
 
-This page will talk about making ingest modules.  We have not written it yet.
+Autopsy provides ingest framework in org.sleuthkit.autopsy.ingest.
+
+Ingest modules (also referred as ingest services) are designed to be pluggable and they can be added to the Autopsy ingest pipeline
+as jar files and they will be automatically recognized next time Autopsy starts.
+
+This document outlines steps necessary to implement a functional ingest module.
+
+\subsection ingest_interface Interfaces
+
+\subsection ingest_interface Required methods
+
+\subsection ingest_registration Service Registration
+
+To implement an ingest module it is required to implement one of the interfaces (for file or image ingest) 
+and to have the module register itself using Netbeans Lookup infrastructure in layer.xml file.
+
+\subsection ingest_configuration Service Configuration
+
+\subsection ingest_events Sending Service Events
+
+Service should notify listeners of new data available periodically by invoking fireServiceDataEvent() method in org.sleuthkit.autopsy.ingest.IngestManagerProxy class.
+The method accepts org.sleuthkit.autopsy.ingest.ServiceDataEvent parameter.  
+The artifacts passed in a single event should be of the same type, which is enforced by the org.sleuthkit.autopsy.ingest.ServiceDataEvent constructor.
+
+
+\subsection ingest_events Data Posting Intervals
+
+The timing as to when a service posts results data is module-implementation-specific.  
+In a simple case, service may post new data as soon as the data is available 
+- the case for simple services that take a relatively short amount of time to execute and new data is expected 
+to arrive in the order of seconds.
+
+Another possibility is to post data in fixed time-intervals (e.g. for a service that takes minutes to produce results
+and for a service that maintains internal threads to perform work).
+There exist a global update setting that specifies maximum time interval for the service to post data.  
+User may adjust the interval for more frequent, real-time updates.  Services that post data in periodic intervals should post their data according to this setting.  
+The setting is retrieved by the module using getUpdateFrequency() method in org.sleuthkit.autopsy.ingest.IngestManagerProxy class.
+
+
+\subsection ingest_messages Inbox messages
+In addition to data events, ingest services should send ingest messages about interesting events.
+Examples of such events include service status (started, stopped) or information about new data.
+The messages include the source service, message subject, message details, unique message id (in the context of the originating service) and a uniqueness attribute, used to group similar messages together and to determine the overall importance priority) of the message.
+A message group with a higher number of aggregate messages with the same uniqueness is considered a lower priority.
+
+Ingest messages have different types: there are info messages, warning messages, error messages and data messages.
+The data messages contain encapsulated blackboard artifacts and attributes. The passed in data is used by the ingest inbox GUI widget to navigate to the artifact view in the directory tree, if requested by the user.
+
+Ingest message API is defined in org.sleuthkit.autopsy.ingest.IngestMessage class.  The class also contains factory methods to create new messages.
+Messages are posted using org.sleuthkit.autopsy.ingest.IngestManagerProxy postMessage() method, which accepts a message created using of the factory methods.
+
+The recipient of the ingest messages is the Ingest Inbox viewer widget component, from the org.sleuthkit.autopsy.ingest.IngestManager package.
+
 
 */
 
