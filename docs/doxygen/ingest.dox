@@ -7,7 +7,7 @@ Autopsy provides ingest framework in org.sleuthkit.autopsy.ingest.
 Ingest modules (also referred as ingest services) are designed to be pluggable and they can be added to the Autopsy ingest pipeline
 as jar files and they will be automatically recognized next time Autopsy starts.
 
-This document outlines steps necessary to implement a functional ingest module.
+This document outlines steps to implement a functional ingest module.
 
 \subsection ingest_interface Interfaces
 
@@ -16,50 +16,44 @@ Implement one of the interfaces:
 - org.sleuthkit.autopsy.ingest.IngestServiceImage (for modules that are interested in the image as a whole, or modules that selectively pick and analyze data from the image) 
 - org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile (for modules that should process every file in the image).
 
-Another difference between the two is that org.sleuthkit.autopsy.ingest.IngestServiceImage services run each in their own threads, and can run in parallel to other image services.
-File services execute within the same worker thread and they run in series, every service is called for every file.
 
-For this reason, org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile services are singleton instances
-and org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile are not singletons -- there could be multiple instances of 
-an image based service, because multiple images can be analyzed at the same time by multiple instances of the same image service class
-(NOTE: this design might change in the future to limit number of image services executing at the same time and to introduce a better service dependency system).
-
-org.sleuthkit.autopsy.ingest.IngestServiceAbstract defines common methods for both types of services, please refer to API documentation for details on the required methods.
+org.sleuthkit.autopsy.ingest.IngestServiceAbstract defines common methods for both types of services.
 
 \subsection ingest_interface Implementation details.
 
 org.sleuthkit.autopsy.ingest.example package for sample service skeleton code.
 
-There is a static getDefault() method that are not part of the interface, that every module (whether an image or a file service)
+There is a static getDefault() method that is not part of the interface, that every module (whether an image or a file service)
 needs to implement to return the registered static instance of the service.
 Refer to example code in org.sleuthkit.autopsy.ingest.example.ExampleAbstractFileIngestService.getDefault()
 
-In case of file ingest service, there needs to be a private constructor to ensure only and only (singleton) instance.
+In case of file ingest service, there needs to be a private constructor to ensure one and only (singleton) instance.
 Ensure the default public file service constructor is overridden with the private one.
 
 In case of the image ingest service, the constructor should be public.
 
-The most important method is the process() method, which takes either a file or an image as an argument (depending on the type of the service).
-A service either performs work in the process method, 
-or enqueues the work for later processing (more common if the service manages its own internal threads).
+Most work is usually performed in process() method invoked by the ingest pipeline.
+The method takes either a file or an image as an argument (depending on the type of the service).
+Services can alternatively enqueue work in process() for later processing (more common if the service manages internal threads).
 
-init() method is invoked on a service (by ingest manager) every time ingest starts, and the service is not already running.
+init() method is invoked on a service (by ingest manager) every time ingest starts, if the service is not already running.
 A service should support multiple invocations of init() throughout the application life-cycle.
 
-complete() method is invoked on a service when ingest completed.  The service should perform any resource (file, handles, caches)
-cleanup here.
+complete() method is invoked on a service when the entire ingest completes.  
+The service should perform any resource (file, handles, caches) cleanup in this method and submit final results and post an ingest inbox message.
 
 stop() method is invoked on a service when ingest is interrupted (by the user or by the system).
-The method is similar to complete(), in that the service should perform any cleanup work.
-The difference is if there is pending data to be processed or pending results to be reported by the service; 
+The method implementation should be similar to complete(), 
+in that the service should perform any cleanup work.  The common cleanup code for stop() and complete() can often be refactored.
+If there is pending data to be processed or pending results to be reported by the service; 
 the results should be rejected and ignored if stop() is invoked and the service should terminate as early as possible.
 
 Services should post inbox messages to the user when stop() or complete() is invoked (refer to the examples).
+It is recommended to populate the description field of the complete inbox message to provide some feedback to the user summarizing the module ingest.
 
-Every service should support multiple init() - process() - complete(), or init() - process() - stop() invocations.
+Every service should support multiple init() - process() - complete(), and init() - process() - stop() invocations.
 The services should also support multiple init() - complete() and init() - stop() invocations, 
-which can occur if ingest is started but no work is enqueued for the particular service.
-
+which can occur if ingest pipeline is started but no work is enqueued for the particular service.
 
 Module developers are encouraged to use the standard java.util.logging.Logger infrastructure to log errors to the Autopsy log.
 
@@ -86,22 +80,27 @@ File image ingest service registration:
 </file>
 
 Note the "position" attribute.  The attribute determines the ordering of the module in the ingest pipeline.
-Services with lower position attribute will execute first.
+Services with lower position attribute will execute earlier.
 Use high numbers (higher than 1000) or non-core services.
 If your module depends on results from another module, use a higher position attribute to enforce the dependency.
+
 Note: we plan to implement a more flexible and robust module dependency system in future versions of the Autopsy ingest framework.
 
 \subsection ingest_configuration Service Configuration
 
-Ingest modules typically require configuration before they are executed.
-There are 2 levels of configuration: simple and advanced.
-
+Ingest modules typically require configuration before they are executed and the ingest module framework 
+supports 2 levels of configuration: simple and advanced.
+Simple configuration should present the most important and most frequently tuned ingest parameters.
+Any additional parameters should be part of advanced configuration.
 
 Module configuration is decentralized and module-specific; every module maintains its
-own configuration state and is responsible for implementing its own JPanels to render
-and present the configuration to the user. 
+own configuration state and is responsible for implementing its own JPanel to render
+and present the configuration to the user.  
 
-The configuration methods are defined in the ingest modules interfaces.
+JPanel implementation should support scrolling if the configuration widgets require
+more real-estate than the parent container.  
+
+Configuration methods are defined in the ingest modules interfaces.
 For example, to implement simple configuration, module should return true in:
 
 org.sleuthkit.autopsy.ingest.IngestServiceAbstract.hasSimpleConfiguration()
@@ -145,7 +144,7 @@ Ingest messages have different types: there are info messages, warning messages,
 The data messages contain encapsulated blackboard artifacts and attributes. The passed in data is used by the ingest inbox GUI widget to navigate to the artifact view in the directory tree, if requested by the user.
 
 Ingest message API is defined in org.sleuthkit.autopsy.ingest.IngestMessage class.  The class also contains factory methods to create new messages.
-Messages are posted using org.sleuthkit.autopsy.ingest.IngestManagerProxy postMessage() method, which accepts a message created using of the factory methods.
+Messages are posted using org.sleuthkit.autopsy.ingest.IngestManagerProxy.postMessage() method, which accepts a message object created using one of the factory methods.
 
 The recipient of the ingest messages is the Ingest Inbox viewer widget component, from the org.sleuthkit.autopsy.ingest.IngestManager package.
 
