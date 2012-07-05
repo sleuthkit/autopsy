@@ -3,12 +3,14 @@
  *
  * The package provides the ingest module framework; the framework defines how ingest modules should behave and provides the infrastructure to execute them.
  * 
- * Different ingest modules module generally have its own specific role.  
+ *   
  * The two main use cases for ingest modules are:
  * - to extract information from the image and write result to blackboard,
  * - to analyze data already in blackboard and add more information to it.
+ *
+ * Different ingest modules generally specialize in extracting or analyzing different type of data.
  * 
- * There may also be special-purpose ingest modules that run early in the ingest pipe-line.  Results posted by such modules can useful to subsequent modules.
+ * There may also be special-purpose core ingest modules that run early in the ingest pipe-line.  Results posted by such modules can useful to subsequent modules.
  * One example of such module is Hash DB module, which determines which files are known; known files are generally treated differently.
  * For instance, processing of known files can be skipped by subsequent modules in the pipeline (if chosen so), for performance reasons.
  * 
@@ -18,6 +20,8 @@
  * 
  * org.sleuthkit.autopsy.ingest.IngestServiceImage services run each in a separate thread, in parallel with respect to other image services.
  * File services execute within the same worker thread and they run in series; for every file in the image every file ingest service is invoked.
+ *
+ * Every ingest thread is presented with a progress bar and can be cancelled by a user, or by the framework, in case of a critical system event (such as Autopsy is terminating, or an unrecoverable system error).
  *
  * org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile services are singleton instances
  * and org.sleuthkit.autopsy.ingest.IngestServiceImage service are not singletons.  There could be multiple instances of 
@@ -29,19 +33,17 @@
  * 
  * The framework also contains classes:
  * - org.sleuthkit.autopsy.ingest.IngestManager, the ingest manager, responsible for discovery of ingest modules, enqueuing work to the modules, starting and stopping the ingest pipeline, 
- * propagating messages sent from the ingest modules to other Autopsy components and is used to query ingest status.
- * - org.sleuthkit.autopsy.ingest.IngestManagerProxy, a facility (IngestManager facade) used by the modules to communicate with the manager,
+ * propagating messages sent from the ingest modules to other Autopsy components, querying ingest status.
+ * - org.sleuthkit.autopsy.ingest.IngestManagerProxy, IngestManager facade used by the modules to communicate with the manager,
  * - additional classes to support threading, sending messages, ingest monitoring, ingest cancellation, progress bars,
  * - a user interface component (Ingest Inbox) used to display interesting messages posted by ingest modules to the user,
  * 
- * 
- * Ingest modules run in background threads. There is a single background thread for file-level ingest modules, within which every file ingest module runs series for every file.
- * Image ingest modules run each in their own thread and thus can run in parallel (TODO we will change this in the future for performance reasons, and support image ingest module dependencies).  
- * Every ingest thread is presented with a progress bar and can be cancelled by a user, or by the framework, in case of a critical event (such as Autopsy is terminating, or a system error).
  *
  * Ingest module can maintain internal threads for any special processing that can occur in parallel.
- * However, the module is then responsible for creating, managing and tearing down the internal threads and to implement locking to protect critical sections internal to the module.
- * An example of a module that maintains its own threads is the KeywordSearch module.
+ * However, the module is then responsible for creating, managing and tearing down the internal threads 
+ * and to implement locking to protect critical sections internal to the module.
+ * An example of a module that maintains its own threads is the KeywordSearch module, 
+ * which provides a periodic refresh of search results as data is being indexed by the main file ingest thread.
  * 
  * org.sleuthkit.autopsy.ingest.IngestManager provides public API other modules can use to get ingest status updates.
  * A handle to ingest manager singleton instance is obtained using org.sleuthkit.autopsy.ingest.IngestManager.getDefault().
