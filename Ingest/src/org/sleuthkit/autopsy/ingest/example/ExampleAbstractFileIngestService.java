@@ -39,6 +39,12 @@ public class ExampleAbstractFileIngestService implements IngestServiceAbstractFi
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
 
+    //file ingest services require a private constructor
+    //to ensure singleton instances
+    private ExampleAbstractFileIngestService() {
+        
+    }
+    
     public static synchronized ExampleAbstractFileIngestService getDefault() {
         if (instance == null) {
             instance = new ExampleAbstractFileIngestService();
@@ -62,7 +68,7 @@ public class ExampleAbstractFileIngestService implements IngestServiceAbstractFi
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete()");
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
+        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Complete"));
 
         //service specific cleanup due completion here
     }
@@ -90,6 +96,7 @@ public class ExampleAbstractFileIngestService implements IngestServiceAbstractFi
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
+        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Stopped"));
 
         //service specific cleanup due interruption here
     }
