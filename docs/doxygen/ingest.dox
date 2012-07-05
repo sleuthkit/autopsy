@@ -104,7 +104,7 @@ and present the configuration to the user.
 JPanel implementation should support scrolling if the configuration widgets require
 more real-estate than the parent container.  
 
-Configuration methods are defined in the ingest modules interfaces.
+Configuration methods are declared in the ingest modules interfaces.
 For example, to implement simple configuration, module should return true in:
 
 org.sleuthkit.autopsy.ingest.IngestServiceAbstract.hasSimpleConfiguration()
@@ -112,8 +112,7 @@ org.sleuthkit.autopsy.ingest.IngestServiceAbstract.hasSimpleConfiguration()
 org.sleuthkit.autopsy.ingest.IngestServiceAbstract.getSimpleConfiguration()
 should then return javax.swing.JPanel instance.
  
-There are method hooks defined in the ingest service interface that are used to hint when the configuration should be saved internally by the module.
-For example, to save the simple configuration state, the module should implement
+To save the simple configuration state, the module should implement
 org.sleuthkit.autopsy.ingest.IngestServiceAbstract.saveSimpleConfiguration()
 
 
