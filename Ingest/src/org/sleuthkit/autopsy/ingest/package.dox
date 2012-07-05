@@ -16,6 +16,14 @@
  * - org.sleuthkit.autopsy.ingest.IngestServiceImage (for modules that are interested in the image as a whole, or modules that selectively pick and analyze data from the image) 
  * - org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile (for modules that should process every file in the image).
  * 
+ * org.sleuthkit.autopsy.ingest.IngestServiceImage services run each in a separate thread, in parallel with respect to other image services.
+ * File services execute within the same worker thread and they run in series; for every file in the image every file ingest service is invoked.
+ *
+ * org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile services are singleton instances
+ * and org.sleuthkit.autopsy.ingest.IngestServiceImage service are not singletons.  There could be multiple instances of 
+ * an image based service, because multiple images can be analyzed at the same time by multiple instances of the same image service class
+ * (NOTE: this design might change in the future to limit number of image services executing at the same time and to introduce a better service dependency system).
+ *
  * The interfaces define methods to initialize, process passed in data, configure the ingest service, 
  * query the service state and finalize the service.
  * 
