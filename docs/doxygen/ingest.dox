@@ -121,7 +121,7 @@ The method accepts org.sleuthkit.autopsy.ingest.ServiceDataEvent parameter.
 The artifacts passed in a single event should be of the same type, 
 which is enforced by the org.sleuthkit.autopsy.ingest.ServiceDataEvent constructor.
 
-\subsection ingest_events Data Posting Intervals
+\subsection ingest_intervals Data Posting Intervals
 
 The timing as to when a service posts results data is module-implementation-specific.  
 In a simple case, service may post new data as soon as the data is available 
