@@ -1,0 +1,32 @@
+/*! \page regression_test_page Regression Testing
+
+\section regression_test_overview Overview
+
+Autopsy uses Netbeans and Jelly testing framework for regression testing.
+Testing is driven by invoking UI actions via Jelly framework.
+
+Currently, Autopsy regression testing automates the following:
+
+- creating a case
+- adding an image
+- configuring ingest
+- running ingest
+
+The tests can be invoked using ant regression-test
+
+There is a python script in Testing/script/regression.py that wraps around "ant regression-test" 
+and runs a test for every disk image it finds.
+
+regression.py also does regression test result validation by comparing the test result with the golden standards
+for the image.
+
+
+\section regression_test_setup Setting up regression testing
+
+\section regression_test_running Running regression testing
+
+\section regression_test_update Updating golden standards
+
+
+*/
+
