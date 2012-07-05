@@ -13,8 +13,8 @@
  * For instance, processing of known files can be skipped by subsequent modules in the pipeline (if chosen so), for performance reasons.
  * 
  * The framework provides interfaces every ingest module needs to implement:
- *  - org.sleuthkit.autopsy.ingest.IngestServiceImage (for modules that are interested in the image as a whole, or query and analyze specific data from the image) 
- *  - org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile (for modules that should process every file).
+ * - org.sleuthkit.autopsy.ingest.IngestServiceImage (for modules that are interested in the image as a whole, or modules that selectively pick and analyze data from the image) 
+ * - org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile (for modules that should process every file in the image).
  * 
  * The interfaces define methods to initialize, process passed in data, configure the ingest service, 
  * query the service state and finalize the service.
@@ -26,18 +26,12 @@
  * - additional classes to support threading, sending messages, ingest monitoring, ingest cancellation, progress bars,
  * - a user interface component (Ingest Inbox) used to display interesting messages posted by ingest modules to the user,
  * 
- * Most ingest modules typically require configuration before they are executed.
- * The configuration methods are defined in the ingest modules interfaces.  
- * Module configuration is decentralized and module-specific; every module maintains its
- * own configuration state and is responsible for implementing its own JPanels to render
- * and present the configuration to the user.  There are method hooks defined in the ingest service interface 
- * that are used to hint the module when the configuration should be saved internally by the module.
  * 
  * Ingest modules run in background threads. There is a single background thread for file-level ingest modules, within which every file ingest module runs series for every file.
  * Image ingest modules run each in their own thread and thus can run in parallel (TODO we will change this in the future for performance reasons, and support image ingest module dependencies).  
  * Every ingest thread is presented with a progress bar and can be cancelled by a user, or by the framework, in case of a critical event (such as Autopsy is terminating, or a system error).
  *
- * Ingest module can also implement its own internal threads for any special-purpose processing that can occur in parallel.
+ * Ingest module can maintain internal threads for any special processing that can occur in parallel.
  * However, the module is then responsible for creating, managing and tearing down the internal threads and to implement locking to protect critical sections internal to the module.
  * An example of a module that maintains its own threads is the KeywordSearch module.
  * 
