@@ -163,7 +163,6 @@ def copyReportToGold(inFile):
 def testCompareReports(inFile):
   print "------------------------------------------------"
   print "Comparing report to golden report."
-  
   name = imageName(inFile)
   goldReport = os.path.join("./",goldDir,name,"report.html")  
   testReportPath = os.path.join("./",outDir,name,"AutopsyTestCase","Reports")
@@ -204,8 +203,7 @@ def testCompareReports(inFile):
     markError(errString, inFile)
   else:
     print "Reports match."
-
-# Credit to StackOverflow:  
+  
 def split(input, size):
   return [input[start:start+size] for start in range(0, len(input), size)]
 

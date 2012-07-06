@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.testing;
 
-import java.awt.Robot;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -27,6 +25,7 @@ import javax.swing.JDialog;
 import javax.swing.JTextField;
 import junit.framework.Test;
 import org.netbeans.jellytools.JellyTestCase;
+import org.netbeans.jellytools.MainWindowOperator;
 import org.netbeans.jellytools.NbDialogOperator;
 import org.netbeans.jellytools.WizardOperator;
 import org.netbeans.jemmy.Timeout;
@@ -224,19 +223,13 @@ public class RegressionTest extends JellyTestCase{
     
     public void testGenerateReportToolbar() {
         logger.info("Generate Report Toolbars");
-        try {
-            Robot robot = new Robot();
-            robot.keyPress(KeyEvent.VK_ALT);
-            robot.keyRelease(KeyEvent.VK_ALT);
-            new Timeout("pausing", 500).sleep();
-            robot.keyPress(KeyEvent.VK_T);
-            robot.keyRelease(KeyEvent.VK_T);
-            new Timeout("pausing", 500).sleep();
-            robot.keyPress(KeyEvent.VK_ENTER);
-            robot.keyRelease(KeyEvent.VK_ENTER);
-        } catch(Exception ex) {
-            logger.info("Key pressing failure: "+ex.toString());
-        }
+        // Force the action if necessary:
+        //new Action("Tools|Generate Report", null).perform();
+        //new Timeout("pausing", 1000).sleep();
+        MainWindowOperator mwo = MainWindowOperator.getDefault();
+        JButtonOperator jbo = new JButtonOperator(mwo, "Generate Report");
+        jbo.pushNoBlock();
+        new Timeout("pausing", 1000).sleep();
     }
     
     public void testGenerateReportButton() {
