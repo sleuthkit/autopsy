@@ -31,11 +31,11 @@ public interface IngestServiceAbstractFile extends IngestServiceAbstract {
      * in the pipeline as a hint to stop processing the file
      */
     public enum ProcessResult {
-        UNKNOWN, //values unknown for the (service,last file)
-        OK, //subsequent service continues processing the file
-        STOP, //subsequent service stops processing the file unconditionally
-        COND_STOP, //subsequent service decides whether to stop processing the file
-        ERROR //error encountered processing the file, hint for the depending service to skip processing the file
+        UNKNOWN, ///< the return value is unknown for the service and current file in the pipeline
+        OK, ///<  indication subsequent services should attempt to process the current file
+        STOP, ///< file processing should be stopped unconditionally (the pipeline terminates processing of the current file)
+        COND_STOP, ///< hit to stop processing the file; it should be decided by interested service whether to stop processing the file
+        ERROR ///< error encountered processing the file, hint for the depending service to skip processing the file due to error condition (such as file could not be read)
     };
     
     /**

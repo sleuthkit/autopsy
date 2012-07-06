@@ -17,7 +17,7 @@ Implement one of the interfaces:
 - org.sleuthkit.autopsy.ingest.IngestServiceImage (for modules that are interested in the entire image, or selectively pick and analyze data from the image) 
 - org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile (for modules that process every file in the image).
 
-org.sleuthkit.autopsy.ingest.IngestServiceAbstract defines common methods for both types of services.
+org.sleuthkit.autopsy.ingest.IngestServiceAbstract declares common methods for both types of services.
 
 \subsection ingest_interface_details Implementation details.
 
@@ -116,6 +116,22 @@ To save the simple configuration state, the module should implement
 org.sleuthkit.autopsy.ingest.IngestServiceAbstract.saveSimpleConfiguration()
 
 
+\subsection file_ingest_return File Ingest Service Return Values
+
+File ingest services are expected to return org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile.ProcessResult from 
+the file service org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile.process() method.
+
+Service can communicate via the return value if it thinks subseqeuent services should continue processing the file,
+whether the pipeline should terminate processing of the file, or whether it should be decided by the subsequent service (in which case the return value is used by the subscribed service as a hint).
+
+The return value of every service that has already processed the file is stored in the pipeline 
+(by the ingest manager) for the duration of processing the file in the pipeline.
+
+Any service interested in retrieving the return value from previously executed services for that file should use
+org.sleuthkit.autopsy.ingest.IngestManagerProxy.getAbstractFileServiceResult() method and pass in the service name.
+If the return value is not available for the service for the current file in the pipeline, org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile.ProcessResult.UNKNOWN is returned.
+
+
 \subsection ingest_events Sending Service Events and Posting Data
 
 Service should notify listeners of new data available periodically by invoking org.sleuthkit.autopsy.ingest.IngestManagerProxy.fireServiceDataEvent() method.
@@ -126,8 +142,8 @@ which is enforced by the org.sleuthkit.autopsy.ingest.ServiceDataEvent construct
 \subsection ingest_intervals Data Posting Intervals
 
 The timing as to when a service posts results data is module-implementation-specific.  
-In a simple case, service may post new data as soon as the data is available 
-- the case for simple services that take a relatively short amount of time to execute and new data is expected 
+In a simple case, service may post new data as soon as the data is available -- likely 
+for simple services that take a relatively short amount of time to execute and new data is expected 
 to arrive in the order of seconds.
 
 Another possibility is to post data in fixed time-intervals (e.g. for a service that takes minutes to produce results
