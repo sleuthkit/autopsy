@@ -170,14 +170,15 @@ def testCompareReports(inFile):
   # Because Java adds a timestamp to the report file, one can't call it
   # directly, so one must get a list of files in the dir, which are only
   # reports, then filter for the .html report
+  testReport = None
   for files in os.listdir(testReportPath):
     if files.endswith(".html"): # Get the HTML one
       testReport = os.path.join("./",outDir,name,"AutopsyTestCase","Reports",files)
   if os.path.isfile(goldReport) == False:
     markError("No gold report exists", inFile)
     return
-  if os.path.isfile(testReport) == False:
-    markError("No report exists", inFile)
+  if testReport is None:
+    markError("No test report exists", inFile)
     return
   # Compare the reports
   goldFile = open(goldReport)
