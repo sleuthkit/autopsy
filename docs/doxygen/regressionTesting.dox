@@ -73,5 +73,105 @@ https://github.com/sleuthkit/autopsy/blob/master/BUILDING.txt
 
 	4b)  run "./regression.py -r", The script will automatically delete pre-existing standards.db files and generate the updated ones in the proper locations (/script/gold/{name of image}).
 
+Running in -r will also generate a golden report file built from the image. Normal runs of regression.py compare their generated report against the golden one, and report any differences in the file, ignoring the timestamp. 
+
+
+
+\section developers_note_regression_test Developers Note: Jemmy and RegressionTest.java
+
+
+For additional details regarding setting up and using Jemmy, please see 
+
+	http://platform.netbeans.org/tutorials/nbm-test.html
+	
+
+
+The Jemmy UI framework includes elements such as buttons, frames, dialog boxes and wizards. In order to manipulate these elements programatically, the associated ContainerOperators must be used. RegressionTest.java makes use of the following major operators:
+	
+	JButtonOperator
+	JDialogOperator
+	nbDialogOperator
+	JTableOperator
+	JFileChooserOperator
+	WizardOperator
+
+
+WizardOperators are for elements that implement the Wizard interface. Wizards specifically have back and next buttons. A WizardOperator can be created by 
+
+	WizardOperator wo = new WizardOperator(String title);
+
+Where title is the display title of the wizard you wish to manipulate.
+
+In order to use any Jemmy UI element, it must first be found. There are a number of ways to do this, but the most common involves searching by the display name of the element in question. Finding elements is a function of that elements ContainerOperator.
+For example, to find a JDialog whose display name is the string "Hash Database Configuration", the following code might be used:
+
+	JDialog hashMainDialog =  JDialogOperator.waitJDialog("Hash Database Configuration", false, false);
+
+The two booleans are for searching the exact string including subsrtings, and for searching case sensitively. 
+
+Note that the method used is called '.waitJDialog', and not '.findJDialog'. This is an important distinction regarding thoroughness of the find, but the functionality of the same. Refer to the link on Jemmy above for greater detail.
+
+Once you an element has been located, it can be operated upon by creating a new ContainerOperator, with the element as the only argument:
+
+	JDialogOperator hashMainDialogOperator = new JDialogOperator(hashMainDialog);
+
+
+Selecting the main window:
+	
+In order to select the main window, in this case, the general Autospy frame, the MainWindowOperator must be used. A MainWindowOperator takes no arguments and is created as follows:
+
+	MainWindowOperator mwo = MainWindowOperator.getDefault();
+
+For further reference regarding ContainerOperators, please see
+
+	http://www.jarvana.com/jarvana/view/org/netbeans/jemmy/2.2.7.5/jemmy-2.2.7.5-javadoc.jar!/org/netbeans/jemmy/operators/ContainerOperator.html
+
+
+When an element has been selected, the individual components may be manipluated with ContainerOperators. 
+To select a button, use the code below, where cont is one of the ContainerOperators from above, text is the text displayed on the button, and index is the button's order if there are multiple with the same name (i.e. if there are three buttons labeled “preview”, the first's index is 0, then 1, then 2).
+
+JbuttonOperator jbo = new JbuttonOperator(ContainerOperator cont, String text, int index);
+
+There are many others elements and operators, such as JcheckBoxOperator, JfileChooserOperator, JtextFieldOperator, etc. See http://www.jarvana.com/jarvana/view/org/netbeans/jemmy/2.2.7.5/jemmy-2.2.7.5-javadoc.jar!/org/netbeans/jemmy/operators/JComponentOperator.html for more. Please see their individual JavaDocs for action commands that push buttons, write in forms, etc.
+
+If an element cannot be grabbed using a ContainerOperator, a temporary workaround is to invoke the element action:
+
+	new Action(String menuPath, String popupPath).perform();
+
+where menuPath is the path through the File menu to said action and popup is the path through the popup menu (which is null since it is unsupported).
+
+For more on Actions, see 
+
+	http://bits.netbeans.org/dev/javadoc/org-netbeans-modules-jellytools-platform/org/netbeans/jellytools/actions/Action.html
+
+
+
+
+
+
 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
