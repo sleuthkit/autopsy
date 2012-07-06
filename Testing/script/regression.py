@@ -143,12 +143,6 @@ def copyTestToGold(inFile):
   cwd = wgetcwd()
   goldFile = os.path.join("./",goldDir,inFile,"standard.db")
   testFile = os.path.join("./",outDir,inFile,"AutopsyTestCase","autopsy.db")
-<<<<<<< HEAD
-=======
-  if os.path.exists(os.path.join(cwd,goldDir,inFile)):
-      shutil.rmtree(os.path.join(cwd,goldDir,inFile))
-  os.makedirs(os.path.join(cwd,goldDir,inFile))
->>>>>>> 5a8a0f056f0cc291891b5ba9167e7e526086d0ab
   shutil.copy(testFile, goldFile)
 
 def copyReportToGold(inFile): 
