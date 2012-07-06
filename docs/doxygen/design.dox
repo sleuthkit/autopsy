@@ -4,9 +4,9 @@
 This section outlines Autopsy design from the typical analysis work flow perspective.
 A typical Autopsy work flow consists of the following steps:
 
-- Wizards are used to create case and images (org.sleuthkit.autopsy.casemodule),
+- Wizards are used to create a case and add images (org.sleuthkit.autopsy.casemodule),
 - TSK database is created,
-- Ingest modules are run (org.sleuthkit.autopsy.ingest),
+- Ingest modules are executed (org.sleuthkit.autopsy.ingest),
 - Ingest modules post results to the blackboard and ingest inbox,
 - Directory tree displays blackboard contents,
 - Data is encapsulated into nodes and passed to table and content viewers,
@@ -15,196 +15,75 @@ A typical Autopsy work flow consists of the following steps:
 \subsection design_overview_sub1 Creating a case
 
 The first step in Autopsy work flow is creating a case.
-User is guided with the case creation wizard (invoked by org.sleuthkit.autopsy.casemodule.NewCaseWizardAction) to enter the case name, base directory and optional case information.
-The base directory is the directory where all files associated with the case are stored. 
-The directory is self contained (besides referenced images files, which are stored separately) and could be later moved to another location or another machine by the user (along with the linked image files).
+User is guided with the case creation wizard to enter the case name, base directory and optional case information.
+Autopsy creates the case directory (named after the case name), where all the case data is stored.
+An empty TSK database is created and initialized.
 
-The case directory contains:
-- a newly created, empty case SQLite TSK database, autopsy.db,
-- a case XML configuration file, named after the case name and .aut extension,
-- directory structure for temporary files, case log files, cache files, and module specific files.
-An example of module-specific directory is keywordsearch directory, created by the Keyword Search module.
-
-After case is created, currentCase singleton member variable in Case class is updated.
-It contains access to higher-level case information stored in the case XML file.
-
-org.sleuthkit.autopsy.casemodule.Case class also contains support for case events; events are sent to registered listeners when new case is created, opened, changed or closed.
-When a case is changed or created, also updated is org.sleuthkit.datamodel.SleuthkitCase handle to the TSK database.  
-SleuthkitCase contains a handle to org.sleuthkit.datamodel.SleuthkitJNI object, through which native sleuthkit API can be accessed.
-
+For more information on the case module refer to the org.sleuthkit.autopsy.casemodule documentation.
 
 \subsection design_overview_sub2 Adding an image
-After case in created, user is guided to add an image to the case using the wizard invoked by org.sleuthkit.autopsy.casemodule.AddImageAction.
-org.sleuthkit.autopsy.casemodule.AddImageWizardIterator instantiates and manages the wizard panels (there are currently 4 of them).
 
-User enters image information in the first panel org.sleuthkit.autopsy.casemodule.AddImageWizardPanel1 (image path, image timezone and additional options).
+After case is created, one or more disk images can be added to the case, using the Add Image Wizard.
+The process invokes internally the native sleuthkit library.  
+The library reads the image and populates the TSK database with the image meta-data.
 
-In the subsequent panel, org.sleuthkit.autopsy.casemodule.AddImageWizardPanel2, a background worker thread is spawned in AddImgTask.
-
-Work is delegated to org.sleuthkit.datamodel.AddImageProcess, which calls native sleuthkit methods via SleuthkitJNI to: initialize, run and commit the new image.
-The entire process is enclosed within a database transaction and the transaction is not committed until user finalizes the process in org.sleuthkit.autopsy.casemodule.AddImageWizardPanel3.
-User can also interrupt the ongoing add image process, which results in a stop call in sleuthkit.  The call sets a special stop flag.  The flag is periodically checked by sleutkit code and,
- if set, it will result in breaking out of any current processing methods and loops and return from sleuthkit.
-The worker thread in Autopsy will terminate and revert will be called to back out of the current transaction.
-
-Actual work in the add image process is done in the native sleuthkit library.  
-The library reads the image and populates the TSK SQLite database with the image meta-data.
-Rows are inserted into the following tables: 
-- tsk_objects (all content objects are given their unique object IDs and are associated with parents),
-- tsk_file_layout (for file block information, such as for "special" files representing unallocated data),
-- tsk_image_info, tsk_image_names (to store image info, such as local image paths, block size and time zone),
-- tsk_vs_info (to store volume system information),
-- tsk_vs_parts (to store volume information),
-- tsk_fs_info (to store file system information),
-- tsk_files (to store all files and directories discovered and their attributes).
-
-After image has been processed successfully and after the user confirmation, the transaction is committed to the database.
-
-Errors from processing the image in sleuthkit are propagated using org.sleuthkit.datamodel.TskCoreException and org.sleuthkit.datamodel.TskDataException java exceptions.
-The errors are logged and can be reviewed by the user form the wizard.
-org.sleuthkit.datamodel.TskCoreException is handled by the wizard as a critical, unrecoverable error condition with TSK core, resulting in the interruption of the add image process.
-org.sleuthkit.datamodel.TskDataException, pertaining to an error associated with the data itself (such as invalid volume offset), is treated as a warning - the process still continues because there are likely data image that can be still read.
- 
-\subsection design_overview_sub3 Concurrency
-
-Autopsy is a highly multi-threaded application; besides threads associated with the GUI, event dispatching and Netbeans RCP, the application uses threads to support concurrent user-driven processes.
-For instance, multiple image ingest services can be ran at the same time.  In addition, user can add another image to the database while ingest is running on previously added images.
-During the add image process, a database lock is acquired using org.sleuthkit.autopsy.casemodule.SleuthkitCase.dbWriteLock() to ensure exclusive access to the database resource.
-Once the lock is acquired by the add image process, other Autopsy threads trying to access the database as acquire the lock (such as ingest modules) will block for the duration of add image process.
-The database lock is implemented with SQLite database in mind, which does not support concurrent writes. The database lock is released with org.sleuthkit.autopsy.casemodule.SleuthkitCase.dbWriteUnlock() when the add image process has ended.
-The database lock is used for all database access methods in org.sleuthkit.autopsy.casemodule.SleuthkitCase.
+For more information on the add image internals, refer to org.sleuthkit.autopsy.casemodule documentation.
 
 \subsection design_overview_sub4 Running ingest modules
 
-User has an option to run ingest modules after the image has been added using the wizard, and, optionally, 
-at any time ingest modules can be run or re-run.
+After image has been added to the case, user can select one or more ingest modules to be executed on the image.
+Most ingest modules can be configured before the run using simple or advanced configuration panels (or both).
 
-Ingest modules (also referred as ingest services) are designed as plugins that are separate from Autopsy core.
-Ingest modules can be added to an existing Autopsy installation as jar files and they will be automatically recognized next time Autopsy starts.
+The work of ingest services is performed in the background and ingest progress is indicated by progress bars.   
 
-Every module generally has its own specific role.  The two main use cases for ingest modules are:
-- to extract information from the image and write result to blackboard,
-- to analyze data already in blackboard and add more information to it.
-
-There may also be special-purpose ingest modules that run early in the ingest pipe-line.  Results posted by such modules can useful to subsequent modules.
-One example of such module is Hash DB module, which determines which files are known; known files are generally treated differently.
-For instance, processing of known files can be skipped by subsequent modules in the pipeline (if chosen so), for performance reasons.
-
-Autopsy provides an ingest module framework in org.sleuthkit.autopsy.ingest package, located in a separate module.
-The framework provides interfaces every ingest module needs to implement:
-* org.sleuthkit.autopsy.ingest.IngestServiceImage (for modules that are interested in the image as a whole, or picking only specific data from the image of interest) 
-* org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile (for modules that need to process every file).
-
-The interfaces define methods to initialize, process passed in data, configure the ingest service, query the service state and finalize the service.
-
-The framework also contains classes:
-- org.sleuthkit.autopsy.ingest.IngestManager, the ingest manager, responsible for discovery of ingest modules, enqueuing work to the modules, starting and stopping the ingest pipeline, 
-propagating messages sent from the ingest modules to other Autopsy components.
-- org.sleuthkit.autopsy.ingest.IngestManagerProxy, a facility used by the modules to communicate with the manager,
-- additional classes to support threading, sending messages, ingest monitoring, ingest cancellation, progress bars,
-- a user interface component (Ingest Inbox) used to display interesting messages posted by ingest modules to the user,
-
-To implement an ingest module it is required to implement one of the interfaces (for file or image ingest) 
-and to have the module register itself using Netbeans Lookup infrastructure in layer.xml file.
-Please refer to ingest.dox, org.sleuthkit.autopsy.ingest package API and org.sleuthkit.autopsy.ingest.example examples for more details on implementing custom ingest modules.
-
-Most ingest modules typically require configuration before they are executed.
-The configuration methods are defined in the ingest modules interfaces.  
-Module configuration is decentralized and module-specific; every module maintains its
- own configuration state and is responsible for implementing its own JPanels to render
- and present the configuration to the user.  There are method hooks defined in the ingest service interface that are used to hint the module when the configuration should be preserved.
-
-Ingest modules run in background threads. There is a single background thread for file-level ingest modules, within which every file ingest module runs series for every file.
-Image ingest modules run each in their own thread and thus can run in parallel (TODO we will change this in the future for performance reasons, and support image ingest module dependencies).  
-Every ingest thread is presented with a progress bar and can be cancelled by a user, or by the framework, in case of a critical event (such as Autopsy is terminating, or a system error).
-Ingest module can also implement its own internal threads for any special-purpose processing that can occur in parallel.
-However, the module is then responsible for creating, managing and tearing down the internal threads.
-An example of a module that maintains its own threads is the KeywordSearch module.
+Autopsy provides ingest module framework in the ingest package and custom modules can be developed and added to Autopsy.
+For more information refer to the org.sleuthkit.autopsy.ingest package documentation and ingest.dox 
 
 
 \subsection design_overview_sub5 Ingest modules posting results
 
-Ingest services, when running, provide real-time updates to the user
-by periodically posting data results and messages to registered components.
+Ingest services, when running, produce data and write the data to the blackboard
+in form of blackboard artifacts and associated blackboard attributes.
 
-The timing as to when a service posts results data is module-implementation-specific.  
-In a simple case, service may post new data as soon as the data is available 
-- the case for simple services that take a relatively short amount of time to execute and new data is expected 
-to arrive in the order of seconds.
+The services notify listeners of the availability of the data.
+The default listener is the Autopsy directory tree UI component.
+The component displays data currently saved in the blackboard and it also
+refreshes the data view in real-time in response to service events.
 
-Another possibility is to post data in fixed time-intervals (e.g. for a service that takes minutes to produce results
-and for a service that maintains internal threads to perform work).
-There exist a global update setting that specifies maximum time interval for the service to post data.  
-User may adjust the interval for more frequent, real-time updates.  Services that post data in periodic intervals should post their data according to this setting.  
-The setting is retrieved by the module using getUpdateFrequency() method in org.sleuthkit.autopsy.ingest.IngestManagerProxy class.
-
-Data events registration and posting data.
-
-When an ingest service produces data, it then writes it to the blackboard (as blackboard artifacts and associated attributes).
-
-Service should notify listeners of new data available periodically by invoking fireServiceDataEvent() method in org.sleuthkit.autopsy.ingest.IngestManagerProxy class.
-The method accepts org.sleuthkit.autopsy.ingest.ServiceDataEvent parameter.  
-The parameter wraps a collection of blackboard artifacts and their associated attributes that are to be reported as the new data to listeners.
-Passing the data as part of the event reduces memory footprint and decreases number of garbage collections 
-of the blackboard artifacts and attributes objects (the objects are expected to be reused by the data event listeners).
-
-Service name and artifact type for the collection of artifacts is also passed in as as part of the event.
-The artifacts passed in a single event should be of the same type, which is enforced by the org.sleuthkit.autopsy.ingest.ServiceDataEvent constructor.
-
-If a service has new data, but the service implementation does not include new artifact tracking, it is possible to pass only the service name and artifact type in the event.
-The event listener may choose to perform a blackboard query for the artifact type to query all data of that type currently stored in the blackboard, including the new data.
-
-Service event listeners need to register themselves with the org.sleuthkit.autopsy.ingest.IngestManager directly, using static addPropertyChangeListener() method.
-
-At the end of the ingest, org.sleuthkit.autopsy.ingest.IngestManager itself will notify all listeners of new data being available in the blackboard.
-This ensures the listeners receive a new data notification, in case some of the modules fail to report availability of new data.
-However, ingest module developers are encouraged to generate new data events in order to provide the real-time feedback to the user.
-
-Ingest messages registration and posting
-In addition to data events, ingest services should send ingest messages about interesting events.
-Examples of such events include service status (started, stopped) or information about new data.
-The messages include the source service, message subject, message details, unique message id (in the context of the originating service) and a uniqueness attribute, used to group similar messages together and to determine the overall importance priority) of the message.
-A message group with a higher number of aggregate messages with the same uniqueness is considered a lower priority.
-
-Ingest messages have different types: there are info messages, warning messages, error messages and data messages.
-The data messages contain encapsulated blackboard artifacts and attributes. The passed in data is used by the ingest inbox GUI widget to navigate to the artifact view in the directory tree, if requested by the user.
-
-Ingest message API is defined in org.sleuthkit.autopsy.ingest.IngestMessage class.  The class also contains factory methods to create new messages.
-Messages are posted using org.sleuthkit.autopsy.ingest.IngestManagerProxy postMessage() method, which accepts a message created using of the factory methods.
-
-The recipient of the ingest messages is the Ingest Inbox viewer widget component, from the org.sleuthkit.autopsy.ingest.IngestManager package.
+Ingest services post interesting messages about the incoming data to Ingest Inbox. 
 
 
 \subsection design_overview_sub6 Result viewers (directory tree, table viewers, content viewers) 
 
-The directory tree result viewer (in the left-hand panel of the Autopsy viewer) is the core results viewer for the results saved during the ingest process.
+The directory tree (in the left-hand panel of the Autopsy viewer) 
+is the results viewer for the results saved in the database during ingest process.
 
-The component is by default registered as an ingest message listener with the ingest manager.
-
-When Autopsy starts, the viewer queries the blackboard data and populates the UI.
-During ingest, the viewer responds to data events by refreshing the data nodes corresponding to the artifact type in the data event.
+The component is by default registered with the ingest manager as an ingest event listener.
+The viewer first loads all the viewer-supported data currently in the blackboard when Autopsy starts.  
+During the ingest process the viewer receives events from ingest services
+(relayed by ingest manager) and it selectively refreshes parts of the tree providing real-time updates to the user.
 When ingest is completed, the viewer responds to the final ingest data event generated by the ingest manager, 
-and performs a final refresh of all data nodes.
+and performs a final refresh of all viewer-supported data in the blackboard.
 
-Data is encapsulated in nodes org.openide.nodes.Node before it is displayed in the UI.
-A node is an abstraction for a displayable data unit.
-The nodes contain property sheets to store data and are organized in a parent-child hierarchy.
-The hierarchy is used to visually represent the data and to trigger child view update whenever the parent node is selected by the user.
-Node child factories are invoked by the Netbeans framework at the time of parent node selection to create or refresh the child node view.
+Data presented is encapsulated in node objects (org.openide.nodes.Node)  before it is displayed in the UI.
+Nodes use property sheets to encapsulate data (blackboard attributes) and are modeled in a parent-child hierarchy with other nodes.
+The hierarchy is used to visually represent the data and to trigger child node updates when the parent node is selected.
+Node child factories are invoked by the Netbeans framework at the time of parent node selection to populate and refresh the child node view.
 
-Once a node is selected, its property sheet is rendered in the default table result viewer in the top-right part of the Autopsy UI.
+User normally initiates result navigation in the directory tree.  
+When a node is selected, it is passed in to the table result viewer (top-right).
+When a node is selected in the table result viewer, it is passed in to the content viewers (bottom-right).
+Node content support capabilities are registered in the node's Lookup.
+Multiple content viewers (such as strings, hex, extracted text, media) can support the node content.
+If multiple content viewers are supported, a preferred (default) content viewer is chosen.
 
-Nodes can also be registered with content viewer (bottom-right part of the Autopsy UI).
-Nodes use the node lookup infrastructure org.openide.util.Lookup to register their content viewer capabilities.
-
-When a new node is selected, org.sleuthkit.autopsy.corecomponents.DataContentTopComponent queries registered data content viewers to determine support for the given node content.
-The specific content viewers query the node lookup to determine the content capability match and return a number ranking the degree of the viewer support for the node type.
-Based on return values of isSupported() and isPreferred() methods, the org.sleuthkit.autopsy.corecomponents.DataContentTopComponent enables or disables content viewers and selects a default active viewer for the node type.
+For more information refer to org.sleuthkit.autopsy.corecomponents, org.sleuthkit.autopsy.corecomponentsinterfaces
+and org.sleuthkit.autopsy.directorytree 
 
 
 \subsection design_overview_sub7 Report generation
 
-After ingest is run, user can generate reports.
+When ingest is complete, user can generate reports (user can generate reports also during ingest - such report might not contain all results).
 There are several types of reports implemented as submodules that are shipped with Autopsy core: generic html, xml and Excel reports.
 Each reporting submodule implements org.sleuthkit.autopsy.report.ReportModule interface and registers itself in layer.xml
 
