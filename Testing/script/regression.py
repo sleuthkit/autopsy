@@ -130,6 +130,12 @@ def testCompareToGold(inFile):
   else:
       print("Object counts match!")
 
+def clearGoldDir(inFile):
+  cwd = wgetcwd()
+  if os.path.exists(os.path.join(cwd,goldDir,inFile)):
+    shutil.rmtree(os.path.join(cwd,goldDir,inFile))
+  os.makedirs(os.path.join(cwd,goldDir,inFile))
+
 def copyTestToGold(inFile): 
   print "------------------------------------------------"
   print "Recreating gold standard from results."
@@ -137,10 +143,69 @@ def copyTestToGold(inFile):
   cwd = wgetcwd()
   goldFile = os.path.join("./",goldDir,inFile,"standard.db")
   testFile = os.path.join("./",outDir,inFile,"AutopsyTestCase","autopsy.db")
-  if os.path.exists(os.path.join(cwd,goldDir,inFile)):
-      shutil.rmtree(os.path.join(cwd,goldDir,inFile))
-  os.makedirs(os.path.join(cwd,goldDir,inFile))
   shutil.copy(testFile, goldFile)
+
+def copyReportToGold(inFile): 
+  print "------------------------------------------------"
+  print "Recreating gold report from results."
+  inFile = imageName(inFile)
+  cwd = wgetcwd()
+  goldReport = os.path.join("./",goldDir,inFile,"report.html")
+  testReportPath = os.path.join("./",outDir,inFile,"AutopsyTestCase","Reports")
+  # Because Java adds a timestamp to the report file, one can't call it
+  # directly, so one must get a list of files in the dir, which are only
+  # reports, then filter for the .html report
+  for files in os.listdir(testReportPath):
+    if files.endswith(".html"): # Get the HTML one
+      testReport = os.path.join("./",outDir,inFile,"AutopsyTestCase","Reports",files)
+  shutil.copy(testReport, goldReport)
+
+def testCompareReports(inFile):
+  print "------------------------------------------------"
+  print "Comparing report to golden report."
+  name = imageName(inFile)
+  goldReport = os.path.join("./",goldDir,name,"report.html")  
+  testReportPath = os.path.join("./",outDir,name,"AutopsyTestCase","Reports")
+  # Because Java adds a timestamp to the report file, one can't call it
+  # directly, so one must get a list of files in the dir, which are only
+  # reports, then filter for the .html report
+  testReport = None
+  for files in os.listdir(testReportPath):
+    if files.endswith(".html"): # Get the HTML one
+      testReport = os.path.join("./",outDir,name,"AutopsyTestCase","Reports",files)
+  if os.path.isfile(goldReport) == False:
+    markError("No gold report exists", inFile)
+    return
+  if testReport is None:
+    markError("No test report exists", inFile)
+    return
+  # Compare the reports
+  goldFile = open(goldReport)
+  testFile = open(testReport)
+  # Search for <ul> because it is first seen in the report
+  # immediately after the unnecessary metadata, styles, and timestamp
+  gold = goldFile.read()
+  test = testFile.read()
+  gold = gold[gold.find("<ul>"):]
+  test = test[test.find("<ul>"):]
+  # Splitting allows for printouts of what the difference is
+  goldList = split(gold, 50)
+  testList = split(test, 50)
+  failed = 0
+  for goldSplit, testSplit in zip(goldList, testList):
+    if goldSplit != testSplit:
+      failed = 1
+      #print "Got: " + testSplit
+      #print "Expected: " + goldSplit
+      break
+  if(failed):
+    errString = "Reports do not match."
+    markError(errString, inFile)
+  else:
+    print "Reports match."
+  
+def split(input, size):
+  return [input[start:start+size] for start in range(0, len(input), size)]
 
 class ImgType:
   RAW, ENCASE, SPLIT, UNKNOWN = range(4)
@@ -199,9 +264,12 @@ def testFile(image, rebuild):
     #print imageName(image)
     copyLogs(image)
     if rebuild:
+      clearGoldDir(image)
       copyTestToGold(image)
+      copyReportToGold(image)
     else:
       testCompareToGold(image)
+      testCompareReports(image)
 
 def usage() :
   usage = "\
