@@ -25,6 +25,7 @@ import javax.swing.JDialog;
 import javax.swing.JTextField;
 import junit.framework.Test;
 import org.netbeans.jellytools.JellyTestCase;
+import org.netbeans.jellytools.MainWindowOperator;
 import org.netbeans.jellytools.NbDialogOperator;
 import org.netbeans.jellytools.WizardOperator;
 import org.netbeans.jemmy.Timeout;
@@ -73,7 +74,9 @@ public class RegressionTest extends JellyTestCase{
                 "testConfigureHash",
                 "testConfigureIngest2",
                 "testConfigureSearch",
-                "testIngest");
+                "testIngest",
+                "testGenerateReportToolbar",
+                "testGenerateReportButton");
         return NbModuleSuite.create(conf);
     }
 
@@ -216,5 +219,35 @@ public class RegressionTest extends JellyTestCase{
         }
         logger.info("Ingest (including enqueue) took " + (System.currentTimeMillis()-start) + "ms");
         new Timeout("pausing", 5000).sleep(); // allow keyword search to finish saving artifacts, just in case
+    }
+    
+    public void testGenerateReportToolbar() {
+        logger.info("Generate Report Toolbars");
+        // Force the action if necessary:
+        //new Action("Tools|Generate Report", null).perform();
+        //new Timeout("pausing", 1000).sleep();
+        MainWindowOperator mwo = MainWindowOperator.getDefault();
+        JButtonOperator jbo = new JButtonOperator(mwo, "Generate Report");
+        jbo.pushNoBlock();
+        new Timeout("pausing", 1000).sleep();
+    }
+    
+    public void testGenerateReportButton() {
+        logger.info("Generate Report Button");
+        JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
+        JDialogOperator reportDialogOperator = new JDialogOperator(reportDialog);
+        JCheckBoxOperator jcbo0 = new JCheckBoxOperator(reportDialogOperator, "Excel");
+        jcbo0.doClick();
+        JCheckBoxOperator jcbo1 = new JCheckBoxOperator(reportDialogOperator, "Default XML");
+        jcbo1.doClick();
+        JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Generate Report");
+        jbo0.pushNoBlock();
+        new Timeout("pausing", 1000).sleep(); // Give it a second to open
+        
+        JDialog previewDialog = JDialogOperator.waitJDialog("Report Preview", false, false);
+        JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
+        JButtonOperator jbo1 = new JButtonOperator(previewDialogOperator, "Close");
+        jbo1.pushNoBlock();
+        new Timeout("pausing", 1000).sleep(); // Give the program a second to idle for ascetics
     }
 }
