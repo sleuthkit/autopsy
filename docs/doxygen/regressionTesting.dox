@@ -83,6 +83,7 @@ Running in -r will also generate a golden report file built from the image. Norm
 For additional details regarding setting up and using Jemmy, please see 
 
 	http://platform.netbeans.org/tutorials/nbm-test.html
+	http://wiki.netbeans.org/Writing_JellyTools_Tests_Guide
 	
 
 
