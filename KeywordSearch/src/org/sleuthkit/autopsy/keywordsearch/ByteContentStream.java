@@ -25,15 +25,32 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.logging.Logger;
 import org.apache.solr.common.util.ContentStream;
-import org.sleuthkit.autopsy.datamodel.AbstractFileStringStream.Encoding;
 import org.sleuthkit.datamodel.AbstractContent;
-import org.sleuthkit.datamodel.FsContent;
 
 /**
  * Stream of bytes representing string with specified encoding
  * to feed into Solr as ContentStream
  */
 public class ByteContentStream implements ContentStream {   
+    
+    public static enum Encoding {
+
+        UTF8 {
+
+            @Override
+            public String toString() {
+                return "UTF-8";
+            }
+        },
+        UTF16 {
+
+            @Override
+            public String toString() {
+                return "UTF-16";
+            }
+        },
+    };
+    
     //input
     private byte[] content; //extracted subcontent
     private long contentSize;

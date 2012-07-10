@@ -161,12 +161,20 @@
                 <binary-origin>release/modules/ext/commons-httpclient-3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/tika-core-0.10.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-core-0.10.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-codec-1.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-codec-1.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-lang-2.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/tika-parsers-0.10.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-parsers-0.10.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jcl-over-slf4j-1.6.1.jar</runtime-relative-path>
