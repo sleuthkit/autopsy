@@ -80,8 +80,9 @@ public class Ingester {
     }
     
     public static synchronized Ingester getDefault() {
-        if (instance == null)
+        if (instance == null) {
             instance = new Ingester();
+        }
         return instance;
     }
 
@@ -133,10 +134,11 @@ public class Ingester {
      * AbstractFileChunk represents a file chunk and its chunk content.
      * 
      * @param fec AbstractFileChunk to ingest
+     * @param size approx. size of the stream in bytes, used for timeout estimation 
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(AbstractFileChunk fec, ByteContentStream bcs) throws IngesterException {
+    void ingest(AbstractFileChunk fec, ByteContentStream bcs, int size) throws IngesterException {
         AbstractContent sourceContent = bcs.getSourceContent();
         Map<String, String> params = getContentFields(sourceContent);
 
@@ -144,7 +146,7 @@ public class Ingester {
         params.put(Server.Schema.ID.toString(), 
         Server.getChunkIdString(sourceContent.getId(), fec.getChunkId()));
     
-        ingest(bcs, params, AbstractFileStringExtract.MAX_STRING_CHUNK_SIZE);
+        ingest(bcs, params, size);
     }
 
     /**

@@ -54,7 +54,7 @@ class AbstractFileChunk {
         boolean success = true;
         ByteContentStream bcs = new ByteContentStream(content, contentSize, parent.getSourceFile(), encoding);
         try {
-            ingester.ingest(this, bcs);
+            ingester.ingest(this, bcs, content.length);
             //logger.log(Level.INFO, "Ingesting string chunk: " + this.getName() + ": " + chunkID);
         } catch (Exception ingEx) {
             success = false;
