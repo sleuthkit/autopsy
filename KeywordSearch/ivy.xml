@@ -16,6 +16,7 @@
         <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="3.5.0" transitive="false" /> <!-- the war file -->
         <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="3.5.0"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
+        <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="0.10"/>
         <dependency conf="start-solr->default" org="org.mortbay.jetty" name="start" rev="6.1.26"/>
         <dependency conf="jetty-libs->default" org="org.mortbay.jetty" name="jetty" rev="6.1.26"/>
         <dependency conf="jetty-libs->default" org="org.mortbay.jetty" name="jsp-2.1" rev="6.1.14"/>

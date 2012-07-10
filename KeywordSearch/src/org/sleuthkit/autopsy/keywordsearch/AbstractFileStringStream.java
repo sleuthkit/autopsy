@@ -16,13 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskException;
 
@@ -33,16 +34,6 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class AbstractFileStringStream extends InputStream {
 
-    public static enum Encoding {
-
-        UTF8 {
-
-            @Override
-            public String toString() {
-                return "UTF-8";
-            }
-        },
-    };
     
     //args
     private AbstractFile content;
@@ -73,7 +64,7 @@ public class AbstractFileStringStream extends InputStream {
      * @param encoding target encoding, currently UTF-8
      * @param preserveOnBuffBoundary whether to preserve or split string on a buffer boundary. If false, will pack into read buffer up to max. possible, potentially splitting a string. If false, the string will be preserved for next read.
      */
-    public AbstractFileStringStream(AbstractFile content, Encoding encoding, boolean preserveOnBuffBoundary) {
+    public AbstractFileStringStream(AbstractFile content, ByteContentStream.Encoding encoding, boolean preserveOnBuffBoundary) {
         this.content = content;
         this.encoding = encoding.toString();
         //this.preserveOnBuffBoundary = preserveOnBuffBoundary;
@@ -87,7 +78,7 @@ public class AbstractFileStringStream extends InputStream {
      * @param content to extract strings from
      * @param encoding target encoding, currently UTF-8
      */
-    public AbstractFileStringStream(AbstractFile content, Encoding encoding) {
+    public AbstractFileStringStream(AbstractFile content, ByteContentStream.Encoding encoding) {
         this(content, encoding, false);
     }
 

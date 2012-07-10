@@ -17,7 +17,7 @@ import org.apache.tika.metadata.*;
  * @author arivera
  */
 public class ThunderbirdMetadata implements CreativeCommons, DublinCore, Geographic, HttpHeaders,
-        IPTC, Message, MSOffice, ClimateForcast, TIFF, TikaMetadataKeys, TikaMimeKeys,
+        Message, MSOffice, ClimateForcast, TIFF, TikaMetadataKeys, TikaMimeKeys,
         Serializable {
     
     private int strArrCount = 0;
