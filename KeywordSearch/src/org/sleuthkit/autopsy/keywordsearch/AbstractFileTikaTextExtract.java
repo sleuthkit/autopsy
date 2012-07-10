@@ -18,9 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
@@ -44,8 +43,8 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private static final Logger logger = Logger.getLogger(IngestServiceAbstractFile.class.getName());
     private static final Encoding ENCODING = Encoding.UTF8;
     static final Charset charset = Charset.forName(ENCODING.toString());
-    static final int MAX_EXTR_TEXT_CHUNK_SIZE = 1 * 1024 * 1024;
-    private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHUNK_SIZE];
+    static final int MAX_EXTR_TEXT_CHARS = 1 * 1024 * 1024;
+    private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
     private static final Tika tika = new Tika();
     private KeywordSearchIngestService service;
     private Ingester ingester;
@@ -58,6 +57,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         this.service = KeywordSearchIngestService.getDefault();
         Server solrServer = KeywordSearch.getServer();
         ingester = solrServer.getIngester();
+        //tika.setMaxStringLength(MAX_EXTR_TEXT_CHARS);
     }
 
     @Override
@@ -74,33 +74,53 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     public boolean index() throws Ingester.IngesterException {
         boolean success = false;
         Reader reader = null;
+        final InputStream stream = new ReadContentInputStream(sourceFile);
         try {
             success = true;
-            reader = tika.parse(new ReadContentInputStream(sourceFile));
+            if (sourceFile.getName().contains("xls")) {
+                int a = 3;
+            }
+            reader = tika.parse(stream);
             long readSize;
-            while ((readSize = reader.read(TEXT_CHUNK_BUF, 0, MAX_EXTR_TEXT_CHUNK_SIZE)) != -1) {
+            long totalRead = 0;
+            //we read max 1024 chars at time, this is max what reader would return it seems
+            while ((readSize = reader.read(TEXT_CHUNK_BUF, 0, 1024)) != -1) {
+                
+                totalRead += readSize;
+
+                //consume more bytes to fill entire chunk
+                while ((totalRead < MAX_EXTR_TEXT_CHARS - 1024)
+                        && (readSize = reader.read(TEXT_CHUNK_BUF, (int) totalRead, 1024)) != -1) {
+                    totalRead += readSize;
+                }
+                
+                //logger.log(Level.INFO, "TOTAL READ SIZE: " + totalRead + " file: " + sourceFile.getName());
 
                 //encode to bytes to index as byte stream
                 String extracted;
-                if (readSize < MAX_EXTR_TEXT_CHUNK_SIZE) {
+                if (totalRead < MAX_EXTR_TEXT_CHARS) {
                     //trim the 0 bytes
-                    StringBuilder sb = new StringBuilder((int) readSize + 5);
-                    //inject BOM here (saves byte buffer realloc), will be converted to specific encoding BOM
-                    sb.append(UTF16BOM); 
+                    StringBuilder sb = new StringBuilder((int) totalRead + 5);
+                    //inject BOM here (saves byte buffer realloc later), will be converted to specific encoding BOM
+                    sb.append(UTF16BOM);
                     sb.append(TEXT_CHUNK_BUF, 0, (int) readSize);
                     extracted = sb.toString();
 
                 } else {
-                    StringBuilder sb = new StringBuilder((int) readSize + 5);
-                    //inject BOM here (saves byte buffer realloc), will be converted to specific encoding BOM
-                    sb.append(UTF16BOM); 
+                    StringBuilder sb = new StringBuilder((int) totalRead + 5);
+                    //inject BOM here (saves byte buffer realloc later), will be converted to specific encoding BOM
+                    sb.append(UTF16BOM);
                     sb.append(TEXT_CHUNK_BUF);
                     extracted = sb.toString();
                 }
+
+                //reset for next chunk
+                totalRead = 0;
+
                 //converts BOM automatically to charSet encoding
                 byte[] encodedBytes = extracted.getBytes(charset);
-                
-                
+
+
                 //PrintStream s = new PrintStream("c:\\temp\\ps.txt");
                 //for (byte b : encodedBytes) {
                 //    s.format("%02x ", b);
@@ -134,9 +154,16 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
             logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId(), ex);
         } finally {
             try {
-                reader.close();
+                stream.close();
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Unable to close content stream from " + sourceFile.getId(), ex);
+            }
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Unable to close content reader from " + sourceFile.getId(), ex);
             }
         }
 
