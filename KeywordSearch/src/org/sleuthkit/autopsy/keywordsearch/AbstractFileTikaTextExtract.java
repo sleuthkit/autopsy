@@ -57,7 +57,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         this.service = KeywordSearchIngestService.getDefault();
         Server solrServer = KeywordSearch.getServer();
         ingester = solrServer.getIngester();
-        //tika.setMaxStringLength(MAX_EXTR_TEXT_CHARS);
+        //tika.setMaxStringLength(MAX_EXTR_TEXT_CHARS); //for getting back string only
     }
 
     @Override
@@ -76,11 +76,8 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         Reader reader = null;
         final InputStream stream = new ReadContentInputStream(sourceFile);
         try {
-            success = true;
-            if (sourceFile.getName().contains("xls")) {
-                int a = 3;
-            }
             reader = tika.parse(stream);
+            success = true;
             long readSize;
             long totalRead = 0;
             //we read max 1024 chars at time, this is max what reader would return it seems
@@ -99,7 +96,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 //encode to bytes to index as byte stream
                 String extracted;
                 if (totalRead < MAX_EXTR_TEXT_CHARS) {
-                    //trim the 0 bytes
+                    //add BOM and trim the 0 bytes
                     StringBuilder sb = new StringBuilder((int) totalRead + 5);
                     //inject BOM here (saves byte buffer realloc later), will be converted to specific encoding BOM
                     sb.append(UTF16BOM);
@@ -120,18 +117,6 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 //converts BOM automatically to charSet encoding
                 byte[] encodedBytes = extracted.getBytes(charset);
 
-
-                //PrintStream s = new PrintStream("c:\\temp\\ps.txt");
-                //for (byte b : encodedBytes) {
-                //    s.format("%02x ", b);
-                //}
-                //s.close();
-
-                //debug
-                //FileOutputStream debug = new FileOutputStream("c:\\temp\\" + sourceFile.getName() + Integer.toString(this.numChunks + 1));
-                //debug.write(encodedBytes, 0, encodedBytes.length);
-                //debug.close();
-
                 AbstractFileChunk chunk = new AbstractFileChunk(this, this.numChunks + 1);
 
                 try {
@@ -147,11 +132,11 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 //check if need invoke commit/search between chunks
                 //not to delay commit if timer has gone off
                 service.checkRunCommitSearch();
-
             }
 
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId(), ex);
+            success = false;
         } finally {
             try {
                 stream.close();

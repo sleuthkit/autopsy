@@ -533,9 +533,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 fsContent = (FsContent) aFile;
             }
 
-            //if alloc fs file and not index content, or a dir, index meta data only
+            final long size = aFile.getSize();
+            //if alloc fs file and not to index content, or a dir, or 0 content, index meta data only
             if (fsContent != null
-                    && (indexContent == false || fsContent.isDir())) {
+                    && (indexContent == false || fsContent.isDir() || size == 0)) {
                 try {
                     ingester.ingest(fsContent, false); //meta-data only
                     ingestStatus.put(aFile.getId(), IngestStatus.INGESTED_META);
@@ -549,26 +550,18 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
             boolean ingestibleFile = Ingester.isIngestible(aFile);
 
-            final long size = aFile.getSize();
-            //if fs file with no content (size is 0), index meta-data only
-            if (fsContent != null && size == 0) {
-                try {
-                    ingester.ingest(fsContent, false); //meta-data only
-                    ingestStatus.put(aFile.getId(), IngestStatus.INGESTED_META);
-                } catch (IngesterException ex) {
-                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
-                    logger.log(Level.WARNING, "Unable to index meta-data for fsContent: " + fsContent.getId(), ex);
-                }
-
-            } else if (fsContent != null && ingestibleFile == true) {
+            if (fsContent != null && ingestibleFile == true) {
                 //we know it's an allocated fs file (FsContent) with supported content
                 //extract text with Tika, divide into chunks and index with Solr
                 try {
                     //logger.log(Level.INFO, "indexing: " + fsContent.getName());
-                    //ingester.ingest(fsContent, true);
                     if (!extractIndex(aFile, false)) {
                         logger.log(Level.WARNING, "Failed to extract Tika text and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
                         ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                        //try to extract strings, if a file
+                        if (fsContent.isFile() == true) {
+                            processNonIngestible(fsContent);
+                        }
 
                     } else {
                         ingestStatus.put(aFile.getId(), IngestStatus.INGESTED);
