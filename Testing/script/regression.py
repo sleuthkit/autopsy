@@ -7,7 +7,7 @@ import os.path
 import shutil
 import time
 
-#  Last modified 7/11/12 @ 11am
+#  Last modified 7/11/12 @ 2pm
 #  Usage: ./regression.py [-i FILE] [OPTIONS]
 #  Run the RegressionTest.java file, and compare the result with a gold standard
 #  When the -i flag is set, this script only tests the image given by FILE.
@@ -17,6 +17,7 @@ import time
 #  In addition, any keywords to search for must be in ./input/notablekeywords.xml
 #    Options:
 #    -r, --rebuild      Rebuild the gold standards from the test results for each image
+#    -u, --ignore
 
 hadErrors = False # If any of the tests failed
 results = {}      # Dictionary in which to store map ({imgname}->errors)
@@ -27,7 +28,7 @@ outDir = os.path.join("output",time.strftime("%Y.%m.%d-%H.%M"))
 
 
 # Run ingest on all the images in 'input', using notablekeywords.xml and notablehashes.txt-md5.idx
-def testAddImageIngest(inFile):
+def testAddImageIngest(inFile, ignoreUnalloc):
   print "================================================"
   print "Ingesting Image: " + inFile
 
@@ -74,7 +75,9 @@ def testAddImageIngest(inFile):
   args.append("-Dnsrl_path=" + nsrlPath)
   args.append("-Dgold_path=" + os.path.join(cwd,goldDir).replace("/", "\\"))
   args.append("-Dout_path=" + os.path.join(cwd,outDir,testCaseName).replace("/", "\\"))
+  args.append("-Dignore_unalloc=" + "%s" % ignoreUnalloc)
   args.append("-Dtest.timeout=" + str(timeout))
+
 
   # print the ant testing command
   print "CMD: " + " ".join(args)
@@ -294,12 +297,15 @@ def copyLogs(inFile):
   logDir = os.path.join("..","build","test","qa-functional","work","userdir0","var","log")
   shutil.copytree(logDir,os.path.join(outDir,imageName(inFile),"logs"))
 
-def testFile(image, rebuild):
+def testFile(image, type):
   if imageType(image) != ImgType.UNKNOWN:
-    testAddImageIngest(image)
+    if type == 2:
+      testAddImageIngest(image, True)
+    else:
+      testAddImageIngest(image, False)
     #print imageName(image)
     copyLogs(image)
-    if rebuild:
+    if type == 1:
       clearGoldDir(image)
       copyTestToGold(image)
       copyReportToGold(image)
@@ -317,12 +323,15 @@ def usage() :
   and an indexed notable hash database at ./input/notablehashes.txt-md5.idx\n\
   In addition, any keywords to search for must be in ./input/notablekeywords.xml\n\n\
     Options:\n\n\
-    -r, --rebuild\t\tRebuild the gold standards from the test results for each image"
+    -r, --rebuild\t\tRebuild the gold standards from the test results for each image\n\n\
+    -u, --nounalloc\t\tIgnore unallocated space while ingesting"
   return usage
 
 def main():
   rebuild = False
   single = False
+  ignore = False
+  type = 0
   test = True
   argi = 1
   while argi < len(sys.argv):
@@ -333,17 +342,22 @@ def main():
           image = sys.argv[argi]
           print "Running on single image: " + image
       elif (arg  == "--rebuild") or (arg == "-r"):
+          type = 1
           rebuild = True
           print "Running in REBUILD mode"
+      elif (arg == "--nounalloc") or (arg == "-u"):
+          type = 2
+          ignore = True
+          print "Ignoring unallocated space"
       else:
           test = False
           print usage()
       argi+=1
   if single:
-    testFile(image, rebuild)
+    testFile(image, type)
   elif test:
     for inFile in os.listdir(inDir):
-      testFile(os.path.join(inDir,inFile), rebuild)
+      testFile(os.path.join(inDir,inFile), type)
 
   if hadErrors == True:
     print "**********************************************"
