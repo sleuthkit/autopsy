@@ -115,9 +115,9 @@ abstract public class Extract implements IngestServiceImage{
      * @param  query is a sql string query that is to be run
      * @return  list is the ArrayList that contains the resultset information in it that the query obtained
      */
-    public List dbConnect(String path, String query) {
+    public List<HashMap<String,Object>> dbConnect(String path, String query) {
         ResultSet temprs = null;
-        List list = new ArrayList();
+        List<HashMap<String,Object>> list = new ArrayList<HashMap<String,Object>>();
         String connectionString = "jdbc:sqlite:" + path;
         try {
             dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", connectionString);
@@ -126,7 +126,7 @@ abstract public class Extract implements IngestServiceImage{
             tempdbconnect.closeConnection();
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex);
-            return new ArrayList();
+            return new ArrayList<HashMap<String,Object>>();
         }
         return list;
     }
@@ -137,12 +137,12 @@ abstract public class Extract implements IngestServiceImage{
      * @param  rs is the resultset that needs to be converted to an arraylist
      * @return  list returns the arraylist built from the converted resultset
      */
-    public List<HashMap> resultSetToArrayList(ResultSet rs) throws SQLException {
+    public List<HashMap<String,Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
         ResultSetMetaData md = rs.getMetaData();
         int columns = md.getColumnCount();
-        List list = new ArrayList(50);
+        List<HashMap<String,Object>> list = new ArrayList<HashMap<String,Object>>(50);
         while (rs.next()) {
-            HashMap row = new HashMap(columns);
+            HashMap<String,Object> row = new HashMap<String,Object>(columns);
             for (int i = 1; i <= columns; ++i) {
                 if (rs.getObject(i) == null) {
                     row.put(md.getColumnName(i), "");
