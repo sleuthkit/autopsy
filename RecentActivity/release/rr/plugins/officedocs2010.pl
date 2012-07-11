@@ -69,9 +69,9 @@ my $VERSION = getVersion();
 sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
-	::logMsg("Launching officedocs2010 v.".$VERSION);
-    ::rptMsg("officedocs2010 v.".$VERSION); # 20110830 [fpi] + banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # 20110830 [fpi] + banner
+	#::logMsg("Launching officedocs2010 v.".$VERSION);
+    #::rptMsg("officedocs2010 v.".$VERSION); # 20110830 [fpi] + banner
+    #::rptMsg("(".getHive().") ".getShortDescr()."\n"); # 20110830 [fpi] + banner
 
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
@@ -83,15 +83,15 @@ sub pluginmain {
 	}
 	
 	if ($tag) {
-		::rptMsg("MSOffice version 2010 located.");
+		#::rptMsg("MSOffice version 2010 located.");
 		my $key_path = "Software\\Microsoft\\Office\\14.0";	                 
 		my $of_key = $root_key->get_subkey($key_path);
 		if ($of_key) {
 # Attempt to retrieve Word docs
 			my $word = 'Word\\File MRU';
 			if (my $word_key = $of_key->get_subkey($word)) {
-				::rptMsg($key_path."\\".$word);
-				::rptMsg("LastWrite Time ".gmtime($word_key->get_timestamp())." (UTC)");
+				#::rptMsg($key_path."\\".$word);
+				#::rptMsg("LastWrite Time ".gmtime($word_key->get_timestamp())." (UTC)");
 				my @vals = $word_key->get_list_of_values();
 				if (scalar(@vals) > 0) {
 					my %files;
@@ -106,22 +106,22 @@ sub pluginmain {
 # Print sorted content to report file			
 					foreach my $u (sort {$a <=> $b} keys %files) {
 						my ($val,$data) = split(/:/,$files{$u},2);
-						::rptMsg("  ".$val." -> ".$data);
+						::rptMsg("<Word name=\"".$val."\">".$data . "</Word>");
 					}
 				}
 				else {
-					::rptMsg($key_path.$word." has no values.");
+					#::rptMsg($key_path.$word." has no values.");
 				}
 			}
 			else {
-				::rptMsg($key_path.$word." not found.");
+				#::rptMsg($key_path.$word." not found.");
 			}
-			::rptMsg("");
+			#::rptMsg("");
 # Attempt to retrieve Excel docs
 			my $excel = 'Excel\\File MRU';
 			if (my $excel_key = $of_key->get_subkey($excel)) {
-				::rptMsg($key_path."\\".$excel);
-				::rptMsg("LastWrite Time ".gmtime($excel_key->get_timestamp())." (UTC)");
+				#::rptMsg($key_path."\\".$excel);
+				#::rptMsg("LastWrite Time ".gmtime($excel_key->get_timestamp())." (UTC)");
 				my @vals = $excel_key->get_list_of_values();
 				if (scalar(@vals) > 0) {
 					my %files;
@@ -136,22 +136,22 @@ sub pluginmain {
 # Print sorted content to report file			
 					foreach my $u (sort {$a <=> $b} keys %files) {
 						my ($val,$data) = split(/:/,$files{$u},2);
-						::rptMsg("  ".$val." -> ".$data);
+						::rptMsg("<Excel name=\"".$val."\">".$data . "</Excel>");
 					}
 				}
 				else {
-					::rptMsg($key_path.$excel." has no values.");
+					#::rptMsg($key_path.$excel." has no values.");
 				}
 			}
 			else {
-				::rptMsg($key_path.$excel." not found.");
+				#::rptMsg($key_path.$excel." not found.");
 			}
-			::rptMsg("");
+			#::rptMsg("");
 # Attempt to retrieve Access docs
 			my $access = 'Access\\File MRU';
 			if (my $access_key = $of_key->get_subkey($access)) {
-				::rptMsg($key_path."\\".$access);
-				::rptMsg("LastWrite Time ".gmtime($access_key->get_timestamp())." (UTC)");
+				#::rptMsg($key_path."\\".$access);
+				#::rptMsg("LastWrite Time ".gmtime($access_key->get_timestamp())." (UTC)");
 				my @vals = $access_key->get_list_of_values();
 				if (scalar(@vals) > 0) {
 					my %files;
@@ -166,22 +166,22 @@ sub pluginmain {
 # Print sorted content to report file			
 					foreach my $u (sort {$a <=> $b} keys %files) {
 						my ($val,$data) = split(/:/,$files{$u},2);
-						::rptMsg("  ".$val." -> ".$data);
+						::rptMsg("<Access name=\"".$val."\">".$data . "</Access>");
 					}
 				}
 				else {
-					::rptMsg($key_path.$access." has no values.");
+				#	::rptMsg($key_path.$access." has no values.");
 				}
 			}
 			else {
-				::rptMsg($key_path.$access." not found.");
+			#	::rptMsg($key_path.$access." not found.");
 			}
-			::rptMsg("");
+			#::rptMsg("");
 # Attempt to retrieve PowerPoint docs			
 			my $ppt = 'PowerPoint\\File MRU';
 			if (my $ppt_key = $of_key->get_subkey($ppt)) {
-				::rptMsg($key_path."\\".$ppt);
-				::rptMsg("LastWrite Time ".gmtime($ppt_key->get_timestamp())." (UTC)");
+				#::rptMsg($key_path."\\".$ppt);
+				#::rptMsg("LastWrite Time ".gmtime($ppt_key->get_timestamp())." (UTC)");
 				my @vals = $ppt_key->get_list_of_values();
 				if (scalar(@vals) > 0) {
 					my %files;
@@ -196,25 +196,25 @@ sub pluginmain {
 # Print sorted content to report file			
 					foreach my $u (sort {$a <=> $b} keys %files) {
 						my ($val,$data) = split(/:/,$files{$u},2);
-						::rptMsg("  ".$val." -> ".$data);
+						::rptMsg("<PowerPoint name=\"".$val."\">".$data . "</PowerPoint>");
 					}
 				}
 				else {
-					::rptMsg($key_path."\\".$ppt." has no values.");
+				#	::rptMsg($key_path."\\".$ppt." has no values.");
 				}		
 			}
 			else {
-				::rptMsg($key_path."\\".$ppt." not found.");
+			#	::rptMsg($key_path."\\".$ppt." not found.");
 			}			
 		}
 		else {
-			::rptMsg("Could not access ".$key_path);
-			::logMsg("Could not access ".$key_path);
+		#	::rptMsg("Could not access ".$key_path);
+		#	::logMsg("Could not access ".$key_path);
 		}
 	}
 	else {
-		::logMsg("MSOffice version not found.");
-		::rptMsg("MSOffice version not found.");
+	#	::logMsg("MSOffice version not found.");
+	#	::rptMsg("MSOffice version not found.");
 	}
 }
 
