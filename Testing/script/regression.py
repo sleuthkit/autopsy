@@ -7,6 +7,7 @@ import os.path
 import shutil
 import time
 
+#  Last modified 7/11/12 @ 11am
 #  Usage: ./regression.py [-i FILE] [OPTIONS]
 #  Run the RegressionTest.java file, and compare the result with a gold standard
 #  When the -i flag is set, this script only tests the image given by FILE.
@@ -22,7 +23,7 @@ results = {}      # Dictionary in which to store map ({imgname}->errors)
 goldDir = "gold"  # Directory for gold standards (files should be ./gold/{imgname}/standard.db)
 inDir = "input"   # Image files, hash dbs, and keywords.
 # Results will be in ./output/{datetime}/{imgname}/
-outDir = os.path.join("output",time.strftime("%Y.%m.%d-%H.%M")) 
+outDir = os.path.join("output",time.strftime("%Y.%m.%d-%H.%M"))
 
 
 # Run ingest on all the images in 'input', using notablekeywords.xml and notablehashes.txt-md5.idx
@@ -40,9 +41,24 @@ def testAddImageIngest(inFile):
 
   cwd = wgetcwd()
   testInFile = wabspath(inFile)
+  # NEEDS windows path (backslashes) for .E00 images to work
+  testInFile = testInFile.replace("/", "\\")
   knownBadPath = os.path.join(cwd,inDir,"notablehashes.txt-md5.idx")
+  knownBadPath = knownBadPath.replace("/", "\\")
   keywordPath = os.path.join(cwd,inDir,"notablekeywords.xml")
+  keywordPath = keywordPath.replace("/", "\\")
   nsrlPath = os.path.join(cwd,inDir,"nsrl.txt-md5.idx")
+  nsrlPath = nsrlPath.replace("/", "\\")
+
+  antlog = os.path.join(cwd,outDir,testCaseName,"antlog.txt")
+  antlog = antlog.replace("/", "\\")
+
+  timeout = 24 * 60 * 60 * 1000    # default of 24 hours, just to be safe
+  size = getImageSize(inFile)      # get the size in bytes
+  timeout = (size / 1000) / 1000   # convert to MB
+  timeout = timeout * 1000         # convert sec to ms
+  timeout = timeout * 1.5          # add a little extra umph
+  timeout = timeout * 25       # decided we needed A LOT extra to be safe
 
   # set up ant target
   args = ["ant"]
@@ -51,13 +67,14 @@ def testAddImageIngest(inFile):
   args.append(os.path.join("..","build.xml"))
   args.append("regression-test")
   args.append("-l")
-  args.append(os.path.join(cwd,outDir,testCaseName,"antlog.txt"))
+  args.append(antlog)
   args.append("-Dimg_path=" + testInFile)
   args.append("-Dknown_bad_path=" + knownBadPath)
   args.append("-Dkeyword_path=" + keywordPath)
   args.append("-Dnsrl_path=" + nsrlPath)
-  args.append("-Dgold_path=" + os.path.join(cwd,goldDir))
-  args.append("-Dout_path=" + os.path.join(cwd,outDir,testCaseName))
+  args.append("-Dgold_path=" + os.path.join(cwd,goldDir).replace("/", "\\"))
+  args.append("-Dout_path=" + os.path.join(cwd,outDir,testCaseName).replace("/", "\\"))
+  args.append("-Dtest.timeout=" + str(timeout))
 
   # print the ant testing command
   print "CMD: " + " ".join(args)
@@ -67,6 +84,19 @@ def testAddImageIngest(inFile):
   #subprocess.call(args, stderr=subprocess.STDOUT, stdout=fnull)
   #fnull.close();
   subprocess.call(args)
+
+def getImageSize(inFile):
+  name = imageName(inFile)
+  path = os.path.join(".",inDir)
+  size = 0
+  for files in os.listdir(path):
+    filename = os.path.splitext(files)[0]
+    if filename == name:
+      filepath = os.path.join(path, files)
+      if not os.path.samefile(filepath, inFile):
+        size += os.path.getsize(filepath)
+  size += os.path.getsize(inFile)
+  return size
 
 def testCompareToGold(inFile):
   print "-----------------------------------------------"
@@ -130,6 +160,13 @@ def testCompareToGold(inFile):
   else:
       print("Object counts match!")
 
+def clearGoldDir(inFile):
+  cwd = wgetcwd()
+  inFile = imageName(inFile)
+  if os.path.exists(os.path.join(cwd,goldDir,inFile)):
+    shutil.rmtree(os.path.join(cwd,goldDir,inFile))
+  os.makedirs(os.path.join(cwd,goldDir,inFile))
+
 def copyTestToGold(inFile): 
   print "------------------------------------------------"
   print "Recreating gold standard from results."
@@ -137,10 +174,74 @@ def copyTestToGold(inFile):
   cwd = wgetcwd()
   goldFile = os.path.join("./",goldDir,inFile,"standard.db")
   testFile = os.path.join("./",outDir,inFile,"AutopsyTestCase","autopsy.db")
-  if os.path.exists(os.path.join(cwd,goldDir,inFile)):
-      shutil.rmtree(os.path.join(cwd,goldDir,inFile))
-  os.makedirs(os.path.join(cwd,goldDir,inFile))
   shutil.copy(testFile, goldFile)
+
+def copyReportToGold(inFile): 
+  print "------------------------------------------------"
+  print "Recreating gold report from results."
+  inFile = imageName(inFile)
+  cwd = wgetcwd()
+  goldReport = os.path.join("./",goldDir,inFile,"report.html")
+  testReportPath = os.path.join("./",outDir,inFile,"AutopsyTestCase","Reports")
+  # Because Java adds a timestamp to the report file, one can't call it
+  # directly, so one must get a list of files in the dir, which are only
+  # reports, then filter for the .html report
+  testReport = None
+  for files in os.listdir(testReportPath):
+    if files.endswith(".html"): # Get the HTML one
+      testReport = os.path.join("./",outDir,inFile,"AutopsyTestCase","Reports",files)
+  if testReport is None:
+    markError("No test report exists", inFile)
+    return
+  else:
+    shutil.copy(testReport, goldReport)
+
+def testCompareReports(inFile):
+  print "------------------------------------------------"
+  print "Comparing report to golden report."
+  name = imageName(inFile)
+  goldReport = os.path.join("./",goldDir,name,"report.html")  
+  testReportPath = os.path.join("./",outDir,name,"AutopsyTestCase","Reports")
+  # Because Java adds a timestamp to the report file, one can't call it
+  # directly, so one must get a list of files in the dir, which are only
+  # reports, then filter for the .html report
+  testReport = None
+  for files in os.listdir(testReportPath):
+    if files.endswith(".html"): # Get the HTML one
+      testReport = os.path.join("./",outDir,name,"AutopsyTestCase","Reports",files)
+  if os.path.isfile(goldReport) == False:
+    markError("No gold report exists", inFile)
+    return
+  if testReport is None:
+    markError("No test report exists", inFile)
+    return
+  # Compare the reports
+  goldFile = open(goldReport)
+  testFile = open(testReport)
+  # Search for <ul> because it is first seen in the report
+  # immediately after the unnecessary metadata, styles, and timestamp
+  gold = goldFile.read()
+  test = testFile.read()
+  gold = gold[gold.find("<ul>"):]
+  test = test[test.find("<ul>"):]
+  # Splitting allows for printouts of what the difference is
+  goldList = split(gold, 50)
+  testList = split(test, 50)
+  failed = 0
+  for goldSplit, testSplit in zip(goldList, testList):
+    if goldSplit != testSplit:
+      failed = 1
+      #print "Got: " + testSplit
+      #print "Expected: " + goldSplit
+      break
+  if(failed):
+    errString = "Reports do not match."
+    markError(errString, inFile)
+  else:
+    print "Reports match."
+  
+def split(input, size):
+  return [input[start:start+size] for start in range(0, len(input), size)]
 
 class ImgType:
   RAW, ENCASE, SPLIT, UNKNOWN = range(4)
@@ -199,9 +300,12 @@ def testFile(image, rebuild):
     #print imageName(image)
     copyLogs(image)
     if rebuild:
+      clearGoldDir(image)
       copyTestToGold(image)
+      copyReportToGold(image)
     else:
       testCompareToGold(image)
+      testCompareReports(image)
 
 def usage() :
   usage = "\
