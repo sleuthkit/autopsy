@@ -79,6 +79,7 @@ public class Chrome extends Extract implements IngestServiceImage {
         int j = 0;
         if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
+                
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
@@ -92,6 +93,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                     break;
                 }
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, chquery);
+                logger.log(Level.INFO, moduleName + "- Now getting history from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -129,6 +131,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                     logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
+                 logger.log(Level.INFO, moduleName + "- Now getting Bookmarks from " + temps);
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
                     dbFile.delete();
@@ -195,6 +198,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                 }
 
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, chcookiequery);
+                logger.log(Level.INFO, moduleName + "- Now getting cookies from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -242,6 +246,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                 }
 
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, chdownloadquery);
+                logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -289,6 +294,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                     break;
                 }
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, chloginquery);
+                logger.log(Level.INFO, moduleName + "- Now getting login information from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
