@@ -219,7 +219,7 @@ public class ExtractRegistry extends Extract implements IngestServiceImage {
                     Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
                     time = epochtime.longValue();
                     String Tempdate = time.toString();
-                    time = Long.valueOf(Tempdate)/1000;
+                    time = Long.valueOf(Tempdate) / 1000;
                 } catch (ParseException e) {
                     logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> ", e);
                 }
@@ -266,7 +266,7 @@ public class ExtractRegistry extends Extract implements IngestServiceImage {
                             try {
                                 Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(name).getTime();
                                 ftime = epochtime.longValue();
-                                ftime = ftime/1000;
+                                ftime = ftime / 1000;
                             } catch (ParseException e) {
                                 logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> ", e);
                             }
@@ -290,7 +290,7 @@ public class ExtractRegistry extends Extract implements IngestServiceImage {
                                     Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
                                     installtime = epochtime.longValue();
                                     String Tempdate = installtime.toString();
-                                    installtime = Long.valueOf(Tempdate)/1000;
+                                    installtime = Long.valueOf(Tempdate) / 1000;
                                 } catch (ParseException e) {
                                     logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> ", e);
                                 }
@@ -299,6 +299,15 @@ public class ExtractRegistry extends Extract implements IngestServiceImage {
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                 bbart.addAttributes(bbattributes);
                             }
+                        } else if ("office".equals(context)) {
+                                                       
+                            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, artnode.getName()));
+                            bbart.addAttributes(bbattributes);
+
                         } else {
 //                            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
 //                            bbart.addAttributes(bbattributes);
@@ -330,8 +339,7 @@ public class ExtractRegistry extends Extract implements IngestServiceImage {
 
     @Override
     public void stop() {
-        if(JavaSystemCaller.Exec.getProcess() != null)
-        {
+        if (JavaSystemCaller.Exec.getProcess() != null) {
             JavaSystemCaller.Exec.stop();
         }
     }
