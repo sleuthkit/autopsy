@@ -22,12 +22,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
+import org.apache.tika.metadata.Metadata;
 import org.sleuthkit.autopsy.keywordsearch.ByteContentStream.Encoding;
 
 /**
@@ -43,7 +47,9 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private static final Logger logger = Logger.getLogger(IngestServiceAbstractFile.class.getName());
     private static final Encoding ENCODING = Encoding.UTF8;
     static final Charset charset = Charset.forName(ENCODING.toString());
-    static final int MAX_EXTR_TEXT_CHARS = 1 * 1024 * 1024;
+    static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
+    private static final int SINGLE_READ_CHARS = 1024;
+    private static final int EXTRA_CHARS = 128; //for whitespace
     private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
     private static final Tika tika = new Tika();
     private KeywordSearchIngestService service;
@@ -76,49 +82,70 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         Reader reader = null;
         final InputStream stream = new ReadContentInputStream(sourceFile);
         try {
-            reader = tika.parse(stream);
+            Metadata meta = new Metadata();
+            reader = tika.parse(stream, meta);
             success = true;
             long readSize;
             long totalRead = 0;
-            //we read max 1024 chars at time, this is max what reader would return it seems
-            while ((readSize = reader.read(TEXT_CHUNK_BUF, 0, 1024)) != -1) {
-                
+            boolean eof = false;
+            //we read max 1024 chars at time, this seems to max what this Reader would return
+            while (!eof && (readSize = reader.read(TEXT_CHUNK_BUF, 0, SINGLE_READ_CHARS)) != -1) {
                 totalRead += readSize;
 
-                //consume more bytes to fill entire chunk
-                while ((totalRead < MAX_EXTR_TEXT_CHARS - 1024)
-                        && (readSize = reader.read(TEXT_CHUNK_BUF, (int) totalRead, 1024)) != -1) {
+                //consume more bytes to fill entire chunk (leave EXTRA_CHARS to end the word)
+                while ((totalRead < MAX_EXTR_TEXT_CHARS - SINGLE_READ_CHARS - EXTRA_CHARS)
+                        && (readSize = reader.read(TEXT_CHUNK_BUF, (int) totalRead, SINGLE_READ_CHARS)) != -1) {
                     totalRead += readSize;
                 }
-                
-                //logger.log(Level.INFO, "TOTAL READ SIZE: " + totalRead + " file: " + sourceFile.getName());
+                if (readSize == -1) {
+                    //this is the last chunk
+                    eof = true;
+                } else {
+                    //try to read until whitespace to not break words
+                    while ((totalRead < MAX_EXTR_TEXT_CHARS - 1)
+                            && !Character.isWhitespace(TEXT_CHUNK_BUF[(int) totalRead - 1])
+                            && (readSize = reader.read(TEXT_CHUNK_BUF, (int) totalRead, 1)) != -1) {
+                        totalRead += readSize;
+                    }
+                    if (readSize == -1) {
+                        //this is the last chunk
+                        eof = true;
+                    }
 
+
+                }
+
+                //logger.log(Level.INFO, "TOTAL READ SIZE: " + totalRead + " file: " + sourceFile.getName());
                 //encode to bytes to index as byte stream
                 String extracted;
+                //add BOM and trim the 0 bytes
+                StringBuilder sb = new StringBuilder((int) totalRead + 5);
+                //inject BOM here (saves byte buffer realloc later), will be converted to specific encoding BOM
+                sb.append(UTF16BOM);
                 if (totalRead < MAX_EXTR_TEXT_CHARS) {
-                    //add BOM and trim the 0 bytes
-                    StringBuilder sb = new StringBuilder((int) totalRead + 5);
-                    //inject BOM here (saves byte buffer realloc later), will be converted to specific encoding BOM
-                    sb.append(UTF16BOM);
-                    sb.append(TEXT_CHUNK_BUF, 0, (int) readSize);
-                    extracted = sb.toString();
-
-                } else {
-                    StringBuilder sb = new StringBuilder((int) totalRead + 5);
-                    //inject BOM here (saves byte buffer realloc later), will be converted to specific encoding BOM
-                    sb.append(UTF16BOM);
+                    sb.append(TEXT_CHUNK_BUF, 0, (int) totalRead);
+                } else {;
                     sb.append(TEXT_CHUNK_BUF);
-                    extracted = sb.toString();
                 }
+
+                //sort meta data keys
+                List<String> sortedKeyList = Arrays.asList(meta.names());
+                Collections.sort(sortedKeyList);
+
+                //append meta data
+                sb.append("\n\n-------------------METADATA------------------------------\n\n");
+                for (String key : sortedKeyList) {
+                    String value = meta.get(key);
+                    sb.append(key).append(": ").append(value).append("\n");
+                }
+                extracted = sb.toString();
 
                 //reset for next chunk
                 totalRead = 0;
 
                 //converts BOM automatically to charSet encoding
                 byte[] encodedBytes = extracted.getBytes(charset);
-
                 AbstractFileChunk chunk = new AbstractFileChunk(this, this.numChunks + 1);
-
                 try {
                     chunk.index(ingester, encodedBytes, encodedBytes.length, ENCODING);
                     ++this.numChunks;
@@ -133,9 +160,8 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 //not to delay commit if timer has gone off
                 service.checkRunCommitSearch();
             }
-
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId(), ex);
+            logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);
             success = false;
         } finally {
             try {
@@ -156,6 +182,5 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         ingester.ingest(this);
 
         return success;
-
     }
 }

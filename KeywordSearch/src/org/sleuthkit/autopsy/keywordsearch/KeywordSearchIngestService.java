@@ -569,6 +569,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                     }
 
                 } catch (IngesterException e) {
+                    logger.log(Level.INFO, "Could not extract text with Tika, " + fsContent.getId() + ", "
+                            + fsContent.getName(), e);
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings, if a file
                     if (fsContent.isFile() == true) {
@@ -576,6 +578,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                     }
 
                 } catch (Exception e) {
+                    logger.log(Level.WARNING, "Error extracting text with Tika, " + fsContent.getId() + ", "
+                            + fsContent.getName(), e);
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings if a file
                     if (fsContent.isFile() == true) {
