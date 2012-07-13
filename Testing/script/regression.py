@@ -337,7 +337,7 @@ def usage() :
   In addition, any keywords to search for must be in ./input/notablekeywords.xml\n\n\
     Options:\n\n\
     -r, --rebuild\t\tRebuild the gold standards from the test results for each image\n\n\
-    -u, --nounalloc\t\tIgnore unallocated space while ingesting"
+    -u, --ignore\t\tIgnore unallocated space while ingesting"
   return usage
 
 def main():
@@ -356,7 +356,7 @@ def main():
       elif (arg  == "--rebuild") or (arg == "-r"):
           rebuild = True
           print "Running in REBUILD mode"
-      elif (arg == "--nounalloc") or (arg == "-u"):
+      elif (arg == "--ignore") or (arg == "-u"):
           ignore = True
           print "Ignoring unallocated space"
       else:
