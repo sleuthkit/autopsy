@@ -63,7 +63,16 @@ https://github.com/sleuthkit/autopsy/blob/master/BUILDING.txt
 	3a) From the Cygwin terminal, navigate to the /script folder and run "./regression.py". The script will automatically begin Autopsy and run ingestion and analysis on all the images from the /input directory, and will close when finished. The Cygwin terminal will print out whether or not errors were encountered at the end of each image's test.
 
 
-\section regression_test_update Updating golden standards
+
+\section regression_test_update Options
+		
+		Currently, the script supports three argument parameters:
+
+			-i {imgname}	: runs the test with a single image as specified by {imgname}. Must include the path, it does not read from input.
+			-r or --rebuild	: runs in REBUILD mode, see 4 below
+			-u or --ignore	: runs ignoring unallocated space. Useful for determining framework is operational. Appends "-u" to the output and gold folders for distinguishing them from others. Will automatically compare the right reports.
+
+		These can be run in any combination.
 
 4) OPTIONAL: Update the standards databases
 
@@ -77,7 +86,7 @@ Running in -r will also generate a golden report file built from the image. Norm
 
 
 
-\section developers_note_regression_test Developers Note: Jemmy and RegressionTest.java
+\section developers_note_regression_test Developers Notes: Jemmy and RegressionTest.java
 
 
 For additional details regarding setting up and using Jemmy, please see 
