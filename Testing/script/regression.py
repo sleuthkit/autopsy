@@ -34,6 +34,8 @@ def testAddImageIngest(inFile, ignoreUnalloc):
 
   # Set up case directory path
   testCaseName = imageName(inFile)
+  if ignoreUnalloc:
+    testCaseName+="-u"
   if os.path.exists(os.path.join(outDir,testCaseName)):
     shutil.rmtree(os.path.join(outDir,testCaseName))
   os.makedirs(os.path.join(outDir,testCaseName))
@@ -101,13 +103,14 @@ def getImageSize(inFile):
   size += os.path.getsize(inFile)
   return size
 
-def testCompareToGold(inFile):
+def testCompareToGold(inFile, ignore):
   print "-----------------------------------------------"
   print "Comparing results for " + inFile + " with gold."
 
   name = imageName(inFile)
+  if ignore:
+   name += ("-u")
   cwd = wgetcwd()
-  
   goldFile = os.path.join("./",goldDir,name,"standard.db")  
   testFile = os.path.join("./",outDir,name,"AutopsyTestCase","autopsy.db")
   if os.path.isfile(goldFile) == False:
@@ -163,26 +166,32 @@ def testCompareToGold(inFile):
   else:
       print("Object counts match!")
 
-def clearGoldDir(inFile):
+def clearGoldDir(inFile, ignore):
   cwd = wgetcwd()
   inFile = imageName(inFile)
+  if ignore:
+    inFile += "-u"
   if os.path.exists(os.path.join(cwd,goldDir,inFile)):
     shutil.rmtree(os.path.join(cwd,goldDir,inFile))
   os.makedirs(os.path.join(cwd,goldDir,inFile))
 
-def copyTestToGold(inFile): 
+def copyTestToGold(inFile, ignore): 
   print "------------------------------------------------"
   print "Recreating gold standard from results."
   inFile = imageName(inFile)
+  if ignore:
+    inFile += "-u"
   cwd = wgetcwd()
   goldFile = os.path.join("./",goldDir,inFile,"standard.db")
   testFile = os.path.join("./",outDir,inFile,"AutopsyTestCase","autopsy.db")
   shutil.copy(testFile, goldFile)
 
-def copyReportToGold(inFile): 
+def copyReportToGold(inFile, ignore): 
   print "------------------------------------------------"
   print "Recreating gold report from results."
   inFile = imageName(inFile)
+  if ignore:
+    inFile += "-u"
   cwd = wgetcwd()
   goldReport = os.path.join("./",goldDir,inFile,"report.html")
   testReportPath = os.path.join("./",outDir,inFile,"AutopsyTestCase","Reports")
@@ -199,10 +208,12 @@ def copyReportToGold(inFile):
   else:
     shutil.copy(testReport, goldReport)
 
-def testCompareReports(inFile):
+def testCompareReports(inFile, ignore):
   print "------------------------------------------------"
   print "Comparing report to golden report."
   name = imageName(inFile)
+  if ignore:
+    name += "-u"
   goldReport = os.path.join("./",goldDir,name,"report.html")  
   testReportPath = os.path.join("./",outDir,name,"AutopsyTestCase","Reports")
   # Because Java adds a timestamp to the report file, one can't call it
@@ -293,25 +304,26 @@ def wabspath(inFile):
     out,err = proc.communicate()
     return out.rstrip()
 
-def copyLogs(inFile):
+def copyLogs(inFile, ignore):
+  if ignore:
+   name = imageName(inFile)+"-u"
   logDir = os.path.join("..","build","test","qa-functional","work","userdir0","var","log")
-  shutil.copytree(logDir,os.path.join(outDir,imageName(inFile),"logs"))
+  shutil.copytree(logDir,os.path.join(outDir,name,"logs"))
 
-def testFile(image, type):
+def testFile(image, rebuild, ignore):
   if imageType(image) != ImgType.UNKNOWN:
-    if type == 2:
+    if ignore:
       testAddImageIngest(image, True)
     else:
       testAddImageIngest(image, False)
-    #print imageName(image)
-    copyLogs(image)
-    if type == 1:
-      clearGoldDir(image)
-      copyTestToGold(image)
-      copyReportToGold(image)
+    copyLogs(image, ignore)
+    if rebuild:
+      clearGoldDir(image, ignore)
+      copyTestToGold(image, ignore)
+      copyReportToGold(image, ignore)
     else:
-      testCompareToGold(image)
-      testCompareReports(image)
+      testCompareToGold(image, ignore)
+      testCompareReports(image, ignore)
 
 def usage() :
   usage = "\
@@ -331,7 +343,6 @@ def main():
   rebuild = False
   single = False
   ignore = False
-  type = 0
   test = True
   argi = 1
   while argi < len(sys.argv):
@@ -342,11 +353,9 @@ def main():
           image = sys.argv[argi]
           print "Running on single image: " + image
       elif (arg  == "--rebuild") or (arg == "-r"):
-          type = 1
           rebuild = True
           print "Running in REBUILD mode"
       elif (arg == "--nounalloc") or (arg == "-u"):
-          type = 2
           ignore = True
           print "Ignoring unallocated space"
       else:
@@ -354,10 +363,10 @@ def main():
           print usage()
       argi+=1
   if single:
-    testFile(image, type)
+    testFile(image, rebuild, ignore)
   elif test:
     for inFile in os.listdir(inDir):
-      testFile(os.path.join(inDir,inFile), type)
+      testFile(os.path.join(inDir,inFile), rebuild, ignore)
 
   if hadErrors == True:
     print "**********************************************"
