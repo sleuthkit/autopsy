@@ -305,8 +305,9 @@ def wabspath(inFile):
     return out.rstrip()
 
 def copyLogs(inFile, ignore):
+  name = imageName(inFile)
   if ignore:
-   name = imageName(inFile)+"-u"
+   name +="-u"
   logDir = os.path.join("..","build","test","qa-functional","work","userdir0","var","log")
   shutil.copytree(logDir,os.path.join(outDir,name,"logs"))
 
