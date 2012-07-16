@@ -96,7 +96,6 @@ public class RegressionTest extends JellyTestCase{
     public void tearDown() {
     }
     
-    @org.junit.Test(timeout = 360000)
     public void testNewCaseWizardOpen() {
         logger.info("New Case");
         NbDialogOperator nbdo = new NbDialogOperator("Welcome");
@@ -104,7 +103,6 @@ public class RegressionTest extends JellyTestCase{
         jbo.clickMouse();
     }
     
-    @org.junit.Test(timeout = 360000)
     public void testNewCaseWizard() {
         logger.info("New Case Wizard");
         WizardOperator wo = new WizardOperator("New Case Information");
@@ -119,7 +117,7 @@ public class RegressionTest extends JellyTestCase{
         jtfo3.typeText("Examiner 1"); // Set the case examiner
         wo.btFinish().clickMouse();
     }
-    @org.junit.Test(timeout = 360000)
+    
     public void testAddImageWizard1() {
         logger.info("AddImageWizard 1");
         WizardOperator wo = new WizardOperator("Add Image");
@@ -134,7 +132,7 @@ public class RegressionTest extends JellyTestCase{
         logger.info("Add image took " + (System.currentTimeMillis()-start) + "ms");
         wo.btNext().clickMouse();
     }
-    @org.junit.Test(timeout = 360000)
+    
     public void testConfigureIngest1() {
         logger.info("Ingest 1");
         WizardOperator wo = new WizardOperator("Add Image");
@@ -145,7 +143,6 @@ public class RegressionTest extends JellyTestCase{
         jbo1.pushNoBlock();
     }
     
-    @org.junit.Test(timeout = 360000)
     public void testConfigureHash() {
         logger.info("Hash Configure");
         JDialog hashMainDialog = JDialogOperator.waitJDialog("Hash Database Configuration", false, false);
@@ -176,7 +173,6 @@ public class RegressionTest extends JellyTestCase{
         jbo4.pushNoBlock();
     }
     
-    @org.junit.Test(timeout = 360000)
     public void testConfigureIngest2() {
         logger.info("Ingest 2");
         WizardOperator wo = new WizardOperator("Add Image");
@@ -187,9 +183,6 @@ public class RegressionTest extends JellyTestCase{
         jbo1.pushNoBlock();
     }
     
-
-    
-    @org.junit.Test(timeout = 360000)
     public void testConfigureSearch() {
         logger.info("Search Configure");
         JDialog jd = JDialogOperator.waitJDialog("Keyword List Configuration", false, false);
@@ -210,9 +203,6 @@ public class RegressionTest extends JellyTestCase{
         wo.btFinish().clickMouse();
     }
     
-
-    
-    @org.junit.Test(timeout = 360000)
     public void testIngest() {
         logger.info("Ingest 3");
         long start = System.currentTimeMillis();
@@ -240,7 +230,6 @@ public class RegressionTest extends JellyTestCase{
         
     }
     
-    @org.junit.Test(timeout = 360000)
     public void testGenerateReportToolbar() {
 
         logger.info("Generate Report Toolbars");
@@ -253,7 +242,6 @@ public class RegressionTest extends JellyTestCase{
         new Timeout("pausing", 1000).sleep();
     }
     
-    @org.junit.Test(timeout = 360000)
     public void testGenerateReportButton() {
         logger.info("Generate Report Button");
         JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
@@ -262,15 +250,17 @@ public class RegressionTest extends JellyTestCase{
         jcbo0.doClick();
         JCheckBoxOperator jcbo1 = new JCheckBoxOperator(reportDialogOperator, "Default XML");
         jcbo1.doClick();
+        JCheckBoxOperator jcbo2 = new JCheckBoxOperator(reportDialogOperator, "Body File");
+        jcbo2.doClick();
         JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Generate Report");
         jbo0.pushNoBlock();
-        new Timeout("pausing", 1000).sleep(); // Give it a second to open
+        new Timeout("pausing", 10000).sleep(); // Give it a few seconds to generate
         
         JDialog previewDialog = JDialogOperator.waitJDialog("Report Preview", false, false);
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
         JButtonOperator jbo1 = new JButtonOperator(previewDialogOperator, "Close");
         jbo1.pushNoBlock();
-        new Timeout("pausing", 1000).sleep(); // Give the program a second to idle for ascetics
+        new Timeout("pausing", 3000).sleep(); // Give the program a second to idle to be safe
     }
    
 }
