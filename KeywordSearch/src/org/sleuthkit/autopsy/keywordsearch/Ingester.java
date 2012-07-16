@@ -73,6 +73,18 @@ public class Ingester {
         "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
 
+    private static Ingester instance;
+    
+    private Ingester() {
+        
+    }
+    
+    public static synchronized Ingester getDefault() {
+        if (instance == null) {
+            instance = new Ingester();
+        }
+        return instance;
+    }
 
     @Override
     @SuppressWarnings("FinalizeDeclaration")
@@ -99,16 +111,16 @@ public class Ingester {
     }
 
     /**
-     * Sends a FileExtract to Solr to have its content extracted and added to the
+     * Sends a AbstractFileExtract to Solr to have its content extracted and added to the
      * index. commit() should be called once you're done ingesting files.
      * FileExtract represents a parent of extracted file with actual content.  
-     * The parent itself has no content, only meta data and is used to associate the extracted FileExtractedChild
+     * The parent itself has no content, only meta data and is used to associate the extracted AbstractFileChunk
      * 
-     * @param fe FileExtract to ingest
+     * @param fe AbstractFileExtract to ingest
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(FileExtract fe) throws IngesterException {
+    void ingest(AbstractFileExtract fe) throws IngesterException {
         Map<String, String> params = getContentFields(fe.getSourceFile());
 
         params.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(fe.getNumChunks()));
@@ -117,23 +129,24 @@ public class Ingester {
     }
 
     /**
-     * Sends a FileExtractedChild to Solr and its extracted content stream to be added to the
+     * Sends a AbstractFileChunk to Solr and its extracted content stream to be added to the
      * index. commit() should be called once you're done ingesting files.
-     * FileExtractedChild represents a file chunk and its chunk content.
+     * AbstractFileChunk represents a file chunk and its chunk content.
      * 
-     * @param fec FileExtractedChild to ingest
+     * @param fec AbstractFileChunk to ingest
+     * @param size approx. size of the stream in bytes, used for timeout estimation 
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(FileExtractedChild fec, ByteContentStream bcs) throws IngesterException {
+    void ingest(AbstractFileChunk fec, ByteContentStream bcs, int size) throws IngesterException {
         AbstractContent sourceContent = bcs.getSourceContent();
         Map<String, String> params = getContentFields(sourceContent);
 
         //overwrite id with the chunk id
         params.put(Server.Schema.ID.toString(), 
-        FileExtractedChild.getFileExtractChildId(sourceContent.getId(), fec.getChunkId()));
+        Server.getChunkIdString(sourceContent.getId(), fec.getChunkId()));
     
-        ingest(bcs, params, FileExtract.MAX_STRING_CHUNK_SIZE);
+        ingest(bcs, params, size);
     }
 
     /**
@@ -448,8 +461,9 @@ public class Ingester {
      */
     static boolean isIngestible(AbstractFile aFile) {
         TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
-        if (! aType.equals(TSK_DB_FILES_TYPE_ENUM.FS) )
+        if (! aType.equals(TSK_DB_FILES_TYPE_ENUM.FS) ) {
                 return false;
+        }
         
         FsContent fsContent = (FsContent) aFile;
         

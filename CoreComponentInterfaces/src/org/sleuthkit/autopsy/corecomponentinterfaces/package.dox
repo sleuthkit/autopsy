@@ -2,9 +2,9 @@
  * \package org.sleuthkit.autopsy.corecomponentinterfaces
  * This package contains the interface classes that define the core components in Autopsy.  These components are used in the difference zones of the GUI.
  * <h2>Autopsy Zones</h2>
- * There are three major zones in the Autopsy UI. The left hand side has the {@link org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer DataExplorer} zone. This area is where you can search for and explore data. It has all of the analysis smarts. An example of a DataExplorer is the directory tree that shows the hierarchy of directories (and hides the files from view).
- * The DataExplorer area identifies a subset of the data to show the user and passes the data to the {@link org.sleuthkit.autopsy.corecomponentinterfaces.DataResult DataResult}s area in the upper right. In the previous example, the contents of a specific folder would be passed to this area and displayed in a table or thumbnail form.</p>
- * When a file or object is selected in the DataResult, it is passed to the {@link org.sleuthkit.autopsy.corecomponentinterfaces.DataContent DataContent} zone in the lower right. This is where file content can be viewed in hex form, strings, etc. 
+ * There are three major zones in the Autopsy UI. The left hand side has the org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer zone. This area is where you can search for and explore data. It has all of the analysis smarts. An example of a DataExplorer is the directory tree that shows the hierarchy of directories (and hides the files from view).
+ * The DataExplorer area identifies a subset of the data to show the user and passes the data to the org.sleuthkit.autopsy.corecomponentinterfaces.DataResult area in the upper right. In the previous example, the contents of a specific folder would be passed to this area and displayed in a table or thumbnail form.</p>
+ * When a file or object is selected in the DataResult, it is passed to the org.sleuthkit.autopsy.corecomponentinterfaces.DataContent zone in the lower right. This is where file content can be viewed in hex form, strings, etc. 
  * <h2>Data Flow</h2>
  * <h3>Creating Nodes in DataExplorer</h3>
  * Data flows between the areas inside of a NetBeans node. The DataExplorer modules create the NetBeans nodes. They query the SQLite database or do whatever they want to identify the set of files that are of interest. They create the NetBeans nodes based on Sleuthkit data model objects. See the org.sleuthkit.autopsy.datamodel package for more details on this. 
@@ -13,7 +13,7 @@
  * The DataExplorer is responsible for setting the double-click and right-click actions associated with the node.  The default single click action is to pass data to DataContent.  To override this, you must create a new DataResultViewer instance that overrides the propertyChange() method. The DataExplorer adds actions to wrapping the node in a FilterNode variant. The FilterNode then defines the actions for the node by overriding the getPreferredAction() and getActions() methods.  As an example, org.sleuthkit.autopsy.directorytree.DataResultFilterNode and org.sleuthkit.autopsy.directorytree.DataResultFilterChildren wraps the nodes that are passed over by the DirectoryTree DataExplorer.
  * DataResult can send data back to its DataExplorer by making a custom action that looks up it's instance (DataExplorer.getInstance()).
  * <h3>Getting Nodes to DataContent </h3>
- * A default DataContent viewer is created when a case is opened. To display the contents of a node, it must be passed to a DataContent instance.  The default single-click behavior of the DataResultViewers is to lookup the default DataContent TopComponent and pass the selected node to it.   See {@link org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer#propertyChange(PropertyChangeEvent) AbstractDataResultViewer.propertyChange()} for details. 
+ * A default DataContent viewer is created when a case is opened. To display the contents of a node, it must be passed to a DataContent instance.  The default single-click behavior of the DataResultViewers is to lookup the default DataContent TopComponent and pass the selected node to it.   See org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer.propertyChange(PropertyChangeEvent) for details. 
  * <h2>Creating new Functionality</h2>
  * <h3>Creating a DataExplorer</h3>
  * <ol>
@@ -32,7 +32,7 @@
  * <li>Utilities API
  * <li>Window System API
  * </ul>
- * <li> Create a class that implements {@link org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer DataExplorer}. We have been making the TopComponent class be the one that implements DataExplorer. Register this class as a DataExplorer service provider by specifying "@ServiceProvider(service=DataExplorer.class)" in the class or using layer.xml. 
+ * <li> Create a class that implements org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer. We have been making the TopComponent class be the one that implements DataExplorer. Register this class as a DataExplorer service provider by specifying "@ServiceProvider(service=DataExplorer.class)" in the class or using layer.xml. 
  * <li>Implement the methods required by the DataExplorer interface. 
  * <li>Register the class to receive property change events from the org.sleuthkit.autopsy.Case module by using its addPropertyChangeListener() method. 
  * <li>Access case data using the org.sleuthkit.autopsy.Case module. 
@@ -58,7 +58,7 @@
  * <li>Utilities API
  * <li>Window System API
  * </ul>
- * <li>Make a class that extends {@link org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer#AbstractDataResultViewer() AbstractDataResultViewer} and is registered as a service provider for the {@link org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer DataResultViewer} class by specifying "@ServiceProvider(service = DataResultViewer.class)" or by using layer.xml.  This class will extend JPanel. </li>
+ * <li>Make a class that extends org.sleuthkit.autopsy.corecomponents.AbstractDataResultViewer and is registered as a service provider for the org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer class by specifying "@ServiceProvider(service = DataResultViewer.class)" or by using layer.xml.  This class will extend JPanel. </li>
  * <li>See the previous sections on default actions.</li>
  * </ol>
  * <h3>Creating a DataContentViewer</h3>
@@ -79,6 +79,6 @@
  * <li>Utilities API
  * <li>Window System API
  * </ul>
- * <li>Make a class that implements {@link org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer DataContentViewer} and is registered as a service provider for DataContentViewer.class by specifying "@ServiceProvider(service = DataContentViewer.class)" or by using layer.xml.  This class must extend JPanel. </li>
+ * <li>Make a class that implements org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer and is registered as a service provider for DataContentViewer.class by specifying "@ServiceProvider(service = DataContentViewer.class)" or by using layer.xml.  This class must extend JPanel. </li>
  * </ol>
 */
