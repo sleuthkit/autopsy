@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -40,7 +41,6 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -95,7 +95,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private final String hashDBServiceName = "Hash Lookup"; //NOTE this needs to match the HashDB service getName()
     private SleuthkitCase caseHandle = null;
     private boolean skipKnown = true;
-    boolean initialized = false;
+    private boolean initialized = false;
 
     private enum IngestStatus {
 
@@ -200,6 +200,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
         }
 
+
         //postSummary();
     }
 
@@ -223,6 +224,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         }
         runSearcher = false;
         finalSearcherDone = true;
+
 
         //commit uncommited files, don't search again
         commit();
@@ -498,16 +500,27 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         private final Logger logger = Logger.getLogger(Indexer.class.getName());
 
-        private boolean extractAndIngest(AbstractFile aFile) {
-            boolean indexed = false;
-            final FileExtract fe = new FileExtract(KeywordSearchIngestService.this, aFile);
-            try {
-                indexed = fe.index(ingester);
-            } catch (IngesterException ex) {
-                logger.log(Level.WARNING, "Error extracting strings and indexing file: " + aFile.getName(), ex);
-                indexed = false;
+        /**
+         * Extract strings or text with Tika (by streaming) from the file Divide
+         * the file into chunks and index the chunks
+         *
+         * @param aFile file to extract strings from, divide into chunks and
+         * index
+         * @param stringsOnly true if use stinrg extraction, false if use Tika
+         * text extractor
+         * @return true if the file was indexed, false otherwise
+         */
+        private boolean extractIndex(AbstractFile aFile, boolean stringsOnly) throws IngesterException {
+            AbstractFileExtract fileExtract;
+
+            if (stringsOnly) {
+                fileExtract = new AbstractFileStringExtract(aFile);
+            } else {
+                fileExtract = new AbstractFileTikaTextExtract(aFile);
             }
-            return indexed;
+
+            //divide into chunks and index
+            return fileExtract.index();
         }
 
         private void indexFile(AbstractFile aFile, boolean indexContent) {
@@ -520,9 +533,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 fsContent = (FsContent) aFile;
             }
 
-            //if alloc fs file and not index content, or a dir, index meta data only
+            final long size = aFile.getSize();
+            //if alloc fs file and not to index content, or a dir, or 0 content, index meta data only
             if (fsContent != null
-                    && (indexContent == false || fsContent.isDir())) {
+                    && (indexContent == false || fsContent.isDir() || size == 0)) {
                 try {
                     ingester.ingest(fsContent, false); //meta-data only
                     ingestStatus.put(aFile.getId(), IngestStatus.INGESTED_META);
@@ -536,28 +550,27 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
             boolean ingestibleFile = Ingester.isIngestible(aFile);
 
-            final long size = aFile.getSize();
-            //if fs file, limit size of entire file, do not limit strings
-            if (fsContent != null && (size == 0 || (ingestibleFile && size > MAX_INDEX_SIZE))) {
-                //if fs file, index meta only, otherwise if unalloc, skip
-                try {
-                    ingester.ingest(fsContent, false); //meta-data only
-                    ingestStatus.put(aFile.getId(), IngestStatus.INGESTED_META);
-                } catch (IngesterException ex) {
-                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
-                    logger.log(Level.WARNING, "Unable to index meta-data for fsContent: " + fsContent.getId(), ex);
-                }
-
-                return;
-            }
-
             if (fsContent != null && ingestibleFile == true) {
-                //we know it's an allocated fs file (FsContent) with supported content 
+                //we know it's an allocated fs file (FsContent) with supported content
+                //extract text with Tika, divide into chunks and index with Solr
                 try {
                     //logger.log(Level.INFO, "indexing: " + fsContent.getName());
-                    ingester.ingest(fsContent, true);
-                    ingestStatus.put(fsContent.getId(), IngestStatus.INGESTED);
+                    if (!extractIndex(aFile, false)) {
+                        logger.log(Level.WARNING, "Failed to extract Tika text and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
+                        ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                        //try to extract strings, if a file
+                        if (fsContent.isFile() == true) {
+                            processNonIngestible(fsContent);
+                        }
+
+                    } else {
+                        ingestStatus.put(aFile.getId(), IngestStatus.INGESTED);
+
+                    }
+
                 } catch (IngesterException e) {
+                    logger.log(Level.INFO, "Could not extract text with Tika, " + fsContent.getId() + ", "
+                            + fsContent.getName(), e);
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings, if a file
                     if (fsContent.isFile() == true) {
@@ -565,6 +578,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                     }
 
                 } catch (Exception e) {
+                    logger.log(Level.WARNING, "Error extracting text with Tika, " + fsContent.getId() + ", "
+                            + fsContent.getName(), e);
                     ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
                     //try to extract strings if a file
                     if (fsContent.isFile() == true) {
@@ -578,13 +593,19 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         }
 
         private boolean processNonIngestible(AbstractFile aFile) {
-            if (!extractAndIngest(aFile)) {
-                logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
+            try {
+                if (!extractIndex(aFile, true)) {
+                    logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
+                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                    return false;
+                } else {
+                    ingestStatus.put(aFile.getId(), IngestStatus.EXTRACTED_INGESTED);
+                    return true;
+                }
+            } catch (IngesterException ex) {
+                logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ex);
                 ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
                 return false;
-            } else {
-                ingestStatus.put(aFile.getId(), IngestStatus.EXTRACTED_INGESTED);
-                return true;
             }
         }
     }
