@@ -52,12 +52,12 @@ def testAddImageIngest(inFile):
   args.append("regression-test")
   args.append("-l")
   args.append(os.path.join(cwd,outDir,testCaseName,"antlog.txt"))
-  args.append("-Dimg_path=" + testInFile)
-  args.append("-Dknown_bad_path=" + knownBadPath)
-  args.append("-Dkeyword_path=" + keywordPath)
-  args.append("-Dnsrl_path=" + nsrlPath)
-  args.append("-Dgold_path=" + os.path.join(cwd,goldDir))
-  args.append("-Dout_path=" + os.path.join(cwd,outDir,testCaseName))
+  args.append("-Dimg_path=" + testInFile.replace("/","\\"))
+  args.append("-Dknown_bad_path=" + knownBadPath.replace("/","\\"))
+  args.append("-Dkeyword_path=" + keywordPath.replace("/","\\"))
+  args.append("-Dnsrl_path=" + nsrlPath.replace("/","\\"))
+  args.append("-Dgold_path=" + os.path.join(cwd,goldDir).replace("/","\\"))
+  args.append("-Dout_path=" + os.path.join(cwd,outDir,testCaseName).replace("/","\\"))
 
   # print the ant testing command
   print "CMD: " + " ".join(args)
@@ -132,6 +132,7 @@ def testCompareToGold(inFile):
 
 def clearGoldDir(inFile):
   cwd = wgetcwd()
+  inFile = imageName(inFile)
   if os.path.exists(os.path.join(cwd,goldDir,inFile)):
     shutil.rmtree(os.path.join(cwd,goldDir,inFile))
   os.makedirs(os.path.join(cwd,goldDir,inFile))
