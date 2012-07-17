@@ -69,7 +69,7 @@ public class Ingester {
     // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
     static final String[] ingestibleExtensions = {"tar", "jar", "zip", "gzip", "bzip2",
         "gz", "tgz", "odf", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log", "manifest",
-        "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
+        "bmp", "gif", "png", "jpeg", "jpg", "tiff", "mp3", "aiff", "au", "midi", "wav",
         "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
 
