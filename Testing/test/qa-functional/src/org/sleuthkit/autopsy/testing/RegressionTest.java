@@ -254,7 +254,7 @@ public class RegressionTest extends JellyTestCase{
         jcbo2.doClick();
         JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Generate Report");
         jbo0.pushNoBlock();
-        new Timeout("pausing", 10000).sleep(); // Give it a few seconds to generate
+        new Timeout("pausing", 3000).sleep(); // Give it a few seconds to generate
         
         JDialog previewDialog = JDialogOperator.waitJDialog("Report Preview", false, false);
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);

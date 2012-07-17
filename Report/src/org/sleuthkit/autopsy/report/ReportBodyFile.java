@@ -36,13 +36,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
 
 /**
- *
- * @author Alex/Devin
+ * ReportBodyFile generates a report in the body file format specified on
+ * The Sleuth Kit wiki as MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime.
  */
 public class ReportBodyFile implements ReportModule {
     //Declare our publically accessible formatted Report, this will change everytime they run a Report
@@ -50,8 +51,9 @@ public class ReportBodyFile implements ReportModule {
     private static String bodyFilePath = "";
     private ReportConfiguration config;
     private static ReportBodyFile instance = null;
-    private Case currentCase = Case.getCurrentCase(); // get the most updated case
+    private Case currentCase = Case.getCurrentCase(); // get the current case
     private SleuthkitCase skCase = currentCase.getSleuthkitCase();
+    private final Logger logger = Logger.getLogger(ReportBodyFile.class.getName());
 
     ReportBodyFile() {
     }
@@ -80,8 +82,9 @@ public class ReportBodyFile implements ReportModule {
         String datenotime = dateFormat.format(date);
         
         // Run query to get all files
+        ResultSet rs = null;
         try {
-            ResultSet rs = skCase.runQuery("SELECT * FROM tsk_files");
+            rs = skCase.runQuery("SELECT * FROM tsk_files");
             List<FsContent> fs = skCase.resultSetToFsContents(rs);
             // Check if ingest finished
             if (IngestManager.getDefault().isIngestRunning()) {
@@ -95,7 +98,7 @@ public class ReportBodyFile implements ReportModule {
                 }
                 // MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime
                 formatted_Report.append(file.getMd5Hash()).append("|");
-                formatted_Report.append(file.getName()).append("|");
+                formatted_Report.append(file.getUniquePath()).append("|");
                 formatted_Report.append(file.getMeta_addr()).append("|"); // Use instead of inode
                 formatted_Report.append(file.getModeAsString()).append("|");
                 formatted_Report.append(file.getUid()).append("|");
@@ -107,18 +110,24 @@ public class ReportBodyFile implements ReportModule {
                 formatted_Report.append(file.getCrtime()).append("|");
                 formatted_Report.append("\n");
             }
-            // Close the query
-            skCase.closeRunQuery(rs);
         } catch(SQLException ex) {
-            Logger.getLogger(ReportBodyFile.class.getName()).log(Level.WARNING, "Failed to get all file information.", ex);
+            logger.log(Level.WARNING, "Failed to get all file information.", ex);
+        } catch(TskCoreException ex) {
+            logger.log(Level.WARNING, "Failed to get the unique path.", ex);
+        } finally {
+            try {// Close the query
+                if(rs!=null) { skCase.closeRunQuery(rs); }
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "Failed to close the query.", ex);
+            }
         }
         
         try {
             bodyFilePath = currentCase.getCaseDirectory() + File.separator + "Reports" +
                     File.separator + currentCase.getName() + "-" + datenotime + ".txt";
             this.save(bodyFilePath);
-        } catch (Exception e) {
-            Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Could not write out body file report! ", e);
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, "Could not write out body file report! ", ex);
         }
         return bodyFilePath;
     }
@@ -136,8 +145,8 @@ public class ReportBodyFile implements ReportModule {
             out.write(formatted_Report.toString());
             out.flush();
             out.close();
-        } catch (IOException e) {
-            Logger.getLogger(ReportBodyFile.class.getName()).log(Level.WARNING, "Could not write out body file report!", e);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Could not write out body file report!", ex);
         }
 
     }
