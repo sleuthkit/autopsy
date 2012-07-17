@@ -22,15 +22,18 @@ package org.sleuthkit.autopsy.report;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -61,11 +64,16 @@ public class ReportBodyFile implements ReportModule {
         return instance;
     }
 
+    /**
+     * Generates a Body File report in the Reports folder of the current case.
+     * 
+     * @param reportconfig  unused in the body file
+     * @return  the path to the generated report
+     * @throws ReportModuleException 
+     */
     @Override
     public String generateReport(ReportConfiguration reportconfig) throws ReportModuleException {
         config = reportconfig;
-        ReportGen reportobj = new ReportGen();
-        reportobj.populateReport(reportconfig);
         
         // Setup timestamp
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
@@ -97,10 +105,9 @@ public class ReportBodyFile implements ReportModule {
                 }
                 
                 BufferedWriter out = null;
-                String tmpPath = bodyFilePath + ".tmp";
                 try {
                     // MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime
-                    out = new BufferedWriter(new FileWriter(tmpPath, true));
+                    out = new BufferedWriter(new FileWriter(bodyFilePath, true));
                     out.write(ingestwarning);
                     
                     if(file.getMd5Hash()!=null) {
@@ -132,7 +139,7 @@ public class ReportBodyFile implements ReportModule {
                     out.write(Long.toString(file.getCrtime()));
                     out.write("\n");
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not write the temp HTML report file.", ex);
+                    logger.log(Level.WARNING, "Could not write the temp body file report.", ex);
                 } finally {
                     try {
                         out.flush();
@@ -154,11 +161,6 @@ public class ReportBodyFile implements ReportModule {
             }
         }
         
-        try {
-            this.save(bodyFilePath);
-        } catch (Exception ex) {
-            logger.log(Level.WARNING, "Could not write out body file report! ", ex);
-        }
         return bodyFilePath;
     }
 
@@ -168,11 +170,56 @@ public class ReportBodyFile implements ReportModule {
         return name;
     }
 
+    /**
+     * Save the previously generated report to the given path.
+     * If the report was not generated in generateReport, save will attempt
+     * to regenerate it, then copy the file. If the regeneration fails, the 
+     * incident is logged.
+     */
     @Override
     public void save(String path) {
-        File tmp = new File(path + ".tmp");
-        File out = new File(path);
-        tmp.renameTo(out);
+        File caseFile = new File(bodyFilePath);
+        if(!caseFile.exists()) {
+            logger.log(Level.WARNING, "Body File report does not exist.");
+            try {
+                // Try to generate it again
+                generateReport(config);
+                logger.log(Level.INFO, "Body File report has been regenerated.");
+            } catch (ReportModuleException ex) {
+                logger.log(Level.WARNING, "Failed attempt to regenerate the report.", ex);
+            }
+        }
+        // Check again
+        if(caseFile.exists()) {
+            InputStream in = null;
+            OutputStream out = null;
+            try {
+                in = new FileInputStream(caseFile);
+                out = new FileOutputStream(path);
+                byte[] b  = new byte[Integer.parseInt(Long.toString(caseFile.length()))];
+                int len = b.length;
+                int total = 0;
+                int result = 0;
+
+                while ((result = in.read(b, total, len-total)) > 0) {
+                  out.write(b, total, len);
+                  total += result;
+                }
+            } catch(FileNotFoundException ex) {
+                logger.log(Level.WARNING, "Could find the file specified.", ex);
+            } catch(IOException ex) {
+                logger.log(Level.WARNING, "Could not read from the FileInputStream.", ex);
+            } finally {
+                try {
+                    in.close();
+                    out.flush();
+                    out.close();
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Could not close and flush the streams.", ex);
+                }
+            }
+        }
+        // Otherwise give up
     }
 
     @Override
