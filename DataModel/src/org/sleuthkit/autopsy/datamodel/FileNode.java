@@ -18,8 +18,9 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.Arrays;
+import java.util.List;
 import javax.swing.Action;
-import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskData;
 
@@ -29,7 +30,18 @@ import org.sleuthkit.datamodel.TskData;
  *
  */
 public class FileNode extends AbstractFsContentNode<File> {
-
+    
+    private final static List<String> IMAGE_EXTENSIONS = Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff");
+    private final static List<String> VIDEO_EXTENSIONS = Arrays.asList(".aaf", ".3gp", ".asf", ".avi", ".m1v", ".m2v",
+            ".m4v", ".mp4", ".mov", ".mpeg", ".mpg", ".mpe", ".mp4", ".rm", ".wmv", ".mpv", ".flv", ".swf");
+    private final static List<String> AUDIO_EXTENSIONS = Arrays.asList(".aiff", ".aif", ".flac", ".wav", ".m4a", ".ape",
+            ".wma", ".mp2", ".mp1", ".mp3", ".aac", ".mp4", ".m4p", ".m1a", ".m2a", ".m4r", ".mpa", ".m3u", ".mid", ".midi", ".ogg");
+    private final static List<String> DOCUMENT_EXTENSIONS = Arrays.asList(".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx");
+    private final static List<String> EXECUTABLE_EXTENSIONS = Arrays.asList(".exe", ".msi", ".cmd", ".com", ".bat", ".reg", ".scr", ".dll", ".ini");
+    private final static List<String> TEXT_EXTENSIONS = Arrays.asList(".txt", ".rtf", ".log", ".text");
+    private final static List<String> WEB_EXTENSIONS = Arrays.asList(".html", ".htm", ".css", ".js", ".php", ".aspx", ".xml");
+    private final static List<String> PDF_EXTENSIONS = Arrays.asList(".pdf");
+    
     /**
      * 
      * @param file underlying Content
@@ -45,7 +57,7 @@ public class FileNode extends AbstractFsContentNode<File> {
         if (File.dirFlagToValue(file.getDir_flags()).equals(TskData.TSK_FS_NAME_FLAG_ENUM.TSK_FS_NAME_FLAG_UNALLOC.toString())) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
         } else {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon.png");
+            this.setIconBaseWithExtension(getIconForFileType(file));
         }
     }
 
@@ -68,5 +80,50 @@ public class FileNode extends AbstractFsContentNode<File> {
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
+    }
+    
+    // Given a file, returns the correct icon for said
+    // file based off it's extension
+    static String getIconForFileType(File file) {
+        // Get the name, extension
+        String name = file.getName();
+        int i = name.lastIndexOf(".");
+        String ext = name.substring(i).toLowerCase();
+        
+        // Images
+        for(String s:IMAGE_EXTENSIONS) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/image-file.png"; }
+        }
+        // Videos
+        for(String s:VIDEO_EXTENSIONS) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/video-file.png"; }
+        }
+        // Audio Files
+        for(String s:AUDIO_EXTENSIONS) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/audio-file.png"; }
+        }
+        // Documents
+        for(String s:DOCUMENT_EXTENSIONS) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/doc-file.png"; }
+        }
+        // Executables / System Files
+        for(String s:EXECUTABLE_EXTENSIONS) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/exe-file.png"; }
+        }
+        // Text Files
+        for(String s:TEXT_EXTENSIONS) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/text-file.png"; }
+        }
+        // Web Files
+        for(String s:WEB_EXTENSIONS) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/web-file.png"; }
+        }
+        // PDFs
+        for(String s:PDF_EXTENSIONS) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/pdf-file.png"; }
+        }
+        // Else return the default
+        return "org/sleuthkit/autopsy/images/file-icon.png";
+        
     }
 }
