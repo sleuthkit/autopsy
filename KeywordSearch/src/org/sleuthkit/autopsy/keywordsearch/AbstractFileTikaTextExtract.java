@@ -80,6 +80,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     public boolean index() throws Ingester.IngesterException {
         boolean success = false;
         Reader reader = null;
+
         final InputStream stream = new ReadContentInputStream(sourceFile);
         try {
             Metadata meta = new Metadata();
@@ -128,20 +129,22 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                     sb.append(TEXT_CHUNK_BUF);
                 }
 
-                //sort meta data keys
-                List<String> sortedKeyList = Arrays.asList(meta.names());
-                Collections.sort(sortedKeyList);
-
-                //append meta data
-                sb.append("\n\n-------------------METADATA------------------------------\n\n");
-                for (String key : sortedKeyList) {
-                    String value = meta.get(key);
-                    sb.append(key).append(": ").append(value).append("\n");
-                }
-                extracted = sb.toString();
-
                 //reset for next chunk
                 totalRead = 0;
+
+                //append meta data if last chunk
+                if (eof) {
+                    //sort meta data keys
+                    List<String> sortedKeyList = Arrays.asList(meta.names());
+                    Collections.sort(sortedKeyList);
+                    sb.append("\n\n------------------------------METADATA------------------------------\n\n");
+                    for (String key : sortedKeyList) {
+                        String value = meta.get(key);
+                        sb.append(key).append(": ").append(value).append("\n");
+                    }
+                }
+
+                extracted = sb.toString();
 
                 //converts BOM automatically to charSet encoding
                 byte[] encodedBytes = extracted.getBytes(charset);
@@ -162,6 +165,9 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
             }
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+            success = false;
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);
             success = false;
         } finally {
             try {
