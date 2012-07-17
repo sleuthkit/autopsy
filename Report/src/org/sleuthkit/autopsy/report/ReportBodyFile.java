@@ -22,10 +22,8 @@ package org.sleuthkit.autopsy.report;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DateFormat;
@@ -36,7 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
@@ -47,13 +44,12 @@ import org.sleuthkit.datamodel.*;
  */
 public class ReportBodyFile implements ReportModule {
     //Declare our publically accessible formatted Report, this will change everytime they run a Report
-    public static StringBuilder formatted_Report = new StringBuilder();
     private static String bodyFilePath = "";
     private ReportConfiguration config;
     private static ReportBodyFile instance = null;
     private Case currentCase = Case.getCurrentCase(); // get the current case
     private SleuthkitCase skCase = currentCase.getSleuthkitCase();
-    private final Logger logger = Logger.getLogger(ReportBodyFile.class.getName());
+    private static final Logger logger = Logger.getLogger(ReportBodyFile.class.getName());
 
     ReportBodyFile() {
     }
@@ -70,45 +66,81 @@ public class ReportBodyFile implements ReportModule {
         config = reportconfig;
         ReportGen reportobj = new ReportGen();
         reportobj.populateReport(reportconfig);
-        HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
         
-        // Clear the StringBuilder
-        formatted_Report.setLength(0);
         // Setup timestamp
-        DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
-        String datetime = datetimeFormat.format(date);
         String datenotime = dateFormat.format(date);
+        
+        // Get report path
+        bodyFilePath = currentCase.getCaseDirectory() + File.separator + "Reports" +
+                File.separator + currentCase.getName() + "-" + datenotime + ".txt";
         
         // Run query to get all files
         ResultSet rs = null;
         try {
-            rs = skCase.runQuery("SELECT * FROM tsk_files");
+            // exclude non-fs files/dirs and . and .. files
+            rs = skCase.runQuery("SELECT * FROM tsk_files "
+                               + "WHERE type = '" + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() + "' "
+                               + "AND name != '.' "
+                               + "AND name != '..'");
             List<FsContent> fs = skCase.resultSetToFsContents(rs);
             // Check if ingest finished
+            String ingestwarning = "";
             if (IngestManager.getDefault().isIngestRunning()) {
-                String ingestwarning = "Warning, this report was run before ingest services completed!";
-                formatted_Report.append(ingestwarning);
+                ingestwarning = "Warning, this report was run before ingest services completed!\n";
             }
             // Loop files and write info to report
             for (FsContent file : fs) {
                 if (ReportFilter.cancel == true) {
                     break;
                 }
-                // MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime
-                formatted_Report.append(file.getMd5Hash()).append("|");
-                formatted_Report.append(file.getUniquePath()).append("|");
-                formatted_Report.append(file.getMeta_addr()).append("|"); // Use instead of inode
-                formatted_Report.append(file.getModeAsString()).append("|");
-                formatted_Report.append(file.getUid()).append("|");
-                formatted_Report.append(file.getGid()).append("|");
-                formatted_Report.append(file.getSize()).append("|");
-                formatted_Report.append(file.getAtime()).append("|");
-                formatted_Report.append(file.getMtime()).append("|");
-                formatted_Report.append(file.getCtime()).append("|");
-                formatted_Report.append(file.getCrtime()).append("|");
-                formatted_Report.append("\n");
+                
+                BufferedWriter out = null;
+                String tmpPath = bodyFilePath + ".tmp";
+                try {
+                    // MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime
+                    out = new BufferedWriter(new FileWriter(tmpPath, true));
+                    out.write(ingestwarning);
+                    
+                    if(file.getMd5Hash()!=null) {
+                        out.write(file.getMd5Hash());
+                    }
+                    out.write("|");
+                    if(file.getUniquePath()!=null) {
+                        out.write(file.getUniquePath());
+                    }
+                    out.write("|");
+                    out.write(Long.toString(file.getMeta_addr()));
+                    out.write("|");
+                    if(file.getModeAsString()!=null) {
+                        out.write(file.getModeAsString());
+                    }
+                    out.write("|");
+                    out.write(Long.toString(file.getUid()));
+                    out.write("|");
+                    out.write(Long.toString(file.getGid()));
+                    out.write("|");
+                    out.write(Long.toString(file.getSize()));
+                    out.write("|");
+                    out.write(Long.toString(file.getAtime()));
+                    out.write("|");
+                    out.write(Long.toString(file.getMtime()));
+                    out.write("|");
+                    out.write(Long.toString(file.getCtime()));
+                    out.write("|");
+                    out.write(Long.toString(file.getCrtime()));
+                    out.write("\n");
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Could not write the temp HTML report file.", ex);
+                } finally {
+                    try {
+                        out.flush();
+                        out.close();
+                    } catch (IOException ex) {
+                        logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex);
+                    }
+                }
             }
         } catch(SQLException ex) {
             logger.log(Level.WARNING, "Failed to get all file information.", ex);
@@ -123,8 +155,6 @@ public class ReportBodyFile implements ReportModule {
         }
         
         try {
-            bodyFilePath = currentCase.getCaseDirectory() + File.separator + "Reports" +
-                    File.separator + currentCase.getName() + "-" + datenotime + ".txt";
             this.save(bodyFilePath);
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Could not write out body file report! ", ex);
@@ -140,15 +170,9 @@ public class ReportBodyFile implements ReportModule {
 
     @Override
     public void save(String path) {
-        try {
-            Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path), "UTF-8"));
-            out.write(formatted_Report.toString());
-            out.flush();
-            out.close();
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Could not write out body file report!", ex);
-        }
-
+        File tmp = new File(path + ".tmp");
+        File out = new File(path);
+        tmp.renameTo(out);
     }
 
     @Override
