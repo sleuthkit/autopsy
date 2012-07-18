@@ -272,7 +272,7 @@ public class Ingester {
      * @param size size of the content
      * @return time in seconds to use a timeout
      */
-    private static int getTimeout(long size) {
+    static int getTimeout(long size) {
         if (size < 1024 * 1024L) //1MB
         {
             return 60;
