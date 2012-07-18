@@ -25,6 +25,11 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
@@ -33,13 +38,15 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.sleuthkit.autopsy.keywordsearch.ByteContentStream.Encoding;
+import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 
 /**
  * Extractor of text from TIKA supported AbstractFile content. Extracted text is
  * divided into chunks and indexed with Solr.
+ * Protects against Tika parser hangs (for unexpected/corrupt content) using a timeout mechanism.
+ * If Tika extraction succeeds, chunks are indexed with Solr.
  *
- * This is especially useful for large content of supported type that is to be
- * divided into text chunks and indexed as such.
+ * This Tika extraction/chunking utility is useful for large files of Tika parsers-supported content type.
  *
  */
 public class AbstractFileTikaTextExtract implements AbstractFileExtract {
@@ -57,6 +64,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private AbstractFile sourceFile;
     private int numChunks = 0;
     private static final String UTF16BOM = "\uFEFF";
+    private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
 
     AbstractFileTikaTextExtract(AbstractFile sourceFile) {
         this.sourceFile = sourceFile;
@@ -81,10 +89,27 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         boolean success = false;
         Reader reader = null;
 
+
         final InputStream stream = new ReadContentInputStream(sourceFile);
         try {
             Metadata meta = new Metadata();
-            reader = tika.parse(stream, meta);
+            ParseRequestTask parseTask = new ParseRequestTask(tika, stream, meta, sourceFile);
+            final Future<?> future = tikaParseExecutor.submit(parseTask);
+            try {
+                future.get(Ingester.getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
+            } catch (TimeoutException te) {
+                final String msg = "Tika parse timeout for content: " + sourceFile.getId() + ", " + sourceFile.getName();
+                logger.log(Level.WARNING, msg);
+                throw new IngesterException(msg);
+            }
+            
+            reader = parseTask.getReader();
+            if (reader == null) {
+                //likely due to exception in parse()
+                logger.log(Level.WARNING, "No reader available from Tika parse");
+                return false;
+            }
+
             success = true;
             long readSize;
             long totalRead = 0;
@@ -188,5 +213,40 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         ingester.ingest(this);
 
         return success;
+    }
+
+    /**
+     * Runnable and timeable task that calls tika to parse the content using streaming
+     */
+    private static class ParseRequestTask implements Runnable {
+
+        //in
+        private Tika tika;
+        private InputStream stream;
+        private Metadata meta;
+        private AbstractFile sourceFile;
+        //out
+        private Reader reader;
+
+        ParseRequestTask(Tika tika, InputStream stream, Metadata meta, AbstractFile sourceFile) {
+            this.tika = tika;
+            this.stream = stream;
+            this.meta = meta;
+            this.sourceFile = sourceFile;
+        }
+
+        @Override
+        public void run() {
+            try {
+                reader = tika.parse(stream, meta);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+                reader = null;
+            }
+        }
+
+        public Reader getReader() {
+            return reader;
+        }
     }
 }
