@@ -60,27 +60,39 @@ https://github.com/sleuthkit/autopsy/blob/master/BUILDING.txt
 
 3) Run regression tests
 
-	3a) From the Cygwin terminal, navigate to the /script folder and run "./regression.py". The script will automatically begin Autopsy and run ingestion and analysis on all the images from the /input directory, and will close when finished. The Cygwin terminal will print out whether or not errors were encountered at the end of each image's test.
+	3a) From the Cygwin terminal, navigate to the /script folder and run "./regression.py". The script will automatically begin Autopsy and run ingestion and analysis on all the images from the ./input directory, and will close when finished. The Cygwin terminal will print out whether or not errors were encountered at the end of each image's test.
+
+	3b) It is possible to run testing on images that do not reside within ./input. To accomplish this, a configuration file is specified as a flag when run. Please see 4 below.
 
 
 
 \section regression_test_update Options
 		
-		Currently, the script supports three argument parameters:
+		Currently, the script supports four argument parameters:
 
-			-i {imgname}	: runs the test with a single image as specified by {imgname}. Must include the path, it does not read from input.
-			-r or --rebuild	: runs in REBUILD mode, see 4 below
-			-u or --ignore	: runs ignoring unallocated space. Useful for determining framework is operational. Appends "-u" to the output and gold folders for distinguishing them from others. Will automatically compare the right reports.
+			-s {imgname}			: runs the test with a single image as specified by {imgname}. Must include the path, it does not read from input.
+			-r or --rebuild			: runs in REBUILD mode, see 5 below
+			-l {config} or --list {config}	: runs with the specified {config} file. If you do not specify a path to the file, it searches for it under ./. It will attempt to search for the file by the specified path name if surrounded in quotes. 
+			-u or --ignore			: runs ignoring unallocated space. Useful for determining framework is operational. Appends "-u" to the output and gold folders for distinguishing them from others. Will automatically compare the right reports.
 
 		These can be run in any combination.
 
-4) OPTIONAL: Update the standards databases
 
-	4a) From the Cygwin terminal, navigate to 
+\section regression_test_config Running regression tests with a config file
+
+4) Running with a configuration file
+	
+	The config file is any user defined XML file that has the following properties: 1 element with the tag "indir" to specify where the hash databases are, and any number of elements with the tag "image", where the program will look for external images. These images do not have to be held locally. They may be on network shares, or other attached drives. We have included a sample "config.xml" in the script folder as a guide. Note that the config file may be named anything.
+
+	
+
+5) OPTIONAL: Update the standards databases
+
+	5a) From the Cygwin terminal, navigate to 
 
 		autopsy/Testing/script
 
-	4b)  run "./regression.py -r", The script will automatically delete pre-existing standards.db files and generate the updated ones in the proper locations (/script/gold/{name of image}).
+	5b)  run "./regression.py -r", The script will automatically delete pre-existing standards.db files and generate the updated ones in the proper locations (/script/gold/{name of image}).
 
 Running in -r will also generate a golden report file built from the image. Normal runs of regression.py compare their generated report against the golden one, and report any differences in the file, ignoring the timestamp. 
 
