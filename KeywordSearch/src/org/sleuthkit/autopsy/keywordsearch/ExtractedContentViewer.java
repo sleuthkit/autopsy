@@ -158,9 +158,9 @@ public class ExtractedContentViewer implements DataContentViewer {
                 @Override
                 public String getMarkup() {
                     try {
-                        curContent = StringEscapeUtils.escapeHtml(getSolrContent(selectedNode, currentPage, hasChunks));
-                        curContent = "<pre>" + curContent.trim() + "</pre>";
-                        return curContent;
+                        curContent = getSolrContent(selectedNode, currentPage, hasChunks);
+                        String curContentTrimmed = "<pre>" + curContent.trim() + "</pre>";
+                        return curContentTrimmed;
                     } catch (SolrServerException ex) {
                         logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
                         return "";
@@ -418,7 +418,10 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         //not cached
         try {
-            curContent = solrServer.getSolrContent(contentObj, chunkId);
+            curContent = StringEscapeUtils.escapeHtml(solrServer.getSolrContent(contentObj, chunkId)).trim();
+            StringBuilder sb = new StringBuilder(curContent.length() + 20);
+            sb.append("<pre>").append(curContent).append("</pre>");
+            curContent = sb.toString();
             curContentId = contentId;
             curContentChunk = chunkId;
         } catch (NoOpenCoreException ex) {
