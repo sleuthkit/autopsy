@@ -87,8 +87,11 @@ public class FileNode extends AbstractFsContentNode<File> {
     static String getIconForFileType(File file) {
         // Get the name, extension
         String name = file.getName();
-        int i = name.lastIndexOf(".");
-        String ext = name.substring(i).toLowerCase();
+        int dotIndex = name.lastIndexOf(".");
+        if (dotIndex == -1) {
+            return "org/sleuthkit/autopsy/images/file-icon.png";
+        }
+        String ext = name.substring(dotIndex).toLowerCase();
         
         // Images
         for(String s:IMAGE_EXTENSIONS) {
