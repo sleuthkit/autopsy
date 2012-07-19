@@ -33,6 +33,7 @@ import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.Node;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.datamodel.Content;
@@ -193,7 +194,7 @@ public final class ExtractAction extends AbstractAction {
                     }
                 } else {
                     logger.log(Level.INFO, "Attempting to delete file(s).");
-                    if(delete(destination)) {
+                    if(FileUtil.deleteFileDir(destination)) {
                         logger.log(Level.INFO, "Finished deletion sucessfully.");
                     } else {
                         logger.log(Level.WARNING, "Deletion attempt complete; not all files were sucessfully deleted.");
@@ -202,43 +203,7 @@ public final class ExtractAction extends AbstractAction {
             }
         }
         
-        private boolean delete(File file) {
-            boolean sucess = true;
-            // If it's a file
-            if(file.isFile()) {
-                if(!file.delete()) {
-                    sucess = false;
-                    logger.log(Level.WARNING, "Failed to delete file {0}", file.getPath());
-                }
-            // If it's a directory
-            } else {
-                // If the dir is empty
-                if(file.list().length==0) {
-                    if(!file.delete()) {
-                        sucess = false;
-                        logger.log(Level.WARNING, "Failed to delete the empty directory at {0}", file.getPath());
-                    }
-                } else {
-                    String files[] = file.list();
-                    for(String s:files) {
-                        File sub = new File(file, s);
-                        sucess = delete(sub);
-                    }
-                    
-                    // Delete the newly-empty dir
-                    if(file.list().length==0) {
-                        if(!file.delete()) {
-                            sucess = false;
-                            logger.log(Level.WARNING, "Failed to delete the empty directory at {0}", file.getPath());
-                        }
-                    } else {
-                        sucess = false;
-                        logger.log(Level.WARNING, "Directory {0} did not recursivly delete sucessfully.", file.getPath());
-                    }
-                }
-            }
-            return sucess;
-        }
+        
         
     }
     
