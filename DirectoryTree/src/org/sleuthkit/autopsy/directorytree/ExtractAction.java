@@ -18,17 +18,23 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import java.awt.event.ActionEvent;
-import javax.swing.JFileChooser;
-import java.io.File;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.util.concurrent.CancellationException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.AbstractAction;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.Node;
+import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
-import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
@@ -41,6 +47,7 @@ public final class ExtractAction extends AbstractAction {
 
     private static final InitializeContentVisitor initializeCV = new InitializeContentVisitor();
     private FsContent fsContent;
+    private Logger logger = Logger.getLogger(ExtractAction.class.getName());
 
     public ExtractAction(String title, Node contentNode) {
         super(title);
@@ -78,8 +85,7 @@ public final class ExtractAction extends AbstractAction {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Log.noteAction(this.getClass());
-
+        // Get file and check that it's okay to overwrite existing file
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory()));
         fc.setSelectedFile(new File(this.fsContent.getName()));
@@ -88,7 +94,7 @@ public final class ExtractAction extends AbstractAction {
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             File destination = fc.getSelectedFile();
 
-            // check that it's okay to overwrite existing file
+            // do the check
             if (destination.exists()) {
                 int choice = JOptionPane.showConfirmDialog(
                         (Component) e.getSource(),
@@ -97,7 +103,7 @@ public final class ExtractAction extends AbstractAction {
                         JOptionPane.OK_CANCEL_OPTION);
 
                 if (choice != JOptionPane.OK_OPTION) {
-                    return;
+                    return; // Just exit the function
                 }
 
                 if (!destination.delete()) {
@@ -106,13 +112,134 @@ public final class ExtractAction extends AbstractAction {
                             "Couldn't delete existing file.");
                 }
             }
-
-            ExtractFscContentVisitor.extract(fsContent, destination);
-            if(fsContent.isDir())
-                JOptionPane.showMessageDialog((Component) e.getSource(), "Directory extracted.");
-            else if(fsContent.isFile()){
-                JOptionPane.showMessageDialog((Component) e.getSource(), "File extracted.");
+        
+            try {
+                ExtractFileThread extract = new ExtractFileThread();    
+                extract.init(this.fsContent, e, destination);
+                extract.execute();
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Unable to start background thread.", ex);
             }
         }
     }
+    
+    private class ExtractFileThread extends SwingWorker<Object,Void> {
+        private Logger logger = Logger.getLogger(ExtractFileThread.class.getName());
+        private ProgressHandle progress;
+        private FsContent fsContent;
+        ActionEvent e;
+        File destination;
+        
+        private void init(FsContent fsContent, ActionEvent e, File destination) {
+            this.fsContent = fsContent;
+            this.e = e;
+            this.destination = destination;
+        }
+
+        @Override
+        protected Object doInBackground() throws Exception {
+            logger.log(Level.INFO, "Starting background processing for file extraction.");
+            
+            // Setup progress bar
+            final String displayName = "Extracting";
+            progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
+                @Override
+                public boolean cancel() {
+                    if (progress != null)
+                        progress.setDisplayName(displayName + " (Cancelling...)");
+                    return ExtractAction.ExtractFileThread.this.cancel(true);
+                }
+            });
+
+            // Start the progress bar as indeterminate
+            progress.start();
+            progress.switchToIndeterminate();
+            if(fsContent.isFile()) {
+                // Max file size of 200GB
+                long filesize = fsContent.getSize();
+                int unit = (int) (filesize / 100);
+                progress.switchToDeterminate(100);
+            } else if(fsContent.isDir()) {
+                // If dir base progress off number of children
+                int toProcess = fsContent.getChildren().size();
+                progress.switchToDeterminate(toProcess);
+            }
+
+            // Start extracting the file/directory
+            ExtractFscContentVisitor.extract(fsContent, destination, progress, this);
+            logger.log(Level.INFO, "Done background processing");
+            return null;
+        }
+        
+        @Override
+        protected void done() {
+            try {
+                super.get(); //block and get all exceptions thrown while doInBackground()
+            } catch (CancellationException ex) {
+                logger.log(Level.INFO, "Extraction was canceled.");
+            } catch (InterruptedException ex) {
+                logger.log(Level.INFO, "Extraction was interrupted.");
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Fatal error during file extraction.", ex);
+            } finally {
+                progress.finish();
+                if (!this.isCancelled()) {
+                    logger.log(Level.INFO, "Extracting completed without cancellation.");
+                    // Alert the user extraction is over
+                    if(fsContent.isDir()) {
+                        JOptionPane.showMessageDialog((Component) e.getSource(), "Directory extracted.");
+                    } else if(fsContent.isFile()){
+                        JOptionPane.showMessageDialog((Component) e.getSource(), "File extracted.");
+                    }
+                } else {
+                    logger.log(Level.INFO, "Attempting to delete file(s).");
+                    if(delete(destination)) {
+                        logger.log(Level.INFO, "Finished deletion sucessfully.");
+                    } else {
+                        logger.log(Level.WARNING, "Deletion attempt complete; not all files were sucessfully deleted.");
+                    }
+                }
+            }
+        }
+        
+        private boolean delete(File file) {
+            boolean sucess = true;
+            // If it's a file
+            if(file.isFile()) {
+                if(!file.delete()) {
+                    sucess = false;
+                    logger.log(Level.WARNING, "Failed to delete file {0}", file.getPath());
+                }
+            // If it's a directory
+            } else {
+                // If the dir is empty
+                if(file.list().length==0) {
+                    if(!file.delete()) {
+                        sucess = false;
+                        logger.log(Level.WARNING, "Failed to delete the empty directory at {0}", file.getPath());
+                    }
+                } else {
+                    String files[] = file.list();
+                    for(String s:files) {
+                        File sub = new File(file, s);
+                        sucess = delete(sub);
+                    }
+                    
+                    // Delete the newly-empty dir
+                    if(file.list().length==0) {
+                        if(!file.delete()) {
+                            sucess = false;
+                            logger.log(Level.WARNING, "Failed to delete the empty directory at {0}", file.getPath());
+                        }
+                    } else {
+                        sucess = false;
+                        logger.log(Level.WARNING, "Directory {0} did not recursivly delete sucessfully.", file.getPath());
+                    }
+                }
+            }
+            return sucess;
+        }
+        
+    }
+    
 }
