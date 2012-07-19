@@ -119,7 +119,7 @@ public class ExtractRegistry extends Extract implements IngestServiceImage {
                     logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
                 }
                 File regFile = new File(temps);
-
+                logger.log(Level.INFO, moduleName + "- Now getting registry information from " + temps);
                 String txtPath = executeRegRip(temps, j);
                 if (txtPath.length() > 0) {
                     Success = parseReg(txtPath, orgId);
