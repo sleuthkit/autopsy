@@ -19,28 +19,28 @@ class FileTypeExtensions {
     private final static List<String> WEB_EXTENSIONS = Arrays.asList(".html", ".htm", ".css", ".js", ".php", ".aspx");
     private final static List<String> PDF_EXTENSIONS = Arrays.asList(".pdf");
     
-    List<String> getImageExtensions() {
+    static List<String> getImageExtensions() {
         return IMAGE_EXTENSIONS;
     }
-    List<String> getVideoExtensions() {
+    static List<String> getVideoExtensions() {
         return VIDEO_EXTENSIONS;
     }
-    List<String> getAudioExtensions() {
+    static List<String> getAudioExtensions() {
         return AUDIO_EXTENSIONS;
     }
-    List<String> getDocumentExtensions() {
+    static List<String> getDocumentExtensions() {
         return DOCUMENT_EXTENSIONS;
     }
-    List<String> getExecutableExtensions() {
+    static List<String> getExecutableExtensions() {
         return EXECUTABLE_EXTENSIONS;
     }
-    List<String> getTextExtensions() {
+    static List<String> getTextExtensions() {
         return TEXT_EXTENSIONS;
     }
-    List<String> getWebExtensions() {
+    static List<String> getWebExtensions() {
         return WEB_EXTENSIONS;
     }
-    List<String> getPDFExtensions() {
+    static List<String> getPDFExtensions() {
         return PDF_EXTENSIONS;
     }
 }
