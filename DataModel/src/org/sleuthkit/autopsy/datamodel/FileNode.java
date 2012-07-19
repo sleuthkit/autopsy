@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.Arrays;
-import java.util.List;
 import javax.swing.Action;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskData;
@@ -30,20 +28,8 @@ import org.sleuthkit.datamodel.TskData;
  *
  */
 public class FileNode extends AbstractFsContentNode<File> {
-    
-    private final static List<String> IMAGE_EXTENSIONS = Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff");
-    private final static List<String> VIDEO_EXTENSIONS = Arrays.asList(".aaf", ".3gp", ".asf", ".avi", ".m1v", ".m2v",
-            ".m4v", ".mp4", ".mov", ".mpeg", ".mpg", ".mpe", ".mp4", ".rm", ".wmv", ".mpv", ".flv", ".swf");
-    private final static List<String> AUDIO_EXTENSIONS = Arrays.asList(".aiff", ".aif", ".flac", ".wav", ".m4a", ".ape",
-            ".wma", ".mp2", ".mp1", ".mp3", ".aac", ".mp4", ".m4p", ".m1a", ".m2a", ".m4r", ".mpa", ".m3u", ".mid", ".midi", ".ogg");
-    private final static List<String> DOCUMENT_EXTENSIONS = Arrays.asList(".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx");
-    private final static List<String> EXECUTABLE_EXTENSIONS = Arrays.asList(".exe", ".msi", ".cmd", ".com", ".bat", ".reg", ".scr", ".dll", ".ini");
-    private final static List<String> TEXT_EXTENSIONS = Arrays.asList(".txt", ".rtf", ".log", ".text");
-    private final static List<String> WEB_EXTENSIONS = Arrays.asList(".html", ".htm", ".css", ".js", ".php", ".aspx", ".xml");
-    private final static List<String> PDF_EXTENSIONS = Arrays.asList(".pdf");
-    
+
     /**
-     * 
      * @param file underlying Content
      */
     public FileNode(File file) {
@@ -94,35 +80,35 @@ public class FileNode extends AbstractFsContentNode<File> {
         String ext = name.substring(dotIndex).toLowerCase();
         
         // Images
-        for(String s:IMAGE_EXTENSIONS) {
+        for(String s:FileTypeExtensions.getImageExtensions()) {
             if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/image-file.png"; }
         }
         // Videos
-        for(String s:VIDEO_EXTENSIONS) {
+        for(String s:FileTypeExtensions.getVideoExtensions()) {
             if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/video-file.png"; }
         }
         // Audio Files
-        for(String s:AUDIO_EXTENSIONS) {
+        for(String s:FileTypeExtensions.getAudioExtensions()) {
             if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/audio-file.png"; }
         }
         // Documents
-        for(String s:DOCUMENT_EXTENSIONS) {
+        for(String s:FileTypeExtensions.getDocumentExtensions()) {
             if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/doc-file.png"; }
         }
         // Executables / System Files
-        for(String s:EXECUTABLE_EXTENSIONS) {
+        for(String s:FileTypeExtensions.getExecutableExtensions()) {
             if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/exe-file.png"; }
         }
         // Text Files
-        for(String s:TEXT_EXTENSIONS) {
+        for(String s:FileTypeExtensions.getTextExtensions()) {
             if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/text-file.png"; }
         }
         // Web Files
-        for(String s:WEB_EXTENSIONS) {
+        for(String s:FileTypeExtensions.getWebExtensions()) {
             if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/web-file.png"; }
         }
         // PDFs
-        for(String s:PDF_EXTENSIONS) {
+        for(String s:FileTypeExtensions.getPDFExtensions()) {
             if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/pdf-file.png"; }
         }
         // Else return the default

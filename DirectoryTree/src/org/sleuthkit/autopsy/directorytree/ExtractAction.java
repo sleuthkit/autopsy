@@ -202,9 +202,6 @@ public final class ExtractAction extends AbstractAction {
                 }
             }
         }
-        
-        
-        
     }
     
 }
