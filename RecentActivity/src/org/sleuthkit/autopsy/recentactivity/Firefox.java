@@ -87,6 +87,7 @@ public class Firefox extends Extract implements IngestServiceImage {
                     break;
                 }
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, ffquery);
+                logger.log(Level.INFO, moduleName + "- Now getting history from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -130,6 +131,7 @@ public class Firefox extends Extract implements IngestServiceImage {
                     break;
                 }
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, ffbookmarkquery);
+                logger.log(Level.INFO, moduleName + "- Now getting bookmarks from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -180,6 +182,7 @@ public class Firefox extends Extract implements IngestServiceImage {
                 }
 
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, query);
+                logger.log(Level.INFO, moduleName + "- Now getting cookies from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -231,6 +234,7 @@ public class Firefox extends Extract implements IngestServiceImage {
                 }
 
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, ffdownloadquery);
+                logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
