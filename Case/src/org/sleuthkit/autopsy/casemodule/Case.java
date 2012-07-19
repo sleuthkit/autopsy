@@ -44,6 +44,7 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.*;
@@ -681,17 +682,7 @@ public class Case {
      * @return boolean  whether the case directory is successfully deleted or not
      */
     static boolean deleteCaseDirectory(File casePath) {
-        if (casePath.exists()) {
-            File[] files = casePath.listFiles();
-            for (int i = 0; i < files.length; i++) {
-                if (files[i].isDirectory()) {
-                    deleteCaseDirectory(files[i]);
-                } else {
-                    files[i].delete();
-                }
-            }
-        }
-        return (casePath.delete());
+        return FileUtil.deleteDir(casePath);
     }
 
     /**
