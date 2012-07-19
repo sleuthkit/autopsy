@@ -145,7 +145,8 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 //encode to bytes to index as byte stream
                 String extracted;
                 //add BOM and trim the 0 bytes
-                StringBuilder sb = new StringBuilder((int) totalRead + 5);
+                //set initial size to chars read + bom + metadata (roughly) - try to prevent from resizing
+                StringBuilder sb = new StringBuilder((int) totalRead + 1000);
                 //inject BOM here (saves byte buffer realloc later), will be converted to specific encoding BOM
                 sb.append(UTF16BOM);
                 if (totalRead < MAX_EXTR_TEXT_CHARS) {
