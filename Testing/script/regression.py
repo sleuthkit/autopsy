@@ -1,4 +1,5 @@
 #!/usr/bin/python 
+#en_US.UTF-8
 import sys
 import sqlite3
 import re
@@ -6,18 +7,24 @@ import subprocess
 import os.path
 import shutil
 import time
+import xml
+from xml.dom.minidom import parse, parseString
 
-# Last modified 7/13/12 3@ pm
-#  Usage: ./regression.py [-i FILE] [OPTIONS]
+
+#  Last modified 7/17/12 @5pm
+#  Usage: ./regression.py [-s FILE] OR [-l CONFIG]  [OPTIONS]
 #  Run the RegressionTest.java file, and compare the result with a gold standard
 #  When the -i flag is set, this script only tests the image given by FILE.
-#  By default, it tests every image in ./input/
 #  An indexed NSRL database is expected at ./input/nsrl.txt-md5.idx,
 #  and an indexed notable hash database at ./input/notablehashes.txt-md5.idx
 #  In addition, any keywords to search for must be in ./input/notablekeywords.xml
-#    Options:
+#  When the -l flag is set, the script looks for a config.xml file of the given name 
+#  where images are stored. For usage notes please see the example "config.xml" in
+#  the /script folder.
+#    Options: 
 #    -r, --rebuild      Rebuild the gold standards from the test results for each image
-#    -u, --ignore
+#    -i, --ignore       Ignores unallocated space when ingesting. Faster, but less accurate results.
+  
 
 hadErrors = False # If any of the tests failed
 results = {}      # Dictionary in which to store map ({imgname}->errors)
@@ -28,14 +35,18 @@ outDir = os.path.join("output",time.strftime("%Y.%m.%d-%H.%M"))
 
 
 # Run ingest on all the images in 'input', using notablekeywords.xml and notablehashes.txt-md5.idx
-def testAddImageIngest(inFile, ignoreUnalloc):
+def testAddImageIngest(inFile, ignoreUnalloc, list):
   print "================================================"
   print "Ingesting Image: " + inFile
 
   # Set up case directory path
   testCaseName = imageName(inFile)
+  
+  #check for flags to append to folder name
   if ignoreUnalloc:
-    testCaseName+="-u"
+    testCaseName+="-i"
+  if list:
+    testCaseName+="-l"
   if os.path.exists(os.path.join(outDir,testCaseName)):
     shutil.rmtree(os.path.join(outDir,testCaseName))
   os.makedirs(os.path.join(outDir,testCaseName))
@@ -44,20 +55,27 @@ def testAddImageIngest(inFile, ignoreUnalloc):
 
   cwd = wgetcwd()
   testInFile = wabspath(inFile)
+
   # NEEDS windows path (backslashes) for .E00 images to work
   testInFile = testInFile.replace("/", "\\")
-  knownBadPath = os.path.join(cwd,inDir,"notablehashes.txt-md5.idx")
+  if list:
+    knownBadPath = os.path.join(inDir, "notablehashes.txt-md5.idx")
+    keywordPath = os.path.join(inDir, "notablekeywords.xml")
+    nsrlPath = os.path.join(inDir, "nsrl.txt-md5.idx")
+  else:  
+    knownBadPath = os.path.join(cwd,inDir,"notablehashes.txt-md5.idx")
+    keywordPath = os.path.join(cwd,inDir,"notablekeywords.xml")
+    nsrlPath = os.path.join(cwd,inDir,"nsrl.txt-md5.idx")
+    
   knownBadPath = knownBadPath.replace("/", "\\")
-  keywordPath = os.path.join(cwd,inDir,"notablekeywords.xml")
   keywordPath = keywordPath.replace("/", "\\")
-  nsrlPath = os.path.join(cwd,inDir,"nsrl.txt-md5.idx")
   nsrlPath = nsrlPath.replace("/", "\\")
 
   antlog = os.path.join(cwd,outDir,testCaseName,"antlog.txt")
   antlog = antlog.replace("/", "\\")
 
   timeout = 24 * 60 * 60 * 1000    # default of 24 hours, just to be safe
-  size = getImageSize(inFile)      # get the size in bytes
+  size = getImageSize(inFile, list)      # get the size in bytes
   timeout = (size / 1000) / 1000   # convert to MB
   timeout = timeout * 1000         # convert sec to ms
   timeout = timeout * 1.5          # add a little extra umph
@@ -80,7 +98,6 @@ def testAddImageIngest(inFile, ignoreUnalloc):
   args.append("-Dignore_unalloc=" + "%s" % ignoreUnalloc)
   args.append("-Dtest.timeout=" + str(timeout))
 
-
   # print the ant testing command
   print "CMD: " + " ".join(args)
 
@@ -90,17 +107,21 @@ def testAddImageIngest(inFile, ignoreUnalloc):
   #fnull.close();
   subprocess.call(args)
 
-def getImageSize(inFile):
+def getImageSize(inFile, list):
   name = imageName(inFile)
-  path = os.path.join(".",inDir)
   size = 0
-  for files in os.listdir(path):
-    filename = os.path.splitext(files)[0]
-    if filename == name:
-      filepath = os.path.join(path, files)
-      if not os.path.samefile(filepath, inFile):
-        size += os.path.getsize(filepath)
-  size += os.path.getsize(inFile)
+  if list:
+    size += os.path.getsize(inFile)
+  else: 
+    path = os.path.join(".",inDir)
+    
+    for files in os.listdir(path):
+        filename = os.path.splitext(files)[0]
+        if filename == name:
+            filepath = os.path.join(path, files)
+        if not os.path.samefile(filepath, inFile):
+            size += os.path.getsize(filepath)
+    size += os.path.getsize(inFile)
   return size
 
 def testCompareToGold(inFile, ignore):
@@ -109,7 +130,7 @@ def testCompareToGold(inFile, ignore):
 
   name = imageName(inFile)
   if ignore:
-   name += ("-u")
+   name += ("-i")
   cwd = wgetcwd()
   goldFile = os.path.join("./",goldDir,name,"standard.db")  
   testFile = os.path.join("./",outDir,name,"AutopsyTestCase","autopsy.db")
@@ -166,32 +187,38 @@ def testCompareToGold(inFile, ignore):
   else:
       print("Object counts match!")
 
-def clearGoldDir(inFile, ignore):
+def clearGoldDir(inFile, ignore, list):
   cwd = wgetcwd()
   inFile = imageName(inFile)
   if ignore:
-    inFile += "-u"
+    inFile += "-i"
+  if list:
+    inFile += "-l"
   if os.path.exists(os.path.join(cwd,goldDir,inFile)):
     shutil.rmtree(os.path.join(cwd,goldDir,inFile))
   os.makedirs(os.path.join(cwd,goldDir,inFile))
 
-def copyTestToGold(inFile, ignore): 
+def copyTestToGold(inFile, ignore, list): 
   print "------------------------------------------------"
   print "Recreating gold standard from results."
   inFile = imageName(inFile)
   if ignore:
-    inFile += "-u"
+    inFile += "-i"
+  if list:
+    inFile += "-l"
   cwd = wgetcwd()
   goldFile = os.path.join("./",goldDir,inFile,"standard.db")
   testFile = os.path.join("./",outDir,inFile,"AutopsyTestCase","autopsy.db")
   shutil.copy(testFile, goldFile)
 
-def copyReportToGold(inFile, ignore): 
+def copyReportToGold(inFile, ignore, list): 
   print "------------------------------------------------"
   print "Recreating gold report from results."
   inFile = imageName(inFile)
   if ignore:
-    inFile += "-u"
+    inFile += "-i"
+  if list:
+    inFile += "-l"
   cwd = wgetcwd()
   goldReport = os.path.join("./",goldDir,inFile,"report.html")
   testReportPath = os.path.join("./",outDir,inFile,"AutopsyTestCase","Reports")
@@ -208,12 +235,14 @@ def copyReportToGold(inFile, ignore):
   else:
     shutil.copy(testReport, goldReport)
 
-def testCompareReports(inFile, ignore):
+def testCompareReports(inFile, ignore, list):
   print "------------------------------------------------"
   print "Comparing report to golden report."
   name = imageName(inFile)
   if ignore:
-    name += "-u"
+    name += "-i"
+  if list:
+    name += "-l"
   goldReport = os.path.join("./",goldDir,name,"report.html")  
   testReportPath = os.path.join("./",outDir,name,"AutopsyTestCase","Reports")
   # Because Java adds a timestamp to the report file, one can't call it
@@ -276,15 +305,20 @@ def imageType(inFile):
 
 def imageName(inFile):
     pathEnd = inFile.rfind("/")
+    pathEnd2 = inFile.rfind("\\")
     extStart = inFile.rfind(".")
     if(extStart == -1 and extStart == -1):
         return inFile
+    if(pathEnd2 != -1):
+        return inFile[pathEnd2+1:extStart]
     elif(extStart == -1):
         return inFile[pathEnd+1:]
     elif(pathEnd == -1):
         return inFile[:extStart]
-    else:
+    elif(pathEnd!=-1 and extStart!=-1):
         return inFile[pathEnd+1:extStart]
+    else:
+        return inFile[pathEnd2+1:extStart]
 
 def markError(errString, inFile):
     global hadErrors
@@ -300,41 +334,47 @@ def wgetcwd():
     return out.rstrip()
 
 def wabspath(inFile):
-    proc = subprocess.Popen(("cygpath", "-m", os.path.abspath(inFile)), stdout=subprocess.PIPE)
-    out,err = proc.communicate()
+    if(inFile[1:2] == ":"):
+         proc = subprocess.Popen(("cygpath", "-m", inFile), stdout=subprocess.PIPE)
+         out,err = proc.communicate()
+    else:
+        proc = subprocess.Popen(("cygpath", "-m", os.path.abspath(inFile)), stdout=subprocess.PIPE)
+        out,err = proc.communicate()
     return out.rstrip()
 
-def copyLogs(inFile, ignore):
+def copyLogs(inFile, ignore, list):
   name = imageName(inFile)
   if ignore:
-   name +="-u"
+   name +="-i"
+  if list:
+    name+="-l"
   logDir = os.path.join("..","build","test","qa-functional","work","userdir0","var","log")
   shutil.copytree(logDir,os.path.join(outDir,name,"logs"))
 
-def testFile(image, rebuild, ignore):
+def testFile(image, rebuild, ignore, list):
   if imageType(image) != ImgType.UNKNOWN:
-    if ignore:
-      testAddImageIngest(image, True)
-    else:
-      testAddImageIngest(image, False)
-    copyLogs(image, ignore)
+    testAddImageIngest(image, ignore, list)
+    copyLogs(image, ignore, list)
     if rebuild:
-      clearGoldDir(image, ignore)
-      copyTestToGold(image, ignore)
-      copyReportToGold(image, ignore)
+      clearGoldDir(image, ignore, list)
+      copyTestToGold(image, ignore, list)
+      copyReportToGold(image, ignore, list)
     else:
-      testCompareToGold(image, ignore)
-      testCompareReports(image, ignore)
-
-def usage() :
+      testCompareToGold(image, ignore, list)
+      testCompareReports(image, ignore, list)
+      
+def usage():
   usage = "\
-  Usage: ./regression.py [-i FILE] [OPTIONS] \n\n\
+  Usage: ./regression.py [-s FILE] [OPTIONS] \n\n\
   Run the RegressionTest.java file, and compare the result with a gold standard \n\n\
   When the -i flag is set, this script only tests the image given by FILE.\n\
   By default, it tests every image in ./input/\n\n\
   An indexed NSRL database is expected at ./input/nsrl.txt-md5.idx,\n\
   and an indexed notable hash database at ./input/notablehashes.txt-md5.idx\n\
   In addition, any keywords to search for must be in ./input/notablekeywords.xml\n\n\
+  When the -l flag is set, the script looks for a config.xml file of the given name\n\
+  where images are stored. For usage notes please see the example config.xml in\n\
+  the /script folder.\
     Options:\n\n\
     -r, --rebuild\t\tRebuild the gold standards from the test results for each image\n\n\
     -u, --ignore\t\tIgnore unallocated space while ingesting"
@@ -344,19 +384,36 @@ def main():
   rebuild = False
   single = False
   ignore = False
+  list = False
   test = True
   argi = 1
+  Config = None   #file pointed to by --list
+  imgListB = []   #list of legal images from config
+  cwd = wgetcwd()
   while argi < len(sys.argv):
       arg = sys.argv[argi]
-      if arg == "-i" and argi+1 < len(sys.argv):
+      if arg == "-s" and argi+1 < len(sys.argv): #check for single
           single = True
           argi+=1
           image = sys.argv[argi]
           print "Running on single image: " + image
-      elif (arg  == "--rebuild") or (arg == "-r"):
+      if arg == "-l" or arg == "--list":    #check for config file
+            list = True
+            argi+=1
+            #check for file in ./
+            if(os.path.isfile(os.path.join("./", sys.argv[argi]))):
+                 Config = parse(os.path.join("./", sys.argv[argi]))
+            #else check if it is a specified path
+            elif (os.path.exists(wabspath(sys.argv[argi]))):
+                Config = parse(sys.argv[argi])
+            else:
+                print sys.argv[argi]
+                print wabspath(sys.argv[argi])
+                markError("Ran with " + arg +" but no such file exists", arg)
+      elif (arg  == "--rebuild") or (arg == "-r"):  #check for rebuild flag
           rebuild = True
           print "Running in REBUILD mode"
-      elif (arg == "--ignore") or (arg == "-u"):
+      elif (arg == "--ignore") or (arg == "-i"):    #check for ignore flag
           ignore = True
           print "Ignoring unallocated space"
       else:
@@ -365,9 +422,28 @@ def main():
       argi+=1
   if single:
     testFile(image, rebuild, ignore)
+  if list:
+    listImages = []
+    errors = 0
+    global inDir    
+    out = Config.getElementsByTagName("indir")[0].getAttribute("value").encode() #there should only be one indir element in the config
+    inDir = out
+    for element in Config.getElementsByTagName("image"):
+        elem = element.getAttribute("value").encode()
+        proc2 = subprocess.Popen(("cygpath", "-i", elem), stdout=subprocess.PIPE)
+        out2,err = proc2.communicate()
+        out2 = out2.rstrip()
+        if(os.path.exists(out2) and os.path.isfile(out2)):
+            listImages.append(elem)
+        else:
+            print out2 + " is not a valid path or is not an image"
+            errors+=1
+    print "Illegal files specified: " + str(errors)
+    for image in listImages:
+        testFile(image, rebuild, ignore, list)
   elif test:
     for inFile in os.listdir(inDir):
-      testFile(os.path.join(inDir,inFile), rebuild, ignore)
+      testFile(os.path.join(inDir,inFile), rebuild, ignore, list)
 
   if hadErrors == True:
     print "**********************************************"
