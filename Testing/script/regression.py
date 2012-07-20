@@ -44,7 +44,7 @@ def testAddImageIngest(inFile, ignoreUnalloc, list):
   
   #check for flags to append to folder name
   if ignoreUnalloc:
-    testCaseName+="-i"
+    testCaseName+="-u"
   if list:
     testCaseName+="-l"
   if os.path.exists(os.path.join(outDir,testCaseName)):
@@ -124,13 +124,13 @@ def getImageSize(inFile, list):
     size += os.path.getsize(inFile)
   return size
 
-def testCompareToGold(inFile, ignore):
+def testCompareToGold(inFile, ignoreUnalloc, list):
   print "-----------------------------------------------"
   print "Comparing results for " + inFile + " with gold."
 
   name = imageName(inFile)
-  if ignore:
-   name += ("-i")
+  if ignoreUnalloc:
+   name += ("-u")
   cwd = wgetcwd()
   goldFile = os.path.join("./",goldDir,name,"standard.db")  
   testFile = os.path.join("./",outDir,name,"AutopsyTestCase","autopsy.db")
@@ -187,23 +187,23 @@ def testCompareToGold(inFile, ignore):
   else:
       print("Object counts match!")
 
-def clearGoldDir(inFile, ignore, list):
+def clearGoldDir(inFile, ignoreUnalloc, list):
   cwd = wgetcwd()
   inFile = imageName(inFile)
-  if ignore:
-    inFile += "-i"
+  if ignoreUnalloc:
+    inFile += "-u"
   if list:
     inFile += "-l"
   if os.path.exists(os.path.join(cwd,goldDir,inFile)):
     shutil.rmtree(os.path.join(cwd,goldDir,inFile))
   os.makedirs(os.path.join(cwd,goldDir,inFile))
 
-def copyTestToGold(inFile, ignore, list): 
+def copyTestToGold(inFile, ignoreUnalloc, list): 
   print "------------------------------------------------"
   print "Recreating gold standard from results."
   inFile = imageName(inFile)
-  if ignore:
-    inFile += "-i"
+  if ignoreUnalloc:
+    inFile += "-u"
   if list:
     inFile += "-l"
   cwd = wgetcwd()
@@ -211,12 +211,12 @@ def copyTestToGold(inFile, ignore, list):
   testFile = os.path.join("./",outDir,inFile,"AutopsyTestCase","autopsy.db")
   shutil.copy(testFile, goldFile)
 
-def copyReportToGold(inFile, ignore, list): 
+def copyReportToGold(inFile, ignoreUnalloc, list): 
   print "------------------------------------------------"
   print "Recreating gold report from results."
   inFile = imageName(inFile)
-  if ignore:
-    inFile += "-i"
+  if ignoreUnalloc:
+    inFile += "-u"
   if list:
     inFile += "-l"
   cwd = wgetcwd()
@@ -235,12 +235,12 @@ def copyReportToGold(inFile, ignore, list):
   else:
     shutil.copy(testReport, goldReport)
 
-def testCompareReports(inFile, ignore, list):
+def testCompareReports(inFile, ignoreUnalloc, list):
   print "------------------------------------------------"
   print "Comparing report to golden report."
   name = imageName(inFile)
-  if ignore:
-    name += "-i"
+  if ignoreUnalloc:
+    name += "-u"
   if list:
     name += "-l"
   goldReport = os.path.join("./",goldDir,name,"report.html")  
@@ -342,26 +342,26 @@ def wabspath(inFile):
         out,err = proc.communicate()
     return out.rstrip()
 
-def copyLogs(inFile, ignore, list):
+def copyLogs(inFile, ignoreUnalloc, list):
   name = imageName(inFile)
-  if ignore:
-   name +="-i"
+  if ignoreUnalloc:
+   name +="-u"
   if list:
     name+="-l"
   logDir = os.path.join("..","build","test","qa-functional","work","userdir0","var","log")
   shutil.copytree(logDir,os.path.join(outDir,name,"logs"))
 
-def testFile(image, rebuild, ignore, list):
+def testFile(image, rebuild, ignoreUnalloc, list):
   if imageType(image) != ImgType.UNKNOWN:
-    testAddImageIngest(image, ignore, list)
-    copyLogs(image, ignore, list)
+    testAddImageIngest(image, ignoreUnalloc, list)
+    copyLogs(image, ignoreUnalloc, list)
     if rebuild:
-      clearGoldDir(image, ignore, list)
-      copyTestToGold(image, ignore, list)
-      copyReportToGold(image, ignore, list)
+      clearGoldDir(image, ignoreUnalloc, list)
+      copyTestToGold(image, ignoreUnalloc, list)
+      copyReportToGold(image, ignoreUnalloc, list)
     else:
-      testCompareToGold(image, ignore, list)
-      testCompareReports(image, ignore, list)
+      testCompareToGold(image, ignoreUnalloc, list)
+      testCompareReports(image, ignoreUnalloc, list)
       
 def usage():
   usage = "\
@@ -383,7 +383,8 @@ def usage():
 def main():
   rebuild = False
   single = False
-  ignore = False
+  ignoreInput = False
+  ignoreUnalloc = False
   list = False
   test = True
   argi = 1
@@ -394,11 +395,13 @@ def main():
       arg = sys.argv[argi]
       if arg == "-s" and argi+1 < len(sys.argv): #check for single
           single = True
+          test = False
           argi+=1
           image = sys.argv[argi]
           print "Running on single image: " + image
       if arg == "-l" or arg == "--list":    #check for config file
             list = True
+            
             argi+=1
             #check for file in ./
             if(os.path.isfile(os.path.join("./", sys.argv[argi]))):
@@ -413,24 +416,27 @@ def main():
       elif (arg  == "--rebuild") or (arg == "-r"):  #check for rebuild flag
           rebuild = True
           print "Running in REBUILD mode"
-      elif (arg == "--ignore") or (arg == "-i"):    #check for ignore flag
-          ignore = True
+      elif (arg == "-u"):    #check for ignore unallocated space flag
+          ignoreUnalloc = True
           print "Ignoring unallocated space"
+      elif (arg == "--ignore") or (arg == "-i"):
+          ignoreInput = True
+          print "Ignoring /script/input directory"
       else:
           test = False
           print usage()
       argi+=1
   if single:
-    testFile(image, rebuild, ignore)
+    testFile(image, rebuild, ignoreUnalloc, list)
   if list:
     listImages = []
     errors = 0
-    global inDir    
+    global inDir
     out = Config.getElementsByTagName("indir")[0].getAttribute("value").encode() #there should only be one indir element in the config
     inDir = out
     for element in Config.getElementsByTagName("image"):
         elem = element.getAttribute("value").encode()
-        proc2 = subprocess.Popen(("cygpath", "-i", elem), stdout=subprocess.PIPE)
+        proc2 = subprocess.Popen(("cygpath", "-u", elem), stdout=subprocess.PIPE)
         out2,err = proc2.communicate()
         out2 = out2.rstrip()
         if(os.path.exists(out2) and os.path.isfile(out2)):
@@ -440,10 +446,14 @@ def main():
             errors+=1
     print "Illegal files specified: " + str(errors)
     for image in listImages:
-        testFile(image, rebuild, ignore, list)
-  elif test:
+        testFile(image, rebuild, ignoreUnalloc, list)
+    if not ignoreInput:
+        global inDir
+        inDir = os.path.join(cwd, "input")
+        test = True
+  if test:
     for inFile in os.listdir(inDir):
-      testFile(os.path.join(inDir,inFile), rebuild, ignore, list)
+      testFile(os.path.join(inDir,inFile), rebuild, ignoreUnalloc, list)
 
   if hadErrors == True:
     print "**********************************************"
