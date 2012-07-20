@@ -1,6 +1,15 @@
 /**
  * \package org.sleuthkit.autopsy.corecomponentinterfaces
  * This package contains the interface classes that define the core components in Autopsy.  These components are used in the difference zones of the GUI.
+ *
+<em>NOTE: Much of this data may be out of date.  It has not been updated 
+since a major redesign was done. </em>
+
+\section corecomponentinterface_contents Package Contents
+The following are imporant classes in this package
+- TODO
+
+
  * <h2>Autopsy Zones</h2>
  * There are three major zones in the Autopsy UI. The left hand side has the org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer zone. This area is where you can search for and explore data. It has all of the analysis smarts. An example of a DataExplorer is the directory tree that shows the hierarchy of directories (and hides the files from view).
  * The DataExplorer area identifies a subset of the data to show the user and passes the data to the org.sleuthkit.autopsy.corecomponentinterfaces.DataResult area in the upper right. In the previous example, the contents of a specific folder would be passed to this area and displayed in a table or thumbnail form.</p>

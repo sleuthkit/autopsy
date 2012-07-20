@@ -43,7 +43,7 @@ The tree on the left hand-side shows the analysis results.  Its contents are pop
 
 The area in the upper right is the result viewer area.  When a node is selected from the tree, the data is sent to this area.  It is a framework with modules that display the data in different layouts.  The org.sleuthkit.autopsy.corecomponentsinterfaces package has the interface to make one of these modules.  
 
-When an item is selected from the result viewer area, it is passed to the bottom right content viewers.  It too is a framework with many modules that know how to show information about a specific file in different ways.  The org.sleuthkit.autopsy.corecomponentsinterfaces package has the interface to make one of these modules.  See \ref contentViewer_page on building new content viewers.
+When an item is selected from the result viewer area, it is passed to the bottom right content viewers.  It too is a framework with many modules that know how to show information about a specific file in different ways.  The org.sleuthkit.autopsy.corecomponentsinterfaces package has the interface to make one of these modules.  See XXX on building new content viewers.
 
 
 <!-- @@@ MOVE THIS SOMEWHERE ELSE -- the directory tree package maybe??
