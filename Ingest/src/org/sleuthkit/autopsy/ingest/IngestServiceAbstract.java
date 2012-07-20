@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2012 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -95,25 +95,25 @@ public interface IngestServiceAbstract {
     
     
     /**
-     * There are 2 levels of configuration a service can implement: simple and advanced.
-     * Provides info if the module implements simple configuration.
+     * Used to determine if a module has implemented a simple (run-time)
+     * configuration panel that is displayed by the ingest manager.
      * 
-     * @return true if this service has a simple configuration
+     * @return true if this service has a simple (run-time) configuration
      */
     public boolean hasSimpleConfiguration();
     
     /**
-     * There are 2 levels of configuration a service can implement: simple and advanced.
-     * Provides info if the module implements advanced configuration.
+     * Used to determine if a module has implemented an advanced (general)
+     * configuration that can be used for more in-depth module configuration.
      * 
      * @return true if this service has an advanced configuration
      */
     public boolean hasAdvancedConfiguration();
     
     /**	
-     * If module implements simple configuration panel
-     * it should read its current state and make it persistent / save it in this method
-     * so that the new configuration will be in effect during the ingest.
+     * Called by the ingest manager if the simple (run-time) configuration
+     * panel should save its current state so that the settings can be used
+     * during the ingest.
      */
     public void saveSimpleConfiguration();
 
@@ -125,9 +125,10 @@ public interface IngestServiceAbstract {
     public void saveAdvancedConfiguration();
 
     /**
-     * Implements simple module configuration exposed to the user before ingest starts
-     * Only basic, most frequently used configuration options should be exposed in this panel due to size limitation
-     * More options, if any, should be available via userConfigureAdvanced()
+     * Returns a panel that displays the simple (run-time) configuration. 
+     * This is presented to the user before ingest starts and only basic
+     * settings should be given here.  use the advanced (general) configuration
+     * panel for more in-depth interfaces. 
      * The module is responsible for preserving / saving its configuration state
      * In addition, saveSimpleConfiguration() can be used
      * 

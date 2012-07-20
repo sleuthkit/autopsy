@@ -1,80 +1,174 @@
 /**
- * \package org.sleuthkit.autopsy.ingest
- *
- * The package provides the ingest module framework; the framework defines how ingest modules should behave and provides the infrastructure to execute them.
- * 
- *   
- * The two main use cases for ingest modules are:
- * - to extract information from the image and write result to blackboard,
- * - to analyze data already in blackboard and add more information to it.
- *
- * Different ingest modules generally specialize in extracting or analyzing different type of data.
- * 
- * There may also be special-purpose core ingest modules that run early in the ingest pipe-line.  Results posted by such modules can useful to subsequent modules.
- * One example of such module is Hash DB module, which determines which files are known; known files are generally treated differently.
- * For instance, processing of known files can be skipped by subsequent modules in the pipeline (if chosen so), for performance reasons.
- * 
- * The framework provides interfaces every ingest module needs to implement:
- * - org.sleuthkit.autopsy.ingest.IngestServiceImage (for modules that are interested in the image as a whole, or modules that selectively pick and analyze data from the image) 
- * - org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile (for modules that should process every file in the image).
- * 
- * org.sleuthkit.autopsy.ingest.IngestServiceImage services run each in a separate thread, in parallel with respect to other image services.
- * File services execute within the same worker thread and they run in series; for every file in the image every file ingest service is invoked.
- *
- * Every ingest thread is presented with a progress bar and can be cancelled by a user, or by the framework, in case of a critical system event (such as Autopsy is terminating, or an unrecoverable system error).
- *
- * org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile services are singleton instances
- * and org.sleuthkit.autopsy.ingest.IngestServiceImage service are not singletons.  There could be multiple instances of 
- * an image based service, because multiple images can be analyzed at the same time by multiple instances of the same image service class
- * (NOTE: this design might change in the future to limit number of image services executing at the same time and to introduce a better service dependency system).
- *
- * The interfaces define methods to initialize, process passed in data, configure the ingest service, 
- * query the service state and finalize the service.
- * 
- * The framework also contains classes:
- * - org.sleuthkit.autopsy.ingest.IngestManager, the ingest manager, responsible for discovery of ingest modules, enqueuing work to the modules, starting and stopping the ingest pipeline, 
- * propagating messages sent from the ingest modules to other Autopsy components, querying ingest status.
- * - org.sleuthkit.autopsy.ingest.IngestManagerProxy, IngestManager facade used by the modules to communicate with the manager,
- * - additional classes to support threading, sending messages, ingest monitoring, ingest cancellation, progress bars,
- * - a user interface component (Ingest Inbox) used to display interesting messages posted by ingest modules to the user,
- * 
- *
- * Ingest module can maintain internal threads for any special processing that can occur in parallel.
- * However, the module is then responsible for creating, managing and tearing down the internal threads 
- * and to implement locking to protect critical sections internal to the module.
- * An example of a module that maintains its own threads is the KeywordSearch module, 
- * which provides a periodic refresh of search results as data is being indexed by the main file ingest thread.
- * 
- * org.sleuthkit.autopsy.ingest.IngestManager provides public API other modules can use to get ingest status updates.
- * A handle to ingest manager singleton instance is obtained using org.sleuthkit.autopsy.ingest.IngestManager.getDefault().
- * org.sleuthkit.autopsy.ingest.IngestManager.isIngestRunning() is used to check if any ingest modules are currently running.
- * There are more granular methods to check ingest status: org.sleuthkit.autopsy.ingest.IngestManager.isFileIngestRunning() to check if the file ingest pipeline is running,
- * org.sleuthkit.autopsy.ingest.IngestManager.isImageIngestRunning() to check the status of the image ingest pipeline,
- * org.sleuthkit.autopsy.ingest.IngestManager.isEnqueueRunning() to check if ingest is currently being enqueued,
- * and org.sleuthkit.autopsy.ingest.IngestManager.isServiceRunning() to check on a per-service level.
- *
- * External modules can also register themselves as ingest service event listeners and receive event notifications (when a service is started, stopped, completed or has new data).
- * Use a static org.sleuthkit.autopsy.ingest.IngestManager.addPropertyChangeListener() method to register a service event listener.
- * Events types received are defined in IngestManagerEvents enum.
- * IngestManagerEvents.SERVICE_HAS_DATA event type, a special type of event object is passed in org.sleuthkit.autopsy.ingest.ServiceDataEvent.
- * The object wraps a collection of blackboard artifacts and their associated attributes that are to be reported as the new data to listeners.
- * Passing the data as part of the event reduces memory footprint and decreases number of garbage collections 
- * of the blackboard artifacts and attributes objects (the objects are expected to be reused by the data event listeners).
- *
- * If a service does not pass the data as part of ServiceDataEvent (ServiceDataEvent.getArtifacts() returns null) - it is an indication that the service 
- * has new data but it does not implement new data tracking.  The listener can then perform a blackboard query to get the latest data of interest (e.g. by artifact type).
- *
- * Service name and artifact type for the collection of artifacts is also passed in as as part of the service data event.
- * By design, only a single type of artifacts can be contained in a single data event. 
- *
- * At the end of the ingest, org.sleuthkit.autopsy.ingest.IngestManager itself will notify all listeners of new data being available in the blackboard.
- * This ensures the listeners receive a new data notification, in case some of the modules fail to report availability of new data.
- * Nevertheless, ingest module developers are encouraged to generate new data events in order to provide the real-time feedback to the user.
- *
- * Refer to ingest.dox and org.sleuthkit.autopsy.ingest.example examples for more details on implementing custom ingest modules.
- *
- *
- * 
- * 
- * 
- */
+
+
+\package org.sleuthkit.autopsy.ingest
+
+The package provides the ingest module framework.  Ingest modules perform data analysis in a multi-threaded approach. 
+
+\section ingestmodue_contents Package Contents
+
+The following are important classes in this package:
+* Ingest Manager (org.sleuthkit.autopsy.ingest.IngestManager)
+* Ingest Inbox (org.sleuthkit.autopsy.ingest.IngestMessageTopComponent)
+
+
+\section ingestmodule_modules Ingest Module Basics
+
+Ingest modules analyze data from a disk image.  They typically focus on a specific type of data analysis.  The modules are loaded each time that Autopsy starts.  The user can choose to enable each module when they add an image to the case.
+
+There are two types of ingest modules. 
+- Image-level modules are passed in a reference to an image and perform general analysis on it.  These modules may query the database for a small set of files.
+- File-level modules are passed in a reference to each file.  The Ingest Manager chooses which files to pass and when.  These modules are intended to analyze most of the files on the system or that want to examine the file content of all files (i.e. to detect file type based on signature instead of file extension). 
+
+Modules post their results to the blackboard (@@@ NEED REFERENCE FOR THIS -- org.sleuthkit.datamodel) and can query the blackboard to get the results of previous modules.  For example, the hash database lookup module may want to query for a previously calculated hash value. 
+
+The ingest manager (org.sleuthkit.autopsy.ingest.IngestManager) is responsible for launching the ingest modules and passing data to them.   Modules can send messages to the ingest inbox (REFERENCE) so that users can see when data has been found. 
+
+
+\section ingestmodule_making Making Ingest Modules
+
+Refer to org.sleuthkit.autopsy.ingest.example for sample source code. 
+
+\subsection ingestmodule_making_api Module Interface
+
+The first step is to choose the correct module type.  Image-level modules will implement the org.sleuthkit.autopsy.ingest.IngestServiceImage interface and file-level modules will implement the org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile interface. 
+
+There is a static getDefault() method that is not part of the interface, that every module (whether an image or a file service) needs to implement to return the registered static instance of the service.  Refer to example code in org.sleuthkit.autopsy.ingest.example.ExampleAbstractFileIngestService.getDefault()
+
+File-level modules need to be singleton (only a single instance at a time).  To ensure this, make the constructor private. Ensure the default public file service constructor is overridden with the private one.  Image-level modules require a public constructor.
+
+The interfaces have several standard methods that need to be implemented.  See the interface methods for details.  
+- init() method (org.sleuthkit.autopsy.ingest.IngestServiceAbstract.init()) is invoked every time an ingest session starts.  A module should support multiple invocations of init() throughout the application life-cycle.
+- complete() method (org.sleuthkit.autopsy.ingest.IngestServiceAbstract.complete) is invoked when an ingest session completes.  The module should perform any resource (files, handles, caches) cleanup in this method and submit final results and post a final ingest inbox message.
+- stop() method (org.sleuthkit.autopsy.ingest.IngestServiceAbstract.stop) is invoked on a module when an ingest session is interrupted by the user or by the system.
+The method implementation should be similar to complete() in that the service should perform any cleanup work.  If there is pending data to be processed or pending results to be reported by the service then the results should be rejected and ignored if stop() is invoked and the module should terminate as early as possible.
+- process() method is invoked to analyze the data. The specific method depends on the module type. 
+
+
+Multiple images can be ingested at the same time. The current behavior is that the files from the second image are added to the list of the files from the first image.  The impact of this on module development is that a file-level module could be passed in files from different images in consecutive calls to process().  New instances of image-level modules will be created when the second image is added.   Therefore, image-level modules should assume that the process() method will be called only once after init() is called. 
+
+Every module should support multiple init() - process() - complete(), and init() - process() - stop() invocations.
+The modules should also support multiple init() - complete() and init() - stop() invocations, 
+which can occur if ingest pipeline is started but no work is enqueued for the particular module.
+
+Module developers are encouraged to use the standard java.util.logging.Logger infrastructure to log errors to the Autopsy log.
+
+\subsection ingestmodule_making_process Process Method
+The process method is where the work is done in each type of module.  Some notes:
+- File-level modules will be called on each file in an order determined by the IngestManager.  Each module is free to quickly ignore a file based on name, signature, etc.  If a module wants to know the return value from a previously run module, it should use the org.sleuthkit.autopsy.ingest.IngestManagerProxy.getAbstractFileServiceResult() method. 
+- Image-level modules are expected not passed in specific files and are expected to query the database to find the files that they are interested in. 
+
+
+\subsection ingestmodule_making_registration Module Registration
+
+Ingest modules need to be registered using the Netbeans Lookup infrastructure in package's layer.xml file.
+
+An example Image-level module is: 
+\verbatim
+<file name="org-sleuthkit-autopsy-ingest-example-ExampleImageIngestService.instance">
+  <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceImage"/>
+  <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.example.ExampleImageIngestService.getDefault"/>
+  <attr name="position" intvalue="1000"/>
+</file>
+\endverbatim
+      
+An example file-level module is: 
+  
+\verbatim
+<file name="org-sleuthkit-autopsy-ingest-example-ExampleAbstractFileIngestService.instance">
+  <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile"/>
+  <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.example.ExampleAbstractFileIngestService.getDefault"/>
+  <attr name="position" intvalue="1100"/>
+</file>
+\endverbatim
+
+Note the "position" attribute.  The attribute determines the ordering of the module in the ingest pipeline.
+Services with lower position attribute will execute earlier.
+Use high numbers (higher than 1000) for non-core services. If your module depends on results from another module, use a higher position attribute to enforce the dependency.
+
+Note: we plan to implement a more flexible and robust module dependency system in future versions of the Autopsy ingest framework.
+
+New modules can be added to the Autopsy ingest pipeline by dropping in jar files into build/cluster/modules.
+Dropped in module will be automatically recognized next time Autopsy starts.
+
+\subsection ingestmodule_making_results Posting Results
+
+Users will see the results from ingest modules in one of two ways:
+- Results are posted to the blackboard and will be displayed in the navigation tree
+- Messages are sent to the Ingest Inbox to notify a user of what has recently been found. 
+
+See the Blackboard (REFERENCE) documentation for posting results to it.  Modules are free to immediately post results when they find them or they can wait.  The  org.sleuthkit.autopsy.ingest.IngestManagerProxy.getUpdateFrequency() method returns the maximum amount of time that a module can wait before it posts its results. 
+
+An example of waiting to post results is the keyword search module.  It is resource intensive to commit the keyword index and do a keyword search.  Therefore, when its process() method is invoked, it checks if it is close to the getUpdateFrequency() since the last time it did a keyword search.  If it is, then it commits the index and performs the search. 
+
+When they add data to the blackboard, modules should notify listeners of the new data by periodically invoking org.sleuthkit.autopsy.ingest.IngestManagerProxy.fireServiceDataEvent() method. This allows other modules (and the main UI) to know when to query the blackboard for the latest data. 
+
+Modules should post messages to the inbox when interesting data is found.  The messages includes the module name, message subject, message details, a unique message id (in the context of the originating module), and a uniqueness attribute.  The uniqueness attribute is used to group similar messages together and to determine the overall importance priority of the message (if the same message is seen repeatedly, it is considered lower priority).
+
+It is important though to not fill up the inbox with messages.  These messages should only be sent if the result has a low false positive rate and will likely be relevant.  For example, the hash lookup module will send messages if known bad (notable) files are found, but not if known good (NSRL) files are found.  The keyword search module will send messages if a specific keyword matches, but will not send messages (by default) if a regular expression match for a URL has matches (because a lot of the URL hits will be false positives and can generate thousands of messages on a typical system). 
+
+Ingest messages have different types: there are info messages, warning messages, error messages and data messages.
+The data messages contain encapsulated blackboard artifacts and attributes. The passed in data is used by the ingest inbox GUI widget to navigate to the artifact view in the directory tree, if requested by the user.
+
+Ingest message API is defined in org.sleuthkit.autopsy.ingest.IngestMessage class.  The class also contains factory methods to create new messages.
+Messages are posted using org.sleuthkit.autopsy.ingest.IngestManagerProxy.postMessage() method, which accepts a message object created using one of the factory methods.
+
+Modules should post inbox messages to the user when stop() or complete() is invoked (refer to the examples).
+It is recommended to populate the description field of the complete inbox message to provide feedback to the user 
+summarizing the module ingest run and if any errors were encountered.
+
+
+\subsection ingestmodule_making_configuration Module Configuration
+
+Ingest modules may require user configuration. The framework 
+supports two levels of configuration: run-time and general. Run-time configuration 
+occurs when the user selects which ingest modules to run when an image is added.  This level
+of configuration should allow the user to enable or disable settings.  General configuration is more in-depth and 
+may require an interface that is more powerful than simple check boxes. 
+
+As an example, the keyword search module uses both configuration methods.  The run-time configuration allows the user
+to choose which lists of keywords to search for.  However, if the user wants to edit the lists or create lists, they 
+need to do go the general configuration window. 
+
+Module configuration is decentralized and module-specific; every module maintains its
+own configuration state and is responsible for implementing the graphical interface.
+
+The run-time configuration (also called simple configuration), is achieved by each
+ingest module providing a JPanel.   The org.sleuthkit.autopsy.ingest.IngestServiceAbstract.hasSimpleConfiguration(),
+org.sleuthkit.autopsy.ingest.IngestServiceAbstract.getSimpleConfiguration(), and org.sleuthkit.autopsy.ingest.IngestServiceAbstract.saveSimpleConfiguration()
+methods should be used for run-time configuration. 
+
+The general configuration is also achieved by the module returning a JPanel. A link will be provided to the general configuration from the ingest manager if it exists.
+The org.sleuthkit.autopsy.ingest.IngestServiceAbstract.hasAdvancedConfiguration(),
+org.sleuthkit.autopsy.ingest.IngestServiceAbstract.getAdvancedConfiguration(), and org.sleuthkit.autopsy.ingest.IngestServiceAbstract.saveAdvancedConfiguration()
+methods should be used for general configuration. 
+
+
+
+
+\section ingestmodule_events Getting Ingest Status and Events
+
+
+Other modules and core Autopsy classes may want to get the status of the ingest manager.  The org.sleuthkit.autopsy.ingest.IngestManager provides access to this data with the sleuthkit.autopsy.ingest.IngestManager.isIngestRunning() method.
+
+
+External modules can also register themselves as ingest service event listeners and receive event notifications (when a module is started, stopped, completed or has new data).  Use the org.sleuthkit.autopsy.ingest.IngestManager.addPropertyChangeListener() method to register a service event listener.  Events types received are defined in org.sleuthkit.autopsy.ingest.IngestManager.IngestManagerEvents enum.   
+<!-- @@@ This is a private enumÉ -->
+
+<!-- @@@ This should be moved to the class documentation -- we should document what each event means -->
+IngestManagerEvents.SERVICE_HAS_DATA event type, a special type of event object is passed in org.sleuthkit.autopsy.ingest.ServiceDataEvent.
+The object wraps a collection of blackboard artifacts and their associated attributes that are to be reported as the new data to listeners.
+Passing the data as part of the event reduces memory footprint and decreases number of garbage collections 
+of the blackboard artifacts and attributes objects (the objects are expected to be reused by the data event listeners).
+
+If a service does not pass the data as part of ServiceDataEvent (ServiceDataEvent.getArtifacts() returns null) - it is an indication that the service 
+has new data but it does not implement new data tracking.  The listener can then perform a blackboard query to get the latest data of interest (e.g. by artifact type).
+
+Service name and artifact type for the collection of artifacts is also passed in as as part of the service data event.
+By design, only a single type of artifacts can be contained in a single data event. 
+
+<!-- @@@ We should mention with what type of event they will be notified with. -->
+At the end of the ingest, org.sleuthkit.autopsy.ingest.IngestManager itself will notify all listeners of new data being available in the blackboard.
+Module developers are encouraged to generate events when they post data to the blackboard, but the IngestManger will make a final event to handle scenarios where the module did not notify listeners while it was running. 
+
+*/

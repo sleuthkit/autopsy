@@ -657,9 +657,6 @@ WARN_LOGFILE           =
 
 INPUT                  = main.dox \
                          design.dox \
-                         ingest.dox \
-                         contentViewer.dox \
-                         report.dox \
                          regressionTesting.dox \
                          ../../Case/src \
                          ../../CoreComponentInterfaces/src \
