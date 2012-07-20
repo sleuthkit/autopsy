@@ -20,13 +20,168 @@ and runs a test for every disk image it finds.
 regression.py also does regression test result validation by comparing the test result with the golden standards
 for the image.
 
+It is assumed that the steps detailed in the Building Autopsy from Source document have been completed, and that appropriate versions of the JDK, LIBEWF etc, are present on the system. Building Autopsy from Source can be accessed at:
+https://github.com/sleuthkit/autopsy/blob/master/BUILDING.txt
+
 
 \section regression_test_setup Setting up regression testing
 
+1)  Install Cygwin
+
+	1a) Download and run the Cygwin setup, available at
+
+	http://www.cygwin.com/setup.exe
+
+
+	1b) From the list of packages to install, select both Database and Python. 
+
+
+2) Setting up Regression.py
+
+	2a) Place all images that you wish to regression test under 
+
+		autopsy/Testing/script/input
+
+
+	2b)  Ensure that the following files are also under  /input
+
+		notablehashes.txt-md5.idx
+		nsrl.txt-md5.idx
+		notablekeywords.xml
+
+
+	2c) place the gold standard database files ("standards.db") for each image under
+
+		autopsy/Testing/script/gold/{name of image}
+
+
+
 \section regression_test_running Running regression testing
 
-\section regression_test_update Updating golden standards
+3) Run regression tests
+
+	3a) From the Cygwin terminal, navigate to the /script folder and run "./regression.py". The script will automatically begin Autopsy and run ingestion and analysis on all the images from the /input directory, and will close when finished. The Cygwin terminal will print out whether or not errors were encountered at the end of each image's test.
+
+
+
+\section regression_test_update Options
+		
+		Currently, the script supports three argument parameters:
+
+			-i {imgname}	: runs the test with a single image as specified by {imgname}. Must include the path, it does not read from input.
+			-r or --rebuild	: runs in REBUILD mode, see 4 below
+			-u or --ignore	: runs ignoring unallocated space. Useful for determining framework is operational. Appends "-u" to the output and gold folders for distinguishing them from others. Will automatically compare the right reports.
+
+		These can be run in any combination.
+
+4) OPTIONAL: Update the standards databases
+
+	4a) From the Cygwin terminal, navigate to 
+
+		autopsy/Testing/script
+
+	4b)  run "./regression.py -r", The script will automatically delete pre-existing standards.db files and generate the updated ones in the proper locations (/script/gold/{name of image}).
+
+Running in -r will also generate a golden report file built from the image. Normal runs of regression.py compare their generated report against the golden one, and report any differences in the file, ignoring the timestamp. 
+
+
+
+\section developers_note_regression_test Developers Notes: Jemmy and RegressionTest.java
+
+
+For additional details regarding setting up and using Jemmy, please see 
+
+	http://platform.netbeans.org/tutorials/nbm-test.html
+	http://wiki.netbeans.org/Writing_JellyTools_Tests_Guide
+	
+
+
+The Jemmy UI framework includes elements such as buttons, frames, dialog boxes and wizards. In order to manipulate these elements programatically, the associated ContainerOperators must be used. RegressionTest.java makes use of the following major operators:
+	
+	JButtonOperator
+	JDialogOperator
+	nbDialogOperator
+	JTableOperator
+	JFileChooserOperator
+	WizardOperator
+
+
+WizardOperators are for elements that implement the Wizard interface. Wizards specifically have back and next buttons. A WizardOperator can be created by 
+
+	WizardOperator wo = new WizardOperator(String title);
+
+Where title is the display title of the wizard you wish to manipulate.
+
+In order to use any Jemmy UI element, it must first be found. There are a number of ways to do this, but the most common involves searching by the display name of the element in question. Finding elements is a function of that elements ContainerOperator.
+For example, to find a JDialog whose display name is the string "Hash Database Configuration", the following code might be used:
+
+	JDialog hashMainDialog =  JDialogOperator.waitJDialog("Hash Database Configuration", false, false);
+
+The two booleans are for searching the exact string including subsrtings, and for searching case sensitively. 
+
+Note that the method used is called '.waitJDialog', and not '.findJDialog'. This is an important distinction regarding thoroughness of the find, but the functionality of the same. Refer to the link on Jemmy above for greater detail.
+
+Once you an element has been located, it can be operated upon by creating a new ContainerOperator, with the element as the only argument:
+
+	JDialogOperator hashMainDialogOperator = new JDialogOperator(hashMainDialog);
+
+
+Selecting the main window:
+	
+In order to select the main window, in this case, the general Autospy frame, the MainWindowOperator must be used. A MainWindowOperator takes no arguments and is created as follows:
+
+	MainWindowOperator mwo = MainWindowOperator.getDefault();
+
+For further reference regarding ContainerOperators, please see
+
+	http://www.jarvana.com/jarvana/view/org/netbeans/jemmy/2.2.7.5/jemmy-2.2.7.5-javadoc.jar!/org/netbeans/jemmy/operators/ContainerOperator.html
+
+
+When an element has been selected, the individual components may be manipluated with ContainerOperators. 
+To select a button, use the code below, where cont is one of the ContainerOperators from above, text is the text displayed on the button, and index is the button's order if there are multiple with the same name (i.e. if there are three buttons labeled “preview”, the first's index is 0, then 1, then 2).
+
+JbuttonOperator jbo = new JbuttonOperator(ContainerOperator cont, String text, int index);
+
+There are many others elements and operators, such as JcheckBoxOperator, JfileChooserOperator, JtextFieldOperator, etc. See http://www.jarvana.com/jarvana/view/org/netbeans/jemmy/2.2.7.5/jemmy-2.2.7.5-javadoc.jar!/org/netbeans/jemmy/operators/JComponentOperator.html for more. Please see their individual JavaDocs for action commands that push buttons, write in forms, etc.
+
+If an element cannot be grabbed using a ContainerOperator, a temporary workaround is to invoke the element action:
+
+	new Action(String menuPath, String popupPath).perform();
+
+where menuPath is the path through the File menu to said action and popup is the path through the popup menu (which is null since it is unsupported).
+
+For more on Actions, see 
+
+	http://bits.netbeans.org/dev/javadoc/org-netbeans-modules-jellytools-platform/org/netbeans/jellytools/actions/Action.html
+
+
+
+
 
 
 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

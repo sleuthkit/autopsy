@@ -22,6 +22,11 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportXLS.getDefault"/>
             <attr name="position" intvalue="902"/>
         </file>
+        <file name="org-sleuthkit-autopsy-report-ReportBodyFile.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.ReportModule"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportBodyFile.getDefault"/>
+            <attr name="position" intvalue="903"/>
+        </file>
     </folder>
     <folder name="Toolbars">
         <folder name="File">

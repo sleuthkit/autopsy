@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import javax.swing.Action;
-import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskData;
 
@@ -31,7 +30,6 @@ import org.sleuthkit.datamodel.TskData;
 public class FileNode extends AbstractFsContentNode<File> {
 
     /**
-     * 
      * @param file underlying Content
      */
     public FileNode(File file) {
@@ -45,7 +43,7 @@ public class FileNode extends AbstractFsContentNode<File> {
         if (File.dirFlagToValue(file.getDir_flags()).equals(TskData.TSK_FS_NAME_FLAG_ENUM.TSK_FS_NAME_FLAG_UNALLOC.toString())) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
         } else {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon.png");
+            this.setIconBaseWithExtension(getIconForFileType(file));
         }
     }
 
@@ -68,5 +66,53 @@ public class FileNode extends AbstractFsContentNode<File> {
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
+    }
+    
+    // Given a file, returns the correct icon for said
+    // file based off it's extension
+    static String getIconForFileType(File file) {
+        // Get the name, extension
+        String name = file.getName();
+        int dotIndex = name.lastIndexOf(".");
+        if (dotIndex == -1) {
+            return "org/sleuthkit/autopsy/images/file-icon.png";
+        }
+        String ext = name.substring(dotIndex).toLowerCase();
+        
+        // Images
+        for(String s:FileTypeExtensions.getImageExtensions()) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/image-file.png"; }
+        }
+        // Videos
+        for(String s:FileTypeExtensions.getVideoExtensions()) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/video-file.png"; }
+        }
+        // Audio Files
+        for(String s:FileTypeExtensions.getAudioExtensions()) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/audio-file.png"; }
+        }
+        // Documents
+        for(String s:FileTypeExtensions.getDocumentExtensions()) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/doc-file.png"; }
+        }
+        // Executables / System Files
+        for(String s:FileTypeExtensions.getExecutableExtensions()) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/exe-file.png"; }
+        }
+        // Text Files
+        for(String s:FileTypeExtensions.getTextExtensions()) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/text-file.png"; }
+        }
+        // Web Files
+        for(String s:FileTypeExtensions.getWebExtensions()) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/web-file.png"; }
+        }
+        // PDFs
+        for(String s:FileTypeExtensions.getPDFExtensions()) {
+            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/pdf-file.png"; }
+        }
+        // Else return the default
+        return "org/sleuthkit/autopsy/images/file-icon.png";
+        
     }
 }

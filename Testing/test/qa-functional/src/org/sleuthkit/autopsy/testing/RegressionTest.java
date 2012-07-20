@@ -25,6 +25,7 @@ import javax.swing.JDialog;
 import javax.swing.JTextField;
 import junit.framework.Test;
 import org.netbeans.jellytools.JellyTestCase;
+import org.netbeans.jellytools.MainWindowOperator;
 import org.netbeans.jellytools.NbDialogOperator;
 import org.netbeans.jellytools.WizardOperator;
 import org.netbeans.jemmy.Timeout;
@@ -44,6 +45,7 @@ import org.sleuthkit.autopsy.ingest.IngestServiceAbstract;
  * nsrl_path: Path to the nsrl database
  * known_bad_path: Path to a database of known bad hashes
  * keyword_path: Path to a keyword list xml file
+ * ignore_unalloc: Boolean whether to ignore unallocated space or not
  * 
  * Without these properties set, the test will fail to run correctly.
  * To run this test correctly, you should use the script 'regression.py'
@@ -61,7 +63,6 @@ public class RegressionTest extends JellyTestCase{
     
     /** Creates suite from particular test cases. */
     public static Test suite() {
-
         // run tests with specific configuration
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(RegressionTest.class).
                 clusters(".*").
@@ -73,13 +74,20 @@ public class RegressionTest extends JellyTestCase{
                 "testConfigureHash",
                 "testConfigureIngest2",
                 "testConfigureSearch",
-                "testIngest");
-        return NbModuleSuite.create(conf);
+                "testConfigureIngest2a",
+                "testIngest",
+                "testGenerateReportToolbar",
+                "testGenerateReportButton"       
+                );
+        return  NbModuleSuite.create(conf);
+
+               
     }
 
     /** Method called before each test case. */
     @Override
     public void setUp() {
+        
         logger.info("########  " + System.getProperty("img_path") + "  #######");
     }
 
@@ -189,6 +197,8 @@ public class RegressionTest extends JellyTestCase{
         JButtonOperator jbo2 = new JButtonOperator(jdo, "OK", 0);
         jbo2.pushNoBlock();
         WizardOperator wo = new WizardOperator("Add Image");
+        JCheckBoxOperator jbco0 = new JCheckBoxOperator(wo, "Process Unallocated Space");
+        jbco0.setSelected(Boolean.parseBoolean(System.getProperty("ignore_unalloc"))); //ignore unallocated space or not. Set with Regression.py -u
         wo.btNext().clickMouse();
         wo.btFinish().clickMouse();
     }
@@ -202,6 +212,7 @@ public class RegressionTest extends JellyTestCase{
         }
         logger.info("Enqueue took " + (System.currentTimeMillis()-start) + "ms");
         while(man.isIngestRunning()) {
+            
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
         new Timeout("pausing", 15000).sleep(); // give it a second (or fifteen) to process
@@ -216,5 +227,40 @@ public class RegressionTest extends JellyTestCase{
         }
         logger.info("Ingest (including enqueue) took " + (System.currentTimeMillis()-start) + "ms");
         new Timeout("pausing", 5000).sleep(); // allow keyword search to finish saving artifacts, just in case
+        
     }
+    
+    public void testGenerateReportToolbar() {
+
+        logger.info("Generate Report Toolbars");
+        // Force the action if necessary:
+        //new Action("Tools|Generate Report", null).perform();
+        //new Timeout("pausing", 1000).sleep();
+        MainWindowOperator mwo = MainWindowOperator.getDefault();
+        JButtonOperator jbo = new JButtonOperator(mwo, "Generate Report");
+        jbo.pushNoBlock();
+        new Timeout("pausing", 1000).sleep();
+    }
+    
+    public void testGenerateReportButton() {
+        logger.info("Generate Report Button");
+        JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
+        JDialogOperator reportDialogOperator = new JDialogOperator(reportDialog);
+        JCheckBoxOperator jcbo0 = new JCheckBoxOperator(reportDialogOperator, "Excel");
+        jcbo0.doClick();
+        JCheckBoxOperator jcbo1 = new JCheckBoxOperator(reportDialogOperator, "Default XML");
+        jcbo1.doClick();
+        JCheckBoxOperator jcbo2 = new JCheckBoxOperator(reportDialogOperator, "Body File");
+        jcbo2.doClick();
+        JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Generate Report");
+        jbo0.pushNoBlock();
+        new Timeout("pausing", 3000).sleep(); // Give it a few seconds to generate
+        
+        JDialog previewDialog = JDialogOperator.waitJDialog("Report Preview", false, false);
+        JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
+        JButtonOperator jbo1 = new JButtonOperator(previewDialogOperator, "Close");
+        jbo1.pushNoBlock();
+        new Timeout("pausing", 3000).sleep(); // Give the program a second to idle to be safe
+    }
+   
 }
