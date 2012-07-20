@@ -24,8 +24,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.logging.Logger;
 import org.apache.solr.common.util.ContentStream;
-import org.sleuthkit.autopsy.datamodel.AbstractFileStringStream;
-import org.sleuthkit.autopsy.datamodel.AbstractFileStringStream.Encoding;
+import org.sleuthkit.autopsy.keywordsearch.ByteContentStream.Encoding;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -43,7 +42,7 @@ public class AbstractFileStringContentStream implements ContentStream {
     private AbstractFileStringStream stream;
     private static Logger logger = Logger.getLogger(AbstractFileStringContentStream.class.getName());
 
-    public AbstractFileStringContentStream(AbstractFile content, Encoding encoding) {
+    public AbstractFileStringContentStream(AbstractFile content, ByteContentStream.Encoding encoding) {
         this.content = content;
         this.encoding = encoding;
         this.stream = new AbstractFileStringStream(content, encoding);

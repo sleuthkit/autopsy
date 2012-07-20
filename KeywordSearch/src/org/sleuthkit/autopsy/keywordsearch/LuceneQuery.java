@@ -326,7 +326,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         if (chunkID == 0) {
             contentIDStr = Long.toString(contentID);
         } else {
-            contentIDStr = FileExtractedChild.getFileExtractChildId(contentID, chunkID);
+            contentIDStr = Server.getChunkIdString(contentID, chunkID);
         }
 
         String idQuery = Server.Schema.ID.toString() + ":" + contentIDStr;
