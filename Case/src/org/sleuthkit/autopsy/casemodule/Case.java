@@ -51,7 +51,9 @@ import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 
 /**
- * Class to store the case information
+ * Stores all information for a given case.  Only a single case can
+ * currently be open at a time.  Use getCurrentCase() to retrieve the
+ * object for the current case. 
  */
 public class Case {
 

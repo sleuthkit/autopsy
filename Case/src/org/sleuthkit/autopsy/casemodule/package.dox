@@ -1,24 +1,30 @@
 // @@@ VERIFY THAT we mention add case wizard in here
 /**
 \package org.sleuthkit.autopsy.casemodule
+
+The org.sleuthkit.autopsy.casemodule Module is responsible for organizing a case. A case contains one or more disk images and is the highest-level unit of an investigation. 
+
+\section casemodule_contents Package Contents
+The important classes in this case are:
+- Case
+
 \section casemodule_overview Overview
+All data in a case will be stored in a single database and configuration file.  A case must be open before analysis can occur. You will use a Case object to get access to the data being analyzed.
 
-The org.sleuthkit.autopsy.casemodule Module is responsible for organizing a case. A case contains one or more disk images and is the highest-level unit of an investigation.   All data in a case will be stored in a single database and configuration file.  A case must be open before analysis can occur. You will use a org.sleuthkit.autopsy.casemodule.Case object to get access to the data being analyzed.
+Case settings are stored in an XML file.  See the XMLCaseManagement class for more details.
 
-Case settings are stored in an XML file.  See the org.sleuthkit.autopsy.casemodule.XMLCaseManagement class for more details.
-
-Currently, only one case can be opened at a time.  To determine the open case, use the static org.sleuthkit.autopsy.casemodule.Case.getCurrentCase()  method.  Once you have the object for the currently open case, org.sleuthkit.autopsy.casemodule.Case.getRootObjects() will return the top-level Sleuth Kit Content modules. You can then get their children to go down the tree of data types.
+Currently, only one case can be opened at a time.  To determine the open case, use the Case.getCurrentCase()  method.  Once you have the object for the currently open case, Case.getRootObjects() will return the top-level Sleuth Kit Content modules. You can then get their children to go down the tree of data types.
 
 
 \section casemodule_events Case Events
-To receive an event when cases are opened, closed, or changed, use the org.sleuthkit.autopsy.casemodule.Case.addPropertyChangeListener(PropertyChangeListener) method to register your class as a PropertyChangeListener.  This is most commonly required when developing a new  module that needs to get data about the currently opened case.
+To receive an event when cases are opened, closed, or changed, use the Case.addPropertyChangeListener(PropertyChangeListener) method to register your class as a PropertyChangeListener.  This is most commonly required when developing a new  module that needs to get data about the currently opened case.
 
 
 \section casemodule_add_image Add Image Process
 The sleuthkit library performs most the actual work of adding the image to the database and Autopsy provides the user interface, calls methods to set up and control and finalize the process.
 
-Add image process is first invoked by org.sleuthkit.autopsy.casemodule.AddImageAction.
-org.sleuthkit.autopsy.casemodule.AddImageWizardIterator instantiates and manages the wizard panels.
+Add image process is first invoked by AddImageAction.
+AddImageWizardIterator instantiates and manages the wizard panels.
 
 A background worker thread is spawned in AddImgTask class.  The work is delegated to org.sleuthkit.datamodel.AddImageProcess, which calls into native sleuthkit methods via SleuthkitJNI interface.
 
@@ -43,11 +49,10 @@ Autopsy is a multi-threaded application; besides threads associated with the GUI
 the application uses threads to support concurrent user-driven processes.
 For instance, user can add another image to the database while ingest is running on previously added images.
 
-During the add image process, a database lock is acquired using org.sleuthkit.autopsy.casemodule.SleuthkitCase.dbWriteLock() to ensure exclusive access to the database resource.
+During the add image process, a database lock is acquired using org.sleuthkit.datamodel.SleuthkitCase.dbWriteLock() to ensure exclusive access to the database resource.
 Once the lock is acquired by the add image process, other Autopsy threads trying to access the database as acquire the lock (such as ingest modules) will block for the duration of add image process.
 
-The database lock is implemented with SQLite database in mind, which does not support concurrent writes. The database lock is released with org.sleuthkit.autopsy.casemodule.SleuthkitCase.dbWriteUnlock() when the add image process has ended. The database lock is used for all database access methods in org.sleuthkit.autopsy.casemodule.SleuthkitCase.
+The database lock is implemented with SQLite database in mind, which does not support concurrent writes. The database lock is released with org.sleuthkit.datamodel.SleuthkitCase.dbWriteUnlock() when the add image process has ended. The database lock is used for all database access methods in org.sleuthkit.datamodel.SleuthkitCase.
 
  */
-
 
