@@ -1,0 +1,19 @@
+/**
+
+
+\package org.sleuthkit.autopsy.report
+
+This package provides the reporting framework.  Reporting modules allow you to get output from Autopsy in the form of XML, HTML, etc.
+
+\section report_contents Package Contents
+
+The following are important classes in this package:
+* TODO
+
+\section report_making Making a Report Module
+
+TODO
+
+
+*/
+

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2012 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +23,10 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
- * representation of an event fired off by services when they have posted new data
- * of specific type
- * additionally, new artifact ids can be provided
+ * Event data that are fired off by ingest modules when they have posted new data
+ * of specific type to the blackboard. 
+ * In its mos generic form, it only gives notice about a type of artifact and it 
+ * can also give notice about specific IDs that can be retrieved.
  */
 public class ServiceDataEvent {
 
@@ -33,11 +34,20 @@ public class ServiceDataEvent {
     private ARTIFACT_TYPE artifactType;
     private Collection<BlackboardArtifact> artifactIDs;
     
+    /**
+     * @param serviceName Module name
+     * @param artifactType Type of artifact that was posted to blackboard
+     */
     public ServiceDataEvent(String serviceName, ARTIFACT_TYPE artifactType) {
         this.serviceName = serviceName;
         this.artifactType = artifactType;
     }
     
+    /**
+     * @param serviceName Module name
+     * @param artifactType Type of artifact that was posted to blackboard
+     * @param artifactIDs List of specific artifact ID values that were added to blackboard
+     */    
     public ServiceDataEvent(String serviceName, ARTIFACT_TYPE artifactType, Collection<BlackboardArtifact> artifactIDs) {
         this(serviceName, artifactType);
         this.artifactIDs = artifactIDs;

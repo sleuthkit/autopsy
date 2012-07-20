@@ -52,7 +52,9 @@ import org.sleuthkit.datamodel.TskData;
  * IngestManager sets up and manages ingest services
  * runs them in a background thread
  * notifies services when work is complete or should be interrupted
- * processes messages from services via messenger proxy  and posts them to GUI
+ * processes messages from services via messenger proxy  and posts them to GUI.
+ *
+ * This runs as a singleton and you can access it using the getDefault() method. 
  * 
  */
 public class IngestManager {
@@ -97,13 +99,13 @@ public class IngestManager {
     private final IngestMonitor ingestMonitor = new IngestMonitor();
 
     private enum IngestManagerEvents {
-
         SERVICE_STARTED, SERVICE_COMPLETED, SERVICE_STOPPED, SERVICE_HAS_DATA
     };
     public final static String SERVICE_STARTED_EVT = IngestManagerEvents.SERVICE_STARTED.name();
     public final static String SERVICE_COMPLETED_EVT = IngestManagerEvents.SERVICE_COMPLETED.name();
     public final static String SERVICE_STOPPED_EVT = IngestManagerEvents.SERVICE_STOPPED.name();
     public final static String SERVICE_HAS_DATA_EVT = IngestManagerEvents.SERVICE_HAS_DATA.name();
+    
     //ui
     private IngestUI ui = null;
     //singleton
@@ -113,6 +115,10 @@ public class IngestManager {
         imageIngesters = new ArrayList<IngestImageThread>();
     }
 
+    /**
+     * Returns reference to singleton instance.
+     * @returns Instance of class.
+     */
     public static synchronized IngestManager getDefault() {
         if (instance == null) {
             logger.log(Level.INFO, "creating manager instance");
@@ -141,6 +147,11 @@ public class IngestManager {
         pcs.firePropertyChange(SERVICE_HAS_DATA_EVT, serviceDataEvent, null);
     }
 
+    /**
+     * Returns the return value from a previously run module on the file being curently analyzed.
+     * @param serviceName Name of module.
+     * @returns Return value from that module if it was previously run. 
+     */
     IngestServiceAbstractFile.ProcessResult getAbstractFileServiceResult(String serviceName) {
         synchronized (abstractFileServiceResults) {
             if (abstractFileServiceResults.containsKey(serviceName)) {
@@ -335,8 +346,8 @@ public class IngestManager {
     }
 
     /**
-     * test if any of image of AbstractFile ingesters are running
-     * @return true if any service is running, false otherwise
+     * Test if any ingester modules are running
+     * @return true if any module is running, false otherwise
      */
     public synchronized boolean isIngestRunning() {
         if (isEnqueueRunning()) {
@@ -351,6 +362,9 @@ public class IngestManager {
 
     }
 
+    /**
+     * check if ingest is currently being enqueued
+     */
     public synchronized boolean isEnqueueRunning() {
         if (queueWorker != null && !queueWorker.isDone()) {
             return true;
@@ -358,6 +372,9 @@ public class IngestManager {
         return false;
     }
 
+    /**
+     * check if the file-level ingest pipeline is running
+     */
     public synchronized boolean isFileIngestRunning() {
         if (abstractFileIngester != null && !abstractFileIngester.isDone()) {
             return true;
@@ -365,6 +382,9 @@ public class IngestManager {
         return false;
     }
 
+    /**
+     * check the status of the image-level ingest pipeline
+     */
     public synchronized boolean isImageIngestRunning() {
         if (imageIngesters.isEmpty()) {
             return false;
