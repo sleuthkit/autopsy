@@ -24,9 +24,18 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 
 /**
  * Event data that are fired off by ingest modules when they have posted new data
- * of specific type to the blackboard. 
- * In its mos generic form, it only gives notice about a type of artifact and it 
+ * of specific type to the blackboard. The name of property change fired is then IngestManager.IngestModuleEvent.DATA.toString()
+ * 
+ * In its most generic form, it only gives notice about a type of artifact and it 
  * can also give notice about specific IDs that can be retrieved.
+ * 
+ * The object wraps a collection of blackboard artifacts and their associated attributes that are to be reported as the new data to listeners.
+ * Passing the data as part of the event reduces memory footprint and decreases number of garbage collections of the blackboard artifacts and attributes objects (the objects are expected to be reused by the data event listeners).
+ * 
+ * If a service does not pass the data as part of ServiceDataEvent (ServiceDataEvent.getArtifacts() returns null) - it is an indication that the service 
+ * has new data but it does not implement new data tracking.  The listener can then perform a blackboard query to get the latest data of interest (e.g. by artifact type).
+ * 
+ * By design, only a single type of artifacts can be contained in a single data event. 
  */
 public class ServiceDataEvent {
 

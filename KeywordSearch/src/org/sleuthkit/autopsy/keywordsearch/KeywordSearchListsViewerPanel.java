@@ -17,11 +17,7 @@
  * limitations under the License.
  */
 
-/*
- * KeywordSearchListsViewerPanel.java
- *
- * Created on Feb 17, 2012, 1:45:38 PM
- */
+
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
@@ -37,8 +33,6 @@ import java.util.logging.Logger;
 import javax.swing.JCheckBox;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -46,10 +40,10 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 
 /**
- *
- * @author dfickling
+ * Viewer panel widget for keyword lists
  */
 class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     
@@ -165,10 +159,12 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             }
         };
         
-        if(IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault()))
+        if(IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault())) {
             initIngest(true);
-        else
+        }
+        else {
             initIngest(false);
+        }
         
         IngestManager.addPropertyChangeListener(new PropertyChangeListener() {
 
@@ -176,15 +172,18 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             public void propertyChange(PropertyChangeEvent evt) {
                 String changed = evt.getPropertyName();
                 Object oldValue = evt.getOldValue();
-                if(changed.equals(IngestManager.SERVICE_COMPLETED_EVT) &&
-                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME))
+                if(changed.equals(IngestModuleEvent.COMPLETED.toString() ) &&
+                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
                     initIngest(false);
-                else if(changed.equals(IngestManager.SERVICE_STARTED_EVT) &&
-                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME))
+                }
+                else if(changed.equals(IngestModuleEvent.STARTED.toString() ) &&
+                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
                     initIngest(true);
-                else if(changed.equals(IngestManager.SERVICE_STOPPED_EVT) &&
-                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME))
+                }
+                else if(changed.equals(IngestModuleEvent.STOPPED.toString() ) &&
+                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
                     initIngest(false);
+                }
             }
             
         });
