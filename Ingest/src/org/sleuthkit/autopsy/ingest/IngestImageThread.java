@@ -26,6 +26,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -107,7 +108,7 @@ public class IngestImageThread extends SwingWorker<Object, Void> {
                 catch (Exception e) {
                     logger.log(Level.INFO, "Error completing the service " + service.getName(), e);
                 }
-                IngestManager.fireServiceEvent(IngestManager.SERVICE_COMPLETED_EVT, service.getName());
+                IngestManager.fireServiceEvent(IngestModuleEvent.COMPLETED.toString(), service.getName());
             } else {
                 logger.log(Level.INFO, "Service " + service.getName() + " stopped");
                 try {
@@ -116,7 +117,7 @@ public class IngestImageThread extends SwingWorker<Object, Void> {
                 catch (Exception e) {
                     logger.log(Level.INFO, "Error stopping the service" + service.getName(), e);
                 }
-                IngestManager.fireServiceEvent(IngestManager.SERVICE_STOPPED_EVT, service.getName());
+                IngestManager.fireServiceEvent(IngestModuleEvent.STOPPED.toString(), service.getName());
             }
 
         }
