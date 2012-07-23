@@ -124,7 +124,7 @@ def getImageSize(inFile, list):
     size += os.path.getsize(inFile)
   return size
 
-def testCompareToGold(inFile, ignoreUnalloc):
+def testCompareToGold(inFile, ignoreUnalloc, list):
   print "-----------------------------------------------"
   print "Comparing results for " + inFile + " with gold."
 
@@ -416,7 +416,7 @@ def main():
       elif (arg  == "--rebuild") or (arg == "-r"):  #check for rebuild flag
           rebuild = True
           print "Running in REBUILD mode"
-      elif (arg == "--ponies") or (arg == "-p"):    #check for ignore unallocated space flag
+      elif (arg == "-u"):    #check for ignore unallocated space flag
           ignoreUnalloc = True
           print "Ignoring unallocated space"
       elif (arg == "--ignore") or (arg == "-i"):
