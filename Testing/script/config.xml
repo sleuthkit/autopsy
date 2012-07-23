@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="ASCII"?>
-<!-- This file is an example config file for regression.py. 
- the following tags are mandatory:
- 1 "indir" tag that specifies where the program can find the hash databases
- any number of "image" tags that specify where the images are stored. They do not have to be local.
- invalid paths and images are ignored by the tester. 
-
- in this file, the first three tags are accepted by the tester, while the last two are disregarded as errors-->
+<!-- 
+This file is an example config file for regression.py. 
+the following tags are mandatory:
+1 "indir" tag that specifies where the program can find the hash databases
+any number of "image" tags that specify where the images are stored. 
+They do not have to be local. 
+Invalid paths are ignored by the tester. 
+In this example, the first three tags are accepted by the tester, while the last two are disregarded as errors
+-->
 
 <Properties>
-    <indir name="indir" value="C:\Users\dhurd\Documents\GitHub\autopsy\Testing\script\input" />
-    <!--<image name="image1" value="P:\shared\Testing\script\input\64mb2.img"/>-->
+    <indir name="indir" value="C:\Users\0xNF\autopsyA\Testing\script\important_files" />
+    <image name="image1" value="P:\shared\Testing\script\input\64mb2.img"/>
+    <image name="image2" value="C:\Users\0xNF\Documents\backups\Testing\script\input\MC1001-0001.E01"/>
+    <image name="image3" value="should be error"/>
+    <image name="image4" value="C:\Invalid\Path\Does\Not\Exist.img"/>
 </Properties>
