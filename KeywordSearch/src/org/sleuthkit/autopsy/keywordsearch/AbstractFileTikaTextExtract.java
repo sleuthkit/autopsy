@@ -93,6 +93,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         final InputStream stream = new ReadContentInputStream(sourceFile);
         try {
             Metadata meta = new Metadata();
+            /* Tika parse request with timeout -- disabled for now
             ParseRequestTask parseTask = new ParseRequestTask(tika, stream, meta, sourceFile);
             final Future<?> future = tikaParseExecutor.submit(parseTask);
             try {
@@ -102,8 +103,21 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
             }
+            catch (Exception ex) {
+                final String msg = "Unexpected exception from Tika parse task execution for file: " + sourceFile.getId() + ", " + sourceFile.getName();
+                logger.log(Level.WARNING, msg, ex);
+                throw new IngesterException(msg);
+            }
             
             reader = parseTask.getReader();
+            */
+             try {
+                reader = tika.parse(stream, meta);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+                reader = null;
+            }
+            
             if (reader == null) {
                 //likely due to exception in parse()
                 logger.log(Level.WARNING, "No reader available from Tika parse");
