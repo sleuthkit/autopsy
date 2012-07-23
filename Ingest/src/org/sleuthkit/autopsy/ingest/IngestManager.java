@@ -98,13 +98,45 @@ public class IngestManager {
     //monitor
     private final IngestMonitor ingestMonitor = new IngestMonitor();
 
-    private enum IngestManagerEvents {
-        SERVICE_STARTED, SERVICE_COMPLETED, SERVICE_STOPPED, SERVICE_HAS_DATA
+    /**
+     * Possible events about ingest modules
+     * Event listeners can get the event name 
+     * by using String returned by toString() method on the specific event.
+     */
+    public enum IngestModuleEvent {
+        /**
+         * Event sent when the ingest module has been started processing.
+         * Second argument of the property change fired contains module name String
+         * and third argument is null.
+         */
+        STARTED,
+     
+        /**
+         * Event sent when the ingest module has completed processing.
+         * Second argument of the property change fired contains module name String
+         * and third argument is null.
+         * 
+         * This event is generally used by listeners to perform a final data view refresh (listeners need to query all data from the blackboard).
+         * 
+         */
+        COMPLETED,
+        
+        /**
+         * Event sent when the ingest module has stopped processing, and likely not all data has been processed.
+         * Second argument of the property change fired contains module name String
+         * and third argument is null.
+         */
+        STOPPED, 
+        
+        /**
+         * Event sent when ingest module has new data.
+         * Second argument of the property change fired contains ServiceDataEvent object and third argument is null.
+         * The object can contain encapsulated new data created by the service.
+         * Listener can also query new data as needed.
+         * 
+         */
+        DATA
     };
-    public final static String SERVICE_STARTED_EVT = IngestManagerEvents.SERVICE_STARTED.name();
-    public final static String SERVICE_COMPLETED_EVT = IngestManagerEvents.SERVICE_COMPLETED.name();
-    public final static String SERVICE_STOPPED_EVT = IngestManagerEvents.SERVICE_STOPPED.name();
-    public final static String SERVICE_HAS_DATA_EVT = IngestManagerEvents.SERVICE_HAS_DATA.name();
     
     //ui
     private IngestUI ui = null;
@@ -144,7 +176,7 @@ public class IngestManager {
     }
 
     static synchronized void fireServiceDataEvent(ServiceDataEvent serviceDataEvent) {
-        pcs.firePropertyChange(SERVICE_HAS_DATA_EVT, serviceDataEvent, null);
+        pcs.firePropertyChange(IngestModuleEvent.DATA.toString(), serviceDataEvent, null);
     }
 
     /**
@@ -248,7 +280,7 @@ public class IngestManager {
                     //image services are now initialized per instance
                     quService.init(managerProxy);
                     newImageWorker.execute();
-                    IngestManager.fireServiceEvent(SERVICE_STARTED_EVT, quService.getName());
+                    IngestManager.fireServiceEvent(IngestModuleEvent.STARTED.toString(), quService.getName());
                 }
             }
         }
@@ -980,7 +1012,7 @@ public class IngestManager {
 
             //notify main thread services started
             for (IngestServiceAbstractFile s : abstractFileServices) {
-                IngestManager.fireServiceEvent(SERVICE_STARTED_EVT, s.getName());
+                IngestManager.fireServiceEvent(IngestModuleEvent.STARTED.toString(), s.getName());
             }
 
             final String displayName = "File Ingest";
@@ -1062,7 +1094,7 @@ public class IngestManager {
                 if (!this.isCancelled()) {
                     for (IngestServiceAbstractFile s : abstractFileServices) {
                         s.complete();
-                        IngestManager.fireServiceEvent(SERVICE_COMPLETED_EVT, s.getName());
+                        IngestManager.fireServiceEvent(IngestModuleEvent.COMPLETED.toString(), s.getName());
                     }
                 }
 
@@ -1102,7 +1134,7 @@ public class IngestManager {
                         logger.log(Level.WARNING, "Exception while stopping service: " + s.getName(), e);
                     }
                 }
-                IngestManager.fireServiceEvent(SERVICE_STOPPED_EVT, s.getName());
+                IngestManager.fireServiceEvent(IngestModuleEvent.STOPPED.toString(), s.getName());
             }
             //empty queues
             emptyAbstractFiles();
