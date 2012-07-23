@@ -72,7 +72,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
     private static KeywordSearchIngestService instance = null;
     private IngestManagerProxy managerProxy;
-    private static final long MAX_INDEX_SIZE = 100 * (1 << 10) * (1 << 10);
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runSearcher = false; //whether to run searcher next time
@@ -86,7 +85,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private Searcher currentSearcher;
     private Searcher finalSearcher;
     private volatile boolean searcherDone = true;
-    private Map<Keyword, List<ContentHit>> currentResults;
+    private Map<Keyword, List<Long>> currentResults;
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
     private static final Lock searcherLock = rwLock.writeLock();
     private volatile int messageID = 0;
@@ -277,7 +276,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         finalSearcherDone = false;
         searcherDone = true; //make sure to start the initial currentSearcher
         //keeps track of all results per run not to repeat reporting the same hits
-        currentResults = new HashMap<Keyword, List<ContentHit>>();
+        currentResults = new HashMap<Keyword, List<Long>>();
 
         indexer = new Indexer();
 
@@ -711,20 +710,27 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                         continue;
                     }
 
-                    //calculate new results but substracting results already obtained in this run
+                    //calculate new results but substracting results already obtained in this ingest
                     Map<Keyword, List<ContentHit>> newResults = new HashMap<Keyword, List<ContentHit>>();
 
                     for (String termResult : queryResult.keySet()) {
                         List<ContentHit> queryTermResults = queryResult.get(termResult);
+                        
+                        //translate to list of IDs that we keep track of
+                        List<Long> queryTermResultsIDs = new ArrayList<Long>();
+                        for (ContentHit ch : queryTermResults) {
+                            queryTermResultsIDs.add(ch.getId());
+                        }
+                        
                         Keyword termResultK = new Keyword(termResult, !isRegex);
-                        List<ContentHit> curTermResults = currentResults.get(termResultK);
+                        List<Long> curTermResults = currentResults.get(termResultK);
                         if (curTermResults == null) {
-                            currentResults.put(termResultK, queryTermResults);
+                            currentResults.put(termResultK, queryTermResultsIDs);
                             newResults.put(termResultK, queryTermResults);
                         } else {
                             //some AbstractFile hits already exist for this keyword
                             for (ContentHit res : queryTermResults) {
-                                if (!previouslyHit(curTermResults, res)) {
+                                if (!curTermResults.contains(res.getId())) {
                                     //add to new results
                                     List<ContentHit> newResultsFs = newResults.get(termResultK);
                                     if (newResultsFs == null) {
@@ -732,7 +738,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                                         newResults.put(termResultK, newResultsFs);
                                     }
                                     newResultsFs.add(res);
-                                    curTermResults.add(res);
+                                    curTermResults.add(res.getId());
                                 }
                             }
                         }
@@ -919,7 +925,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 keywordLists.clear();
                 keywordToList.clear();
                 //reset current resuls earlier to potentially garbage collect sooner
-                currentResults = new HashMap<Keyword, List<ContentHit>>();
+                currentResults = new HashMap<Keyword, List<Long>>();
 
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
             } else {
@@ -932,24 +938,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         }
     }
 
-    /**
-     * Checks if the content has already been hit previously
-     *
-     * @param previousHits the previous hits to check against
-     * @param hit a hit to check for, that potentially had already been hit
-     * @return true if the potential hit has already been hit, false otherwise
-     */
-    private static boolean previouslyHit(List<ContentHit> previousHits, ContentHit hit) {
-        boolean ret = false;
-        long hitId = hit.getId();
-        for (ContentHit c : previousHits) {
-            if (c.getId() == hitId) {
-                ret = true;
-                break;
-            }
-        }
-        return ret;
-    }
 
     /**
      * Set the skip known files setting on the service
