@@ -11,19 +11,21 @@ import xml
 from xml.dom.minidom import parse, parseString
 
 
-#  Last modified 7/17/12 @5pm
-#  Usage: ./regression.py [-s FILE] OR [-l CONFIG]  [OPTIONS]
+#  Last modified 7/23/12 @11:30am
+#  Usage: ./regression.py [-f FILE] OR [-l CONFIG]  [OPTIONS]
 #  Run the RegressionTest.java file, and compare the result with a gold standard
-#  When the -i flag is set, this script only tests the image given by FILE.
+#  When the -f flag is set, this script only tests the image given by FILE.
 #  An indexed NSRL database is expected at ./input/nsrl.txt-md5.idx,
 #  and an indexed notable hash database at ./input/notablehashes.txt-md5.idx
 #  In addition, any keywords to search for must be in ./input/notablekeywords.xml
 #  When the -l flag is set, the script looks for a config.xml file of the given name 
-#  where images are stored. For usage notes please see the example "config.xml" in
+#  where images are stored. The above input files can be outsourced to different locations
+#  from the config.xml. For usage notes please see the example "config.xml" in
 #  the /script folder.
 #    Options: 
 #    -r, --rebuild      Rebuild the gold standards from the test results for each image
-#    -i, --ignore       Ignores unallocated space when ingesting. Faster, but less accurate results.
+#    -i, --ignore       Ignores the ./input directory when searching for files
+#    -u, --unallocated  Ignores unallocated space when ingesting. Faster, but less accurate results.
   
 
 hadErrors = False # If any of the tests failed
@@ -119,8 +121,8 @@ def getImageSize(inFile, list):
         filename = os.path.splitext(files)[0]
         if filename == name:
             filepath = os.path.join(path, files)
-        if not os.path.samefile(filepath, inFile):
-            size += os.path.getsize(filepath)
+            if not os.path.samefile(filepath, inFile):
+                size += os.path.getsize(filepath)
     size += os.path.getsize(inFile)
   return size
 
@@ -365,19 +367,22 @@ def testFile(image, rebuild, ignoreUnalloc, list):
       
 def usage():
   usage = "\
-  Usage: ./regression.py [-s FILE] [OPTIONS] \n\n\
+  Usage: ./regression.py [-f FILE] [OPTIONS] \n\n\
   Run the RegressionTest.java file, and compare the result with a gold standard \n\n\
-  When the -i flag is set, this script only tests the image given by FILE.\n\
+  When the -f flag is set, this script only tests the image given by FILE.\n\
   By default, it tests every image in ./input/\n\n\
   An indexed NSRL database is expected at ./input/nsrl.txt-md5.idx,\n\
   and an indexed notable hash database at ./input/notablehashes.txt-md5.idx\n\
   In addition, any keywords to search for must be in ./input/notablekeywords.xml\n\n\
   When the -l flag is set, the script looks for a config.xml file of the given name\n\
-  where images are stored. For usage notes please see the example config.xml in\n\
+  where images are stored. The above input files may be outsources to a different folder\n\
+  via the config file. For usage notes please see the example \"config.xml\" in\n\
   the /script folder.\
     Options:\n\n\
-    -r, --rebuild\t\tRebuild the gold standards from the test results for each image\n\n\
-    -u, --ignore\t\tIgnore unallocated space while ingesting"
+    -r, --rebuild\t\tRebuild the gold standards from the test results for each image.\n\n\
+    -i, --ignore\t\tIgnores the ./input directory when searching for files. ONLY use in combinatin with a config file.\n\n\
+    -u, --unallocated\t\tIgnores unallocated space when ingesting. Faster, but less accurate results."
+    
   return usage
 
 def main():
@@ -393,13 +398,13 @@ def main():
   cwd = wgetcwd()
   while argi < len(sys.argv):
       arg = sys.argv[argi]
-      if arg == "-s" and argi+1 < len(sys.argv): #check for single
+      if arg == "-f" and argi+1 < len(sys.argv): #check for single
           single = True
           test = False
           argi+=1
           image = sys.argv[argi]
           print "Running on single image: " + image
-      if arg == "-l" or arg == "--list":    #check for config file
+      elif arg == "-l" or arg == "--list":    #check for config file
             list = True
             
             argi+=1
@@ -416,7 +421,7 @@ def main():
       elif (arg  == "--rebuild") or (arg == "-r"):  #check for rebuild flag
           rebuild = True
           print "Running in REBUILD mode"
-      elif (arg == "-u"):    #check for ignore unallocated space flag
+      elif (arg == "-u") or (arg == "--unallocated"):    #check for ignore unallocated space flag
           ignoreUnalloc = True
           print "Ignoring unallocated space"
       elif (arg == "--ignore") or (arg == "-i"):
