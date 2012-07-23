@@ -152,23 +152,14 @@ methods should be used for general configuration.
 Other modules and core Autopsy classes may want to get the status of the ingest manager.  The IngestManager provides access to this data with the sleuthkit.autopsy.ingest.IngestManager.isIngestRunning() method.
 
 
-External modules can also register themselves as ingest service event listeners and receive event notifications (when a module is started, stopped, completed or has new data).  Use the IngestManager.addPropertyChangeListener() method to register a service event listener.  Events types received are defined in IngestManager.IngestManagerEvents enum.   
-<!-- @@@ This is a private enumÉ -->
+External modules can also register themselves as ingest service event listeners and receive event notifications (when a module is started, stopped, completed or has new data).  
+Use the IngestManager.addPropertyChangeListener() method to register a service event listener.  
+Events types received are defined in IngestManager.IngestModuleEvent enum.   
 
-<!-- @@@ This should be moved to the class documentation -- we should document what each event means -->
-IngestManagerEvents.SERVICE_HAS_DATA event type, a special type of event object is passed in ServiceDataEvent.
-The object wraps a collection of blackboard artifacts and their associated attributes that are to be reported as the new data to listeners.
-Passing the data as part of the event reduces memory footprint and decreases number of garbage collections 
-of the blackboard artifacts and attributes objects (the objects are expected to be reused by the data event listeners).
-
-If a service does not pass the data as part of ServiceDataEvent (ServiceDataEvent.getArtifacts() returns null) - it is an indication that the service 
-has new data but it does not implement new data tracking.  The listener can then perform a blackboard query to get the latest data of interest (e.g. by artifact type).
-
-Service name and artifact type for the collection of artifacts is also passed in as as part of the service data event.
-By design, only a single type of artifacts can be contained in a single data event. 
-
-<!-- @@@ We should mention with what type of event they will be notified with. -->
-At the end of the ingest, IngestManager itself will notify all listeners of new data being available in the blackboard.
-Module developers are encouraged to generate events when they post data to the blackboard, but the IngestManger will make a final event to handle scenarios where the module did not notify listeners while it was running. 
+At the end of the ingest, IngestManager itself will notify all listeners of IngestModuleEvent.COMPLETED event.
+The event is an indication for listeners to perform the final data refresh by quering the blackboard.
+Module developers are encouraged to generate periodic IngestModuleEvent.DATA 
+ServiceDataEvent events when they post data to the blackboard, 
+but the IngestManager will make a final event to handle scenarios where the module did not notify listeners while it was running. 
 
 */
