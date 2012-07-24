@@ -639,7 +639,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             boolean written = exporter.writeLists(toWrite);
             if (written) {
                 KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword lists exported", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-                return;
             }
         }
     }//GEN-LAST:event_exportButtonActionPerformed
@@ -659,10 +658,14 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useForIngestCheckboxActionPerformed
     ingestMessagesCheckbox.setEnabled(useForIngestCheckbox.isSelected());
     currentKeywordList.setUseForIngest(useForIngestCheckbox.isSelected());
+    KeywordSearchListsXML updater = KeywordSearchListsXML.getCurrent();
+    updater.addList(currentKeywordList);
 }//GEN-LAST:event_useForIngestCheckboxActionPerformed
 
     private void ingestMessagesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ingestMessagesCheckboxActionPerformed
         currentKeywordList.setIngestMessages(ingestMessagesCheckbox.isSelected());
+        KeywordSearchListsXML updater = KeywordSearchListsXML.getCurrent();
+        updater.addList(currentKeywordList);
     }//GEN-LAST:event_ingestMessagesCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
