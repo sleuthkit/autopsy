@@ -42,13 +42,13 @@ class ContentChildren extends AbstractContentChildren {
         List<Content> children = ContentHierarchyVisitor.getChildren(parent);
         
         // To not display LayoutFiles
-        Iterator<Content> it = children.iterator();
-        while(it.hasNext()) {
-            Content child = it.next();
-            if(child instanceof LayoutFile) {
-                it.remove();
-            }
-        }
+//        Iterator<Content> it = children.iterator();
+//        while(it.hasNext()) {
+//            Content child = it.next();
+//            if(child instanceof LayoutFile) {
+//                it.remove();
+//            }
+//        }
         
         setKeys(children.subList(0, Math.min(children.size(), MAX_CHILD_COUNT)));
     }
