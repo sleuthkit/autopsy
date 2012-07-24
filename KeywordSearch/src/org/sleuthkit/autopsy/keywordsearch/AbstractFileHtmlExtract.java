@@ -22,56 +22,36 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
+import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.apache.tika.Tika;
-import org.apache.tika.metadata.Metadata;
-import org.sleuthkit.autopsy.keywordsearch.ByteContentStream.Encoding;
-import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 
 /**
- * Extractor of text from TIKA supported AbstractFile content. Extracted text is
- * divided into chunks and indexed with Solr.
- * Protects against Tika parser hangs (for unexpected/corrupt content) using a timeout mechanism.
- * If Tika extraction succeeds, chunks are indexed with Solr.
- *
- * This Tika extraction/chunking utility is useful for large files of Tika parsers-supported content type.
- *
+ * Extractor of text from HTML supported AbstractFile content.
+ * Extracted text is divided into chunks and indexed with Solr.
+ * If HTML extraction succeeds, chunks are indexed with Solr.
  */
-public class AbstractFileTikaTextExtract implements AbstractFileExtract {
-
-    private static final Logger logger = Logger.getLogger(IngestServiceAbstractFile.class.getName());
-    private static final Encoding ENCODING = Encoding.UTF8;
+public class AbstractFileHtmlExtract implements AbstractFileExtract {
+    private static final Logger logger = Logger.getLogger(AbstractFileHtmlExtract.class.getName());
+    private static final ByteContentStream.Encoding ENCODING = ByteContentStream.Encoding.UTF8;
     static final Charset charset = Charset.forName(ENCODING.toString());
     static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
     private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
-    private static final Tika tika = new Tika();
     private KeywordSearchIngestService service;
     private Ingester ingester;
     private AbstractFile sourceFile;
     private int numChunks = 0;
     private static final String UTF16BOM = "\uFEFF";
-    private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
-
-    AbstractFileTikaTextExtract(AbstractFile sourceFile) {
+    
+    AbstractFileHtmlExtract(AbstractFile sourceFile) {
         this.sourceFile = sourceFile;
         this.service = KeywordSearchIngestService.getDefault();
         Server solrServer = KeywordSearch.getServer();
         ingester = solrServer.getIngester();
-        //tika.setMaxStringLength(MAX_EXTR_TEXT_CHARS); //for getting back string only
     }
 
     @Override
@@ -85,45 +65,23 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     }
 
     @Override
-    public boolean index() throws Ingester.IngesterException {
+    public boolean index() throws IngesterException {
         boolean success = false;
         Reader reader = null;
-
-
         final InputStream stream = new ReadContentInputStream(sourceFile);
+        
         try {
-            Metadata meta = new Metadata();
-            /* Tika parse request with timeout -- disabled for now
-            ParseRequestTask parseTask = new ParseRequestTask(tika, stream, meta, sourceFile);
-            final Future<?> future = tikaParseExecutor.submit(parseTask);
-            try {
-                future.get(Ingester.getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
-            } catch (TimeoutException te) {
-                final String msg = "Tika parse timeout for content: " + sourceFile.getId() + ", " + sourceFile.getName();
-                logger.log(Level.WARNING, msg);
-                throw new IngesterException(msg);
-            }
-            catch (Exception ex) {
-                final String msg = "Unexpected exception from Tika parse task execution for file: " + sourceFile.getId() + ", " + sourceFile.getName();
-                logger.log(Level.WARNING, msg, ex);
-                throw new IngesterException(msg);
-            }
+            // Parse the stream with Jericho
+            JerichoParserWrapper jpw = new JerichoParserWrapper(stream);
+            jpw.parse();
+            reader = jpw.getReader();
             
-            reader = parseTask.getReader();
-            */
-             try {
-                reader = tika.parse(stream, meta);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
-                reader = null;
-            }
-            
+            // In case there is an exception or parse() isn't called
             if (reader == null) {
-                //likely due to exception in parse()
-                logger.log(Level.WARNING, "No reader available from Tika parse");
+                logger.log(Level.WARNING, "No reader available from HTML parser");
                 return false;
             }
-
+            
             success = true;
             long readSize;
             long totalRead = 0;
@@ -151,15 +109,13 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                         //this is the last chunk
                         eof = true;
                     }
-
-
                 }
 
                 //logger.log(Level.INFO, "TOTAL READ SIZE: " + totalRead + " file: " + sourceFile.getName());
                 //encode to bytes to index as byte stream
                 String extracted;
                 //add BOM and trim the 0 bytes
-                //set initial size to chars read + bom + metadata (roughly) - try to prevent from resizing
+                //set initial size to chars read + bom - try to prevent from resizing
                 StringBuilder sb = new StringBuilder((int) totalRead + 1000);
                 //inject BOM here (saves byte buffer realloc later), will be converted to specific encoding BOM
                 sb.append(UTF16BOM);
@@ -171,19 +127,6 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
                 //reset for next chunk
                 totalRead = 0;
-
-                //append meta data if last chunk
-                if (eof) {
-                    //sort meta data keys
-                    List<String> sortedKeyList = Arrays.asList(meta.names());
-                    Collections.sort(sortedKeyList);
-                    sb.append("\n\n------------------------------METADATA------------------------------\n\n");
-                    for (String key : sortedKeyList) {
-                        String value = meta.get(key);
-                        sb.append(key).append(": ").append(value).append("\n");
-                    }
-                }
-
                 extracted = sb.toString();
 
                 //converts BOM automatically to charSet encoding
@@ -194,7 +137,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                     ++this.numChunks;
                 } catch (Ingester.IngesterException ingEx) {
                     success = false;
-                    logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '"
+                    logger.log(Level.WARNING, "Ingester had a problem with extracted HTML from file '"
                             + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);
                     throw ingEx; //need to rethrow/return to signal error and move on
                 }
@@ -223,45 +166,11 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 logger.log(Level.WARNING, "Unable to close content reader from " + sourceFile.getId(), ex);
             }
         }
-
+        
         //after all chunks, ingest the parent file without content itself, and store numChunks
         ingester.ingest(this);
 
         return success;
     }
-
-    /**
-     * Runnable and timeable task that calls tika to parse the content using streaming
-     */
-    private static class ParseRequestTask implements Runnable {
-
-        //in
-        private Tika tika;
-        private InputStream stream;
-        private Metadata meta;
-        private AbstractFile sourceFile;
-        //out
-        private Reader reader;
-
-        ParseRequestTask(Tika tika, InputStream stream, Metadata meta, AbstractFile sourceFile) {
-            this.tika = tika;
-            this.stream = stream;
-            this.meta = meta;
-            this.sourceFile = sourceFile;
-        }
-
-        @Override
-        public void run() {
-            try {
-                reader = tika.parse(stream, meta);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
-                reader = null;
-            }
-        }
-
-        public Reader getReader() {
-            return reader;
-        }
-    }
+    
 }

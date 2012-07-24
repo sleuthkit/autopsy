@@ -193,12 +193,16 @@
                 <binary-origin>release/modules/ext/boilerpipe-1.1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-3.5.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-3.5.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/fontbox-1.6.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/fontbox-1.6.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jericho-html-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jericho-html-3.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/solr-solrj-3.5.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-3.5.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.6.1.jar</runtime-relative-path>
@@ -245,12 +249,12 @@
                 <binary-origin>release/modules/ext/tika-core-0.10.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/dom4j-1.6.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-codec-1.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-codec-1.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/dom4j-1.6.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/rome-0.9.jar</runtime-relative-path>
@@ -263,6 +267,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jempbox-1.6.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jempbox-1.6.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jericho-html-3.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jericho-html-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/pdfbox-1.6.0.jar</runtime-relative-path>
