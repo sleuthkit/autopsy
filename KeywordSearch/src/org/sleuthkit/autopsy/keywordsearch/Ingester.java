@@ -65,12 +65,6 @@ public class Ingester {
     private final ExecutorService upRequestExecutor = Executors.newSingleThreadExecutor();
     private final Server solrServer = KeywordSearch.getServer();
     private final GetContentFieldsV getContentFieldsV = new GetContentFieldsV();
-    // TODO: use a more robust method than checking file extension
-    // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
-    static final String[] ingestibleExtensions = {"tar", "jar", "zip", "gzip", "bzip2",
-        "gz", "tgz", "odf", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log", "manifest",
-        "bmp", "gif", "png", "jpeg", "jpg", "tiff", "mp3", "aiff", "au", "midi", "wav",
-        "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
 
     private static Ingester instance;
@@ -452,29 +446,4 @@ public class Ingester {
         }
     }
 
-    /**
-     * Determine if the file content is ingestible/indexable by keyword search
-     * Ingestible abstract file is either a directory, or an allocated file with supported extensions.
-     * Note: currently only checks by extension and abstract type, it does not check actual file content.
-     * @param aFile
-     * @return true if it is ingestible, false otherwise
-     */
-    static boolean isIngestible(AbstractFile aFile) {
-        TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
-        if (! aType.equals(TSK_DB_FILES_TYPE_ENUM.FS) ) {
-                return false;
-        }
-        
-        FsContent fsContent = (FsContent) aFile;
-        
-        boolean isIngestible = false;
-        final String fileName = fsContent.getName();
-        for (final String ext : ingestibleExtensions) {
-            if (fileName.toLowerCase().endsWith(ext)) {
-                isIngestible = true;
-                break;
-            }
-        }
-        return isIngestible;
-    }
 }

@@ -95,6 +95,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private SleuthkitCase caseHandle = null;
     private boolean skipKnown = true;
     private boolean initialized = false;
+    private List<AbstractFileExtract> textExtractors;
+    private AbstractFileStringExtract stringExtractor;
 
     private enum IngestStatus {
 
@@ -256,9 +258,15 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         this.managerProxy = managerProxy;
 
-        Server solrServer = KeywordSearch.getServer();
+        ingester = Server.getIngester();
 
-        ingester = solrServer.getIngester();
+        //initialize extractors
+        stringExtractor = new AbstractFileStringExtract();
+        textExtractors = new ArrayList<AbstractFileExtract>();
+        //order matters, more specific extractors first
+        textExtractors.add(new AbstractFileHtmlExtract());
+        textExtractors.add(new AbstractFileTikaTextExtract());
+
 
         ingestStatus = new HashMap<Long, IngestStatus>();
 
@@ -505,21 +513,44 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
          *
          * @param aFile file to extract strings from, divide into chunks and
          * index
-         * @param stringsOnly true if use stinrg extraction, false if use Tika
-         * text extractor
+         * @param stringsOnly true if use string extraction, false if to use a
+         * content-type specific text extractor
          * @return true if the file was indexed, false otherwise
+         * @throws IngesterException exception thrown if indexing failed
          */
         private boolean extractIndex(AbstractFile aFile, boolean stringsOnly) throws IngesterException {
-            AbstractFileExtract fileExtract;
+            AbstractFileExtract fileExtract = null;
 
             if (stringsOnly) {
-                fileExtract = new AbstractFileStringExtract(aFile);
+                fileExtract = stringExtractor;
             } else {
-                fileExtract = new AbstractFileTikaTextExtract(aFile);
+                //go over available text extractors and pick the first one (most specific one)
+                for (AbstractFileExtract fe : textExtractors) {
+                    if (fe.isSupported(aFile)) {
+                        fileExtract = fe;
+                        break;
+                    }
+                }
             }
 
+            if (fileExtract == null) {
+                throw new IngesterException("No supported file extractor found for file: " + aFile.getId() + " " + aFile.getName());
+            }
+
+            //logger.log(Level.INFO, "Extractor: " + fileExtract + ", file: " + aFile.getName());
+
             //divide into chunks and index
-            return fileExtract.index();
+            return fileExtract.index(aFile);
+        }
+
+        private boolean isTextExtractSupported(AbstractFile aFile) {
+            for (AbstractFileExtract extractor : textExtractors) {
+                if (extractor.isContentTypeSpecific() == true
+                        && extractor.isSupported(aFile)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void indexFile(AbstractFile aFile, boolean indexContent) {
@@ -547,11 +578,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 return;
             }
 
-            boolean ingestibleFile = Ingester.isIngestible(aFile);
-
-            if (fsContent != null && ingestibleFile == true) {
-                //we know it's an allocated fs file (FsContent) with supported content
-                //extract text with Tika, divide into chunks and index with Solr
+            boolean extractTextSupported = isTextExtractSupported(aFile);
+            if (fsContent != null && extractTextSupported) {
+                //we know it's an allocated FS file (since it's FsContent)
+                //extract text with one of the extractors, divide into chunks and index with Solr
                 try {
                     //logger.log(Level.INFO, "indexing: " + fsContent.getName());
                     if (!extractIndex(aFile, false)) {
@@ -564,7 +594,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
                     } else {
                         ingestStatus.put(aFile.getId(), IngestStatus.INGESTED);
-
                     }
 
                 } catch (IngesterException e) {
@@ -715,13 +744,13 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
                     for (String termResult : queryResult.keySet()) {
                         List<ContentHit> queryTermResults = queryResult.get(termResult);
-                        
+
                         //translate to list of IDs that we keep track of
                         List<Long> queryTermResultsIDs = new ArrayList<Long>();
                         for (ContentHit ch : queryTermResults) {
                             queryTermResultsIDs.add(ch.getId());
                         }
-                        
+
                         Keyword termResultK = new Keyword(termResult, !isRegex);
                         List<Long> curTermResults = currentResults.get(termResultK);
                         if (curTermResults == null) {
@@ -937,7 +966,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             }
         }
     }
-
 
     /**
      * Set the skip known files setting on the service

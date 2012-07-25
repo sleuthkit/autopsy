@@ -41,8 +41,24 @@ interface AbstractFileExtract {
 
     /**
      * Index the Abstract File
+     * @param sourceFile file to index
      * @return true if indexed successfully, false otherwise
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException 
      */
-    boolean index() throws Ingester.IngesterException;
+    boolean index(AbstractFile sourceFile) throws Ingester.IngesterException;
+    
+    /**
+     * Determines if the extractor works only for specified types
+     * is supportedTypes() or whether is a generic content extractor (such as string extractor)
+     * @return 
+     */
+    boolean isContentTypeSpecific();
+    
+    /**
+     * Determines if the file content is supported by the extractor, 
+     * if isContentTypeSpecific() returns true.
+     * @param file to test if its content should be supported
+     * @return true if the file content is supported, false otherwise
+     */
+    boolean isSupported(AbstractFile file);
 }

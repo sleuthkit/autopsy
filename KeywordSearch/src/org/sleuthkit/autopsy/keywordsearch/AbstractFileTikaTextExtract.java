@@ -42,11 +42,12 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 
 /**
  * Extractor of text from TIKA supported AbstractFile content. Extracted text is
- * divided into chunks and indexed with Solr.
- * Protects against Tika parser hangs (for unexpected/corrupt content) using a timeout mechanism.
- * If Tika extraction succeeds, chunks are indexed with Solr.
+ * divided into chunks and indexed with Solr. Protects against Tika parser hangs
+ * (for unexpected/corrupt content) using a timeout mechanism. If Tika
+ * extraction succeeds, chunks are indexed with Solr.
  *
- * This Tika extraction/chunking utility is useful for large files of Tika parsers-supported content type.
+ * This Tika extraction/chunking utility is useful for large files of Tika
+ * parsers-supported content type.
  *
  */
 public class AbstractFileTikaTextExtract implements AbstractFileExtract {
@@ -58,19 +59,24 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
     private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
-    private static final Tika tika = new Tika();
+    private Tika tika;
     private KeywordSearchIngestService service;
-    private Ingester ingester;
-    private AbstractFile sourceFile;
+    private static Ingester ingester;
+    private AbstractFile sourceFile; //currently processed file
     private int numChunks = 0;
     private static final String UTF16BOM = "\uFEFF";
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
+    // TODO: use a more robust method than checking file extension
+    // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
+    static final String[] SUPPORTED_EXTENSIONS = {"tar", "jar", "zip", "gzip", "bzip2",
+        "gz", "tgz", "odf", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log", "manifest",
+        "bmp", "gif", "png", "jpeg", "jpg", "tiff", "mp3", "aiff", "au", "midi", "wav",
+        "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
-    AbstractFileTikaTextExtract(AbstractFile sourceFile) {
-        this.sourceFile = sourceFile;
+    AbstractFileTikaTextExtract() {
         this.service = KeywordSearchIngestService.getDefault();
-        Server solrServer = KeywordSearch.getServer();
-        ingester = solrServer.getIngester();
+        ingester = Server.getIngester();
+        tika = new Tika();
         //tika.setMaxStringLength(MAX_EXTR_TEXT_CHARS); //for getting back string only
     }
 
@@ -85,7 +91,10 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     }
 
     @Override
-    public boolean index() throws Ingester.IngesterException {
+    public boolean index(AbstractFile sourceFile) throws Ingester.IngesterException {
+        this.sourceFile = sourceFile;
+        this.numChunks = 0; //unknown until indexing is done
+        
         boolean success = false;
         Reader reader = null;
 
@@ -94,30 +103,30 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         try {
             Metadata meta = new Metadata();
             /* Tika parse request with timeout -- disabled for now
-            ParseRequestTask parseTask = new ParseRequestTask(tika, stream, meta, sourceFile);
-            final Future<?> future = tikaParseExecutor.submit(parseTask);
-            try {
-                future.get(Ingester.getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
-            } catch (TimeoutException te) {
-                final String msg = "Tika parse timeout for content: " + sourceFile.getId() + ", " + sourceFile.getName();
-                logger.log(Level.WARNING, msg);
-                throw new IngesterException(msg);
-            }
-            catch (Exception ex) {
-                final String msg = "Unexpected exception from Tika parse task execution for file: " + sourceFile.getId() + ", " + sourceFile.getName();
-                logger.log(Level.WARNING, msg, ex);
-                throw new IngesterException(msg);
-            }
-            
-            reader = parseTask.getReader();
-            */
+             ParseRequestTask parseTask = new ParseRequestTask(tika, stream, meta, sourceFile);
+             final Future<?> future = tikaParseExecutor.submit(parseTask);
              try {
+             future.get(Ingester.getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
+             } catch (TimeoutException te) {
+             final String msg = "Tika parse timeout for content: " + sourceFile.getId() + ", " + sourceFile.getName();
+             logger.log(Level.WARNING, msg);
+             throw new IngesterException(msg);
+             }
+             catch (Exception ex) {
+             final String msg = "Unexpected exception from Tika parse task execution for file: " + sourceFile.getId() + ", " + sourceFile.getName();
+             logger.log(Level.WARNING, msg, ex);
+             throw new IngesterException(msg);
+             }
+            
+             reader = parseTask.getReader();
+             */
+            try {
                 reader = tika.parse(stream, meta);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
                 reader = null;
             }
-            
+
             if (reader == null) {
                 //likely due to exception in parse()
                 logger.log(Level.WARNING, "No reader available from Tika parse");
@@ -230,8 +239,25 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         return success;
     }
 
+    @Override
+    public boolean isContentTypeSpecific() {
+        return true;
+    }
+
+    @Override
+    public boolean isSupported(AbstractFile file) {
+        String fileNameLower = file.getName().toLowerCase();
+        for (int i = 0; i < SUPPORTED_EXTENSIONS.length; ++i) {
+            if (fileNameLower.endsWith(SUPPORTED_EXTENSIONS[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
-     * Runnable and timeable task that calls tika to parse the content using streaming
+     * Runnable and timeable task that calls tika to parse the content using
+     * streaming
      */
     private static class ParseRequestTask implements Runnable {
 
