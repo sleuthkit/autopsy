@@ -46,7 +46,9 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     private AbstractFile sourceFile;
     private int numChunks = 0;
     private static final String UTF16BOM = "\uFEFF";
-    private static final String [] SUPPORTED_EXTENSIONS = {"htm", "html", "xhtml", "css", "js"};
+    private static final String [] SUPPORTED_EXTENSIONS = {
+        "htm", "html", "xhtml", "shtml", "xhtm", "shtm", "css", "js", "php", "jsp"
+    };
     
     AbstractFileHtmlExtract() {
         this.service = KeywordSearchIngestService.getDefault();
