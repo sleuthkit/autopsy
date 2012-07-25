@@ -25,9 +25,7 @@ import java.io.StringReader;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.htmlparser.jericho.Attribute;
 import net.htmlparser.jericho.Attributes;
-import net.htmlparser.jericho.Segment;
 import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StartTagType;
@@ -59,31 +57,80 @@ public class JerichoParserWrapper {
             Source source = new Source(in);
             source.fullSequentialParse();
             
-            // Look through each segment
-            for(Segment segment : source) {
-                // Get all the tags to process them
-                List<StartTag> tagz = segment.getAllStartTags();
-                for(StartTag tag : tagz) {
-                    // If it's a comment, add it
-                    if(tag.getTagType().equals(StartTagType.COMMENT)) {
-                        out.append("COMMENT\t").append(tag.getTagContent()).append("\n");
-                    } else {
-                        // If it's a tag with an attribute, add it
-                        Attributes atts = tag.getAttributes();
-                        if (atts!=null && atts.length()>0) {
-                            System.out.print(tag.getName().toUpperCase());
-                            for(Attribute att : atts) {
-                                out.append("\t").append(att.getName()).append(": ");
-                                out.append(att.getValue()).append("\n");
-                            }
-                        }
+            StringBuilder text = new StringBuilder();
+            StringBuilder scripts = new StringBuilder();
+            StringBuilder links = new StringBuilder();
+            StringBuilder images = new StringBuilder();
+            StringBuilder comments = new StringBuilder();
+            StringBuilder others = new StringBuilder();
+            int numScripts = 1;
+            int numLinks = 1;
+            int numImages = 1;
+            int numComments = 1;
+            int numOthers = 1;
+
+            // Extract text from the source
+            TextExtractor extractor = new TextExtractor(source);
+            // Split it at every ". " but keep the .
+            String[] lines = extractor.toString().split("(?<=\\. )");
+            for(String s : lines) {
+                text.append(s).append("\n");
+            }
+
+            // Get all the tags in the source
+            List<StartTag> tags = source.getAllStartTags();
+            for(StartTag tag : tags) {
+                if(tag.getName().equals("script")) {
+                    // If the <script> tag has attributes
+                    scripts.append(numScripts).append(") ");
+                    if(tag.getTagContent().length()>0) {
+                        scripts.append(tag.getTagContent()).append(" ");
+                    }
+                    // Get whats between the <script> .. </script> tags
+                    scripts.append(tag.getElement().getContent()).append("\n");
+                    numScripts++;
+                } else if(tag.getName().equals("a")) {
+                    links.append(numLinks).append(") ");
+                    links.append(tag.getTagContent()).append("\n");
+                    numLinks++;
+                } else if(tag.getName().equals("img")) {
+                    images.append(numImages).append(") ");
+                    images.append(tag.getTagContent()).append("\n");
+                    numImages++;
+                } else if(tag.getTagType().equals(StartTagType.COMMENT)) {
+                    comments.append(numComments).append(") ");
+                    comments.append(tag.getTagContent()).append("\n");
+                    numComments++;
+                } else {
+                    // Make sure it has an attribute
+                    Attributes atts = tag.getAttributes();
+                    if (atts!=null && atts.length()>0) {
+                        others.append(numOthers).append(") ");
+                        others.append(tag.getName()).append(":");
+                        others.append(tag.getTagContent()).append("\n");
+                        numOthers++;
                     }
                 }
-                // In the end, add whatever text there is in this segment
-                TextExtractor extractor = new TextExtractor(segment);
-                if(extractor.toString().length()>0) {
-                    out.append(extractor.toString()).append("\n");
-                }
+            }
+
+            out.append(text.toString()).append("\n");
+
+            out.append("----------NONVISIBLE TEXT----------\n\n");
+            if(numScripts>1) {
+                out.append("---Scripts---\n");
+                out.append(scripts.toString()).append("\n");
+            } if(numLinks>1) {
+                out.append("---Links---\n");
+                out.append(links.toString()).append("\n");
+            } if(numImages>1) {
+                out.append("---Images---\n");
+                out.append(images.toString()).append("\n");
+            } if(numComments>1) {
+                out.append("---Comments---\n");
+                out.append(comments.toString()).append("\n");
+            } if(numOthers>1) {
+                out.append("---Others---\n");
+                out.append(others.toString()).append("\n");
             }
             // All done, now make it a reader
             reader = new StringReader(out.toString());
