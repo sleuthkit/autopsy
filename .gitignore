@@ -22,7 +22,7 @@ Bundle_*.properties
 genfiles.properties
 /branding/core/core.jar/org/netbeans/core/startup/Bundle.properties
 /branding/modules/org-netbeans-core-windows.jar/org/netbeans/core/windows/view/ui/Bundle.properties
-/CoreUtils/src/org/sleuthkit/autopsy/coreutils/Bundle.properties
+/CoreUtils/src/org/sleuthkit/autopsy/coreutils/Version.properties
 /Testing/script/input/
 /Testing/script/output/
 /Testing/script/gold/
