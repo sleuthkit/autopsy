@@ -46,12 +46,11 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     private AbstractFile sourceFile;
     private int numChunks = 0;
     private static final String UTF16BOM = "\uFEFF";
+    private static final String [] SUPPORTED_EXTENSIONS = {"htm", "html", "xhtml", "css", "js"};
     
-    AbstractFileHtmlExtract(AbstractFile sourceFile) {
-        this.sourceFile = sourceFile;
+    AbstractFileHtmlExtract() {
         this.service = KeywordSearchIngestService.getDefault();
-        Server solrServer = KeywordSearch.getServer();
-        ingester = solrServer.getIngester();
+        ingester = Server.getIngester();
     }
 
     @Override
@@ -65,9 +64,13 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     }
 
     @Override
-    public boolean index() throws IngesterException {
+    public boolean index(AbstractFile sourceFile) throws IngesterException {
+        this.sourceFile = sourceFile;
+        this.numChunks = 0; //unknown until indexing is done
+        
         boolean success = false;
         Reader reader = null;
+        
         final InputStream stream = new ReadContentInputStream(sourceFile);
         
         try {
@@ -171,6 +174,22 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
         ingester.ingest(this);
 
         return success;
+    }
+    
+    @Override
+    public boolean isContentTypeSpecific() {
+        return true;
+    }
+
+    @Override
+    public boolean isSupported(AbstractFile file) {
+        String fileNameLower = file.getName().toLowerCase();
+        for (int i = 0; i< SUPPORTED_EXTENSIONS.length; ++i) {
+            if (fileNameLower.endsWith(SUPPORTED_EXTENSIONS[i])) {
+                return true;
+            }
+        }
+        return false;
     }
     
 }

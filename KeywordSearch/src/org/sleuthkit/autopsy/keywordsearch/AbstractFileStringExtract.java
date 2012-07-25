@@ -40,24 +40,27 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     private int numChunks;
     private static final Logger logger = Logger.getLogger(AbstractFileStringExtract.class.getName());
     static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;
-    private AbstractFile aFile;
+    private AbstractFile sourceFile;
     //single static buffer for all extractions.  Safe, indexing can only happen in one thread
     private static final byte[] STRING_CHUNK_BUF = new byte[(int) MAX_STRING_CHUNK_SIZE];
     private static final int BOM_LEN = 3;
+    
+    //private static final StringExtract se = new StringExtract();
 
     static {
         //prepend UTF-8 BOM to start of the buffer
         STRING_CHUNK_BUF[0] = (byte) 0xEF;
         STRING_CHUNK_BUF[1] = (byte) 0xBB;
         STRING_CHUNK_BUF[2] = (byte) 0xBF;
+        
+        //se.init();
+        
+        
     }
 
-    public AbstractFileStringExtract(AbstractFile aFile) {
-        this.aFile = aFile;
-        numChunks = 0; //unknown until indexing is done
+    public AbstractFileStringExtract() {
         this.service = KeywordSearchIngestService.getDefault();
-        Server solrServer = KeywordSearch.getServer();
-        ingester = solrServer.getIngester();
+        ingester = Server.getIngester();
     }
 
     @Override
@@ -67,15 +70,17 @@ class AbstractFileStringExtract implements AbstractFileExtract {
 
     @Override
     public AbstractFile getSourceFile() {
-        return aFile;
+        return sourceFile;
     }
 
     @Override
-    public boolean index() throws IngesterException {
+    public boolean index(AbstractFile sourceFile) throws IngesterException {
+        this.sourceFile = sourceFile;
+        this.numChunks = 0; //unknown until indexing is done
         boolean success = false;
-
+        
         //construct stream that extracts text as we read it
-        final InputStream stringStream = new AbstractFileStringStream(aFile, ByteContentStream.Encoding.UTF8);
+        final InputStream stringStream = new AbstractFileStringStream(sourceFile, ByteContentStream.Encoding.UTF8);
 
         try {
             success = true;
@@ -93,7 +98,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
                     ++this.numChunks;
                 } catch (IngesterException ingEx) {
                     success = false;
-                    logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ingEx);
+                    logger.log(Level.WARNING, "Ingester had a problem with extracted strings from file '" + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);
                     throw ingEx; //need to rethrow/return to signal error and move on
                 }
 
@@ -109,19 +114,31 @@ class AbstractFileStringExtract implements AbstractFileExtract {
             ingester.ingest(this);
 
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to read input stream to divide and send to Solr, file: " + aFile.getName(), ex);
+            logger.log(Level.WARNING, "Unable to read input stream to divide and send to Solr, file: " + sourceFile.getName(), ex);
             success = false;
         } finally {
             try {
                 stringStream.close();
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Error closing input stream stream, file: " + aFile.getName(), ex);
+                logger.log(Level.WARNING, "Error closing input stream stream, file: " + sourceFile.getName(), ex);
             }
         }
 
 
         return success;
     }
+
+    @Override
+    public boolean isContentTypeSpecific() {
+        return false;
+    }
+
+    @Override
+    public boolean isSupported(AbstractFile file) {
+        return true;
+    }
+    
+    
     
 
 }
