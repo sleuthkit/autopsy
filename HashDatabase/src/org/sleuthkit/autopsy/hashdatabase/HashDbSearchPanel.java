@@ -128,6 +128,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         jSeparator1 = new javax.swing.JSeparator();
         titleLabel = new javax.swing.JLabel();
         errorField = new javax.swing.JLabel();
+        saveBox = new javax.swing.JCheckBox();
 
         hashTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -173,6 +174,13 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         errorField.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorField, org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.errorField.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(saveBox, org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.saveBox.text")); // NOI18N
+        saveBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveBoxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -202,7 +210,9 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                                         .addGap(61, 61, 61)
                                         .addComponent(addButton)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(removeButton)))
+                                        .addComponent(removeButton)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(saveBox)))
                                 .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
@@ -220,7 +230,8 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(addButton)
-                    .addComponent(removeButton))
+                    .addComponent(removeButton)
+                    .addComponent(saveBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -231,6 +242,11 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void saveBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveBoxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_saveBoxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
     private javax.swing.JButton cancelButton;
@@ -241,6 +257,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JButton removeButton;
+    private javax.swing.JCheckBox saveBox;
     private javax.swing.JButton searchButton;
     private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables
@@ -304,6 +321,19 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         // index numbers change and the wrong rows are deleted
         for(int i=rows.length-1; i>=0; i--) {
             model.removeRow(rows[i]);
+        }
+    }
+    
+    /**
+     * Clears the table of hashes
+     */
+    void clear() {
+        if(!saveBox.isSelected()) {
+            DefaultTableModel model = (DefaultTableModel) hashTable.getModel();
+            int numRows = hashTable.getRowCount();
+            for(int i=0; i<numRows; i++) {
+                model.removeRow(i);
+            }
         }
     }
 }

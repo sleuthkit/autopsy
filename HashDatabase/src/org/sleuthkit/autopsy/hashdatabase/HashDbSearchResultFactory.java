@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.openide.nodes.ChildFactory;
+import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
@@ -34,6 +35,6 @@ public class HashDbSearchResultFactory extends ChildFactory<KeyValue> {
 
     @Override
     protected Node createNodeForKey(KeyValue thing) {
-        return new KeyValueNode(thing, null);
+        return new KeyValueNode(thing, Children.LEAF);
     }
 }
