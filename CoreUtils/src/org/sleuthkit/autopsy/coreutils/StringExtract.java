@@ -20,6 +20,9 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
@@ -28,7 +31,15 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
 
 /**
  * Language and encoding aware utility to extract strings from stream of bytes
- * Currently supports Latin UTF-16 LE and UTF-16 BE
+ * Currently supports Latin UTF-16 LE, UTF-16 BE and UTF8
+ * 
+ * TODO: 
+ * - add streaming interface
+ * - support for Cyrillic, Arabic, Chinese UTF8 and UTF16
+ * - process control characters
+ * - testing: check non-printable common chars sometimes extracted
+ * - check if need UTF8 to UTF16 conversion
+ * - handle tie better (when number of chars in result is equal)
  */
 public class StringExtract {
 
@@ -86,16 +97,15 @@ public class StringExtract {
             }
 
             //for now 2 possibilities, see which one wins
-            StringExtractResult resUTF16End1 = extractUTF16(buff, len, curOffset, false);
-            StringExtractResult resUTF16End2 = extractUTF16(buff, len, curOffset, true);
-            StringExtractResult resUTF8 = extractUTF8(buff, len, curOffset);
+            List<StringExtractResult> results = new ArrayList<StringExtractResult>();
+            results.add(extractUTF16(buff, len, curOffset, false));
+            results.add(extractUTF16(buff, len, curOffset, true));
+            results.add(extractUTF8(buff, len, curOffset));
+            
+            Collections.sort(results);
 
-            StringExtractResult resWin = resUTF16End1.numBytes > resUTF16End2.numBytes ? resUTF16End1 : resUTF16End2;
-            //TODO handle tie
+            StringExtractResult resWin = results.get(0);
 
-            resWin = resWin.numBytes > resUTF8.numBytes ? resWin : resUTF8;
-            //TODO handle tie
-            //tringExtractResult resWin = resUTF8;
 
             if (resWin.numChars >= MIN_CHARS_STRING) {
                 //record string 
@@ -206,11 +216,11 @@ public class StringExtract {
                     ++res.numChars;
                     curString.append(byteVal);
                 } else {
-                    //bail out ? check
+                    //bail out
                     break;
                 }
             } else {
-                //bail out ? check
+                //bail out 
                 break;
             }
 
@@ -373,11 +383,11 @@ public class StringExtract {
                     ++res.numChars;
                     curString.append((char) ch);
                 } else {
-                    //bail out ? check
+                    //bail out
                     break;
                 }
             } else {
-                //bail out ? check
+                //bail out 
                 break;
             }
 
@@ -385,15 +395,13 @@ public class StringExtract {
 
         res.textString = curString.toString();
 
-
-
         return res;
     }
 
     /**
      * Representation of the string extraction result
      */
-    public class StringExtractResult {
+    public class StringExtractResult implements Comparable<StringExtractResult> {
 
         int offset; ///< offset in input buffer where the first string starts (TODO not really needed)
         int numBytes; ///< num bytes in input buffer consumed
@@ -415,6 +423,15 @@ public class StringExtract {
         public String getText() {
             return textString;
         }
+
+        @Override
+        public int compareTo(StringExtractResult o) {
+            //result with highest num of characters is less than (wins)
+            //TODO handle tie - pick language with smallest number of chars
+            return o.numChars - numChars;
+        }
+        
+        
     }
 
     /**
