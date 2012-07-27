@@ -19,14 +19,17 @@
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
+import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
@@ -34,50 +37,42 @@ import org.sleuthkit.datamodel.FsContent;
  */
 public class HashDbSearchManager {
     Map<String, List<FsContent>> map;
-    List<HashSearchPairs> pairs;
+    List<KeyValue> keyValues;
     
     HashDbSearchManager(Map<String, List<FsContent>> map) {
         this.map = map;
         init();
     }
     
-    
+    private void init() {
+        keyValues = new ArrayList<KeyValue>();
+        int id = 0;
+        for(String s : map.keySet()) {
+            for(FsContent file : map.get(s)) {
+                Map<String, Object> keyMap = new LinkedHashMap<String, Object>();
+                keyMap.put("Hash", s);
+                AbstractFsContentNode.fillPropertyMap(keyMap, file);
+                KeyValue kv = new KeyValue("MD5 - Name", keyMap, ++id);
+                keyValues.add(kv);
+            }
+        }
+    }
+
     public void execute() {
+        Collection<KeyValue> things = keyValues;
         Node rootNode = null;
 
-        if (map.size() > 0) {
+        if (things.size() > 0) {
             Children childThingNodes =
-                    Children.create(new HashDbSearchResultFactory(pairs), true);
+                    Children.create(new HashDbSearchResultFactory(map, things), true);
 
             rootNode = new AbstractNode(childThingNodes);
         } else {
             rootNode = Node.EMPTY;
         }
 
-        final String pathText = "Keyword search";
-        TopComponent searchResultWin = DataResultTopComponent.createInstance("Keyword search", pathText, rootNode, map.size());
+        final String pathText = "MD5 Hash Search";
+        TopComponent searchResultWin = DataResultTopComponent.createInstance("MD5 Hash Search", pathText, rootNode, things.size());
         searchResultWin.requestActive();
-    }
-    
-    private void init() {
-        pairs = new ArrayList<HashSearchPairs>();
-        for(String hash : map.keySet()) {
-            ArrayList<FsContent> files = new ArrayList<FsContent>();
-            for(FsContent file : map.get(hash)) {                
-                files.add(file);
-            }
-            pairs.add(new HashSearchPairs(hash, files));
-        }
-    }
-    
-}
-
-class HashSearchPairs {
-    String hash;
-    List<FsContent> files;
-    
-    HashSearchPairs(String hash, List<FsContent> files) {
-        this.hash = hash;
-        this.files = files;
     }
 }
