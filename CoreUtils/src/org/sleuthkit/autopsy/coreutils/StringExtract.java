@@ -20,163 +20,108 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 
 /**
  * Language and encoding aware utility to extract strings from stream of bytes
- * Currently supports Latin UTF-16 LE and UTF-16 BE
+ * Currently supports Latin UTF-16 LE, UTF-16 BE and UTF8
+ *
+ * TODO: - add streaming interface - support for Cyrillic, Arabic, Chinese UTF8
+ * and UTF16 - process control characters - testing: check non-printable common
+ * chars sometimes extracted - check if need UTF8 to UTF16 conversion - handle
+ * tie better (when number of chars in result is equal)
  */
 public class StringExtract {
 
-    /**
-     * Scripts listed in the unicodeTable loaded
-     */
-    public static enum SCRIPT {
-
-        NONE,
-        COMMON,
-        LATIN_1,
-        GREEK,
-        CYRILLIC,
-        ARMENIAN,
-        HEBREW,
-        ARABIC,
-        SYRIAC,
-        THAANA,
-        DEVANAGARI,
-        BENGALI,
-        GURMUKHI,
-        GUJARATI,
-        ORIYA,
-        TAMIL,
-        TELUGU,
-        KANNADA,
-        MALAYALAM,
-        SINHALA,
-        THAI,
-        LAO,
-        TIBETAN,
-        MYANMAR,
-        GEORGIAN,
-        HANGUL,
-        ETHIOPIC,
-        CHEROKEE,
-        CANADIAN_ABORIGINAL,
-        OGHAM,
-        RUNIC,
-        KHMER,
-        MONGOLIAN,
-        HIRAGANA,
-        KATAKANA,
-        BOPOMOFO,
-        HAN,
-        YI,
-        OLD_ITALIC,
-        GOTHIC,
-        DESERET,
-        INHERITED,
-        TAGALOG,
-        HANUNOO,
-        BUHID,
-        TAGBANWA,
-        LIMBU,
-        TAI_LE,
-        LINEAR_B,
-        UGARITIC,
-        SHAVIAN,
-        OSMANYA,
-        CYPRIOT,
-        BRAILLE,
-        BUGINESE,
-        COPTIC,
-        NEW_TAI_LUE,
-        GLAGOLITIC,
-        TIFINAGH,
-        SYLOTI_NAGRI,
-        OLD_PERSIAN,
-        KHAROSHTHI,
-        BALINESE,
-        CUNEIFORM,
-        PHOENICIAN,
-        PHAGS_PA,
-        NKO,
-        CONTROL,
-        LATIN_2
-    };
-    private static final SCRIPT[] SCRIPT_VALUES = SCRIPT.values();
-
-    /**
-     * Get script given byte value
-     *
-     * @param value
-     * @return the script type corresponding to the value
-     */
-    public SCRIPT getScript(int value) {
-        char scriptVal = unicodeTable[value];
-        return SCRIPT_VALUES[scriptVal];
-    }
-
-    /**
-     * Get the value of the script
-     *
-     * @param script the script to get value of
-     * @return the value corresponding to ordering in the SCRIPT enum
-     */
-    public static int getScriptValue(SCRIPT script) {
-        return script.ordinal();
-    }
     private static final Logger logger = Logger.getLogger(StringExtract.class.getName());
-    /**
-     * table has an entry for every possible 2-byte value
-     */
-    private static final int UNICODE_TABLE_SIZE = 65536;
-    /**
-     * unicode lookup table with 2 byte index and value of script
-     */
-    private static final char[] unicodeTable = new char[UNICODE_TABLE_SIZE];
-    private static boolean initialized = false;
     /**
      * min. number of extracted chars to qualify as string
      */
     public static final int MIN_CHARS_STRING = 4;
+    private StringExtractUnicodeTable unicodeTable;
+    /**
+     * currently enabled scripts
+     */
+    private List<SCRIPT> enabledScripts;
+    /**
+     * supported scripts, can be overriden with enableScriptX methods
+     */
+    private static final List<SCRIPT> SUPPORTED_SCRIPTS =
+            Arrays.asList(SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.CYRILLIC, SCRIPT.HAN);
 
     /**
-     * Initialization, loads unicode tables
+     * Initializes the StringExtract utility Sets enabled scripts to all
+     * supported ones
      */
-    static {
-        Properties properties = new Properties();
-        try {
-            //properties.load(new FileInputStream("StringExtract.properties"));            
-            InputStream inputStream = StringExtract.class.getResourceAsStream("StringExtract.properties");
-            properties.load(inputStream);
-            String table = properties.getProperty("UnicodeTable");
-            StringTokenizer st = new StringTokenizer(table, " ");
-            int toks = st.countTokens();
-            //logger.log(Level.INFO, "TABLE TOKS: " + toks);
-            if (toks != UNICODE_TABLE_SIZE) {
-                logger.log(Level.WARNING, "Unicode table corrupt, expecting: " + UNICODE_TABLE_SIZE, ", have: " + toks);
-            }
+    public StringExtract() {
+        unicodeTable = StringExtractUnicodeTable.getInstance();
 
-            int tableIndex = 0;
-            while (st.hasMoreTokens()) {
-                String tok = st.nextToken();
-                char code = (char) Integer.parseInt(tok);
-                unicodeTable[tableIndex++] = code;
-            }
-
-            initialized = true;
-            logger.log(Level.INFO, "initialized, unicode table loaded");
-
-        } catch (IOException ex) {
-            initialized = false;
-            logger.log(Level.WARNING, "Could not load StringExtract.properties");
+        if (unicodeTable == null) {
+            throw new IllegalStateException("Unicode table not properly initialized, cannot instantiate StringExtract");
         }
+
+        this.setEnabledScripts(SUPPORTED_SCRIPTS);
+    }
+
+    /**
+     * Sets the enabled scripts to ones provided, resets previous setting
+     *
+     * @param scripts scripts to consider for when extracting strings
+     */
+    public final void setEnabledScripts(List<SCRIPT> scripts) {
+        this.enabledScripts = scripts;
+    }
+
+    /**
+     * Sets the enabled script to one provided, resets previous setting
+     *
+     * @param scripts script to consider for when extracting strings
+     */
+    public final void setEnabledScript(SCRIPT script) {
+
+        this.enabledScripts = new ArrayList<SCRIPT>();
+        this.enabledScripts.add(script);
+    }
+
+    /**
+     * Check if extraction of the script is supported by the utility
+     *
+     * @param script script to check if supported
+     * @return true if the the utility supports the extraction of the script
+     */
+    public static boolean isExtractionSupported(SCRIPT script) {
+        return SUPPORTED_SCRIPTS.contains(script);
+    }
+
+    /**
+     * Check if extraction of the script is enabled by this instance of the
+     * utility
+     *
+     * @param script script to check if enabled
+     * @return true if the the script extraction is enabled
+     */
+    public boolean isExtractionEnabled(SCRIPT script) {
+        return enabledScripts.contains(script);
 
     }
 
+    /**
+     * Runs the byte buffer through the string extractor
+     *
+     * @param buff
+     * @param len
+     * @param offset
+     * @return string extraction result, with the string extracted and
+     * additional info
+     */
     public StringExtractResult extract(byte[] buff, int len, int offset) {
         final int buffLen = buff.length;
 
@@ -187,24 +132,22 @@ public class StringExtract {
         StringBuilder curString = new StringBuilder();
 
         while (curOffset < buffLen) {
-
             //shortcut, skip processing empty bytes
-            //TODO adjust for UTF8 if needed
             if (buff[curOffset] == 0 && curOffset + 1 < buffLen && buff[curOffset + 1] == 0) {
-                curOffset +=2;
+                curOffset += 2;
                 continue;
             }
 
             //for now 2 possibilities, see which one wins
-            StringExtractResult res0 = extractUTF16(buff, len, curOffset, false);
-            StringExtractResult res1 = extractUTF16(buff, len, curOffset, true);
-            StringExtractResult res2 = extractUTF8(buff, len, curOffset);
+            List<StringExtractResult> results = new ArrayList<StringExtractResult>();
+            results.add(extractUTF16(buff, len, curOffset, false));
+            results.add(extractUTF16(buff, len, curOffset, true));
+            results.add(extractUTF8(buff, len, curOffset));
 
-            StringExtractResult resWin = res0.numBytes > res1.numBytes ? res0 : res1;
-            //TODO handle tie
+            Collections.sort(results);
 
-            resWin = resWin.numBytes > res2.numBytes ? resWin : res2;
-            //TODO handle tie
+            StringExtractResult resWin = results.get(0);
+
 
             if (resWin.numChars >= MIN_CHARS_STRING) {
                 //record string 
@@ -270,12 +213,12 @@ public class StringExtract {
             byteVal += b[0];
 
             //skip if beyond range
-            if (byteVal > UNICODE_TABLE_SIZE - 1) {
+            if (byteVal > StringExtractUnicodeTable.getUnicodeTableSize() - 1) {
                 break;
             }
 
             //lookup byteVal in the unicode table
-            SCRIPT scriptFound = getScript(byteVal);
+            SCRIPT scriptFound = unicodeTable.getScript(byteVal);
 
             if (scriptFound == SCRIPT.NONE) {
                 break;
@@ -291,13 +234,10 @@ public class StringExtract {
              }*/
 
 
-            final boolean isGeneric = isGeneric(scriptFound);
-            //allow generic and one of supported script we locked in to
+            final boolean isGeneric = StringExtractUnicodeTable.isGeneric(scriptFound);
+            //allow generic and one of enabled scripts we locked in to
             if (isGeneric
-                    || scriptFound == SCRIPT.LATIN_2
-                    || scriptFound == SCRIPT.ARABIC //|| scriptFound == SCRIPT.CYRILLIC
-                    //|| scriptFound == SCRIPT.HAN
-                    ) {
+                    || isExtractionEnabled(scriptFound)) {
 
                 if (currentScript == SCRIPT.NONE
                         && !isGeneric) {
@@ -318,11 +258,11 @@ public class StringExtract {
                     ++res.numChars;
                     curString.append(byteVal);
                 } else {
-                    //bail out ? check
+                    //bail out
                     break;
                 }
             } else {
-                //bail out ? check
+                //bail out 
                 break;
             }
 
@@ -342,8 +282,6 @@ public class StringExtract {
 
         StringBuilder curString = new StringBuilder();
 
-        //we only care about common script
-        //final SCRIPT scriptSupported = SCRIPT.COMMON;
         SCRIPT currentScript = SCRIPT.NONE;
 
         boolean inControl = false;
@@ -442,12 +380,12 @@ public class StringExtract {
             curOffset += chBytes;
 
             //skip if beyond range
-            if (ch < 0 || ch > UNICODE_TABLE_SIZE - 1) {
+            if (ch < 0 || ch > StringExtractUnicodeTable.getUnicodeTableSize() - 1) {
                 break;
             }
 
             //lookup byteVal in the unicode table
-            SCRIPT scriptFound = getScript(ch);
+            SCRIPT scriptFound = unicodeTable.getScript(ch);
 
             if (scriptFound == SCRIPT.NONE) {
                 break;
@@ -461,13 +399,10 @@ public class StringExtract {
              break;
              }*/
 
-            final boolean isGeneric = isGeneric(scriptFound);
-            //allow generic and one of supported script we locked in to
+            final boolean isGeneric = StringExtractUnicodeTable.isGeneric(scriptFound);
+            //allow generic and one of enabled scripts we locked in to
             if (isGeneric
-                    || scriptFound == SCRIPT.LATIN_2
-                    || scriptFound == SCRIPT.ARABIC //|| scriptFound == SCRIPT.CYRILLIC
-                    //|| scriptFound == SCRIPT.HAN
-                    ) {
+                    || isExtractionEnabled(scriptFound)) {
 
                 if (currentScript == SCRIPT.NONE
                         && !isGeneric) {
@@ -488,11 +423,11 @@ public class StringExtract {
                     ++res.numChars;
                     curString.append((char) ch);
                 } else {
-                    //bail out ? check
+                    //bail out
                     break;
                 }
             } else {
-                //bail out ? check
+                //bail out 
                 break;
             }
 
@@ -500,19 +435,13 @@ public class StringExtract {
 
         res.textString = curString.toString();
 
-
-
         return res;
-    }
-
-    private static boolean isGeneric(SCRIPT script) {
-        return script == SCRIPT.COMMON || script == SCRIPT.LATIN_1;
     }
 
     /**
      * Representation of the string extraction result
      */
-    public class StringExtractResult {
+    public class StringExtractResult implements Comparable<StringExtractResult> {
 
         int offset; ///< offset in input buffer where the first string starts (TODO not really needed)
         int numBytes; ///< num bytes in input buffer consumed
@@ -533,6 +462,201 @@ public class StringExtract {
 
         public String getText() {
             return textString;
+        }
+
+        @Override
+        public int compareTo(StringExtractResult o) {
+            //result with highest num of characters is less than (wins)
+            //TODO handle tie - pick language with smallest number of chars
+            return o.numChars - numChars;
+        }
+    }
+
+    /**
+     * Encapsulates the loaded unicode table and different scripts and provides
+     * utilitities for the table and script lookup. Manages loading of the
+     * unicode table. Used as a singleton to ensure minimal resource usage for
+     * the unicode table.
+     */
+    public static class StringExtractUnicodeTable {
+
+        /**
+         * Scripts listed in the unicodeTable loaded
+         */
+        public static enum SCRIPT {
+
+            NONE,
+            COMMON,
+            LATIN_1,
+            GREEK,
+            CYRILLIC,
+            ARMENIAN,
+            HEBREW,
+            ARABIC,
+            SYRIAC,
+            THAANA,
+            DEVANAGARI,
+            BENGALI,
+            GURMUKHI,
+            GUJARATI,
+            ORIYA,
+            TAMIL,
+            TELUGU,
+            KANNADA,
+            MALAYALAM,
+            SINHALA,
+            THAI,
+            LAO,
+            TIBETAN,
+            MYANMAR,
+            GEORGIAN,
+            HANGUL,
+            ETHIOPIC,
+            CHEROKEE,
+            CANADIAN_ABORIGINAL,
+            OGHAM,
+            RUNIC,
+            KHMER,
+            MONGOLIAN,
+            HIRAGANA,
+            KATAKANA,
+            BOPOMOFO,
+            HAN,
+            YI,
+            OLD_ITALIC,
+            GOTHIC,
+            DESERET,
+            INHERITED,
+            TAGALOG,
+            HANUNOO,
+            BUHID,
+            TAGBANWA,
+            LIMBU,
+            TAI_LE,
+            LINEAR_B,
+            UGARITIC,
+            SHAVIAN,
+            OSMANYA,
+            CYPRIOT,
+            BRAILLE,
+            BUGINESE,
+            COPTIC,
+            NEW_TAI_LUE,
+            GLAGOLITIC,
+            TIFINAGH,
+            SYLOTI_NAGRI,
+            OLD_PERSIAN,
+            KHAROSHTHI,
+            BALINESE,
+            CUNEIFORM,
+            PHOENICIAN,
+            PHAGS_PA,
+            NKO,
+            CONTROL,
+            LATIN_2
+        };
+        private static final SCRIPT[] SCRIPT_VALUES = SCRIPT.values();
+        private static final String PROPERTY_FILE = "StringExtract.properties";
+        /**
+         * table has an entry for every possible 2-byte value
+         */
+        private static final int UNICODE_TABLE_SIZE = 65536;
+        /**
+         * unicode lookup table with 2 byte index and value of script
+         */
+        private static final char[] unicodeTable = new char[UNICODE_TABLE_SIZE];
+        private static StringExtractUnicodeTable instance = null; //the singleton instance
+
+        /**
+         * return instance of StringExtract of null if it could not be
+         * initialized
+         *
+         * @return
+         */
+        public static synchronized StringExtractUnicodeTable getInstance() {
+            if (instance == null) {
+                instance = new StringExtractUnicodeTable();
+                if (!instance.init()) {
+                    //error condition
+                    instance = null;
+                }
+
+            }
+            return instance;
+        }
+
+        /**
+         * Get script given byte value
+         *
+         * @param value
+         * @return the script type corresponding to the value
+         */
+        public SCRIPT getScript(int value) {
+            char scriptVal = unicodeTable[value];
+            return SCRIPT_VALUES[scriptVal];
+        }
+
+        /**
+         * Check if the script belongs to generic/common (chars are shared
+         * between different scripts)
+         *
+         * @param script to check for
+         * @return true if the script is generic
+         */
+        public static boolean isGeneric(SCRIPT script) {
+            return script == SCRIPT.COMMON || script == SCRIPT.LATIN_1;
+        }
+
+        public static int getUnicodeTableSize() {
+            return UNICODE_TABLE_SIZE;
+        }
+
+        /**
+         * Get the value of the script
+         *
+         * @param script the script to get value of
+         * @return the value corresponding to ordering in the SCRIPT enum
+         */
+        public static int getScriptValue(SCRIPT script) {
+            return script.ordinal();
+        }
+
+        /**
+         * Initialization, loads unicode tables
+         *
+         * @return true if initialized properly, false otherwise
+         */
+        private boolean init() {
+            Properties properties = new Properties();
+            try {
+                //properties.load(new FileInputStream("StringExtract.properties"));            
+                InputStream inputStream = StringExtract.class.getResourceAsStream(PROPERTY_FILE);
+                properties.load(inputStream);
+                String table = properties.getProperty("UnicodeTable");
+                StringTokenizer st = new StringTokenizer(table, " ");
+                int toks = st.countTokens();
+                //logger.log(Level.INFO, "TABLE TOKS: " + toks);
+                if (toks != UNICODE_TABLE_SIZE) {
+                    logger.log(Level.WARNING, "Unicode table corrupt, expecting: " + UNICODE_TABLE_SIZE, ", have: " + toks);
+                    return false;
+                }
+
+                int tableIndex = 0;
+                while (st.hasMoreTokens()) {
+                    String tok = st.nextToken();
+                    char code = (char) Integer.parseInt(tok);
+                    unicodeTable[tableIndex++] = code;
+                }
+
+                logger.log(Level.INFO, "initialized, unicode table loaded");
+
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Could not load" + PROPERTY_FILE);
+                return false;
+            }
+
+            return true;
+
         }
     }
 }
