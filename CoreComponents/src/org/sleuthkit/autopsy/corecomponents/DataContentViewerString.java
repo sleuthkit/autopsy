@@ -30,7 +30,8 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.autopsy.coreutils.StringExtract;
+import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
 import org.sleuthkit.autopsy.datamodel.StringContent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
@@ -301,7 +302,10 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 Boolean setVisible = false;
 
                 if (bytesRead > 0) {
-                    text = DataConversion.getString(data, bytesRead, 4);
+                    //text = DataConversion.getString(data, bytesRead, 4);
+                    final StringExtract sr = new StringExtract();
+                    StringExtractResult res = sr.extract(data, bytesRead, 0);
+                    text = res.getText();
                     setVisible = true;
                 }
 
