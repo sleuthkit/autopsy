@@ -37,18 +37,22 @@ class HashDbSearchAction extends CallableSystemAction {
     public void performAction() {
         final HashDbSearchPanel panel = HashDbSearchPanel.getDefault();
         final AdvancedConfigurationCleanDialog dialog = new AdvancedConfigurationCleanDialog();
-        panel.cancelButtonListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                panel.clear();
-                dialog.close();
-            }
-        });
+        // Set the dialog close button to clear then close the window
         dialog.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 panel.clear();
                 dialog.close();
+            }
+        });
+        // Have the search button close the window after searching
+        panel.addSearchActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(panel.doSearch()) {
+                    panel.clear();
+                    dialog.close();
+                }
             }
         });
         dialog.display(panel);

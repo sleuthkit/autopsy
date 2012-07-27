@@ -30,36 +30,47 @@ import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
- *
+ * Interface/Node manager for hash searching. The manager takes in the raw
+ * map of MD5 hashes to files, flattens the map, and sends it to the HashDbSearchResultFactory.
  */
 public class HashDbSearchManager {
     Map<String, List<FsContent>> map;
-    List<KeyValue> keyValues;
+    List<KeyValueContent> keyValues;
     
     HashDbSearchManager(Map<String, List<FsContent>> map) {
         this.map = map;
         init();
     }
     
+    /**
+     * Initializes the flattened map of KeyValues. Each map in a KeyValue is a 
+     * row in the table, with the String as it's column name and the Object
+     * as it's value in the row.
+     */
     private void init() {
-        keyValues = new ArrayList<KeyValue>();
+        keyValues = new ArrayList<KeyValueContent>();
         int id = 0;
         for(String s : map.keySet()) {
             for(FsContent file : map.get(s)) {
                 Map<String, Object> keyMap = new LinkedHashMap<String, Object>();
                 keyMap.put("MD5 Hash", s);
                 AbstractFsContentNode.fillPropertyMap(keyMap, file);
-                KeyValue kv = new KeyValue(file.getName(), keyMap, ++id);
+                KeyValueContent kv = new KeyValueContent(file.getName(), keyMap, ++id, file);
                 keyValues.add(kv);
             }
         }
     }
 
+    /**
+     * Takes the key values, creates nodes through the HashDbSearchResultFactory, and
+     * displays it in a TopComponent on the GUI.
+     */
     public void execute() {
-        Collection<KeyValue> things = keyValues;
+        Collection<KeyValueContent> things = keyValues;
         Node rootNode = null;
 
         if (things.size() > 0) {
@@ -74,5 +85,18 @@ public class HashDbSearchManager {
         final String pathText = "MD5 Hash Search";
         TopComponent searchResultWin = DataResultTopComponent.createInstance("MD5 Hash Search", pathText, rootNode, things.size());
         searchResultWin.requestActive();
+    }
+}
+
+class KeyValueContent extends KeyValue {
+    Content content;
+    
+    KeyValueContent(String name, Map<String, Object> map, int id, Content content) {
+        super(name, map, id);
+        this.content = content;
+    }
+    
+    Content getContent() {
+        return content;
     }
 }

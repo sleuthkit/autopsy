@@ -26,7 +26,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.table.DefaultTableModel;
 import org.sleuthkit.datamodel.FsContent;
@@ -38,7 +37,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
     private static final Logger logger = Logger.getLogger(HashDbSearchPanel.class.getName());
     private static HashDbSearchPanel instance;
     private static boolean ingestRunning = false;
-
+    
     /**
      * @return  the default instance of this panel 
      */
@@ -59,7 +58,6 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
     }
     
     final void customInit() {
-        searchButton.addActionListener(this);
         addButton.addActionListener(this);
         removeButton.addActionListener(this);
         errorField.setVisible(false);
@@ -84,6 +82,13 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         });
     }
     
+    void addSearchActionListener(ActionListener l) {
+        for(ActionListener al : searchButton.getActionListeners()) {
+            searchButton.removeActionListener(al);
+        }
+        searchButton.addActionListener(l);
+    }
+    
     /**
      * Don't allow any changes if ingest is running
      */
@@ -103,10 +108,6 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         hashTable.setEnabled(!ingestRunning);
         hashLabel.setEnabled(!ingestRunning);
     }
-    
-    void cancelButtonListener(ActionListener l) {
-        cancelButton.addActionListener(l);
-    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -122,7 +123,6 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         hashField = new javax.swing.JTextField();
         addButton = new javax.swing.JButton();
         hashLabel = new javax.swing.JLabel();
-        cancelButton = new javax.swing.JButton();
         searchButton = new javax.swing.JButton();
         removeButton = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
@@ -162,8 +162,6 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
 
         org.openide.awt.Mnemonics.setLocalizedText(hashLabel, org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.hashLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.cancelButton.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.searchButton.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(removeButton, org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.removeButton.text")); // NOI18N
@@ -190,10 +188,8 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(errorField)
-                        .addGap(18, 18, 18)
-                        .addComponent(searchButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(cancelButton))
+                        .addComponent(searchButton))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -236,7 +232,6 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cancelButton)
                     .addComponent(searchButton)
                     .addComponent(errorField))
                 .addContainerGap())
@@ -249,7 +244,6 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
-    private javax.swing.JButton cancelButton;
     private javax.swing.JLabel errorField;
     private javax.swing.JTextField hashField;
     private javax.swing.JLabel hashLabel;
@@ -277,23 +271,31 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
      * Search through all tsk_files to find ones with the same hashes as the
      * hashes given.
      */
-    void doSearch() {
+    boolean doSearch() {
         // Make sure all files have an md5 hash
         if(HashDbSearcher.isReady()) {
-            errorField.setEnabled(false);
-            cancelButton.setText("Done"); // no changes so done
-            // Get all the rows in the table
-            int numRows = hashTable.getRowCount();
-            ArrayList<String> hashes = new ArrayList<String>();
-            for(int i=0; i<numRows; i++) {
-                hashes.add((String) hashTable.getValueAt(i, 0));
+            if(hashTable.getRowCount()!=0) {
+                errorField.setVisible(false);
+                // Get all the rows in the table
+                int numRows = hashTable.getRowCount();
+                ArrayList<String> hashes = new ArrayList<String>();
+                for(int i=0; i<numRows; i++) {
+                    hashes.add((String) hashTable.getValueAt(i, 0));
+                }
+                // Get the map of hashes to FsContent and send it to the manager
+                Map<String, List<FsContent>> map = HashDbSearcher.findFilesBymd5(hashes);
+                HashDbSearchManager man = new HashDbSearchManager(map);
+                man.execute();
+                return true;
+            } else {
+                errorField.setText("No hashes have been entered.");
+                errorField.setVisible(true);
+                return false;
             }
-            // Get the map of hashes to FsContent and send it to the manager
-            Map<String, List<FsContent>> map = HashDbSearcher.findFilesBymd5(hashes);
-            HashDbSearchManager man = new HashDbSearchManager(map);
-            man.execute();
         } else {
+            errorField.setText("Error: Not all files have been hashed.");
             errorField.setVisible(true);
+                return false;
         }
     }
     
@@ -301,7 +303,6 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
      * Add the given text into the table of hashes.
      */
     void add() {
-        cancelButton.setText("Cancel"); // changes means cancel
         DefaultTableModel model = (DefaultTableModel) hashTable.getModel();
         if(!hashField.getText().equals("")) {
             model.addRow(new String[] {hashField.getText()});
@@ -314,7 +315,6 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
      * Remove all of the highlighted/selected rows from the table of hashes.
      */
     void remove() {
-        cancelButton.setText("Cancel"); // changes means cancel
         DefaultTableModel model = (DefaultTableModel) hashTable.getModel();
         int rows[] = hashTable.getSelectedRows();
         // Loop backwards to delete highest row index first, otherwise
@@ -331,9 +331,11 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         if(!saveBox.isSelected()) {
             DefaultTableModel model = (DefaultTableModel) hashTable.getModel();
             int numRows = hashTable.getRowCount();
-            for(int i=0; i<numRows; i++) {
+            for(int i=numRows-1; i>=0; i--) {
                 model.removeRow(i);
             }
         }
+        errorField.setVisible(false);
+        hashField.setText("");
     }
 }
