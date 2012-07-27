@@ -50,9 +50,9 @@ public class HashDbSearchManager {
         for(String s : map.keySet()) {
             for(FsContent file : map.get(s)) {
                 Map<String, Object> keyMap = new LinkedHashMap<String, Object>();
-                keyMap.put("Hash", s);
+                keyMap.put("MD5 Hash", s);
                 AbstractFsContentNode.fillPropertyMap(keyMap, file);
-                KeyValue kv = new KeyValue("MD5 - Name", keyMap, ++id);
+                KeyValue kv = new KeyValue(file.getName(), keyMap, ++id);
                 keyValues.add(kv);
             }
         }
