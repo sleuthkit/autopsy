@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.coreutils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -32,14 +33,11 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
 /**
  * Language and encoding aware utility to extract strings from stream of bytes
  * Currently supports Latin UTF-16 LE, UTF-16 BE and UTF8
- * 
- * TODO: 
- * - add streaming interface
- * - support for Cyrillic, Arabic, Chinese UTF8 and UTF16
- * - process control characters
- * - testing: check non-printable common chars sometimes extracted
- * - check if need UTF8 to UTF16 conversion
- * - handle tie better (when number of chars in result is equal)
+ *
+ * TODO: - add streaming interface - support for Cyrillic, Arabic, Chinese UTF8
+ * and UTF16 - process control characters - testing: check non-printable common
+ * chars sometimes extracted - check if need UTF8 to UTF16 conversion - handle
+ * tie better (when number of chars in result is equal)
  */
 public class StringExtract {
 
@@ -49,26 +47,70 @@ public class StringExtract {
      */
     public static final int MIN_CHARS_STRING = 4;
     private StringExtractUnicodeTable unicodeTable;
+    /**
+     * currently enabled scripts
+     */
+    private List<SCRIPT> enabledScripts;
+    /**
+     * supported scripts, can be overriden with enableScriptX methods
+     */
+    private static final List<SCRIPT> SUPPORTED_SCRIPTS =
+            Arrays.asList(SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.CYRILLIC, SCRIPT.HAN);
 
+    /**
+     * Initializes the StringExtract utility Sets enabled scripts to all
+     * supported ones
+     */
     public StringExtract() {
         unicodeTable = StringExtractUnicodeTable.getInstance();
 
         if (unicodeTable == null) {
             throw new IllegalStateException("Unicode table not properly initialized, cannot instantiate StringExtract");
         }
+
+        this.setEnabledScripts(SUPPORTED_SCRIPTS);
     }
 
     /**
-     * Check if extraction of the script is supported
+     * Sets the enabled scripts to ones provided, resets previous setting
+     *
+     * @param scripts scripts to consider for when extracting strings
+     */
+    public final void setEnabledScripts(List<SCRIPT> scripts) {
+        this.enabledScripts = scripts;
+    }
+
+    /**
+     * Sets the enabled script to one provided, resets previous setting
+     *
+     * @param scripts script to consider for when extracting strings
+     */
+    public final void setEnabledScript(SCRIPT script) {
+
+        this.enabledScripts = new ArrayList<SCRIPT>();
+        this.enabledScripts.add(script);
+    }
+
+    /**
+     * Check if extraction of the script is supported by the utility
      *
      * @param script script to check if supported
      * @return true if the the utility supports the extraction of the script
      */
     public static boolean isExtractionSupported(SCRIPT script) {
-        return script == SCRIPT.LATIN_2
-                || script == SCRIPT.ARABIC
-                || script == SCRIPT.CYRILLIC
-                || script == SCRIPT.HAN;
+        return SUPPORTED_SCRIPTS.contains(script);
+    }
+
+    /**
+     * Check if extraction of the script is enabled by this instance of the
+     * utility
+     *
+     * @param script script to check if enabled
+     * @return true if the the script extraction is enabled
+     */
+    public boolean isExtractionEnabled(SCRIPT script) {
+        return enabledScripts.contains(script);
+
     }
 
     /**
@@ -101,7 +143,7 @@ public class StringExtract {
             results.add(extractUTF16(buff, len, curOffset, false));
             results.add(extractUTF16(buff, len, curOffset, true));
             results.add(extractUTF8(buff, len, curOffset));
-            
+
             Collections.sort(results);
 
             StringExtractResult resWin = results.get(0);
@@ -193,9 +235,9 @@ public class StringExtract {
 
 
             final boolean isGeneric = StringExtractUnicodeTable.isGeneric(scriptFound);
-            //allow generic and one of supported script we locked in to
+            //allow generic and one of enabled scripts we locked in to
             if (isGeneric
-                    || isExtractionSupported(scriptFound)) {
+                    || isExtractionEnabled(scriptFound)) {
 
                 if (currentScript == SCRIPT.NONE
                         && !isGeneric) {
@@ -240,8 +282,6 @@ public class StringExtract {
 
         StringBuilder curString = new StringBuilder();
 
-        //we only care about common script
-        //final SCRIPT scriptSupported = SCRIPT.COMMON;
         SCRIPT currentScript = SCRIPT.NONE;
 
         boolean inControl = false;
@@ -360,9 +400,9 @@ public class StringExtract {
              }*/
 
             final boolean isGeneric = StringExtractUnicodeTable.isGeneric(scriptFound);
-            //allow generic and one of supported script we locked in to
+            //allow generic and one of enabled scripts we locked in to
             if (isGeneric
-                    || isExtractionSupported(scriptFound)) {
+                    || isExtractionEnabled(scriptFound)) {
 
                 if (currentScript == SCRIPT.NONE
                         && !isGeneric) {
@@ -430,8 +470,6 @@ public class StringExtract {
             //TODO handle tie - pick language with smallest number of chars
             return o.numChars - numChars;
         }
-        
-        
     }
 
     /**
