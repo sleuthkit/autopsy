@@ -37,25 +37,37 @@ public class StringExtract {
      * min. number of extracted chars to qualify as string
      */
     public static final int MIN_CHARS_STRING = 4;
-    
-    
     private StringExtractUnicodeTable unicodeTable;
-    
+
     public StringExtract() {
         unicodeTable = StringExtractUnicodeTable.getInstance();
-        
+
         if (unicodeTable == null) {
             throw new IllegalStateException("Unicode table not properly initialized, cannot instantiate StringExtract");
         }
     }
-    
+
+    /**
+     * Check if extraction of the script is supported
+     *
+     * @param script script to check if supported
+     * @return true if the the utility supports the extraction of the script
+     */
+    public static boolean isExtractionSupported(SCRIPT script) {
+        return script == SCRIPT.LATIN_2
+                || script == SCRIPT.ARABIC
+                || script == SCRIPT.CYRILLIC
+                || script == SCRIPT.HAN;
+    }
 
     /**
      * Runs the byte buffer through the string extractor
+     *
      * @param buff
      * @param len
      * @param offset
-     * @return string extraction result, with the string extracted and additional info
+     * @return string extraction result, with the string extracted and
+     * additional info
      */
     public StringExtractResult extract(byte[] buff, int len, int offset) {
         final int buffLen = buff.length;
@@ -173,10 +185,7 @@ public class StringExtract {
             final boolean isGeneric = StringExtractUnicodeTable.isGeneric(scriptFound);
             //allow generic and one of supported script we locked in to
             if (isGeneric
-                    || scriptFound == SCRIPT.LATIN_2
-                    || scriptFound == SCRIPT.ARABIC
-                    || scriptFound == SCRIPT.CYRILLIC
-                    || scriptFound == SCRIPT.HAN) {
+                    || isExtractionSupported(scriptFound)) {
 
                 if (currentScript == SCRIPT.NONE
                         && !isGeneric) {
@@ -343,10 +352,7 @@ public class StringExtract {
             final boolean isGeneric = StringExtractUnicodeTable.isGeneric(scriptFound);
             //allow generic and one of supported script we locked in to
             if (isGeneric
-                    || scriptFound == SCRIPT.LATIN_2
-                    || scriptFound == SCRIPT.ARABIC
-                    || scriptFound == SCRIPT.CYRILLIC
-                    || scriptFound == SCRIPT.HAN) {
+                    || isExtractionSupported(scriptFound)) {
 
                 if (currentScript == SCRIPT.NONE
                         && !isGeneric) {
@@ -411,12 +417,11 @@ public class StringExtract {
         }
     }
 
-    
     /**
-     * Encapsulates the loaded unicode table and different scripts
-     * and provides utilitities for the table and script lookup.
-     * Manages loading of the unicode table.
-     * Used as a singleton to ensure minimal resource usage for the unicode table.
+     * Encapsulates the loaded unicode table and different scripts and provides
+     * utilitities for the table and script lookup. Manages loading of the
+     * unicode table. Used as a singleton to ensure minimal resource usage for
+     * the unicode table.
      */
     public static class StringExtractUnicodeTable {
 
