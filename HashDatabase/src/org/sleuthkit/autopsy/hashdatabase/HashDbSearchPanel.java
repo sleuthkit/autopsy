@@ -295,7 +295,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         } else {
             errorField.setText("Error: Not all files have been hashed.");
             errorField.setVisible(true);
-                return false;
+            return false;
         }
     }
     
