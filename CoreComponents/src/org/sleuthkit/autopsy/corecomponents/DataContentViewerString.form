@@ -55,7 +55,7 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="0" attributes="0">
+              <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="pageLabel" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
@@ -74,9 +74,12 @@
                   <Component id="goToPageLabel" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="goToPageTextField" min="-2" pref="79" max="-2" attributes="0"/>
-                  <EmptySpace pref="205" max="32767" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
+                  <Component id="languageLabel" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="languageCombo" min="-2" pref="96" max="-2" attributes="0"/>
               </Group>
-              <Component id="jScrollPane1" alignment="1" pref="622" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="622" max="32767" attributes="0"/>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
@@ -93,7 +96,11 @@
                       <Component id="nextPageButton" alignment="0" min="-2" pref="23" max="-2" attributes="0"/>
                       <Component id="prevPageButton" alignment="0" min="-2" pref="23" max="-2" attributes="0"/>
                       <Component id="goToPageLabel" min="-2" max="-2" attributes="0"/>
-                      <Component id="goToPageTextField" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                          <Component id="goToPageTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="languageCombo" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="languageLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
                   <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
                   <Component id="jScrollPane1" pref="401" max="32767" attributes="0"/>
@@ -251,6 +258,26 @@
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="goToPageTextFieldActionPerformed"/>
           </Events>
+        </Component>
+        <Component class="javax.swing.JComboBox" name="languageCombo">
+          <Properties>
+            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+              <StringArray count="0"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerString.languageCombo.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="languageComboActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JLabel" name="languageLabel">
+          <Properties>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerString.languageLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+          </Properties>
         </Component>
       </SubComponents>
     </Container>
