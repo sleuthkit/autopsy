@@ -119,6 +119,10 @@ public class StringExtract {
         return enabledScripts.contains(script);
 
     }
+    
+    public static List<SCRIPT> getSupportedScripts() {
+        return SUPPORTED_SCRIPTS;
+    }
 
     /**
      * Runs the byte buffer through the string extractor
@@ -610,7 +614,7 @@ public class StringExtract {
         }
 
         /**
-         * Get script given byte value
+         * Lookup and get script given byte value of a potential character
          *
          * @param value
          * @return the script type corresponding to the value
@@ -643,6 +647,11 @@ public class StringExtract {
          */
         public static int getScriptValue(SCRIPT script) {
             return script.ordinal();
+        }
+        
+        public static SCRIPT scriptForString(String scriptStringVal) {
+            SCRIPT script = SCRIPT.valueOf(scriptStringVal);
+            return script;
         }
 
         /**
