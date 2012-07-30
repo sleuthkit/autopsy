@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -52,7 +52,7 @@ public class HashDbSearcher {
      * @return a Map of md5 hashes mapped to the list of files hit
      */
     static Map<String, List<FsContent>> findFilesBymd5(List<String> md5Hash) {
-        Map<String, List<FsContent>> map = new HashMap<String, List<FsContent>>();
+        Map<String, List<FsContent>> map = new LinkedHashMap<String, List<FsContent>>();
         for(String md5 : md5Hash) {
             List<FsContent> files = findFilesByMd5(md5);
             if(!files.isEmpty()) {

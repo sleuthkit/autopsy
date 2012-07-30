@@ -238,9 +238,9 @@ public final class ContentUtils {
                 out.write(buffer, 0, len);
                 len = in.read(buffer);
                 totalRead+=len;
-                // If there is a progress bar and this is the source file,
-                // report any progress
-                if(progress!=null && source) {
+                // If there is a progress bar, and this is the source file,
+                // and there will be more than one read, report any progress
+                if(progress!=null && source && totalRead>=TO_FILE_BUFFER_SIZE) {
                     int totalProgress = (int) (totalRead / unit);
                     progress.progress(content.getName(), totalProgress);
                 // If it's not the source, just update the file being processed

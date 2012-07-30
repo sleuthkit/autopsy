@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
- * Creates a Node for each KeyValue.
+ * Creates a Node for each KeyValueContent.
  */
 public class HashDbSearchResultFactory extends ChildFactory<KeyValueContent> {
     Collection<KeyValueContent>  keyValues;
@@ -50,6 +50,6 @@ public class HashDbSearchResultFactory extends ChildFactory<KeyValueContent> {
     @Override
     protected Node createNodeForKey(KeyValueContent thing) {
         final Content content = thing.getContent();
-        return new KeyValueNode(thing, Children.LEAF, Lookups.singleton(content));
+        return new KeyValueFileNode(thing, Children.LEAF);
     }
 }

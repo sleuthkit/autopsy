@@ -29,8 +29,6 @@ import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
-import org.sleuthkit.autopsy.datamodel.KeyValue;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
@@ -41,7 +39,7 @@ public class HashDbSearchManager {
     Map<String, List<FsContent>> map;
     List<KeyValueContent> keyValues;
     
-    HashDbSearchManager(Map<String, List<FsContent>> map) {
+    public HashDbSearchManager(Map<String, List<FsContent>> map) {
         this.map = map;
         init();
     }
@@ -85,18 +83,5 @@ public class HashDbSearchManager {
         final String pathText = "MD5 Hash Search";
         TopComponent searchResultWin = DataResultTopComponent.createInstance("MD5 Hash Search", pathText, rootNode, things.size());
         searchResultWin.requestActive();
-    }
-}
-
-class KeyValueContent extends KeyValue {
-    Content content;
-    
-    KeyValueContent(String name, Map<String, Object> map, int id, Content content) {
-        super(name, map, id);
-        this.content = content;
-    }
-    
-    Content getContent() {
-        return content;
     }
 }

@@ -9,6 +9,13 @@
             </file>
         </folder>    
     </folder>
+    <folder name="Services">
+        <file name="org-sleuthkit-autopsy-hashdatabase-HashSearchAction.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.directorytree.HashSearchProvider"/>
+            <!--<attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.filesearch.FileSearchAction.getDefault"/>-->
+            <attr name="position" intvalue="250"/>
+        </file>
+    </folder>
     <folder name="Menu">
         
         <folder name="Tools">
