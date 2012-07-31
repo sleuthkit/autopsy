@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
@@ -32,6 +32,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Wrapper over StringExtract to provide streaming API Given AbstractFile
  * object, extract international strings from the file and read output as a
  * stream of UTF-8 strings as encoded bytes.
+ *
+ * Currently not-thread safe (reusing static buffers for efficiency)
  */
 public class AbstractFileStringIntStream extends InputStream {
 
@@ -47,6 +49,7 @@ public class AbstractFileStringIntStream extends InputStream {
     private boolean fileEOF = false; //if file has more bytes to read
     private Charset outCharset;
     private static final Logger logger = Logger.getLogger(AbstractFileStringIntStream.class.getName());
+    private StringExtractResult lastExtractResult;
 
     /**
      * Constructs new stream object that does convertion from file, to extracted
@@ -89,20 +92,41 @@ public class AbstractFileStringIntStream extends InputStream {
         if (fileSize == 0) {
             return -1;
         }
-        
+
 
         //read and convert until user buffer full
         //we have data if file can be read or when byteBuff has converted strings to return
         int bytesToUser = 0; //returned to user so far
-        while (bytesToUser < len) {
+        int offsetUser = off;
+        while (bytesToUser < len && offsetUser < len) {
             //check if we have enough converted strings         
-            int remain = bytesInConvertBuff - convertBuffOffset;
+            int convertBuffRemain = bytesInConvertBuff - convertBuffOffset;
 
-            if ((convertBuff == null || remain == 0) && !fileEOF && fileReadOffset < fileSize) {
+            if ((convertBuff == null || convertBuffRemain == 0) && !fileEOF && fileReadOffset < fileSize) {
                 try {
                     //convert more strings, store in buffer
-                    //TODO read repeatadly to ensure we have entire max FILE_BUF_SIZE
-                    final long toRead = Math.min(FILE_BUF_SIZE, fileSize - fileReadOffset);
+                    //we know this implementation will read what we asked for, unless end of stream
+                    //TODO to be safe, we should read repeatadly to ensure we have max possible fileReadBuff
+                    //as we don't want to depend on stream implementation and end up with inefficient/broken string extraction
+
+                    long toRead = 0;
+                    int shiftSize = 0;
+                    if (lastExtractResult != null && lastExtractResult.getTextLength() != 0
+                            && (shiftSize = FILE_BUF_SIZE - lastExtractResult.getFirstUnprocessedOff()) > 0) {
+                        //a string previously extracted
+                        //shift the fileReadBuff past last bytes extracted
+                        //read only what's needed to fill the buffer
+                        //to avoid losing chars and breaking or corrupting potential strings - preserve byte stream continuity
+                        byte[] temp = new byte[shiftSize];
+                        System.arraycopy(fileReadBuff, lastExtractResult.getFirstUnprocessedOff(),
+                                temp, 0, shiftSize);
+                        System.arraycopy(temp, 0, fileReadBuff, 0, shiftSize);
+                        toRead = Math.min(lastExtractResult.getFirstUnprocessedOff(), fileSize - fileReadOffset);
+                        lastExtractResult = null;
+                    } else {
+                        //fill up entire fileReadBuff fresh
+                        toRead = Math.min(FILE_BUF_SIZE, fileSize - fileReadOffset);
+                    }
                     int read = content.read(fileReadBuff, fileReadOffset, toRead);
                     if (read == -1 || read == 0) {
                         fileEOF = true;
@@ -114,7 +138,7 @@ public class AbstractFileStringIntStream extends InputStream {
 
                         //put converted string in convertBuff
                         convert(read);
-                        remain = bytesInConvertBuff - convertBuffOffset;
+                        convertBuffRemain = bytesInConvertBuff - convertBuffOffset;
                     }
                 } catch (TskCoreException ex) {
                     //Exceptions.printStackTrace(ex);
@@ -123,7 +147,7 @@ public class AbstractFileStringIntStream extends InputStream {
             }
 
             //nothing more to read, and no more bytes in convertBuff
-            if (convertBuff == null || remain == 0) {
+            if (convertBuff == null || convertBuffRemain == 0) {
                 if (fileEOF) {
                     return bytesToUser > 0 ? bytesToUser : -1;
                 } else {
@@ -133,14 +157,27 @@ public class AbstractFileStringIntStream extends InputStream {
             }
 
             //return part or all of convert buff to user
-            final int toCopy = Math.min(remain, len - off);
-            System.arraycopy(convertBuff, convertBuffOffset, b, off, toCopy);
+            final int toCopy = Math.min(convertBuffRemain, len - offsetUser);
+            System.arraycopy(convertBuff, convertBuffOffset, b, offsetUser, toCopy);
+            
+            //DEBUG
+            /*
+            if (toCopy > 0) {
+                FileOutputStream debug = new FileOutputStream("c:\\temp\\" + content.getName(), true);
+                debug.write(b, offsetUser, toCopy);
+                debug.close();
+            }
+            */
+            
             convertBuffOffset += toCopy;
+            offsetUser += toCopy;
 
-            //TODO ensure that total bytesToUser < len, and save for next read()
             bytesToUser += toCopy;
-
+          
         }
+
+        //if more string data in convertBuff, will be consumed on next read()
+
 
         return bytesToUser;
     }
@@ -152,11 +189,11 @@ public class AbstractFileStringIntStream extends InputStream {
      * @param numBytes num bytes in the fileReadBuff
      */
     private void convert(int numBytes) {
-        StringExtractResult ser = stringExtractor.extract(fileReadBuff, numBytes, 0);
-        convertBuff = ser.getText().getBytes(outCharset);
+        lastExtractResult = stringExtractor.extract(fileReadBuff, numBytes, 0);
+        convertBuff = lastExtractResult.getText().getBytes(outCharset);
 
         //reset tracking vars
-        if (ser.getNumBytes() == 0) {
+        if (lastExtractResult.getNumBytes() == 0) {
             bytesInConvertBuff = 0;
         } else {
             bytesInConvertBuff = convertBuff.length;

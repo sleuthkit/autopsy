@@ -137,6 +137,10 @@ public class StringExtract {
         int curStringLen = 0;
         StringBuilder curString = new StringBuilder();
 
+        //keep track of first byte offset that hasn't been processed
+        //(one byte past the last byte processed in by last extraction)
+        int firstUnprocessedOff = offset;
+        
         while (curOffset < buffLen) {
             //shortcut, skip processing empty bytes
             if (buff[curOffset] == 0 && curOffset + 1 < buffLen && buff[curOffset + 1] == 0) {
@@ -144,7 +148,7 @@ public class StringExtract {
                 continue;
             }
 
-            //for now 2 possibilities, see which one wins
+            //extract using all methods and see which one wins
             List<StringExtractResult> results = new ArrayList<StringExtractResult>();
             results.add(extractUTF16(buff, len, curOffset, false));
             results.add(extractUTF16(buff, len, curOffset, true));
@@ -153,7 +157,6 @@ public class StringExtract {
             Collections.sort(results);
 
             StringExtractResult resWin = results.get(0);
-
 
             if (resWin.numChars >= MIN_CHARS_STRING) {
                 //record string 
@@ -170,6 +173,7 @@ public class StringExtract {
             if (resWin.numChars > 0) {
                 curOffset += resWin.numBytes;
                 processedBytes += resWin.numBytes;
+                firstUnprocessedOff = resWin.offset + resWin.numBytes;
             } else {
                 //if no encodings worked, advance 1 byte
                 ++curOffset;
@@ -184,6 +188,7 @@ public class StringExtract {
         res.numChars = curStringLen;
         res.offset = startOffset;
         res.textString = curString.toString();
+        res.firstUnprocessedOff = firstUnprocessedOff; //save that of the last winning result
 
         return res;
     }
@@ -437,7 +442,7 @@ public class StringExtract {
                 if (currentScript == scriptFound
                         || isGeneric) {
                     if (res.numChars == 0) {
-                        //set the start offset of the string
+                        //set the start byte offset of the string
                         res.offset = curOffset;
                     }
                     //update bytes processed
@@ -466,11 +471,15 @@ public class StringExtract {
      */
     public class StringExtractResult implements Comparable<StringExtractResult> {
 
-        int offset; ///< offset in input buffer where the first string starts (TODO not really needed)
+        int offset; ///< offset in input buffer where the first string starts
         int numBytes; ///< num bytes in input buffer consumed
         int numChars; ///< number of encoded characters extracted in the textString
+        int firstUnprocessedOff; ///< first byte past the last byte used in extraction, offset+numBytes for a single result, but we keep track of it for multiple extractions
         String textString; ///< the actual text string extracted, of numChars long
 
+        public int getFirstUnprocessedOff() {
+            return firstUnprocessedOff;
+        }
         public int getStartOffset() {
             return offset;
         }
