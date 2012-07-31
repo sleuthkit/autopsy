@@ -85,6 +85,10 @@ Pasco2 for pulling Internet Explorer activity
 - Web page: http://sourceforge.net/projects/pasco2/
 - License: http://www.gnu.org/licenses/gpl.html
 
+Jericho for extracting content from HTML files
+- Web page: http://jerichohtml.sourceforge.net/
+- License: http://www.gnu.org/copyleft/lesser.html
+
 Advanced installer 9.0 (Freeware)
 (not embedded in Autopsy, but used to generate Autopsy installer.)
 - Web page: http://www.advancedinstaller.com/
