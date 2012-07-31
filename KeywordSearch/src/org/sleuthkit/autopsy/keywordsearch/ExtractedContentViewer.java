@@ -158,9 +158,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 @Override
                 public String getMarkup() {
                     try {
-                        curContent = getSolrContent(selectedNode, currentPage, hasChunks);
-                        String curContentTrimmed = "<pre>" + curContent.trim() + "</pre>";
-                        return curContentTrimmed;
+                        return getSolrContent(selectedNode, currentPage, hasChunks);
                     } catch (SolrServerException ex) {
                         logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
                         return "";
