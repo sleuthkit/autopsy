@@ -1,0 +1,391 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.sleuthkit.autopsy.recentactivity;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.logging.Level;
+import javax.swing.JPanel;
+import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServiceImage;
+import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.Image;
+
+
+
+public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServiceImage{
+    protected String moduleName = "SEUQA";
+
+    
+    private static enum SearchEngine {NONE, Google, Bing, Yahoo, Baidu, Sogou, Soso, Yandex, Youdao, Biglobe, Linkestan, Parseek, Parset};
+
+    
+    
+    
+            
+           
+    SearchEngineURLQueryAnalyzer(){
+
+
+}
+    
+    
+    private SearchEngine getSearchEngine(String domain){
+        if(domain.contains(".com")){
+            String[] d = domain.split(".com");
+            if(d.length != 0 && d[0].contains(".baidu")){
+                return SearchEngine.Baidu;
+            }
+            else if(d.length != 0 && d.length != 0 && d[0].contains(".bing")){
+                return SearchEngine.Bing;
+            }
+            else if(d.length != 0 && d[0].contains(".yahoo")){
+                return SearchEngine.Yahoo;
+            }
+            else if(d.length != 0 && d[0].contains(".google")){
+                return SearchEngine.Google;
+            }
+            else if(d.length != 0 && d[0].contains(".youdao")){
+                return SearchEngine.Youdao;
+            }
+            else if(d.length !=0 && d[0].contains(".soso.com")){
+                return SearchEngine.Soso;
+            }
+            else if(d.length !=0 && d[0].contains(".sogou.com")){
+                return SearchEngine.Sogou;
+            }
+            else if(d.length != 0 && d[0].contains(".linkestan.com")){
+                return SearchEngine.Linkestan;
+            }
+            else if(d.length != 0 && d[0].contains(".parseek.com")){
+                return SearchEngine.Parseek;
+            }
+            else if(d.length !=0 && d[0].contains(".parset.com")){
+                return SearchEngine.Parset;
+            }
+        }
+        else if (domain.contains(".ru")){
+            String[] d = domain.split(".ru");
+            if(d[0].contains("yandex")){
+                return SearchEngine.Yandex;
+            }
+        }
+        else if (domain.contains(".ne.jp")){
+            String[] d = domain.split(".ne.jp");
+            if(d[0].contains("biglobe")){
+                return SearchEngine.Biglobe;
+            }
+        }
+      return SearchEngine.NONE;
+    }
+    
+    private String extractSearchEngineQuery(SearchEngine se, String url){
+        String x = "";
+
+//English Search Engines        
+        
+        //google.com
+        if(se.equals(SearchEngine.Google)){
+            if(url.contains("?q=")){
+                x = split2(url, "\\?q=");
+            }
+            else {
+                x = split2(url, "&q=");
+            }
+        }
+
+        //yahoo.com
+        else if(se.equals(SearchEngine.Yahoo)){
+            x = split2(url, "\\?p=");
+        }
+        
+        //bing.com
+        else if (se.equals(SearchEngine.Bing)){
+            x = split2(url, "\\?q=");
+        }
+        
+//Chinese Search Engines
+        
+        //baidu.com
+        else if (se.equals(SearchEngine.Baidu)){
+            if(url.contains("?wd=")){
+                x = split2(url, "\\?wd=");
+            }
+            else if(url.contains("?kw=")){
+                x = split2(url, "\\?kw=");
+            }
+            else if(url.contains("baidu.com/q?") || url.contains("baidu.com/m?") || url.contains("baidu.com/i?")){
+                x = split2(url, "word=");
+            }
+            else if (url.contains("/qw=") || url.contains("?qw=")){
+                x = split2(url, "\\qw=");
+            }
+            else if (url.contains("bs=")){
+                x = split2(url, "&bs=");
+            }
+        }
+        
+        //sogou.com
+        else if(se.equals(SearchEngine.Sogou)){
+            x = split2(url, "query=");
+        }
+        
+        //Soso.com
+        else if (se.equals(SearchEngine.Soso)){
+            if(url.contains("p=S")){
+                x = split2(url, "p=S");
+            }
+            else if (url.contains("?w=")){
+                x = split2(url, "\\?w=");
+            }
+            else {
+                x = split2(url, "&w=");
+            }
+            
+            
+        }
+
+        //youdao.com
+        else if(se.equals(SearchEngine.Youdao)){
+            if(url.contains("search?q=")){
+                x = split2(url, "\\?q=");
+            }
+            else if (url.contains("?i=")){
+                x = split2(url, "\\?i=");
+            }
+        }
+  
+ //Russian Search Engines
+        
+        //yandex.ru
+        else if(se.equals(SearchEngine.Yandex)){
+            if(url.contains("?text=")){
+            x = split2(url, "\\?text=");
+            }
+            else{
+                x = split2(url, "&text=");
+            }
+        }
+        
+ //Japanese Search Engines       
+      
+        //biglobe.ne.jp
+        else if(se.equals(SearchEngine.Biglobe)){
+            if(url.contains("?search=")){
+                x = split2(url, "\\?search=");
+            }
+            else if(url.contains("?q=")){
+                x = split2(url, "\\?q=");
+            }
+            else if(url.contains("/key/")){
+                x = split2(url, "/key/");
+            }
+            
+            else if (url.contains("&q=")){
+                x = split2(url, "&q=");
+            }
+        }
+ 
+//Persian & Arabic Search Engines        
+        
+        //Linkestan.com
+        else if(se.equals(SearchEngine.Linkestan)){
+            x = split2(url, "\\?psearch=");
+        }
+        
+        //Parseek.com
+        else if(se.equals(SearchEngine.Parseek)){
+            x = split2(url, "\\?q=");
+        }
+        
+        //Parset.com
+        else if(se.equals(SearchEngine.Parset)){
+            x = split2(url, "\\?Keyword=");
+        }
+        
+        try{ //try to decode the url
+        String decoded = URLDecoder.decode(x, "UTF-8");
+            return decoded;
+        }
+        catch(UnsupportedEncodingException uee){ //if it fails, return the encoded string
+            logger.info("Error during URL decoding: " + uee);
+            return x;
+        }
+  
+    }
+
+    
+//for splitting urls based on a key. Abstracted out of extractSearchEngineQuery()  
+    private String split2(String url, String splitkey){
+        String basereturn = "NULL";
+        String splitKeyConverted = splitkey;
+        //Want to determine if string contains a string based on splitkey, but we want to split the string on splitKeyConverted due to regex
+        if(splitkey.contains("\\?")){
+            splitKeyConverted = splitkey.replace("\\?", "?"); //Handling java -> regex conversions and viceversa
+        }
+        if (url.contains(splitKeyConverted)){
+            String[] sp = url.split(splitkey);
+            if(sp.length >= 2){
+                if(sp[sp.length -1].contains("&")){
+                    basereturn = sp[sp.length -1].split("&")[0];
+                    
+                }
+                else{
+                    basereturn = sp[sp.length -1];
+                }
+            }
+        }
+        return basereturn;
+    }
+   
+    
+    
+    private void getURLs(Image image){
+        Collection<BlackboardAttribute> unknownAttr = new ArrayList<BlackboardAttribute>();
+        try{ 
+            //from blackboard_artifacts
+            ArrayList<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getMatchingArtifacts("WHERE (`artifact_type_id` = '2' OR `artifact_type_id` = '4') ");  //List of every 'web_history' and 'bookmark' artifact
+        int y = listArtifacts.size();
+        int z = 1;
+            getAll:    
+        for(BlackboardArtifact artifact : listArtifacts){
+            String query = "";
+            String domain = "";
+            String browser = "";
+            //from tsk_files
+            FsContent fs = this.extractFiles(image, "select * from tsk_files where `obj_id` = '" + artifact.getObjectID() + "'").get(0);
+            SearchEngine se = SearchEngine.NONE;
+            long last_accessed = -1;
+            //from blackboard_attributes
+            ArrayList<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("Where `artifact_id` = " + artifact.getArtifactID());
+            getAttributes:
+            for(BlackboardAttribute attribute : listAttributes){
+                if(attribute.getAttributeTypeID() == 1){
+                    se = getSearchEngine(attribute.getValueString());
+                    if(! se.equals(SearchEngine.NONE)){ 
+                        query = extractSearchEngineQuery(se, attribute.getValueString());
+                        domain = se.toString();
+                        if(query.equals("NULL")){   //False positive match, artifact was not a query.
+                            break getAttributes;
+                        }
+                    }
+                    else if(se.equals(SearchEngine.NONE)){
+                        break getAttributes;    //could not determine type. Will move onto next artifact
+                    }
+                }
+                else if(attribute.getAttributeTypeID() == 4){
+                    browser = attribute.getValueString();
+                }
+                else if(attribute.getAttributeTypeID() == 33){
+                    last_accessed = attribute.getValueLong();
+                }
+            }
+            
+            if(!se.equals(SearchEngine.NONE) && !query.equals("NULL")){
+                try{
+                        Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "SEUQA", "Base URL", domain));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), "SEUQA", "Extracted search query", query));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "SEUQA", "Browser Name", browser));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "SEUQA", "Last Accessed", last_accessed));
+                        this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, fs , bbattributes);
+            }
+                catch(Exception e){
+                    logger.log(Level.SEVERE, "Error while add artifact.", e + " at " + fs.toString());
+                    this.addErrorMessage(this.getName() + ": Error while adding artifact");
+                }
+                IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT));
+            }
+            z++;
+            
+        }
+        }
+        catch (Exception e){
+            logger.info("Encountered error retrieving artifacts: " + e);
+        }
+    }
+    
+            
+    @Override
+    public void process(Image image, IngestImageWorkerController controller) {
+        this.getURLs(image);
+    }
+
+    @Override
+    public void init(IngestManagerProxy managerProxy) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void complete() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void stop() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String getName() {
+        return this.moduleName;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Extracts search queries on major search engines";
+    }
+
+    @Override
+    public ServiceType getType() {
+        return ServiceType.Image;
+    }
+
+    @Override
+    public boolean hasBackgroundJobsRunning() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public boolean hasSimpleConfiguration() {
+        return false;
+    }
+
+    @Override
+    public boolean hasAdvancedConfiguration() {
+        return false;
+    }
+
+    @Override
+    public void saveSimpleConfiguration() {
+       
+    }
+
+    @Override
+    public void saveAdvancedConfiguration() {
+       
+    }
+
+    @Override
+    public JPanel getSimpleConfiguration() {
+        return null;
+    }
+
+    @Override
+    public JPanel getAdvancedConfiguration() {
+        return null;
+    }
+    
+    
+    
+}

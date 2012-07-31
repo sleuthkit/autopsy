@@ -74,9 +74,12 @@ Currently, the script supports four argument parameters:
 
 	-s {imgname}				: runs the test with a single image as specified by {imgname}. Must include the path, it does not read from input.
 	-r or --rebuild			: runs in REBUILD mode, see 5 below
-	-l {config} or --list {config}	: runs with the specified {config} file. If you do not specify a path to the file, it searches for it under ./. It will attempt to search for the file by the specified path name if surrounded in quotes. By default will also search ./input for images in addition. 
-	-u				: runs ignoring unallocated space. Useful for determining framework is operational. Appends "-u" to the output and gold folders for distinguishing them from others. Will automatically compare the right reports.
+	-l {config} or --list {config}	: runs with the specified {config} file. If you do not specify a path to the file, it searches for it under ./. It will attempt to search for the file by the specified path name if surrounded in quotes. By default will also search ./input for images in addition. Appends "-l" to the output and gold folders for distinguishing.
+	-u or --unallocated		: runs ignoring unallocated space. Useful for determining framework is operational. Appends "-u" to the output and gold folders for distinguishing them from others. Will automatically compare the right reports.
 	-i or --ignore			: Will ignore the ./input directory. Use only in combination with -l
+	-d or --delete			: Will not delete the keyword search Solr index upon ingest completion. Will consume more disk space.
+	-v or --verbose			: Prints logged warnings after each ingest
+	-e or --exception		: When followed by a string, will only print out the exceptions that occured that contain the string. Case sensitive.
 
 These can be run in any combination.
 
