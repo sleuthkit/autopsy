@@ -32,6 +32,7 @@ import java.io.OutputStreamWriter;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.SocketException;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
@@ -123,6 +124,9 @@ class Server {
     public static final String CORE_EVT = "CORE_EVT";
     public static final char ID_CHUNK_SEP = '_';
     private String javaPath = "java";
+    
+    public static final Charset DEFAULT_INDEXED_TEXT_CHARSET = Charset.forName("UTF-8"); ///< default Charset to index text as
+    
     private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
     

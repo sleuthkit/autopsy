@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
@@ -28,17 +29,20 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * FsContent input string stream reader/converter
- * TODO should be encoding specific and detect UTF8, UTF16LE, UTF16BE
- * then process remainder of the string using detected encoding  
+ * AbstractFile input string stream reader/converter - given AbstractFile, 
+ * extract strings from it and return encoded bytes via read()
+ * 
+ * Note: the utility supports extraction of only LATIN script and UTF8, UTF16LE, UTF16BE encodings
+ * and uses a brute force encoding detection - it's fast but could apply multiple encodings on the same string.
+ * 
+ * For other script/languages support and better encoding detection use AbstractFileStringIntStream streaming class,
+ * which wraps around StringExtract extractor.
  */
 public class AbstractFileStringStream extends InputStream {
 
-    
     //args
     private AbstractFile content;
-    private String encoding;
-    
+    private Charset outputCharset;
     //internal data
     private long contentOffset = 0; //offset in fscontent read into curReadBuf
     private static final int READ_BUF_SIZE = 256;
@@ -60,26 +64,30 @@ public class AbstractFileStringStream extends InputStream {
 
     /**
      * Construct new string stream from FsContent
+     *
      * @param content to extract strings from
-     * @param encoding target encoding, currently UTF-8
-     * @param preserveOnBuffBoundary whether to preserve or split string on a buffer boundary. If false, will pack into read buffer up to max. possible, potentially splitting a string. If false, the string will be preserved for next read.
+     * @param outputCharset target encoding to index as
+     * @param preserveOnBuffBoundary whether to preserve or split string on a
+     * buffer boundary. If false, will pack into read buffer up to max.
+     * possible, potentially splitting a string. If false, the string will be
+     * preserved for next read.
      */
-    public AbstractFileStringStream(AbstractFile content, ByteContentStream.Encoding encoding, boolean preserveOnBuffBoundary) {
+    public AbstractFileStringStream(AbstractFile content, Charset outputCharset, boolean preserveOnBuffBoundary) {
         this.content = content;
-        this.encoding = encoding.toString();
+        this.outputCharset = outputCharset;
         //this.preserveOnBuffBoundary = preserveOnBuffBoundary;
         //logger.log(Level.INFO, "FILE: " + content.getParentPath() + "/" + content.getName());
     }
-    
+
     /**
-     * Construct new string stream from FsContent
-     * Do not attempt to fill entire read buffer if that would break a string
-     * 
+     * Construct new string stream from FsContent Do not attempt to fill entire
+     * read buffer if that would break a string
+     *
      * @param content to extract strings from
-     * @param encoding target encoding, currently UTF-8
+     * @param outCharset target charset to encode into bytes and index as, e.g. UTF-8
      */
-    public AbstractFileStringStream(AbstractFile content, ByteContentStream.Encoding encoding) {
-        this(content, encoding, false);
+    public AbstractFileStringStream(AbstractFile content, Charset outCharset) {
+        this(content, outCharset, false);
     }
 
     @Override
@@ -100,7 +108,7 @@ public class AbstractFileStringStream extends InputStream {
         if (isEOF) {
             return -1;
         }
-        
+
 
         if (stringAtTempBoundary) {
             //append entire temp string residual from previous read()
@@ -113,8 +121,8 @@ public class AbstractFileStringStream extends InputStream {
 
         boolean singleConsecZero = false; //preserve the current sequence of chars if 1 consecutive zero char
         int newCurLen = curStringLen + tempStringLen;
-        
-        
+
+
         while (newCurLen < len) {
             //need to extract more strings
             if (readBufOffset > bytesInReadBuf - 1) {
@@ -248,23 +256,18 @@ public class AbstractFileStringStream extends InputStream {
     //copy currently extracted string to user buffer
     //and reset for next read() call
     private int copyToReturn(byte[] b, int off, long len) {
-        try {
-            final String curStringS = curString.toString();
-            //logger.log(Level.INFO, curStringS);
-            byte[] stringBytes = curStringS.getBytes(encoding);
-            System.arraycopy(stringBytes, 0, b, off, Math.min(curStringLen, (int) len));
-            //logger.log(Level.INFO, curStringS);
-            //copied all string, reset
-            curString = new StringBuilder();
-            int ret = curStringLen;
-            curStringLen = 0;
-            return ret;
-        } catch (UnsupportedEncodingException ex) {
-            //should not happen
-            logger.log(Level.SEVERE, "Bad encoding string: " + encoding, ex);
-        }
 
-        return 0;
+        final String curStringS = curString.toString();
+        //logger.log(Level.INFO, curStringS);
+        byte[] stringBytes = curStringS.getBytes(outputCharset);
+        System.arraycopy(stringBytes, 0, b, off, Math.min(curStringLen, (int) len));
+        //logger.log(Level.INFO, curStringS);
+        //copied all string, reset
+        curString = new StringBuilder();
+        int ret = curStringLen;
+        curStringLen = 0;
+        return ret;
+
     }
 
     @Override

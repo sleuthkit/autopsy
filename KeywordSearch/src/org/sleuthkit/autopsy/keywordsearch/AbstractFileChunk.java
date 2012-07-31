@@ -19,6 +19,7 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.nio.charset.Charset;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 
 /**
@@ -50,9 +51,9 @@ class AbstractFileChunk {
         return Server.getChunkIdString(this.parent.getSourceFile().getId(), this.chunkID);
     }
 
-    public boolean index(Ingester ingester, byte[] content, long contentSize, ByteContentStream.Encoding encoding) throws IngesterException {
+    public boolean index(Ingester ingester, byte[] content, long contentSize, Charset indexCharset) throws IngesterException {
         boolean success = true;
-        ByteContentStream bcs = new ByteContentStream(content, contentSize, parent.getSourceFile(), encoding);
+        ByteContentStream bcs = new ByteContentStream(content, contentSize, parent.getSourceFile(), indexCharset);
         try {
             ingester.ingest(this, bcs, content.length);
             //logger.log(Level.INFO, "Ingesting string chunk: " + this.getName() + ": " + chunkID);

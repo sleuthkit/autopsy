@@ -46,14 +46,9 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
-import org.sleuthkit.datamodel.Volume;
-import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  * Handles indexing files on a Solr core.

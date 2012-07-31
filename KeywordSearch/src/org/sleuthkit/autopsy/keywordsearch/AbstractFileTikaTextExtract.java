@@ -27,9 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
@@ -37,8 +34,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
-import org.sleuthkit.autopsy.keywordsearch.ByteContentStream.Encoding;
-import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
+import org.sleuthkit.autopsy.coreutils.StringExtract;
 
 /**
  * Extractor of text from TIKA supported AbstractFile content. Extracted text is
@@ -53,8 +49,7 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 public class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
     private static final Logger logger = Logger.getLogger(IngestServiceAbstractFile.class.getName());
-    private static final Encoding ENCODING = Encoding.UTF8;
-    static final Charset charset = Charset.forName(ENCODING.toString());
+    private static final Charset OUTPUT_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
@@ -81,6 +76,11 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     }
 
     @Override
+    public boolean setScript(StringExtract.StringExtractUnicodeTable.SCRIPT extractScript) {
+        return false;
+    }
+
+    @Override
     public int getNumChunks() {
         return numChunks;
     }
@@ -94,7 +94,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     public boolean index(AbstractFile sourceFile) throws Ingester.IngesterException {
         this.sourceFile = sourceFile;
         this.numChunks = 0; //unknown until indexing is done
-        
+
         boolean success = false;
         Reader reader = null;
 
@@ -196,10 +196,10 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 extracted = sb.toString();
 
                 //converts BOM automatically to charSet encoding
-                byte[] encodedBytes = extracted.getBytes(charset);
+                byte[] encodedBytes = extracted.getBytes(OUTPUT_CHARSET);
                 AbstractFileChunk chunk = new AbstractFileChunk(this, this.numChunks + 1);
                 try {
-                    chunk.index(ingester, encodedBytes, encodedBytes.length, ENCODING);
+                    chunk.index(ingester, encodedBytes, encodedBytes.length, OUTPUT_CHARSET);
                     ++this.numChunks;
                 } catch (Ingester.IngesterException ingEx) {
                     success = false;
