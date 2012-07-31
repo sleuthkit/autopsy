@@ -32,13 +32,12 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
 
 /**
  * Language and encoding aware utility to extract strings from stream of bytes
- * Currently supports UTF-16 LE, UTF-16 BE and UTF8 Latin, Cyrillic, Chinese, Arabic
+ * Currently supports UTF-16 LE, UTF-16 BE and UTF8 Latin, Cyrillic, Chinese,
+ * Arabic
  *
- * TODO:
- * - add streaming interface 
+ * TODO: 
  * - process control characters 
- * - testing: check non-printable common chars sometimes extracted 
- * - check if need UTF8 to UTF16 conversion 
+ * - testing: check non-printable common chars sometimes extracted (font?)
  * - handle tie better (when number of chars in result is equal)
  */
 public class StringExtract {
@@ -58,11 +57,7 @@ public class StringExtract {
      */
     private static final List<SCRIPT> SUPPORTED_SCRIPTS =
             Arrays.asList(
-            SCRIPT.LATIN_2 
-            ,SCRIPT.ARABIC 
-            , SCRIPT.CYRILLIC 
-            , SCRIPT.HAN
-    );
+            SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.CYRILLIC, SCRIPT.HAN);
 
     /**
      * Initializes the StringExtract utility Sets enabled scripts to all
@@ -119,7 +114,7 @@ public class StringExtract {
         return enabledScripts.contains(script);
 
     }
-    
+
     public static List<SCRIPT> getSupportedScripts() {
         return SUPPORTED_SCRIPTS;
     }
@@ -648,7 +643,7 @@ public class StringExtract {
         public static int getScriptValue(SCRIPT script) {
             return script.ordinal();
         }
-        
+
         public static SCRIPT scriptForString(String scriptStringVal) {
             SCRIPT script = SCRIPT.valueOf(scriptStringVal);
             return script;

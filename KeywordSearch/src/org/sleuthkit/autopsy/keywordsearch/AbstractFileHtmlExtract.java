@@ -24,19 +24,20 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Extractor of text from HTML supported AbstractFile content.
- * Extracted text is divided into chunks and indexed with Solr.
- * If HTML extraction succeeds, chunks are indexed with Solr.
+ * Extractor of text from HTML supported AbstractFile content. Extracted text is
+ * divided into chunks and indexed with Solr. If HTML extraction succeeds,
+ * chunks are indexed with Solr.
  */
 public class AbstractFileHtmlExtract implements AbstractFileExtract {
+
     private static final Logger logger = Logger.getLogger(AbstractFileHtmlExtract.class.getName());
-    private static final ByteContentStream.Encoding ENCODING = ByteContentStream.Encoding.UTF8;
-    static final Charset charset = Charset.forName(ENCODING.toString());
+    static final Charset outCharset = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
@@ -46,13 +47,18 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     private AbstractFile sourceFile;
     private int numChunks = 0;
     private static final String UTF16BOM = "\uFEFF";
-    private static final String [] SUPPORTED_EXTENSIONS = {
+    private static final String[] SUPPORTED_EXTENSIONS = {
         "htm", "html", "xhtml", "shtml", "xhtm", "shtm", "css", "js", "php", "jsp"
     };
-    
+
     AbstractFileHtmlExtract() {
         this.service = KeywordSearchIngestService.getDefault();
         ingester = Server.getIngester();
+    }
+
+    @Override
+    public boolean setScript(SCRIPT extractScript) {
+        return false;
     }
 
     @Override
@@ -69,24 +75,24 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     public boolean index(AbstractFile sourceFile) throws IngesterException {
         this.sourceFile = sourceFile;
         this.numChunks = 0; //unknown until indexing is done
-        
+
         boolean success = false;
         Reader reader = null;
-        
+
         final InputStream stream = new ReadContentInputStream(sourceFile);
-        
+
         try {
             // Parse the stream with Jericho
             JerichoParserWrapper jpw = new JerichoParserWrapper(stream);
             jpw.parse();
             reader = jpw.getReader();
-            
+
             // In case there is an exception or parse() isn't called
             if (reader == null) {
                 logger.log(Level.WARNING, "No reader available from HTML parser");
                 return false;
             }
-            
+
             success = true;
             long readSize;
             long totalRead = 0;
@@ -135,10 +141,10 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
                 extracted = sb.toString();
 
                 //converts BOM automatically to charSet encoding
-                byte[] encodedBytes = extracted.getBytes(charset);
+                byte[] encodedBytes = extracted.getBytes(outCharset);
                 AbstractFileChunk chunk = new AbstractFileChunk(this, this.numChunks + 1);
                 try {
-                    chunk.index(ingester, encodedBytes, encodedBytes.length, ENCODING);
+                    chunk.index(ingester, encodedBytes, encodedBytes.length, outCharset);
                     ++this.numChunks;
                 } catch (Ingester.IngesterException ingEx) {
                     success = false;
@@ -171,13 +177,13 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
                 logger.log(Level.WARNING, "Unable to close content reader from " + sourceFile.getId(), ex);
             }
         }
-        
+
         //after all chunks, ingest the parent file without content itself, and store numChunks
         ingester.ingest(this);
 
         return success;
     }
-    
+
     @Override
     public boolean isContentTypeSpecific() {
         return true;
@@ -186,12 +192,11 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     @Override
     public boolean isSupported(AbstractFile file) {
         String fileNameLower = file.getName().toLowerCase();
-        for (int i = 0; i< SUPPORTED_EXTENSIONS.length; ++i) {
+        for (int i = 0; i < SUPPORTED_EXTENSIONS.length; ++i) {
             if (fileNameLower.endsWith(SUPPORTED_EXTENSIONS[i])) {
                 return true;
             }
         }
         return false;
     }
-    
 }

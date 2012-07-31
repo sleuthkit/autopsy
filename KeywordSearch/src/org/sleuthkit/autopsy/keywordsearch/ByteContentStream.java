@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.logging.Logger;
 import org.apache.solr.common.util.ContentStream;
 import org.sleuthkit.datamodel.AbstractContent;
@@ -33,38 +34,21 @@ import org.sleuthkit.datamodel.AbstractContent;
  */
 public class ByteContentStream implements ContentStream {   
     
-    public static enum Encoding {
-
-        UTF8 {
-
-            @Override
-            public String toString() {
-                return "UTF-8";
-            }
-        },
-        UTF16 {
-
-            @Override
-            public String toString() {
-                return "UTF-16";
-            }
-        },
-    };
     
     //input
     private byte[] content; //extracted subcontent
     private long contentSize;
     private AbstractContent aContent; //origin
-    private Encoding encoding;
+    private Charset charset; //output byte stream charset of encoded strings
     
     private InputStream stream;
 
     private static Logger logger = Logger.getLogger(ByteContentStream.class.getName());
 
-    public ByteContentStream(byte [] content, long contentSize, AbstractContent aContent, Encoding encoding) {
+    public ByteContentStream(byte [] content, long contentSize, AbstractContent aContent, Charset charset) {
         this.content = content;
         this.aContent = aContent;
-        this.encoding = encoding;
+        this.charset = charset;
         stream = new ByteArrayInputStream(content, 0, (int)contentSize);
     }
 
@@ -79,7 +63,7 @@ public class ByteContentStream implements ContentStream {
 
     @Override
     public String getContentType() {
-        return "text/plain;charset=" + encoding.toString();
+        return "text/plain;charset=" + charset.name();
     }
 
     @Override
