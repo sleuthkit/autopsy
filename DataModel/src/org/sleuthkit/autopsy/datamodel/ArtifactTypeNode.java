@@ -97,6 +97,9 @@ public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNod
                 return "recent_docs.png";
             case TSK_DEVICE_ATTACHED:
                 return "usb_devices.png";
+            case TSK_WEB_SEARCH_QUERY:
+                return "searchquery.png";
+
         }
         return "artifact-icon.png";
     }

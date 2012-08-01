@@ -47,6 +47,7 @@ public final class RAImageIngestService implements IngestServiceImage {
     private Firefox ffre = null;
     private Chrome chre = null;
     private ExtractIE eere = null;
+    private SearchEngineURLQueryAnalyzer usq = null;
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
@@ -69,6 +70,7 @@ public final class RAImageIngestService implements IngestServiceImage {
         modules.add(ffre);
         modules.add(chre);
         modules.add(eere);
+        modules.add(usq);
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
         controller.switchToDeterminate(modules.size());
         controller.progress(0);
@@ -131,6 +133,7 @@ public final class RAImageIngestService implements IngestServiceImage {
         this.chre = new Chrome();
         this.eree = new ExtractRegistry();
         this.ffre = new Firefox();
+        this.usq = new SearchEngineURLQueryAnalyzer();
 
     }
 
