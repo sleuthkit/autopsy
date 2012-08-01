@@ -35,10 +35,9 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
  * Currently supports UTF-16 LE, UTF-16 BE and UTF8 Latin, Cyrillic, Chinese,
  * Arabic
  *
- * TODO: 
- * - process control characters 
- * - testing: check non-printable common chars sometimes extracted (font?)
- * - handle tie better (when number of chars in result is equal)
+ * TODO: - process control characters - testing: check non-printable common
+ * chars sometimes extracted (font?) - handle tie better (when number of chars
+ * in result is equal)
  */
 public class StringExtract {
 
@@ -140,7 +139,7 @@ public class StringExtract {
         //keep track of first byte offset that hasn't been processed
         //(one byte past the last byte processed in by last extraction)
         int firstUnprocessedOff = offset;
-        
+
         while (curOffset < buffLen) {
             //shortcut, skip processing empty bytes
             if (buff[curOffset] == 0 && curOffset + 1 < buffLen && buff[curOffset + 1] == 0) {
@@ -150,8 +149,10 @@ public class StringExtract {
 
             //extract using all methods and see which one wins
             List<StringExtractResult> results = new ArrayList<StringExtractResult>();
-            results.add(extractUTF16(buff, len, curOffset, false));
-            results.add(extractUTF16(buff, len, curOffset, true));
+            if (curOffset % 2 == 0) {
+                results.add(extractUTF16(buff, len, curOffset, true));
+                results.add(extractUTF16(buff, len, curOffset, false));
+            }
             results.add(extractUTF8(buff, len, curOffset));
 
             Collections.sort(results);
@@ -168,9 +169,8 @@ public class StringExtract {
                 curString.append(resWin.textString);
                 curString.append("\n");
                 curStringLen += resWin.numChars + 1;
-            }
-            //advance, whether string found or not
-            if (resWin.numChars > 0) {
+
+                //advance
                 curOffset += resWin.numBytes;
                 processedBytes += resWin.numBytes;
                 firstUnprocessedOff = resWin.offset + resWin.numBytes;
@@ -179,7 +179,6 @@ public class StringExtract {
                 ++curOffset;
                 //++processedBytes;
             }
-
         }
 
         //build up the result
@@ -480,6 +479,7 @@ public class StringExtract {
         public int getFirstUnprocessedOff() {
             return firstUnprocessedOff;
         }
+
         public int getStartOffset() {
             return offset;
         }
