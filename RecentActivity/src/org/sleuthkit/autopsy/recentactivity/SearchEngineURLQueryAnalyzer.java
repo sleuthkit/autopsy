@@ -251,21 +251,20 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
     
     
     private void getURLs(Image image){
-        Collection<BlackboardAttribute> unknownAttr = new ArrayList<BlackboardAttribute>();
-        try{ 
+       try{ 
             //from blackboard_artifacts
             ArrayList<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getMatchingArtifacts("WHERE (`artifact_type_id` = '2' OR `artifact_type_id` = '4') ");  //List of every 'web_history' and 'bookmark' artifact
-        int y = listArtifacts.size();
-        int z = 1;
-            getAll:    
+        getAll:    
         for(BlackboardArtifact artifact : listArtifacts){
-            String query = "";
-            String domain = "";
-            String browser = "";
+            //initializing default attributes
+            String source = ""; //becomes "bookmark" if attribute type 2, remains blank otherwise
+            String query = "";  
+            String domain = ""; 
+            String browser = ""; 
+            long last_accessed = -1; 
             //from tsk_files
-            FsContent fs = this.extractFiles(image, "select * from tsk_files where `obj_id` = '" + artifact.getObjectID() + "'").get(0);
+            FsContent fs = this.extractFiles(image, "select * from tsk_files where `obj_id` = '" + artifact.getObjectID() + "'").get(0); //associated file
             SearchEngine se = SearchEngine.NONE;
-            long last_accessed = -1;
             //from blackboard_attributes
             ArrayList<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("Where `artifact_id` = " + artifact.getArtifactID());
             getAttributes:
@@ -286,6 +285,9 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
                 else if(attribute.getAttributeTypeID() == 4){
                     browser = attribute.getValueString();
                 }
+                else if(attribute.getArtifactID() == 2){
+                    source = "bookmark";
+                }
                 else if(attribute.getAttributeTypeID() == 33){
                     last_accessed = attribute.getValueLong();
                 }
@@ -294,19 +296,19 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
             if(!se.equals(SearchEngine.NONE) && !query.equals("NULL")){
                 try{
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "SEUQA", "Base URL", domain));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), "SEUQA", "Extracted search query", query));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "SEUQA", "Browser Name", browser));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "SEUQA", "Last Accessed", last_accessed));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "SEUQA", "", domain));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), "SEUQA", "", query));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "SEUQA", source, browser));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "SEUQA", "", last_accessed));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, fs , bbattributes);
             }
                 catch(Exception e){
-                    logger.log(Level.SEVERE, "Error while add artifact.", e + " at " + fs.toString());
+                    logger.log(Level.SEVERE, "Error while add artifact.", e + " from " + fs.toString());
                     this.addErrorMessage(this.getName() + ": Error while adding artifact");
                 }
                 IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT));
             }
-            z++;
+            
             
         }
         }
