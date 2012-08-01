@@ -22,6 +22,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JMenuItem;
@@ -30,7 +31,10 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.autopsy.coreutils.StringExtract;
+import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
+import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable;
+import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.datamodel.StringContent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
@@ -50,6 +54,9 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private Content dataSource;
     // for error handling
     private String className = this.getClass().toString();
+    
+    //string extract utility
+    private final StringExtract stringExtract = new StringExtract();
 
     /** Creates new form DataContentViewerString */
     public DataContentViewerString() {
@@ -72,6 +79,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         };
         copyMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
+        
+        List<SCRIPT> supportedScripts = StringExtract.getSupportedScripts();
+        for (SCRIPT s : supportedScripts) {
+            languageCombo.addItem(s.toString() );
+        }
+        
     }
 
     /** This method is called from within the constructor to
@@ -98,6 +111,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         prevPageButton = new javax.swing.JButton();
         goToPageLabel = new javax.swing.JLabel();
         goToPageTextField = new javax.swing.JTextField();
+        languageCombo = new javax.swing.JComboBox();
+        languageLabel = new javax.swing.JLabel();
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
@@ -166,6 +181,15 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             }
         });
 
+        languageCombo.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.languageCombo.toolTipText")); // NOI18N
+        languageCombo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                languageComboActionPerformed(evt);
+            }
+        });
+
+        languageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.languageLabel.text")); // NOI18N
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -189,8 +213,11 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 .addComponent(goToPageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(205, Short.MAX_VALUE))
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 622, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(languageLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 622, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -205,7 +232,10 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                     .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(goToPageLabel)
-                    .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(languageLabel)))
                 .addGap(0, 0, 0)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 401, Short.MAX_VALUE))
         );
@@ -258,6 +288,13 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         setDataView(dataSource, currentOffset, false);
     }//GEN-LAST:event_goToPageTextFieldActionPerformed
 
+    private void languageComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_languageComboActionPerformed
+
+        if (dataSource != null) {
+            setDataView(dataSource, currentOffset, false);
+        }
+    }//GEN-LAST:event_languageComboActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JLabel currentPageLabel;
@@ -265,6 +302,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private javax.swing.JTextField goToPageTextField;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JComboBox languageCombo;
+    private javax.swing.JLabel languageLabel;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JLabel ofLabel;
     private javax.swing.JTextPane outputViewPane;
@@ -301,7 +340,11 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 Boolean setVisible = false;
 
                 if (bytesRead > 0) {
-                    text = DataConversion.getString(data, bytesRead, 4);
+                    //text = DataConversion.getString(data, bytesRead, 4);
+                    final String selScript = (String) languageCombo.getSelectedItem();
+                    stringExtract.setEnabledScript(StringExtractUnicodeTable.scriptForString(selScript));
+                    StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
+                    text = res.getText();
                     setVisible = true;
                 }
 

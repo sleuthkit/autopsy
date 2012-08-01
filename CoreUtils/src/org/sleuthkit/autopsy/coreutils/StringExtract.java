@@ -32,12 +32,14 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
 
 /**
  * Language and encoding aware utility to extract strings from stream of bytes
- * Currently supports Latin UTF-16 LE, UTF-16 BE and UTF8
+ * Currently supports UTF-16 LE, UTF-16 BE and UTF8 Latin, Cyrillic, Chinese, Arabic
  *
- * TODO: - add streaming interface - support for Cyrillic, Arabic, Chinese UTF8
- * and UTF16 - process control characters - testing: check non-printable common
- * chars sometimes extracted - check if need UTF8 to UTF16 conversion - handle
- * tie better (when number of chars in result is equal)
+ * TODO:
+ * - add streaming interface 
+ * - process control characters 
+ * - testing: check non-printable common chars sometimes extracted 
+ * - check if need UTF8 to UTF16 conversion 
+ * - handle tie better (when number of chars in result is equal)
  */
 public class StringExtract {
 
@@ -55,7 +57,12 @@ public class StringExtract {
      * supported scripts, can be overriden with enableScriptX methods
      */
     private static final List<SCRIPT> SUPPORTED_SCRIPTS =
-            Arrays.asList(SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.CYRILLIC, SCRIPT.HAN);
+            Arrays.asList(
+            SCRIPT.LATIN_2 
+            ,SCRIPT.ARABIC 
+            , SCRIPT.CYRILLIC 
+            , SCRIPT.HAN
+    );
 
     /**
      * Initializes the StringExtract utility Sets enabled scripts to all
@@ -111,6 +118,10 @@ public class StringExtract {
     public boolean isExtractionEnabled(SCRIPT script) {
         return enabledScripts.contains(script);
 
+    }
+    
+    public static List<SCRIPT> getSupportedScripts() {
+        return SUPPORTED_SCRIPTS;
     }
 
     /**
@@ -289,86 +300,103 @@ public class StringExtract {
         //decode and extract a character
         while (curOffset < len) {
             // based on "valid UTF-8 byte sequences" in the Unicode 5.0 book
-            if (buff[curOffset] <= 0x7F) {
+            final int curByte = buff[curOffset] & 0xFF; //ensure we are not comparing signed bytes to ints
+            if (curByte <= 0x7F) {
                 chBytes = 1;
-                ch = buff[curOffset];
-            } else if (buff[curOffset] <= 0xC1) {
+                ch = curByte;
+            } else if (curByte <= 0xC1) {
                 break;
-            } else if (buff[curOffset] <= 0xDF) {
+            } else if (curByte <= 0xDF) {
                 if (len - curOffset < 2) {
                     break;
                 }
-                if (buff[curOffset + 1] >= 0x80 && buff[curOffset + 1] <= 0xBF) {
+                final int curByte_1 = buff[curOffset + 1] & 0xFF;
+                if (curByte_1 >= 0x80 && curByte_1 <= 0xBF) {
                     chBytes = 2;
-                    ch = (((buff[curOffset] & 0x1f) << 6) + (buff[curOffset + 1] & 0x3f));
+                    ch = (((curByte & 0x1f) << 6) + (curByte_1 & 0x3f));
                 } else {
                     break;
                 }
-            } else if (buff[curOffset] == 0xE0) {
+            } else if (curByte == 0xE0) {
                 if (len - curOffset < 3) {
                     break;
                 }
-                if (buff[curOffset + 1] >= 0xA0 && buff[curOffset + 1] <= 0xBF
-                        && buff[curOffset + 2] >= 0x80 && buff[curOffset + 2] <= 0xBF) {
+                final int curByte_1 = buff[curOffset + 1] & 0xFF;
+                final int curByte_2 = buff[curOffset + 2] & 0xFF;
+
+                if (curByte_1 >= 0xA0 && curByte_1 <= 0xBF
+                        && curByte_2 >= 0x80 && curByte_2 <= 0xBF) {
                     chBytes = 3;
-                    ch = (((buff[curOffset] & 0x0f) << 12) + ((buff[curOffset + 1] & 0x3f) << 6) + (buff[curOffset + 2] & 0x3f));
+                    ch = (((curByte & 0x0f) << 12) + ((curByte_1 & 0x3f) << 6) + (curByte_2 & 0x3f));
                 } else {
                     break;
                 }
-            } else if (buff[curOffset] <= 0xEC) {
+            } else if (curByte <= 0xEC) {
                 if (len - curOffset < 3) {
                     break;
                 }
-                if (buff[curOffset + 1] >= 0x80 && buff[curOffset + 1] <= 0xBF
-                        && buff[curOffset + 2] >= 0x80 && buff[curOffset + 2] <= 0xBF) {
+                final int curByte_1 = buff[curOffset + 1] & 0xFF;
+                final int curByte_2 = buff[curOffset + 2] & 0xFF;
+                if (curByte_1 >= 0x80 && curByte_1 <= 0xBF
+                        && curByte_2 >= 0x80 && curByte_2 <= 0xBF) {
                     chBytes = 3;
-                    ch = (((buff[curOffset] & 0x0f) << 12) + ((buff[curOffset + 1] & 0x3f) << 6) + (buff[curOffset + 2] & 0x3f));
+                    ch = (((curByte & 0x0f) << 12) + ((curByte_1 & 0x3f) << 6) + (curByte_2 & 0x3f));
                 } else {
                     break;
                 }
-            } else if (buff[curOffset] == 0xED) {
+            } else if (curByte == 0xED) {
                 if (len - curOffset < 3) {
                     break;
                 }
-                if (buff[curOffset + 1] >= 0x80 && buff[curOffset + 1] <= 0x9F
-                        && buff[curOffset + 2] >= 0x80 && buff[curOffset + 2] <= 0xBF) {
+                final int curByte_1 = buff[curOffset + 1] & 0xFF;
+                final int curByte_2 = buff[curOffset + 2] & 0xFF;
+                if (curByte_1 >= 0x80 && curByte_1 <= 0x9F
+                        && curByte_2 >= 0x80 && curByte_2 <= 0xBF) {
                     chBytes = 3;
-                    ch = (((buff[curOffset] & 0x0f) << 12) + ((buff[curOffset + 1] & 0x3f) << 6) + (buff[curOffset + 2] & 0x3f));
+                    ch = (((curByte & 0x0f) << 12) + ((curByte_1 & 0x3f) << 6) + (curByte_2 & 0x3f));
                 } else {
                     break;
                 }
-            } else if (buff[curOffset] <= 0xEF) {
+            } else if (curByte <= 0xEF) {
                 if (len - curOffset < 3) {
                     break;
                 }
-                if (buff[curOffset + 1] >= 0x80 && buff[curOffset + 1] <= 0xBF
-                        && buff[curOffset + 2] >= 0x80 && buff[curOffset + 2] <= 0xBF) {
+                final int curByte_1 = buff[curOffset + 1] & 0xFF;
+                final int curByte_2 = buff[curOffset + 2] & 0xFF;
+                if (curByte_1 >= 0x80 && curByte_1 <= 0xBF
+                        && curByte_2 >= 0x80 && curByte_2 <= 0xBF) {
                     chBytes = 3;
-                    ch = (((buff[curOffset] & 0x0f) << 12) + ((buff[curOffset + 1] & 0x3f) << 6) + (buff[curOffset + 2] & 0x3f));
+                    ch = (((curByte & 0x0f) << 12) + ((curByte_1 & 0x3f) << 6) + (curByte_2 & 0x3f));
                 } else {
                     break;
                 }
-            } else if (buff[curOffset] == 0xF0) {
+            } else if (curByte == 0xF0) {
                 if (len - curOffset < 4) {
                     break;
                 }
-                if (buff[curOffset + 1] >= 0x90 && buff[curOffset + 1] <= 0xBF
-                        && buff[curOffset + 2] >= 0x80 && buff[curOffset + 2] <= 0xBF
-                        && buff[curOffset + 3] >= 0x80 && buff[curOffset + 3] <= 0xBF) {
+                final int curByte_1 = buff[curOffset + 1] & 0xFF;
+                final int curByte_2 = buff[curOffset + 2] & 0xFF;
+                final int curByte_3 = buff[curOffset + 3] & 0xFF;
+                if (curByte_1 >= 0x90 && curByte_1 <= 0xBF
+                        && curByte_2 >= 0x80 && curByte_2 <= 0xBF
+                        && curByte_3 >= 0x80 && curByte_3 <= 0xBF) {
                     chBytes = 4;
-                    ch = (((buff[curOffset] & 0x07) << 18) + ((buff[curOffset + 1] & 0x3f) << 12) + ((buff[curOffset + 2] & 0x3f) << 6) + (buff[curOffset + 3] & 0x3f));
+                    ch = (((curByte & 0x07) << 18) + ((curByte_1 & 0x3f) << 12) + ((curByte_2 & 0x3f) << 6) + (curByte_3 & 0x3f));
                 } else {
                     break;
                 }
-            } else if (buff[curOffset] <= 0xF3) {
+            } else if (curByte <= 0xF3) {
                 if (len - curOffset < 4) {
                     break;
                 }
-                if (buff[curOffset + 1] >= 0x80 && buff[curOffset + 1] <= 0xBF
-                        && buff[curOffset + 2] >= 0x80 && buff[curOffset + 2] <= 0xBF
-                        && buff[curOffset + 3] >= 0x80 && buff[curOffset + 3] <= 0xBF) {
+                final int curByte_1 = buff[curOffset + 1] & 0xFF;
+                final int curByte_2 = buff[curOffset + 2] & 0xFF;
+                final int curByte_3 = buff[curOffset + 3] & 0xFF;
+                if (curByte_1 >= 0x80 && curByte_1 <= 0xBF
+                        && curByte_2 >= 0x80 && curByte_2 <= 0xBF
+                        && curByte_3 >= 0x80 && curByte_3 <= 0xBF) {
                     chBytes = 4;
-                    ch = (((buff[curOffset] & 0x07) << 18) + ((buff[curOffset + 1] & 0x3f) << 12) + ((buff[curOffset + 2] & 0x3f) << 6) + (buff[curOffset + 3] & 0x3f));
+                    ch = (((curByte & 0x07) << 18) + ((curByte_1 & 0x3f) << 12) + ((curByte_2 & 0x3f) << 6) + (curByte_3 & 0x3f));
                 } else {
                     break;
                 }
@@ -380,7 +408,7 @@ public class StringExtract {
             curOffset += chBytes;
 
             //skip if beyond range
-            if (ch < 0 || ch > StringExtractUnicodeTable.getUnicodeTableSize() - 1) {
+            if (ch > StringExtractUnicodeTable.getUnicodeTableSize() - 1) {
                 break;
             }
 
@@ -586,7 +614,7 @@ public class StringExtract {
         }
 
         /**
-         * Get script given byte value
+         * Lookup and get script given byte value of a potential character
          *
          * @param value
          * @return the script type corresponding to the value
@@ -619,6 +647,11 @@ public class StringExtract {
          */
         public static int getScriptValue(SCRIPT script) {
             return script.ordinal();
+        }
+        
+        public static SCRIPT scriptForString(String scriptStringVal) {
+            SCRIPT script = SCRIPT.valueOf(scriptStringVal);
+            return script;
         }
 
         /**
