@@ -105,10 +105,6 @@ public class AbstractFileStringIntStream extends InputStream {
             if ((convertBuff == null || convertBuffRemain == 0) && !fileEOF && fileReadOffset < fileSize) {
                 try {
                     //convert more strings, store in buffer
-                    //we know this implementation will read what we asked for, unless end of stream
-                    //TODO to be safe, we should read repeatadly to ensure we have max possible fileReadBuff
-                    //as we don't want to depend on stream implementation and end up with inefficient/broken string extraction
-
                     long toRead = 0;
                     int shiftSize = 0;
                     if (lastExtractResult != null && lastExtractResult.getTextLength() != 0
