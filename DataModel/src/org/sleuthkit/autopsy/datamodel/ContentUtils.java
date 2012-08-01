@@ -240,7 +240,7 @@ public final class ContentUtils {
                 totalRead+=len;
                 // If there is a progress bar and this is the source file,
                 // report any progress
-                if(progress!=null && source) {
+                if(progress!=null && source && totalRead>=TO_FILE_BUFFER_SIZE) {
                     int totalProgress = (int) (totalRead / unit);
                     progress.progress(content.getName(), totalProgress);
                 // If it's not the source, just update the file being processed

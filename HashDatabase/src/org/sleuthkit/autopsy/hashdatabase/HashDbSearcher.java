@@ -19,10 +19,9 @@
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -34,7 +33,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 public class HashDbSearcher {
     private static final Case currentCase = Case.getCurrentCase();
     private static final SleuthkitCase skCase = currentCase.getSleuthkitCase();
-    private static final Logger logger = Logger.getLogger(HashDbSearcher.class.getName());
     
     /**
      * Given a string hash value, find all files with that hash.
@@ -52,7 +50,7 @@ public class HashDbSearcher {
      * @return a Map of md5 hashes mapped to the list of files hit
      */
     static Map<String, List<FsContent>> findFilesBymd5(List<String> md5Hash) {
-        Map<String, List<FsContent>> map = new HashMap<String, List<FsContent>>();
+        Map<String, List<FsContent>> map = new LinkedHashMap<String, List<FsContent>>();
         for(String md5 : md5Hash) {
             List<FsContent> files = findFilesByMd5(md5);
             if(!files.isEmpty()) {
@@ -83,6 +81,6 @@ public class HashDbSearcher {
      * @return true if the search feature is ready.
      */
     static boolean isReady() {
-        return skCase.md5HashFinished();
+        return skCase.allFilesMd5Hashed();
     }
 }

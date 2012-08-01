@@ -18,58 +18,95 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import org.openide.nodes.Node;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationCleanDialog;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.directorytree.HashSearchProvider;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.FsContent;
 
 /**
- * The HashDbSearchAction opens the HashDbSearchPanel in a dialog.
+ * Searches for FsContent Files with the same MD5 hash as the given Node's
+ * FsContent's MD5 hash. This action should only be available from Nodes with
+ * specific Content attached; it is manually programmed into a Node's available actions.
  */
-class HashDbSearchAction extends CallableSystemAction {
+public class HashDbSearchAction extends CallableSystemAction implements HashSearchProvider {
 
-    static final String ACTION_NAME = "Hash File Search";
+    private static final InitializeContentVisitor initializeCV = new InitializeContentVisitor();
+    private FsContent fsContent;
+
+    private static HashDbSearchAction instance = null;
+
+    HashDbSearchAction() {
+        super();
+    }
+    
+    public static HashDbSearchAction getDefault() {
+        if(instance == null){
+            instance = new HashDbSearchAction();
+        }
+        return instance;
+    }
 
     @Override
+    public void search(Node contentNode) {
+        Content tempContent = contentNode.getLookup().lookup(Content.class);
+        this.fsContent = tempContent.accept(initializeCV);
+        performAction();
+    }
+
+    /**
+     * Returns the FsContent if it is supported, otherwise null. It should 
+     * realistically never return null or a Directory, only a File.
+     */
+    private static class InitializeContentVisitor extends ContentVisitor.Default<FsContent> {
+
+        @Override
+        public FsContent visit(org.sleuthkit.datamodel.File f) {
+            return f;
+        }
+
+        @Override
+        public FsContent visit(Directory dir) {
+            return ContentUtils.isDotDirectory(dir) ? null : dir;
+        }
+
+        @Override
+        protected FsContent defaultVisit(Content cntnt) {
+            return null;
+        }
+    }
+
+    /**
+     * Find all files with the same MD5 hash as this' fsContent. fsContent should
+     * be previously set by calling the search function, which in turn calls performAction.
+     */
+    @Override
     public void performAction() {
-        final HashDbSearchPanel panel = HashDbSearchPanel.getDefault();
-        final AdvancedConfigurationCleanDialog dialog = new AdvancedConfigurationCleanDialog();
-        // Set the dialog close button to clear then close the window
-        dialog.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                panel.clear();
-                dialog.close();
-            }
-        });
-        // Have the search button close the window after searching
-        panel.addSearchActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(panel.doSearch()) {
-                    panel.clear();
-                    dialog.close();
-                }
-            }
-        });
-        dialog.display(panel);
+        // Make sure all files have an md5 hash
+        if(HashDbSearcher.isReady()) {
+            // Get the map of hashes to FsContent and send it to the manager
+            List<FsContent> files = HashDbSearcher.findFilesByMd5(fsContent.getMd5Hash());
+            Map<String, List<FsContent>> map = new LinkedHashMap<String, List<FsContent>>();
+            map.put(fsContent.getMd5Hash(), files);
+            HashDbSearchManager man = new HashDbSearchManager(map);
+            man.execute();
+        }
     }
 
     @Override
     public String getName() {
-        return ACTION_NAME;
+        return "Hash Search";
     }
 
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
-    }
-    
-    @Override
-    protected boolean asynchronous() {
-        return false;
     }
 }

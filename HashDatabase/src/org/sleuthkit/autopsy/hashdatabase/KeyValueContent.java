@@ -18,30 +18,22 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
-import java.util.Collection;
-import java.util.List;
-import org.openide.nodes.ChildFactory;
-import org.openide.nodes.Children;
-import org.openide.nodes.Node;
+import java.util.Map;
+import org.sleuthkit.autopsy.datamodel.KeyValue;
+import org.sleuthkit.datamodel.Content;
 
 /**
- * Factory class to create a KeyValueFileNode for each KeyValueContent in the Collection.
+ * A KeyValue mapping where specific content needs to be recognizable.
  */
-public class HashDbSearchResultFactory extends ChildFactory<KeyValueContent> {
-    Collection<KeyValueContent>  kvContents;
+public class KeyValueContent extends KeyValue {
+    Content content;
     
-    HashDbSearchResultFactory(Collection<KeyValueContent> kvContents) {
-        this.kvContents = kvContents;
+    KeyValueContent(String name, Map<String, Object> map, int id, Content content) {
+        super(name, map, id);
+        this.content = content;
     }
     
-    @Override
-    protected boolean createKeys(List<KeyValueContent> toPopulate) {
-        toPopulate.addAll(kvContents);
-        return true;
-    }
-
-    @Override
-    protected Node createNodeForKey(KeyValueContent content) {
-        return new KeyValueFileNode(content, Children.LEAF);
+    Content getContent() {
+        return content;
     }
 }
