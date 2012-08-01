@@ -106,23 +106,24 @@ public class AbstractFileStringIntStream extends InputStream {
                 try {
                     //convert more strings, store in buffer
                     long toRead = 0;
-                    int shiftSize = 0;
-                    if (lastExtractResult != null && lastExtractResult.getTextLength() != 0
-                            && (shiftSize = FILE_BUF_SIZE - lastExtractResult.getFirstUnprocessedOff()) > 0) {
-                        //a string previously extracted
-                        //shift the fileReadBuff past last bytes extracted
-                        //read only what's needed to fill the buffer
-                        //to avoid losing chars and breaking or corrupting potential strings - preserve byte stream continuity
-                        byte[] temp = new byte[shiftSize];
-                        System.arraycopy(fileReadBuff, lastExtractResult.getFirstUnprocessedOff(),
-                                temp, 0, shiftSize);
-                        System.arraycopy(temp, 0, fileReadBuff, 0, shiftSize);
-                        toRead = Math.min(lastExtractResult.getFirstUnprocessedOff(), fileSize - fileReadOffset);
-                        lastExtractResult = null;
-                    } else {
+                    //int shiftSize = 0;
+                    
+                    //if (lastExtractResult != null && lastExtractResult.getTextLength() != 0
+                      //      && (shiftSize = FILE_BUF_SIZE - lastExtractResult.getFirstUnprocessedOff()) > 0) {
+                        ////a string previously extracted
+                        ////shift the fileReadBuff past last bytes extracted
+                        ////read only what's needed to fill the buffer
+                        ////to avoid loosing chars and breaking or corrupting potential strings - preserve byte stream continuity
+                        //byte[] temp = new byte[shiftSize];
+                        //System.arraycopy(fileReadBuff, lastExtractResult.getFirstUnprocessedOff(),
+                        //        temp, 0, shiftSize);
+                        //System.arraycopy(temp, 0, fileReadBuff, 0, shiftSize);
+                        //toRead = Math.min(lastExtractResult.getFirstUnprocessedOff(), fileSize - fileReadOffset);
+                        //lastExtractResult = null;
+                    //} else { 
                         //fill up entire fileReadBuff fresh
                         toRead = Math.min(FILE_BUF_SIZE, fileSize - fileReadOffset);
-                    }
+                    //}
                     int read = content.read(fileReadBuff, fileReadOffset, toRead);
                     if (read == -1 || read == 0) {
                         fileEOF = true;
