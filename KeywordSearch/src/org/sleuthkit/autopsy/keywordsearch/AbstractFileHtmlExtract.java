@@ -62,6 +62,11 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     }
 
     @Override
+    public SCRIPT getScript() {
+        return null;
+    }
+
+    @Override
     public int getNumChunks() {
         return numChunks;
     }

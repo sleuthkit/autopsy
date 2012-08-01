@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -39,8 +38,8 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -97,6 +96,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private boolean initialized = false;
     private List<AbstractFileExtract> textExtractors;
     private AbstractFileStringExtract stringExtractor;
+    private SCRIPT stringExtractSctipt = SCRIPT.LATIN_2;
 
     private enum IngestStatus {
 
@@ -262,6 +262,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         //initialize extractors
         stringExtractor = new AbstractFileStringExtract();
+        stringExtractor.setScript(stringExtractSctipt);
         textExtractors = new ArrayList<AbstractFileExtract>();
         //order matters, more specific extractors first
         textExtractors.add(new AbstractFileHtmlExtract());
@@ -979,5 +980,23 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     boolean getSkipKnown() {
         return skipKnown;
+    }
+
+    /**
+     * Set the script to use for string extraction.
+     * Takes effect on next ingest start / at init(), not in effect if ingest is running
+     * @param script script to use for string extraction next time ingest inits and runs
+     */
+    void setStringExtractScript(SCRIPT script) {
+        this.stringExtractSctipt = script;
+
+    }
+
+    /**
+     * gets the currently set script to use
+     * @return the currently used script
+     */
+    SCRIPT getStringExtractScript() {
+        return this.stringExtractSctipt;
     }
 }

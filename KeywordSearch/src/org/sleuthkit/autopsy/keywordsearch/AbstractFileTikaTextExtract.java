@@ -81,6 +81,11 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     }
 
     @Override
+    public StringExtract.StringExtractUnicodeTable.SCRIPT getScript() {
+        return null;
+    }
+
+    @Override
     public int getNumChunks() {
         return numChunks;
     }
