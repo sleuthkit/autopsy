@@ -113,8 +113,7 @@ class Server {
             public String toString() {
                 return "num_chunks";
             }
-        },
-    };
+        },};
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "-1";
     //max content size we can send to Solr
     public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
@@ -124,12 +123,9 @@ class Server {
     public static final String CORE_EVT = "CORE_EVT";
     public static final char ID_CHUNK_SEP = '_';
     private String javaPath = "java";
-    
     public static final Charset DEFAULT_INDEXED_TEXT_CHARSET = Charset.forName("UTF-8"); ///< default Charset to index text as
-    
     private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
-    
     private static Ingester ingester = null;
 
     public enum CORE_EVT_STATES {
@@ -140,6 +136,8 @@ class Server {
     private String instanceDir;
     private File solrFolder;
     private ServerAction serverAction;
+    private InputStreamPrinterThread inputRedirectThread;
+    private InputStreamPrinterThread errorRedirectThread;
 
     /**
      * New instance for the server at the given URL
@@ -177,6 +175,7 @@ class Server {
 
         InputStream stream;
         OutputStream out;
+        boolean doRun = true;
 
         InputStreamPrinterThread(InputStream stream, String type) {
             this.stream = stream;
@@ -203,6 +202,10 @@ class Server {
             }
         }
 
+        void stopRun() {
+            doRun = false;
+        }
+
         @Override
         public void run() {
             InputStreamReader isr = new InputStreamReader(stream);
@@ -211,7 +214,7 @@ class Server {
                 OutputStreamWriter osw = new OutputStreamWriter(out);
                 BufferedWriter bw = new BufferedWriter(osw);
                 String line = null;
-                while ((line = br.readLine()) != null) {
+                while (doRun && (line = br.readLine()) != null) {
                     bw.write(line);
                     bw.newLine();
                     if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
@@ -245,8 +248,11 @@ class Server {
                 Exceptions.printStackTrace(ex);
             }
             // Handle output to prevent process from blocking
-            (new InputStreamPrinterThread(curSolrProcess.getInputStream(), "input")).start();
-            (new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "error")).start();
+            inputRedirectThread = new InputStreamPrinterThread(curSolrProcess.getInputStream(), "input");
+            inputRedirectThread.start();
+
+            errorRedirectThread = new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "error");
+            errorRedirectThread.start();
 
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -274,6 +280,16 @@ class Server {
             throw new RuntimeException(ex);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
+        } finally {
+            //stop Solr stream -> log redirect threads
+            if (inputRedirectThread != null) {
+                inputRedirectThread.stopRun();
+                inputRedirectThread = null;
+            }
+            if (errorRedirectThread != null) {
+                errorRedirectThread.stopRun();
+                errorRedirectThread = null;
+            }
         }
     }
 
@@ -515,8 +531,9 @@ class Server {
     }
 
     /**
-     * Given file parent id and child chunk ID, return the ID string of the chunk
-     * as stored in Solr, e.g. FILEID_CHUNKID
+     * Given file parent id and child chunk ID, return the ID string of the
+     * chunk as stored in Solr, e.g. FILEID_CHUNKID
+     *
      * @param parentID the parent file id (id of the source content)
      * @param childID the child chunk id
      * @return formatted string id
