@@ -23,14 +23,13 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.JOptionPane;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.windows.TopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
-import org.sleuthkit.autopsy.datamodel.KeyValue;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
@@ -39,9 +38,9 @@ import org.sleuthkit.datamodel.FsContent;
  */
 public class HashDbSearchManager {
     Map<String, List<FsContent>> map;
-    List<KeyValueContent> keyValues;
+    List<KeyValueContent> kvContents;
     
-    HashDbSearchManager(Map<String, List<FsContent>> map) {
+    public HashDbSearchManager(Map<String, List<FsContent>> map) {
         this.map = map;
         init();
     }
@@ -52,51 +51,44 @@ public class HashDbSearchManager {
      * as it's value in the row.
      */
     private void init() {
-        keyValues = new ArrayList<KeyValueContent>();
-        int id = 0;
-        for(String s : map.keySet()) {
-            for(FsContent file : map.get(s)) {
-                Map<String, Object> keyMap = new LinkedHashMap<String, Object>();
-                keyMap.put("MD5 Hash", s);
-                AbstractFsContentNode.fillPropertyMap(keyMap, file);
-                KeyValueContent kv = new KeyValueContent(file.getName(), keyMap, ++id, file);
-                keyValues.add(kv);
+        if(!map.isEmpty()) {
+            kvContents = new ArrayList<KeyValueContent>();
+            int id = 0;
+            for(String s : map.keySet()) {
+                for(FsContent file : map.get(s)) {
+                    Map<String, Object> keyMap = new LinkedHashMap<String, Object>();
+                    keyMap.put("MD5 Hash", s);
+                    AbstractFsContentNode.fillPropertyMap(keyMap, file);
+                    KeyValueContent kv = new KeyValueContent(file.getName(), keyMap, ++id, file);
+                    kvContents.add(kv);
+                }
             }
         }
     }
 
     /**
      * Takes the key values, creates nodes through the HashDbSearchResultFactory, and
-     * displays it in a TopComponent on the GUI.
+     * displays it in the TopComponet.
      */
     public void execute() {
-        Collection<KeyValueContent> things = keyValues;
-        Node rootNode = null;
+        if(!map.isEmpty()) {
+            Collection<KeyValueContent> kvCollection = kvContents;
+            Node rootNode = null;
 
-        if (things.size() > 0) {
-            Children childThingNodes =
-                    Children.create(new HashDbSearchResultFactory(map, things), true);
+            if (kvCollection.size() > 0) {
+                Children childKeyValueContentNodes =
+                        Children.create(new HashDbSearchResultFactory(kvCollection), true);
 
-            rootNode = new AbstractNode(childThingNodes);
+                rootNode = new AbstractNode(childKeyValueContentNodes);
+            } else {
+                rootNode = Node.EMPTY;
+            }
+
+            final String pathText = "MD5 Hash Search";
+            TopComponent searchResultWin = DataResultTopComponent.createInstance("MD5 Hash Search", pathText, rootNode, kvCollection.size());
+            searchResultWin.requestActive();
         } else {
-            rootNode = Node.EMPTY;
+            JOptionPane.showMessageDialog(null, "No results were found.");
         }
-
-        final String pathText = "MD5 Hash Search";
-        TopComponent searchResultWin = DataResultTopComponent.createInstance("MD5 Hash Search", pathText, rootNode, things.size());
-        searchResultWin.requestActive();
-    }
-}
-
-class KeyValueContent extends KeyValue {
-    Content content;
-    
-    KeyValueContent(String name, Map<String, Object> map, int id, Content content) {
-        super(name, map, id);
-        this.content = content;
-    }
-    
-    Content getContent() {
-        return content;
     }
 }

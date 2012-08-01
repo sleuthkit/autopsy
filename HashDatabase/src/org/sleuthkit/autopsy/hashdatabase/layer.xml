@@ -5,9 +5,16 @@
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-hashdatabase-HashDbMgmtAction.instance">
             </file>
-            <file name="org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction.instance">
+            <file name="org-sleuthkit-autopsy-hashdatabase-HashDbPanelSearchAction.instance">
             </file>
         </folder>    
+    </folder>
+    <folder name="Services">
+        <file name="org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.directorytree.HashSearchProvider"/>
+            <!--<attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.filesearch.FileSearchAction.getDefault"/>-->
+            <attr name="position" intvalue="250"/>
+        </file>
     </folder>
     <folder name="Menu">
         
@@ -17,7 +24,7 @@
                 <attr name="position" intvalue="1000"/>
             </file>
             <file name="org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction.instance"/>
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-hashdatabase-HashDbPanelSearchAction.instance"/>
                 <attr name="position" intvalue="1001"/>
             </file>
             <file name="Separator1.instance_hidden"/>
