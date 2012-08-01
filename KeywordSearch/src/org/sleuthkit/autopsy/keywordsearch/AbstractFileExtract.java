@@ -56,6 +56,12 @@ interface AbstractFileExtract {
     boolean setScript(SCRIPT extractScript);
     
     /**
+     * Get the currently used script for extraction
+     * @return script currently used or null if not supported
+     */
+    SCRIPT getScript();
+    
+    /**
      * Determines if the extractor works only for specified types
      * is supportedTypes() or whether is a generic content extractor (such as string extractor)
      * @return 

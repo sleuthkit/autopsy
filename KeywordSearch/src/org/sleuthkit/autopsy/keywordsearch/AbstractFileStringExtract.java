@@ -71,6 +71,11 @@ class AbstractFileStringExtract implements AbstractFileExtract {
         return true;
     }
     
+    @Override
+    public SCRIPT getScript() {
+        return this.extractScript;
+    }
+    
 
     @Override
     public int getNumChunks() {
