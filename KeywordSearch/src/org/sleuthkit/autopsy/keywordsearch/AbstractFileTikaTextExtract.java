@@ -54,7 +54,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
     private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
-    private Tika tika;
+    //private Tika tika;
     private KeywordSearchIngestService service;
     private static Ingester ingester;
     private AbstractFile sourceFile; //currently processed file
@@ -71,7 +71,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     AbstractFileTikaTextExtract() {
         this.service = KeywordSearchIngestService.getDefault();
         ingester = Server.getIngester();
-        tika = new Tika();
+        //tika = new Tika();
         //tika.setMaxStringLength(MAX_EXTR_TEXT_CHARS); //for getting back string only
     }
 
@@ -126,6 +126,10 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
              reader = parseTask.getReader();
              */
             try {
+                //Use new Tika instance for every file 
+                //it does seem to protect against memory errors in Tika
+                //in contrast when reusing the same instance for many files
+                Tika tika = new Tika();
                 reader = tika.parse(stream, meta);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
