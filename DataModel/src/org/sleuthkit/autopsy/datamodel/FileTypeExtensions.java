@@ -7,8 +7,8 @@ import java.util.List;
  * Contains Lists of commonly known and used file type extensions
  * and 'getters' to obtain them.
  */
-class FileTypeExtensions {
-    private final static List<String> IMAGE_EXTENSIONS = Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff");
+public class FileTypeExtensions {
+    private final static List<String> IMAGE_EXTENSIONS = Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff", ".bmp");
     private final static List<String> VIDEO_EXTENSIONS = Arrays.asList(".aaf", ".3gp", ".asf", ".avi", ".m1v", ".m2v",
             ".m4v", ".mp4", ".mov", ".mpeg", ".mpg", ".mpe", ".mp4", ".rm", ".wmv", ".mpv", ".flv", ".swf");
     private final static List<String> AUDIO_EXTENSIONS = Arrays.asList(".aiff", ".aif", ".flac", ".wav", ".m4a", ".ape",
@@ -19,28 +19,28 @@ class FileTypeExtensions {
     private final static List<String> WEB_EXTENSIONS = Arrays.asList(".html", ".htm", ".css", ".js", ".php", ".aspx");
     private final static List<String> PDF_EXTENSIONS = Arrays.asList(".pdf");
     
-    static List<String> getImageExtensions() {
+    public static List<String> getImageExtensions() {
         return IMAGE_EXTENSIONS;
     }
-    static List<String> getVideoExtensions() {
+    public static List<String> getVideoExtensions() {
         return VIDEO_EXTENSIONS;
     }
-    static List<String> getAudioExtensions() {
+    public static List<String> getAudioExtensions() {
         return AUDIO_EXTENSIONS;
     }
-    static List<String> getDocumentExtensions() {
+    public static List<String> getDocumentExtensions() {
         return DOCUMENT_EXTENSIONS;
     }
-    static List<String> getExecutableExtensions() {
+    public static List<String> getExecutableExtensions() {
         return EXECUTABLE_EXTENSIONS;
     }
-    static List<String> getTextExtensions() {
+    public static List<String> getTextExtensions() {
         return TEXT_EXTENSIONS;
     }
-    static List<String> getWebExtensions() {
+    public static List<String> getWebExtensions() {
         return WEB_EXTENSIONS;
     }
-    static List<String> getPDFExtensions() {
+    public static List<String> getPDFExtensions() {
         return PDF_EXTENSIONS;
     }
 }
