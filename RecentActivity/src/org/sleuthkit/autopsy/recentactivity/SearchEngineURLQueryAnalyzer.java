@@ -1,7 +1,33 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2011 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+
+/** This module attempts to extract web queries from major search engines
+ *  by querying the blackboard for web history and bookmark artifacts, and extracting
+ *  search text from them. 
+ * 
+ * 
+ *  Additions to the search engines require editing the following:
+ *      SearchEngine enum,
+ *      getSearchEngine(),
+ *      extractSearchEngineQuery()
+ **/
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.UnsupportedEncodingException;
@@ -9,6 +35,7 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JPanel;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
@@ -24,23 +51,56 @@ import org.sleuthkit.datamodel.Image;
 
 
 public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServiceImage{
-    protected String moduleName = "SEUQA";
+    static final String moduleName = "SEUQA";
 
-    
-    private static enum SearchEngine {NONE, Google, Bing, Yahoo, Baidu, Sogou, Soso, Yandex, Youdao, Biglobe, Linkestan, Parseek, Parset};
 
-    
-    
-    
-            
+
+    /** The record of supported engines**/
+    private static enum SearchEngine {
+        NONE("None"), 
+        Google("Google"), 
+        Bing("Bing"), 
+        Yahoo("Yahoo"), 
+        Baidu("Baidu"), 
+        Sogou("Sogou"), 
+        Soso("Soso"), 
+        Yandex("Yandex"), 
+        Youdao("Youdao"), 
+        Biglobe("Biglobe"), 
+        Linkestan("Linkestan"), 
+        Parseek("Parseek"), 
+        Parset("Parset");
+        
+        private final String name;
+        private int total = 0;
+        
+        SearchEngine(String name){
+            this.name = name;
+        }
+        
+        private int getTotal(){
+            return total;
+        }
+        private void increment(){
+            ++total;
+        }
+        private String getName(){
+            return name;
+        }
+    };
+
            
     SearchEngineURLQueryAnalyzer(){
-
 
 }
     
     
-    private SearchEngine getSearchEngine(String domain){
+    /** 
+     * Returns which of the supported SearchEngines, if any, the given string belongs to. 
+     * 
+     * @param domain the URL string to be determined
+     **/
+    private static SearchEngine getSearchEngine(String domain){
         if(domain.contains(".com")){
             String[] d = domain.split(".com");
             if(d.length != 0 && d[0].contains(".baidu")){
@@ -88,7 +148,13 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
         }
       return SearchEngine.NONE;
     }
-    
+        
+   /**
+    * Attempts to extract the query from a URL.
+    * @param se SearchEngine, used to determine format of search query. 
+    * @param url The URL string to be dissected.
+    * @return The extracted search query.
+    */
     private String extractSearchEngineQuery(SearchEngine se, String url){
         String x = "";
 
@@ -225,7 +291,12 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
     }
 
     
-//for splitting urls based on a key. Abstracted out of extractSearchEngineQuery()  
+/**
+ * Splits URLs based on a delimeter (key). .contains() and .split() 
+ * @param url The URL to be split
+ * @param splitkey the delimeter used to split the URL into its search query.
+ * @return The extracted search query
+ **/
     private String split2(String url, String splitkey){
         String basereturn = "NULL";
         String splitKeyConverted = splitkey;
@@ -250,11 +321,15 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
    
     
     
-    private void getURLs(Image image){
+    private void getURLs(Image image, IngestImageWorkerController controller){
+        int totalQueries = 0;
        try{ 
             //from blackboard_artifacts
-            ArrayList<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getMatchingArtifacts("WHERE (`artifact_type_id` = '2' OR `artifact_type_id` = '4') ");  //List of every 'web_history' and 'bookmark' artifact
-        getAll:    
+            ArrayList<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getMatchingArtifacts
+                    ("WHERE (`artifact_type_id` = '" + ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() 
+                    +"' OR `artifact_type_id` = '"+ ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() +"') ");  //List of every 'web_history' and 'bookmark' artifact
+            logger.info("Processing " + listArtifacts.size() + " blackboard artifacts.");
+       getAll:    
         for(BlackboardArtifact artifact : listArtifacts){
             //initializing default attributes
             String source = ""; //becomes "bookmark" if attribute type 2, remains blank otherwise
@@ -269,6 +344,9 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
             ArrayList<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("Where `artifact_id` = " + artifact.getArtifactID());
             getAttributes:
             for(BlackboardAttribute attribute : listAttributes){
+                if(controller.isCancelled()){   
+                    break getAll;       //User cancled the process.
+                }
                 if(attribute.getAttributeTypeID() == 1){
                     se = getSearchEngine(attribute.getValueString());
                     if(! se.equals(SearchEngine.NONE)){ 
@@ -301,12 +379,14 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "SEUQA", source, browser));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "SEUQA", "", last_accessed));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, fs , bbattributes);
+                        se.increment();
+                        ++totalQueries;
             }
                 catch(Exception e){
                     logger.log(Level.SEVERE, "Error while add artifact.", e + " from " + fs.toString());
                     this.addErrorMessage(this.getName() + ": Error while adding artifact");
                 }
-                IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT));
+                IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
             }
             
             
@@ -315,27 +395,43 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
         catch (Exception e){
             logger.info("Encountered error retrieving artifacts: " + e);
         }
+       finally{
+           if(controller.isCancelled()){
+               logger.info("Operation terminated by user.");
+           }
+           logger.info("Extracted " + totalQueries + " queries from the blackboard");
+       }
     }
     
+    private String getTotals() {
+        String total = "";
+       for(SearchEngine se : SearchEngine.values()){
+           if(se.getTotal() != 0){
+               total += se.getName() + ": " + se.getTotal() + "\n";
+           }
+       }
+       return total;
+    }
             
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
-        this.getURLs(image);
+        this.getURLs(image, controller);
+        logger.info("Search Engine stats: \n" + getTotals());
     }
 
     @Override
     public void init(IngestManagerProxy managerProxy) {
-        throw new UnsupportedOperationException("Not supported yet.");
+       logger.info("running init()");
     }
 
     @Override
     public void complete() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        logger.info("running complete()");
     }
 
     @Override
     public void stop() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        logger.info("running stop()");
     }
 
     @Override
@@ -345,7 +441,18 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
 
     @Override
     public String getDescription() {
-        return "Extracts search queries on major search engines";
+         SearchEngine[] values = SearchEngine.values();
+         String total = "";
+         int i = 0;
+         while(i < values.length){  //could alternatively just forbid values[0], but that's kind of volatile.
+             if (values[i] != SearchEngine.NONE){
+                 total += values[i].getName() + "\n";
+             }
+             i++;
+         }
+             
+        return "Extracts search queries on the following search engines: " + total;
+       
     }
 
     @Override
@@ -355,7 +462,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
 
     @Override
     public boolean hasBackgroundJobsRunning() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return false;
     }
 
     @Override
