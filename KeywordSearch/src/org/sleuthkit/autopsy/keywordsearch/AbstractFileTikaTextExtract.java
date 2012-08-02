@@ -27,6 +27,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
@@ -35,6 +38,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
+import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 
 /**
  * Extractor of text from TIKA supported AbstractFile content. Extracted text is
@@ -107,34 +111,33 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         final InputStream stream = new ReadContentInputStream(sourceFile);
         try {
             Metadata meta = new Metadata();
-            /* Tika parse request with timeout -- disabled for now
-             ParseRequestTask parseTask = new ParseRequestTask(tika, stream, meta, sourceFile);
-             final Future<?> future = tikaParseExecutor.submit(parseTask);
-             try {
-             future.get(Ingester.getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
-             } catch (TimeoutException te) {
-             final String msg = "Tika parse timeout for content: " + sourceFile.getId() + ", " + sourceFile.getName();
-             logger.log(Level.WARNING, msg);
-             throw new IngesterException(msg);
-             }
-             catch (Exception ex) {
-             final String msg = "Unexpected exception from Tika parse task execution for file: " + sourceFile.getId() + ", " + sourceFile.getName();
-             logger.log(Level.WARNING, msg, ex);
-             throw new IngesterException(msg);
-             }
-            
-             reader = parseTask.getReader();
-             */
+            //Tika parse request with timeout
+            final Tika tika = new Tika(); //new tika instance for every file, to workaround tika memory issues
+            ParseRequestTask parseTask = new ParseRequestTask(tika, stream, meta, sourceFile);
+            final Future<?> future = tikaParseExecutor.submit(parseTask);
             try {
-                //Use new Tika instance for every file 
-                //it does seem to protect against memory errors in Tika
-                //in contrast when reusing the same instance for many files
-                Tika tika = new Tika();
-                reader = tika.parse(stream, meta);
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
-                reader = null;
+                future.get(Ingester.getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
+            } catch (TimeoutException te) {
+                final String msg = "Tika parse timeout for content: " + sourceFile.getId() + ", " + sourceFile.getName();
+                logger.log(Level.WARNING, msg);
+                throw new IngesterException(msg);
+            } catch (Exception ex) {
+                final String msg = "Unexpected exception from Tika parse task execution for file: " + sourceFile.getId() + ", " + sourceFile.getName();
+                logger.log(Level.WARNING, msg, ex);
+                throw new IngesterException(msg);
             }
+
+            reader = parseTask.getReader();
+
+            /*
+             try {
+             //new tika instance for every file, to workaround tika memory issues
+             Tika tika = new Tika();
+             reader = tika.parse(stream, meta);
+             } catch (IOException ex) {
+             logger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+             reader = null;
+             }*/
 
             if (reader == null) {
                 //likely due to exception in parse()
