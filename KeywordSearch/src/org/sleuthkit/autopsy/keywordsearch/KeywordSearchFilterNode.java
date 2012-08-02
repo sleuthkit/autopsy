@@ -30,6 +30,7 @@ import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -137,7 +138,9 @@ class KeywordSearchFilterNode extends FilterNode {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", KeywordSearchFilterNode.this));
             actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
+            actions.add(null);
             actions.add(new ExtractAction("Extract File", getOriginal()));
+            actions.add(new HashSearchAction("Search for similar MD5", getOriginal()));
             return actions;
         }
 
