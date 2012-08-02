@@ -23,6 +23,11 @@
                 <attr name="position" intvalue="3086"/>
             </file>
         </folder>
+        <file name="org-sleuthkit-autopsy-directorytree-HashSearchAction.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.hashdatabase.HashSearchAction"/>
+            <!--<attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.filesearch.FileSearchAction.getDefault"/>-->
+            <attr name="position" intvalue="250"/>
+        </file>
         <file name="org-sleuthkit-autopsy-directorytree-DirectoryTreeTopComponent.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent.getDefault"/>
