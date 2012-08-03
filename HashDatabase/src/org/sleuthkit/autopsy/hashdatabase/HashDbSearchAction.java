@@ -97,13 +97,9 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
             // Get the map of hashes to FsContent and send it to the manager
             List<FsContent> files = HashDbSearcher.findFilesByMd5(fsContent.getMd5Hash());
             for(int i=0; i<files.size(); i++) {
-                try {
-                    // If they are the same file, remove it from the list
-                    if(files.get(i).getUniquePath().equals(fsContent.getUniquePath())) {
-                        files.remove(i);
-                    }
-                } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex);
+                // If they are the same file, remove it from the list
+                if(files.get(i).equals(fsContent)) {
+                    files.remove(i);
                 }
             }
             if(!files.isEmpty()) {
