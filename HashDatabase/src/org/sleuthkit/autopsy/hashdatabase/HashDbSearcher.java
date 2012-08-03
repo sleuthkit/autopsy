@@ -31,8 +31,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * subsequently the same content.
  */
 public class HashDbSearcher {
-    private static final Case currentCase = Case.getCurrentCase();
-    private static final SleuthkitCase skCase = currentCase.getSleuthkitCase();
     
     /**
      * Given a string hash value, find all files with that hash.
@@ -40,6 +38,8 @@ public class HashDbSearcher {
      * @return a List of all FsContent with the given hash
      */
     static List<FsContent> findFilesByMd5(String md5Hash) {
+        final Case currentCase = Case.getCurrentCase();
+        final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.findFilesByMd5(md5Hash);
     }
     
@@ -81,6 +81,8 @@ public class HashDbSearcher {
      * @return true if the search feature is ready.
      */
     static boolean isReady() {
+        final Case currentCase = Case.getCurrentCase();
+        final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.allFilesMd5Hashed();
     }
 }

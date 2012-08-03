@@ -30,15 +30,18 @@ import org.openide.util.Lookup;
  */
 public class HashSearchAction extends AbstractAction {
     Node contentNode;
+    HashSearchProvider searcher;
     
     public HashSearchAction(String title, Node contentNode) {
         super(title);
         this.contentNode = contentNode;
+        this.searcher = Lookup.getDefault().lookup(HashSearchProvider.class);
+        this.setEnabled(searcher.isReady());
     }
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        HashSearchProvider searcher = Lookup.getDefault().lookup(HashSearchProvider.class);
+        //HashSearchProvider searcher = Lookup.getDefault().lookup(HashSearchProvider.class);
         searcher.search(contentNode);
     }
     
