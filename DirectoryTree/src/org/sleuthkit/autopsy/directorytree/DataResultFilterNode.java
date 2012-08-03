@@ -185,7 +185,7 @@ public class DataResultFilterNode extends FilterNode{
             actions.add(new ExternalViewerAction("Open in External Viewer", f));
             actions.add(null); // creates a menu separator
             actions.add(new ExtractAction("Extract File", f));
-            actions.add(new HashSearchAction("Search for similar MD5", f));
+            actions.add(new HashSearchAction("Search for files with the same MD5 hash", f));
             return actions;
         }
         
@@ -210,7 +210,7 @@ public class DataResultFilterNode extends FilterNode{
                 actions.add(new ExternalViewerAction("Open in External Viewer", new FileNode(f)));
                 actions.add(null); // creates a menu separator
                 actions.add(new ExtractAction("Extract File", new FileNode(f)));
-                actions.add(new HashSearchAction("Search for similar MD5", new FileNode(f)));
+                actions.add(new HashSearchAction("Search for files with the same MD5 hash", new FileNode(f)));
             }
             return actions;
         }

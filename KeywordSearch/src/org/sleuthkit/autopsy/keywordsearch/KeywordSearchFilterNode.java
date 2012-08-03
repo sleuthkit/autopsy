@@ -140,7 +140,7 @@ class KeywordSearchFilterNode extends FilterNode {
             actions.add(new ExternalViewerAction("Open in External Viewer", getOriginal()));
             actions.add(null);
             actions.add(new ExtractAction("Extract File", getOriginal()));
-            actions.add(new HashSearchAction("Search for similar MD5", getOriginal()));
+            actions.add(new HashSearchAction("Search for files with the same MD5 hash", getOriginal()));
             return actions;
         }
 

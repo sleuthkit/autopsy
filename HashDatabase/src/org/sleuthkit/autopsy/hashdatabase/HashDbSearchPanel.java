@@ -27,7 +27,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.UndoableEditListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Element;
+import javax.swing.text.PlainDocument;
+import javax.swing.text.Position;
+import javax.swing.text.Segment;
 import org.sleuthkit.datamodel.FsContent;
 
 /**
@@ -62,6 +71,15 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         removeButton.addActionListener(this);
         errorField.setVisible(false);
         hashField.requestFocus();
+        // Don't let the user input more characters than in an MD5 hash
+        hashField.setDocument(new PlainDocument () {
+            @Override
+            public void insertString(int offset, String str, AttributeSet a) throws BadLocationException {
+                if((this.getLength() + str.length()) <= 32) {
+                    super.insertString(offset, str, a);
+                }
+            }
+        });
         // Pressing enter adds the hash
         hashField.addKeyListener(new KeyAdapter() {
             @Override
@@ -184,32 +202,30 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(errorField)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(searchButton))
+                    .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
+                        .addComponent(hashLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(hashField))
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane1)
-                            .addComponent(jSeparator1)
+                            .addComponent(titleLabel)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(hashLabel)
+                                .addGap(61, 61, 61)
+                                .addComponent(addButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(hashField))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(titleLabel)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(61, 61, 61)
-                                        .addComponent(addButton)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(removeButton)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(saveBox)))
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                .addComponent(removeButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(saveBox)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(errorField)
+                        .addGap(18, 18, 18)
+                        .addComponent(searchButton))
+                    .addComponent(jSeparator1))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -218,8 +234,8 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                 .addContainerGap()
                 .addComponent(titleLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 355, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(26, 26, 26)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(hashLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(hashField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -228,13 +244,13 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                     .addComponent(addButton)
                     .addComponent(removeButton)
                     .addComponent(saveBox))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(searchButton)
                     .addComponent(errorField))
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -288,7 +304,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                 man.execute();
                 return true;
             } else {
-                errorField.setText("No hashes have been entered.");
+                errorField.setText("Error: No hashes have been entered.");
                 errorField.setVisible(true);
                 return false;
             }
@@ -303,10 +319,17 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
      * Add the given text into the table of hashes.
      */
     void add() {
+        errorField.setVisible(false);
         DefaultTableModel model = (DefaultTableModel) hashTable.getModel();
-        if(!hashField.getText().equals("")) {
-            model.addRow(new String[] {hashField.getText()});
-            hashField.setText(""); // wipe the field
+        String hash = hashField.getText();
+        if(!hash.equals("")) {
+            if(hash.matches("[a-fA-F0-9]{32}")) {
+                model.addRow(new String[] {hash});
+                hashField.setText(""); // wipe the field
+            } else {
+                errorField.setText("Error: That is not a valid MD5 hash.");
+                errorField.setVisible(true);
+            }
         }
         hashField.requestFocus(); // select the field to type in
     }
