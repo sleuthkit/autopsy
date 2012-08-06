@@ -42,7 +42,7 @@ public class AbstractFileStringIntStream extends InputStream {
     private StringExtract stringExtractor;
     private static final int FILE_BUF_SIZE = 1024 * 1024;
     private static final byte[] fileReadBuff = new byte[FILE_BUF_SIZE]; //NOTE: need to run all stream extraction in same thread
-    private int fileReadOffset = 0;
+    private long fileReadOffset = 0L;
     private byte[] convertBuff; //stores extracted string encoded as bytes, before returned to user
     private int convertBuffOffset = 0; //offset to start returning data to user on next read()
     private int bytesInConvertBuff = 0; //amount of data currently in the buffer
