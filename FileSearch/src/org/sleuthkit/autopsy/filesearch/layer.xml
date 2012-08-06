@@ -29,10 +29,6 @@
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-filesearch-FileSearchAction.instance"/>
                 <attr name="position" intvalue="800"/>
             </file>
-            <file name="org-sleuthkit-autopsy-report-generatereport-separatorAfter.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="801"/>
-            </file>
         </folder>
     </folder>
 </filesystem>
