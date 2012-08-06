@@ -60,14 +60,11 @@ public class Ingester {
     private final ExecutorService upRequestExecutor = Executors.newSingleThreadExecutor();
     private final Server solrServer = KeywordSearch.getServer();
     private final GetContentFieldsV getContentFieldsV = new GetContentFieldsV();
-
-
     private static Ingester instance;
-    
+
     private Ingester() {
-        
     }
-    
+
     public static synchronized Ingester getDefault() {
         if (instance == null) {
             instance = new Ingester();
@@ -89,7 +86,7 @@ public class Ingester {
     /**
      * Sends a stream to Solr to have its content extracted and added to the
      * index. commit() should be called once you're done ingesting files.
-     * 
+     *
      * @param afscs File AbstractFileStringContentStream to ingest
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
@@ -100,11 +97,12 @@ public class Ingester {
     }
 
     /**
-     * Sends a AbstractFileExtract to Solr to have its content extracted and added to the
-     * index. commit() should be called once you're done ingesting files.
-     * FileExtract represents a parent of extracted file with actual content.  
-     * The parent itself has no content, only meta data and is used to associate the extracted AbstractFileChunk
-     * 
+     * Sends a AbstractFileExtract to Solr to have its content extracted and
+     * added to the index. commit() should be called once you're done ingesting
+     * files. FileExtract represents a parent of extracted file with actual
+     * content. The parent itself has no content, only meta data and is used to
+     * associate the extracted AbstractFileChunk
+     *
      * @param fe AbstractFileExtract to ingest
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
@@ -118,12 +116,13 @@ public class Ingester {
     }
 
     /**
-     * Sends a AbstractFileChunk to Solr and its extracted content stream to be added to the
-     * index. commit() should be called once you're done ingesting files.
-     * AbstractFileChunk represents a file chunk and its chunk content.
-     * 
+     * Sends a AbstractFileChunk to Solr and its extracted content stream to be
+     * added to the index. commit() should be called once you're done ingesting
+     * files. AbstractFileChunk represents a file chunk and its chunk content.
+     *
      * @param fec AbstractFileChunk to ingest
-     * @param size approx. size of the stream in bytes, used for timeout estimation 
+     * @param size approx. size of the stream in bytes, used for timeout
+     * estimation
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
@@ -132,40 +131,42 @@ public class Ingester {
         Map<String, String> params = getContentFields(sourceContent);
 
         //overwrite id with the chunk id
-        params.put(Server.Schema.ID.toString(), 
-        Server.getChunkIdString(sourceContent.getId(), fec.getChunkId()));
-    
+        params.put(Server.Schema.ID.toString(),
+                Server.getChunkIdString(sourceContent.getId(), fec.getChunkId()));
+
         ingest(bcs, params, size);
     }
 
     /**
      * Sends a file to Solr to have its content extracted and added to the
-     * index. commit() should be called once you're done ingesting files.
-     * If the file is a directory or ingestContent is set to false, the file name is indexed only.
-     * 
+     * index. commit() should be called once you're done ingesting files. If the
+     * file is a directory or ingestContent is set to false, the file name is
+     * indexed only.
+     *
      * @param fsContent File to ingest
-     * @param ingestContent if true, index the file and the content, otherwise indesx metadata only
+     * @param ingestContent if true, index the file and the content, otherwise
+     * indesx metadata only
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
     void ingest(FsContent fsContent, boolean ingestContent) throws IngesterException {
-        if (fsContent.isDir() || ingestContent == false ) {
+        if (fsContent.isDir() || ingestContent == false) {
             ingest(new NullContentStream(fsContent), getContentFields(fsContent), 0);
-        }
-        else {
+        } else {
             ingest(new FscContentStream(fsContent), getContentFields(fsContent), fsContent.getSize());
         }
     }
 
     /**
      * Creates a field map from FsContent, that is later sent to Solr
+     *
      * @param fsc FsContent to get fields from
      * @return the map
      */
     private Map<String, String> getContentFields(AbstractContent fsc) {
         return fsc.accept(getContentFieldsV);
     }
-    
+
     private class GetContentFieldsV extends ContentVisitor.Default<Map<String, String>> {
 
         @Override
@@ -176,10 +177,14 @@ public class Ingester {
         @Override
         public Map<String, String> visit(File f) {
             Map<String, String> params = getCommonFields(f);
-            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTime(f.getCtime(), f));
-            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTime(f.getAtime(), f));
-            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTime(f.getMtime(), f));
-            params.put(Server.Schema.CRTIME.toString(),ContentUtils.getStringTime(f.getCrtime(), f));
+            getCommonFsContentFields(params, f);
+            return params;
+        }
+
+        @Override
+        public Map<String, String> visit(Directory d) {
+            Map<String, String> params = getCommonFields(d);
+            getCommonFsContentFields(params, d);
             return params;
         }
 
@@ -187,32 +192,32 @@ public class Ingester {
         public Map<String, String> visit(LayoutFile lf) {
             return getCommonFields(lf);
         }
-        
+
+        private Map<String, String> getCommonFsContentFields(Map<String, String> params, FsContent fsContent) {
+            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTime(fsContent.getCtime(), fsContent));
+            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTime(fsContent.getAtime(), fsContent));
+            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTime(fsContent.getMtime(), fsContent));
+            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTime(fsContent.getCrtime(), fsContent));
+            return params;
+        }
+
         private Map<String, String> getCommonFields(AbstractFile af) {
             Map<String, String> params = new HashMap<String, String>();
             params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
             params.put(Server.Schema.FILE_NAME.toString(), af.getName());
             return params;
         }
-
-        @Override
-        public Map<String, String> visit(Directory d) {
-            Map<String, String> params = getCommonFields(d);
-            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTime(d.getCtime(), d));
-            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTime(d.getAtime(), d));
-            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTime(d.getMtime(), d));
-            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTime(d.getCrtime(), d));
-            return params;
-        } 
     }
 
     /**
-     * Delegate method actually performing the indexing work for objects implementing ContentStream
-     * 
+     * Delegate method actually performing the indexing work for objects
+     * implementing ContentStream
+     *
      * @param cs ContentStream to ingest
      * @param fields content specific fields
-     * @param size size of the content - used to determine the Solr timeout, not used to populate meta-data
-     * 
+     * @param size size of the content - used to determine the Solr timeout, not
+     * used to populate meta-data
+     *
      * @throws IngesterException if there was an error processing a specific
      * content, but the Solr server is probably fine.
      */
@@ -257,7 +262,8 @@ public class Ingester {
     }
 
     /**
-     * return timeout that should be used to index the content 
+     * return timeout that should be used to index the content
+     *
      * @param size size of the content
      * @return time in seconds to use a timeout
      */
@@ -333,6 +339,7 @@ public class Ingester {
 
     /**
      * Helper to set document fields
+     *
      * @param up request with document
      * @param fields map of field-names->values
      */
@@ -427,8 +434,8 @@ public class Ingester {
     }
 
     /**
-     * Indicates that there was an error with the specific ingest operation,
-     * but it's still okay to continue ingesting files.
+     * Indicates that there was an error with the specific ingest operation, but
+     * it's still okay to continue ingesting files.
      */
     static class IngesterException extends Exception {
 
@@ -440,5 +447,4 @@ public class Ingester {
             super(message);
         }
     }
-
 }
