@@ -13,7 +13,10 @@ All data in a case will be stored in a single database and configuration file.  
 
 Case settings are stored in an XML file.  See the XMLCaseManagement class for more details.
 
-Currently, only one case can be opened at a time.  To determine the open case, use the Case.getCurrentCase()  method.  Once you have the object for the currently open case, Case.getRootObjects() will return the top-level Sleuth Kit Content modules. You can then get their children to go down the tree of data types.
+Currently, only one case can be opened at a time.  To determine the open case, use the Case.getCurrentCase()  method.  
+Do not cache the case handle object obtained from this method (for example, in member variables) unless you are sure your are acting within case context; 
+It is safer to call the method more frequently to ensure the validity of the case handle object as new cases are opened.
+Once you have the object for the currently open case, Case.getRootObjects() will return the top-level Sleuth Kit Content modules. You can then get their children to go down the tree of data types.
 
 
 \section casemodule_events Case Events
