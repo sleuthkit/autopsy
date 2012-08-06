@@ -39,6 +39,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -683,6 +684,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             //block to ensure previous searcher is completely done with doInBackground()
             //even after previous searcher cancellation, we need to check this
             searcherLock.lock();
+            final StopWatch stopWatch = new StopWatch();
+            stopWatch.start();
             try {
                 logger.log(Level.INFO, "Started a new searcher");
                 progress.setDisplayName(displayName);
@@ -741,38 +744,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                     }
 
                     //calculate new results but substracting results already obtained in this ingest
-                    Map<Keyword, List<ContentHit>> newResults = new HashMap<Keyword, List<ContentHit>>();
-
-                    for (String termResult : queryResult.keySet()) {
-                        List<ContentHit> queryTermResults = queryResult.get(termResult);
-
-                        //translate to list of IDs that we keep track of
-                        List<Long> queryTermResultsIDs = new ArrayList<Long>();
-                        for (ContentHit ch : queryTermResults) {
-                            queryTermResultsIDs.add(ch.getId());
-                        }
-
-                        Keyword termResultK = new Keyword(termResult, !isRegex);
-                        List<Long> curTermResults = currentResults.get(termResultK);
-                        if (curTermResults == null) {
-                            currentResults.put(termResultK, queryTermResultsIDs);
-                            newResults.put(termResultK, queryTermResults);
-                        } else {
-                            //some AbstractFile hits already exist for this keyword
-                            for (ContentHit res : queryTermResults) {
-                                if (!curTermResults.contains(res.getId())) {
-                                    //add to new results
-                                    List<ContentHit> newResultsFs = newResults.get(termResultK);
-                                    if (newResultsFs == null) {
-                                        newResultsFs = new ArrayList<ContentHit>();
-                                        newResults.put(termResultK, newResultsFs);
-                                    }
-                                    newResultsFs.add(res);
-                                    curTermResults.add(res.getId());
-                                }
-                            }
-                        }
-                    }
+                    Map<Keyword, List<ContentHit>> newResults = filterResults(queryResult, isRegex);
 
                     if (!newResults.isEmpty()) {
 
@@ -902,6 +874,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 logger.log(Level.WARNING, "searcher exception occurred", ex);
             } finally {
                 finalizeSearcher();
+                stopWatch.stop();
+                logger.log(Level.INFO, "Searcher took to run: " + stopWatch.getElapsedTimeSecs() + " secs.");
                 searcherLock.unlock();
             }
 
@@ -966,6 +940,46 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 }
             }
         }
+
+        //calculate new results but substracting results already obtained in this ingest
+        //update currentResults map with the new results
+        private Map<Keyword, List<ContentHit>> filterResults(Map<String, List<ContentHit>> queryResult, boolean isRegex) {
+            Map<Keyword, List<ContentHit>> newResults = new HashMap<Keyword, List<ContentHit>>();
+
+            for (String termResult : queryResult.keySet()) {
+                List<ContentHit> queryTermResults = queryResult.get(termResult);
+
+                //translate to list of IDs that we keep track of
+                List<Long> queryTermResultsIDs = new ArrayList<Long>();
+                for (ContentHit ch : queryTermResults) {
+                    queryTermResultsIDs.add(ch.getId());
+                }
+
+                Keyword termResultK = new Keyword(termResult, !isRegex);
+                List<Long> curTermResults = currentResults.get(termResultK);
+                if (curTermResults == null) {
+                    currentResults.put(termResultK, queryTermResultsIDs);
+                    newResults.put(termResultK, queryTermResults);
+                } else {
+                    //some AbstractFile hits already exist for this keyword
+                    for (ContentHit res : queryTermResults) {
+                        if (!curTermResults.contains(res.getId())) {
+                            //add to new results
+                            List<ContentHit> newResultsFs = newResults.get(termResultK);
+                            if (newResultsFs == null) {
+                                newResultsFs = new ArrayList<ContentHit>();
+                                newResults.put(termResultK, newResultsFs);
+                            }
+                            newResultsFs.add(res);
+                            curTermResults.add(res.getId());
+                        }
+                    }
+                }
+            }
+
+            return newResults;
+
+        }
     }
 
     /**
@@ -983,9 +997,11 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * Set the script to use for string extraction.
-     * Takes effect on next ingest start / at init(), not in effect if ingest is running
-     * @param script script to use for string extraction next time ingest inits and runs
+     * Set the script to use for string extraction. Takes effect on next ingest
+     * start / at init(), not in effect if ingest is running
+     *
+     * @param script script to use for string extraction next time ingest inits
+     * and runs
      */
     void setStringExtractScript(SCRIPT script) {
         this.stringExtractSctipt = script;
@@ -994,6 +1010,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     /**
      * gets the currently set script to use
+     *
      * @return the currently used script
      */
     SCRIPT getStringExtractScript() {
