@@ -193,8 +193,10 @@ public class DataResultFilterNode extends FilterNode{
         public List<Action> visit(BlackboardArtifactNode ban) {
             List<Action> actions = new ArrayList<Action>();
             BlackboardArtifact ba = ban.getLookup().lookup(BlackboardArtifact.class);
-            if(ba.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
-                    || ba.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+            final int artifactTypeID = ba.getArtifactTypeID();
+            
+            if( artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
+                    || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 actions.add(new ViewContextAction("View File in Directory", ban));
             } else {
                 Content c = findLinked(ban);
@@ -211,6 +213,10 @@ public class DataResultFilterNode extends FilterNode{
                 actions.add(null); // creates a menu separator
                 actions.add(new ExtractAction("Extract File", new FileNode(f)));
                 actions.add(new HashSearchAction("Search for files with the same MD5 hash", new FileNode(f)));
+            }
+            if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() ) {
+                actions.add(null); // creates a menu separator
+                actions.add(new ResultDeleteAction("Delete Result", ba) ); 
             }
             return actions;
         }
