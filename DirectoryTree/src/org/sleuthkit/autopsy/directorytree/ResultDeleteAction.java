@@ -28,6 +28,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -87,7 +88,7 @@ public class ResultDeleteAction extends AbstractAction {
         } else if (this.actionType == ActionType.TYPE_ARTIFACTS) {
             if (JOptionPane.showConfirmDialog(null,
                     "Are you sure you want to delete all " + artType.getDisplayName() + " results?",
-                   artType.getDisplayName() + " Results Deletion", JOptionPane.YES_NO_OPTION,
+                    artType.getDisplayName() + " Results Deletion", JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION) {
                 deleteArtifacts(artType);
                 DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();
@@ -111,6 +112,36 @@ public class ResultDeleteAction extends AbstractAction {
 
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Could not delete artifact by id: " + artId, ex);
+        }
+
+    }
+
+
+    private static void deleteArtifactsByAttributeValue(BlackboardArtifact.ARTIFACT_TYPE artType,
+            BlackboardAttribute.ATTRIBUTE_TYPE attrType, String value) {
+
+        final SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+        try {
+            //first to select to get artifact ids to delete
+            //then join delete attrs
+            //then delete arts by id
+            ResultSet rs = skCase.runQuery("DELETE FROM blackboard_attributes WHERE artifact_id IN "
+                    + "(SELECT blackboard_artifacts.artifact_id FROM blackboard_artifacts "
+                    + "INNER JOIN blackboard_attributes ON (blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id) "
+                    + "WHERE blackboard_artifacts.artifact_type_id = "
+                    + Integer.toString(artType.getTypeID())
+                    + " AND blackboard_attributes.attribute_type_id = " + Integer.toString(attrType.getTypeID())
+                    + " AND blackboard_attributes.value_type = " + BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING.getType()
+                    + " AND blackboard_attributes.value_text = '" + value + "'"
+                    + ")");
+            skCase.closeRunQuery(rs);
+
+            //rs = skCase.runQuery("DELETE from blackboard_artifacts where artifact_type_id = "
+              //      + Integer.toString(artType.getTypeID()));
+            //skCase.closeRunQuery(rs);
+
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "Could not delete artifacts by type id: " + artType.getTypeID(), ex);
         }
 
     }
