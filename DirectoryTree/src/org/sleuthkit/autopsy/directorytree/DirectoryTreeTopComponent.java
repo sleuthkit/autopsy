@@ -739,7 +739,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refreshes the nodes in the tree to reflect updates in the database
      * should be called in the gui thread
      */
-    private void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
+    void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
 
         Node selected = getSelectedNode();
         final String[] path = NodeOp.createPath(selected, em.getRootContext());
