@@ -60,26 +60,25 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskException;
 
-
 /**
- * This class wraps nodes as they are passed to the DataResult viewers.  It 
- * defines the actions that the node should have. 
+ * This class wraps nodes as they are passed to the DataResult viewers. It
+ * defines the actions that the node should have.
  */
-public class DataResultFilterNode extends FilterNode{
+public class DataResultFilterNode extends FilterNode {
 
     private ExplorerManager sourceEm;
     private final DisplayableItemNodeVisitor<List<Action>> getActionsDIV;
     private final DisplayableItemNodeVisitor<AbstractAction> getPreferredActionsDIV;
 
-
-    /** the constructor */
+    /**
+     * the constructor
+     */
     public DataResultFilterNode(Node node, ExplorerManager em) {
         super(node, new DataResultFilterChildren(node, em));
         this.sourceEm = em;
         getActionsDIV = new GetPopupActionsDisplayableItemNodeVisitor();
         getPreferredActionsDIV = new GetPreferredActionsDisplayableItemNodeVisitor();
     }
-    
 
     /**
      * Right click action for the nodes that we want to pass to the directory
@@ -92,16 +91,15 @@ public class DataResultFilterNode extends FilterNode{
     public Action[] getActions(boolean popup) {
 
         List<Action> actions = new ArrayList<Action>();
-        
+
         final DisplayableItemNode originalNode = (DisplayableItemNode) this.getOriginal();
         actions.addAll(originalNode.accept(getActionsDIV));
-        
+
         //actions.add(new IndexContentFilesAction(nodeContent, "Index"));
 
         return actions.toArray(new Action[actions.size()]);
     }
-    
-    
+
     /**
      * Double click action for the nodes that we want to pass to the directory
      * table and the output view.
@@ -111,13 +109,13 @@ public class DataResultFilterNode extends FilterNode{
     @Override
     public Action getPreferredAction() {
         // double click action(s) for volume node or directory node
-        
+
         final DisplayableItemNode originalNode;
         originalNode = (DisplayableItemNode) this.getOriginal();
-        
+
         return originalNode.accept(getPreferredActionsDIV);
     }
-    
+
     @Override
     public Node.PropertySet[] getPropertySets() {
         Node.PropertySet[] propertySets = super.getPropertySets();
@@ -132,17 +130,18 @@ public class DataResultFilterNode extends FilterNode{
                 newPs.setShortDescription(ps.getShortDescription());
 
                 newPs.put(ps.getProperties());
-                if(newPs.remove(AbstractFsContentNode.HIDE_PARENT) != null)
-                    newPs.remove(FsContentPropertyType.LOCATION.toString() );
+                if (newPs.remove(AbstractFsContentNode.HIDE_PARENT) != null) {
+                    newPs.remove(FsContentPropertyType.LOCATION.toString());
+                }
                 propertySets[i] = newPs;
             }
         }
 
         return propertySets;
     }
-    
+
     private class GetPopupActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<List<Action>> {
-        
+
         @Override
         public List<Action> visit(ImageNode img) {
             List<Action> actions = new ArrayList<Action>();
@@ -151,20 +150,20 @@ public class DataResultFilterNode extends FilterNode{
             actions.addAll(ShowDetailActionVisitor.getActions(img.getLookup().lookup(Content.class)));
             return actions;
         }
-        
+
         @Override
         public List<Action> visit(VolumeNode vol) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", vol));
             actions.addAll(ShowDetailActionVisitor.getActions(vol.getLookup().lookup(Content.class)));
-            
+
             return actions;
         }
-        
+
         @Override
         public List<Action> visit(DirectoryNode dir) {
             List<Action> actions = new ArrayList<Action>();
-            if(!dir.getDirectoryBrowseMode()) {
+            if (!dir.getDirectoryBrowseMode()) {
                 actions.add(new ViewContextAction("View File in Directory", dir));
                 actions.add(null); // creates a menu separator
             }
@@ -173,11 +172,11 @@ public class DataResultFilterNode extends FilterNode{
             actions.add(new ExtractAction("Extract Directory", dir));
             return actions;
         }
-        
+
         @Override
         public List<Action> visit(FileNode f) {
             List<Action> actions = new ArrayList<Action>();
-            if(!f.getDirectoryBrowseMode()) {
+            if (!f.getDirectoryBrowseMode()) {
                 actions.add(new ViewContextAction("View File in Directory", f));
                 actions.add(null); // creates a menu separator
             }
@@ -188,14 +187,14 @@ public class DataResultFilterNode extends FilterNode{
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", f));
             return actions;
         }
-        
+
         @Override
         public List<Action> visit(BlackboardArtifactNode ban) {
             List<Action> actions = new ArrayList<Action>();
             BlackboardArtifact ba = ban.getLookup().lookup(BlackboardArtifact.class);
             final int artifactTypeID = ba.getArtifactTypeID();
-            
-            if( artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
+
+            if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
                     || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 actions.add(new ViewContextAction("View File in Directory", ban));
             } else {
@@ -206,7 +205,7 @@ public class DataResultFilterNode extends FilterNode{
                 actions.add(new ViewContextAction("View Source File in Directory", ban));
             }
             File f = ban.getLookup().lookup(File.class);
-            if(f != null) {
+            if (f != null) {
                 actions.add(null); // creates a menu separator
                 actions.add(new NewWindowViewAction("View in New Window", new FileNode(f)));
                 actions.add(new ExternalViewerAction("Open in External Viewer", new FileNode(f)));
@@ -214,145 +213,164 @@ public class DataResultFilterNode extends FilterNode{
                 actions.add(new ExtractAction("Extract File", new FileNode(f)));
                 actions.add(new HashSearchAction("Search for files with the same MD5 hash", new FileNode(f)));
             }
-            if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() ) {
+            if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 actions.add(null); // creates a menu separator
-                actions.add(new ResultDeleteAction("Delete Result", ba) ); 
+                actions.add(new ResultDeleteAction("Delete Result", ba));
             }
             return actions;
         }
-        
+
+        @Override
+        public List<Action> visit(KeywordHitsRootNode khrn) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.add(null); // creates a menu separator
+
+            actions.add(new ResultDeleteAction("Delete Results", BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT));
+            return actions;
+        }
+
+        @Override
+        public List<Action> visit(KeywordHitsListNode khsn) {
+            return super.visit(khsn);
+        }
+
+        @Override
+        public List<Action> visit(KeywordHitsKeywordNode khmln) {
+            return super.visit(khmln);
+        }
+
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             return new ArrayList<Action>();
         }
-        
+
         private Content findLinked(BlackboardArtifactNode ba) {
             BlackboardArtifact art = ba.getLookup().lookup(BlackboardArtifact.class);
             Content c = null;
             try {
-                for(BlackboardAttribute attr : art.getAttributes()) {
-                    if(attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
-                        switch(attr.getValueType()) {
+                for (BlackboardAttribute attr : art.getAttributes()) {
+                    if (attr.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                        switch (attr.getValueType()) {
                             case INTEGER:
                                 int i = attr.getValueInt();
-                                if(i != -1)
+                                if (i != -1) {
                                     c = art.getSleuthkitCase().getContentById(i);
+                                }
                                 break;
                             case LONG:
                                 long l = attr.getValueLong();
-                                if(l != -1)
+                                if (l != -1) {
                                     c = art.getSleuthkitCase().getContentById(l);
+                                }
                                 break;
                         }
                     }
                 }
-            } catch(TskException ex) {
+            } catch (TskException ex) {
                 Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error getting linked file", ex);
             }
             return c;
         }
-        
     }
-    
-    private class GetPreferredActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<AbstractAction>{
-        
+
+    private class GetPreferredActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<AbstractAction> {
+
         @Override
-        public AbstractAction visit(ImageNode in){
+        public AbstractAction visit(ImageNode in) {
             return openChild(in);
         }
-        
+
         @Override
-        public AbstractAction visit(VolumeNode vn){
+        public AbstractAction visit(VolumeNode vn) {
             return openChild(vn);
         }
-        
+
         @Override
         public AbstractAction visit(ExtractedContentNode ecn) {
             return openChild(ecn);
         }
-        
+
         @Override
         public AbstractAction visit(KeywordHitsRootNode khrn) {
             return openChild(khrn);
         }
-        
+
         @Override
         public AbstractAction visit(HashsetHitsRootNode hhrn) {
             return openChild(hhrn);
         }
-        
+
         @Override
         public AbstractAction visit(HashsetHitsSetNode hhsn) {
             return openChild(hhsn);
         }
-        
+
         @Override
         public AbstractAction visit(EmailExtractedRootNode eern) {
             return openChild(eern);
         }
-        
+
         @Override
         public AbstractAction visit(EmailExtractedAccountNode eean) {
             return openChild(eean);
         }
-        
+
         @Override
         public AbstractAction visit(EmailExtractedFolderNode eefn) {
             return openChild(eefn);
         }
-        
+
         @Override
         public AbstractAction visit(RecentFilesNode rfn) {
             return openChild(rfn);
         }
-        
+
         @Override
-        public AbstractAction visit(BlackboardArtifactNode ban){
+        public AbstractAction visit(BlackboardArtifactNode ban) {
             return new ViewContextAction("View in Directory", ban);
         }
-        
+
         @Override
-        public AbstractAction visit(ArtifactTypeNode atn){
+        public AbstractAction visit(ArtifactTypeNode atn) {
             return openChild(atn);
         }
-        
+
         @Override
-        public AbstractAction visit(DirectoryNode dn){
-            if(dn.getDisplayName().equals(DirectoryNode.DOTDOTDIR))
+        public AbstractAction visit(DirectoryNode dn) {
+            if (dn.getDisplayName().equals(DirectoryNode.DOTDOTDIR)) {
                 return openParent(dn);
-            else if(!dn.getDisplayName().equals(DirectoryNode.DOTDIR))
+            } else if (!dn.getDisplayName().equals(DirectoryNode.DOTDIR)) {
                 return openChild(dn);
-            else
+            } else {
                 return null;
+            }
         }
-        
+
         @Override
-        public AbstractAction visit(FileSearchFilterNode fsfn){
+        public AbstractAction visit(FileSearchFilterNode fsfn) {
             return openChild(fsfn);
         }
-        
+
         @Override
         public AbstractAction visit(SearchFiltersNode sfn) {
             return openChild(sfn);
         }
-        
+
         @Override
         public AbstractAction visit(RecentFilesFilterNode rffn) {
             return openChild(rffn);
         }
-        
+
         @Override
         public AbstractAction visit(KeywordHitsListNode khsn) {
             return openChild(khsn);
         }
-        
+
         @Override
         public AbstractAction visit(KeywordHitsKeywordNode khmln) {
             return openChild(khmln);
         }
-        
-        
-        
+
         @Override
         protected AbstractAction defaultVisit(DisplayableItemNode c) {
             return null;
@@ -364,7 +382,6 @@ public class DataResultFilterNode extends FilterNode{
             final Node original = node;
 
             return new AbstractAction() {
-
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     if (parentContext != null) {
@@ -384,24 +401,23 @@ public class DataResultFilterNode extends FilterNode{
                 }
             };
         }
-        
+
         private AbstractAction openParent(AbstractNode node) {
             Node[] selectedNode = sourceEm.getSelectedNodes();
-                Node selectedContext = selectedNode[0];
-                final Node parentNode = selectedContext.getParentNode();
+            Node selectedContext = selectedNode[0];
+            final Node parentNode = selectedContext.getParentNode();
 
-                return new AbstractAction() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        try {
-                            sourceEm.setSelectedNodes(new Node[]{parentNode});
-                        } catch (PropertyVetoException ex) {
-                            Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
-                            logger.log(Level.WARNING, "Error: can't open the parent directory.", ex);
-                        }
+            return new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        sourceEm.setSelectedNodes(new Node[]{parentNode});
+                    } catch (PropertyVetoException ex) {
+                        Logger logger = Logger.getLogger(DataResultFilterNode.class.getName());
+                        logger.log(Level.WARNING, "Error: can't open the parent directory.", ex);
                     }
-                };
+                }
+            };
         }
     }
 }
