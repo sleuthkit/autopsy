@@ -140,7 +140,7 @@ public class DataResultFilterNode extends FilterNode {
         return propertySets;
     }
 
-    private class GetPopupActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<List<Action>> {
+    private static class GetPopupActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<List<Action>> {
 
         @Override
         public List<Action> visit(ImageNode img) {
@@ -214,28 +214,31 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new HashSearchAction("Search for files with the same MD5 hash", new FileNode(f)));
             }
             if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                actions.add(null); // creates a menu separator
-                actions.add(new ResultDeleteAction("Delete Result", ba));
+                //actions.add(null); // creates a menu separator
+                //actions.add(new ResultDeleteAction("Delete Result", ba));
             }
             return actions;
         }
 
         @Override
         public List<Action> visit(KeywordHitsRootNode khrn) {
-            List<Action> actions = new ArrayList<Action>();
-            actions.add(null); // creates a menu separator
+            //List<Action> actions = new ArrayList<Action>();
+            //actions.add(null); // creates a menu separator
 
-            actions.add(new ResultDeleteAction("Delete Results", BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT));
-            return actions;
+            //actions.add(new ResultDeleteAction("Delete Results", BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT));
+            //return actions;
+            return super.visit(khrn);
         }
 
         @Override
         public List<Action> visit(KeywordHitsListNode khsn) {
+            //TODO delete by list
             return super.visit(khsn);
         }
 
         @Override
         public List<Action> visit(KeywordHitsKeywordNode khmln) {
+            //TODO delete by keyword hit
             return super.visit(khmln);
         }
 
