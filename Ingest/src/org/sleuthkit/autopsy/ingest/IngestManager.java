@@ -953,7 +953,7 @@ public class IngestManager {
                 logger.log(Level.WARNING, "Invalid service passed in to record stop processing: " + service.getName()
                         + ", expected: " + currentServiceForTimer.getName());
             } else {
-                final long elapsed = timer.getElapsedTimeSecs();
+                final long elapsed = timer.getElapsedTime();
                 final long current = fileServiceTimers.get(service.getName());
                 fileServiceTimers.put(service.getName(), elapsed + current);
             }
@@ -965,8 +965,8 @@ public class IngestManager {
             StringBuilder sb = new StringBuilder();
             for (final String serviceName : fileServiceTimers.keySet()) {
                 sb.append(serviceName).append(" took: ")
-                        .append(fileServiceTimers.get(serviceName))
-                        .append(" secs. to process()");
+                        .append(fileServiceTimers.get(serviceName) / 1000)
+                        .append(" secs. to process()").append('\n');
             }
             return sb.toString();
         }
