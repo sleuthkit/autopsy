@@ -79,8 +79,8 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
         skipNSRLCheckBox.setSelected(service.getSkipKnown());
         reloadScriptCombo();
         boolean enable = ! IngestManager.getDefault().isIngestRunning();
-        //scriptCombo.setEnabled(enable);
-        scriptCombo.setEnabled(false);
+        scriptCombo.setEnabled(enable);
+        //scriptCombo.setEnabled(false);
         skipNSRLCheckBox.setEnabled(enable);
     }
     
