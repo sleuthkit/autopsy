@@ -148,16 +148,17 @@ public class StringExtract {
             }
 
             //extract using all methods and see which one wins
-            List<StringExtractResult> results = new ArrayList<StringExtractResult>();
+            StringExtractResult resUTF16 = null;
             if (curOffset % 2 == 0) {
-                results.add(extractUTF16(buff, len, curOffset, true));
-                results.add(extractUTF16(buff, len, curOffset, false));
+                StringExtractResult resUTF16En1 = extractUTF16(buff, len, curOffset, true);
+                StringExtractResult resUTF16En2 = extractUTF16(buff, len, curOffset, false);
+                resUTF16 = resUTF16En1.numChars > resUTF16En2.numChars? resUTF16En1 : resUTF16En2;
             }
-            results.add(extractUTF8(buff, len, curOffset));
-
-            Collections.sort(results);
-
-            StringExtractResult resWin = results.get(0);
+            //results.add(extractUTF8(buff, len, curOffset));
+            StringExtractResult resUTF8 = extractUTF8(buff, len, curOffset);
+            
+            StringExtractResult resWin;
+            resWin = resUTF16 != null && resUTF16.numChars > resUTF8.numChars ? resUTF16 : resUTF8;
 
             if (resWin.numChars >= MIN_CHARS_STRING) {
                 //record string 
