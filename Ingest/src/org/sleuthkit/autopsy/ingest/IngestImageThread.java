@@ -26,6 +26,7 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 import org.sleuthkit.datamodel.Image;
 
@@ -59,7 +60,7 @@ public class IngestImageThread extends SwingWorker<Object, Void> {
     @Override
     protected Object doInBackground() throws Exception {
 
-        logger.log(Level.INFO, "Starting background processing");
+        logger.log(Level.INFO, "Starting processing of service: " + service.getName());
 
         final String displayName = service.getName() + " image id:" + image.getId();
         progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
@@ -82,12 +83,16 @@ public class IngestImageThread extends SwingWorker<Object, Void> {
             logger.log(Level.INFO, "Terminating image ingest service " + service.getName() + " due to cancellation.");
             return null;
         }
+        final StopWatch timer = new StopWatch();
+        timer.start();
         try {
             service.process(image, controller);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Exception in service: " + service.getName() + " image: " + image.getName(), e);
         } finally {
-            logger.log(Level.INFO, "Done background processing");
+            timer.stop();
+            logger.log(Level.INFO, "Done processing of service: " + service.getName() 
+                    + " took " + timer.getElapsedTimeSecs() + " secs. to process()" );
 
             EventQueue.invokeLater(new Runnable() {
                 @Override
