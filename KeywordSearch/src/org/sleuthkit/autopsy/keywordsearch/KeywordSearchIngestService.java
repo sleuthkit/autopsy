@@ -90,7 +90,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private static final Lock searcherLock = rwLock.writeLock();
     private volatile int messageID = 0;
     private boolean processedFiles;
-    private volatile boolean finalSearcherDone = true;
+    private volatile boolean finalSearcherDone = false;
     private final String hashDBServiceName = "Hash Lookup"; //NOTE this needs to match the HashDB service getName()
     private SleuthkitCase caseHandle = null;
     private boolean skipKnown = true;
