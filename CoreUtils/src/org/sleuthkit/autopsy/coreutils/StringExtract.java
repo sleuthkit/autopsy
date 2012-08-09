@@ -57,6 +57,9 @@ public class StringExtract {
     private static final List<SCRIPT> SUPPORTED_SCRIPTS =
             Arrays.asList(
             SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.CYRILLIC, SCRIPT.HAN);
+    
+    //current string buffer, reuse for performance
+    private final StringBuilder curString = new StringBuilder();
 
     /**
      * Initializes the StringExtract utility Sets enabled scripts to all
@@ -134,7 +137,9 @@ public class StringExtract {
         int curOffset = offset;
         int startOffset = offset;
         int curStringLen = 0;
-        StringBuilder curString = new StringBuilder();
+        
+        //reset curString buffer
+        curString.delete(0, curString.length());
 
         //keep track of first byte offset that hasn't been processed
         //(one byte past the last byte processed in by last extraction)
