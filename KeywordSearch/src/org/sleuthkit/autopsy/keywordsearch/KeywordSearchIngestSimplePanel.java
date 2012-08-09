@@ -30,6 +30,7 @@ import java.util.logging.Logger;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 
 /**
  *
@@ -66,6 +67,8 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
                 column.setPreferredWidth(((int) (width * 0.84)));
             }
         }
+        
+        reloadLangs();
     }
 
     /** This method is called from within the constructor to
@@ -81,6 +84,9 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
         listsTable = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
+        languagesLabel = new javax.swing.JLabel();
+        languagesValLabel = new javax.swing.JLabel();
+        jSeparator2 = new javax.swing.JSeparator();
 
         setPreferredSize(new java.awt.Dimension(172, 57));
 
@@ -101,35 +107,63 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
 
         jLabel1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.jLabel1.text")); // NOI18N
 
+        languagesLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.languagesLabel.text")); // NOI18N
+        languagesLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.languagesLabel.toolTipText")); // NOI18N
+
+        languagesValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.languagesValLabel.text")); // NOI18N
+        languagesValLabel.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchIngestSimplePanel.class, "KeywordSearchIngestSimplePanel.languagesValLabel.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSeparator1, javax.swing.GroupLayout.DEFAULT_SIZE, 172, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addComponent(jSeparator1)
+            .addComponent(listsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+            .addComponent(jSeparator2)
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addComponent(listsScrollPane, 0, 0, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(languagesLabel)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(languagesValLabel))
+                    .addComponent(jLabel1))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addComponent(languagesLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(languagesValLabel)
+                .addGap(9, 9, 9)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 4, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(listsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 11, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(listsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;
     private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JLabel languagesLabel;
+    private javax.swing.JLabel languagesValLabel;
     private javax.swing.JScrollPane listsScrollPane;
     private javax.swing.JTable listsTable;
     // End of variables declaration//GEN-END:variables
 
+    private void reloadLangs() {
+        //TODO multiple
+        SCRIPT script = KeywordSearchIngestService.getDefault().getStringExtractScript();
+        this.languagesValLabel.setText(script.toString());
+        this.languagesValLabel.setToolTipText(script.toString());
+    }
+    
     private void reloadLists() {
         lists.clear();
         lists.addAll(KeywordSearchListsXML.getCurrent().getListsL());

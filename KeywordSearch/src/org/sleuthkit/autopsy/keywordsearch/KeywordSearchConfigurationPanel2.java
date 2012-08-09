@@ -217,7 +217,7 @@ private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//
 
         List<StringExtract.StringExtractUnicodeTable.SCRIPT> supportedScripts = StringExtract.getSupportedScripts();
         for (StringExtract.StringExtractUnicodeTable.SCRIPT s : supportedScripts) {
-            scriptCombo.addItem(s.toString());
+            scriptCombo.addItem(s);
         }
         reloadScriptCombo();
 
