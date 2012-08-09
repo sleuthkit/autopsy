@@ -400,6 +400,25 @@ public class IngestManager {
         }
 
     }
+    
+    /**
+     * Test is any file ingest services are running.
+     * 
+     * @return true if any file ingest services are running, false otherwise
+     */
+    public synchronized boolean areServicesRunning() {
+        for (IngestServiceAbstract serv : abstractFileServices) {
+            if(serv.hasBackgroundJobsRunning()) {
+                return true;
+            }
+        }
+        for (IngestImageThread thread : imageIngesters) {
+            if(isServiceRunning(thread.getService())) {
+                return false;
+            }
+        }
+        return false;
+    }
 
     /**
      * check if ingest is currently being enqueued
