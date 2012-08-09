@@ -19,6 +19,7 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.List;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -49,17 +50,17 @@ interface AbstractFileExtract {
     boolean index(AbstractFile sourceFile) throws Ingester.IngesterException;
     
     /**
-     * Sets the script to use for the extraction
-     * @param extractScript script to use
+     * Sets the scripts to use for the extraction
+     * @param extractScripts scripts to use
      * @return true if extractor supports script - specific extraction, false otherwise
      */
-    boolean setScript(SCRIPT extractScript);
+    boolean setScripts(List<SCRIPT> extractScript);
     
     /**
-     * Get the currently used script for extraction
-     * @return script currently used or null if not supported
+     * Get the currently used scripts for extraction
+     * @return scripts currently used or null if not supported
      */
-    SCRIPT getScript();
+    List<SCRIPT> getScripts();
     
     /**
      * Determines if the extractor works only for specified types

@@ -159,9 +159,16 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
 
     private void reloadLangs() {
         //TODO multiple
-        SCRIPT script = KeywordSearchIngestService.getDefault().getStringExtractScript();
-        this.languagesValLabel.setText(script.toString());
-        this.languagesValLabel.setToolTipText(script.toString());
+        List<SCRIPT> scripts = KeywordSearchIngestService.getDefault().getStringExtractScripts();
+        StringBuilder langs = new StringBuilder();
+        langs.append("<html>");
+        for (SCRIPT s : scripts) {
+            langs.append(s.toString()).append("<br />");
+        }
+        langs.append("</html>");
+        String langsS = langs.toString();
+        this.languagesValLabel.setText(langsS);
+        this.languagesValLabel.setToolTipText(langsS);
     }
     
     private void reloadLists() {

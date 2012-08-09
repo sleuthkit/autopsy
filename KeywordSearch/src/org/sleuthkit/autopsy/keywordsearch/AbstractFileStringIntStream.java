@@ -18,13 +18,14 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
+import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -60,10 +61,10 @@ public class AbstractFileStringIntStream extends InputStream {
      * @param script
      * @param outCharset
      */
-    public AbstractFileStringIntStream(AbstractFile content, StringExtract.StringExtractUnicodeTable.SCRIPT script, Charset outCharset) {
+    public AbstractFileStringIntStream(AbstractFile content, List<SCRIPT> scripts, Charset outCharset) {
         this.content = content;
         this.stringExtractor = new StringExtract();
-        this.stringExtractor.setEnabledScript(script);
+        this.stringExtractor.setEnabledScripts(scripts);
         this.outCharset = outCharset;
     }
 
