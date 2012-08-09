@@ -55,11 +55,12 @@ public class StringExtract {
      */
     private static final List<SCRIPT> SUPPORTED_SCRIPTS =
             Arrays.asList(
-            SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.CYRILLIC, SCRIPT.HAN);
-    
+            SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.HAN,
+            SCRIPT.HIRAGANA, SCRIPT.KATAKANA, SCRIPT.HANGUL,
+            SCRIPT.ARMENIAN, SCRIPT.BENGALI, SCRIPT.KHMER, SCRIPT.ETHIOPIC,
+            SCRIPT.GEORGIAN, SCRIPT.HEBREW, SCRIPT.LAO, SCRIPT.MONGOLIAN, SCRIPT.THAI, SCRIPT.TIBETAN,SCRIPT.CYRILLIC);
     //current total string buffer, reuse for performance
     private final StringBuilder curString = new StringBuilder();
-
 
     /**
      * Initializes the StringExtract utility Sets enabled scripts to all
@@ -137,7 +138,7 @@ public class StringExtract {
         int curOffset = offset;
         int startOffset = offset;
         int curStringLen = 0;
-        
+
         //reset curString buffer
         curString.delete(0, curString.length());
 
@@ -157,11 +158,11 @@ public class StringExtract {
             if (curOffset % 2 == 0) {
                 StringExtractResult resUTF16En1 = extractUTF16(buff, len, curOffset, true);
                 StringExtractResult resUTF16En2 = extractUTF16(buff, len, curOffset, false);
-                resUTF16 = resUTF16En1.numChars > resUTF16En2.numChars? resUTF16En1 : resUTF16En2;
+                resUTF16 = resUTF16En1.numChars > resUTF16En2.numChars ? resUTF16En1 : resUTF16En2;
             }
             //results.add(extractUTF8(buff, len, curOffset));
             StringExtractResult resUTF8 = extractUTF8(buff, len, curOffset);
-            
+
             StringExtractResult resWin;
             resWin = resUTF16 != null && resUTF16.numChars > resUTF8.numChars ? resUTF16 : resUTF8;
 
@@ -526,15 +527,45 @@ public class StringExtract {
             NONE,
             COMMON,
             LATIN_1,
-            GREEK,
-            CYRILLIC,
-            ARMENIAN,
-            HEBREW,
-            ARABIC,
+            GREEK {
+                @Override
+                public String toString() {
+                    return "Greek";
+                }
+            },
+            CYRILLIC {
+                @Override
+                public String toString() {
+                    return "Russian, Bulgarian, Serbian, Moldovan (Cyrillic)";
+                }
+            },
+            ARMENIAN {
+                @Override
+                public String toString() {
+                    return "Armenian";
+                }
+            },
+            HEBREW {
+                @Override
+                public String toString() {
+                    return "Hebrew";
+                }
+            },
+            ARABIC {
+                @Override
+                public String toString() {
+                    return "Arabic";
+                }
+            },
             SYRIAC,
             THAANA,
             DEVANAGARI,
-            BENGALI,
+            BENGALI {
+                @Override
+                public String toString() {
+                    return "Bengali";
+                }
+            },
             GURMUKHI,
             GUJARATI,
             ORIYA,
@@ -543,23 +574,78 @@ public class StringExtract {
             KANNADA,
             MALAYALAM,
             SINHALA,
-            THAI,
-            LAO,
-            TIBETAN,
+            THAI {
+                @Override
+                public String toString() {
+                    return "Thai";
+                }
+            },
+            LAO {
+                @Override
+                public String toString() {
+                    return "Laotian";
+                }
+            },
+            TIBETAN {
+                @Override
+                public String toString() {
+                    return "Tibetian";
+                }
+            },
             MYANMAR,
-            GEORGIAN,
-            HANGUL,
-            ETHIOPIC,
+            GEORGIAN {
+                @Override
+                public String toString() {
+                    return "Georgian";
+                }
+            },
+            HANGUL {
+                @Override
+                public String toString() {
+                    return "Korean (Hangul)";
+                }
+            },
+            ETHIOPIC {
+                @Override
+                public String toString() {
+                    return "Ethiopic";
+                }
+            },
             CHEROKEE,
             CANADIAN_ABORIGINAL,
             OGHAM,
             RUNIC,
-            KHMER,
-            MONGOLIAN,
-            HIRAGANA,
-            KATAKANA,
+            KHMER {
+                @Override
+                public String toString() {
+                    return "Cambodian";
+                }
+            },
+            MONGOLIAN {
+                @Override
+                public String toString() {
+                    return "Mongolian";
+                }
+            },
+            HIRAGANA {
+                @Override
+                public String toString() {
+                    return "Japanese (Hiragana)";
+                }
+            },
+            KATAKANA {
+                @Override
+                public String toString() {
+                    return "Japanese (Katakana)";
+                }
+            },
             BOPOMOFO,
-            HAN,
+            HAN {
+                @Override
+                public String toString() {
+                    return "Chinese, Japanese (Kanji), Korean (Hanja)";
+                }
+            },
             YI,
             OLD_ITALIC,
             GOTHIC,
@@ -591,7 +677,12 @@ public class StringExtract {
             PHAGS_PA,
             NKO,
             CONTROL,
-            LATIN_2
+            LATIN_2 {
+                @Override
+                public String toString() {
+                    return "English, European, Vietnamese";
+                }
+            }
         };
         private static final SCRIPT[] SCRIPT_VALUES = SCRIPT.values();
         private static final String PROPERTY_FILE = "StringExtract.properties";

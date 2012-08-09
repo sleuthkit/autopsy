@@ -65,8 +65,8 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
         final SCRIPT currentScript = service.getStringExtractScript();
         int items = scriptCombo.getItemCount();
         for (int i = 0; i<items; ++i) {
-            String scriptName = (String) scriptCombo.getItemAt(i);
-            if (scriptName.equals(currentScript.toString())) {
+            SCRIPT script= (SCRIPT) scriptCombo.getItemAt(i);
+            if (script.equals(currentScript)) {
                 scriptCombo.setSelectedIndex(i);
                 break;
             }
@@ -134,14 +134,17 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(filesIndexedLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(filesIndexedValue, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(skipNSRLCheckBox)
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(scriptLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(scriptCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(scriptCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(filesIndexedLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(filesIndexedValue, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(skipNSRLCheckBox))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
             .addComponent(jSeparator2)
         );
@@ -171,8 +174,7 @@ private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//
 }//GEN-LAST:event_skipNSRLCheckBoxActionPerformed
 
     private void scriptComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scriptComboActionPerformed
-        final String scriptStr = (String)scriptCombo.getSelectedItem(); 
-        final SCRIPT script = StringExtract.StringExtractUnicodeTable.scriptForString(scriptStr);
+        final SCRIPT script = (SCRIPT)scriptCombo.getSelectedItem(); 
         KeywordSearchIngestService.getDefault().setStringExtractScript(script);
     }//GEN-LAST:event_scriptComboActionPerformed
 
