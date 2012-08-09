@@ -262,10 +262,12 @@ class Database:
 
 # Iterates through an XML configuration file to find all given elements        
 def run_config_test(config_file):
-    try:
+    #try:
         parsed = parse(config_file)
-        case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode()
-        case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode()
+        if parsed.getElementsByTagName("indir"):
+            case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode()
+        if parsed.getElementsByTagName("global_csv"):
+            case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode()
         
         # Generate the top navbar of the HTML for easy access to all images
         values = []
@@ -283,9 +285,9 @@ def run_config_test(config_file):
             else:
                 printerror("Warning: Image file listed in the configuration does not exist:")
                 printerror(value + "\n")
-    except Exception as e:
-        printerror("Error: There was an error running with the configuration file.")
-        printerror(str(e) + "\n")
+    #except Exception as e:
+        #printerror("Error: There was an error running with the configuration file.")
+        #printerror(str(e) + "\n")
 
 # Runs the test on the single given file.
 # The path must be guarenteed to be a correct path.
