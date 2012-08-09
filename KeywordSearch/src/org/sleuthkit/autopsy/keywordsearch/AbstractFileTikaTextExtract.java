@@ -80,12 +80,12 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     }
 
     @Override
-    public boolean setScript(StringExtract.StringExtractUnicodeTable.SCRIPT extractScript) {
+    public boolean setScripts(List<StringExtract.StringExtractUnicodeTable.SCRIPT> extractScripts) {
         return false;
     }
 
     @Override
-    public StringExtract.StringExtractUnicodeTable.SCRIPT getScript() {
+    public List<StringExtract.StringExtractUnicodeTable.SCRIPT> getScripts() {
         return null;
     }
 

@@ -97,13 +97,19 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private boolean initialized = false;
     private List<AbstractFileExtract> textExtractors;
     private AbstractFileStringExtract stringExtractor;
-    private SCRIPT stringExtractSctipt = SCRIPT.LATIN_2;
+    private final List<SCRIPT> stringExtractScripts = new ArrayList<SCRIPT>();
 
     private enum IngestStatus {
 
         INGESTED, EXTRACTED_INGESTED, SKIPPED, INGESTED_META
     };
     private Map<Long, IngestStatus> ingestStatus;
+
+    //private constructor to ensure singleton instance 
+    private KeywordSearchIngestService() {
+        //set default script 
+        stringExtractScripts.add(SCRIPT.LATIN_2);
+    }
 
     /**
      * Returns singleton instance of the service, creates one if needed
@@ -263,7 +269,14 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         //initialize extractors
         stringExtractor = new AbstractFileStringExtract();
-        stringExtractor.setScript(stringExtractSctipt);
+        stringExtractor.setScripts(stringExtractScripts);
+        //log the scripts used for debugging
+        final StringBuilder sbScripts = new StringBuilder();
+        for (SCRIPT s : stringExtractScripts) {
+            sbScripts.append(s.name()).append(" ");
+        }
+        logger.log(Level.INFO, "Using string extract scripts: " + sbScripts.toString());
+
         textExtractors = new ArrayList<AbstractFileExtract>();
         //order matters, more specific extractors first
         textExtractors.add(new AbstractFileHtmlExtract());
@@ -997,23 +1010,24 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * Set the script to use for string extraction. Takes effect on next ingest
+     * Set the scripts to use for string extraction. Takes effect on next ingest
      * start / at init(), not in effect if ingest is running
      *
-     * @param script script to use for string extraction next time ingest inits
-     * and runs
+     * @param scripts scripts to use for string extraction next time ingest
+     * inits and runs
      */
-    void setStringExtractScript(SCRIPT script) {
-        this.stringExtractSctipt = script;
+    void setStringExtractScripts(List<SCRIPT> scripts) {
+        this.stringExtractScripts.clear();
+        this.stringExtractScripts.addAll(scripts);
 
     }
 
     /**
-     * gets the currently set script to use
+     * gets the currently set scripts to use
      *
-     * @return the currently used script
+     * @return the list of currently used script
      */
-    SCRIPT getStringExtractScript() {
-        return this.stringExtractSctipt;
+    List<SCRIPT> getStringExtractScripts() {
+        return new ArrayList<SCRIPT>(this.stringExtractScripts);
     }
 }

@@ -18,10 +18,11 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -50,7 +51,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     private static final Charset INDEX_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     
     private static final SCRIPT DEFAULT_SCRIPT = SCRIPT.LATIN_2;
-    private SCRIPT extractScript;
+    private final List<SCRIPT> extractScripts = new ArrayList<SCRIPT>();
 
     static {
         //prepend UTF-8 BOM to start of the buffer
@@ -62,18 +63,19 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     public AbstractFileStringExtract() {
         this.service = KeywordSearchIngestService.getDefault();
         this.ingester = Server.getIngester();
-        this.extractScript = DEFAULT_SCRIPT;
+        this.extractScripts.add(DEFAULT_SCRIPT);
     }
 
     @Override
-    public boolean setScript(SCRIPT extractScript) {
-        this.extractScript = extractScript;
+    public boolean setScripts(List<SCRIPT> extractScripts) {
+        this.extractScripts.clear();
+        this.extractScripts.addAll(extractScripts);
         return true;
     }
     
     @Override
-    public SCRIPT getScript() {
-        return this.extractScript;
+    public List<SCRIPT> getScripts() {
+        return new ArrayList<SCRIPT>(this.extractScripts);
     }
     
 
@@ -96,7 +98,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
         //construct stream that extracts text as we read it
         //final InputStream stringStream = new AbstractFileStringStream(sourceFile, INDEX_CHARSET);
         final InputStream stringStream = new AbstractFileStringIntStream(
-                sourceFile, extractScript, INDEX_CHARSET);
+                sourceFile, extractScripts, INDEX_CHARSET);
 
         try {
             success = true;

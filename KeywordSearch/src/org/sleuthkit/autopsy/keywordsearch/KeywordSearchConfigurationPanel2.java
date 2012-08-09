@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -61,12 +62,13 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
     }
     
     private void reloadScriptCombo() {
+        //TODO turn into checkboxes
         final KeywordSearchIngestService service = KeywordSearchIngestService.getDefault();
-        final SCRIPT currentScript = service.getStringExtractScript();
+        final List<SCRIPT> currentScripts = service.getStringExtractScripts();
         int items = scriptCombo.getItemCount();
         for (int i = 0; i<items; ++i) {
             SCRIPT script= (SCRIPT) scriptCombo.getItemAt(i);
-            if (script.equals(currentScript)) {
+            if (script.equals(currentScripts.get(0))) {
                 scriptCombo.setSelectedIndex(i);
                 break;
             }
@@ -174,8 +176,11 @@ private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//
 }//GEN-LAST:event_skipNSRLCheckBoxActionPerformed
 
     private void scriptComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scriptComboActionPerformed
+        //TODO use checkboxes
         final SCRIPT script = (SCRIPT)scriptCombo.getSelectedItem(); 
-        KeywordSearchIngestService.getDefault().setStringExtractScript(script);
+        final List<SCRIPT> scripts = new ArrayList<SCRIPT>();
+        scripts.add(script);
+        KeywordSearchIngestService.getDefault().setStringExtractScripts(scripts);
     }//GEN-LAST:event_scriptComboActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
