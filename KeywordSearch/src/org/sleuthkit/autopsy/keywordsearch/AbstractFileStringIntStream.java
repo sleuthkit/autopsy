@@ -39,7 +39,7 @@ public class AbstractFileStringIntStream extends InputStream {
 
     private AbstractFile content;
     private final byte[] oneCharBuf = new byte[1];
-    private StringExtract stringExtractor;
+    private final StringExtract stringExtractor;
     private static final int FILE_BUF_SIZE = 1024 * 1024;
     private static final byte[] fileReadBuff = new byte[FILE_BUF_SIZE]; //NOTE: need to run all stream extraction in same thread
     private long fileReadOffset = 0L;
