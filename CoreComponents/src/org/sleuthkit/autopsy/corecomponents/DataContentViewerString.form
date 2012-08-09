@@ -77,7 +77,7 @@
                   <EmptySpace max="32767" attributes="0"/>
                   <Component id="languageLabel" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="languageCombo" min="-2" pref="96" max="-2" attributes="0"/>
+                  <Component id="languageCombo" min="-2" pref="229" max="-2" attributes="0"/>
               </Group>
               <Component id="jScrollPane1" pref="756" max="32767" attributes="0"/>
           </Group>

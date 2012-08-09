@@ -82,7 +82,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         
         List<SCRIPT> supportedScripts = StringExtract.getSupportedScripts();
         for (SCRIPT s : supportedScripts) {
-            languageCombo.addItem(s.toString() );
+            languageCombo.addItem(s);
         }
         
     }
@@ -217,7 +217,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(languageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 229, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 756, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
@@ -342,8 +342,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
                 if (bytesRead > 0) {
                     //text = DataConversion.getString(data, bytesRead, 4);
-                    final String selScript = (String) languageCombo.getSelectedItem();
-                    stringExtract.setEnabledScript(StringExtractUnicodeTable.scriptForString(selScript));
+                    final SCRIPT selScript = (SCRIPT) languageCombo.getSelectedItem();
+                    stringExtract.setEnabledScript(selScript);
                     StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
                     text = res.getText();
                     setVisible = true;
