@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2012 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -52,14 +51,15 @@ public class StringExtract {
      */
     private List<SCRIPT> enabledScripts;
     /**
-     * supported scripts, can be overriden with enableScriptX methods
+     * supported scripts, can be overridden with enableScriptX methods
      */
     private static final List<SCRIPT> SUPPORTED_SCRIPTS =
             Arrays.asList(
             SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.CYRILLIC, SCRIPT.HAN);
     
-    //current string buffer, reuse for performance
+    //current total string buffer, reuse for performance
     private final StringBuilder curString = new StringBuilder();
+
 
     /**
      * Initializes the StringExtract utility Sets enabled scripts to all
@@ -203,7 +203,7 @@ public class StringExtract {
 
         int curOffset = offset;
 
-        StringBuilder curString = new StringBuilder();
+        final StringBuilder tempString = new StringBuilder();
 
         SCRIPT currentScript = SCRIPT.NONE;
 
@@ -272,7 +272,7 @@ public class StringExtract {
                     res.numBytes += 2;
                     //append the char
                     ++res.numChars;
-                    curString.append(byteVal);
+                    tempString.append(byteVal);
                 } else {
                     //bail out
                     break;
@@ -284,7 +284,7 @@ public class StringExtract {
 
         } //no more data
 
-        res.textString = curString.toString();
+        res.textString = tempString.toString();
 
         return res;
     }
@@ -296,7 +296,7 @@ public class StringExtract {
         int ch = 0; //character being extracted
         int chBytes; //num bytes consumed by current char (1 - 4)
 
-        StringBuilder curString = new StringBuilder();
+        final StringBuilder tempString = new StringBuilder();
 
         SCRIPT currentScript = SCRIPT.NONE;
 
@@ -454,7 +454,7 @@ public class StringExtract {
                     res.numBytes += chBytes;
                     //append the char
                     ++res.numChars;
-                    curString.append((char) ch);
+                    tempString.append((char) ch);
                 } else {
                     //bail out
                     break;
@@ -466,7 +466,7 @@ public class StringExtract {
 
         } //no more data
 
-        res.textString = curString.toString();
+        res.textString = tempString.toString();
 
         return res;
     }
