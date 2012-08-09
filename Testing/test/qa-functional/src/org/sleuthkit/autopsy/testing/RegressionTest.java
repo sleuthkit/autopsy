@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.testing;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.logging.Logger;
 import javax.swing.JDialog;
 import javax.swing.JTextField;
@@ -226,7 +227,11 @@ public class RegressionTest extends JellyTestCase{
             }
         }
         logger.info("Ingest (including enqueue) took " + (System.currentTimeMillis()-start) + "ms");
-        new Timeout("pausing", 5000).sleep(); // allow keyword search to finish saving artifacts, just in case
+        // allow keyword search to finish saving artifacts, just in case
+        //   but randomize the timing so that we don't always get the same error
+        //   consistently, making it seem like default behavior
+        Random rand = new Random();
+        new Timeout("pausing", 10000 + (rand.nextInt(15000) + 5000)).sleep();
         
     }
     

@@ -11,6 +11,30 @@ import datetime
 import xml
 from xml.dom.minidom import parse, parseString
 
+#
+# Please read me...
+#
+# This is the regression testing Python script.
+# It uses an ant command to run build.xml for RegressionTest.java
+#
+# The code is cleanly sectioned and commented.
+# Please follow the current formatting.
+# It is a long and potentially confusing script.
+#
+# Variable, function, and class names are written in Python conventions:
+# this_is_a_variable    this_is_a_function()    ThisIsAClass
+#
+# All variables that are needed throughout the script have been initialized
+# in a global class.
+# - Command line arguments are in Args (named args)
+# - Information pertaining to each test is in TestAutopsy (named case)
+# - Queried information from the databases is in Database (named database)
+# Feel free to add additional global classes or add to the existing ones,
+# but do not overwrite any existing variables as they are used frequently.
+#
+
+
+
 #-------------------------------------------------------------#
 # Parses argv and stores booleans to match command line input #
 #-------------------------------------------------------------#
@@ -23,7 +47,7 @@ class Args:
         self.config_file = ""
         self.unallocated = False
         self.ignore = False
-        self.delete = False
+        self.keep = False
         self.verbose = False
         self.exception = False
         self.exception_string = ""
@@ -61,9 +85,9 @@ class Args:
             elif(arg == "-i" or arg == "--ignore"):
                 printout("Ignoring the ./input directory.\n")
                 self.ignore = True
-            elif(arg == "-d" or arg == "--delete"):
-                printout("Deleting Solr index after ingest.\n")
-                self.delete = True
+            elif(arg == "-k" or arg == "--keep"):
+                printout("Keeping the Solr index.\n")
+                self.keep = True
             elif(arg == "-v" or arg == "--verbose"):
                 printout("Running in verbose mode:")
                 printout("Printing all thrown exceptions.\n")
@@ -100,6 +124,7 @@ class TestAutopsy:
         self.antlog_dir = ""
         self.common_log = ""
         self.csv = ""
+        self.global_csv = ""
         self.html_log = ""
         # Error tracking
         self.printerror = []
@@ -153,9 +178,6 @@ class TestAutopsy:
         return string
         
     def reset(self):
-        # Paths:
-        self.input_dir = make_local_path("input")
-        self.gold = "gold"
         # Logs:
         self.antlog_dir = ""
         # Error tracking
@@ -242,8 +264,8 @@ class Database:
 def run_config_test(config_file):
     try:
         parsed = parse(config_file)
-        input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode()
-        case.input_dir = input_dir
+        case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode()
+        case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode()
         
         # Generate the top navbar of the HTML for easy access to all images
         values = []
@@ -297,11 +319,13 @@ def run_test(image_file):
     # If running in rebuild mode (-r)
     if args.rebuild:
         rebuild()
-    # If deleting Solr index (-d)
-    if args.delete:
+    # If NOT keeping Solr index (-k)
+    if not args.keep:
         solr_index = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "KeywordSearch")
         clear_dir(solr_index)
         print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
+    elif args.keep:
+        print_report([], "KEEP SOLR INDEX", "Solr index has been kept.")
     # If running in verbose mode (-v)
     if args.verbose:
         errors = report_all_errors()
@@ -318,7 +342,9 @@ def run_test(image_file):
     compare_to_gold_html()
     
     # Make the CSV log and the html log viewer
-    generate_csv()
+    generate_csv(case.csv)
+    if case.global_csv:
+        generate_csv(case.global_csv)
     generate_html()
     
     # Reset the case and return the tests sucessfully finished
@@ -619,15 +645,15 @@ def fill_case_data():
         printerror(srt(e) + "\n")
     
 # Generate the CSV log file
-def generate_csv():
-    # If the CSV file hasn't already been generated, this is the
-    # first run, and we need to add the column names
-    if not file_exists(case.csv):
-        csv_header()
-        
-    # Now add on the fields to a new row
+def generate_csv(csv_path):
     try:
-        csv = open(case.csv, "a")
+        # If the CSV file hasn't already been generated, this is the
+        # first run, and we need to add the column names
+        if not file_exists(csv_path):
+            csv_header(csv_path)
+            
+        # Now add on the fields to a new row
+        csv = open(csv_path, "a")
         # Variables that need to be written
         image_path = case.image_file
         name = case.image_name
@@ -663,14 +689,16 @@ def generate_csv():
         csv.close()
     except StringNotFoundException as e:
         e.print_error()
-        printerror("Error: CSV file was not created.\n")
+        printerror("Error: CSV file was not created at:")
+        printerror(csv_path + "\n")
     except Exception as e:
-        printerror("Error: Unknown fatal error when creating CSV file.")
+        printerror("Error: Unknown fatal error when creating CSV file at:")
+        printerror(csv_path)
         printerror(str(e) + "\n")
 
 # Generates the CSV header (column names)
-def csv_header():
-    csv = open(case.csv, "w")
+def csv_header(csv_path):
+    csv = open(csv_path, "w")
     seq = ("Image Path", "Image Name", "Output Case Directory", "Autopsy Version",
            "Heap Space Setting", "Test Start Date", "Test End Date", "Total Test Time",
            "Total Ingest Time", "Service Times", "Exceptions Count", "TSK Objects Count", "Artifacts Count",
@@ -1035,6 +1063,18 @@ def get_word_at(string, n):
     else:
         return ""
 
+# Returns true if the given file is one of the required input files
+# for ingest testing
+def required_input_file(name):
+    if ((name == "notablehashes.txt-md5.idx") or
+       (name == "notablekeywords.xml") or
+       (name == "nsrl.txt-md5.idx")): 
+       return True
+    else:
+        return False
+
+        
+
 # Returns the args of the test script
 def usage():
   usage = "\
@@ -1053,7 +1093,7 @@ def usage():
     -r, --rebuild\t\tRebuild the gold standards from the test results for each image.\n\n\
     -i, --ignore\t\tIgnores the ./input directory when searching for files. ONLY use in combinatin with a config file.\n\n\
     -u, --unallocated\t\tIgnores unallocated space when ingesting. Faster, but less accurate results.\n\n\
-    -d, --delete\t\tDeletes the Solr index for each image after it is done testing.\n\n\
+    -k, --keep\t\tKeeps each image's Solr index instead of deleting it.\n\n\
     -v, --verbose\t\tPrints logged warnings after each ingest\n\n\
     -e, --exception\t\tWhen followed by a string, will only print out the exceptions that occured that contain the string. Case sensitive."
     
@@ -1127,34 +1167,44 @@ def main():
 
     printout("")
     args = Args()
+    # The arguments were given wrong:
     if not args.parse():
         case.reset()
         pass
+    # Otherwise test away!
     else:
         case.output_dir = make_path("output", time.strftime("%Y.%m.%d-%H.%M.%S"))
         os.makedirs(case.output_dir)
-        case.common_log = make_local_path(case.output_dir, "CommonLog.txt")
+        case.common_log = make_local_path(case.output_dir, "AutopsyErrors.txt")
         case.csv = make_local_path(case.output_dir, "CSV.txt")
         case.html_log = make_local_path(case.output_dir, "AutopsyTestCase.html")
         
+        # If user wants to do a single file and a list (contradictory?)
         if args.single and args.list:
             printerror("Error: Cannot run both from config file and on a single file.")
             return
+        # If working from a configuration file
         if args.list:
             if not file_exists(args.config_file):
                 printerror("Error: Configuration file does not exist at:")
                 printerror(args.config_file)
                 return
             run_config_test(args.config_file)
+        # Else if working on a single file
         elif args.single:
             if not file_exists(args.single_file):
                 printerror("Error: Image file does not exist at:")
                 printerror(args.single_file)
                 return
             run_test(args.single_file)
+        # If user has not selected a single file, and does not want to ignore
+        #  the input directory, continue on to parsing ./input
         if (not args.single) and (not args.ignore):
             for file in os.listdir(case.input_dir):
-                run_test(make_path(case.input_dir, file))
+                # Make sure it's not a required hash/keyword file or dir
+                if (not required_input_file(file) and
+                    not os.path.isdir(make_path(case.input_dir, file))):
+                    run_test(make_path(case.input_dir, file))
                
         write_html_foot()
 
