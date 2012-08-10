@@ -26,7 +26,7 @@ It is up to the user to distinguish between the paths when adding to this file.
 
 <Properties>
     <!-- Path to input directory -->
-    <indir value="C:\Users\0xNF\autopsyA\Testing\script\important_files" />
+    <indir value="X:\path\to\input\directory" />
     <!-- Path to global CSV file -->
     <global_csv value="X:\path\to\global\csv.txt" />
     <!-- Path to images -->
