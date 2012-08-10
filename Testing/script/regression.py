@@ -1079,27 +1079,35 @@ def required_input_file(name):
 
 # Returns the args of the test script
 def usage():
-  usage = "\
-  Usage: ./regression.py [-f FILE] [OPTIONS] \n\n\
-  Run the RegressionTest.java file, and compare the result with a gold standard \n\n\
-  When the -f flag is set, this script only tests the image given by FILE.\n\
-  By default, it tests every image in ./input/\n\n\
-  An indexed NSRL database is expected at ./input/nsrl.txt-md5.idx,\n\
-  and an indexed notable hash database at ./input/notablehashes.txt-md5.idx\n\
-  In addition, any keywords to search for must be in ./input/notablekeywords.xml\n\n\
-  When the -l flag is set, the script looks for a config.xml file of the given name\n\
-  where images are stored. The above input files may be outsources to a different folder\n\
-  via the config file. For usage notes please see the example \"config.xml\" in\n\
-  the /script folder.\
-    Options:\n\n\
-    -r, --rebuild\t\tRebuild the gold standards from the test results for each image.\n\n\
-    -i, --ignore\t\tIgnores the ./input directory when searching for files. ONLY use in combinatin with a config file.\n\n\
-    -u, --unallocated\t\tIgnores unallocated space when ingesting. Faster, but less accurate results.\n\n\
-    -k, --keep\t\tKeeps each image's Solr index instead of deleting it.\n\n\
-    -v, --verbose\t\tPrints logged warnings after each ingest\n\n\
-    -e, --exception\t\tWhen followed by a string, will only print out the exceptions that occured that contain the string. Case sensitive."
+    usage = "\
+Usage: ./regression.py [-f FILE] [OPTIONS] \n\n\
+Run the RegressionTest.java file, and compare the result with a gold standard \n\n\
+When the -f flag is set, this script only tests the image given by FILE.\n\
+By default, it tests every image in ./input/\n\n\
+An indexed NSRL database is expected at ./input/nsrl.txt-md5.idx,\n\
+and an indexed notable hash database at ./input/notablehashes.txt-md5.idx\n\
+In addition, any keywords to search for must be in ./input/notablekeywords.xml\n\n\
+When the -l flag is set, the script looks for a config.xml file of the given name\n\
+where images are stored. The above input files may be outsources to a different folder\n\
+via the config file. For usage notes please see the example \"config.xml\" in\n\
+the /script folder.\
+Options:\n\n\
+  -r/--rebuild\n\
+Rebuild the gold standards from the test results for each image.\n\n\
+  -i/--ignore\n\
+Ignores the ./input directory when searching for files. Only use in combinatin with a config file.\n\n\
+  -u/--unallocated\n\
+Ignores unallocated space when ingesting. Faster, but yields less accurate results.\n\n\
+  -k/--keep\n\
+Keeps each image's Solr index instead of deleting it.\n\n\
+  -v/--verbose\n\
+Prints all Warnings and Exceptions after each ingest.\n\n\
+  -e/--exception [exception]\n\
+When followed by a string, will print out all exceptions that occured that contain the string. Case sensitive.\n\n\
+  -l/--list [configuration file]\n\
+Runs from a configuration file, which is given as a path to the file after the argument."
     
-  return usage
+    return usage
 
 
 
