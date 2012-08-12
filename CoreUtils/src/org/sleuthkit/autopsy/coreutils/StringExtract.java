@@ -586,6 +586,7 @@ public class StringExtract {
                     return "Hebrew";
                 }
 
+                @Override
                 public String getLanguages() {
                     return toString();
                 }
@@ -596,6 +597,7 @@ public class StringExtract {
                     return "Arabic";
                 }
 
+                @Override
                 public String getLanguages() {
                     return toString();
                 }
@@ -624,6 +626,7 @@ public class StringExtract {
                     return "Bengali";
                 }
 
+                @Override
                 public String getLanguages() {
                     return toString();
                 }
@@ -800,6 +803,7 @@ public class StringExtract {
                     return "Hiragana";
                 }
 
+                @Override
                 public String getLanguages() {
                     return "Japanese";
                 }
@@ -810,6 +814,7 @@ public class StringExtract {
                     return "Katakana";
                 }
 
+                @Override
                 public String getLanguages() {
                     return "Japanese";
                 }
@@ -826,6 +831,7 @@ public class StringExtract {
                     return "Han";
                 }
 
+                @Override
                 public String getLanguages() {
                     return "Chinese, Japanese, Korean";
                 }
