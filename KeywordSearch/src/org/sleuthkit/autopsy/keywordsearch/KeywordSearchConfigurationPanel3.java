@@ -82,15 +82,24 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
         }
     }
 
+    private static String getLangText(SCRIPT script) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(script.toString()).append(" (");
+        sb.append(script.getLanguages());
+        sb.append(")");
+        return sb.toString();
+    }
+    
     private void initScriptsCheckBoxes() {
         final List<StringExtract.StringExtractUnicodeTable.SCRIPT> supportedScripts = StringExtract.getSupportedScripts();
         checkPanel.setLayout(new GridLayout(0, 1));
         for (StringExtract.StringExtractUnicodeTable.SCRIPT s : supportedScripts) {
-            JCheckBox ch = new JCheckBox(s.toString());
+            String text = getLangText(s);
+            JCheckBox ch = new JCheckBox(text);
             ch.addActionListener(updateLanguagesAction);
             checkPanel.add(ch);
             ch.setSelected(false);
-            scripts.put(s.toString(), s);
+            scripts.put(text, s);
         }
     }
 
