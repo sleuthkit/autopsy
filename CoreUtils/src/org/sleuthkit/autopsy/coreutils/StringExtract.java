@@ -55,10 +55,10 @@ public class StringExtract {
      */
     private static final List<SCRIPT> SUPPORTED_SCRIPTS =
             Arrays.asList(
-            SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.HAN,
+            SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.CYRILLIC, SCRIPT.HAN,
             SCRIPT.HIRAGANA, SCRIPT.KATAKANA, SCRIPT.HANGUL,
             SCRIPT.ARMENIAN, SCRIPT.BENGALI, SCRIPT.KHMER, SCRIPT.ETHIOPIC,
-            SCRIPT.GEORGIAN, SCRIPT.HEBREW, SCRIPT.LAO, SCRIPT.MONGOLIAN, SCRIPT.THAI, SCRIPT.TIBETAN, SCRIPT.CYRILLIC);
+            SCRIPT.GEORGIAN, SCRIPT.HEBREW, SCRIPT.LAO, SCRIPT.MONGOLIAN, SCRIPT.THAI, SCRIPT.TIBETAN);
     //current total string buffer, reuse for performance
     private final StringBuilder curString = new StringBuilder();
 
