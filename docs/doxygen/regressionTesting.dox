@@ -11,6 +11,7 @@ Currently, Autopsy regression testing automates the following:
 - adding an image
 - configuring ingest
 - running ingest
+- generating an HTML report
 
 The tests can be invoked using ant regression-test
 
@@ -18,7 +19,7 @@ There is a python script in Testing/script/regression.py that wraps around "ant 
 and runs a test for every disk image it finds.
 
 regression.py also does regression test result validation by comparing the test result with the golden standards
-for the image.
+for the image and comparing the HTML report with the gold standard HTML report.
 
 It is assumed that the steps detailed in the Building Autopsy from Source document have been completed, and that appropriate versions of the JDK, LIBEWF etc, are present on the system. Building Autopsy from Source can be accessed at:
 https://github.com/sleuthkit/autopsy/blob/master/BUILDING.txt
@@ -35,62 +36,93 @@ Download and run the Cygwin setup, available at
 From the list of packages to install, select both Database and Python. 
 
 
-2) Setting up Regression.py
+2)  Setting up regression.py
 
-Place all images that you wish to regression test under 
+If you are planning on running the script regularly ("./regression.py"), the input directory will be
 
 		autopsy/Testing/script/input
 
+However, if you are planning on using the configuration file, you can change the input directory using the <indir> tag.
 
-Ensure that the following files are also under  /input
+Ensure the following files are in the input directory, whether in the default location or set by the configuration file
 
 		notablehashes.txt-md5.idx
 		nsrl.txt-md5.idx
 		notablekeywords.xml
 
-
-place the gold standard database files ("standards.db") for each image under
-
-		autopsy/Testing/script/gold/{name of image}
+Place any images you would like to test in the input directory, and/or use the configuration file to point to image files directly using the <image> tag. The input directory will be scanned for images even when the configuration file points to specific ones. Use the -i or --ignore command to prevent this.
 
 
 
 \section regression_test_running Running regression testing
 
-3) Run regression tests
+3)  Running regression.py
 
-From the Cygwin terminal, navigate to the /script folder and run "./regression.py". 
-The script will automatically begin Autopsy and run ingestion and analysis on all the images from the ./input directory, and will close when finished. 
-The Cygwin terminal will print out whether or not errors were encountered at the end of each image's test.
+From the Cygwin terminal, navigate to
 
-It is possible to run testing on images that do not reside within ./input. 
-To accomplish this, a configuration file is specified as a flag when run. Please see 4 below.
+	autopsy/Testing/script
 
+To run regression.py using the default settings, type
 
+	./regression.py
 
-Options:
-		
-Currently, the script supports four argument parameters:
+By default this will
 
-	-s {imgname}				: runs the test with a single image as specified by {imgname}. Must include the path, it does not read from input.
-	-r or --rebuild			: runs in REBUILD mode, see 5 below
-	-l {config} or --list {config}	: runs with the specified {config} file. If you do not specify a path to the file, it searches for it under ./. It will attempt to search for the file by the specified path name if surrounded in quotes. By default will also search ./input for images in addition. Appends "-l" to the output and gold folders for distinguishing.
-	-u or --unallocated		: runs ignoring unallocated space. Useful for determining framework is operational. Appends "-u" to the output and gold folders for distinguishing them from others. Will automatically compare the right reports.
-	-i or --ignore			: Will ignore the ./input directory. Use only in combination with -l
-	-d or --delete			: Will not delete the keyword search Solr index upon ingest completion. Will consume more disk space.
-	-v or --verbose			: Prints logged warnings after each ingest
-	-e or --exception		: When followed by a string, will only print out the exceptions that occured that contain the string. Case sensitive.
+- Search for notablehashes.txt-md5.idx, nsrl.txt-md5.idx, and notablekeywords.xml in the ./input directory
+- Search for any image files in the ./input directory and test them
+- Compare the generated database and report to the gold standards
+- Save AutopsyErrors.txt, which is a log of all Warnings and Exceptions thrown by Autopsy, in the output directory
+- Save CSV.txt, which contains all important test detailes for each image delimited by a "|", in the output directory
+- Save AutopsyTestCase.html, which is a user-friendly information, warning, and command-line log of all the tests ran, in the output directory
+- Delete the Solr index in the output directory to save drive space
 
-These can be run in any combination.
+Other commands can be issued by adding the following arguments to the script
+
+    -r, --rebuild
+Rebuild the gold standards from the test results for each image.
+    -i, --ignore
+Ignores the ./input directory when searching for files. Only use in combinatin with a configuration file.
+    -u, --unallocated
+Ignores unallocated space when ingesting. Faster, but yields less accurate results.
+    -k, --keep
+Keeps each image's Solr index instead of deleting it.
+    -v, --verbose
+Prints all Warnings and Exceptions after each ingest.
+    -e, --exception
+When followed by a string, will print out all exceptions that occured that contain the string. Case sensitive.
+    -l, --list
+Runs from a configuration file, which is given as a path to the file after the argument.
+
 
 
 \section regression_test_config Running regression tests with a config file
 
-4) Running with a configuration file
-	
-The config file is any user defined XML file that has the following properties: 1 element with the tag "indir" to specify where the hash databases are, and any number of elements with the tag "image",
-where the program will look for external images. These images do not have to be held locally. They may be on network shares, or other attached drives. We have included a sample "config.xml" in the script folder as a guide.
-Note that the config file may be named anything.
+4) Running from a configuration file
+
+An XML configuration file can be pointed to by using the -l or --list command as shown below
+
+	./regression.py -l X:\path\to\file.xml
+
+The configuration file has three possible tags, all of which are optional.
+
+<indir value="X:\path\to\input\directory">
+Changes the default input directory to the one provided.
+
+<global_csv value="X:\path\to\csv\file.txt">
+Points to an optional CSV file to be added to, anywhere in the user's filesystem.
+
+<image value="X:\path\to\image.img">
+Points to a specific image file to be tested. This tag can be used any number of times in the configuration file.
+
+
+Note: When running with a configuration file, all the default features of regression.py will still be enabled.
+
+Please see the example configuration file
+
+	autopsy/Testing/script/config.xml
+
+For more detail
+
 
 
 /section optional_standards_update OPTIONAL: Update the standards databases	
