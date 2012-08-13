@@ -42,6 +42,12 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
     
     private OpenRecentCasePanel() {
         initComponents();
+    }
+    
+    /**
+     * Retrieves all the recent cases and adds them to the table.
+     */
+    private void generateRecentCases() {
 
         caseName = RecentCases.getInstance().getRecentCaseNames();
         casePaths = RecentCases.getInstance().getRecentCasePaths();
@@ -118,6 +124,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         if (instance == null) {
             instance = new OpenRecentCasePanel();
         }
+        instance.generateRecentCases(); // refresh the case list
         return instance;
     }
 
