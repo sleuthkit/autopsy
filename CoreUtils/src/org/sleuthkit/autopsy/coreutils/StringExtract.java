@@ -551,7 +551,7 @@ public class StringExtract {
             LATIN_1 {
                  @Override
                 public String toString() {
-                    return "Latin";
+                    return "Latin - Basic";
                 }
                 @Override
                 public String getLanguages() {
