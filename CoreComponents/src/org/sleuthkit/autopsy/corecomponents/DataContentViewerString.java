@@ -113,6 +113,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         goToPageTextField = new javax.swing.JTextField();
         languageCombo = new javax.swing.JComboBox();
         languageLabel = new javax.swing.JLabel();
+        noTextLabel = new javax.swing.JLabel();
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
@@ -191,6 +192,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         languageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.languageLabel.text")); // NOI18N
         languageLabel.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.languageLabel.toolTipText")); // NOI18N
 
+        noTextLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.noTextLabel.text")); // NOI18N
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -214,6 +217,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 .addComponent(goToPageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(noTextLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(languageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -236,7 +241,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(languageLabel)))
+                        .addComponent(languageLabel)
+                        .addComponent(noTextLabel)))
                 .addGap(0, 0, 0)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 401, Short.MAX_VALUE))
         );
@@ -306,6 +312,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private javax.swing.JComboBox languageCombo;
     private javax.swing.JLabel languageLabel;
     private javax.swing.JButton nextPageButton;
+    private javax.swing.JLabel noTextLabel;
     private javax.swing.JLabel ofLabel;
     private javax.swing.JTextPane outputViewPane;
     private javax.swing.JLabel pageLabel;
@@ -346,6 +353,13 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                     stringExtract.setEnabledScript(selScript);
                     StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
                     text = res.getText();
+                    if (text.trim().isEmpty()) {
+                        noTextLabel.setText("(offset " + currentOffset + "-" + (currentOffset + pageLength) 
+                                + " contains no text)");
+                    }
+                    else {
+                        noTextLabel.setText("");
+                    }
                     setVisible = true;
                 }
 
@@ -454,6 +468,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         prevPageButton.setEnabled(false);
         nextPageButton.setEnabled(false);
         setComponentsVisibility(false); // hides the components that not needed
+        noTextLabel.setText("");
     }
 
     @Override
