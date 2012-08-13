@@ -146,7 +146,7 @@ public class DataResultFilterNode extends FilterNode {
         public List<Action> visit(ImageNode img) {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", img));
-            actions.add(new FileSearchAction("Open File Search"));
+            actions.add(new FileSearchAction("Open File Search by Attributes"));
             actions.addAll(ShowDetailActionVisitor.getActions(img.getLookup().lookup(Content.class)));
             return actions;
         }

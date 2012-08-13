@@ -66,7 +66,7 @@ public final class FileSearchAction extends CallableSystemAction implements File
 
     @Override
     public String getName() {
-        return "File Search";
+        return "File Search by Attributes";
     }
 
     @Override

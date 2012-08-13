@@ -290,21 +290,20 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             .addGroup(timePanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(timePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, timePanelLayout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                    .addGroup(timePanelLayout.createSequentialGroup()
+                        .addGap(0, 0, 0)
                         .addComponent(timeRadioButton1))
                     .addGroup(timePanelLayout.createSequentialGroup()
                         .addGroup(timePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(timeLabel)
                             .addComponent(timeRadioButton2)
-                            .addComponent(timeRadioButton3))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                            .addComponent(timeRadioButton3))))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         timePanelLayout.setVerticalGroup(
             timePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(timePanelLayout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
+                .addGap(0, 4, Short.MAX_VALUE)
                 .addComponent(timeLabel)
                 .addGap(0, 0, 0)
                 .addComponent(timeRadioButton1)
@@ -318,6 +317,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         processUnallocPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
 
         processUnallocCheckbox.setText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.processUnallocCheckbox.text")); // NOI18N
+        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestDialogPanel.class, "IngestDialogPanel.processUnallocCheckbox.toolTipText")); // NOI18N
         processUnallocCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 processUnallocCheckboxActionPerformed(evt);
