@@ -404,7 +404,7 @@ public class IngestManager {
     /**
      * Test is any file ingest services are running.
      * 
-     * @return true if any file ingest services are running, false otherwise
+     * @return true if any ingest services are running, false otherwise
      */
     public synchronized boolean areServicesRunning() {
         for (IngestServiceAbstract serv : abstractFileServices) {

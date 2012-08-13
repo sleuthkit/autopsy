@@ -218,13 +218,8 @@ public class RegressionTest extends JellyTestCase{
         }
         new Timeout("pausing", 15000).sleep(); // give it a second (or fifteen) to process
         boolean sleep = true;
-        while (sleep) {
+        while (man.areServicesRunning()) {
             new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
-            sleep = false;
-
-            for (IngestServiceAbstract serv : IngestManager.enumerateAbstractFileServices()) {
-                sleep = sleep || serv.hasBackgroundJobsRunning();
-            }
         }
         logger.info("Ingest (including enqueue) took " + (System.currentTimeMillis()-start) + "ms");
         // allow keyword search to finish saving artifacts, just in case
