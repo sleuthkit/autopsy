@@ -108,6 +108,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     //private constructor to ensure singleton instance 
     private KeywordSearchIngestService() {
         //set default script 
+        stringExtractScripts.add(SCRIPT.LATIN_1);
         stringExtractScripts.add(SCRIPT.LATIN_2);
     }
 
