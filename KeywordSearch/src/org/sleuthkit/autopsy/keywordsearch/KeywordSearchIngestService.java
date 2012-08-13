@@ -84,13 +84,13 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private Indexer indexer;
     private Searcher currentSearcher;
     private Searcher finalSearcher;
-    private volatile boolean searcherDone = true;
+    private volatile boolean searcherDone = true; //mark as done, until it's inited
     private Map<Keyword, List<Long>> currentResults;
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
     private static final Lock searcherLock = rwLock.writeLock();
     private volatile int messageID = 0;
     private boolean processedFiles;
-    private volatile boolean finalSearcherDone = false;
+    private volatile boolean finalSearcherDone = true;  //mark as done, until it's inited
     private final String hashDBServiceName = "Hash Lookup"; //NOTE this needs to match the HashDB service getName()
     private SleuthkitCase caseHandle = null;
     private boolean skipKnown = true;
