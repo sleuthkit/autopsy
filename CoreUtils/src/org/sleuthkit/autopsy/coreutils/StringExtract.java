@@ -1036,7 +1036,7 @@ public class StringExtract {
             LATIN_2 {
                 @Override
                 public String toString() {
-                    return "Latin (Extended)";
+                    return "Latin - Extended)";
                 }
 
                 @Override
