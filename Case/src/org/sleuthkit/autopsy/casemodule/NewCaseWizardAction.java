@@ -41,6 +41,8 @@ import org.sleuthkit.autopsy.coreutils.Log;
 public final class NewCaseWizardAction extends CallableSystemAction {
 
     private WizardDescriptor.Panel<WizardDescriptor>[] panels;
+    
+    private static final Logger logger = Logger.getLogger(NewCaseWizardAction.class.getName());
 
     @Override
     public void performAction() {
@@ -92,8 +94,10 @@ public final class NewCaseWizardAction extends CallableSystemAction {
         // if Cancel button is pressed
         if (isCancelled) {
             String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory");
-            if(createdDirectory != null)
+            if(createdDirectory != null) {
+                logger.log(Level.INFO, "Deleting a created case directory due to isCancelled set, dir: " + createdDirectory);
                 Case.deleteCaseDirectory(new File(createdDirectory));
+            }
             // if there's case opened, close the case
             if (Case.existsCurrentCase()) {
                 // close the previous case if there's any

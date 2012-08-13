@@ -115,6 +115,8 @@ public class Case {
     private SleuthkitCase db;
     // Track the current case (only set with changeCase() method)
     private static Case currentCase = null;
+    
+    private static final Logger logger = Logger.getLogger(Case.class.getName());
 
     /**
      * Constructor for the Case class
@@ -684,6 +686,7 @@ public class Case {
      * @return boolean  whether the case directory is successfully deleted or not
      */
     static boolean deleteCaseDirectory(File casePath) {
+        logger.log(Level.INFO, "Deleting case directory: " + casePath.getAbsolutePath());
         return FileUtil.deleteDir(casePath);
     }
 
