@@ -55,10 +55,10 @@ public class StringExtract {
      */
     private static final List<SCRIPT> SUPPORTED_SCRIPTS =
             Arrays.asList(
-            SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.HAN,
+            SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.CYRILLIC, SCRIPT.HAN,
             SCRIPT.HIRAGANA, SCRIPT.KATAKANA, SCRIPT.HANGUL,
             SCRIPT.ARMENIAN, SCRIPT.BENGALI, SCRIPT.KHMER, SCRIPT.ETHIOPIC,
-            SCRIPT.GEORGIAN, SCRIPT.HEBREW, SCRIPT.LAO, SCRIPT.MONGOLIAN, SCRIPT.THAI, SCRIPT.TIBETAN,SCRIPT.CYRILLIC);
+            SCRIPT.GEORGIAN, SCRIPT.HEBREW, SCRIPT.LAO, SCRIPT.MONGOLIAN, SCRIPT.THAI, SCRIPT.TIBETAN);
     //current total string buffer, reuse for performance
     private final StringBuilder curString = new StringBuilder();
 
@@ -519,24 +519,54 @@ public class StringExtract {
      */
     public static class StringExtractUnicodeTable {
 
+        public interface LanguageInfo {
+
+            String getLanguages();
+        }
+
         /**
          * Scripts listed in the unicodeTable loaded
          */
-        public static enum SCRIPT {
+        public static enum SCRIPT implements LanguageInfo {
 
-            NONE,
-            COMMON,
-            LATIN_1,
+            NONE {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            COMMON {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            LATIN_1 {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
             GREEK {
                 @Override
                 public String toString() {
                     return "Greek";
                 }
+
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
             },
             CYRILLIC {
                 @Override
                 public String toString() {
-                    return "Russian, Bulgarian, Serbian, Moldovan (Cyrillic)";
+                    return "Cyrillic";
+                }
+
+                @Override
+                public String getLanguages() {
+                    return "Russian, Bulgarian, Serbian, Moldovan";
                 }
             },
             ARMENIAN {
@@ -544,11 +574,21 @@ public class StringExtract {
                 public String toString() {
                     return "Armenian";
                 }
+
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
             },
             HEBREW {
                 @Override
                 public String toString() {
                     return "Hebrew";
+                }
+
+                @Override
+                public String getLanguages() {
+                    return toString();
                 }
             },
             ARABIC {
@@ -556,28 +596,98 @@ public class StringExtract {
                 public String toString() {
                     return "Arabic";
                 }
+
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
             },
-            SYRIAC,
-            THAANA,
-            DEVANAGARI,
+            SYRIAC {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            THAANA {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            DEVANAGARI {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
             BENGALI {
                 @Override
                 public String toString() {
                     return "Bengali";
                 }
+
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
             },
-            GURMUKHI,
-            GUJARATI,
-            ORIYA,
-            TAMIL,
-            TELUGU,
-            KANNADA,
-            MALAYALAM,
-            SINHALA,
+            GURMUKHI {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            GUJARATI {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            ORIYA {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            TAMIL {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            TELUGU {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            KANNADA {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            MALAYALAM {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            SINHALA {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
             THAI {
                 @Override
                 public String toString() {
                     return "Thai";
+                }
+
+                @Override
+                public String getLanguages() {
+                    return toString();
                 }
             },
             LAO {
@@ -585,24 +695,49 @@ public class StringExtract {
                 public String toString() {
                     return "Laotian";
                 }
+
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
             },
             TIBETAN {
                 @Override
                 public String toString() {
                     return "Tibetian";
                 }
+
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
             },
-            MYANMAR,
+            MYANMAR {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
             GEORGIAN {
                 @Override
                 public String toString() {
                     return "Georgian";
                 }
+
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
             },
             HANGUL {
                 @Override
                 public String toString() {
-                    return "Korean (Hangul)";
+                    return "Hangul";
+                }
+
+                @Override
+                public String getLanguages() {
+                    return "Korean";
                 }
             },
             ETHIOPIC {
@@ -610,14 +745,44 @@ public class StringExtract {
                 public String toString() {
                     return "Ethiopic";
                 }
+
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
             },
-            CHEROKEE,
-            CANADIAN_ABORIGINAL,
-            OGHAM,
-            RUNIC,
+            CHEROKEE {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            CANADIAN_ABORIGINAL {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            OGHAM {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            RUNIC {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
             KHMER {
                 @Override
                 public String toString() {
+                    return "Khmer";
+                }
+
+                @Override
+                public String getLanguages() {
                     return "Cambodian";
                 }
             },
@@ -626,61 +791,246 @@ public class StringExtract {
                 public String toString() {
                     return "Mongolian";
                 }
+
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
             },
             HIRAGANA {
                 @Override
                 public String toString() {
-                    return "Japanese (Hiragana)";
+                    return "Hiragana";
+                }
+
+                @Override
+                public String getLanguages() {
+                    return "Japanese";
                 }
             },
             KATAKANA {
                 @Override
                 public String toString() {
-                    return "Japanese (Katakana)";
+                    return "Katakana";
+                }
+
+                @Override
+                public String getLanguages() {
+                    return "Japanese";
                 }
             },
-            BOPOMOFO,
+            BOPOMOFO {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
             HAN {
                 @Override
                 public String toString() {
-                    return "Chinese, Japanese (Kanji), Korean (Hanja)";
+                    return "Han";
+                }
+
+                @Override
+                public String getLanguages() {
+                    return "Chinese, Japanese, Korean";
                 }
             },
-            YI,
-            OLD_ITALIC,
-            GOTHIC,
-            DESERET,
-            INHERITED,
-            TAGALOG,
-            HANUNOO,
-            BUHID,
-            TAGBANWA,
-            LIMBU,
-            TAI_LE,
-            LINEAR_B,
-            UGARITIC,
-            SHAVIAN,
-            OSMANYA,
-            CYPRIOT,
-            BRAILLE,
-            BUGINESE,
-            COPTIC,
-            NEW_TAI_LUE,
-            GLAGOLITIC,
-            TIFINAGH,
-            SYLOTI_NAGRI,
-            OLD_PERSIAN,
-            KHAROSHTHI,
-            BALINESE,
-            CUNEIFORM,
-            PHOENICIAN,
-            PHAGS_PA,
-            NKO,
-            CONTROL,
+            YI {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            OLD_ITALIC {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            GOTHIC {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            DESERET {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            INHERITED {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            TAGALOG {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            HANUNOO {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            BUHID {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            TAGBANWA {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            LIMBU {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            TAI_LE {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            LINEAR_B {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            UGARITIC {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            SHAVIAN {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            OSMANYA {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            CYPRIOT {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            BRAILLE {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            BUGINESE {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            COPTIC {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            NEW_TAI_LUE {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            GLAGOLITIC {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            TIFINAGH {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            SYLOTI_NAGRI {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            OLD_PERSIAN {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            KHAROSHTHI {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            BALINESE {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            CUNEIFORM {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            PHOENICIAN {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            PHAGS_PA {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            NKO {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
+            CONTROL {
+                @Override
+                public String getLanguages() {
+                    return toString();
+                }
+            },
             LATIN_2 {
                 @Override
                 public String toString() {
-                    return "English, European, Vietnamese";
+                    return "Latin";
+                }
+
+                @Override
+                public String getLanguages() {
+                    return "English, European";
                 }
             }
         };
