@@ -21,10 +21,14 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractButton;
+import javax.swing.JCheckBox;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -57,36 +61,16 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-        
+
         activateWidgets();
     }
-    
-    private void reloadScriptCombo() {
-        //TODO turn into checkboxes
-        final KeywordSearchIngestService service = KeywordSearchIngestService.getDefault();
-        final List<SCRIPT> currentScripts = service.getStringExtractScripts();
-        int items = scriptCombo.getItemCount();
-        for (int i = 0; i<items; ++i) {
-            SCRIPT script= (SCRIPT) scriptCombo.getItemAt(i);
-            if (script.equals(currentScripts.get(0))) {
-                scriptCombo.setSelectedIndex(i);
-                break;
-            }
-        }
-        
-    }
-    
+
     private void activateWidgets() {
-        final KeywordSearchIngestService service = KeywordSearchIngestService.getDefault();        
+        final KeywordSearchIngestService service = KeywordSearchIngestService.getDefault();
         skipNSRLCheckBox.setSelected(service.getSkipKnown());
-        reloadScriptCombo();
-        boolean enable = ! IngestManager.getDefault().isIngestRunning();
-        scriptCombo.setEnabled(enable);
-        //scriptCombo.setEnabled(false);
+        boolean enable = !IngestManager.getDefault().isIngestRunning();
         skipNSRLCheckBox.setEnabled(enable);
     }
-    
-    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -97,12 +81,10 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        langButtonGroup = new javax.swing.ButtonGroup();
         skipNSRLCheckBox = new javax.swing.JCheckBox();
         filesIndexedLabel = new javax.swing.JLabel();
         filesIndexedValue = new javax.swing.JLabel();
-        jSeparator1 = new javax.swing.JSeparator();
-        scriptLabel = new javax.swing.JLabel();
-        scriptCombo = new javax.swing.JComboBox();
         jSeparator2 = new javax.swing.JSeparator();
 
         skipNSRLCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.skipNSRLCheckBox.text")); // NOI18N
@@ -118,78 +100,44 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
         filesIndexedValue.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.filesIndexedValue.text")); // NOI18N
         filesIndexedValue.setMaximumSize(null);
 
-        scriptLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.scriptLabel.text")); // NOI18N
-
-        scriptCombo.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.scriptCombo.toolTipText")); // NOI18N
-        scriptCombo.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                scriptComboActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+            .addComponent(jSeparator2)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(skipNSRLCheckBox)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(scriptLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(scriptCombo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(filesIndexedLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(filesIndexedValue, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(skipNSRLCheckBox))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-            .addComponent(jSeparator2)
+                        .addComponent(filesIndexedLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(filesIndexedValue, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(205, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(scriptLabel)
-                    .addComponent(scriptCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(4, 4, 4)
-                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(4, 4, 4)
+                .addContainerGap()
                 .addComponent(skipNSRLCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(filesIndexedValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(filesIndexedLabel))
-                .addContainerGap(187, Short.MAX_VALUE))
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(filesIndexedLabel)
+                    .addComponent(filesIndexedValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(51, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
 private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipNSRLCheckBoxActionPerformed
     KeywordSearchIngestService.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
 }//GEN-LAST:event_skipNSRLCheckBoxActionPerformed
-
-    private void scriptComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scriptComboActionPerformed
-        //TODO use checkboxes
-        final SCRIPT script = (SCRIPT)scriptCombo.getSelectedItem(); 
-        final List<SCRIPT> scripts = new ArrayList<SCRIPT>();
-        scripts.add(script);
-        KeywordSearchIngestService.getDefault().setStringExtractScripts(scripts);
-    }//GEN-LAST:event_scriptComboActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel filesIndexedLabel;
     private javax.swing.JLabel filesIndexedValue;
-    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
-    private javax.swing.JComboBox scriptCombo;
-    private javax.swing.JLabel scriptLabel;
+    private javax.swing.ButtonGroup langButtonGroup;
     private javax.swing.JCheckBox skipNSRLCheckBox;
     // End of variables declaration//GEN-END:variables
 
@@ -220,11 +168,6 @@ private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//
                     }
                 });
 
-        List<StringExtract.StringExtractUnicodeTable.SCRIPT> supportedScripts = StringExtract.getSupportedScripts();
-        for (StringExtract.StringExtractUnicodeTable.SCRIPT s : supportedScripts) {
-            scriptCombo.addItem(s);
-        }
-        reloadScriptCombo();
 
     }
 }
