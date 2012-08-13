@@ -51,7 +51,7 @@ public class AddImageVisualPanel3 extends javax.swing.JPanel {
      */
     @Override
     public String getName() {
-        return "Ingest Image";
+        return "Configure Ingest Modules";
     }
 
     /** This method is called from within the constructor to
@@ -80,11 +80,11 @@ public class AddImageVisualPanel3 extends javax.swing.JPanel {
         configPanel.setLayout(configPanelLayout);
         configPanelLayout.setHorizontalGroup(
             configPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 596, Short.MAX_VALUE)
+            .addGap(0, 569, Short.MAX_VALUE)
         );
         configPanelLayout.setVerticalGroup(
             configPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 266, Short.MAX_VALUE)
+            .addGap(0, 246, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -97,8 +97,8 @@ public class AddImageVisualPanel3 extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(subtitleLabel)))
-                .addContainerGap(159, Short.MAX_VALUE))
-            .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 596, Short.MAX_VALUE)
+                .addContainerGap(132, Short.MAX_VALUE))
+            .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -107,7 +107,7 @@ public class AddImageVisualPanel3 extends javax.swing.JPanel {
                 .addGap(5, 5, 5)
                 .addComponent(subtitleLabel)
                 .addGap(18, 18, 18)
-                .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE))
+                .addComponent(configPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
