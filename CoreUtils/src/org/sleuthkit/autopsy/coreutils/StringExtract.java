@@ -55,7 +55,7 @@ public class StringExtract {
      */
     private static final List<SCRIPT> SUPPORTED_SCRIPTS =
             Arrays.asList(
-            SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.CYRILLIC, SCRIPT.HAN,
+            SCRIPT.LATIN_1, SCRIPT.LATIN_2, SCRIPT.ARABIC, SCRIPT.CYRILLIC, SCRIPT.HAN,
             SCRIPT.HIRAGANA, SCRIPT.KATAKANA, SCRIPT.HANGUL,
             SCRIPT.ARMENIAN, SCRIPT.BENGALI, SCRIPT.KHMER, SCRIPT.ETHIOPIC,
             SCRIPT.GEORGIAN, SCRIPT.HEBREW, SCRIPT.LAO, SCRIPT.MONGOLIAN, SCRIPT.THAI, SCRIPT.TIBETAN);
@@ -108,13 +108,20 @@ public class StringExtract {
 
     /**
      * Check if extraction of the script is enabled by this instance of the
-     * utility
+     * utility.
+     * For LATIN_2 (extended LATIN), enable also LATIN_1, even if it's not explicitely enabled.
      *
-     * @param script script to check if enabled
+     * @param script script that was identified, to check if it is enabled
      * @return true if the the script extraction is enabled
      */
     public boolean isExtractionEnabled(SCRIPT script) {
-        return enabledScripts.contains(script);
+        if (script.equals(SCRIPT.LATIN_1)) {
+            return enabledScripts.contains(SCRIPT.LATIN_1)
+                    || enabledScripts.contains(SCRIPT.LATIN_2);
+        }
+        else {
+            return enabledScripts.contains(script);
+        }
 
     }
 
@@ -542,9 +549,13 @@ public class StringExtract {
                 }
             },
             LATIN_1 {
+                 @Override
+                public String toString() {
+                    return "Latin";
+                }
                 @Override
                 public String getLanguages() {
-                    return toString();
+                    return "English";
                 }
             },
             GREEK {
@@ -1025,12 +1036,12 @@ public class StringExtract {
             LATIN_2 {
                 @Override
                 public String toString() {
-                    return "Latin";
+                    return "Latin (Extended)";
                 }
 
                 @Override
                 public String getLanguages() {
-                    return "English, European";
+                    return "European";
                 }
             }
         };
@@ -1083,7 +1094,7 @@ public class StringExtract {
          * @return true if the script is generic
          */
         public static boolean isGeneric(SCRIPT script) {
-            return script == SCRIPT.COMMON || script == SCRIPT.LATIN_1;
+            return script == SCRIPT.COMMON; // || script == SCRIPT.LATIN_1;
         }
 
         public static int getUnicodeTableSize() {
