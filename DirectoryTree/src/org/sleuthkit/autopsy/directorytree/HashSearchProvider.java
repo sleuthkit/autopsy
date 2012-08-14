@@ -25,5 +25,4 @@ import org.openide.nodes.Node;
  */
 public interface HashSearchProvider {
     public void search(Node contentNode);
-    public boolean isReady();
 }

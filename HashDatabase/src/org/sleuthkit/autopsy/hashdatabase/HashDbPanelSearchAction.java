@@ -22,8 +22,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationCleanDialog;
 
 /**
@@ -32,7 +35,31 @@ import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationCleanDialog;
  */
 class HashDbPanelSearchAction extends CallableSystemAction {
 
-    static final String ACTION_NAME = "Hash File Search";
+    static final String ACTION_NAME = "File Search by MD5 Hash";
+    private static HashDbPanelSearchAction instance = null;
+    
+    HashDbPanelSearchAction() {
+        super();
+        setEnabled(false);
+        
+        Case.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if(evt.getPropertyName().equals(Case.CASE_CURRENT_CASE)){
+                    setEnabled(evt.getNewValue() != null);
+                }
+            }
+            
+        });
+    }
+    
+    public static HashDbPanelSearchAction getDefault() {
+        if(instance == null){
+            instance = new HashDbPanelSearchAction();
+        }
+        return instance;
+    }
 
     @Override
     public void performAction() {
@@ -50,10 +77,18 @@ class HashDbPanelSearchAction extends CallableSystemAction {
         panel.addSearchActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(panel.doSearch()) {
+                if(panel.search()) {
                     panel.clear();
                     dialog.close();
                 }
+            }
+        });
+        // Have the search button close the window after searching
+        panel.addCancelActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                panel.clear();
+                dialog.close();
             }
         });
         dialog.display(panel);

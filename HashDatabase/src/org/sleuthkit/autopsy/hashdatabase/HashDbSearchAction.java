@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.JOptionPane;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -32,7 +31,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Searches for FsContent Files with the same MD5 hash as the given Node's
@@ -93,29 +91,39 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
     @Override
     public void performAction() {
         // Make sure all files have an md5 hash
-        if(HashDbSearcher.isReady()) {
-            // Get the map of hashes to FsContent and send it to the manager
-            List<FsContent> files = HashDbSearcher.findFilesByMd5(fsContent.getMd5Hash());
-            for(int i=0; i<files.size(); i++) {
-                // If they are the same file, remove it from the list
-                if(files.get(i).equals(fsContent)) {
-                    files.remove(i);
-                }
+        if(HashDbSearcher.allFilesMd5Hashed()) {
+            doSearch();
+        // and if not, warn the user
+        } else if(HashDbSearcher.countFilesMd5Hashed() > 0) {
+            Object selected = JOptionPane.showConfirmDialog(null, "Not all files have MD5 hashes. "
+                    + "Search results will be incomplete.\n"
+                    + "Would you like to search anyway?", "File Search by MD5 Hash", JOptionPane.YES_NO_OPTION);
+            if(selected.equals(JOptionPane.YES_OPTION)) {
+                doSearch();
             }
-            if(!files.isEmpty()) {
-                Map<String, List<FsContent>> map = new LinkedHashMap<String, List<FsContent>>();
-                map.put(fsContent.getMd5Hash(), files);
-                HashDbSearchManager man = new HashDbSearchManager(map);
-                man.execute();
-            } else {
-                JOptionPane.showMessageDialog(null, "No other files with the same MD5 hash were found.");
-            }
+        } else {
+                JOptionPane.showMessageDialog(null, "No files currently have an MD5 hash.",
+                        "File Search by MD5 Hash", JOptionPane.ERROR_MESSAGE);
         }
     }
     
-    @Override
-    public boolean isReady() {
-        return HashDbSearcher.isReady();
+    private void doSearch() {
+        // Get the map of hashes to FsContent and send it to the manager
+        List<FsContent> files = HashDbSearcher.findFilesByMd5(fsContent.getMd5Hash());
+        for(int i=0; i<files.size(); i++) {
+            // If they are the same file, remove it from the list
+            if(files.get(i).equals(fsContent)) {
+                files.remove(i);
+            }
+        }
+        if(!files.isEmpty()) {
+            Map<String, List<FsContent>> map = new LinkedHashMap<String, List<FsContent>>();
+            map.put(fsContent.getMd5Hash(), files);
+            HashDbSearchManager man = new HashDbSearchManager(map);
+            man.execute();
+        } else {
+            JOptionPane.showMessageDialog(null, "No other files with the same MD5 hash were found.");
+        }
     }
 
     @Override
