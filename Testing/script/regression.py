@@ -112,6 +112,7 @@ class Args:
         return True
 
 
+
 #-----------------------------------------------------#
 # Holds all global variables for each individual test #
 #-----------------------------------------------------#
@@ -208,7 +209,7 @@ class TestAutopsy:
         self.ant = []
 
 
-        
+
 #---------------------------------------------------------#
 # Holds all database information from querying autopsy.db #
 #  and standard.db. Initialized when the autopsy.db file  #
@@ -309,6 +310,7 @@ class Database:
             gold_cur = gold_con.cursor()
             gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
             self.gold_objects = gold_cur.fetchone()[0]
+
 
 
 #----------------------------------#
@@ -480,8 +482,8 @@ def rebuild():
     except FileNotFoundException as e:
         errors.append(e.error)
     except Exception as e:
-        printerror("Error: Unknown fatal error when rebuilding the gold database.")
-        errors.append(str(e))
+        errors.append("Error: Unknown fatal error when rebuilding the gold database.")
+        errors.append(str(e) + "\n")
     
     # Rebuild the HTML report
     html_path = make_local_path(case.output_dir, case.image_name,
@@ -493,8 +495,8 @@ def rebuild():
     except FileNotFoundException as e:
         errors.append(e.error)
     except Exception as e:
-        printerror("Error: Unknown fatal error when rebuilding the gold html report.")
-        errors.append(str(e))
+        errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
+        errors.append(str(e) + "\n")
     
     okay = "Sucessfully rebuilt all gold standards."
     print_report(errors, "REBUILDING", okay)
@@ -668,16 +670,20 @@ def generate_common_log():
 
 # Fill in the global case's variables that require the log files
 def fill_case_data():
-    # Open autopsy.log.0
-    log_path = make_local_path(case.output_dir, case.image_name, "logs", "autopsy.log.0")
-    log = open(log_path)
+    try:
+        # Open autopsy.log.0
+        log_path = make_local_path(case.output_dir, case.image_name, "logs", "autopsy.log.0")
+        log = open(log_path)
+        
+        # Set the case starting time based off the first line of autopsy.log.0
+        # *** If logging time format ever changes this will break ***
+        case.start_date = log.readline().split(" java.")[0]
     
-    # Set the case starting time based off the first line of autopsy.log.0
-    # *** If logging time format ever changes this will break ***
-    case.start_date = log.readline().split(" java.")[0]
-    
-    # Set the case ending time based off the "create" time (when the file was copied)
-    case.end_date = time.ctime(os.path.getmtime(log_path))
+        # Set the case ending time based off the "create" time (when the file was copied)
+        case.end_date = time.ctime(os.path.getmtime(log_path))
+    except Exception as e:
+        printerror("Error: Unable to open autopsy.log.0.")
+        printerror(str(e) + "\n")
     
     # Set the case total test time
     # Start date must look like: "Jul 16, 2012 12:57:53 PM"
@@ -687,12 +693,16 @@ def fill_case_data():
     end = datetime.datetime.strptime(case.end_date, "%a %b %d %H:%M:%S %Y")
     case.total_test_time = str(end - start)
     
-    # Set Autopsy version, heap space, ingest time, and service times
-    version_line = search_logs("INFO: Application name: Autopsy, version:")[0]
-    case.autopsy_version = get_word_at(version_line, 5).rstrip(",")
-    case.heap_space = search_logs("Heap memory usage:")[0].rstrip().split(": ")[1]
-    ingest_line = search_logs("INFO: Ingest (including enqueue)")[0]
-    case.total_ingest_time = get_word_at(ingest_line, 5).rstrip()
+    try:
+        # Set Autopsy version, heap space, ingest time, and service times
+        version_line = search_logs("INFO: Application name: Autopsy, version:")[0]
+        case.autopsy_version = get_word_at(version_line, 5).rstrip(",")
+        case.heap_space = search_logs("Heap memory usage:")[0].rstrip().split(": ")[1]
+        ingest_line = search_logs("INFO: Ingest (including enqueue)")[0]
+        case.total_ingest_time = get_word_at(ingest_line, 5).rstrip()
+    except Exception as e:
+        printerror("Error: Unable to find the required information to fill case data.")
+        printerror(str(e) + "\n")
     try:
         service_lines = search_log("autopsy.log.0", "to process()")
         service_list = []
@@ -978,8 +988,7 @@ def generate_html():
     except Exception as e:
         printerror("Error: Unknown fatal error when creating HTML log at:")
         printerror(case.html_log)
-        printerror(str(e) + "\n")
-        
+        printerror(str(e) + "\n")    
 
 # Writed the top of the HTML log file
 def write_html_head():
