@@ -46,6 +46,8 @@ import java.util.regex.Pattern;
 // TSK Imports
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.JLNK;
+import org.sleuthkit.autopsy.coreutils.JLnkParser;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
@@ -62,8 +64,7 @@ import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestServiceImage;
-import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.*;
 
 public class ExtractIE extends Extract implements IngestServiceImage {
 
@@ -139,7 +140,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Internet Explorer"));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", "", domain));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, Favorite, bbattributes);
-                IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+                IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
                 this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + Favorite.getName());
@@ -192,7 +193,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
 
         }
 
-        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+        IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
 
     //Recent Documents section
@@ -206,34 +207,15 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                 break;
             }
             Content fav = Recent;
-            byte[] t = new byte[(int) fav.getSize()];
-
-            int bytesRead = 0;
-            if (fav.getSize() > 0) {
-                try {
-                    bytesRead = fav.read(t, 0, fav.getSize()); // read the data
-                } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to retrieve content from the TSK .", ex);
-                }
-            }
-
-            // set the data on the bottom and show it
-            String recentString = new String();
-            if (bytesRead > 0) {
-                recentString = DataConversion.getString(t, bytesRead, 4);
-            }
-            String path = Util.getPath(recentString);
-            String name = Util.getFileName(path);
+            JLNK lnk = new JLnkParser(new ReadContentInputStream(fav), (int) fav.getSize()).parse();
+            String path = lnk.getBestPath();
             Long datetime = Recent.getCrtime();
-            String Tempdate = datetime.toString();
-            datetime = Long.valueOf(Tempdate);
             try {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", "Last Visited", path));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "", name));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", "", path));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "", Util.getFileName(path)));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", "", Util.findID(path)));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Date Created", datetime));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "", "Windows Explorer"));
                 this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, Recent, bbattributes);
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
@@ -241,7 +223,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
             }
 
         }
-        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
+        IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
 
     }
 
@@ -260,7 +242,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
 
         final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false);
         if (pascoRoot == null) {
-            logger.log(Level.SEVERE, "Pasco2 not found");
+            logger.log(Level.WARNING, "Pasco2 not found");
             pascoFound = false;
             return;
         } else {
@@ -338,7 +320,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                 }
             }
         } catch (Exception ioex) {
-            logger.log(Level.SEVERE, "Error while trying to write index.dat files.", ioex);
+            logger.log(Level.WARNING, "Error while trying to write index.dat files.", ioex);
         }
 
         //bookmarks
@@ -370,13 +352,13 @@ public class ExtractIE extends Extract implements IngestServiceImage {
 
         } catch (Exception e) {
             success = false;
-            logger.log(Level.SEVERE, "ExtractIE::executePasco() -> ", e.getMessage());
+            logger.log(Level.WARNING, "ExtractIE::executePasco() -> ", e);
         }
 
         return success;
     }
 
-    public void parsePascoResults() {
+    private void parsePascoResults() {
         if (pascoFound == false) {
             return;
         }
@@ -451,9 +433,9 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                                             try {
                                                 Long epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(actime).getTime();
                                                 ftime = epochtime.longValue();
-                                                ftime = ftime/1000;
+                                                ftime = ftime / 1000;
                                             } catch (ParseException e) {
-                                                logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e.getMessage());
+                                                logger.log(Level.WARNING, "ExtractIE::parsePascosResults() -> ", e);
                                             }
                                         }
 
@@ -497,13 +479,13 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                         boolean bDelete = file.delete();
                     }
                 } catch (IOException ioex) {
-                    logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", ioex.getMessage());
+                    logger.log(Level.WARNING, "ExtractIE::parsePascosResults() -> ", ioex);
                 }
 
             }
         }
 
-        IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+        IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 
     @Override
@@ -518,7 +500,10 @@ public class ExtractIE extends Extract implements IngestServiceImage {
 
     @Override
     public void stop() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        if(JavaSystemCaller.Exec.getProcess() != null)
+        {
+            JavaSystemCaller.Exec.stop();
+        }
     }
 
     @Override

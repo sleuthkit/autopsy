@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,7 +42,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -276,7 +275,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                             }
                         }
                         if (hit != null) {
-                            snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit, true, false);
+                            snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit);
                         }
                     }
 
@@ -338,7 +337,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                     int curTerm = 0;
                     for (String term : hitTerms) {
                         //escape subqueries, they shouldn't be escaped again later
-                        final String termS = KeywordSearchUtil.escapeLuceneQuery(term, true, false);
+                        final String termS = KeywordSearchUtil.escapeLuceneQuery(term);
                         highlightQuery.append("\"");
                         highlightQuery.append(termS);
                         highlightQuery.append("\"");
@@ -537,7 +536,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
 
             if (!this.isCancelled() && !na.isEmpty()) {
-                IngestManager.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+                IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent(KeywordSearchIngestService.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
             }
         }
 
@@ -568,7 +567,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
                     Map<AbstractFile, Integer> flattened = ContentHit.flattenResults(hits.get(hit));
                     for (AbstractFile f : flattened.keySet()) {
                         int chunkId = flattened.get(f);
-                        final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit, true, false);
+                        final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hit);
                         String snippet = null;
                         try {
                             snippet = LuceneQuery.querySnippet(snippetQuery, f.getId(), chunkId, !query.isLiteral(), true);

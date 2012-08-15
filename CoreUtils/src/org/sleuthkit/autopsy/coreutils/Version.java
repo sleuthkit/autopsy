@@ -18,29 +18,72 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
-import org.openide.util.NbBundle;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 /**
- *
- * @author dfickling
+ * Utility to get version and build settings set at build time
  */
 public class Version {
-    
-    private Version() { }
-    
-    public enum Type{
+
+    private static Properties versionProperties;
+
+    private Version() {
+    }
+
+    public enum Type {
+
         RELEASE, DEVELOPMENT;
     }
-    
+
+    private static void loadVersionProperty() {
+        if (versionProperties != null) {
+            return;
+        }
+
+        versionProperties = new Properties();
+        try {
+            InputStream inputStream = Version.class.getResourceAsStream("Version.properties");
+            versionProperties.load(inputStream);
+        } catch (IOException e) {
+            versionProperties = null;
+        }
+
+
+    }
+
+    private static String getVersionProperty(String property) {
+        loadVersionProperty();
+        if (versionProperties == null) {
+            return "";
+        } else {
+            return versionProperties.getProperty(property);
+        }
+    }
+
+    /**
+     * Get the application version as set at build time
+     * @return application version string
+     */
     public static String getVersion() {
-        return NbBundle.getMessage(Version.class, "app.version");
+        return getVersionProperty("app.version");
     }
-    
+
+    /**
+     * Get the application name as set at build time
+     * @return the application name string
+     */
     public static String getName() {
-        return NbBundle.getMessage(Version.class, "app.name");
+        return getVersionProperty("app.name");
     }
-    
+
+    /**
+     * Get the application build type as set at build time
+     * @return the application build type
+     */
     public static Version.Type getBuildType() {
-        return Type.valueOf(NbBundle.getMessage(Version.class, "build.type"));
+        String valueProp = getVersionProperty("build.type");
+        return Type.valueOf(valueProp);
     }
 }

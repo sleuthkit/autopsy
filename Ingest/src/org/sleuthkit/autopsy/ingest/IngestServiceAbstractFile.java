@@ -21,36 +21,26 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Ingest service interface that acts on every AbstractFile in the image
+ * Ingest service interface that will be called for every file in the image
  */
 public interface IngestServiceAbstractFile extends IngestServiceAbstract {
 
     /**
      * Return value resulting from processing AbstractFile
-     * Can be used by manager to stop processing the file, or by subsequent service
+     * Can be used by IngestManager to stop processing the file, or by subsequent module
      * in the pipeline as a hint to stop processing the file
      */
     public enum ProcessResult {
-        UNKNOWN, //values unknown for the (service,last file)
-        OK, //subsequent service continues processing the file
-        STOP, //subsequent service stops processing the file unconditionally
-        COND_STOP, //subsequent service decides whether to stop processing the file
-        ERROR //error encountered processing the file, hint for the depending service to skip processing the file
+        OK, ///<  Indicates that processing was successful (including if the file was largely ignored by the module)
+        COND_STOP, ///< Indicates that the module thinks that the pipeline could stop processing, but it is up to the IngestManager to decide. Use this, for example, if a hash lookup detects that a file is known to be good and can be ignored.  
+        STOP, ///< Indicates that the module thinks that the pipeline processing should be stopped unconditionally for the current file (this should be used sparingly for critical system errors and could be removed in future version)
+        ERROR, ///< Indicates that an error was encountered while processing the file, hint for later modules that depend on this module to skip processing the file due to error condition (such as file could not be read)
+        UNKNOWN ///< Indicates that a return value for the module is not known.  This should not be returned directly by modules, but is used when modules want to learn about a return value from a previously run module.  
     };
     
     /**
-     * Entry point to process file / directory by the service.
-     * 
-     * Service does all the processing work in this method.
-     * It may choose to skip the file if the file is not of interest to the service.
-     * Results of processing, such as extracted data or analysis results should be posted to the blackboard.
-     * 
-     * In a more advanced module, the module can enqueue the file 
-     * and postpone processing until more files of interest are available.
-     * 
-     * The service notifies the ingest inbox of interesting events (data, errors, warnings, infos) 
-     * by posting ingest messages
-     * The service notifies data viewers by firing events using IngestManager.fireServiceDataEvent
+     * Entry point to process file / directory by the service.  See \ref ingestmodule_making for details
+     * on what modules are responsible for doing. 
      * 
      * @param abstractFile file to process
      * @return ProcessResult result of the processing that can be used in the pipeline as a hint whether to further process this file

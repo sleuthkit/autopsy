@@ -25,8 +25,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author dfickling
+ * Node for the results view
  */
 public class ResultsNode extends AbstractNode implements DisplayableItemNode {
     
@@ -35,7 +34,9 @@ public class ResultsNode extends AbstractNode implements DisplayableItemNode {
     public ResultsNode(SleuthkitCase sleuthkitCase) {
         super(new RootContentChildren(Arrays.asList(new ExtractedContent(sleuthkitCase),
                 new KeywordHits(sleuthkitCase),
-                new HashsetHits(sleuthkitCase))), Lookups.singleton(NAME));
+                new HashsetHits(sleuthkitCase),
+                new EmailExtracted(sleuthkitCase)
+                )), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/results.png");

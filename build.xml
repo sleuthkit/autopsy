@@ -4,9 +4,12 @@
 <!-- If you delete this file and reopen the project it will be recreated. -->
 <project name="Autopsy3" basedir=".">
     <description>Builds the module suite Autopsy3.</description>
+	
     <import file="nbproject/build-impl.xml"/>
-
     
+    <property name="netbeans-plat-version" value="7.2" />
+    <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
+
     <condition property="os.family" value="unix">  
         <os family="unix"/>  
     </condition>  
@@ -25,10 +28,11 @@
             <pathelement location="${ant.contrib.jar}"/>
         </classpath>
     </taskdef>
+    
 
     <!-- This seems really bad to be hard coded, but I couldn't find a better solution -->
     <path id="jni-path">
-        <pathelement location="./build/cluster/modules/org-sleuthkit-datamodel.jar"/>
+        <pathelement location="${basedir}/build/cluster/modules/org-sleuthkit-datamodel.jar"/>
         <path refid="cluster.path.id" />
     </path>
 
@@ -54,15 +58,18 @@
     <target name="getExternals" depends="findTSK,copyTSKLibsToRelease">
         <property environment="env"/>
         <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel.jar" tofile="${basedir}/DataModel/release/modules/ext/Tsk_DataModel.jar"/>
-		 <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.7.2.jar" tofile="${basedir}/DataModel/release/modules/ext/sqlite-jdbc-3.7.2.jar"/>
-        <!--<copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.6.20-javadoc.jar" tofile="${basedir}/DataModel/release/modules/ext/sqlite-jdbc-3.6.20-javadoc.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.6.20-sources.jar" tofile="${basedir}/DataModel/release/modules/ext/sqlite-jdbc-3.6.20-sources.jar"/> -->
+        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.7.2.jar" tofile="${basedir}/DataModel/release/modules/ext/sqlite-jdbc-3.7.2.jar"/>
     </target>
-
+    
+     <target name="getJunit">
+        <property name="junit.dir" value="${thirdparty.dir}/junit/${netbeans-plat-version}" />
+         <unzip src="${junit.dir}/junit.zip" dest="${nbplatform.active.dir}"/>
+    </target>
+    
     <!-- This target will create a custom ZIP file for us.  It first uses the general
       ZIP target and then opens it up and adds in any files that we want.  This is where we customize the
       version number. -->
-    <target name="build-zip" depends="suite.build-zip">
+    <target name="build-zip" depends="suite.build-zip,findJRE">
         <property name="nbdist.dir" value="dist"/>
         <property name="release.dir" value="${nbdist.dir}/${app.name}"/>
 
@@ -77,7 +84,18 @@
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
+        <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
+        <copy todir="${zip-tmp}/${app.name}/jre6">
+            <fileset dir="${env.JRE_HOME}"/>
+        </copy>
+        <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
         <antcall target="copyExternalLibsToZip"></antcall>
+        
+        <propertyfile
+        file="${zip-tmp}/${app.name}/etc/${app.name}.conf">
+            <entry key="default_options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx1024m&quot;" />
+            <entry key="jdkhome" value="&quot;jre6&quot;" />
+        </propertyfile>
         
         <!-- step (4) zip again, but with the version numbers in the dir -->
         <zip destfile="${nbdist.dir}/${app.name}-${app.version}.zip">
@@ -111,7 +129,7 @@
         <property name="app.version" value="${DSTAMP}"/>
     </target>
     
-    <target name="-init" depends="-taskdefs,-convert-old-project,getExternals,getProps">
+    <target name="-init" depends="-taskdefs,-convert-old-project,getExternals,getProps,getJunit">
         <convertclusterpath from="${cluster.path.evaluated}" to="cluster.path.final" id="cluster.path.id"/>
         <sortsuitemodules unsortedmodules="${modules}" sortedmodulesproperty="modules.sorted"/>
         <property name="cluster" location="build/cluster"/>
@@ -160,7 +178,7 @@
         </propertyfile>
         
         <propertyfile
-        file="${basedir}/CoreUtils/src/org/sleuthkit/autopsy/coreutils/Bundle.properties"
+        file="${basedir}/CoreUtils/src/org/sleuthkit/autopsy/coreutils/Version.properties"
         comment="Updated by build script">
             <entry key="app.name" value="${app.title}" />
             <entry key="app.version" value="${app.version}" />
@@ -180,27 +198,15 @@
         </javah>
     </target>
     
-    <target name="javadoc" depends="-init,-hide-excluded-modules">
-        <subant target="javadoc" buildpath="${modules.sorted}" inheritrefs="false" inheritall="false" />
+    <target name="doxygen" description="build doxygen docs, requires doxygen in PATH" depends="-init,-hide-excluded-modules">
+        <exec executable="doxygen" dir="${basedir}/docs/doxygen">
+            <arg value="Doxyfile"/>
+        </exec>
     </target>
+     
     
-    <target name="build-installer-dir" depends="findJRE,build-zip" >
+    <target name="build-installer-dir" depends="build-zip" >
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
-        <antcall target="update-conf-file" />
-        <delete file="${nbdist.dir}/${app.name}-${app.version}.zip"/>
-        <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${nbdist.dir}/${app.name}-installer/gstreamer"/>
-        <copy todir="${nbdist.dir}/${app.name}-installer/jre6">
-            <fileset dir="${env.JRE_HOME}"/>
-        </copy>
-        <copy file="${basedir}/branding_${app.name}/icon.ico" tofile="${nbdist.dir}/${app.name}-installer/icon.ico" overwrite="true"/>
-    </target>
-    
-    <target name="update-conf-file" depends="getProps">
-        <propertyfile
-        file="${nbdist.dir}/${app.name}-installer/etc/${app.name}.conf">
-            <entry key="jdkhome" value="&quot;jre6&quot;" />
-            <entry key="default_options" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx1024m&quot;" />
-        </propertyfile>
     </target>
     
     <target name="build-installer" depends="build-installer-dir">

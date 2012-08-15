@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * sections and some modules may generate additional, specialized sections
  * 
 */
-class ReportConfiguration {
+public class ReportConfiguration {
 
     //base data structure
     Map<BlackboardArtifact.ARTIFACT_TYPE, Boolean> config = new EnumMap<BlackboardArtifact.ARTIFACT_TYPE, Boolean>(BlackboardArtifact.ARTIFACT_TYPE.class);
@@ -115,7 +115,8 @@ public void setGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type, Boolean va
        
        
        /** getters for generally supported report parts
-        * 
+        * @param type is a blackboardartifact type
+        * @return value is the artifact type   
         */
        public boolean getGenArtifactType(BlackboardArtifact.ARTIFACT_TYPE type) throws ReportModuleException {
         boolean value = false;

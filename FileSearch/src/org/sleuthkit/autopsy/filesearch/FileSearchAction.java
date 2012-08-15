@@ -24,8 +24,11 @@ import java.beans.PropertyChangeListener;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.directorytree.FileSearchProvider;
 
-public final class FileSearchAction extends CallableSystemAction {
+public final class FileSearchAction extends CallableSystemAction implements FileSearchProvider{
+    
+    private static FileSearchAction instance = null;
 
     FileSearchAction() {
         super();
@@ -43,6 +46,13 @@ public final class FileSearchAction extends CallableSystemAction {
         });
     }
     
+    public static FileSearchAction getDefault() {
+        if(instance == null){
+            instance = new FileSearchAction();
+        }
+        return instance;
+    }
+    
     
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -56,7 +66,7 @@ public final class FileSearchAction extends CallableSystemAction {
 
     @Override
     public String getName() {
-        return "File Search";
+        return "File Search by Attributes";
     }
 
     @Override
@@ -67,5 +77,10 @@ public final class FileSearchAction extends CallableSystemAction {
     @Override
     protected boolean asynchronous() {
         return false;
+    }
+
+    @Override
+    public void showDialog() {
+        performAction();
     }
 }

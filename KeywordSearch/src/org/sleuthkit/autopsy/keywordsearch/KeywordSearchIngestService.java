@@ -39,7 +39,8 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.coreutils.StopWatch;
+import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -55,14 +56,13 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * An ingest service on a file level
- * Performs indexing of allocated and Solr supported files,
- * string extraction and indexing of unallocated and not Solr supported files
- * Index commit is done periodically (determined by user set ingest update interval)
- * Runs a periodic keyword / regular expression search on currently configured lists for ingest
- * and writes results to blackboard
+ * An ingest service on a file level Performs indexing of allocated and Solr
+ * supported files, string extraction and indexing of unallocated and not Solr
+ * supported files Index commit is done periodically (determined by user set
+ * ingest update interval) Runs a periodic keyword / regular expression search
+ * on currently configured lists for ingest and writes results to blackboard
  * Reports interesting events to Inbox and to viewers
- * 
+ *
  * Registered as a service in layer.xml
  */
 public final class KeywordSearchIngestService implements IngestServiceAbstractFile {
@@ -72,7 +72,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
     private static KeywordSearchIngestService instance = null;
     private IngestManagerProxy managerProxy;
-    private static final long MAX_INDEX_SIZE = 100 * (1 << 10) * (1 << 10);
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runSearcher = false; //whether to run searcher next time
@@ -85,26 +84,37 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private Indexer indexer;
     private Searcher currentSearcher;
     private Searcher finalSearcher;
-    private volatile boolean searcherDone = true;
-    private Map<Keyword, List<ContentHit>> currentResults;
+    private volatile boolean searcherDone = true; //mark as done, until it's inited
+    private Map<Keyword, List<Long>> currentResults;
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
     private static final Lock searcherLock = rwLock.writeLock();
     private volatile int messageID = 0;
     private boolean processedFiles;
-    private volatile boolean finalSearcherDone = true;
-    private final String hashDBServiceName = "Hash Lookup";
+    private volatile boolean finalSearcherDone = true;  //mark as done, until it's inited
+    private final String hashDBServiceName = "Hash Lookup"; //NOTE this needs to match the HashDB service getName()
     private SleuthkitCase caseHandle = null;
     private boolean skipKnown = true;
-    boolean initialized = false;
+    private boolean initialized = false;
+    private List<AbstractFileExtract> textExtractors;
+    private AbstractFileStringExtract stringExtractor;
+    private final List<SCRIPT> stringExtractScripts = new ArrayList<SCRIPT>();
 
     private enum IngestStatus {
 
-        INGESTED, EXTRACTED_INGESTED, SKIPPED,
+        INGESTED, EXTRACTED_INGESTED, SKIPPED, INGESTED_META
     };
     private Map<Long, IngestStatus> ingestStatus;
 
+    //private constructor to ensure singleton instance 
+    private KeywordSearchIngestService() {
+        //set default script 
+        stringExtractScripts.add(SCRIPT.LATIN_1);
+        stringExtractScripts.add(SCRIPT.LATIN_2);
+    }
+
     /**
      * Returns singleton instance of the service, creates one if needed
+     *
      * @return instance of the service
      */
     public static synchronized KeywordSearchIngestService getDefault() {
@@ -115,10 +125,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * Starts processing of every file provided by IngestManager.  
-     * Checks if it is time to commit and run search
+     * Starts processing of every file provided by IngestManager. Checks if it
+     * is time to commit and run search
+     *
      * @param abstractFile file/unallocated file/directory to process
-     * @return ProcessResult.OK in most cases and ERROR only if error in the pipeline, otherwise does not advice to stop the pipeline
+     * @return ProcessResult.OK in most cases and ERROR only if error in the
+     * pipeline, otherwise does not advice to stop the pipeline
      */
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
@@ -133,8 +145,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         IngestServiceAbstractFile.ProcessResult hashDBResult = managerProxy.getAbstractFileServiceResult(hashDBServiceName);
         //logger.log(Level.INFO, "hashdb result: " + hashDBResult + "file: " + AbstractFile.getName());
         if (hashDBResult == IngestServiceAbstractFile.ProcessResult.COND_STOP && skipKnown) {
+            //index meta-data only
+            indexer.indexFile(abstractFile, false);
             return ProcessResult.OK;
         } else if (hashDBResult == IngestServiceAbstractFile.ProcessResult.ERROR) {
+            //index meta-data only
+            indexer.indexFile(abstractFile, false);
             //notify depending service that keyword search (would) encountered error for this file
             return ProcessResult.ERROR;
         }
@@ -145,7 +161,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         checkRunCommitSearch();
 
-        indexer.indexFile(abstractFile);
+        //index the file and content (if the content is supported)
+        indexer.indexFile(abstractFile, true);
         return ProcessResult.OK;
 
     }
@@ -192,12 +209,12 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
         }
 
+
         //postSummary();
     }
 
     /**
-     * Handle stop event (ingest interrupted)
-     * Cleanup resources, threads, timers
+     * Handle stop event (ingest interrupted) Cleanup resources, threads, timers
      */
     @Override
     public void stop() {
@@ -217,6 +234,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         runSearcher = false;
         finalSearcherDone = true;
 
+
         //commit uncommited files, don't search again
         commit();
 
@@ -234,9 +252,10 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * Initializes the service for new ingest run
-     * Sets up threads, timers, retrieves settings, keyword lists to run on
-     * @param managerProxy 
+     * Initializes the service for new ingest run Sets up threads, timers,
+     * retrieves settings, keyword lists to run on
+     *
+     * @param managerProxy
      */
     @Override
     public void init(IngestManagerProxy managerProxy) {
@@ -247,9 +266,23 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         this.managerProxy = managerProxy;
 
-        Server solrServer = KeywordSearch.getServer();
+        ingester = Server.getIngester();
 
-        ingester = solrServer.getIngester();
+        //initialize extractors
+        stringExtractor = new AbstractFileStringExtract();
+        stringExtractor.setScripts(stringExtractScripts);
+        //log the scripts used for debugging
+        final StringBuilder sbScripts = new StringBuilder();
+        for (SCRIPT s : stringExtractScripts) {
+            sbScripts.append(s.name()).append(" ");
+        }
+        logger.log(Level.INFO, "Using string extract scripts: " + sbScripts.toString());
+
+        textExtractors = new ArrayList<AbstractFileExtract>();
+        //order matters, more specific extractors first
+        textExtractors.add(new AbstractFileHtmlExtract());
+        textExtractors.add(new AbstractFileTikaTextExtract());
+
 
         ingestStatus = new HashMap<Long, IngestStatus>();
 
@@ -267,7 +300,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         finalSearcherDone = false;
         searcherDone = true; //make sure to start the initial currentSearcher
         //keeps track of all results per run not to repeat reporting the same hits
-        currentResults = new HashMap<Keyword, List<ContentHit>>();
+        currentResults = new HashMap<Keyword, List<Long>>();
 
         indexer = new Indexer();
 
@@ -320,9 +353,11 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * The services maintains background threads, return true if background threads are running
-     * or there are pending tasks to be run in the future, such as the final search post-ingest completion
-     * @return 
+     * The services maintains background threads, return true if background
+     * threads are running or there are pending tasks to be run in the future,
+     * such as the final search post-ingest completion
+     *
+     * @return
      */
     @Override
     public boolean hasBackgroundJobsRunning() {
@@ -353,12 +388,16 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
      */
     private void postIndexSummary() {
         int indexed = 0;
+        int indexed_meta = 0;
         int indexed_extr = 0;
         int skipped = 0;
         for (IngestStatus s : ingestStatus.values()) {
             switch (s) {
                 case INGESTED:
                     ++indexed;
+                    break;
+                case INGESTED_META:
+                    ++indexed_meta;
                     break;
                 case EXTRACTED_INGESTED:
                     ++indexed_extr;
@@ -373,6 +412,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
         StringBuilder msg = new StringBuilder();
         msg.append("Indexed files: ").append(indexed).append("<br />Indexed strings: ").append(indexed_extr);
+        msg.append("<br />Indexed meta-data only: ").append(indexed_meta).append("<br />");
         msg.append("<br />Skipped files: ").append(skipped).append("<br />");
         String indexStats = msg.toString();
         logger.log(Level.INFO, "Keyword Indexing Completed: " + indexStats);
@@ -423,8 +463,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * Check if time to commit, if so, run commit.
-     * Then run search if search timer is also set.
+     * Check if time to commit, if so, run commit. Then run search if search
+     * timer is also set.
      */
     void checkRunCommitSearch() {
         if (commitIndex) {
@@ -446,8 +486,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * CommitTimerAction to run by commitTimer
-     * Sets a flag to indicate we are ready for commit
+     * CommitTimerAction to run by commitTimer Sets a flag to indicate we are
+     * ready for commit
      */
     private class CommitTimerAction implements ActionListener {
 
@@ -461,8 +501,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     }
 
     /**
-     * SearchTimerAction to run by searchTimer
-     * Sets a flag to indicate we are ready to search
+     * SearchTimerAction to run by searchTimer Sets a flag to indicate we are
+     * ready to search
      */
     private class SearchTimerAction implements ActionListener {
 
@@ -477,80 +517,148 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     /**
      * File indexer, processes and indexes known/allocated files,
-     * unknown/unallocated files and directories accordingly 
+     * unknown/unallocated files and directories accordingly
      */
     private class Indexer {
 
         private final Logger logger = Logger.getLogger(Indexer.class.getName());
 
-        private boolean extractAndIngest(AbstractFile aFile) {
-            boolean indexed = false;
-            final FileExtract fe = new FileExtract(KeywordSearchIngestService.this, aFile);
-            try {
-                indexed = fe.index(ingester);
-            } catch (IngesterException ex) {
-                logger.log(Level.WARNING, "Error extracting strings and indexing file: " + aFile.getName(), ex);
-                indexed = false;
+        /**
+         * Extract strings or text with Tika (by streaming) from the file Divide
+         * the file into chunks and index the chunks
+         *
+         * @param aFile file to extract strings from, divide into chunks and
+         * index
+         * @param stringsOnly true if use string extraction, false if to use a
+         * content-type specific text extractor
+         * @return true if the file was indexed, false otherwise
+         * @throws IngesterException exception thrown if indexing failed
+         */
+        private boolean extractIndex(AbstractFile aFile, boolean stringsOnly) throws IngesterException {
+            AbstractFileExtract fileExtract = null;
+
+            if (stringsOnly) {
+                fileExtract = stringExtractor;
+            } else {
+                //go over available text extractors and pick the first one (most specific one)
+                for (AbstractFileExtract fe : textExtractors) {
+                    if (fe.isSupported(aFile)) {
+                        fileExtract = fe;
+                        break;
+                    }
+                }
             }
-            return indexed;
+
+            if (fileExtract == null) {
+                throw new IngesterException("No supported file extractor found for file: " + aFile.getId() + " " + aFile.getName());
+            }
+
+            //logger.log(Level.INFO, "Extractor: " + fileExtract + ", file: " + aFile.getName());
+
+            //divide into chunks and index
+            return fileExtract.index(aFile);
         }
 
-        private void indexFile(AbstractFile aFile) {
+        private boolean isTextExtractSupported(AbstractFile aFile) {
+            for (AbstractFileExtract extractor : textExtractors) {
+                if (extractor.isContentTypeSpecific() == true
+                        && extractor.isSupported(aFile)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void indexFile(AbstractFile aFile, boolean indexContent) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
-            boolean ingestibleFile = Ingester.isIngestible(aFile);
+
+            FsContent fsContent = null;
+            //check if alloc fs file or dir
+            TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
+            if (aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
+                fsContent = (FsContent) aFile;
+            }
 
             final long size = aFile.getSize();
-            //limit size of entire file, do not limit strings
-            if (size == 0 || (ingestibleFile && size > MAX_INDEX_SIZE)) {
-                ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+            //if alloc fs file and not to index content, or a dir, or 0 content, index meta data only
+            if (fsContent != null
+                    && (indexContent == false || fsContent.isDir() || size == 0)) {
+                try {
+                    ingester.ingest(fsContent, false); //meta-data only
+                    ingestStatus.put(aFile.getId(), IngestStatus.INGESTED_META);
+                } catch (IngesterException ex) {
+                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                    logger.log(Level.WARNING, "Unable to index meta-data for fsContent: " + fsContent.getId(), ex);
+                }
+
                 return;
             }
 
-            if (ingestibleFile == true) {
-                //we know it's an allocated file or dir (FsContent)
-                FsContent fileDir = (FsContent) aFile;
+            boolean extractTextSupported = isTextExtractSupported(aFile);
+            if (fsContent != null && extractTextSupported) {
+                //we know it's an allocated FS file (since it's FsContent)
+                //extract text with one of the extractors, divide into chunks and index with Solr
                 try {
                     //logger.log(Level.INFO, "indexing: " + fsContent.getName());
-                    ingester.ingest(fileDir);
-                    ingestStatus.put(fileDir.getId(), IngestStatus.INGESTED);
+                    if (!extractIndex(aFile, false)) {
+                        logger.log(Level.WARNING, "Failed to extract Tika text and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
+                        ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                        //try to extract strings, if a file
+                        if (fsContent.isFile() == true) {
+                            processNonIngestible(fsContent);
+                        }
+
+                    } else {
+                        ingestStatus.put(aFile.getId(), IngestStatus.INGESTED);
+                    }
+
                 } catch (IngesterException e) {
-                    ingestStatus.put(fileDir.getId(), IngestStatus.SKIPPED);
-                    //try to extract strings if not a dir
-                    if (fileDir.isFile() == true) {
-                        processNonIngestible(fileDir);
+                    logger.log(Level.INFO, "Could not extract text with Tika, " + fsContent.getId() + ", "
+                            + fsContent.getName(), e);
+                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+                    //try to extract strings, if a file
+                    if (fsContent.isFile() == true) {
+                        processNonIngestible(fsContent);
                     }
 
                 } catch (Exception e) {
-                    ingestStatus.put(fileDir.getId(), IngestStatus.SKIPPED);
-                    //try to extract strings if not a dir
-                    if (fileDir.isFile() == true) {
-                        processNonIngestible(fileDir);
+                    logger.log(Level.WARNING, "Error extracting text with Tika, " + fsContent.getId() + ", "
+                            + fsContent.getName(), e);
+                    ingestStatus.put(fsContent.getId(), IngestStatus.SKIPPED);
+                    //try to extract strings if a file
+                    if (fsContent.isFile() == true) {
+                        processNonIngestible(fsContent);
                     }
                 }
             } else {
-                //unallocated or unsupported type by Solr
+                //unallocated file or unsupported content type by Solr
                 processNonIngestible(aFile);
-
             }
         }
 
         private boolean processNonIngestible(AbstractFile aFile) {
-            if (!extractAndIngest(aFile)) {
-                logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
+            try {
+                if (!extractIndex(aFile, true)) {
+                    logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").");
+                    ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
+                    return false;
+                } else {
+                    ingestStatus.put(aFile.getId(), IngestStatus.EXTRACTED_INGESTED);
+                    return true;
+                }
+            } catch (IngesterException ex) {
+                logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ex);
                 ingestStatus.put(aFile.getId(), IngestStatus.SKIPPED);
                 return false;
-            } else {
-                ingestStatus.put(aFile.getId(), IngestStatus.EXTRACTED_INGESTED);
-                return true;
             }
         }
     }
 
     /**
-     * Searcher responsible for searching the current index and writing results to blackboard
-     * and the inbox.  Also, posts results to listeners as Ingest data events.
-     * Searches entire index, and keeps track of only new results to report and save.
-     * Runs as a background thread.
+     * Searcher responsible for searching the current index and writing results
+     * to blackboard and the inbox. Also, posts results to listeners as Ingest
+     * data events. Searches entire index, and keeps track of only new results
+     * to report and save. Runs as a background thread.
      */
     private class Searcher extends SwingWorker<Object, Void> {
 
@@ -574,7 +682,6 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
             final String displayName = "Keyword Search" + (finalRun ? " - Finalizing" : "");
             progress = ProgressHandleFactory.createHandle(displayName + (" (Pending)"), new Cancellable() {
-
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Cancelling the searcher by user.");
@@ -591,6 +698,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             //block to ensure previous searcher is completely done with doInBackground()
             //even after previous searcher cancellation, we need to check this
             searcherLock.lock();
+            final StopWatch stopWatch = new StopWatch();
+            stopWatch.start();
             try {
                 logger.log(Level.INFO, "Started a new searcher");
                 progress.setDisplayName(displayName);
@@ -648,32 +757,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                         continue;
                     }
 
-                    //calculate new results but substracting results already obtained in this run
-                    Map<Keyword, List<ContentHit>> newResults = new HashMap<Keyword, List<ContentHit>>();
-
-                    for (String termResult : queryResult.keySet()) {
-                        List<ContentHit> queryTermResults = queryResult.get(termResult);
-                        Keyword termResultK = new Keyword(termResult, !isRegex);
-                        List<ContentHit> curTermResults = currentResults.get(termResultK);
-                        if (curTermResults == null) {
-                            currentResults.put(termResultK, queryTermResults);
-                            newResults.put(termResultK, queryTermResults);
-                        } else {
-                            //some AbstractFile hits already exist for this keyword
-                            for (ContentHit res : queryTermResults) {
-                                if (!previouslyHit(curTermResults, res)) {
-                                    //add to new results
-                                    List<ContentHit> newResultsFs = newResults.get(termResultK);
-                                    if (newResultsFs == null) {
-                                        newResultsFs = new ArrayList<ContentHit>();
-                                        newResults.put(termResultK, newResultsFs);
-                                    }
-                                    newResultsFs.add(res);
-                                    curTermResults.add(res);
-                                }
-                            }
-                        }
-                    }
+                    //calculate new results but substracting results already obtained in this ingest
+                    Map<Keyword, List<ContentHit>> newResults = filterResults(queryResult, isRegex);
 
                     if (!newResults.isEmpty()) {
 
@@ -687,7 +772,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                             Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
                             for (final AbstractFile hitFile : contentHitsFlattened.keySet()) {
                                 String snippet = null;
-                                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery(), true, false);
+                                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(hitTerm.getQuery());
                                 int chunkId = contentHitsFlattened.get(hitFile);
                                 try {
                                     snippet = LuceneQuery.querySnippet(snippetQuery, hitFile.getId(), chunkId, isRegex, true);
@@ -792,7 +877,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
                         //update artifact browser
                         if (!newArtifacts.isEmpty()) {
-                            IngestManager.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+                            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                         }
                     }
                     progress.progress(queryStr, ++numSearched);
@@ -803,6 +888,8 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 logger.log(Level.WARNING, "searcher exception occurred", ex);
             } finally {
                 finalizeSearcher();
+                stopWatch.stop();
+                logger.log(Level.INFO, "Searcher took to run: " + stopWatch.getElapsedTimeSecs() + " secs.");
                 searcherLock.unlock();
             }
 
@@ -833,14 +920,14 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
         //without relying on done() method that is not guaranteed to run after background thread completes
         //NEED to call this method always right before doInBackground() returns
         /**
-         * Performs the cleanup that needs to be done right AFTER doInBackground() returns
-         * without relying on done() method that is not guaranteed to run after background thread completes
-         * REQUIRED to call this method always right before doInBackground() returns
+         * Performs the cleanup that needs to be done right AFTER
+         * doInBackground() returns without relying on done() method that is not
+         * guaranteed to run after background thread completes REQUIRED to call
+         * this method always right before doInBackground() returns
          */
         private void finalizeSearcher() {
             logger.log(Level.INFO, "Searcher finalizing");
             SwingUtilities.invokeLater(new Runnable() {
-
                 @Override
                 public void run() {
                     progress.finish();
@@ -856,7 +943,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 keywordLists.clear();
                 keywordToList.clear();
                 //reset current resuls earlier to potentially garbage collect sooner
-                currentResults = new HashMap<Keyword, List<ContentHit>>();
+                currentResults = new HashMap<Keyword, List<Long>>();
 
                 managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestService.instance, "Completed"));
             } else {
@@ -867,29 +954,53 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
                 }
             }
         }
-    }
 
-    /**
-     * Checks if the content has already been hit previously
-     * @param previousHits the previous hits to check against
-     * @param new hit, that potentially had already been hit
-     * @return true if already hit
-     */
-    private static boolean previouslyHit(List<ContentHit> previousHits, ContentHit hit) {
-        boolean ret = false;
-        long hitId = hit.getId();
-        for (ContentHit c : previousHits) {
-            if (c.getId() == hitId) {
-                ret = true;
-                break;
+        //calculate new results but substracting results already obtained in this ingest
+        //update currentResults map with the new results
+        private Map<Keyword, List<ContentHit>> filterResults(Map<String, List<ContentHit>> queryResult, boolean isRegex) {
+            Map<Keyword, List<ContentHit>> newResults = new HashMap<Keyword, List<ContentHit>>();
+
+            for (String termResult : queryResult.keySet()) {
+                List<ContentHit> queryTermResults = queryResult.get(termResult);
+
+                //translate to list of IDs that we keep track of
+                List<Long> queryTermResultsIDs = new ArrayList<Long>();
+                for (ContentHit ch : queryTermResults) {
+                    queryTermResultsIDs.add(ch.getId());
+                }
+
+                Keyword termResultK = new Keyword(termResult, !isRegex);
+                List<Long> curTermResults = currentResults.get(termResultK);
+                if (curTermResults == null) {
+                    currentResults.put(termResultK, queryTermResultsIDs);
+                    newResults.put(termResultK, queryTermResults);
+                } else {
+                    //some AbstractFile hits already exist for this keyword
+                    for (ContentHit res : queryTermResults) {
+                        if (!curTermResults.contains(res.getId())) {
+                            //add to new results
+                            List<ContentHit> newResultsFs = newResults.get(termResultK);
+                            if (newResultsFs == null) {
+                                newResultsFs = new ArrayList<ContentHit>();
+                                newResults.put(termResultK, newResultsFs);
+                            }
+                            newResultsFs.add(res);
+                            curTermResults.add(res.getId());
+                        }
+                    }
+                }
             }
+
+            return newResults;
+
         }
-        return ret;
     }
 
     /**
      * Set the skip known files setting on the service
-     * @param skip true if skip, otherwise, will process known files as well, as reported by HashDB service
+     *
+     * @param skip true if skip, otherwise, will process known files as well, as
+     * reported by HashDB service
      */
     void setSkipKnown(boolean skip) {
         this.skipKnown = skip;
@@ -897,5 +1008,27 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
 
     boolean getSkipKnown() {
         return skipKnown;
+    }
+
+    /**
+     * Set the scripts to use for string extraction. Takes effect on next ingest
+     * start / at init(), not in effect if ingest is running
+     *
+     * @param scripts scripts to use for string extraction next time ingest
+     * inits and runs
+     */
+    void setStringExtractScripts(List<SCRIPT> scripts) {
+        this.stringExtractScripts.clear();
+        this.stringExtractScripts.addAll(scripts);
+
+    }
+
+    /**
+     * gets the currently set scripts to use
+     *
+     * @return the list of currently used script
+     */
+    List<SCRIPT> getStringExtractScripts() {
+        return new ArrayList<SCRIPT>(this.stringExtractScripts);
     }
 }

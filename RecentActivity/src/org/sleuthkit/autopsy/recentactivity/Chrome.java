@@ -79,6 +79,7 @@ public class Chrome extends Extract implements IngestServiceImage {
         int j = 0;
         if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
+                
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
@@ -92,6 +93,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                     break;
                 }
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, chquery);
+                logger.log(Level.INFO, moduleName + "- Now getting history from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -110,7 +112,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         }
     }
 
@@ -129,6 +131,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                     logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
+                 logger.log(Level.INFO, moduleName + "- Now getting Bookmarks from " + temps);
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
                     dbFile.delete();
@@ -138,11 +141,11 @@ public class Chrome extends Extract implements IngestServiceImage {
 
                     final JsonParser parser = new JsonParser();
                     JsonElement jsonElement = parser.parse(new FileReader(temps));
-                    JsonObject test = jsonElement.getAsJsonObject();
-                    JsonObject whatever = test.get("roots").getAsJsonObject();
-                    JsonObject whatever2 = whatever.get("bookmark_bar").getAsJsonObject();
-                    JsonArray whatever3 = whatever2.getAsJsonArray("children");
-                    for (JsonElement result : whatever3) {
+                    JsonObject jElement = jsonElement.getAsJsonObject();
+                    JsonObject jRoot = jElement.get("roots").getAsJsonObject();
+                    JsonObject jBookmark = jRoot.get("bookmark_bar").getAsJsonObject();
+                    JsonArray jBookmarkArray = jBookmark.getAsJsonArray("children");
+                    for (JsonElement result : jBookmarkArray) {
                         try {
                             JsonObject address = result.getAsJsonObject();
                             String url = address.get("url").getAsString();
@@ -168,7 +171,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
         }
     }
 
@@ -195,6 +198,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                 }
 
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, chcookiequery);
+                logger.log(Level.INFO, moduleName + "- Now getting cookies from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -215,7 +219,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
         }
     }
 
@@ -242,6 +246,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                 }
 
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, chdownloadquery);
+                logger.log(Level.INFO, moduleName + "- Now getting downloads from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -264,7 +269,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
+            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
         }
     }
 
@@ -289,6 +294,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                     break;
                 }
                 List<HashMap<String, Object>> tempList = this.dbConnect(temps, chloginquery);
+                logger.log(Level.INFO, moduleName + "- Now getting login information from " + temps + " with " + tempList.size() + "artifacts identified.");
                 for (HashMap<String, Object> result : tempList) {
                     try {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -309,7 +315,7 @@ public class Chrome extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManager.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         }
     }
 

@@ -10,12 +10,15 @@ correct C libraries.
 
 STEPS:
 1) Get Java Setup
+
 1a) Download and install 32-bit version of JDK (32-bit is currently
 needed even if you have a 64-bit system).
 
 1b) Ensure that JDK_HOME is set to the root JDK directory. 
 
-1c) Download and install Netbeans IDE 7.0.1 (http://netbeans.org/)
+1c) (optional) Download and install Netbeans IDE (http://netbeans.org/)
+Note: Netbeans IDE is not required to build and run Autopsy,
+but it is a recommended IDE to use for development of Autopsy modules.
 
 
 2) Get Sleuth Kit Setup
@@ -51,10 +54,17 @@ yet, so we don't have instructions for that yet.
 
 
 4) Compile Autopsy
-4a) Start NetBean IDE and open the Autopsy project.
-
-4b) Choose to build the Autopsy project / module.  It is the highest
+4a) using Netbeans IDE:
+- Start NetBeans IDE and open the Autopsy project.
+- Choose to build the Autopsy project / module.  It is the highest
 level project that will then cause the other modules to be compiled.
+
+4b) without Netbeans IDE (requires JDK and ant >= 1.7.1):
+- from root directory of Autopsy source execute:
+ant build
+(to build Autopsy)
+ant run
+(to run Autopsy)
 
 
 BACKGROUND:

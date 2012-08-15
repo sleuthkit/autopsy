@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
@@ -43,7 +44,7 @@ public final class CaseOpenAction implements ActionListener {
     AutopsyPropFile AutopsyProperties = AutopsyPropFile.getInstance();
 
     JFileChooser fc = new JFileChooser();
-    GeneralFilter autFilter = new GeneralFilter(new String[]{".aut"}, "AUTOPSY File (*.aut)", false);
+    GeneralFilter autFilter = new GeneralFilter(Collections.<String>singletonList(".aut"), "AUTOPSY File (*.aut)");
 
     /** The constructor */
     public CaseOpenAction() {

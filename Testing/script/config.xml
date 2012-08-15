@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ASCII"?>
+<!-- 
+This file is an example configuration file for regression.py. 
+
+None of these tags are mandatory, and if nothing is provided the file will be
+looked over and ignored.
+
+If the -i tag is not set as an argument, images from the input directory will
+be tested after the images provided in this file are.
+By default the input directory will be ./input, however if the indir tag
+is set, that value will become the new input directory. This directory must
+have the required hash/keyword search files, and if -i is not set, this
+will be the directory searched for images.
+
+A CSV file will be created by default in the output directory. If the
+global_csv tag is set in this file, a CSV file will be created or
+appended to at that location. It must be given a specific file, not a directory.
+
+Images can be added on any drive including network drives. If the image path
+is incorrect, or if the image pointed to is an unsupported format, the regression
+script will inform the user in an error message, but carry on without problems.
+NOTE: Some image formats can only be parsed by Autopsy using a Windows path
+(i.e. X:\this\is\a\windows\path ./this/is/not/a/windows/path)
+It is up to the user to distinguish between the paths when adding to this file.
+-->
+
+<Properties>
+    <!-- Path to input directory -->
+    <indir value="X:\path\to\input\directory" />
+    <!-- Path to global CSV file -->
+    <global_csv value="X:\path\to\global\csv.txt" />
+    <!-- Path to images -->
+    <image value="X:\path\to\an\image\file.img" />
+    <image value="X:\path\to\a\different\image\file.E01" />
+    <image value="This provokes an error." />
+    <image value="X:\Invalid\Path\Does\Not\Exist.img" />
+</Properties>

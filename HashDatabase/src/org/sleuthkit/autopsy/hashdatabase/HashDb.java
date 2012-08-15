@@ -40,7 +40,17 @@ import org.sleuthkit.datamodel.TskException;
 public class HashDb implements Comparable<HashDb> {
 
     public enum DBType{
-        NSRL, KNOWN_BAD;
+        NSRL("NSRL"), KNOWN_BAD("Known Bad");
+        
+        private String displayName;
+        
+        private DBType(String displayName) {
+            this.displayName = displayName;
+        }
+        
+        public String getDisplayName() {
+            return this.displayName;
+        }
     }
     
     // Suffix added to the end of a database name to get its index file
@@ -49,17 +59,29 @@ public class HashDb implements Comparable<HashDb> {
     private String name;
     private List<String> databasePaths; // TODO: Length limited to one for now...
     private boolean useForIngest;
+    private boolean showInboxMessages;
     private boolean indexing;
+    private DBType type;
     
-    public HashDb(String name, List<String> databasePaths, boolean useForIngest) {
+    public HashDb(String name, List<String> databasePaths, boolean useForIngest, boolean showInboxMessages, DBType type) {
         this.name = name;
         this.databasePaths = databasePaths;
         this.useForIngest = useForIngest;
+        this.showInboxMessages = showInboxMessages;
+        this.type = type;
         this.indexing = false;
     }
     
     boolean getUseForIngest() {
         return useForIngest;
+    }
+    
+    boolean getShowInboxMessages() {
+        return showInboxMessages;
+    }
+    
+    DBType getDbType() {
+        return type;
     }
     
     String getName() {
@@ -74,12 +96,20 @@ public class HashDb implements Comparable<HashDb> {
         this.useForIngest = useForIngest;
     }
     
+    void setShowInboxMessages(boolean showInboxMessages) {
+        this.showInboxMessages = showInboxMessages;
+    }
+    
     void setName(String name) {
         this.name = name;
     }
     
     void setDatabasePaths(List<String> databasePaths) {
         this.databasePaths = databasePaths;
+    }
+    
+    void setDbType(DBType type) {
+        this.type = type;
     }
     
     /**
@@ -253,7 +283,7 @@ public class HashDb implements Comparable<HashDb> {
         protected void done() {
             indexing = false;
             progress.finish();
-            HashDbMgmtPanel.getDefault().resync();
+            HashDbManagementPanel.getDefault().resync();
         }
     }
 }

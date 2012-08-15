@@ -28,9 +28,8 @@ public interface ContentNode extends DisplayableItemNode{
     /**
      * Visitor pattern support.
      * 
-     * @param <T> visitor return type
      * @param v visitor
-     * @return visitor return value
+     * @return visitor's visit return value
      */
     <T> T accept(ContentNodeVisitor<T> v);
 }

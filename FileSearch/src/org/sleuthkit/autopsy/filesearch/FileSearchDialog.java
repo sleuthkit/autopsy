@@ -31,14 +31,13 @@ import java.awt.event.ActionListener;
 import javax.swing.JFrame;
 
 /**
- *
- * @author dfickling
+ * File search dialog
  */
 public class FileSearchDialog extends javax.swing.JDialog {
 
     /** Creates new form FileSearchDialog */
     public FileSearchDialog() {
-        super(new JFrame("File Search"), "File Search", true);
+        super(new JFrame("File Search by Attributes"), "File Search by Attributes", true);
         initComponents();
 
         setResizable(false);

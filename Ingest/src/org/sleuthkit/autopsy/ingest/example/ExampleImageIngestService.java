@@ -91,7 +91,7 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     public void complete() {
         logger.log(Level.INFO, "complete() " + this.toString());
 
-        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "completed image processing");
+        final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Complete");
         managerProxy.postMessage(msg);
 
         //service specific cleanup due to completion here
@@ -119,6 +119,7 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
+        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Stopped"));
 
         //service specific cleanup due to interruption here
     }

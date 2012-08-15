@@ -56,17 +56,81 @@
 
     <target name="run-advanced-installer" depends="autoAIPath,inputAIPath">
         <fail unless="aiPath" message="Could not locate Advanced Installer."/>
+        <copy file="${basedir}/installer_${app.name}/installer_${app.name}.aip" tofile="${nbdist.dir}/installer_${app.name}.aip"/>
+        <property name="inst-path" value="${nbdist.dir}\${app.name}-installer"/>
+        <property name="proj-path" value="${nbdist.dir}\installer_${app.name}.aip"/>
+        
+        <echo message="Adding files to installer..."/>
         <exec executable="${aiPath}">
-            <arg line="/build ${basedir}\installer_${app.name}\installer_${app.name}.aip"/>
+            <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\bin"/>
         </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\etc"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\gstreamer"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\harness"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\java"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\jre6"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\platform"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /AddFolder APPDIR ${inst-path}\${app.name}"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /AddFile APPDIR ${inst-path}\icon.ico"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /AddFile APPDIR ${inst-path}\KNOWN_ISSUES.txt"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /AddFile APPDIR ${inst-path}\LICENSE-2.0.txt"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /AddFile APPDIR ${inst-path}\NEWS.txt"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /AddFile APPDIR ${inst-path}\README.txt"/>
+        </exec>
+        
+        <!-- Need to find a way to deal with beta version -->
+        <!--<echo message="Setting ${app.name} version to ${app.version}..."/>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /SetVersion ${app.version}"/>
+        </exec>--> 
+       
+        <echo message="Adding desktop/menu shortcuts..."/>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /NewShortcut -name ${app.title} -dir DesktopFolder -target APPDIR\bin\${app.name}.exe -icon ${inst-path}\icon.ico"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /NewShortcut -name ${app.title} -dir SHORTCUTDIR -target APPDIR\bin\${app.name}.exe -icon ${inst-path}\icon.ico"/>
+        </exec>
+        
+        <echo message="Setting environment variables..."/>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /NewEnvironment -name PATH -value APPDIR\gstreamer\bin -install_operation CreateUpdate -behavior Append"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /NewEnvironment -name PATH -value APPDIR\gstreamer\lib\gstreamer-0.10 -install_operation CreateUpdate -behavior Append"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/build ${proj-path}"/>
+        </exec>
+        <delete file="${proj-path}"/>
     </target>
     
     <target name="build-installer-windows">
         <antcall target="run-advanced-installer" />
-        <move file="${basedir}/installer_${app.name}/installer_${app.name}-SetupFiles/installer_${app.name}.msi"
-                tofile="${nbdist.dir}/${app.name}-installer.msi"/>
         <!--<delete dir="${nbdist.dir}/${app.name}-installer"/>-->
-        <delete dir="${basedir}/installer_${app.name}/installer_${app.name}-cache"/>
-        <delete dir="${basedir}/installer_${app.name}/installer_${app.name}-SetupFiles"/>
+        <delete dir="${nbdist.dir}/installer_${app.name}-cache"/>
     </target>
 </project>

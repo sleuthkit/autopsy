@@ -1,0 +1,6 @@
+/**
+ \package org.sleuthkit.autopsy.corecomponents
+
+This package contains standard implementations of the content viewer and other frameworks.
+
+*/

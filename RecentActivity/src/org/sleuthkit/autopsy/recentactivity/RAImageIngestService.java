@@ -21,6 +21,7 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
@@ -40,8 +41,13 @@ public final class RAImageIngestService implements IngestServiceImage {
     private static RAImageIngestService defaultInstance = null;
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
-    private ArrayList<String> errors = null;
+    private ArrayList<String> errors = new ArrayList<String>();
     private StringBuilder subCompleted = new StringBuilder();
+    private ExtractRegistry eree = null;
+    private Firefox ffre = null;
+    private Chrome chre = null;
+    private ExtractIE eere = null;
+    private SearchEngineURLQueryAnalyzer usq = null;
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
@@ -59,51 +65,28 @@ public final class RAImageIngestService implements IngestServiceImage {
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
         //logger.log(Level.INFO, "process() " + this.toString());
+        List<Extract> modules = new ArrayList<Extract>();
+        modules.add(eree);
+        modules.add(ffre);
+        modules.add(chre);
+        modules.add(eere);
+        modules.add(usq);
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
-        try {
-            controller.switchToDeterminate(4);
-            controller.progress(0);
-
-            if (controller.isCancelled() == false) {
-                ExtractRegistry eree = new ExtractRegistry();
-                eree.process(image, controller);
-                controller.progress(1);
-                subCompleted.append("Registry extraction complete. <br>");
+        controller.switchToDeterminate(modules.size());
+        controller.progress(0);
+        
+        for(int i = 0; i < modules.size(); i++) {
+            Extract module = modules.get(i);
+            try {
+                module.process(image, controller);
+                subCompleted.append(module.getName()).append(" complete <br>");
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Exception occurred in " + module.getName(), ex);
+                subCompleted.append(module.getName()).append(" failed - see log for details <br>");
             }
-            if (controller.isCancelled() == false) {
-                Firefox ffre = new Firefox();
-                ffre.process(image, controller);
-                controller.progress(2);
-                subCompleted.append("Firefox extraction complete. <br>");
-                if(ffre.errorMessages != null){
-                errors.addAll(ffre.errorMessages);
-                }
-            }
-            if (controller.isCancelled() == false) {
-                Chrome chre = new Chrome();
-                chre.process(image, controller);
-                controller.progress(3);
-                subCompleted.append("Chrome extraction complete. <br>");
-                if(chre.errorMessages != null){
-                errors.addAll(chre.errorMessages);
-                }
-            }
-            if (controller.isCancelled() == false) {
-                ExtractIE eere = new ExtractIE();
-                eere.process(image, controller);
-                if(eere.errorMessages != null){
-                errors.addAll(eere.errorMessages);
-                }
-                subCompleted.append( "Internet Explorer extraction complete. <br>");
-                controller.progress(4);
-            }
-
-
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Error extracting recent activity", e);
-            managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, this, "Error extracting recent activity data", null));
+            controller.progress(i+1);
+            errors.addAll(module.getErrorMessages());
         }
-
     }
 
     @Override
@@ -113,7 +96,7 @@ public final class RAImageIngestService implements IngestServiceImage {
         String errorsFound = "";
         errorMessage.append(subCompleted);
         int i = 0;
-        if (errors != null) {
+        if (!errors.isEmpty()) {
             errorMessage.append("<br>There were some errors extracting the data: <br>");
             for (String msg : errors) {
                 i++;
@@ -146,15 +129,23 @@ public final class RAImageIngestService implements IngestServiceImage {
     public void init(IngestManagerProxy managerProxy) {
         logger.log(Level.INFO, "init() " + this.toString());
         this.managerProxy = managerProxy;
-        //service specific initialization here
+        this.eere = new ExtractIE();
+        this.chre = new Chrome();
+        this.eree = new ExtractRegistry();
+        this.ffre = new Firefox();
+        this.usq = new SearchEngineURLQueryAnalyzer();
 
     }
 
     @Override
     public void stop() {
-        logger.log(Level.INFO, "stop()");
-
-        //service specific cleanup due to interruption here
+        logger.log(Level.INFO, "RAImageIngetService::stop()");
+        //Order Matters
+        //ExtractRegistry stop        
+        this.eree.stop();
+        //ExtractIE stop
+        this.eere.stop();
+        logger.log(Level.INFO, "Recent Activity processes properly shutdown.");
     }
 
     @Override

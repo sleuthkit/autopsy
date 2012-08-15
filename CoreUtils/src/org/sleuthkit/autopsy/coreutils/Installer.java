@@ -24,6 +24,7 @@ import java.util.logging.FileHandler;
 import org.openide.modules.ModuleInstall;
 import java.util.logging.Logger;
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
 
 
@@ -50,6 +51,9 @@ public class Installer extends ModuleInstall {
             logs.setFormatter(new SimpleFormatter());
             autopsyLogger.addHandler(logs);
         }
+        
+        autopsyLogger.log(Level.INFO, "Application name: " + Version.getName() 
+                + ", version: " + Version.getVersion() + ", build: " + Version.getBuildType());
     }
     
     @Override

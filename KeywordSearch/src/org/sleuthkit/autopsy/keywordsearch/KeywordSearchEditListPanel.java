@@ -47,6 +47,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
@@ -189,13 +190,13 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             public void propertyChange(PropertyChangeEvent evt) {
                 String changed = evt.getPropertyName();
                 Object oldValue = evt.getOldValue();
-                if (changed.equals(IngestManager.SERVICE_COMPLETED_EVT)
+                if (changed.equals(IngestModuleEvent.COMPLETED.toString() )
                         && ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
                     initIngest(1);
-                } else if (changed.equals(IngestManager.SERVICE_STARTED_EVT)
+                } else if (changed.equals(IngestModuleEvent.STARTED.toString() )
                         && ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
                     initIngest(0);
-                } else if (changed.equals(IngestManager.SERVICE_STOPPED_EVT)
+                } else if (changed.equals(IngestModuleEvent.STOPPED.toString() )
                         && ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
                     initIngest(1);
                 }
@@ -411,21 +412,22 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         listEditorPanel.setLayout(listEditorPanelLayout);
         listEditorPanelLayout.setHorizontalGroup(
             listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, listEditorPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(useForIngestCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 62, Short.MAX_VALUE)
-                .addComponent(deleteWordButton)
-                .addContainerGap())
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, listEditorPanelLayout.createSequentialGroup()
-                .addContainerGap(34, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(addKeywordPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(19, 19, 19))
             .addGroup(listEditorPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(ingestMessagesCheckbox)
-                .addContainerGap(131, Short.MAX_VALUE))
+                .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, listEditorPanelLayout.createSequentialGroup()
+                        .addComponent(useForIngestCheckbox)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(deleteWordButton))
+                    .addGroup(listEditorPanelLayout.createSequentialGroup()
+                        .addComponent(ingestMessagesCheckbox)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         listEditorPanelLayout.setVerticalGroup(
             listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -467,10 +469,10 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSeparator1, javax.swing.GroupLayout.DEFAULT_SIZE, 340, Short.MAX_VALUE)
+            .addComponent(jSeparator1)
             .addComponent(listEditorPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(81, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(exportButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(deleteListButton)
@@ -637,7 +639,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             boolean written = exporter.writeLists(toWrite);
             if (written) {
                 KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword lists exported", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-                return;
             }
         }
     }//GEN-LAST:event_exportButtonActionPerformed
@@ -657,10 +658,14 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useForIngestCheckboxActionPerformed
     ingestMessagesCheckbox.setEnabled(useForIngestCheckbox.isSelected());
     currentKeywordList.setUseForIngest(useForIngestCheckbox.isSelected());
+    KeywordSearchListsXML updater = KeywordSearchListsXML.getCurrent();
+    updater.addList(currentKeywordList);
 }//GEN-LAST:event_useForIngestCheckboxActionPerformed
 
     private void ingestMessagesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ingestMessagesCheckboxActionPerformed
         currentKeywordList.setIngestMessages(ingestMessagesCheckbox.isSelected());
+        KeywordSearchListsXML updater = KeywordSearchListsXML.getCurrent();
+        updater.addList(currentKeywordList);
     }//GEN-LAST:event_ingestMessagesCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

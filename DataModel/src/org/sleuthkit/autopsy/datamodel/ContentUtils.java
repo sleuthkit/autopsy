@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.SwingWorker;
+import org.netbeans.api.progress.ProgressHandle;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
@@ -214,23 +216,45 @@ public final class ContentUtils {
      * it does
      * @throws IOException 
      */
-    public static void writeToFile(Content content, java.io.File outputFile) throws IOException {
+    public static void writeToFile(Content content, java.io.File outputFile, ProgressHandle progress, SwingWorker worker, boolean source) throws IOException {
 
         InputStream in = new ReadContentInputStream(content);
         
         boolean append = false;
         FileOutputStream out = new FileOutputStream(outputFile, append);
+        
+        // Get the unit size for a progress bar
+        int unit = (int) (content.getSize() / 100);
+        long totalRead = 0;
 
         try {
             byte[] buffer = new byte[TO_FILE_BUFFER_SIZE];
             int len = in.read(buffer);
             while (len != -1) {
+                // If there is a worker, check for a cancelation
+                if (worker!=null && worker.isCancelled()) {
+                    break;
+                }
                 out.write(buffer, 0, len);
                 len = in.read(buffer);
+                totalRead+=len;
+                // If there is a progress bar and this is the source file,
+                // report any progress
+                if(progress!=null && source && totalRead>=TO_FILE_BUFFER_SIZE) {
+                    int totalProgress = (int) (totalRead / unit);
+                    progress.progress(content.getName(), totalProgress);
+                // If it's not the source, just update the file being processed
+                } else if(progress!=null && !source) {
+                    progress.progress(content.getName());
+                }
             }
         } finally {
             out.close();
         }
+    }
+    
+    public static void writeToFile(Content content, java.io.File outputFile) throws IOException {
+        writeToFile(content, outputFile, null, null, false);
     }
     
     /**
@@ -250,11 +274,21 @@ public final class ContentUtils {
     public static class ExtractFscContentVisitor extends ContentVisitor.Default<Void> {
 
         java.io.File dest;
+        ProgressHandle progress;
+        SwingWorker worker;
+        boolean source = false;
 
         /**
          * Make new extractor for a specific destination
          * @param dest The file/folder visited will be extracted as this file
          */
+        public ExtractFscContentVisitor(java.io.File dest, ProgressHandle progress, SwingWorker worker, boolean source) {
+            this.dest = dest;
+            this.progress = progress;
+            this.worker = worker;
+            this.source = source;
+        }
+        
         public ExtractFscContentVisitor(java.io.File dest) {
             this.dest = dest;
         }
@@ -263,13 +297,13 @@ public final class ContentUtils {
          * Convenience method to make a new instance for given destination
          * and extract given content 
          */
-        public static void extract(Content cntnt, java.io.File dest) {
-            cntnt.accept(new ExtractFscContentVisitor(dest));
+        public static void extract(Content cntnt, java.io.File dest, ProgressHandle progress, SwingWorker worker) {
+            cntnt.accept(new ExtractFscContentVisitor(dest, progress, worker, true));
         }
 
         public Void visit(File f) {
             try {
-                ContentUtils.writeToFile(f, dest);
+                ContentUtils.writeToFile(f, dest, progress, worker, source);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
                         "Trouble extracting file to " + dest.getAbsolutePath(),
@@ -292,12 +326,23 @@ public final class ContentUtils {
             DestFileContentVisitor destFileCV = new DestFileContentVisitor();
 
             try {
+                int numProcessed = 0;
                 // recurse on children
                 for (Content child : dir.getChildren()) {
                     java.io.File childFile = child.accept(destFileCV);
                     ExtractFscContentVisitor childVisitor = 
-                        new ExtractFscContentVisitor(childFile);
+                        new ExtractFscContentVisitor(childFile, progress, worker, false);
+                    // If this is the source directory of an extract it
+                    // will have a progress and worker, and will keep track
+                    // of the progress bar's progress
+                    if(worker!=null && worker.isCancelled()) {
+                        break;
+                    }
+                    if(progress!=null && source) {
+                        progress.progress(child.getName(), numProcessed);
+                    }
                     child.accept(childVisitor);
+                    numProcessed++;
                 }
             } catch (TskException ex) {
                 logger.log(Level.SEVERE,

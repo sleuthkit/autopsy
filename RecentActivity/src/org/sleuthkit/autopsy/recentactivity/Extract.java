@@ -28,16 +28,31 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.ingest.IngestServiceImage;
 import org.sleuthkit.datamodel.*;
 
-abstract public class Extract {
+abstract public class Extract implements IngestServiceImage{
 
     protected Case currentCase = Case.getCurrentCase(); // get the most updated case
     protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
     public final Logger logger = Logger.getLogger(this.getClass().getName());
     protected ArrayList<String> errorMessages = null;
     protected String moduleName = "";
+    
+    List<String> getErrorMessages() {
+        if(errorMessages == null) {
+            errorMessages = new ArrayList<String>();
+        }
+        return errorMessages;
+    }
 
+    /**
+     * Returns a List of FsContent objects from TSK based on sql query.
+     *
+     * @param  image is a Image object that denotes which image to get the files from
+     * @param  query is a sql string query that is to be run
+     * @return  FFSqlitedb is a List of FsContent objects
+     */
     public List<FsContent> extractFiles(Image image, String query) {
 
         Collection<FileSystem> imageFS = tskCase.getFileSystems(image);
@@ -75,6 +90,13 @@ abstract public class Extract {
         return FFSqlitedb;
     }
 
+        /**
+     *  Generic method for adding a blackboard artifact to the blackboard
+     *
+     * @param  type is a blackboard.artifact_type enum to determine which type the artifact should be
+     * @param  content is the FsContent object that needs to have the artifact added for it
+     * @param bbattributes is the collection of blackboard attributes that need to be added to the artifact after the artifact has been created
+     */
     public void addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, FsContent content, Collection<BlackboardAttribute> bbattributes) {
 
         try {
@@ -86,9 +108,16 @@ abstract public class Extract {
         }
     }
 
-    public List dbConnect(String path, String query) {
+        /**
+     * Returns a List from a result set based on sql query.
+     *
+     * @param  path is the string path to the sqlite db file
+     * @param  query is a sql string query that is to be run
+     * @return  list is the ArrayList that contains the resultset information in it that the query obtained
+     */
+    public List<HashMap<String,Object>> dbConnect(String path, String query) {
         ResultSet temprs = null;
-        List list = null;
+        List<HashMap<String,Object>> list = new ArrayList<HashMap<String,Object>>();
         String connectionString = "jdbc:sqlite:" + path;
         try {
             dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", connectionString);
@@ -97,16 +126,23 @@ abstract public class Extract {
             tempdbconnect.closeConnection();
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex);
+            return new ArrayList<HashMap<String,Object>>();
         }
         return list;
     }
 
-    public List<HashMap> resultSetToArrayList(ResultSet rs) throws SQLException {
+        /**
+     * Returns a List of FsContent objects from TSK based on sql query.
+     *
+     * @param  rs is the resultset that needs to be converted to an arraylist
+     * @return  list returns the arraylist built from the converted resultset
+     */
+    public List<HashMap<String,Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
         ResultSetMetaData md = rs.getMetaData();
         int columns = md.getColumnCount();
-        List list = new ArrayList(50);
+        List<HashMap<String,Object>> list = new ArrayList<HashMap<String,Object>>(50);
         while (rs.next()) {
-            HashMap row = new HashMap(columns);
+            HashMap<String,Object> row = new HashMap<String,Object>(columns);
             for (int i = 1; i <= columns; ++i) {
                 if (rs.getObject(i) == null) {
                     row.put(md.getColumnName(i), "");
@@ -119,15 +155,28 @@ abstract public class Extract {
 
         return list;
     }
+        /**
+     * Returns a List of string error messages from the inheriting class
+     * @return  errorMessages returns all error messages logged
+     */
 
     public ArrayList<String> getErrorMessage() {
         return errorMessages;
     }
 
+        /**
+     * Adds a string to the error message list
+     *
+     * @param  message is an error message represented as a string
+     */
     public void addErrorMessage(String message) {
         errorMessages.add(message);
     }
 
+        /**
+     * Returns the name of the inheriting class
+     * @return  Gets the moduleName set in the moduleName data member
+     */
     public String getName() {
         return moduleName;
     }

@@ -21,10 +21,8 @@ package org.sleuthkit.autopsy.datamodel;
 import java.text.SimpleDateFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TimeZone;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Abstract class that implements the commonality between File and Directory
@@ -181,11 +179,17 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         this(fsContent, true);
     }
     
-    // The param 'directoryBrowseMode' refers to how the user caused this node
-    // to be created: if by browsing the image contents, it is true. If by
-    // selecting a file filter (e.g. 'type' or 'recent'), it is false
+    
+    /**
+     * Constructor
+     * @param fsContent the fsContent
+     * @param directoryBrowseMode how the user caused this node
+     * to be created: if by browsing the image contents, it is true. If by 
+     * selecting a file filter (e.g. 'type' or 'recent'), it is false
+     */
     AbstractFsContentNode(T fsContent, boolean directoryBrowseMode) {
         super(fsContent);
+        this.setDisplayName(AbstractFsContentNode.getFsContentName(fsContent));
         this.directoryBrowseMode = directoryBrowseMode;
     }
     
@@ -222,11 +226,12 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
 
     /**
      * Fill map with FsContent properties
-     * @param map, with preserved ordering, where property names/values are put
+     * 
+     * @param map map with preserved ordering, where property names/values are put
      * @param content to extract properties from
      */
     public static void fillPropertyMap(Map<String, Object> map, FsContent content) {
-        map.put(FsContentPropertyType.NAME.toString(), content.getName());
+        map.put(FsContentPropertyType.NAME.toString(), getFsContentName(content));
         map.put(FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
         map.put(FsContentPropertyType.MOD_TIME.toString(),  ContentUtils.getStringTime(content.getMtime(), content));
         map.put(FsContentPropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
@@ -244,5 +249,15 @@ public abstract class AbstractFsContentNode<T extends FsContent> extends Abstrac
         map.put(FsContentPropertyType.TYPE_META.toString(), content.getMetaTypeAsString());
         map.put(FsContentPropertyType.KNOWN.toString(), content.getKnown().getName());
         map.put(FsContentPropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
+    }
+    
+    static String getFsContentName(FsContent fsContent) {
+        String name = fsContent.getName();
+        if(name.equals("..")) {
+            name = DirectoryNode.DOTDOTDIR;
+        } else if(name.equals(".")) {
+            name = DirectoryNode.DOTDIR;
+        }
+        return name;
     }
 }

@@ -25,19 +25,14 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Filters database results by file extension.
  */
-public class SearchFilters implements AutopsyVisitableItem{
+public class SearchFilters implements AutopsyVisitableItem {
 
     SleuthkitCase skCase;
 
     public enum FileSearchFilter implements AutopsyVisitableItem,SearchFilterInterface {
-        TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", "Images", Arrays.asList(".jpg", ".jpeg", ".png", ".psd", ".nef", ".tiff")),
-        TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", "Videos",
-            Arrays.asList(".aaf", ".3gp", ".asf", ".avi", ".m1v", ".m2v", ".m4v", ".mp4",
-            ".mov", ".mpeg", ".mpg", ".mpe", ".mp4", ".rm", ".wmv", ".mpv", ".flv", ".swf")),
-        TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", "Audio", 
-            Arrays.asList(".aiff", ".aif", ".flac", ".wav", ".m4a", ".ape", ".wma", ".mp2",
-            ".mp1", ".mp3", ".aac", ".mp4", ".m4p", ".m1a", ".m2a", ".m4r", ".mpa",
-            ".m3u", ".mid", ".midi", ".ogg")),
+        TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", "Images", FileTypeExtensions.getImageExtensions()),
+        TSK_VIDEO_FILTER(1, "TSK_VIDEO_FILTER", "Videos", FileTypeExtensions.getVideoExtensions()),
+        TSK_AUDIO_FILTER(2, "TSK_AUDIO_FILTER", "Audio", FileTypeExtensions.getAudioExtensions()),
         TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", "Documents", Arrays.asList(".doc", ".docx", ".pdf", ".xls", ".rtf", ".txt"));
 
         int id;

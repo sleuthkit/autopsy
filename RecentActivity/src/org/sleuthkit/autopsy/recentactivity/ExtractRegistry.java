@@ -43,10 +43,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.*;
 
 /**
- *
- * @author Alex \System32\Config
+ * Extracting windows registry data using regripper
  */
-public class ExtractRegistry implements IngestServiceImage {
+public class ExtractRegistry extends Extract implements IngestServiceImage {
 
     public Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
@@ -56,7 +55,7 @@ public class ExtractRegistry implements IngestServiceImage {
     ExtractRegistry() {
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false);
         if (rrRoot == null) {
-            logger.log(Level.SEVERE, "RegRipper not found");
+            logger.log(Level.WARNING, "RegRipper not found");
             rrFound = false;
             return;
         } else {
@@ -120,7 +119,7 @@ public class ExtractRegistry implements IngestServiceImage {
                     logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
                 }
                 File regFile = new File(temps);
-
+                logger.log(Level.INFO, moduleName + "- Now getting registry information from " + temps);
                 String txtPath = executeRegRip(temps, j);
                 if (txtPath.length() > 0) {
                     Success = parseReg(txtPath, orgId);
@@ -176,7 +175,7 @@ public class ExtractRegistry implements IngestServiceImage {
 
         } catch (Exception e) {
 
-            logger.log(Level.SEVERE, "ExtractRegistry::executeRegRip() -> ", e.getMessage());
+            logger.log(Level.WARNING, "ExtractRegistry::executeRegRip() -> ", e);
         }
 
         return txtPath;
@@ -220,9 +219,9 @@ public class ExtractRegistry implements IngestServiceImage {
                     Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
                     time = epochtime.longValue();
                     String Tempdate = time.toString();
-                    time = Long.valueOf(Tempdate)/1000;
+                    time = Long.valueOf(Tempdate) / 1000;
                 } catch (ParseException e) {
-                    logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
+                    logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> ", e);
                 }
                 Element artroot = tempnode.getChild("artifacts");
                 List<Element> artlist = artroot.getChildren();
@@ -253,7 +252,7 @@ public class ExtractRegistry implements IngestServiceImage {
                                 utime = Long.valueOf(Tempdate);
                                 utime = utime;
                             } catch (Exception e) {
-                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
+                                logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> ", e);
                             }
 
                             BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
@@ -267,9 +266,9 @@ public class ExtractRegistry implements IngestServiceImage {
                             try {
                                 Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(name).getTime();
                                 ftime = epochtime.longValue();
-                                ftime = ftime/1000;
+                                ftime = ftime / 1000;
                             } catch (ParseException e) {
-                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
+                                logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> ", e);
                             }
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, value));
@@ -291,15 +290,24 @@ public class ExtractRegistry implements IngestServiceImage {
                                     Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
                                     installtime = epochtime.longValue();
                                     String Tempdate = installtime.toString();
-                                    installtime = Long.valueOf(Tempdate)/1000;
+                                    installtime = Long.valueOf(Tempdate) / 1000;
                                 } catch (ParseException e) {
-                                    logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e.getMessage());
+                                    logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> ", e);
                                 }
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, winver));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, installtime));
                                 BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
                                 bbart.addAttributes(bbattributes);
                             }
+                        } else if ("office".equals(context)) {
+                                                       
+                            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, artnode.getName()));
+                            bbart.addAttributes(bbattributes);
+
                         } else {
 //                            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
 //                            bbart.addAttributes(bbattributes);
@@ -331,7 +339,9 @@ public class ExtractRegistry implements IngestServiceImage {
 
     @Override
     public void stop() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        if (JavaSystemCaller.Exec.getProcess() != null) {
+            JavaSystemCaller.Exec.stop();
+        }
     }
 
     @Override
