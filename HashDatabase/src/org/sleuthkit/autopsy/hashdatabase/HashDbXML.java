@@ -66,6 +66,8 @@ public class HashDbXML {
     private static final String CUR_HASHSETS_FILE_NAME = "hashsets.xml";
     private static final String ENCODING = "UTF-8";
     private static final String CUR_HASHSET_FILE = AutopsyPropFile.getUserDirPath() + File.separator + CUR_HASHSETS_FILE_NAME;
+    private static final String SET_CALC = "hash_calculate";
+    private static final String SET_VALUE = "value";
     private static final Logger logger = Logger.getLogger(HashDbXML.class.getName());
     private static HashDbXML currentInstance;
     
@@ -184,6 +186,7 @@ public class HashDbXML {
      */
     public void setCalculate(boolean set) {
         this.calculate = set;
+        save();
     }
     
     /**
@@ -252,6 +255,11 @@ public class HashDbXML {
                 }
                 rootEl.appendChild(setEl);
             }
+            
+            String calcValue = Boolean.toString(calculate);
+            Element setCalc = doc.createElement(SET_CALC);
+            setCalc.setAttribute(SET_VALUE, calcValue);
+            rootEl.appendChild(setCalc);
 
             success = saveDoc(doc);
         } catch (ParserConfigurationException e) {
@@ -304,6 +312,14 @@ public class HashDbXML {
             } else if(typeDBType == DBType.NSRL) {
                 this.nsrlSet = set;
             }
+        }
+        
+        NodeList calcList = root.getElementsByTagName(SET_CALC);
+        int numCalc = calcList.getLength(); // Shouldn't be more than 1
+        for(int i=0; i<numCalc; i++) {
+            Element calcEl = (Element) calcList.item(i);
+            final String value = calcEl.getAttribute(SET_VALUE);
+            calculate = Boolean.parseBoolean(value);
         }
         return true;
     }
