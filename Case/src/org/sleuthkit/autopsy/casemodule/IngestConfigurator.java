@@ -50,7 +50,7 @@ public interface IngestConfigurator {
     /**
      * find out if ingest is currently running
      * 
-     * @param true if ingest process is running
+     * @return  true if ingest process is running, false otherwise
      */
     boolean isIngestRunning();
     

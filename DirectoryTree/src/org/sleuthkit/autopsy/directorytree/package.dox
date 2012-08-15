@@ -1,0 +1,6 @@
+/**
+ \package org.sleuthkit.autopsy.directorytree
+
+Contains the implementation of the navigation tree on the left-side of the interface.
+
+*/

@@ -63,6 +63,7 @@ import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -204,10 +205,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 1, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 854, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 860, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -683,7 +684,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         }
 
-        if (changed.equals(IngestManager.SERVICE_HAS_DATA_EVT)) {
+        if (changed.equals(IngestModuleEvent.DATA.toString())) {
             final ServiceDataEvent event = (ServiceDataEvent) oldValue;
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
@@ -693,7 +694,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             });
         }
         
-        if (changed.equals(IngestManager.SERVICE_COMPLETED_EVT)) {
+        if (changed.equals(IngestModuleEvent.COMPLETED.toString())) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -738,7 +739,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refreshes the nodes in the tree to reflect updates in the database
      * should be called in the gui thread
      */
-    private void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
+    void refreshTree(final BlackboardArtifact.ARTIFACT_TYPE... types) {
 
         Node selected = getSelectedNode();
         final String[] path = NodeOp.createPath(selected, em.getRootContext());

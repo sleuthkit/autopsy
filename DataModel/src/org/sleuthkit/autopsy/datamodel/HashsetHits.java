@@ -41,8 +41,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- *
- * @author dfickling
+ * Hash set hits node support
  */
 public class HashsetHits implements AutopsyVisitableItem {
     
@@ -92,6 +91,9 @@ public class HashsetHits implements AutopsyVisitableItem {
         return v.visit(this);
     }
     
+    /**
+     * Node for the hash set hits 
+     */
     public class HashsetHitsRootNode extends AbstractNode implements DisplayableItemNode{
 
         public HashsetHitsRootNode() {

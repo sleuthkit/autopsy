@@ -28,27 +28,27 @@ enum IndexStatus {
     /**
      * The index and database both exist, and the index is older.
      */
-    INDEX_OUTDATED("Index is older than database."),
+    INDEX_OUTDATED("Index is older than database"),
     /**
      * The index and database both exist, and the index is not older.
      */
-    INDEX_CURRENT("Database has index."),
+    INDEX_CURRENT("Database and index exist"),
     /**
      * The index exists but the database does not.
      */
-    NO_DB("Only an index exists."),
+    NO_DB("Index exists (no database)"),
     /**
      * The database exists but the index does not.
      */
-    NO_INDEX("Database does not have index."),
+    NO_INDEX("Index does not exist"),
     /**
      * Neither the index nor the database exists.
      */
-    NONE("No index or database."),
+    NONE("No index or database"),
     /**
      * The index is currently being generated
      */
-    INDEXING("The index is currently being generated");
+    INDEXING("Index is currently being generated");
     
     private String message;
 

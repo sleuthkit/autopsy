@@ -45,13 +45,18 @@ import org.sleuthkit.datamodel.Directory;
  * MarkupSource items in the selected Node's lookup, plus the content that
  * Solr extracted (if there is any).
  */
-@ServiceProvider(service = DataContentViewer.class)
+@ServiceProvider(service = DataContentViewer.class, position=4)
 public class ExtractedContentViewer implements DataContentViewer {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
     private ExtractedContentPanel panel;
     private Node currentNode = null;
     private MarkupSource currentSource = null;
+    
+    //keep last content cached
+    private String curContent;
+    private long curContentId;
+    private int curContentChunk;
 
     public ExtractedContentViewer() {
     }
@@ -153,8 +158,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 @Override
                 public String getMarkup() {
                     try {
-                        String content = StringEscapeUtils.escapeHtml(getSolrContent(selectedNode, currentPage, hasChunks));
-                        return "<pre>" + content.trim() + "</pre>";
+                        return getSolrContent(selectedNode, currentPage, hasChunks);
                     } catch (SolrServerException ex) {
                         logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
                         return "";
@@ -298,10 +302,20 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     @Override
-    public boolean isPreferred(Node node,
+    public int isPreferred(Node node,
             boolean isSupported) {
         BlackboardArtifact art = node.getLookup().lookup(BlackboardArtifact.class);
-        return isSupported && (art == null || art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID());
+        if(isSupported) {
+            if(art == null) {
+                return 4;
+            } else if(art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                return 6;
+            } else {
+                return 4;
+            }
+        } else {
+            return 0;
+        }
     }
 
     /**
@@ -314,18 +328,28 @@ public class ExtractedContentViewer implements DataContentViewer {
             panel.setSources(sources);
         }
     }
-    
+
+    //get current node content id, or 0 if not available
+    private long getNodeContentId() {
+        Content content = currentNode.getLookup().lookup(Content.class);
+        if (content == null) {
+            return 0;
+        }
+
+        return content.getId();
+    }
+
     private class IsDirVisitor extends ContentVisitor.Default<Boolean> {
 
         @Override
         protected Boolean defaultVisit(Content cntnt) {
-            return false; 
+            return false;
         }
-       
+
         @Override
         public Boolean visit(Directory d) {
             return true;
-        } 
+        }
     }
 
     /**
@@ -338,17 +362,18 @@ public class ExtractedContentViewer implements DataContentViewer {
         if (content == null) {
             return false;
         }
-        
 
-        final Server solrServer = KeywordSearch.getServer();
-        
-        boolean isDir = content.accept(new IsDirVisitor());
-        if (isDir)
+        if (content.getSize() == 0)
             return false;
 
+        final Server solrServer = KeywordSearch.getServer();
+
+        boolean isDir = content.accept(new IsDirVisitor());
+        if (isDir) {
+            return false;
+        }
+
         final long contentID = content.getId();
-        
-        
 
         try {
             return solrServer.queryIsIndexed(contentID);
@@ -363,8 +388,10 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     /**
      * Get extracted content for a node from Solr
-     * @param cNode a node that has extracted content in Solr (check with
+     * @param node a node that has extracted content in Solr (check with
      * solrHasContent(ContentNode))
+     * @param currentPage currently used page 
+     * @param hasChunks true if the content behind the node has multiple chunks. This means we need to address the content pages specially.
      * @return the extracted content
      * @throws SolrServerException if something goes wrong
      */
@@ -378,14 +405,28 @@ public class ExtractedContentViewer implements DataContentViewer {
             chunkId = currentPage;
         }
 
-        String content = null;
+        //check if cached
+        long contentId = getNodeContentId();
+        if (curContent != null) {
+            if (contentId == curContentId
+                    && curContentChunk == chunkId) {
+                return curContent;
+            }
+        }
+
+        //not cached
         try {
-            content = solrServer.getSolrContent(contentObj, chunkId);
+            curContent = StringEscapeUtils.escapeHtml(solrServer.getSolrContent(contentObj, chunkId)).trim();
+            StringBuilder sb = new StringBuilder(curContent.length() + 20);
+            sb.append("<pre>").append(curContent).append("</pre>");
+            curContent = sb.toString();
+            curContentId = contentId;
+            curContentChunk = chunkId;
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Couldn't get text content.", ex);
             return "";
         }
-        return content;
+        return curContent;
     }
 
     private class NextFindActionListener implements ActionListener {
@@ -507,8 +548,9 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     private void updatePageControls() {
-        if (currentSource == null)
+        if (currentSource == null) {
             return;
+        }
 
         final int currentPage = currentSource.getCurrentPage();
         final int totalPages = currentSource.getNumberPages();

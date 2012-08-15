@@ -60,7 +60,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     // String: time zone that the image is from
     static final String TIMEZONE_PROP = "timeZone";
     // String[]: array of paths to each image selected
-    static final String IMGPATHS_PROP = "imgPaths";
+    static final String IMGPATH_PROP = "imgPath";
     // CleanupTask: task to clean up the database file if wizard errors/is cancelled after it is created
     static final String IMAGECLEANUPTASK_PROP = "finalFileCleanup";
     // int: the next availble id for a new image

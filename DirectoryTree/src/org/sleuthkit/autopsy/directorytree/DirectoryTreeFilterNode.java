@@ -21,29 +21,34 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.ingest.IngestDialog;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Image;
 
 /**
  * This class sets the actions for the nodes in the directory tree and creates
- * the children filter so that files and such are hidden from the tree. 
+ * the children filter so that files and such are hidden from the tree.
  *
  */
 class DirectoryTreeFilterNode extends FilterNode {
 
     private static final Action collapseAll = new CollapseAction("Collapse All");
+    private static final DeleteActionsDisplayableItemNodeVisitor getDeleteActionVisitor = new DeleteActionsDisplayableItemNodeVisitor();
 
-    /** the constructor */
+    /**
+     * the constructor
+     */
     DirectoryTreeFilterNode(Node arg, boolean createChildren) {
         super(arg, DirectoryTreeFilterChildren.createInstance(arg, createChildren),
                 new ProxyLookup(Lookups.singleton(new OriginalNode(arg)),
@@ -63,7 +68,6 @@ class DirectoryTreeFilterNode extends FilterNode {
         Content c = this.getLookup().lookup(Content.class);
         if (c != null) {
             actions.addAll(DirectoryTreeFilterNode.getDetailActions(c));
-            actions.add(collapseAll);
 
             Directory dir = this.getLookup().lookup(Directory.class);
             if (dir != null) {
@@ -72,8 +76,8 @@ class DirectoryTreeFilterNode extends FilterNode {
             }
             final Image img = this.getLookup().lookup(Image.class);
             if (img != null) {
+                actions.add(new FileSearchAction("Open File Search by Attributes"));
                 actions.add(new AbstractAction("Restart Ingest Modules") {
-
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         final IngestDialog ingestDialog = new IngestDialog();
@@ -83,7 +87,51 @@ class DirectoryTreeFilterNode extends FilterNode {
                 });
             }
         }
+
+        //check if delete actions should be added
+        final Node orig = getOriginal();
+        //TODO add a mechanism to determine if DisplayableItemNode
+        if (orig instanceof DisplayableItemNode) {
+            actions.addAll(getDeleteActions((DisplayableItemNode) orig));
+        }
+        
+        actions.add(collapseAll);
         return actions.toArray(new Action[actions.size()]);
+    }
+
+    private static List<Action> getDeleteActions(DisplayableItemNode original) {
+        List<Action> actions = new ArrayList<Action>();
+        //actions.addAll(original.accept(getDeleteActionVisitor));
+        return actions;
+    }
+
+    private static class DeleteActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<List<Action>> {
+
+        @Override
+        public List<Action> visit(KeywordHits.KeywordHitsRootNode khrn) {
+            List<Action> actions = new ArrayList<Action>();
+            actions.add(null); // creates a menu separator
+
+            actions.add(new ResultDeleteAction("Delete Results", BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT));
+            return actions;
+        }
+
+        @Override
+        public List<Action> visit(KeywordHits.KeywordHitsListNode khsn) {
+            //TODO delete by list
+            return super.visit(khsn);
+        }
+
+        @Override
+        public List<Action> visit(KeywordHits.KeywordHitsKeywordNode khmln) {
+            //TODO delete by keyword hit
+            return super.visit(khmln);
+        }
+
+        @Override
+        protected List<Action> defaultVisit(DisplayableItemNode c) {
+            return new ArrayList<Action>();
+        }
     }
 
     private static List<Action> getDetailActions(Content c) {
@@ -93,7 +141,6 @@ class DirectoryTreeFilterNode extends FilterNode {
 
         return actions;
     }
-
 }
 
 class OriginalNode {

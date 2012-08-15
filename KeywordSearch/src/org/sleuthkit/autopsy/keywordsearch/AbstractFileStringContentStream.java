@@ -22,31 +22,28 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.logging.Logger;
 import org.apache.solr.common.util.ContentStream;
-import org.sleuthkit.autopsy.datamodel.AbstractFileStringStream;
-import org.sleuthkit.autopsy.datamodel.AbstractFileStringStream.Encoding;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Converter from AbstractContent into String with specific encoding
- * Then, an adapter back to Solr' ContentStream (which is a specific InputStream), 
- * using the same encoding
+ * Wrapper over InputStream that implements ContentStream to feed to Solr.
  */
 public class AbstractFileStringContentStream implements ContentStream {
     //input
 
     private AbstractFile content;
-    private Encoding encoding;
+    private Charset charset;
     //converted
-    private AbstractFileStringStream stream;
+    private InputStream stream;
     private static Logger logger = Logger.getLogger(AbstractFileStringContentStream.class.getName());
 
-    public AbstractFileStringContentStream(AbstractFile content, Encoding encoding) {
+    public AbstractFileStringContentStream(AbstractFile content, Charset charset, InputStream inputStream) {
         this.content = content;
-        this.encoding = encoding;
-        this.stream = new AbstractFileStringStream(content, encoding);
+        this.charset = charset;
+        this.stream = inputStream;
     }
 
     public AbstractContent getSourceContent() {
@@ -55,7 +52,7 @@ public class AbstractFileStringContentStream implements ContentStream {
 
     @Override
     public String getContentType() {
-        return "text/plain;charset=" + encoding.toString();
+        return "text/plain;charset=" + charset.name();
     }
 
     @Override
@@ -88,7 +85,7 @@ public class AbstractFileStringContentStream implements ContentStream {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-
+        
         stream.close();
     }
 }

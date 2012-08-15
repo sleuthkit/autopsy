@@ -96,7 +96,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
                 }
             }
         });
-        this.skipNSRLCheckBox.setSelected(KeywordSearchIngestService.getDefault().getSkipKnown());
 
     }
 
@@ -113,7 +112,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         listsTable = new javax.swing.JTable();
         newListButton = new javax.swing.JButton();
         importButton = new javax.swing.JButton();
-        skipNSRLCheckBox = new javax.swing.JCheckBox();
 
         setMinimumSize(new java.awt.Dimension(200, 0));
         setPreferredSize(new java.awt.Dimension(200, 297));
@@ -145,22 +143,12 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
             }
         });
 
-        skipNSRLCheckBox.setSelected(true);
-        skipNSRLCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.skipNSRLCheckBox.text")); // NOI18N
-        skipNSRLCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.skipNSRLCheckBox.toolTipText")); // NOI18N
-        skipNSRLCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                skipNSRLCheckBoxActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(skipNSRLCheckBox)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(18, 18, 18)
                         .addComponent(newListButton)
@@ -177,8 +165,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newListButton)
                     .addComponent(importButton))
-                .addGap(2, 2, 2)
-                .addComponent(skipNSRLCheckBox))
+                .addGap(25, 25, 25))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -293,10 +280,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_importButtonActionPerformed
 
-    private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipNSRLCheckBoxActionPerformed
-        KeywordSearchIngestService.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
-    }//GEN-LAST:event_skipNSRLCheckBoxActionPerformed
-
     private void listsTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_listsTableKeyPressed
         if(evt.getKeyCode() == KeyEvent.VK_DELETE) {
             int[] selected = listsTable.getSelectedRows();
@@ -314,7 +297,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable listsTable;
     private javax.swing.JButton newListButton;
-    private javax.swing.JCheckBox skipNSRLCheckBox;
     // End of variables declaration//GEN-END:variables
 
     

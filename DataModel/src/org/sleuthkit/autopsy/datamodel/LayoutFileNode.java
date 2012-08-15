@@ -24,22 +24,19 @@ import org.openide.nodes.Sheet;
 import org.sleuthkit.datamodel.LayoutFile;
 
 /**
- *
- * @author dfickling
+ * Node for layout file
  */
-public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile>{
-    
+public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
+
     public static enum LayoutContentPropertyType {
 
         NAME {
-
             @Override
             public String toString() {
                 return "Name";
             }
         },
         SIZE {
-
             @Override
             public String toString() {
                 return "Size";
@@ -50,19 +47,20 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile>{
             public String toString() {
                 return "Parts";
             }
-        }}
-    
+        }
+    }
+
     public static String nameForLayoutFile(LayoutFile lf) {
         return lf.getName();
     }
-    
+
     public LayoutFileNode(LayoutFile lf) {
         super(lf);
-        
+
         this.setDisplayName(nameForLayoutFile(lf));
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
     }
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
@@ -71,12 +69,12 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile>{
             ss = Sheet.createPropertiesSet();
             s.put(ss);
         }
-        
+
         Map<String, Object> map = new LinkedHashMap<String, Object>();
         fillPropertyMap(map, content);
 
         ss.put(new NodeProperty("Name", "Name", "no description", getName()));
-        
+
         final String NO_DESCR = "no description";
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
@@ -95,11 +93,10 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile>{
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     private static void fillPropertyMap(Map<String, Object> map, LayoutFile content) {
         map.put(LayoutContentPropertyType.NAME.toString(), content.getName());
         map.put(LayoutContentPropertyType.PARTS.toString(), content.getNumParts());
         map.put(LayoutContentPropertyType.SIZE.toString(), content.getSize());
     }
-    
 }

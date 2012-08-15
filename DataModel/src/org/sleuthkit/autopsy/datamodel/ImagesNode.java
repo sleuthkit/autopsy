@@ -25,8 +25,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.Content;
 
 /**
- *
- * @author dfickling
+ * Nodes for the images
  */
 public class ImagesNode extends AbstractNode implements DisplayableItemNode {
     

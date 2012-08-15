@@ -37,12 +37,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.FsContent;
@@ -50,11 +50,12 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * IngestManager sets up and manages ingest services
- * runs them in a background thread
- * notifies services when work is complete or should be interrupted
- * processes messages from services via messenger proxy  and posts them to GUI
- * 
+ * IngestManager sets up and manages ingest services runs them in a background
+ * thread notifies services when work is complete or should be interrupted
+ * processes messages from services via messenger proxy and posts them to GUI.
+ *
+ * This runs as a singleton and you can access it using the getDefault() method.
+ *
  */
 public class IngestManager {
 
@@ -79,17 +80,17 @@ public class IngestManager {
     private boolean processUnallocSpace = true;
     //queues
     private final ImageQueue imageQueue = new ImageQueue();   // list of services and images to analyze
-    private final AbstractFileQueue AbstractFileQueue = new AbstractFileQueue();
+    private final AbstractFileQueue abstractFileQueue = new AbstractFileQueue();
     private final Object queuesLock = new Object();
     //workers
-    private IngestAbstractFileThread AbstractFileIngester;
+    private IngestAbstractFileThread abstractFileIngester;
     private List<IngestImageThread> imageIngesters;
-    private SwingWorker<Object,Void> queueWorker;
+    private SwingWorker<Object, Void> queueWorker;
     //services
-    final List<IngestServiceImage> imageServices = enumerateImageServices();
-    final List<IngestServiceAbstractFile> AbstractFileServices = enumerateAbstractFileServices();
+    private final List<IngestServiceImage> imageServices = enumerateImageServices();
+    private final List<IngestServiceAbstractFile> abstractFileServices = enumerateAbstractFileServices();
     // service return values
-    private final Map<String, IngestServiceAbstractFile.ProcessResult> AbstractFileServiceResults = new HashMap<String, IngestServiceAbstractFile.ProcessResult>();
+    private final Map<String, IngestServiceAbstractFile.ProcessResult> abstractFileServiceResults = new HashMap<String, IngestServiceAbstractFile.ProcessResult>();
     //manager proxy
     final IngestManagerProxy managerProxy = new IngestManagerProxy(this);
     //notifications
@@ -97,14 +98,43 @@ public class IngestManager {
     //monitor
     private final IngestMonitor ingestMonitor = new IngestMonitor();
 
-    private enum IngestManagerEvents {
+    /**
+     * Possible events about ingest modules Event listeners can get the event
+     * name by using String returned by toString() method on the specific event.
+     */
+    public enum IngestModuleEvent {
 
-        SERVICE_STARTED, SERVICE_COMPLETED, SERVICE_STOPPED, SERVICE_HAS_DATA
+        /**
+         * Event sent when the ingest module has been started processing. Second
+         * argument of the property change fired contains module name String and
+         * third argument is null.
+         */
+        STARTED,
+        /**
+         * Event sent when the ingest module has completed processing. Second
+         * argument of the property change fired contains module name String and
+         * third argument is null.
+         *
+         * This event is generally used by listeners to perform a final data
+         * view refresh (listeners need to query all data from the blackboard).
+         *
+         */
+        COMPLETED,
+        /**
+         * Event sent when the ingest module has stopped processing, and likely
+         * not all data has been processed. Second argument of the property
+         * change fired contains module name String and third argument is null.
+         */
+        STOPPED,
+        /**
+         * Event sent when ingest module has new data. Second argument of the
+         * property change fired contains ServiceDataEvent object and third
+         * argument is null. The object can contain encapsulated new data
+         * created by the service. Listener can also query new data as needed.
+         *
+         */
+        DATA
     };
-    public final static String SERVICE_STARTED_EVT = IngestManagerEvents.SERVICE_STARTED.name();
-    public final static String SERVICE_COMPLETED_EVT = IngestManagerEvents.SERVICE_COMPLETED.name();
-    public final static String SERVICE_STOPPED_EVT = IngestManagerEvents.SERVICE_STOPPED.name();
-    public final static String SERVICE_HAS_DATA_EVT = IngestManagerEvents.SERVICE_HAS_DATA.name();
     //ui
     private IngestUI ui = null;
     //singleton
@@ -114,6 +144,11 @@ public class IngestManager {
         imageIngesters = new ArrayList<IngestImageThread>();
     }
 
+    /**
+     * Returns reference to singleton instance.
+     *
+     * @returns Instance of class.
+     */
     public static synchronized IngestManager getDefault() {
         if (instance == null) {
             logger.log(Level.INFO, "creating manager instance");
@@ -128,24 +163,32 @@ public class IngestManager {
 
     /**
      * Add property change listener to listen to ingest events
+     *
      * @param l PropertyChangeListener to add
      */
     public static synchronized void addPropertyChangeListener(final PropertyChangeListener l) {
         pcs.addPropertyChangeListener(l);
     }
 
-    public static synchronized void fireServiceEvent(String eventType, String serviceName) {
+    static synchronized void fireServiceEvent(String eventType, String serviceName) {
         pcs.firePropertyChange(eventType, serviceName, null);
     }
 
-    public static synchronized void fireServiceDataEvent(ServiceDataEvent serviceDataEvent) {
-        pcs.firePropertyChange(SERVICE_HAS_DATA_EVT, serviceDataEvent, null);
+    static synchronized void fireServiceDataEvent(ServiceDataEvent serviceDataEvent) {
+        pcs.firePropertyChange(IngestModuleEvent.DATA.toString(), serviceDataEvent, null);
     }
 
+    /**
+     * Returns the return value from a previously run module on the file being
+     * curently analyzed.
+     *
+     * @param serviceName Name of module.
+     * @returns Return value from that module if it was previously run.
+     */
     IngestServiceAbstractFile.ProcessResult getAbstractFileServiceResult(String serviceName) {
-        synchronized (AbstractFileServiceResults) {
-            if (AbstractFileServiceResults.containsKey(serviceName)) {
-                return AbstractFileServiceResults.get(serviceName);
+        synchronized (abstractFileServiceResults) {
+            if (abstractFileServiceResults.containsKey(serviceName)) {
+                return abstractFileServiceResults.get(serviceName);
             } else {
                 return IngestServiceAbstractFile.ProcessResult.UNKNOWN;
             }
@@ -153,7 +196,9 @@ public class IngestManager {
     }
 
     /**
-     * Multiple image version of execute, enqueues multiple images and associated services at once
+     * Multiple image version of execute, enqueues multiple images and
+     * associated services at once
+     *
      * @param services services to execute on every image
      * @param images images to execute services on
      */
@@ -172,10 +217,13 @@ public class IngestManager {
     }
 
     /**
-     * IngestManager entry point, enqueues image to be processed.
-     * Spawns background thread which enumerates all sorted files and executes chosen services per file in a pre-determined order.
-     * Notifies services when work is complete or should be interrupted using complete() and stop() calls.
-     * Does not block and can be called multiple times to enqueue more work to already running background process.
+     * IngestManager entry point, enqueues image to be processed. Spawns
+     * background thread which enumerates all sorted files and executes chosen
+     * services per file in a pre-determined order. Notifies services when work
+     * is complete or should be interrupted using complete() and stop() calls.
+     * Does not block and can be called multiple times to enqueue more work to
+     * already running background process.
+     *
      * @param services services to execute on the image
      * @param image image to execute services on
      */
@@ -188,16 +236,16 @@ public class IngestManager {
 
     /**
      * Starts the needed worker threads.
-     * 
-     * if AbstractFile service is still running, do nothing and allow it to consume queue
-     * otherwise start /restart AbstractFile worker
-     * 
-     * image workers run per (service,image).  Check if one for the (service,image) is already running
-     * otherwise start/restart the worker
+     *
+     * if AbstractFile service is still running, do nothing and allow it to
+     * consume queue otherwise start /restart AbstractFile worker
+     *
+     * image workers run per (service,image). Check if one for the
+     * (service,image) is already running otherwise start/restart the worker
      */
     private synchronized void startAll() {
         logger.log(Level.INFO, "Image queue: " + this.imageQueue.toString());
-        logger.log(Level.INFO, "File queue: " + this.AbstractFileQueue.toString());
+        logger.log(Level.INFO, "File queue: " + this.abstractFileQueue.toString());
 
         if (!ingestMonitor.isRunning()) {
             ingestMonitor.start();
@@ -238,7 +286,7 @@ public class IngestManager {
                     //image services are now initialized per instance
                     quService.init(managerProxy);
                     newImageWorker.execute();
-                    IngestManager.fireServiceEvent(SERVICE_STARTED_EVT, quService.getName());
+                    IngestManager.fireServiceEvent(IngestModuleEvent.STARTED.toString(), quService.getName());
                 }
             }
         }
@@ -248,12 +296,12 @@ public class IngestManager {
         //AbstractFile ingester
         boolean startAbstractFileIngester = false;
         if (hasNextAbstractFile()) {
-            if (AbstractFileIngester
+            if (abstractFileIngester
                     == null) {
                 startAbstractFileIngester = true;
                 logger.log(Level.INFO, "Starting initial AbstractFile ingester");
             } //if worker had completed, restart it in case data is still enqueued
-            else if (AbstractFileIngester.isDone()) {
+            else if (abstractFileIngester.isDone()) {
                 startAbstractFileIngester = true;
                 logger.log(Level.INFO, "Restarting AbstractFile ingester");
             }
@@ -263,12 +311,12 @@ public class IngestManager {
 
         if (startAbstractFileIngester) {
             stats = new IngestManagerStats();
-            AbstractFileIngester = new IngestAbstractFileThread();
+            abstractFileIngester = new IngestAbstractFileThread();
             //init all fs services, everytime new worker starts
-            for (IngestServiceAbstractFile s : AbstractFileServices) {
+            for (IngestServiceAbstractFile s : abstractFileServices) {
                 s.init(managerProxy);
             }
-            AbstractFileIngester.execute();
+            abstractFileIngester.execute();
         }
     }
 
@@ -287,9 +335,9 @@ public class IngestManager {
         emptyImages();
 
         //stop service workers
-        if (AbstractFileIngester != null) {
+        if (abstractFileIngester != null) {
             //send signals to all file services
-            for (IngestServiceAbstractFile s : this.AbstractFileServices) {
+            for (IngestServiceAbstractFile s : this.abstractFileServices) {
                 if (isServiceRunning(s)) {
                     try {
                         s.stop();
@@ -300,11 +348,11 @@ public class IngestManager {
 
             }
             //stop fs ingester thread
-            boolean cancelled = AbstractFileIngester.cancel(true);
+            boolean cancelled = abstractFileIngester.cancel(true);
             if (!cancelled) {
                 logger.log(Level.WARNING, "Unable to cancel file ingest worker");
             } else {
-                AbstractFileIngester = null;
+                abstractFileIngester = null;
             }
         }
 
@@ -314,13 +362,13 @@ public class IngestManager {
 
         for (IngestImageThread imageWorker : toStop) {
             IngestServiceImage s = imageWorker.getService();
-            
+
             //stop the worker thread if thread is running
             boolean cancelled = imageWorker.cancel(true);
             if (!cancelled) {
                 logger.log(Level.INFO, "Unable to cancel image ingest worker for service: " + imageWorker.getService().getName() + " img: " + imageWorker.getImage().getName());
             }
-            
+
             //stop notification to service to cleanup resources
             if (isServiceRunning(s)) {
                 try {
@@ -329,15 +377,16 @@ public class IngestManager {
                     logger.log(Level.WARNING, "Exception while stopping service: " + s.getName(), e);
                 }
             }
-           
+
         }
 
         logger.log(Level.INFO, "stopped all");
     }
 
     /**
-     * test if any of image of AbstractFile ingesters are running
-     * @return true if any service is running, false otherwise
+     * Test if any ingester modules are running
+     *
+     * @return true if any module is running, false otherwise
      */
     public synchronized boolean isIngestRunning() {
         if (isEnqueueRunning()) {
@@ -351,7 +400,29 @@ public class IngestManager {
         }
 
     }
+    
+    /**
+     * Test is any file ingest services are running.
+     * 
+     * @return true if any ingest services are running, false otherwise
+     */
+    public synchronized boolean areServicesRunning() {
+        for (IngestServiceAbstract serv : abstractFileServices) {
+            if(serv.hasBackgroundJobsRunning()) {
+                return true;
+            }
+        }
+        for (IngestImageThread thread : imageIngesters) {
+            if(isServiceRunning(thread.getService())) {
+                return false;
+            }
+        }
+        return false;
+    }
 
+    /**
+     * check if ingest is currently being enqueued
+     */
     public synchronized boolean isEnqueueRunning() {
         if (queueWorker != null && !queueWorker.isDone()) {
             return true;
@@ -359,13 +430,19 @@ public class IngestManager {
         return false;
     }
 
+    /**
+     * check if the file-level ingest pipeline is running
+     */
     public synchronized boolean isFileIngestRunning() {
-        if (AbstractFileIngester != null && !AbstractFileIngester.isDone()) {
+        if (abstractFileIngester != null && !abstractFileIngester.isDone()) {
             return true;
         }
         return false;
     }
 
+    /**
+     * check the status of the image-level ingest pipeline
+     */
     public synchronized boolean isImageIngestRunning() {
         if (imageIngesters.isEmpty()) {
             return false;
@@ -387,17 +464,17 @@ public class IngestManager {
     }
 
     /**
-     * check if the service is running (was started and not yet complete/stopped)
-     * give a complete answer, i.e. it's already consumed all files
-     * but it might have background threads running
-     * 
+     * check if the service is running (was started and not yet
+     * complete/stopped) give a complete answer, i.e. it's already consumed all
+     * files but it might have background threads running
+     *
      */
     public boolean isServiceRunning(final IngestServiceAbstract service) {
 
         if (service.getType() == IngestServiceAbstract.ServiceType.AbstractFile) {
 
             synchronized (queuesLock) {
-                if (AbstractFileQueue.hasServiceEnqueued((IngestServiceAbstractFile) service)) {
+                if (abstractFileQueue.hasServiceEnqueued((IngestServiceAbstractFile) service)) {
                     //has work enqueued, so running
                     return true;
                 } else {
@@ -437,9 +514,9 @@ public class IngestManager {
     }
 
     /**
-     * returns the current minimal update frequency setting in minutes
-     * Services should call this at init() to get current setting
-     * and use the setting to change notification and data refresh intervals
+     * returns the current minimal update frequency setting in minutes Services
+     * should call this at init() to get current setting and use the setting to
+     * change notification and data refresh intervals
      */
     UpdateFrequency getUpdateFrequency() {
         return updateFrequency;
@@ -447,23 +524,26 @@ public class IngestManager {
 
     /**
      * set new minimal update frequency services should use
+     *
      * @param frequency to use in minutes
      */
     void setUpdateFrequency(UpdateFrequency frequency) {
         this.updateFrequency = frequency;
     }
-    
+
     /**
      * returns if manager is currently configured to process unalloc space
+     *
      * @return true if process unaloc space is set
      */
     boolean getProcessUnallocSpace() {
         return processUnallocSpace;
     }
-    
+
     /**
      * Sets process unalloc space setting on the manager
-     * @param processUnallocSpace 
+     *
+     * @param processUnallocSpace
      */
     void setProcessUnallocSpace(boolean processUnallocSpace) {
         this.processUnallocSpace = processUnallocSpace;
@@ -477,11 +557,11 @@ public class IngestManager {
     }
 
     /**
-     * Service publishes message using InegestManager handle
-     * Does not block.
-     * The message gets enqueued in the GUI thread and displayed in a widget
-     * IngestService should make an attempt not to publish the same message multiple times.
-     * Viewer will attempt to identify duplicate messages and filter them out (slower)
+     * Service publishes message using InegestManager handle Does not block. The
+     * message gets enqueued in the GUI thread and displayed in a widget
+     * IngestService should make an attempt not to publish the same message
+     * multiple times. Viewer will attempt to identify duplicate messages and
+     * filter them out (slower)
      */
     void postMessage(final IngestMessage message) {
 
@@ -495,7 +575,8 @@ public class IngestManager {
     }
 
     /**
-     * helper to return all image services managed (using Lookup API) sorted in Lookup position order
+     * helper to return all image services managed (using Lookup API) sorted in
+     * Lookup position order
      */
     public static List<IngestServiceImage> enumerateImageServices() {
         List<IngestServiceImage> ret = new ArrayList<IngestServiceImage>();
@@ -506,7 +587,8 @@ public class IngestManager {
     }
 
     /**
-     * helper to return all file/dir services managed (using Lookup API) sorted in Lookup position order
+     * helper to return all file/dir services managed (using Lookup API) sorted
+     * in Lookup position order
      */
     public static List<IngestServiceAbstractFile> enumerateAbstractFileServices() {
         List<IngestServiceAbstractFile> ret = new ArrayList<IngestServiceAbstractFile>();
@@ -517,7 +599,8 @@ public class IngestManager {
     }
 
     /**
-     * Queue up an image to be processed by a given service. 
+     * Queue up an image to be processed by a given service.
+     *
      * @param service Service to analyze image
      * @param image Image to analyze
      */
@@ -529,26 +612,27 @@ public class IngestManager {
 
     /**
      * Queue up an image to be processed by a given File service.
-     * @param service
-     * @param image 
+     *
+     * @param service service for which to enqueue the files
+     * @param abstractFiles files to enqueue
      */
-    private void addAbstractFile(IngestServiceAbstractFile service, Collection<AbstractFile> AbstractFiles) {
+    private void addAbstractFile(IngestServiceAbstractFile service, Collection<AbstractFile> abstractFiles) {
         synchronized (queuesLock) {
-            for (AbstractFile AbstractFile : AbstractFiles) {
-                AbstractFileQueue.enqueue(AbstractFile, service);
+            for (AbstractFile abstractFile : abstractFiles) {
+                abstractFileQueue.enqueue(abstractFile, service);
             }
         }
     }
 
     /**
-     * get next file/dir and associated list of services to process
-     * the queue of AbstractFile to process is maintained internally 
-     * and could be dynamically sorted as data comes in
+     * get next file/dir and associated list of services to process the queue of
+     * AbstractFile to process is maintained internally and could be dynamically
+     * sorted as data comes in
      */
     private Map.Entry<AbstractFile, List<IngestServiceAbstractFile>> getNextAbstractFile() {
         Map.Entry<AbstractFile, List<IngestServiceAbstractFile>> ret = null;
         synchronized (queuesLock) {
-            ret = AbstractFileQueue.dequeue();
+            ret = abstractFileQueue.dequeue();
         }
         return ret;
     }
@@ -556,7 +640,7 @@ public class IngestManager {
     private boolean hasNextAbstractFile() {
         boolean ret = false;
         synchronized (queuesLock) {
-            ret = AbstractFileQueue.hasNext();
+            ret = abstractFileQueue.hasNext();
         }
         return ret;
     }
@@ -564,14 +648,14 @@ public class IngestManager {
     private int getNumAbstractFiles() {
         int ret = 0;
         synchronized (queuesLock) {
-            ret = AbstractFileQueue.getCount();
+            ret = abstractFileQueue.getCount();
         }
         return ret;
     }
 
     private void emptyAbstractFiles() {
         synchronized (queuesLock) {
-            AbstractFileQueue.empty();
+            abstractFileQueue.empty();
         }
     }
 
@@ -582,9 +666,8 @@ public class IngestManager {
     }
 
     /**
-     * get next Image/Service pair to process
-     * the queue of Images to process is maintained internally 
-     * and could be dynamically sorted as data comes in
+     * get next Image/Service pair to process the queue of Images to process is
+     * maintained internally and could be dynamically sorted as data comes in
      */
     private Map.Entry<Image, List<IngestServiceImage>> getNextImage() {
         Map.Entry<Image, List<IngestServiceImage>> ret = null;
@@ -646,12 +729,12 @@ public class IngestManager {
         }
 
         static Priority getPriority(final AbstractFile abstractFile) {
-            if(!abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
+            if (!abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
                 return Priority.MEDIUM;
             }
-            final String path = ((FsContent)abstractFile).getParentPath();
-            
-            if(path == null){
+            final String path = ((FsContent) abstractFile).getParentPath();
+
+            if (path == null) {
                 return Priority.MEDIUM;
             }
 
@@ -682,13 +765,13 @@ public class IngestManager {
     }
 
     /**
-     * manages queue of pending AbstractFile and list of associated IngestServiceAbstractFile to use on that content
-     * sorted based on AbstractFilePriotity
+     * manages queue of pending AbstractFile and list of associated
+     * IngestServiceAbstractFile to use on that content sorted based on
+     * AbstractFilePriotity
      */
     private class AbstractFileQueue {
 
         final Comparator<AbstractFile> sorter = new Comparator<AbstractFile>() {
-
             @Override
             public int compare(AbstractFile q1, AbstractFile q2) {
                 AbstractFilePriotity.Priority p1 = AbstractFilePriotity.getPriority(q1);
@@ -737,7 +820,8 @@ public class IngestManager {
 
         /**
          * Returns next AbstractFile and list of associated services
-         * @return 
+         *
+         * @return
          */
         Map.Entry<AbstractFile, List<IngestServiceAbstractFile>> dequeue() {
             if (!hasNext()) {
@@ -750,7 +834,8 @@ public class IngestManager {
 
         /**
          * checks if the service has any work enqueued
-         * @param service to check for 
+         *
+         * @param service to check for
          * @return true if the service is enqueued to do work
          */
         boolean hasServiceEnqueued(IngestServiceAbstractFile service) {
@@ -770,22 +855,21 @@ public class IngestManager {
         public String printQueue() {
             StringBuilder sb = new StringBuilder();
             /*for (QueueUnit<AbstractFile, IngestServiceAbstractFile> u : AbstractFileUnits) {
-            sb.append(u.toString());
-            sb.append("\n");
-            }*/
+             sb.append(u.toString());
+             sb.append("\n");
+             }*/
             return sb.toString();
         }
     }
 
     /**
-     * manages queue of pending Images and IngestServiceImage to use on that image.
-     * image / service pairs are added one at a time and internally, it keeps track of all
-     * services for a given image.
+     * manages queue of pending Images and IngestServiceImage to use on that
+     * image. image / service pairs are added one at a time and internally, it
+     * keeps track of all services for a given image.
      */
     private class ImageQueue {
 
         final Comparator<Image> sorter = new Comparator<Image>() {
-
             @Override
             public int compare(Image q1, Image q2) {
                 return (int) (q2.getId() - q1.getId());
@@ -825,8 +909,10 @@ public class IngestManager {
         }
 
         /**
-         * Return a QueueUnit that contains an image and set of services to run on it.
-         * @return 
+         * Return a QueueUnit that contains an image and set of services to run
+         * on it.
+         *
+         * @return
          */
         Map.Entry<Image, List<IngestServiceImage>> dequeue() {
             if (!hasNext()) {
@@ -845,16 +931,63 @@ public class IngestManager {
     /**
      * collects IngestManager statistics during runtime
      */
-    private static class IngestManagerStats {
+    private class IngestManagerStats {
 
-        Date startTime;
-        Date endTime;
-        int errorsTotal;
-        Map<IngestServiceAbstract, Integer> errors;
-        private static DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        private Date startTime;
+        private Date endTime;
+        private int errorsTotal;
+        private Map<IngestServiceAbstract, Integer> errors;
+        private final DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        private final StopWatch timer = new StopWatch();
+        private IngestServiceAbstract currentServiceForTimer;
+        //file service timing stats, image service timers are logged in IngestImageThread class
+        private final Map<String, Long> fileServiceTimers = new HashMap<String, Long>();
 
         IngestManagerStats() {
             errors = new HashMap<IngestServiceAbstract, Integer>();
+
+        }
+
+        /**
+         * records start time of the file process for the service must be
+         * followed by logFileServiceEndProcess for the same service
+         *
+         * @param service to record start time for processing a file
+         */
+        void logFileServiceStartProcess(IngestServiceAbstract service) {
+            timer.reset();
+            timer.start();
+            currentServiceForTimer = service;
+        }
+
+        /**
+         * records stop time of the file process for the service must be
+         * preceded by logFileServiceStartProcess for the same service
+         *
+         * @param service to record stop time for processing a file
+         */
+        void logFileServiceEndProcess(IngestServiceAbstract service) {
+            timer.stop();
+            if (service != currentServiceForTimer) {
+                logger.log(Level.WARNING, "Invalid service passed in to record stop processing: " + service.getName()
+                        + ", expected: " + currentServiceForTimer.getName());
+            } else {
+                final long elapsed = timer.getElapsedTime();
+                final long current = fileServiceTimers.get(service.getName());
+                fileServiceTimers.put(service.getName(), elapsed + current);
+            }
+
+            currentServiceForTimer = null;
+        }
+
+        String getFileServiceStats() {
+            StringBuilder sb = new StringBuilder();
+            for (final String serviceName : fileServiceTimers.keySet()) {
+                sb.append(serviceName).append(" took: ")
+                        .append(fileServiceTimers.get(serviceName) / 1000)
+                        .append(" secs. to process()").append('\n');
+            }
+            return sb.toString();
         }
 
         @Override
@@ -886,13 +1019,13 @@ public class IngestManager {
             sb.append("Ingest time: ").append(getTotalTimeString()).append("<br />");
             sb.append("Total errors: ").append(errorsTotal).append("<br />");
             /*
-            if (errorsTotal > 0) {
-            sb.append("Errors per service:");
-            for (IngestServiceAbstract service : errors.keySet()) {
-            final int errorsService = errors.get(service);
-            sb.append("\t").append(service.getName()).append(": ").append(errorsService).append("<br />");
-            }
-            }
+             if (errorsTotal > 0) {
+             sb.append("Errors per service:");
+             for (IngestServiceAbstract service : errors.keySet()) {
+             final int errorsService = errors.get(service);
+             sb.append("\t").append(service.getName()).append(": ").append(errorsService).append("<br />");
+             }
+             }
              * */
 
             sb.append("</html>");
@@ -901,6 +1034,10 @@ public class IngestManager {
 
         void start() {
             startTime = new Date();
+
+            for (IngestServiceAbstractFile service : abstractFileServices) {
+                fileServiceTimers.put(service.getName(), 0L);
+            }
         }
 
         void end() {
@@ -948,7 +1085,7 @@ public class IngestManager {
 //ingester worker for AbstractFile queue
 //worker runs until AbstractFile queue is consumed
 //and if needed, new instance is created and started when data arrives
-    private class IngestAbstractFileThread extends SwingWorker<Object,Void> {
+    private class IngestAbstractFileThread extends SwingWorker<Object, Void> {
 
         private Logger logger = Logger.getLogger(IngestAbstractFileThread.class.getName());
         private ProgressHandle progress;
@@ -960,18 +1097,18 @@ public class IngestManager {
             stats.start();
 
             //notify main thread services started
-            for (IngestServiceAbstractFile s : AbstractFileServices) {
-                IngestManager.fireServiceEvent(SERVICE_STARTED_EVT, s.getName());
+            for (IngestServiceAbstractFile s : abstractFileServices) {
+                IngestManager.fireServiceEvent(IngestModuleEvent.STARTED.toString(), s.getName());
             }
 
             final String displayName = "File Ingest";
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
-
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Filed ingest cancelled by user.");
-                    if (progress != null)
+                    if (progress != null) {
                         progress.setDisplayName(displayName + " (Cancelling...)");
+                    }
                     return IngestAbstractFileThread.this.cancel(true);
                 }
             });
@@ -985,8 +1122,8 @@ public class IngestManager {
             while (hasNextAbstractFile()) {
                 Map.Entry<AbstractFile, List<IngestServiceAbstractFile>> unit = getNextAbstractFile();
                 //clear return values from services for last file
-                synchronized (AbstractFileServiceResults) {
-                    AbstractFileServiceResults.clear();
+                synchronized (abstractFileServiceResults) {
+                    abstractFileServiceResults.clear();
                 }
 
                 final AbstractFile fileToProcess = unit.getKey();
@@ -994,6 +1131,7 @@ public class IngestManager {
                 progress.progress(fileToProcess.getName(), processedFiles);
 
                 for (IngestServiceAbstractFile service : unit.getValue()) {
+                    //process the file with every file service
                     if (isCancelled()) {
                         logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
                         return null;
@@ -1001,7 +1139,9 @@ public class IngestManager {
 
 
                     try {
+                        stats.logFileServiceStartProcess(service);
                         IngestServiceAbstractFile.ProcessResult result = service.process(fileToProcess);
+                        stats.logFileServiceEndProcess(service);
                         //handle unconditional stop
                         if (result == IngestServiceAbstractFile.ProcessResult.STOP) {
                             break;
@@ -1009,8 +1149,8 @@ public class IngestManager {
                         }
 
                         //store the result for subsequent services for this file
-                        synchronized (AbstractFileServiceResults) {
-                            AbstractFileServiceResults.put(service.getName(), result);
+                        synchronized (abstractFileServiceResults) {
+                            abstractFileServiceResults.put(service.getName(), result);
                         }
 
                     } catch (Exception e) {
@@ -1035,15 +1175,12 @@ public class IngestManager {
         @Override
         protected void done() {
             try {
-                Date d1 = new Date();
                 super.get(); //block and get all exceptions thrown while doInBackground()
-                Date d2 = new Date();
-                logger.log(Level.INFO, "File ingest get() took: " + (d2.getTime()-d1.getTime()) );
                 //notify services of completion
                 if (!this.isCancelled()) {
-                    for (IngestServiceAbstractFile s : AbstractFileServices) {
+                    for (IngestServiceAbstractFile s : abstractFileServices) {
                         s.complete();
-                        IngestManager.fireServiceEvent(SERVICE_COMPLETED_EVT, s.getName());
+                        IngestManager.fireServiceEvent(IngestModuleEvent.COMPLETED.toString(), s.getName());
                     }
                 }
 
@@ -1066,6 +1203,7 @@ public class IngestManager {
 
                 if (!this.isCancelled()) {
                     logger.log(Level.INFO, "Summary Report: " + stats.toString());
+                    logger.log(Level.INFO, "File service timings: " + stats.getFileServiceStats());
                     //ui.displayReport(stats.toHtmlString());
                     IngestManager.this.postMessage(IngestMessage.createManagerMessage("File Ingest Complete", stats.toHtmlString()));
                 }
@@ -1074,16 +1212,15 @@ public class IngestManager {
         }
 
         private void handleInterruption() {
-            for (IngestServiceAbstractFile s : AbstractFileServices) {
+            for (IngestServiceAbstractFile s : abstractFileServices) {
                 if (isServiceRunning(s)) {
                     try {
                         s.stop();
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         logger.log(Level.WARNING, "Exception while stopping service: " + s.getName(), e);
                     }
                 }
-                IngestManager.fireServiceEvent(SERVICE_STOPPED_EVT, s.getName());
+                IngestManager.fireServiceEvent(IngestModuleEvent.STOPPED.toString(), s.getName());
             }
             //empty queues
             emptyAbstractFiles();
@@ -1091,7 +1228,7 @@ public class IngestManager {
     }
 
     /* Thread that adds image/file and service pairs to queues */
-    private class EnqueueWorker extends SwingWorker<Object,Void> {
+    private class EnqueueWorker extends SwingWorker<Object, Void> {
 
         List<IngestServiceAbstract> services;
         final List<Image> images;
@@ -1105,15 +1242,15 @@ public class IngestManager {
 
         @Override
         protected Object doInBackground() throws Exception {
-            
+
             final String displayName = "Queueing Ingest";
             progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
-
                 @Override
                 public boolean cancel() {
                     logger.log(Level.INFO, "Queueing ingest cancelled by user.");
-                    if (progress != null)
+                    if (progress != null) {
                         progress.setDisplayName(displayName + " (Cancelling...)");
+                    }
                     return EnqueueWorker.this.cancel(true);
                 }
             });

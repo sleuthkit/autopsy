@@ -1,3 +1,12 @@
+3.0.0b4 (June 29, 2012)
+Funded by US Army Intelligence Center of Excellence (USAICoE):
+New Features:
+- MBOX parsing 
+- Better lnk file parsing
+Bug Fixes:
+- Included needed jar file for Recent Activity (Issue #52).  
+- Fixed error handling from ingest (Issue #53).
+
 3.0.0b3 (June 12, 2012)
 New Features (Funded by US Army Intelligence Center of Excellence (USAICoE)):
 - Ingest manager runs triage/ingest task after disk is added.

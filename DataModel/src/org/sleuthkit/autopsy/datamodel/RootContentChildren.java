@@ -61,6 +61,10 @@ public class RootContentChildren extends AbstractContentChildren {
                         if (o instanceof KeywordHits)
                             this.refreshKey(o);
                         break;
+                    case TSK_EMAIL_MSG:
+                        if (o instanceof EmailExtracted)
+                            this.refreshKey(o);
+                        break;
                     default:
                         if (o instanceof ExtractedContent)
                             this.refreshKey(o);
@@ -71,6 +75,8 @@ public class RootContentChildren extends AbstractContentChildren {
                 if (o instanceof HashsetHits)
                     this.refreshKey(o);
                 else if (o instanceof KeywordHits)
+                    this.refreshKey(o);
+                else if (o instanceof EmailExtracted)
                     this.refreshKey(o);
                 else if (o instanceof ExtractedContent)
                     this.refreshKey(o);

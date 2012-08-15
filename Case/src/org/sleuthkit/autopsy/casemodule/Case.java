@@ -44,13 +44,16 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 
 /**
- * Class to store the case information
+ * Stores all information for a given case.  Only a single case can
+ * currently be open at a time.  Use getCurrentCase() to retrieve the
+ * object for the current case. 
  */
 public class Case {
 
@@ -112,6 +115,8 @@ public class Case {
     private SleuthkitCase db;
     // Track the current case (only set with changeCase() method)
     private static Case currentCase = null;
+    
+    private static final Logger logger = Logger.getLogger(Case.class.getName());
 
     /**
      * Constructor for the Case class
@@ -242,10 +247,15 @@ public class Case {
         }
     }
     
-    Map<Long, List<String>> getImagePaths() {
-        Map<Long, List<String>> imgPaths = new HashMap<Long, List<String>>();
+    static Map<Long, String> getImagePaths(SleuthkitCase db) { //TODO: clean this up
+        Map<Long, String> imgPaths = new HashMap<Long, String>();
         try {
-            imgPaths = db.getImagePaths();
+            Map<Long, List<String>> imgPathsList = db.getImagePaths();
+            for(Map.Entry<Long, List<String>> entry : imgPathsList.entrySet()) {
+                if(entry.getValue().size() > 0) {
+                    imgPaths.put(entry.getKey(), entry.getValue().get(0));
+                }
+            }
         } catch (TskException ex) {
             Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error getting image paths", ex);
         }
@@ -253,58 +263,37 @@ public class Case {
     }
     
     /**
-	 * Ensure that all image paths point to valid image files
-	 */
-	private static void checkImagesExist(SleuthkitCase db) {
-        Map<Long, List<String>> imgPaths = new HashMap<Long, List<String>>();
-        try {
-            imgPaths = db.getImagePaths();
-        } catch (TskException ex) {
-            Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error getting image paths", ex);
-        }
-        for (Map.Entry<Long, List<String>> entry : imgPaths.entrySet()) {
+     * Ensure that all image paths point to valid image files
+     */
+    private static void checkImagesExist(SleuthkitCase db) {
+        Map<Long, String> imgPaths = getImagePaths(db);
+        for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
             JFileChooser fc = new JFileChooser();
             FileFilter filter;
             long obj_id = entry.getKey();
-            List<String> paths = entry.getValue();
-            boolean allFilesExist = true;
-            String pathString = "";
-            for (String s : paths) {
-                allFilesExist &= isPhysicalDrive(s) || new File(s).exists();
-                pathString += s + "\n";
-            }
-            if (!allFilesExist) {
-                File f = new File(paths.get(0));
-                if (AddImageVisualPanel1.encaseFilter.accept(f)) {
-                    filter = AddImageVisualPanel1.encaseFilter;
-                } else if (AddImageVisualPanel1.splitFilter.accept(f)) {
-                    filter = AddImageVisualPanel1.splitFilter;
-                } else {
-                    filter = AddImageVisualPanel1.imgFilter;
-                }
-                fc.setMultiSelectionEnabled(true);
+            String path = entry.getValue();
+            boolean fileExists = pathExists(path);
+            if (!fileExists) {
+                filter = AddImageVisualPanel1.allFilter;
+                fc.setMultiSelectionEnabled(false);
                 fc.setFileFilter(filter);
-                int ret = JOptionPane.showConfirmDialog(null, appName + " has detected that one or more of the images associated with \n"
+                int ret = JOptionPane.showConfirmDialog(null, appName + " has detected that one of the images associated with \n"
                         + "this case are missing. Would you like to search for them now?\n"
-                        + "Previously, the image(s) were located at:\n" + pathString
+                        + "Previously, the image was located at:\n" + path
                         + "\nPlease note that you will still be able to browse directories and generate reports\n"
-                        + "if you choose No, but you will not be able to view file content or run the ingest process.", "Missing Images", JOptionPane.YES_NO_OPTION);
+                        + "if you choose No, but you will not be able to view file content or run the ingest process.", "Missing Image", JOptionPane.YES_NO_OPTION);
                 if (ret == JOptionPane.YES_OPTION) {
                     fc.showOpenDialog(null);
-                    if (fc.getSelectedFiles().length == paths.size()) { //TODO: this is the extent of our equality checking...we should do more.
-                        List<String> newPaths = new ArrayList<String>();
-                        for (File newFile : fc.getSelectedFiles()) {
-                            newPaths.add(newFile.getPath());
-                        }
-                        try {
-                            db.setImagePaths(obj_id, newPaths);
-                        } catch (TskException ex) {
-                            Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error setting image paths", ex);
-                        }
-                    } else {
-                        Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Selected image files don't match old files!");
+                    String newPath = fc.getSelectedFile().getPath();
+                    try {
+                        db.setImagePaths(obj_id, Arrays.asList(new String[]{newPath}));
+                    } catch (TskException ex) {
+                        Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error setting image paths", ex);
                     }
+                } else {
+                    Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Selected image files don't match old files!");
                 }
+
             }
         }
     }
@@ -316,12 +305,10 @@ public class Case {
      * @param imgId  the ID of the image that being added
      * @param timeZone  the timeZone of the image where it's added
      */
-    Image addImage(String[] imgPaths, long imgId, String timeZone) throws Exception {
-        Log.get(this.getClass()).log(Level.INFO, "Adding image to Case.  imgPaths: {0}  ID: {1} TimeZone: {2}", new Object[]{Arrays.toString(imgPaths), imgId, timeZone});
+    Image addImage(String imgPath, long imgId, String timeZone) throws Exception {
+        Log.get(this.getClass()).log(Level.INFO, "Adding image to Case.  imgPath: {0}  ID: {1} TimeZone: {2}", new Object[]{imgPath, imgId, timeZone});
 
         try {
-            xmlcm.addImage(imgPaths, imgId, timeZone); // add the image to the document handler in the XML class and to the config file
-            xmlcm.writeFile(); // write any changes to the config file
             Image newImage = db.getImageById(imgId);
             pcs.firePropertyChange(CASE_ADD_IMAGE, null, newImage); // the new value is the instance of the image
             doAddImage();
@@ -434,46 +421,6 @@ public class Case {
         }
     }
 
-// Not dealing with removing images for now.
-//    /**
-//     * Removes the image from this case
-//     *
-//     * @param givenID    the ID of the image to be removed
-//     * @param givenPath  the path of the image to be removed
-//     */
-//    void removeImage(int givenID, String givenPath) throws Exception {
-//        Log.get(this.getClass()).log(Level.FINE, "Removing image.\ngivenID: {0}\ngivenPath: {1}", new Object[] {givenID, givenPath});
-//        
-//        String[] tempPaths = xmlcm.getImageSet(givenID);
-//        String tempDb = xmlcm.getImageSetDbPath(givenID);
-//
-//        if (tempPaths[0].equals(givenPath)) {
-//            xmlcm.removeImageSet(givenID); // make the changes in the config file
-//            try {
-//                xmlcm.writeFile();
-//            } catch (Exception ex) {
-//                throw new Exception("Error while trying to remove the image from this case.", ex);
-//            }
-//
-//            Image img = imageIdToData.get(givenID).image; // save the image that we want to delete temporarily
-//
-//            imageIdToData.remove(givenID);
-//
-//            pcs.firePropertyChange(CASE_DEL_IMAGE, givenID, img); // the old value is the image ID that removed, the new value is the instance of the image
-//
-//            img.getSleuthkit().closeConnection(); // to make sure that we close the connection
-//
-//            // need to remove the database as well??
-//            File database = new File(tempDb);
-//            boolean test = database.delete(); // delete the database of the image that we remove
-//            if (!test) {
-//                database.deleteOnExit(); // delete on exit if the delete is not successful
-//            }
-//        } else {
-//            // throw an error here
-//            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Couldn't remove image.", new Exception("Couldn't find the image in this case."));
-//        }
-//    }
     /**
      * Checks whether there is a current case open.
      *
@@ -597,9 +544,8 @@ public class Case {
         return pcs;
     }
 
-    String[] getImagePaths(Long imgID) {
-        List<String> paths = getImagePaths().get(imgID);
-        return paths.toArray(new String[paths.size()]);
+    String getImagePaths(Long imgID) {
+        return getImagePaths(db).get(imgID);
     }
 
     /**
@@ -607,7 +553,7 @@ public class Case {
      * @return imageIDs
      */
     public Long[] getImageIDs() {
-        Set<Long> ids = getImagePaths().keySet();
+        Set<Long> ids = getImagePaths(db).keySet();
         return ids.toArray(new Long[ids.size()]);
     }
 
@@ -637,11 +583,15 @@ public class Case {
      * @return time zones  the set of time zones
      */
     public Set<TimeZone> getTimeZone() {
-        if (xmlcm == null) {
-            return new HashSet<TimeZone>();
-        } else {
-            return xmlcm.getTimeZone();
+        Set<TimeZone> timezones = new HashSet<TimeZone>();
+        for(Content c : getRootObjects()) {
+            try {
+                timezones.add(TimeZone.getTimeZone(c.getImage().getTimeZone()));
+            } catch (TskException ex) {
+                Logger.getLogger(Case.class.getName()).log(Level.INFO, "Error getting time zones", ex);
+            }
         }
+        return timezones;
     }
 
     public static synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -653,73 +603,22 @@ public class Case {
     }
 
     /**
-     * convert the image Path to array string
-     * @param imgPath   the image path
-     * @return imgPath  the converted image path
+     * Check if image from the given image path exists.
+     * @param imgPath  the image path
+     * @return isExist  whether the path exists
      */
-    public static String[] convertImgPath(String imgPath) {
-        String[] result;
-        String unsplitPaths = imgPath;
-        int count = 0;
-
-        for (int i = 0; i < unsplitPaths.length(); i++) {
-            if (unsplitPaths.charAt(i) == '\"') {
-                count++;
-            }
-        }
-
-        if (count != 0) {
-            result = new String[count / 2];
-            int start = 0;
-            int current = 0;
-            for (int i = 0; i < count / 2; i++) {
-                while (unsplitPaths.charAt(current) != '\"') {
-                    current++;
-                }
-                start = current;
-                current++;
-                while (unsplitPaths.charAt(current) != '\"') {
-                    current++;
-                }
-                result[i] = unsplitPaths.substring(start + 1, current);
-                current++;
-            }
-        } else {
-            result = new String[1];
-            result[0] = unsplitPaths;
-        }
-
-        return result;
-    }
-
-    /**
-     * Check if all the images from the given image path exist.
-     * @param imgPaths  the image paths
-     * @return isExist  whether the multiple paths exist
-     */
-    public static boolean checkMultiplePathExist(String[] imgPaths) {
-        boolean result = false;
-        int totalLength = imgPaths.length;
-        if (totalLength > 0) {
-            result = true;
-            for (int i = 0; i < totalLength; i++) {
-                String path = imgPaths[i];
-                if (!new File(path).exists() && !isPhysicalDrive(path)) {
-                    result = false;
-                    break;
-                }
-            }
-        }
-        return result;
+    public static boolean pathExists(String imgPath) {
+        return new File(imgPath).isFile();
     }
     
     /**
      * Does the given string refer to a physical drive?
      */
-    private static String pdisk = "\\\\.\\physicaldrive";
+    private static final String pdisk = "\\\\.\\physicaldrive";
+    private static final String dev = "/dev/";
     static boolean isPhysicalDrive(String path) {
-        int endIndex = Math.min(path.length(), pdisk.length());
-        return path.substring(0, endIndex).toLowerCase().equals(pdisk);
+        return path.toLowerCase().startsWith(pdisk) ||
+                path.toLowerCase().startsWith(dev);
     }
 
     /**
@@ -787,17 +686,8 @@ public class Case {
      * @return boolean  whether the case directory is successfully deleted or not
      */
     static boolean deleteCaseDirectory(File casePath) {
-        if (casePath.exists()) {
-            File[] files = casePath.listFiles();
-            for (int i = 0; i < files.length; i++) {
-                if (files[i].isDirectory()) {
-                    deleteCaseDirectory(files[i]);
-                } else {
-                    files[i].delete();
-                }
-            }
-        }
-        return (casePath.delete());
+        logger.log(Level.INFO, "Deleting case directory: " + casePath.getAbsolutePath());
+        return FileUtil.deleteDir(casePath);
     }
 
     /**

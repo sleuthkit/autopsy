@@ -47,6 +47,7 @@ public class ExtractedContentChildren extends ChildFactory<BlackboardArtifact.AR
         list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT);
         list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG);
         list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
+        list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY);
         return true;
     }
     

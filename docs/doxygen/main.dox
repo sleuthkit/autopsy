@@ -4,9 +4,7 @@
 Autopsy has been designed as a platform for open source tools besides just The Sleuth Kit.  This document is for developers who want to add functionality into Autopsy.  This could be in the form of enhancing the existing functionality or by making a module that plugs into it and you may distribute from your own site or push it back into the base distribution. 
 
 - \subpage design_page
-- \subpage ingest_page
-- \subpage contentViewer_page
-- \subpage report_page
+- \subpage regression_test_page 
 
 */
 

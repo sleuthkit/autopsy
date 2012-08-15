@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskException;
 class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
     // the paths of the image files to be added
-    private String[] imgPaths;
+    private String imgPath;
     // the time zone where the image is added
     private String timeZone;
     //whether to not process FAT filesystem orphans
@@ -79,7 +79,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      * but never displayed, or not all panels are displayed, it is better to
      * create only those which really need to be visible.
      *
-     * @return component  the UI component of this wizard panel
+     * @return component the UI component of this wizard panel
      */
     @Override
     public AddImageVisualPanel2 getComponent() {
@@ -93,7 +93,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      * Help for this panel. When the panel is active, this is used as the help
      * for the wizard dialog.
      *
-     * @return HelpCtx.DEFAULT_HELP  the help for this panel
+     * @return HelpCtx.DEFAULT_HELP the help for this panel
      */
     @Override
     public HelpCtx getHelp() {
@@ -105,7 +105,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      * Tests whether the panel is finished and it is safe to proceed to the next
      * one. If the panel is valid, the "Next" button will be enabled.
      *
-     * @return boolean  true if can proceed to the next one, false otherwise
+     * @return boolean true if can proceed to the next one, false otherwise
      */
     @Override
     public boolean isValid() {
@@ -130,10 +130,10 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     }
 
     /**
-     * Sets the isDbCreated variable in this class and also invoke 
+     * Sets the isDbCreated variable in this class and also invoke
      * fireChangeEvent() method.
      *
-     * @param created  whether the database already created or not
+     * @param created whether the database already created or not
      */
     private void setDbCreated(Boolean created) {
         imgAdded = created;
@@ -144,7 +144,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     /**
      * Adds a listener to changes of the panel's validity.
      *
-     * @param l  the change listener to add
+     * @param l the change listener to add
      */
     @Override
     public final void addChangeListener(ChangeListener l) {
@@ -156,7 +156,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     /**
      * Removes a listener to changes of the panel's validity.
      *
-     * @param l  the change listener to move
+     * @param l the change listener to move
      */
     @Override
     public final void removeChangeListener(ChangeListener l) {
@@ -166,8 +166,8 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     }
 
     /**
-     * This method is auto-generated. It seems that this method is used to listen
-     * to any change in this wizard panel.
+     * This method is auto-generated. It seems that this method is used to
+     * listen to any change in this wizard panel.
      */
     protected final void fireChangeEvent() {
         Iterator<ChangeListener> it;
@@ -184,24 +184,24 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      * Load the image locations from the WizardDescriptor settings object, and
      * the
      *
-     * @param settings  the setting to be read from
+     * @param settings the setting to be read from
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
         cleanupImage = null;
         imgAdded = false;
-        imgPaths = (String[]) settings.getProperty(AddImageAction.IMGPATHS_PROP);
+        imgPath = (String) settings.getProperty(AddImageAction.IMGPATH_PROP);
         timeZone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
         noFatOrphans = ((Boolean) settings.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
 
-        component.changeProgressBarTextAndColor("", 0, Color.black);
+        getComponent().resetInfoPanel();
 
         startAddImage();
     }
 
     /**
      *
-     * @param settings  the setting to be stored to
+     * @param settings the setting to be stored to
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
@@ -213,10 +213,12 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         // be cancelled if all goes well, and availble if we return to this
         // panel so the the previously added image can be reverted
         settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, cleanupImage);
+        
+        getComponent().resetInfoPanel();
     }
 
     /**
-     * Thread that will make the JNI call to ingest the image. 
+     * Thread that will make the JNI call to ingest the image.
      */
     private class AddImgTask extends SwingWorker<Integer, Integer> {
 
@@ -233,20 +235,19 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         }
 
         /**
-         * Starts the addImage process, but does not commit the results. 
-         * 
+         * Starts the addImage process, but does not commit the results.
+         *
          * @return
-         * @throws Exception 
+         * @throws Exception
          */
         @Override
         protected Integer doInBackground() {
             this.setProgress(0);
-            
+
 
             // Add a cleanup task to interupt the backgroud process if the
             // wizard exits while the background process is running.
             AddImageAction.CleanupTask cancelledWhileRunning = action.new CleanupTask() {
-
                 @Override
                 void cleanup() throws Exception {
                     logger.log(Level.INFO, "Add image process interrupted.");
@@ -259,7 +260,6 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 //lock DB for writes in EWT thread
                 //wait until lock acquired in EWT
                 EventQueue.invokeAndWait(new Runnable() {
-
                     @Override
                     public void run() {
                         SleuthkitCase.dbWriteLock();
@@ -278,14 +278,14 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
             process = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
             cancelledWhileRunning.enable();
             try {
-                process.run(imgPaths);
+                process.run(new String[]{imgPath});
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Errors occurred while running add image. ", ex);
+                logger.log(Level.WARNING, "Core errors occurred while running add image. ", ex);
                 //critical core/system error and process needs to be interrupted
                 hasCritError = true;
                 errorString = ex.getMessage();
             } catch (TskDataException ex) {
-                logger.log(Level.WARNING, "Errors occurred while running add image. ", ex);
+                logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex);
                 errorString = ex.getMessage();
             } finally {
                 // process is over, doesn't need to be dealt with if cancel happens
@@ -296,7 +296,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         }
 
         /**
-         * 
+         *
          * (called by EventDispatch Thread after doInBackground finishes)
          */
         @Override
@@ -317,15 +317,14 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                     logger.log(Level.INFO, "Handling errors or interruption that occured in add image process");
                     revert();
                     if (hasCritError) {
-                        StringBuilder errMsgB = new StringBuilder();
-                        errMsgB.append("<html>*Failed to add image");
-                        if (errorString != null) {
-                            errMsgB.append(": <br />").append(errorString);
-                        }
-                        errMsgB.append("</html>");
-                        getComponent().changeProgressBarTextAndColor(errMsgB.toString(), 0, Color.black);
+                        //core error
+                         getComponent().setErrors(errorString, true);
                     }
                     return;
+                } else if (errorString != null) {
+                    //data error (non-critical)
+                    logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
+                    getComponent().setErrors(errorString, false);
                 }
             }
 
@@ -344,7 +343,8 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 };
                 cleanupImage.enable();
 
-                getComponent().changeProgressBarTextAndColor("*Image added.", 100, Color.black); // complete progress bar
+                if (errorString == null) 
+                    getComponent().changeProgressBarTextAndColor("*Image added.", 100, Color.black); // complete progress bar
 
                 // Get attention for the process finish
                 java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!

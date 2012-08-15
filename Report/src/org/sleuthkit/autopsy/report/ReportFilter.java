@@ -58,7 +58,7 @@ public class ReportFilter extends javax.swing.JPanel {
             config.getAllTypes();
 
         } catch (ReportModuleException ex) {
-            Logger.getLogger(Report.class.getName()).log(Level.SEVERE, "Exception occurred", ex);
+            Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", ex);
         }
     }
 
@@ -171,7 +171,7 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     getReports(newConfig, classList, preview);
 }//GEN-LAST:event_jButton1ActionPerformed
 
-    public void getReports(final ReportConfiguration reportConfig, final ArrayList classList, final String preview) {
+    public void getReports(final ReportConfiguration reportConfig, final ArrayList<String> classList, final String preview) {
         new SwingWorker<Void, Void>() {
 
             @Override

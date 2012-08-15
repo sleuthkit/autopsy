@@ -46,14 +46,9 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
-import org.sleuthkit.datamodel.Volume;
-import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
  * Handles indexing files on a Solr core.
@@ -65,14 +60,17 @@ public class Ingester {
     private final ExecutorService upRequestExecutor = Executors.newSingleThreadExecutor();
     private final Server solrServer = KeywordSearch.getServer();
     private final GetContentFieldsV getContentFieldsV = new GetContentFieldsV();
-    // TODO: use a more robust method than checking file extension
-    // supported extensions list from http://www.lucidimagination.com/devzone/technical-articles/content-extraction-tika
-    static final String[] ingestibleExtensions = {"tar", "jar", "zip", "gzip", "bzip2",
-        "gz", "tgz", "odf", "doc", "xls", "ppt", "rtf", "pdf", "html", "htm", "xhtml", "txt", "log", "manifest",
-        "bmp", "gif", "png", "jpeg", "tiff", "mp3", "aiff", "au", "midi", "wav",
-        "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
+    private static Ingester instance;
 
+    private Ingester() {
+    }
 
+    public static synchronized Ingester getDefault() {
+        if (instance == null) {
+            instance = new Ingester();
+        }
+        return instance;
+    }
 
     @Override
     @SuppressWarnings("FinalizeDeclaration")
@@ -88,7 +86,7 @@ public class Ingester {
     /**
      * Sends a stream to Solr to have its content extracted and added to the
      * index. commit() should be called once you're done ingesting files.
-     * 
+     *
      * @param afscs File AbstractFileStringContentStream to ingest
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
@@ -99,16 +97,17 @@ public class Ingester {
     }
 
     /**
-     * Sends a FileExtract to Solr to have its content extracted and added to the
-     * index. commit() should be called once you're done ingesting files.
-     * FileExtract represents a parent of extracted file with actual content.  
-     * The parent itself has no content, only meta data and is used to associate the extracted FileExtractedChild
-     * 
-     * @param fe FileExtract to ingest
+     * Sends a AbstractFileExtract to Solr to have its content extracted and
+     * added to the index. commit() should be called once you're done ingesting
+     * files. FileExtract represents a parent of extracted file with actual
+     * content. The parent itself has no content, only meta data and is used to
+     * associate the extracted AbstractFileChunk
+     *
+     * @param fe AbstractFileExtract to ingest
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(FileExtract fe) throws IngesterException {
+    void ingest(AbstractFileExtract fe) throws IngesterException {
         Map<String, String> params = getContentFields(fe.getSourceFile());
 
         params.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(fe.getNumChunks()));
@@ -117,51 +116,57 @@ public class Ingester {
     }
 
     /**
-     * Sends a FileExtractedChild to Solr and its extracted content stream to be added to the
-     * index. commit() should be called once you're done ingesting files.
-     * FileExtractedChild represents a file chunk and its chunk content.
-     * 
-     * @param fec FileExtractedChild to ingest
+     * Sends a AbstractFileChunk to Solr and its extracted content stream to be
+     * added to the index. commit() should be called once you're done ingesting
+     * files. AbstractFileChunk represents a file chunk and its chunk content.
+     *
+     * @param fec AbstractFileChunk to ingest
+     * @param size approx. size of the stream in bytes, used for timeout
+     * estimation
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(FileExtractedChild fec, ByteContentStream bcs) throws IngesterException {
+    void ingest(AbstractFileChunk fec, ByteContentStream bcs, int size) throws IngesterException {
         AbstractContent sourceContent = bcs.getSourceContent();
         Map<String, String> params = getContentFields(sourceContent);
 
         //overwrite id with the chunk id
-        params.put(Server.Schema.ID.toString(), 
-        FileExtractedChild.getFileExtractChildId(sourceContent.getId(), fec.getChunkId()));
-    
-        ingest(bcs, params, FileExtract.MAX_STRING_CHUNK_SIZE);
+        params.put(Server.Schema.ID.toString(),
+                Server.getChunkIdString(sourceContent.getId(), fec.getChunkId()));
+
+        ingest(bcs, params, size);
     }
 
     /**
      * Sends a file to Solr to have its content extracted and added to the
-     * index. commit() should be called once you're done ingesting files.
-     * 
-     * @param f File to ingest
+     * index. commit() should be called once you're done ingesting files. If the
+     * file is a directory or ingestContent is set to false, the file name is
+     * indexed only.
+     *
+     * @param fsContent File to ingest
+     * @param ingestContent if true, index the file and the content, otherwise
+     * indesx metadata only
      * @throws IngesterException if there was an error processing a specific
      * file, but the Solr server is probably fine.
      */
-    void ingest(FsContent fsContent) throws IngesterException {
-        if (fsContent.isDir() ) {
+    void ingest(FsContent fsContent, boolean ingestContent) throws IngesterException {
+        if (fsContent.isDir() || ingestContent == false) {
             ingest(new NullContentStream(fsContent), getContentFields(fsContent), 0);
-        }
-        else {
+        } else {
             ingest(new FscContentStream(fsContent), getContentFields(fsContent), fsContent.getSize());
         }
     }
 
     /**
      * Creates a field map from FsContent, that is later sent to Solr
+     *
      * @param fsc FsContent to get fields from
      * @return the map
      */
     private Map<String, String> getContentFields(AbstractContent fsc) {
         return fsc.accept(getContentFieldsV);
     }
-    
+
     private class GetContentFieldsV extends ContentVisitor.Default<Map<String, String>> {
 
         @Override
@@ -172,10 +177,14 @@ public class Ingester {
         @Override
         public Map<String, String> visit(File f) {
             Map<String, String> params = getCommonFields(f);
-            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTime(f.getCtime(), f));
-            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTime(f.getAtime(), f));
-            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTime(f.getMtime(), f));
-            params.put(Server.Schema.CRTIME.toString(),ContentUtils.getStringTime(f.getCrtime(), f));
+            getCommonFsContentFields(params, f);
+            return params;
+        }
+
+        @Override
+        public Map<String, String> visit(Directory d) {
+            Map<String, String> params = getCommonFields(d);
+            getCommonFsContentFields(params, d);
             return params;
         }
 
@@ -183,31 +192,32 @@ public class Ingester {
         public Map<String, String> visit(LayoutFile lf) {
             return getCommonFields(lf);
         }
-        
+
+        private Map<String, String> getCommonFsContentFields(Map<String, String> params, FsContent fsContent) {
+            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTime(fsContent.getCtime(), fsContent));
+            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTime(fsContent.getAtime(), fsContent));
+            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTime(fsContent.getMtime(), fsContent));
+            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTime(fsContent.getCrtime(), fsContent));
+            return params;
+        }
+
         private Map<String, String> getCommonFields(AbstractFile af) {
             Map<String, String> params = new HashMap<String, String>();
             params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
             params.put(Server.Schema.FILE_NAME.toString(), af.getName());
             return params;
         }
-
-        @Override
-        public Map<String, String> visit(Directory d) {
-            Map<String, String> params = getCommonFields(d);
-            params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTime(d.getCtime(), d));
-            params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTime(d.getAtime(), d));
-            params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTime(d.getMtime(), d));
-            params.put(Server.Schema.CRTIME.toString(), ContentUtils.getStringTime(d.getCrtime(), d));
-            return params;
-        } 
     }
 
     /**
-     * Common delegate method actually doing the work for objects implementing ContentStream
-     * 
-     * @param ContentStream to ingest
+     * Delegate method actually performing the indexing work for objects
+     * implementing ContentStream
+     *
+     * @param cs ContentStream to ingest
      * @param fields content specific fields
-     * @param size size of the content - used to determine the Solr timeout, not used to populate meta-data
+     * @param size size of the content - used to determine the Solr timeout, not
+     * used to populate meta-data
+     *
      * @throws IngesterException if there was an error processing a specific
      * content, but the Solr server is probably fine.
      */
@@ -252,11 +262,12 @@ public class Ingester {
     }
 
     /**
-     * return timeout that should be used to index the content 
+     * return timeout that should be used to index the content
+     *
      * @param size size of the content
      * @return time in seconds to use a timeout
      */
-    private static int getTimeout(long size) {
+    static int getTimeout(long size) {
         if (size < 1024 * 1024L) //1MB
         {
             return 60;
@@ -328,6 +339,7 @@ public class Ingester {
 
     /**
      * Helper to set document fields
+     *
      * @param up request with document
      * @param fields map of field-names->values
      */
@@ -422,8 +434,8 @@ public class Ingester {
     }
 
     /**
-     * Indicates that there was an error with the specific ingest operation,
-     * but it's still okay to continue ingesting files.
+     * Indicates that there was an error with the specific ingest operation, but
+     * it's still okay to continue ingesting files.
      */
     static class IngesterException extends Exception {
 
@@ -434,35 +446,5 @@ public class Ingester {
         IngesterException(String message) {
             super(message);
         }
-    }
-
-    /**
-     * Determine if the file is ingestible/indexable by keyword search
-     * Ingestible abstract file is either a directory, or an allocated file with supported extensions.
-     * Note: currently only checks by extension and abstract type, it does not check actual file content.
-     * @param aFile
-     * @return true if it is ingestible, false otherwise
-     */
-    static boolean isIngestible(AbstractFile aFile) {
-        boolean isIngestible = false;
-        
-        TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
-        if (aType.equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || aType.equals(TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))
-                return isIngestible;
-        
-        FsContent fsContent = (FsContent) aFile;
-        if (fsContent.isDir())
-            //we index dir name, not content
-            return true;
-        
-        final String fileName = fsContent.getName();
-        for (final String ext : ingestibleExtensions) {
-            if (fileName.toLowerCase().endsWith(ext)) {
-                isIngestible = true;
-                break;
-            }
-        }
-        return isIngestible;
     }
 }

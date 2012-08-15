@@ -26,10 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**
- *
- * @author Alex
- */
+
 public class ReportUtils {
 
     static String changeExtension(String originalName, String newExtension) {
@@ -41,6 +38,14 @@ public class ReportUtils {
         }
     }
 
+    /**
+ * Inserts a string into a string every n number of characters
+ *
+ * @param  text the base string/text that you want to have manipulated
+ * @param  insert the string you want to insert
+ * @param period how many characters it should input insert at
+ * @return string with the string inserts inserted
+ */
     public static String insertPeriodically(String text, String insert, int period) {
         StringBuilder builder = new StringBuilder(
                 text.length() + insert.length() * (text.length() / period) + 1);

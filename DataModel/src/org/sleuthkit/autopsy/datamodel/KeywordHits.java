@@ -41,8 +41,7 @@ import org.sleuthkit.datamodel.TskException;
 
 
 /**
- *
- * @author dfickling
+ * Keyword hits node support
  */
 public class KeywordHits implements AutopsyVisitableItem {
     

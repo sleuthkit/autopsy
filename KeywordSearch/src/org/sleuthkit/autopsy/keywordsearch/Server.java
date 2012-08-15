@@ -32,6 +32,7 @@ import java.io.OutputStreamWriter;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.SocketException;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
@@ -60,82 +61,72 @@ class Server {
     public static enum Schema {
 
         ID {
-
             @Override
             public String toString() {
                 return "id";
             }
         },
         CONTENT {
-
             @Override
             public String toString() {
                 return "content";
             }
         },
         CONTENT_WS {
-
             @Override
             public String toString() {
                 return "content_ws";
             }
         },
         FILE_NAME {
-
             @Override
             public String toString() {
                 return "file_name";
             }
         },
         CTIME {
-
             @Override
             public String toString() {
                 return "ctime";
             }
         },
         ATIME {
-
             @Override
             public String toString() {
                 return "atime";
             }
         },
         MTIME {
-
             @Override
             public String toString() {
                 return "mtime";
             }
         },
         CRTIME {
-
             @Override
             public String toString() {
                 return "crtime";
             }
         },
         NUM_CHUNKS {
-
             @Override
             public String toString() {
                 return "num_chunks";
             }
         },};
-    
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "-1";
-    
     //max content size we can send to Solr
     public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
-    
     private static final Logger logger = Logger.getLogger(Server.class.getName());
     private static final String DEFAULT_CORE_NAME = "coreCase";
     // TODO: DEFAULT_CORE_NAME needs to be replaced with unique names to support multiple open cases
     public static final String CORE_EVT = "CORE_EVT";
     public static final char ID_CHUNK_SEP = '_';
     private String javaPath = "java";
+    public static final Charset DEFAULT_INDEXED_TEXT_CHARSET = Charset.forName("UTF-8"); ///< default Charset to index text as
     private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
+    private static Ingester ingester = null;
 
     public enum CORE_EVT_STATES {
 
@@ -145,9 +136,12 @@ class Server {
     private String instanceDir;
     private File solrFolder;
     private ServerAction serverAction;
+    private InputStreamPrinterThread inputRedirectThread;
+    private InputStreamPrinterThread errorRedirectThread;
 
     /**
      * New instance for the server at the given URL
+     *
      * @param url should be something like "http://localhost:8983/solr/"
      */
     Server(String url) {
@@ -181,6 +175,7 @@ class Server {
 
         InputStream stream;
         OutputStream out;
+        boolean doRun = true;
 
         InputStreamPrinterThread(InputStream stream, String type) {
             this.stream = stream;
@@ -207,6 +202,10 @@ class Server {
             }
         }
 
+        void stopRun() {
+            doRun = false;
+        }
+
         @Override
         public void run() {
             InputStreamReader isr = new InputStreamReader(stream);
@@ -215,12 +214,12 @@ class Server {
                 OutputStreamWriter osw = new OutputStreamWriter(out);
                 BufferedWriter bw = new BufferedWriter(osw);
                 String line = null;
-                while ((line = br.readLine()) != null) {
+                while (doRun && (line = br.readLine()) != null) {
                     bw.write(line);
                     bw.newLine();
                     if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
                         //flush buffers if dev version for debugging
-                        bw.flush(); 
+                        bw.flush();
                     }
                 }
             } catch (IOException ex) {
@@ -237,7 +236,7 @@ class Server {
     void start() {
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
         try {
-            final String MAX_SOLR_MEM_MB_PAR = " -Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m"; 
+            final String MAX_SOLR_MEM_MB_PAR = " -Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m";
             final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar";
             logger.log(Level.INFO, "Starting Solr using: " + SOLR_START_CMD);
             curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
@@ -249,8 +248,11 @@ class Server {
                 Exceptions.printStackTrace(ex);
             }
             // Handle output to prevent process from blocking
-            (new InputStreamPrinterThread(curSolrProcess.getInputStream(), "input")).start();
-            (new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "error")).start();
+            inputRedirectThread = new InputStreamPrinterThread(curSolrProcess.getInputStream(), "input");
+            inputRedirectThread.start();
+
+            errorRedirectThread = new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "error");
+            errorRedirectThread.start();
 
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -259,9 +261,8 @@ class Server {
 
     /**
      * Tries to stop a Solr instance.
-     * 
-     * Waits for the stop command to finish
-     * before returning.
+     *
+     * Waits for the stop command to finish before returning.
      */
     synchronized void stop() {
         try {
@@ -279,12 +280,25 @@ class Server {
             throw new RuntimeException(ex);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
+        } finally {
+            //stop Solr stream -> log redirect threads
+            if (inputRedirectThread != null) {
+                inputRedirectThread.stopRun();
+                inputRedirectThread = null;
+            }
+            if (errorRedirectThread != null) {
+                errorRedirectThread.stopRun();
+                errorRedirectThread = null;
+            }
         }
     }
 
     /**
-     * Tests if there's a Solr server running by sending it a core-status request.
-     * @return false if the request failed with a connection error, otherwise true
+     * Tests if there's a Solr server running by sending it a core-status
+     * request.
+     *
+     * @return false if the request failed with a connection error, otherwise
+     * true
      */
     synchronized boolean isRunning() {
 
@@ -311,7 +325,9 @@ class Server {
 
         return true;
     }
-    /**** Convenience methods for use while we only open one case at a time ****/
+    /**
+     * ** Convenience methods for use while we only open one case at a time ***
+     */
     private volatile Core currentCore = null;
 
     synchronized void openCore() {
@@ -331,11 +347,14 @@ class Server {
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
     }
 
-    /**** end single-case specific methods ****/
+    /**
+     * ** end single-case specific methods ***
+     */
     /**
      * Open a core for the given case
+     *
      * @param c
-     * @return 
+     * @return
      */
     synchronized Core openCore(Case c) {
         String sep = File.separator;
@@ -345,6 +364,7 @@ class Server {
 
     /**
      * commit current core if it exists
+     *
      * @throws SolrServerException, NoOpenCoreException
      */
     synchronized void commit() throws SolrServerException, NoOpenCoreException {
@@ -362,10 +382,12 @@ class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr documents indexed
-     * without actually returning the documents
+     * Execute query that gets only number of all Solr files indexed without
+     * actually returning the files. The result does not include chunks, only
+     * number of actual files.
+     *
      * @return int representing number of indexed files
-     * @throws SolrServerException 
+     * @throws SolrServerException
      */
     public int queryNumIndexedFiles() throws SolrServerException, NoOpenCoreException {
         if (currentCore == null) {
@@ -376,7 +398,23 @@ class Server {
     }
 
     /**
+     * Execute query that gets only number of all Solr documents indexed (files
+     * and chunks) without actually returning the documents
+     *
+     * @return int representing number of indexed files (files and chunks)
+     * @throws SolrServerException
+     */
+    public int queryNumIndexedDocuments() throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+
+        return currentCore.queryNumIndexedDocuments();
+    }
+
+    /**
      * Return true if the file is indexed (either as a whole as a chunk)
+     *
      * @param contentID
      * @return true if it is indexed
      * @throws SolrServerException, NoOpenCoreException
@@ -391,9 +429,11 @@ class Server {
 
     /**
      * Execute query that gets number of indexed file chunks for a file
+     *
      * @param fileID file id of the original file broken into chunks and indexed
-     * @return int representing number of indexed file chunks, 0 if there is no chunks
-     * @throws SolrServerException 
+     * @return int representing number of indexed file chunks, 0 if there is no
+     * chunks
+     * @throws SolrServerException
      */
     public int queryNumFileChunks(long fileID) throws SolrServerException, NoOpenCoreException {
         if (currentCore == null) {
@@ -405,10 +445,11 @@ class Server {
 
     /**
      * Execute solr query
+     *
      * @param sq query
      * @return query response
      * @throws SolrServerException
-     * @throws NoOpenCoreException 
+     * @throws NoOpenCoreException
      */
     public QueryResponse query(SolrQuery sq) throws SolrServerException, NoOpenCoreException {
         if (currentCore == null) {
@@ -419,11 +460,12 @@ class Server {
 
     /**
      * Execute solr query
+     *
      * @param sq the query
      * @param method http method to use
      * @return query response
      * @throws SolrServerException
-     * @throws NoOpenCoreException 
+     * @throws NoOpenCoreException
      */
     public QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws SolrServerException, NoOpenCoreException {
         if (currentCore == null) {
@@ -434,10 +476,11 @@ class Server {
 
     /**
      * Execute Solr terms query
+     *
      * @param sq the query
      * @return terms response
      * @throws SolrServerException
-     * @throws NoOpenCoreException 
+     * @throws NoOpenCoreException
      */
     public TermsResponse queryTerms(SolrQuery sq) throws SolrServerException, NoOpenCoreException {
         if (currentCore == null) {
@@ -448,10 +491,11 @@ class Server {
 
     /**
      * Execute Solr query to get content text
+     *
      * @param content to get the text for
      * @return content text string
      * @throws SolrServerException
-     * @throws NoOpenCoreException 
+     * @throws NoOpenCoreException
      */
     public String getSolrContent(final Content content) throws SolrServerException, NoOpenCoreException {
         if (currentCore == null) {
@@ -459,14 +503,16 @@ class Server {
         }
         return currentCore.getSolrContent(content.getId(), 0);
     }
-    
+
     /**
      * Execute Solr query to get content text from content chunk
+     *
      * @param content to get the text for
-     * @param chunkID chunk number to query (starting at 1), or 0 if there is no chunks for that content
+     * @param chunkID chunk number to query (starting at 1), or 0 if there is no
+     * chunks for that content
      * @return content text string
      * @throws SolrServerException
-     * @throws NoOpenCoreException 
+     * @throws NoOpenCoreException
      */
     public String getSolrContent(final Content content, int chunkID) throws SolrServerException, NoOpenCoreException {
         if (currentCore == null) {
@@ -476,15 +522,29 @@ class Server {
     }
 
     /**
-     * factory method to create ingester
-     * @return ingester
+     * Method to return ingester instance
+     *
+     * @return ingester instance
      */
-    public Ingester getIngester() {
-        return new Ingester();
+    public static Ingester getIngester() {
+        return Ingester.getDefault();
+    }
+
+    /**
+     * Given file parent id and child chunk ID, return the ID string of the
+     * chunk as stored in Solr, e.g. FILEID_CHUNKID
+     *
+     * @param parentID the parent file id (id of the source content)
+     * @param childID the child chunk id
+     * @return formatted string id
+     */
+    public static String getChunkIdString(long parentID, int childID) {
+        return Long.toString(parentID) + Server.ID_CHUNK_SEP + Integer.toString(childID);
     }
 
     /**
      * Open a new core
+     *
      * @param coreName name to refer to the core by in Solr
      * @param dataDir directory to load/store the core data from/to
      * @return new core
@@ -560,13 +620,13 @@ class Server {
             }
         }
 
-        
-         private String getSolrContent(long contentID, int chunkID) {
+        private String getSolrContent(long contentID, int chunkID) {
             final SolrQuery q = new SolrQuery();
             q.setQuery("*:*");
             String filterQuery = Schema.ID.toString() + ":" + contentID;
-            if (chunkID != 0)
+            if (chunkID != 0) {
                 filterQuery = filterQuery + Server.ID_CHUNK_SEP + chunkID;
+            }
             q.addFilterQuery(filterQuery);
             q.setFields(Schema.CONTENT.toString());
             try {
@@ -588,12 +648,30 @@ class Server {
         }
 
         /**
-         * Execute query that gets only number of all Solr documents indexed
-         * without actually returning the documents
-         * @return int representing number of indexed files
-         * @throws SolrServerException 
+         * Execute query that gets only number of all Solr files (not chunks)
+         * indexed without actually returning the files
+         *
+         * @return int representing number of indexed files (entire files, not
+         * chunks)
+         * @throws SolrServerException
          */
         private int queryNumIndexedFiles() throws SolrServerException {
+            SolrQuery q = new SolrQuery(Server.Schema.ID + ":*" + Server.ID_CHUNK_SEP + "*");
+            q.setRows(0);
+            int numChunks = (int) query(q).getResults().getNumFound();
+            return queryNumIndexedDocuments() - numChunks;
+        }
+
+        /**
+         * Execute query that gets only number of all Solr documents indexed
+         * without actually returning the documents. Documents include entire
+         * indexed files as well as chunks, which are treated as documents.
+         *
+         * @return int representing number of indexed documents (entire files
+         * and chunks)
+         * @throws SolrServerException
+         */
+        private int queryNumIndexedDocuments() throws SolrServerException {
             SolrQuery q = new SolrQuery("*:*");
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
@@ -601,9 +679,10 @@ class Server {
 
         /**
          * Return true if the file is indexed (either as a whole as a chunk)
+         *
          * @param contentID
          * @return true if it is indexed
-         * @throws SolrServerException 
+         * @throws SolrServerException
          */
         private boolean queryIsIndexed(long contentID) throws SolrServerException {
             SolrQuery q = new SolrQuery("*:*");
@@ -615,12 +694,15 @@ class Server {
 
         /**
          * Execute query that gets number of indexed file chunks for a file
-         * @param contentID file id of the original file broken into chunks and indexed
-         * @return int representing number of indexed file chunks, 0 if there is no chunks
-         * @throws SolrServerException 
+         *
+         * @param contentID file id of the original file broken into chunks and
+         * indexed
+         * @return int representing number of indexed file chunks, 0 if there is
+         * no chunks
+         * @throws SolrServerException
          */
         private int queryNumFileChunks(long contentID) throws SolrServerException {
-            final SolrQuery q = 
+            final SolrQuery q =
                     new SolrQuery(Server.Schema.ID + ":" + Long.toString(contentID) + Server.ID_CHUNK_SEP + "*");
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();

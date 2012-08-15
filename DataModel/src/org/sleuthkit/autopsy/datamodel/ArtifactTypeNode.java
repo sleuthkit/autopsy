@@ -30,8 +30,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- *
- * @author dfickling
+ * Node encapsulating blackboard artifact type
  */
 public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNode{
     
@@ -98,6 +97,9 @@ public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNod
                 return "recent_docs.png";
             case TSK_DEVICE_ATTACHED:
                 return "usb_devices.png";
+            case TSK_WEB_SEARCH_QUERY:
+                return "searchquery.png";
+
         }
         return "artifact-icon.png";
     }

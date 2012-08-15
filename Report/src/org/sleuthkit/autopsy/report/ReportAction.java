@@ -213,7 +213,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
                     filterpanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
                     filterpanel.setAlignmentY(Component.TOP_ALIGNMENT);
                     filterpanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                    filterpanel.setSize(300, 100);
+                    filterpanel.setSize(300, 200);
                     ButtonGroup previewGroup = new ButtonGroup();
                     for (ReportModule m : Lookup.getDefault().lookupAll(ReportModule.class)) {
                         String name = m.getName();
@@ -260,6 +260,9 @@ public final class ReportAction extends CallableSystemAction implements Presente
 
             popUpWindow.pack();
             popUpWindow.setResizable(false);
+            // Modules need extra room for text to properly show
+            popUpWindow.setSize(popUpWindow.getWidth(),
+                    popUpWindow.getHeight()+50);
 
             // set the location of the popUp Window on the center of the screen
             Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();

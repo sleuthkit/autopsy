@@ -1,0 +1,243 @@
+/*! \page regression_test_page Regression Testing
+
+\section regression_test_overview Overview
+
+Autopsy uses Netbeans and Jelly testing framework for regression testing.
+Testing is driven by invoking UI actions via Jelly framework.
+
+Currently, Autopsy regression testing automates the following:
+
+- creating a case
+- adding an image
+- configuring ingest
+- running ingest
+- generating an HTML report
+
+The tests can be invoked using ant regression-test
+
+There is a python script in Testing/script/regression.py that wraps around "ant regression-test" 
+and runs a test for every disk image it finds.
+
+regression.py also does regression test result validation by comparing the test result with the golden standards
+for the image and comparing the HTML report with the gold standard HTML report.
+
+It is assumed that the steps detailed in the Building Autopsy from Source document have been completed, and that appropriate versions of the JDK, LIBEWF etc, are present on the system. Building Autopsy from Source can be accessed at:
+https://github.com/sleuthkit/autopsy/blob/master/BUILDING.txt
+
+
+\section regression_test_setup Setting up regression testing
+
+1)  Install Cygwin
+
+Download and run the Cygwin setup, available at
+
+			http://www.cygwin.com/setup.exe
+
+From the list of packages to install, select both Database and Python. 
+
+
+2)  Setting up regression.py
+
+If you are planning on running the script regularly ("./regression.py"), the input directory will be
+
+		autopsy/Testing/script/input
+
+However, if you are planning on using the configuration file, you can change the input directory using the <indir> tag.
+
+Ensure the following files are in the input directory, whether in the default location or set by the configuration file
+
+		notablehashes.txt-md5.idx
+		nsrl.txt-md5.idx
+		notablekeywords.xml
+
+Place any images you would like to test in the input directory, and/or use the configuration file to point to image files directly using the <image> tag. The input directory will be scanned for images even when the configuration file points to specific ones. Use the -i or --ignore command to prevent this.
+
+
+
+\section regression_test_running Running regression testing
+
+3)  Running regression.py
+
+From the Cygwin terminal, navigate to
+
+	autopsy/Testing/script
+
+To run regression.py using the default settings, type
+
+	./regression.py
+
+By default this will
+
+- Search for notablehashes.txt-md5.idx, nsrl.txt-md5.idx, and notablekeywords.xml in the ./input directory
+- Search for any image files in the ./input directory and test them
+- Compare the generated database and report to the gold standards
+- Save AutopsyErrors.txt, which is a log of all Warnings and Exceptions thrown by Autopsy, in the output directory
+- Save CSV.txt, which contains all important test detailes for each image delimited by a "|", in the output directory
+- Save AutopsyTestCase.html, which is a user-friendly information, warning, and command-line log of all the tests ran, in the output directory
+- Delete the Solr index in the output directory to save drive space
+
+Other commands can be issued by adding the following arguments to the script
+
+    -r, --rebuild
+Rebuild the gold standards from the test results for each image.
+    -i, --ignore
+Ignores the ./input directory when searching for files. Only use in combinatin with a configuration file.
+    -u, --unallocated
+Ignores unallocated space when ingesting. Faster, but yields less accurate results.
+    -k, --keep
+Keeps each image's Solr index instead of deleting it.
+    -v, --verbose
+Prints all Warnings and Exceptions after each ingest.
+    -e, --exception
+When followed by a string, will print out all exceptions that occured that contain the string. Case sensitive.
+    -l, --list
+Runs from a configuration file, which is given as a path to the file after the argument.
+
+
+
+\section regression_test_config Running regression tests with a config file
+
+4) Running from a configuration file
+
+An XML configuration file can be pointed to by using the -l or --list command as shown below
+
+	./regression.py -l X:\path\to\file.xml
+
+The configuration file has three possible tags, all of which are optional.
+
+<indir value="X:\path\to\input\directory">
+Changes the default input directory to the one provided.
+
+<global_csv value="X:\path\to\csv\file.txt">
+Points to an optional CSV file to be added to, anywhere in the user's filesystem.
+
+<image value="X:\path\to\image.img">
+Points to a specific image file to be tested. This tag can be used any number of times in the configuration file.
+
+
+Note: When running with a configuration file, all the default features of regression.py will still be enabled.
+
+Please see the example configuration file
+
+	autopsy/Testing/script/config.xml
+
+For more detail
+
+
+
+/section optional_standards_update OPTIONAL: Update the standards databases	
+
+From the Cygwin terminal, navigate to 
+
+	autopsy/Testing/script
+
+run:
+
+	./regression.py -r
+
+
+The script will automatically delete pre-existing standards.db files and generate the updated ones in the proper locations (/script/gold/{name of image}).
+
+Running in -r will also generate a golden report file built from the image. Normal runs of regression.py compare their generated report against the golden one, and report any differences in the file, ignoring the timestamp. 
+
+
+
+\section developers_note_regression_test Developers Notes: Jemmy and RegressionTest.java
+
+
+For additional details regarding setting up and using Jemmy, please see 
+
+	http://platform.netbeans.org/tutorials/nbm-test.html
+	http://wiki.netbeans.org/Writing_JellyTools_Tests_Guide
+	
+
+
+The Jemmy UI framework includes elements such as buttons, frames, dialog boxes and wizards. In order to manipulate these elements programatically, the associated ContainerOperators must be used. RegressionTest.java makes use of the following major operators:
+	
+	JButtonOperator
+	JDialogOperator
+	nbDialogOperator
+	JTableOperator
+	JFileChooserOperator
+	WizardOperator
+
+
+WizardOperators are for elements that implement the Wizard interface. Wizards specifically have back and next buttons. A WizardOperator can be created by 
+
+	WizardOperator wo = new WizardOperator(String title);
+
+Where title is the display title of the wizard you wish to manipulate.
+
+In order to use any Jemmy UI element, it must first be found. There are a number of ways to do this, but the most common involves searching by the display name of the element in question. Finding elements is a function of that elements ContainerOperator.
+For example, to find a JDialog whose display name is the string "Hash Database Configuration", the following code might be used:
+
+	JDialog hashMainDialog =  JDialogOperator.waitJDialog("Hash Database Configuration", false, false);
+
+The two booleans are for searching the exact string including subsrtings, and for searching case sensitively. 
+
+Note that the method used is called '.waitJDialog', and not '.findJDialog'. This is an important distinction regarding thoroughness of the find, but the functionality of the same. Refer to the link on Jemmy above for greater detail.
+
+Once you an element has been located, it can be operated upon by creating a new ContainerOperator, with the element as the only argument:
+
+	JDialogOperator hashMainDialogOperator = new JDialogOperator(hashMainDialog);
+
+
+Selecting the main window:
+	
+In order to select the main window, in this case, the general Autospy frame, the MainWindowOperator must be used. A MainWindowOperator takes no arguments and is created as follows:
+
+	MainWindowOperator mwo = MainWindowOperator.getDefault();
+
+For further reference regarding ContainerOperators, please see
+
+	http://www.jarvana.com/jarvana/view/org/netbeans/jemmy/2.2.7.5/jemmy-2.2.7.5-javadoc.jar!/org/netbeans/jemmy/operators/ContainerOperator.html
+
+
+When an element has been selected, the individual components may be manipluated with ContainerOperators. 
+To select a button, use the code below, where cont is one of the ContainerOperators from above, text is the text displayed on the button, and index is the button's order if there are multiple with the same name (i.e. if there are three buttons labeled “preview”, the first's index is 0, then 1, then 2).
+
+JbuttonOperator jbo = new JbuttonOperator(ContainerOperator cont, String text, int index);
+
+There are many others elements and operators, such as JcheckBoxOperator, JfileChooserOperator, JtextFieldOperator, etc. See http://www.jarvana.com/jarvana/view/org/netbeans/jemmy/2.2.7.5/jemmy-2.2.7.5-javadoc.jar!/org/netbeans/jemmy/operators/JComponentOperator.html for more. Please see their individual JavaDocs for action commands that push buttons, write in forms, etc.
+
+If an element cannot be grabbed using a ContainerOperator, a temporary workaround is to invoke the element action:
+
+	new Action(String menuPath, String popupPath).perform();
+
+where menuPath is the path through the File menu to said action and popup is the path through the popup menu (which is null since it is unsupported).
+
+For more on Actions, see 
+
+	http://bits.netbeans.org/dev/javadoc/org-netbeans-modules-jellytools-platform/org/netbeans/jellytools/actions/Action.html
+
+
+
+
+
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

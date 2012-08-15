@@ -36,16 +36,12 @@ class HashDbMgmtAction extends CallableSystemAction {
 
     @Override
     public void performAction() {
-        Log.noteAction(this.getClass());
-
-        // initialize panel with loaded settings
-        final HashDbMgmtPanel panel = HashDbMgmtPanel.getDefault();
-        final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
+        final HashDbManagementPanel panel = HashDbManagementPanel.getDefault();
+        final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog();
         dialog.addApplyButtonListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                panel.save();
                 dialog.close();
             }
         });

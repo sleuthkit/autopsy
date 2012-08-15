@@ -23,31 +23,32 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.logging.Logger;
 import org.apache.solr.common.util.ContentStream;
-import org.sleuthkit.autopsy.datamodel.AbstractFileStringStream.Encoding;
 import org.sleuthkit.datamodel.AbstractContent;
-import org.sleuthkit.datamodel.FsContent;
 
 /**
  * Stream of bytes representing string with specified encoding
  * to feed into Solr as ContentStream
  */
 public class ByteContentStream implements ContentStream {   
+    
+    
     //input
     private byte[] content; //extracted subcontent
     private long contentSize;
     private AbstractContent aContent; //origin
-    private Encoding encoding;
+    private Charset charset; //output byte stream charset of encoded strings
     
     private InputStream stream;
 
     private static Logger logger = Logger.getLogger(ByteContentStream.class.getName());
 
-    public ByteContentStream(byte [] content, long contentSize, AbstractContent aContent, Encoding encoding) {
+    public ByteContentStream(byte [] content, long contentSize, AbstractContent aContent, Charset charset) {
         this.content = content;
         this.aContent = aContent;
-        this.encoding = encoding;
+        this.charset = charset;
         stream = new ByteArrayInputStream(content, 0, (int)contentSize);
     }
 
@@ -62,7 +63,7 @@ public class ByteContentStream implements ContentStream {
 
     @Override
     public String getContentType() {
-        return "text/plain;charset=" + encoding.toString();
+        return "text/plain;charset=" + charset.name();
     }
 
     @Override

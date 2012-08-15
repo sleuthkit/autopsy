@@ -43,7 +43,7 @@ final class AddImageVisualPanel4 extends JPanel {
      */
     @Override
     public String getName() {
-        return "Done";
+        return "Finish";
     }
 
     /** This method is called from within the constructor to
@@ -57,6 +57,7 @@ final class AddImageVisualPanel4 extends JPanel {
         addImgButton = new javax.swing.JButton();
         crDbLabel = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(addImgButton, org.openide.util.NbBundle.getMessage(AddImageVisualPanel4.class, "AddImageVisualPanel4.addImgButton.text")); // NOI18N
         addImgButton.addActionListener(new java.awt.event.ActionListener() {
@@ -65,10 +66,12 @@ final class AddImageVisualPanel4 extends JPanel {
             }
         });
 
-        crDbLabel.setFont(new java.awt.Font("Tahoma", 1, 14));
+        crDbLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(crDbLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel4.class, "AddImageVisualPanel4.crDbLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AddImageVisualPanel4.class, "AddImageVisualPanel4.jLabel1.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageVisualPanel4.class, "AddImageVisualPanel4.jLabel2.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -79,7 +82,8 @@ final class AddImageVisualPanel4 extends JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(crDbLabel)
                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 549, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(addImgButton))
+                    .addComponent(addImgButton)
+                    .addComponent(jLabel2))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -89,9 +93,11 @@ final class AddImageVisualPanel4 extends JPanel {
                 .addComponent(crDbLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel2)
                 .addGap(18, 18, 18)
                 .addComponent(addImgButton)
-                .addContainerGap(31, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -110,5 +116,6 @@ final class AddImageVisualPanel4 extends JPanel {
     private javax.swing.JButton addImgButton;
     private javax.swing.JLabel crDbLabel;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     // End of variables declaration//GEN-END:variables
 }
