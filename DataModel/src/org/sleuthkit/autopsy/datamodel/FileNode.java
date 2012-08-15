@@ -40,7 +40,7 @@ public class FileNode extends AbstractFsContentNode<File> {
         super(file, directoryBrowseMode);
         
         // set name, display name, and icon
-        if (File.dirFlagToValue(file.getDir_flags()).equals(TskData.TSK_FS_NAME_FLAG_ENUM.TSK_FS_NAME_FLAG_UNALLOC.toString())) {
+        if (file.getDir_flags() == (TskData.TSK_FS_NAME_FLAG_ENUM.TSK_FS_NAME_FLAG_UNALLOC.getDirFlag())) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
         } else {
             this.setIconBaseWithExtension(getIconForFileType(file));
