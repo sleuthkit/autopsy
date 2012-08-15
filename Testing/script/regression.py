@@ -746,15 +746,15 @@ def generate_csv(csv_path):
         total_ingest_time = case.total_ingest_time
         service_times = case.service_times
         exceptions_count = str(len(get_exceptions()))
-        mem_exceptions_count = str(len(search_common_log("OutOfMemoryException")) +
-                                   len(search_common_log("OutOfMemoryError")))
+        mem_exceptions_count = str(len(search_logs("OutOfMemoryException")) +
+                                   len(search_logs("OutOfMemoryError")))
         tsk_objects_count = str(database.autopsy_objects)
         artifacts_count = str(database.get_artifacts_count())
         attributes_count = str(database.autopsy_attributes)
-        gold_db_name = "standard.db"
+        gold_db_name = make_local_path("gold", case.image_name, "standard.db")
         artifact_comparison = database.get_artifact_comparison()
         attribute_comparison = database.get_attribute_comparison()
-        gold_report_name = "standard.html"
+        gold_report_name = make_local_path("gold", case.image_name, "standard.html")
         report_comparison = str(case.report_passed)
         ant = case.ant_to_string()
         
@@ -788,17 +788,20 @@ def csv_header(csv_path):
     csv.write(output)
     csv.close()
         
-# Returns a list of all the exceptions listed in the common log
+# Returns a list of all the exceptions listed in all the case logs
 def get_exceptions():
     exceptions = []
-    common_log = open(case.common_log, "r")
-    lines = common_log.readlines()
-    ex = re.compile("\SException")
-    er = re.compile("\SError")
-    for line in lines:
-        if ex.search(line) or er.search(line):
-            exceptions.append(line)
-    common_log.close()
+    logs_path = make_local_path(case.output_dir, case.image_name, "logs")
+    results = []
+    for file in os.listdir(logs_path):
+        log = open(make_path(logs_path, file), "r")
+        lines = log.readlines()
+        ex = re.compile("\SException")
+        er = re.compile("\SError")
+        for line in lines:
+            if ex.search(line) or er.search(line):
+                exceptions.append(line)
+        log.close()
     return exceptions
     
 # Returns a list of all the warnings listed in the common log
@@ -954,9 +957,9 @@ def generate_html():
         info += "<tr><td>Exceptions Count:</td>"
         info += "<td>" + str(len(get_exceptions())) + "</td></tr>"
         info += "<tr><td>OutOfMemoryExceptions:</td>"
-        info += "<td>" + str(len(search_common_log("OutOfMemoryException"))) + "</td></tr>"
+        info += "<td>" + str(len(search_logs("OutOfMemoryException"))) + "</td></tr>"
         info += "<tr><td>OutOfMemoryErrors:</td>"
-        info += "<td>" + str(len(search_common_log("OutOfMemoryError"))) + "</td></tr>"
+        info += "<td>" + str(len(search_logs("OutOfMemoryError"))) + "</td></tr>"
         info += "<tr><td>TSK Objects Count:</td>"
         info += "<td>" + str(database.autopsy_objects) + "</td></tr>"
         info += "<tr><td>Artifacts Count:</td>"
