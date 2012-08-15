@@ -58,6 +58,7 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
     // Whether or not to do hash lookups (only set to true if there are dbs set)
     private boolean nsrlIsSet;
     private boolean knownBadIsSet;
+    private boolean calcHashesIsSet;
     private HashDb nsrlSet;
     private int nsrlPointer;
     static long calctime = 0;
@@ -96,6 +97,7 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
             skCase.clearLookupDatabases();
             nsrlIsSet = false;
             knownBadIsSet = false;
+            calcHashesIsSet = hdbxml.getCalculate();
             
             HashDb nsrl = hdbxml.getNSRLSet();
             if(nsrl != null && IndexStatus.isIngestible(nsrl.status())) {
@@ -341,6 +343,22 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
                     managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestService.this, "Read Error: " + name,
                             "Error encountered while calculating the hash value for " + name + "."));
                     ret = ProcessResult.ERROR;
+                }
+            } else if(processFile && calcHashesIsSet) {
+                String name = fsContent.getName();
+                try {
+                    String md5Hash = fsContent.getMd5Hash();
+                    if (md5Hash == null || md5Hash.isEmpty()) {
+                        long calcstart = System.currentTimeMillis();
+                        Hash.calculateMd5(fsContent);
+                        calctime += (System.currentTimeMillis()-calcstart);
+                    }
+                    ret = ProcessResult.OK;
+                }
+                catch (IOException ex) {
+                    logger.log(Level.WARNING, "Error reading file " + name, ex);
+                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestService.this, "Read Error: " + name,
+                            "Error encountered while calculating the hash value for " + name + " without databases."));
                 }
             }
             return ret;

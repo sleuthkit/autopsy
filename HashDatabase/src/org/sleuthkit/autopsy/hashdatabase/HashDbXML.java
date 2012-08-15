@@ -72,6 +72,7 @@ public class HashDbXML {
     private List<HashDb> knownBadSets;
     private HashDb nsrlSet;
     private String xmlFile;
+    private boolean calculate;
     
     private HashDbXML(String xmlFile) {
         knownBadSets = new ArrayList<HashDb>();
@@ -175,6 +176,22 @@ public class HashDbXML {
             //create new if failed to load
             save();
         }
+    }
+    
+    /**
+     * Sets the local variable calculate to the given boolean.
+     * @param set the state to make calculate
+     */
+    public void setCalculate(boolean set) {
+        this.calculate = set;
+    }
+    
+    /**
+     * Returns the value of the local boolean calculate.
+     * @return true if calculate is true, false otherwise
+     */
+    public boolean getCalculate() {
+        return this.calculate;
     }
     
     /**

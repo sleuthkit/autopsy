@@ -24,6 +24,8 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
@@ -54,6 +56,29 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     }
     
     private void customizeComponents() {
+        final HashDbXML xmlHandle = HashDbXML.getCurrent();
+        if(xmlHandle.getNSRLSet()==null && xmlHandle.getKnownBadSets().isEmpty()) {
+            calcHashesButton.setEnabled(true);
+            calcHashesButton.setSelected(true);
+            xmlHandle.setCalculate(true);
+        } else {
+            calcHashesButton.setEnabled(false);
+            calcHashesButton.setSelected(false);
+            xmlHandle.setCalculate(false);
+        }
+        calcHashesButton.addActionListener( new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(calcHashesButton.isSelected()) {
+                    xmlHandle.setCalculate(true);
+                } else {
+                    xmlHandle.setCalculate(false);
+                }
+            }
+            
+        });
+        
         notableHashTable.setModel(knownBadTableModel);
         jTable1.setModel(nsrlTableModel);
         
@@ -96,6 +121,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         jLabel2 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
+        calcHashesButton = new javax.swing.JCheckBox();
 
         jScrollPane1.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
@@ -115,6 +141,8 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         jTable1.setShowVerticalLines(false);
         jScrollPane2.setViewportView(jTable1);
 
+        calcHashesButton.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.calcHashesButton.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -125,7 +153,8 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel2)
-                    .addComponent(jLabel1))
+                    .addComponent(jLabel1)
+                    .addComponent(calcHashesButton))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -137,11 +166,15 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 98, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 25, Short.MAX_VALUE)
+                .addComponent(calcHashesButton)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox calcHashesButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
