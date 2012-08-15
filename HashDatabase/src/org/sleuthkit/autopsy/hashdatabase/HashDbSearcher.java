@@ -80,9 +80,19 @@ public class HashDbSearcher {
      * if there are no Fs files in tsk_files that have and empty md5.
      * @return true if the search feature is ready.
      */
-    static boolean isReady() {
+    static boolean allFilesMd5Hashed() {
         final Case currentCase = Case.getCurrentCase();
         final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.allFilesMd5Hashed();
+    }
+    
+    /**
+     * Counts the number of FsContent in the database that have an MD5
+     * @return the number of files with an MD5 
+     */
+    static int countFilesMd5Hashed() {
+        final Case currentCase = Case.getCurrentCase();
+        final SleuthkitCase skCase = currentCase.getSleuthkitCase();
+        return skCase.countFilesMd5Hashed();
     }
 }

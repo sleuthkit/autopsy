@@ -186,7 +186,7 @@ public class RegressionTest extends JellyTestCase{
     
     public void testConfigureSearch() {
         logger.info("Search Configure");
-        JDialog jd = JDialogOperator.waitJDialog("Keyword List Configuration", false, false);
+        JDialog jd = JDialogOperator.waitJDialog("Advanced Keyword Search Configuration", false, false);
         JDialogOperator jdo = new JDialogOperator(jd);
         String words = System.getProperty("keyword_path");
         JButtonOperator jbo0 = new JButtonOperator(jdo, "Import List", 0);
