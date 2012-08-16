@@ -710,26 +710,27 @@ public class IngestManager {
 
             LOW, MEDIUM, HIGH
         };
-        static final List<Pattern> lowPriorityPaths = new ArrayList<Pattern>();
-        static final List<Pattern> mediumPriorityPaths = new ArrayList<Pattern>();
-        static final List<Pattern> highPriorityPaths = new ArrayList<Pattern>();
+        static final List<Pattern> LOW_PRI_PATHS = new ArrayList<Pattern>();
+        static final List<Pattern> MEDIUM_PRI_PATHS = new ArrayList<Pattern>();
+        static final List<Pattern> HIGH_PRI_PATHS = new ArrayList<Pattern>();
 
         static {
-            lowPriorityPaths.add(Pattern.compile("^\\/Windows", Pattern.CASE_INSENSITIVE));
+            LOW_PRI_PATHS.add(Pattern.compile("^\\/Windows", Pattern.CASE_INSENSITIVE));
 
-            mediumPriorityPaths.add(Pattern.compile("^\\/Program Files", Pattern.CASE_INSENSITIVE));
-            mediumPriorityPaths.add(Pattern.compile("^pagefile", Pattern.CASE_INSENSITIVE));
-            mediumPriorityPaths.add(Pattern.compile("^hiberfil", Pattern.CASE_INSENSITIVE));
+            MEDIUM_PRI_PATHS.add(Pattern.compile("^\\/Program Files", Pattern.CASE_INSENSITIVE));
+            MEDIUM_PRI_PATHS.add(Pattern.compile("^pagefile", Pattern.CASE_INSENSITIVE));
+            MEDIUM_PRI_PATHS.add(Pattern.compile("^hiberfil", Pattern.CASE_INSENSITIVE));
 
-            highPriorityPaths.add(Pattern.compile("^\\/Users", Pattern.CASE_INSENSITIVE));
-            highPriorityPaths.add(Pattern.compile("^\\/Documents and Settings", Pattern.CASE_INSENSITIVE));
-            highPriorityPaths.add(Pattern.compile("^\\/home", Pattern.CASE_INSENSITIVE));
-            highPriorityPaths.add(Pattern.compile("^\\/ProgramData", Pattern.CASE_INSENSITIVE));
-            highPriorityPaths.add(Pattern.compile("^\\/Windows\\/Temp", Pattern.CASE_INSENSITIVE));
+            HIGH_PRI_PATHS.add(Pattern.compile("^\\/Users", Pattern.CASE_INSENSITIVE));
+            HIGH_PRI_PATHS.add(Pattern.compile("^\\/Documents and Settings", Pattern.CASE_INSENSITIVE));
+            HIGH_PRI_PATHS.add(Pattern.compile("^\\/home", Pattern.CASE_INSENSITIVE));
+            HIGH_PRI_PATHS.add(Pattern.compile("^\\/ProgramData", Pattern.CASE_INSENSITIVE));
+            HIGH_PRI_PATHS.add(Pattern.compile("^\\/Windows\\/Temp", Pattern.CASE_INSENSITIVE));
         }
 
         static Priority getPriority(final AbstractFile abstractFile) {
             if (!abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
+                //non-fs files, such as representing unalloc space
                 return Priority.MEDIUM;
             }
             final String path = ((FsContent) abstractFile).getParentPath();
@@ -738,21 +739,21 @@ public class IngestManager {
                 return Priority.MEDIUM;
             }
 
-            for (Pattern p : highPriorityPaths) {
+            for (Pattern p : HIGH_PRI_PATHS) {
                 Matcher m = p.matcher(path);
                 if (m.find()) {
                     return Priority.HIGH;
                 }
             }
 
-            for (Pattern p : mediumPriorityPaths) {
+            for (Pattern p : MEDIUM_PRI_PATHS) {
                 Matcher m = p.matcher(path);
                 if (m.find()) {
                     return Priority.MEDIUM;
                 }
             }
 
-            for (Pattern p : lowPriorityPaths) {
+            for (Pattern p : LOW_PRI_PATHS) {
                 Matcher m = p.matcher(path);
                 if (m.find()) {
                     return Priority.LOW;
