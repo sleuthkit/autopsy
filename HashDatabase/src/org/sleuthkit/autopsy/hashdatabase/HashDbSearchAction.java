@@ -18,9 +18,6 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import javax.swing.JOptionPane;
 import org.openide.nodes.Node;
 import org.openide.util.HelpCtx;
@@ -108,22 +105,8 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
     }
     
     private void doSearch() {
-        // Get the map of hashes to FsContent and send it to the manager
-        List<FsContent> files = HashDbSearcher.findFilesByMd5(fsContent.getMd5Hash());
-        for(int i=0; i<files.size(); i++) {
-            // If they are the same file, remove it from the list
-            if(files.get(i).equals(fsContent)) {
-                files.remove(i);
-            }
-        }
-        if(!files.isEmpty()) {
-            Map<String, List<FsContent>> map = new LinkedHashMap<String, List<FsContent>>();
-            map.put(fsContent.getMd5Hash(), files);
-            HashDbSearchManager man = new HashDbSearchManager(map);
-            man.execute();
-        } else {
-            JOptionPane.showMessageDialog(null, "No other files with the same MD5 hash were found.");
-        }
+        HashDbSearchThread hashThread = new HashDbSearchThread(fsContent);
+        hashThread.execute();
     }
 
     @Override
