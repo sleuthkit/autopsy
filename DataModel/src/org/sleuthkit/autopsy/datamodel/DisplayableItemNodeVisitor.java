@@ -55,6 +55,7 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(ResultsNode rn);
     T visit(ImagesNode in);
     T visit(LayoutFileNode lcn);
+    T visit(LayoutDirectoryNode ldn);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -183,6 +184,11 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(LayoutFileNode lcn) {
             return defaultVisit(lcn);
+        }
+        
+        @Override
+        public T visit(LayoutDirectoryNode ldn) {
+            return defaultVisit(ldn);
         }
     }
 }
