@@ -23,16 +23,14 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LayoutDirectory;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
-import org.sleuthkit.datamodel.VolumeSystem;
 import org.sleuthkit.datamodel.LayoutFile;
 
 /**
@@ -91,6 +89,11 @@ abstract class AbstractContentChildren extends Keys<Object> {
         @Override
         public AbstractContentNode visit(LayoutFile lf) {
             return new LayoutFileNode(lf);
+        }
+        
+        @Override
+        public AbstractContentNode visit(LayoutDirectory ld) {
+            return new LayoutDirectoryNode(ld);
         }
 
         @Override
