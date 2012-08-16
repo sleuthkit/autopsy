@@ -24,15 +24,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
-import org.sleuthkit.datamodel.FsContent;
 
 /**
  * Searches for files by md5 hash, based off the hash given in this panel.
@@ -328,10 +325,9 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         for(int i=0; i<numRows; i++) {
             hashes.add((String) hashTable.getValueAt(i, 0));
         }
-        // Get the map of hashes to FsContent and send it to the manager
-        Map<String, List<FsContent>> map = HashDbSearcher.findFilesBymd5(hashes);
-        HashDbSearchManager man = new HashDbSearchManager(map);
-        man.execute();
+        // Start a new thread and find the hashes
+        HashDbSearchThread hashThread = new HashDbSearchThread(hashes);
+        hashThread.execute();
         return true;
     }
     
