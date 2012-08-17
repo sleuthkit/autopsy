@@ -40,8 +40,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.*;
 
 /**
- *
- * @author Alex
+ * Generates an XLS report for all the Blackboard Artifacts found in the current case.
  */
 public class ReportXLS implements ReportModule {
 
@@ -80,6 +79,7 @@ public class ReportXLS implements ReportModule {
         int countHash = 0;
         int countDevice = 0;
         int countEmail = 0;
+        int countWebSearch = 0;
         for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
                 countGen++;
@@ -119,6 +119,9 @@ public class ReportXLS implements ReportModule {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
                 countEmail++;
             }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+                countWebSearch++;
+            }
         }
 
         try {
@@ -151,6 +154,7 @@ public class ReportXLS implements ReportModule {
             Sheet sheetDownload = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getDisplayName());
             Sheet sheetHistory = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getDisplayName());
             Sheet sheetEmail = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getDisplayName());
+            Sheet sheetWebSearch = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getDisplayName());
 
             //Bold/underline cell style for the top header rows
             CellStyle style = wbtemp.createCellStyle();
@@ -267,6 +271,13 @@ public class ReportXLS implements ReportModule {
             sheetEmail.getRow(0).createCell(6).setCellValue("BCC");
             sheetEmail.getRow(0).createCell(7).setCellValue("Path");
 
+            sheetWebSearch.setDefaultColumnStyle(1, defaultstyle);
+            sheetWebSearch.createRow(0).setRowStyle(style);
+            sheetWebSearch.getRow(0).createCell(0).setCellValue("Program");
+            sheetWebSearch.getRow(0).createCell(1).setCellValue("Domain");
+            sheetWebSearch.getRow(0).createCell(2).setCellValue("Text");
+            sheetWebSearch.getRow(0).createCell(3).setCellValue("Last Accesed");
+
             for (int i = 0; i < wbtemp.getNumberOfSheets(); i++) {
                 Sheet tempsheet = wbtemp.getSheetAt(i);
                 tempsheet.setAutobreaks(true);
@@ -291,6 +302,7 @@ public class ReportXLS implements ReportModule {
             int countedHash = 0;
             int countedDevice = 0;
             int countedEmail = 0;
+            int countedWebSearch = 0;
 
             //start populating the sheets in the workbook
             for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
@@ -404,7 +416,7 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                 }
                 
-                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
                     countedEmail++;
                     Row temp = sheetEmail.createRow(countedEmail);
                     temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID()));
@@ -415,6 +427,15 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(5).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()));
                     temp.createCell(6).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()));
                     temp.createCell(7).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                }
+                
+                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+                    countedWebSearch++;
+                    Row temp = sheetWebSearch.createRow(countedWebSearch);
+                    temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()));
+                    temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
+                    temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()));
                 }
             }
 

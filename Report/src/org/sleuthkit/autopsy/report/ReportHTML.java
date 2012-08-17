@@ -42,8 +42,7 @@ import java.io.File;
 import org.sleuthkit.autopsy.ingest.IngestServiceAbstract;
 
 /**
- *
- * @author Alex
+ * Generates an HTML report for all the Blackboard Artifacts found in the current case.
  */
 public class ReportHTML implements ReportModule {
     //Declare our publically accessible formatted Report, this will change everytime they run a Report
@@ -92,6 +91,7 @@ public class ReportHTML implements ReportModule {
         int countHash = 0;
         int countDevice = 0;
         int countEmail = 0;
+        int countWebSearch = 0;
         for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
                 countGen++;
@@ -130,6 +130,9 @@ public class ReportHTML implements ReportModule {
             }
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
                 countEmail++;
+            }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+                countWebSearch++;
             }
         }
 
@@ -238,6 +241,9 @@ public class ReportHTML implements ReportModule {
         if (countEmail > 0) {
             formatted_Report.append("<tr><td><a href=\"#email\">Email Messages</a></td><td>").append(countEmail).append("</td></tr>");
         }
+        if (countWebSearch > 0) {
+            formatted_Report.append("<tr><td><a href=\"#search\">Web Search Queries</a></td><td>").append(countWebSearch).append("</td></tr>");
+        }
         formatted_Report.append("</tbody></table><br />");
         String tableHeader = "<table><thead><tr>";
         StringBuilder nodeGen = new StringBuilder("<h3>General Information (").append(countGen).append(")</h3>").append(tableHeader).append("<th>Attribute</th><th>Value</th></tr></thead><tbody>");
@@ -252,6 +258,7 @@ public class ReportHTML implements ReportModule {
         StringBuilder nodeHash = new StringBuilder("<h3><a name=\"hash\">Hashset Hit (").append(countHash).append(")</h3>");
         StringBuilder nodeDevice = new StringBuilder("<h3><a name=\"device\">Attached Devices (").append(countDevice).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Serial #</th><th>Time</th></tr></thead><tbody>");
         StringBuilder nodeEmail = new StringBuilder("<h3><a name=\"email\">Email Messages (").append(countEmail).append(")</h3>");
+        StringBuilder nodeWebSearch = new StringBuilder("<h3><a name=\"search\">Web Search Queries (").append(countWebSearch).append(")</h3>").append(tableHeader).append("<th>Program Name</th><th>Domain</th><th>Text</th><th>Last Modified</th></tr></thead><tbody>");
 
         int alt = 0;
         String altRow = "";
@@ -392,6 +399,14 @@ public class ReportHTML implements ReportModule {
             }
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
             }
+            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+                artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())).append("</td>");
+                artifact.append("</tr>");
+                nodeWebSearch.append(artifact);
+            }
         }
         //Add them back in order
         //formatted_Report.append(nodeGen);
@@ -445,6 +460,11 @@ public class ReportHTML implements ReportModule {
             formatted_Report.append(nodeEmail);
             Report email = new Report();
             formatted_Report.append(email.getGroupedEmailHit());
+        }
+       
+        if (countWebSearch > 0) {
+            formatted_Report.append(nodeWebSearch);
+            formatted_Report.append("</tbody></table>");
         }
         //end of master loop
         formatted_Report.append("</div></div></body></html>");
