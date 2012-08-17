@@ -10,7 +10,9 @@ import time
 import datetime
 import xml
 import re
+import socket
 from xml.dom.minidom import parse, parseString
+from sys import platform as _platform
 
 #
 # Please read me...
@@ -322,21 +324,21 @@ def run_config_test(config_file):
     try:
         parsed = parse(config_file)
         if parsed.getElementsByTagName("indir"):
-            case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode()
+            case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf-8")
         if parsed.getElementsByTagName("global_csv"):
-            case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode()
+            case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf-8")
         
         # Generate the top navbar of the HTML for easy access to all images
         values = []
         for element in parsed.getElementsByTagName("image"):
-            value = element.getAttribute("value").encode()
+            value = element.getAttribute("value").encode().decode("utf-8")
             if file_exists(value):
                 values.append(value)
         html_add_images(values)
         
         # Run the test for each file in the configuration
         for element in parsed.getElementsByTagName("image"):
-            value = element.getAttribute("value").encode()
+            value = element.getAttribute("value").encode().decode("utf-8")
             if file_exists(value):
                 run_test(value)
             else:
@@ -438,7 +440,11 @@ def run_ant():
     printout("Ingesting Image:\n" + case.image_file + "\n")
     printout("CMD: " + " ".join(case.ant))
     printout("Starting test...\n")
-    subprocess.call(case.ant)
+    if SYS is OS.CYGWIN:
+        subprocess.call(case.ant)
+    elif SYS is OS.WIN:
+        theproc = subprocess.Popen(case.ant, shell = True)
+        theproc.communicate()
     
 # Returns the type of image file, based off extension
 class IMGTYPE:
@@ -722,7 +728,7 @@ def fill_case_data():
         e.print_error()
     except Exception as e:
         printerror("Error: Unknown fatal error when finding service times.")
-        printerror(srt(e) + "\n")
+        printerror(str(e) + "\n")
     
 # Generate the CSV log file
 def generate_csv(csv_path):
@@ -738,6 +744,7 @@ def generate_csv(csv_path):
         image_path = case.image_file
         name = case.image_name
         path = case.output_dir
+        hostname = socket.gethostname()
         autopsy_version = case.autopsy_version
         heap_space = case.heap_space
         start_date = case.start_date
@@ -759,7 +766,7 @@ def generate_csv(csv_path):
         ant = case.ant_to_string()
         
         # Make a list with all the strings in it
-        seq = (image_path, name, path, autopsy_version, heap_space, start_date, end_date, total_test_time,
+        seq = (image_path, name, path, hostname, autopsy_version, heap_space, start_date, end_date, total_test_time,
                total_ingest_time, service_times, exceptions_count, mem_exceptions_count, tsk_objects_count, artifacts_count,
                attributes_count, gold_db_name, artifact_comparison, attribute_comparison,
                gold_report_name, report_comparison, ant)
@@ -777,7 +784,7 @@ def generate_csv(csv_path):
 # Generates the CSV header (column names)
 def csv_header(csv_path):
     csv = open(csv_path, "w")
-    seq = ("Image Path", "Image Name", "Output Case Directory", "Autopsy Version",
+    seq = ("Image Path", "Image Name", "Output Case Directory", "Host Name", "Autopsy Version",
            "Heap Space Setting", "Test Start Date", "Test End Date", "Total Test Time",
            "Total Ingest Time", "Service Times", "Exceptions Count", "OutOfMemoryExceptions",
            "TSK Objects Count", "Artifacts Count",
@@ -895,12 +902,12 @@ def print_report(errors, name, okay):
 
 # Used instead of the print command when printing out an error
 def printerror(string):
-    print string
+    print(string)
     case.printerror.append(string)
 
 # Used instead of the print command when printing out anything besides errors
 def printout(string):
-    print string
+    print(string)
     case.printout.append(string)
 
 # Generates the HTML log file
@@ -912,7 +919,8 @@ def generate_html():
     try:
         html = open(case.html_log, "a")
         # The image title
-        title = "<h1><a name='" + case.image_name + "'>" + case.image_name + "</a></h1>\
+        title = "<h1><a name='" + case.image_name + "'>" + case.image_name + " \
+                    <span><i>tested on</i> " + socket.gethostname() + "</span></a></h1>\
                  <h2 align='center'>\
                  <a href='#" + case.image_name + "-errors'>Errors and Warnings</a> |\
                  <a href='#" + case.image_name + "-info'>Information</a> |\
@@ -1003,6 +1011,7 @@ def write_html_head():
             <style type='text/css'>\
             body { font-family: 'Courier New'; font-size: 12px; }\
             h1 { background: #444; margin: 0px auto; padding: 0px; color: #FFF; border: 1px solid #000; font-family: Tahoma; text-align: center; }\
+            h1 span { font-size: 12px; font-weight: 100; }\
             h2 { font-family: Tahoma; padding: 0px; margin: 0px; }\
             hr { width: 100%; height: 1px; border: none; margin-top: 10px; margin-bottom: 10px; }\
             #errors { background: #FFCFCF; border: 1px solid #FF0000; color: #FF0000; padding: 10px; margin: 20px; }\
@@ -1077,9 +1086,12 @@ def path_fix(path):
 
 # Gets the true current working directory instead of Cygwin's
 def wgetcwd():
-    proc = subprocess.Popen(("cygpath", "-m", os.getcwd()), stdout=subprocess.PIPE)
-    out,err = proc.communicate()
-    return out.rstrip()
+    if SYS is OS.CYGWIN:
+        proc = subprocess.Popen(("cygpath", "-m", os.getcwd()), stdout=subprocess.PIPE)
+        out,err = proc.communicate()
+        return out.rstrip()
+    elif SYS is OS.WIN:
+        return os.getcwd()
 
 # Copy the log files from Autopsy's default directory
 def copy_logs():
@@ -1293,5 +1305,20 @@ def main():
                
         write_html_foot()
 
+class OS:
+  LINUX, MAC, WIN, CYGWIN = range(4)      
 if __name__ == "__main__":
-    main()
+    global SYS
+    if _platform == "linux" or _platform == "linux2":
+        SYS = OS.LINUX
+    elif _platform == "darwin":
+        SYS = OS.MAC
+    elif _platform == "win32":
+        SYS = OS.WIN
+    elif _platform == "cygwin":
+        SYS = OS.CYGWIN
+        
+    if SYS is OS.WIN or SYS is OS.CYGWIN:
+        main()
+    else:
+        print("We only support Windows and Cygwin at this time.")
