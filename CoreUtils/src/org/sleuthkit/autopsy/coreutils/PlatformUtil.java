@@ -48,7 +48,7 @@ public class PlatformUtil {
         File jrePath = new File(rootPath.getAbsolutePath() + File.separator + "jre6");
  
         if (jrePath != null && jrePath.exists() && jrePath.isDirectory()) {
-            logger.log(Level.INFO, "Embedded jre6 directory not found in: " + jrePath.getAbsolutePath());
+            logger.log(Level.INFO, "Embedded jre6 directory found in: " + jrePath.getAbsolutePath());
             javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java";
         }
         else {

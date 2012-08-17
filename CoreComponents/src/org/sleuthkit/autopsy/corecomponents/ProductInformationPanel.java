@@ -33,6 +33,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import org.netbeans.core.actions.HTMLViewAction;
 import org.openide.awt.HtmlBrowser;
+import org.openide.modules.Places;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
 import org.sleuthkit.datamodel.SleuthkitJNI;
@@ -244,7 +245,7 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
     }
 
     private String getUserDirValue() {
-        return System.getProperty("netbeans.user");
+        return Places.getUserDirectory().getAbsolutePath();
     }
 
     private static String getEncodingValue() {
