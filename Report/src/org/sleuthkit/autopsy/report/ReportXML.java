@@ -41,6 +41,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
 
+/**
+ * Generates an XML report for all the Blackboard Artifacts found in the current case.
+ */
 public class ReportXML implements ReportModule {
 
     public static Document xmldoc = new Document();
@@ -104,6 +107,7 @@ public class ReportXML implements ReportModule {
             Element nodeHash = new Element("Hashset-Hits");
             Element nodeDevice = new Element("Attached-Devices");
             Element nodeEmail = new Element("Email-Messages");
+            Element nodeWebSearch = new Element("Web-Search-Queries");
             //remove bytes
             Pattern INVALID_XML_CHARS = Pattern.compile("[^\\u0009\\u000A\\u000D\\u0020-\\uD7FF\\uE000-\\uFFFD\uD800\uDC00-\uDBFF\uDFFF]");
             for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
@@ -178,8 +182,11 @@ public class ReportXML implements ReportModule {
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                     nodeDevice.addContent(artifact);
                 }
-                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
                     nodeEmail.addContent(artifact);
+                }
+                if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+                    nodeWebSearch.addContent(artifact);
                 }
 
                 //end of master loop
@@ -198,6 +205,7 @@ public class ReportXML implements ReportModule {
             root.addContent(nodeHash);
             root.addContent(nodeDevice);
             root.addContent(nodeEmail);
+            root.addContent(nodeWebSearch);
 
 
             //Export it the first time
@@ -258,7 +266,7 @@ public class ReportXML implements ReportModule {
 
     @Override
     public String getReportTypeDescription() {
-        String desc = "This is an html formatted report that is meant to be viewed in a modern browser.";
+        String desc = "This is an xml formatted report that is meant to be viewed in a modern browser.";
         return desc;
     }
 
