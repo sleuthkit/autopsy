@@ -23,6 +23,7 @@ import java.io.*;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.openide.modules.Places;
 /**
  * This class contains the framework to read, add, update, and remove
  * from the properties file located at %USERDIR%/autopsy.properties
@@ -32,7 +33,7 @@ import java.util.logging.Logger;
 public class AutopsyPropFile {
 
     // The directory where the properties file is lcoated
-    private final static String userDirPath = System.getProperty("netbeans.user");
+    private final static String userDirPath = Places.getUserDirectory().getAbsolutePath();
     private final static String propFilePath = userDirPath + File.separator + "autopsy.properties";
 
     // The AutopsyPropFile singleton

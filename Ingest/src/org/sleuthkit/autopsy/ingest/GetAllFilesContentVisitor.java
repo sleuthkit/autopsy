@@ -31,6 +31,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.LayoutDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
@@ -60,6 +61,11 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
     @Override
     public Collection<AbstractFile> visit(LayoutFile lf) {
         return Collections.<AbstractFile>singleton(lf);
+    }
+    
+    @Override
+    public Collection<AbstractFile> visit(LayoutDirectory ld) {
+        return Collections.<AbstractFile>singleton(ld);
     }
 
     @Override
