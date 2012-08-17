@@ -43,6 +43,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LayoutDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
@@ -203,6 +204,11 @@ class ViewContextAction extends AbstractAction {
         @Override
         public List<Content> visit(LayoutFile lc) {
             return lc.getParent().accept(this);
+        }
+        
+        @Override
+        public List<Content> visit(LayoutDirectory ld) {
+            return ld.getParent().accept(this);
         }
     }
 }

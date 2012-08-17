@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
+import org.openide.modules.Places;
 
 
 
@@ -35,7 +36,7 @@ import java.util.logging.SimpleFormatter;
 public class Installer extends ModuleInstall {
 
     static final Logger autopsyLogger = Logger.getLogger("");
-    static final String LOG_FILENAME_PATTERN = System.getProperty("netbeans.user") + "/var/log/autopsy.log"; //%t is system temp dir, %g is log number
+    static final String LOG_FILENAME_PATTERN = Places.getUserDirectory().getAbsolutePath() + "/var/log/autopsy.log"; //%t is system temp dir, %g is log number
     static final int LOG_SIZE = 0; // in bytes, zero is unlimited
     static final int LOG_FILE_COUNT = 10;
     static Handler logs;
