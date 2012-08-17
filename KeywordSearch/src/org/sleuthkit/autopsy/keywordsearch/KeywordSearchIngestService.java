@@ -575,9 +575,14 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             FsContent fsContent = null;
             //check if alloc fs file or dir
             TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
-            if (aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
+            if (aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
+                //skip indexing of virtual dirs (no content, no real name) - will index children files
+                return;
+            }
+            else if (aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
                 fsContent = (FsContent) aFile;
             }
+
 
             final long size = aFile.getSize();
             //if alloc fs file and not to index content, or a dir, or 0 content, index meta data only
