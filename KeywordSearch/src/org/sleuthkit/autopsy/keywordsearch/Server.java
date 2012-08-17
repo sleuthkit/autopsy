@@ -614,7 +614,8 @@ class Server {
 
         private void commit() throws SolrServerException {
             try {
-                solrCore.commit();
+                //commit and block
+                solrCore.commit(true, true);
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Could not commit index. ", e);
                 throw new SolrServerException("Could not commit index", e);
