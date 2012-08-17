@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 import javax.swing.JDialog;
 import javax.swing.JTextField;
 import junit.framework.Test;
-import org.netbeans.jellytools.JellyTestCase;
+import junit.framework.TestCase;
 import org.netbeans.jellytools.MainWindowOperator;
 import org.netbeans.jellytools.NbDialogOperator;
 import org.netbeans.jellytools.WizardOperator;
@@ -38,7 +38,6 @@ import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
 import org.netbeans.junit.NbModuleSuite;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstract;
 /**
  * This test expects the following system properties to be set:
  * img_path: The fully qualified path to the image file (if split, the first file)
@@ -52,7 +51,7 @@ import org.sleuthkit.autopsy.ingest.IngestServiceAbstract;
  * To run this test correctly, you should use the script 'regression.py'
  * located in the 'script' directory of the Testing module.
  */
-public class RegressionTest extends JellyTestCase{
+public class RegressionTest extends TestCase{
     
     private static final Logger logger = Logger.getLogger(RegressionTest.class.getName());
     
