@@ -37,6 +37,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.LayoutDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskException;
@@ -149,6 +150,13 @@ public final class ContentUtils {
         public List<String> visit(LayoutFile lay) {
             List<String> path = lay.getParent().accept(this);
             path.add(toString.visit(lay));
+            return path;
+        }
+        
+        @Override
+        public List<String> visit(LayoutDirectory ld) {
+            List<String> path = ld.getParent().accept(this);
+            path.add(toString.visit(ld));
             return path;
         }
 
@@ -301,6 +309,7 @@ public final class ContentUtils {
             cntnt.accept(new ExtractFscContentVisitor(dest, progress, worker, true));
         }
 
+        @Override
         public Void visit(File f) {
             try {
                 ContentUtils.writeToFile(f, dest, progress, worker, source);

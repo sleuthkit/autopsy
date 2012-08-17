@@ -9,6 +9,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.LayoutDirectory;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -70,5 +71,11 @@ public class ContentHierarchyVisitor extends ContentVisitor.Default<List<? exten
         } else {
             return Collections.singletonList(dir);
         }
+    }
+    
+    @Override
+    public List<? extends Content> visit(LayoutDirectory ldir) {
+        //return getChildren(ldir);
+        return Collections.singletonList(ldir);
     }
 }
