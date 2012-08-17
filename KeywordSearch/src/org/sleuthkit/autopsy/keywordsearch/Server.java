@@ -47,6 +47,7 @@ import org.apache.commons.httpclient.NoHttpResponseException;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.modules.Places;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -180,7 +181,7 @@ class Server {
         InputStreamPrinterThread(InputStream stream, String type) {
             this.stream = stream;
             try {
-                String log = System.getProperty("netbeans.user") + "/var/log/solr.log." + type;
+                final String log = Places.getUserDirectory().getAbsolutePath() + "/var/log/solr.log." + type;
                 File outputFile = new File(log.concat(".0"));
                 File first = new File(log.concat(".1"));
                 File second = new File(log.concat(".2"));
