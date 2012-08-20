@@ -21,17 +21,10 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.AbstractButton;
-import javax.swing.JCheckBox;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.sleuthkit.autopsy.coreutils.StringExtract;
-import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -86,6 +79,8 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
         filesIndexedLabel = new javax.swing.JLabel();
         filesIndexedValue = new javax.swing.JLabel();
         jSeparator2 = new javax.swing.JSeparator();
+        chunksLabel = new javax.swing.JLabel();
+        chunksValLabel = new javax.swing.JLabel();
 
         skipNSRLCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.skipNSRLCheckBox.text")); // NOI18N
         skipNSRLCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.skipNSRLCheckBox.toolTipText")); // NOI18N
@@ -100,6 +95,10 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
         filesIndexedValue.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.filesIndexedValue.text")); // NOI18N
         filesIndexedValue.setMaximumSize(null);
 
+        chunksLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.chunksLabel.text")); // NOI18N
+
+        chunksValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.chunksValLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -110,10 +109,14 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(skipNSRLCheckBox)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(filesIndexedLabel)
-                        .addGap(18, 18, 18)
-                        .addComponent(filesIndexedValue, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(205, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(chunksLabel)
+                            .addComponent(filesIndexedLabel))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(filesIndexedValue, javax.swing.GroupLayout.DEFAULT_SIZE, 104, Short.MAX_VALUE)
+                            .addComponent(chunksValLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addContainerGap(203, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -126,7 +129,11 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filesIndexedLabel)
                     .addComponent(filesIndexedValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(51, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chunksLabel)
+                    .addComponent(chunksValLabel))
+                .addContainerGap(31, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -134,6 +141,8 @@ private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//
     KeywordSearchIngestService.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
 }//GEN-LAST:event_skipNSRLCheckBoxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel chunksLabel;
+    private javax.swing.JLabel chunksValLabel;
     private javax.swing.JLabel filesIndexedLabel;
     private javax.swing.JLabel filesIndexedValue;
     private javax.swing.JSeparator jSeparator2;
@@ -146,11 +155,12 @@ private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//
 
         try {
             filesIndexedValue.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedFiles()));
+            chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
         } catch (SolrServerException ex) {
-            logger.log(Level.WARNING, "Could not get number of indexed files");
+            logger.log(Level.WARNING, "Could not get number of indexed files/chunks");
 
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Could not get number of indexed files");
+            logger.log(Level.WARNING, "Could not get number of indexed files/chunks");
         }
 
         KeywordSearch.changeSupport.addPropertyChangeListener(KeywordSearch.NUM_FILES_CHANGE_EVT,
@@ -163,6 +173,14 @@ private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//
                         if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
                             int newFilesIndexed = ((Integer) newValue).intValue();
                             filesIndexedValue.setText(Integer.toString(newFilesIndexed));
+                            try {
+                                chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
+                            } catch (SolrServerException ex) {
+                                logger.log(Level.WARNING, "Could not get number of indexed chunks");
+
+                            } catch (NoOpenCoreException ex) {
+                                logger.log(Level.WARNING, "Could not get number of indexed chunks");
+                            }
 
                         }
                     }
