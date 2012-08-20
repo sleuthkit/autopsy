@@ -198,7 +198,7 @@ public class RegressionTest extends TestCase{
         jbo2.pushNoBlock();
         WizardOperator wo = new WizardOperator("Add Image");
         JCheckBoxOperator jbco0 = new JCheckBoxOperator(wo, "Process Unallocated Space");
-        jbco0.setSelected(Boolean.parseBoolean(System.getProperty("ignore_unalloc"))); //ignore unallocated space or not. Set with Regression.py -u
+        jbco0.setSelected(!Boolean.parseBoolean(System.getProperty("ignore_unalloc"))); //ignore unallocated space or not. Set with Regression.py -u
         wo.btNext().clickMouse();
         wo.btFinish().clickMouse();
     }
