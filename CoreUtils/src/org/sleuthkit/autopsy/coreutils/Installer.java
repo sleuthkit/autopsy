@@ -45,7 +45,7 @@ public class Installer extends ModuleInstall {
     public void restored() {
         if (logs == null) {
             try {
-                logs = new FileHandler(LOG_FILENAME_PATTERN, LOG_SIZE, LOG_FILE_COUNT);;
+                logs = new FileHandler(LOG_FILENAME_PATTERN, LOG_SIZE, LOG_FILE_COUNT);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
