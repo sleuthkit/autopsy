@@ -264,7 +264,9 @@ class Database:
                                           "AutopsyTestCase", "autopsy.db")
             autopsy_con = sqlite3.connect(autopsy_db_file)
             autopsy_cur = autopsy_con.cursor()
-            for type_id in range(1, 13):
+            autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
+            length = autopsy_cur.fetchone()[0] + 1
+            for type_id in range(1, length):
                 autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
                 self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])
                 
@@ -293,7 +295,9 @@ class Database:
             gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
             gold_con = sqlite3.connect(gold_db_file)
             gold_cur = gold_con.cursor()
-            for type_id in range(1, 13):
+            gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
+            length = gold_cur.fetchone()[0] + 1
+            for type_id in range(1, length):
                 gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
                 self.gold_artifacts.append(gold_cur.fetchone()[0])
                 
@@ -920,7 +924,7 @@ def generate_html():
         html = open(case.html_log, "a")
         # The image title
         title = "<h1><a name='" + case.image_name + "'>" + case.image_name + " \
-                    <span><i>tested on</i> " + socket.gethostname() + "</span></a></h1>\
+                    <span>tested on " + socket.gethostname() + "</span></a></h1>\
                  <h2 align='center'>\
                  <a href='#" + case.image_name + "-errors'>Errors and Warnings</a> |\
                  <a href='#" + case.image_name + "-info'>Information</a> |\
