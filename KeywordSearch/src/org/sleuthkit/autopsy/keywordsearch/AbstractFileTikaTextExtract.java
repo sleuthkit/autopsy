@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 public class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
     private static final Logger logger = Logger.getLogger(IngestServiceAbstractFile.class.getName());
+    private static final Logger tikaLogger = KeywordSearch.getTikaLogger();
     private static final Charset OUTPUT_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
     private static final int SINGLE_READ_CHARS = 1024;
@@ -75,6 +76,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     AbstractFileTikaTextExtract() {
         this.service = KeywordSearchIngestService.getDefault();
         ingester = Server.getIngester();
+        
     }
 
     @Override
@@ -118,12 +120,14 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
             } catch (TimeoutException te) {
                 tika = null;
                 final String msg = "Tika parse timeout for content: " + sourceFile.getId() + ", " + sourceFile.getName();
+                tikaLogger.log(Level.SEVERE, msg, te);
                 logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
             } catch (Exception ex) {
                 tika = null;
                 final String msg = "Unexpected exception from Tika parse task execution for file: " + sourceFile.getId() + ", " + sourceFile.getName();
-                logger.log(Level.WARNING, msg, ex);
+                tikaLogger.log(Level.SEVERE, msg, ex);
+                logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
             }
 
@@ -215,10 +219,14 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
                 service.checkRunCommitSearch();
             }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+            final String msg = "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
+            tikaLogger.log(Level.SEVERE, msg, ex);
+            logger.log(Level.WARNING, msg);
             success = false;
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+            final String msg = "Unexpected error, can't read content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
+            tikaLogger.log(Level.SEVERE, msg, ex);
+            logger.log(Level.WARNING, msg);
             success = false;
         } finally {
             try {
@@ -283,7 +291,12 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
             try {
                 reader = tika.parse(stream, meta);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+                tikaLogger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+                tika = null;
+                reader = null;
+            }
+             catch (Exception ex) {
+                tikaLogger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
                 tika = null;
                 reader = null;
             }

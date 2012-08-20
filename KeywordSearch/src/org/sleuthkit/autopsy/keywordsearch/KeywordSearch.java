@@ -21,8 +21,13 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.IOException;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+import org.openide.modules.Places;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWriter;
 
@@ -33,6 +38,7 @@ class KeywordSearch {
 
     private static final String BASE_URL = "http://localhost:8983/solr/";
     private static final Server SERVER = new Server(BASE_URL);
+    static final Logger TIKA_LOGGER = Logger.getLogger("Tika");
 
     public enum QueryType {WORD, REGEX};
     
@@ -44,10 +50,28 @@ class KeywordSearch {
     static Server getServer() {
         return SERVER;
     }
+    
+    static {
+        try {
+            final int MAX_TIKA_LOG_FILES = 3;
+            FileHandler tikaLogHandler = new FileHandler(Places.getUserDirectory().getAbsolutePath() + "/var/log/tika.log",
+                    0, MAX_TIKA_LOG_FILES);
+            tikaLogHandler.setFormatter(new SimpleFormatter());
+            TIKA_LOGGER.addHandler(tikaLogHandler);
+        } catch (IOException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (SecurityException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+    }
 
     // don't instantiate
     private KeywordSearch() {
         throw new AssertionError();
+    }
+    
+    static Logger getTikaLogger() {
+        return TIKA_LOGGER;
     }
 
     /**
