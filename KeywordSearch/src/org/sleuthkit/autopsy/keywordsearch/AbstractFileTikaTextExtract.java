@@ -120,13 +120,13 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
             } catch (TimeoutException te) {
                 tika = null;
                 final String msg = "Tika parse timeout for content: " + sourceFile.getId() + ", " + sourceFile.getName();
-                tikaLogger.log(Level.SEVERE, msg, te);
+                tikaLogger.log(Level.WARNING, msg, te);
                 logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
             } catch (Exception ex) {
                 tika = null;
                 final String msg = "Unexpected exception from Tika parse task execution for file: " + sourceFile.getId() + ", " + sourceFile.getName();
-                tikaLogger.log(Level.SEVERE, msg, ex);
+                tikaLogger.log(Level.WARNING, msg, ex);
                 logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
             }
@@ -220,12 +220,12 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
             }
         } catch (IOException ex) {
             final String msg = "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
-            tikaLogger.log(Level.SEVERE, msg, ex);
+            tikaLogger.log(Level.WARNING, msg, ex);
             logger.log(Level.WARNING, msg);
             success = false;
         } catch (Exception ex) {
             final String msg = "Unexpected error, can't read content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
-            tikaLogger.log(Level.SEVERE, msg, ex);
+            tikaLogger.log(Level.WARNING, msg, ex);
             logger.log(Level.WARNING, msg);
             success = false;
         } finally {
