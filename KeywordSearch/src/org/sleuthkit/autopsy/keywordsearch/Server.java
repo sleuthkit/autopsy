@@ -397,6 +397,21 @@ class Server {
 
         return currentCore.queryNumIndexedFiles();
     }
+    
+     /**
+     * Execute query that gets only number of all Solr file chunks (not logical files) indexed without
+     * actually returning the content. 
+     * 
+     * @return int representing number of indexed chunks
+     * @throws SolrServerException
+     */
+    public int queryNumIndexedChunks() throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+
+        return currentCore.queryNumIndexedChunks();
+    }
 
     /**
      * Execute query that gets only number of all Solr documents indexed (files
@@ -658,10 +673,21 @@ class Server {
          * @throws SolrServerException
          */
         private int queryNumIndexedFiles() throws SolrServerException {
+            return queryNumIndexedDocuments() - queryNumIndexedChunks();
+        }
+        
+         /**
+         * Execute query that gets only number of all chunks (not logical files, or all documents)
+         * indexed without actually returning the content
+         *
+         * @return int representing number of indexed chunks
+         * @throws SolrServerException
+         */
+        private int queryNumIndexedChunks() throws SolrServerException {
             SolrQuery q = new SolrQuery(Server.Schema.ID + ":*" + Server.ID_CHUNK_SEP + "*");
             q.setRows(0);
             int numChunks = (int) query(q).getResults().getNumFound();
-            return queryNumIndexedDocuments() - numChunks;
+            return numChunks;
         }
 
         /**
