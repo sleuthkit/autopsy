@@ -84,7 +84,7 @@ public class HashDbXML {
     /**
      * get instance for managing the current keyword list of the application
      */
-    static HashDbXML getCurrent() {
+    static synchronized HashDbXML getCurrent() {
         if (currentInstance == null) {
             currentInstance = new HashDbXML(CUR_HASHSET_FILE);
             currentInstance.reload();
