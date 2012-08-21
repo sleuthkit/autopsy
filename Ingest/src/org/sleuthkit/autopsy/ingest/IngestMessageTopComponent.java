@@ -287,6 +287,12 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
         messagePanel.addMessage(ingestMessage);
     }
 
+    @Override
+    public int getMessagesCount() {
+        return messagePanel.getMessagesCount();
+    }
+
+    
 
     @Override
     public void clearMessages() {

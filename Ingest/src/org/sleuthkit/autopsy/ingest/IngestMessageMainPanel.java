@@ -118,6 +118,10 @@ public class IngestMessageMainPanel extends JLayeredPane {
     public void clearMessages() {
         messagePanel.clearMessages();
     }
+    
+     public int getMessagesCount() {
+        return messagePanel.getMessagesCount();
+    }
 
     /** This method is called from within the constructor to
      * initialize the form.

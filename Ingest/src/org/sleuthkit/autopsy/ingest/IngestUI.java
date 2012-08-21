@@ -26,6 +26,7 @@ import org.sleuthkit.datamodel.Image;
  */
 public interface IngestUI {
     void displayMessage(final IngestMessage message);
+    int getMessagesCount();
     void clearMessages();
     void restoreMessages();
     void displayIngestDialog(final Image image);

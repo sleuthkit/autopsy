@@ -1205,6 +1205,7 @@ public class IngestManager {
                 if (!this.isCancelled()) {
                     logger.log(Level.INFO, "Summary Report: " + stats.toString());
                     logger.log(Level.INFO, "File service timings: " + stats.getFileServiceStats());
+                    logger.log(Level.INFO, "Ingest messages count: " + ui.getMessagesCount());
                     //ui.displayReport(stats.toHtmlString());
                     IngestManager.this.postMessage(IngestMessage.createManagerMessage("File Ingest Complete", stats.toHtmlString()));
                 }

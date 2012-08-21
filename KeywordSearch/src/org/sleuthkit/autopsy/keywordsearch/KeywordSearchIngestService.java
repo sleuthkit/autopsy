@@ -209,7 +209,20 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
         }
 
-
+        //log number of files / chunks in index
+         //signal a potential change in number of indexed files
+        try {
+            final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
+            final int numIndexedChunks = KeywordSearch.getServer().queryNumIndexedChunks();
+            logger.log(Level.INFO, "Indexed files count: " + numIndexedFiles);
+            logger.log(Level.INFO, "Indexed file chunks count: " + numIndexedChunks);
+        } catch (NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", ex);
+        } catch (SolrServerException se) {
+            logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", se);
+        }
+        
+        
         //postSummary();
     }
 
