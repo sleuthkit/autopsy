@@ -149,6 +149,9 @@ class TestAutopsy:
         self.autopsy_version = ""
         self.heap_space = ""
         self.service_times = ""
+        self.ingest_messages = 0
+        self.indexed_files = 0
+        self.indexed_chunks = 0
         
         # Set the timeout to something huge
         # The entire tester should not timeout before this number in ms
@@ -707,9 +710,20 @@ def fill_case_data():
         # Set Autopsy version, heap space, ingest time, and service times
         version_line = search_logs("INFO: Application name: Autopsy, version:")[0]
         case.autopsy_version = get_word_at(version_line, 5).rstrip(",")
+        
         case.heap_space = search_logs("Heap memory usage:")[0].rstrip().split(": ")[1]
+        
         ingest_line = search_logs("INFO: Ingest (including enqueue)")[0]
         case.total_ingest_time = get_word_at(ingest_line, 5).rstrip()
+        
+        message_line = search_log_set("autopsy", "Ingest messages count:")[0]
+        case.ingest_messages = int(message_line.rstrip().split(": ")[2])
+        
+        files_line = search_log_set("autopsy", "Indexed files count:")[0]
+        case.indexed_files = int(files_line.rstrip().split(": ")[2])
+        
+        chunks_line = search_log_set("autopsy", "Indexed file chunks count:")[0]
+        case.indexed_chunks = int(chunks_line.rstrip().split(": ")[2])
     except Exception as e:
         printerror("Error: Unable to find the required information to fill case data.")
         printerror(str(e) + "\n")
@@ -744,38 +758,41 @@ def generate_csv(csv_path):
             
         # Now add on the fields to a new row
         csv = open(csv_path, "a")
-        # Variables that need to be written
-        image_path = case.image_file
-        name = case.image_name
-        path = case.output_dir
-        hostname = socket.gethostname()
-        autopsy_version = case.autopsy_version
-        heap_space = case.heap_space
-        start_date = case.start_date
-        end_date = case.end_date
-        total_test_time = case.total_test_time
-        total_ingest_time = case.total_ingest_time
-        service_times = case.service_times
-        exceptions_count = str(len(get_exceptions()))
-        mem_exceptions_count = str(len(search_logs("OutOfMemoryException")) +
-                                   len(search_logs("OutOfMemoryError")))
-        tsk_objects_count = str(database.autopsy_objects)
-        artifacts_count = str(database.get_artifacts_count())
-        attributes_count = str(database.autopsy_attributes)
-        gold_db_name = make_local_path("gold", case.image_name, "standard.db")
-        artifact_comparison = database.get_artifact_comparison()
-        attribute_comparison = database.get_attribute_comparison()
-        gold_report_name = make_local_path("gold", case.image_name, "standard.html")
-        report_comparison = str(case.report_passed)
-        ant = case.ant_to_string()
         
-        # Make a list with all the strings in it
-        seq = (image_path, name, path, hostname, autopsy_version, heap_space, start_date, end_date, total_test_time,
-               total_ingest_time, service_times, exceptions_count, mem_exceptions_count, tsk_objects_count, artifacts_count,
-               attributes_count, gold_db_name, artifact_comparison, attribute_comparison,
-               gold_report_name, report_comparison, ant)
+        # Variables that need to be written
+        vars = []
+        vars.append( case.image_file )
+        vars.append( case.image_name )
+        vars.append( case.output_dir )
+        vars.append( socket.gethostname() )
+        vars.append( case.autopsy_version )
+        vars.append( case.heap_space )
+        vars.append( case.start_date )
+        vars.append( case.end_date )
+        vars.append( case.total_test_time )
+        vars.append( case.total_ingest_time )
+        vars.append( case.service_times )
+        vars.append( str(len(get_exceptions())) )
+        vars.append( str(get_num_memory_errors("autopsy")) )
+        vars.append( str(get_num_memory_errors("tika")) )
+        vars.append( str(get_num_memory_errors("solr")) )
+        vars.append( str(len(search_log_set("autopsy", "TskCoreException"))) )
+        vars.append( str(len(search_log_set("autopsy", "TskDataException"))) )
+        vars.append( str(case.ingest_messages) )
+        vars.append( str(case.indexed_files) )
+        vars.append( str(case.indexed_chunks) )
+        vars.append( str(database.autopsy_objects) )
+        vars.append( str(database.get_artifacts_count()) )
+        vars.append( str(database.autopsy_attributes) )
+        vars.append( make_local_path("gold", case.image_name, "standard.db") )
+        vars.append( database.get_artifact_comparison() )
+        vars.append( database.get_attribute_comparison() )
+        vars.append( make_local_path("gold", case.image_name, "standard.html") )
+        vars.append( str(case.report_passed) )
+        vars.append( case.ant_to_string() )
+        
         # Join it together with a ", "
-        output = "|".join(seq)
+        output = "|".join(vars)
         output += "\n"
         # Write to the log!
         csv.write(output)
@@ -788,13 +805,37 @@ def generate_csv(csv_path):
 # Generates the CSV header (column names)
 def csv_header(csv_path):
     csv = open(csv_path, "w")
-    seq = ("Image Path", "Image Name", "Output Case Directory", "Host Name", "Autopsy Version",
-           "Heap Space Setting", "Test Start Date", "Test End Date", "Total Test Time",
-           "Total Ingest Time", "Service Times", "Exceptions Count", "OutOfMemoryExceptions",
-           "TSK Objects Count", "Artifacts Count",
-           "Attributes Count", "Gold Database Name", "Artifacts Comparison",
-           "Attributes Comparison", "Gold Report Name", "Report Comparison", "Ant Command Line")
-    output = "|".join(seq)
+    titles = []
+    titles.append("Image Path")
+    titles.append("Image Name")
+    titles.append("Output Case Directory")
+    titles.append("Host Name")
+    titles.append("Autopsy Version")
+    titles.append("Heap Space Setting")
+    titles.append("Test Start Date")
+    titles.append("Test End Date")
+    titles.append("Total Test Time")
+    titles.append("Total Ingest Time")
+    titles.append("Service Times")
+    titles.append("Autopsy Exceptions")
+    titles.append("Autopsy OutOfMemoryErrors/Exceptions")
+    titles.append("Tika OutOfMemoryErrors/Exceptions")
+    titles.append("Solr OutOfMemoryErrors/Exceptions")
+    titles.append("TskCoreExceptions")
+    titles.append("TskDataExceptions")
+    titles.append("Ingest Messages Count")
+    titles.append("Indexed Files Count")
+    titles.append("Indexed File Chunks Count")
+    titles.append("Tsk Objects Count")
+    titles.append("Artifacts Count")
+    titles.append("Attributes Count")
+    titles.append("Gold Database Name")
+    titles.append("Artifacts Comparison")
+    titles.append("Attributes Comparison")
+    titles.append("Gold Report Name")
+    titles.append("Report Comparison")
+    titles.append("Ant Command Line")
+    output = "|".join(titles)
     output += "\n"
     csv.write(output)
     csv.close()
@@ -890,7 +931,28 @@ def search_log(log, string):
             return results
     except:
         raise FileNotFoundException(logs_path)
+
+# Search through all the the logs of the given type
+# Types include autopsy, tika, and solr
+def search_log_set(type, string):
+    logs_path = make_local_path(case.output_dir, case.image_name, "logs")
+    results = []
+    for file in os.listdir(logs_path):
+        if type in file:
+            log = open(make_path(logs_path, file), "r")
+            lines = log.readlines()
+            for line in lines:
+                if string in line:
+                    results.append(line)
+            log.close()
+    return results
         
+# Returns the number of OutOfMemoryErrors and OutOfMemoryExceptions
+# for a certain type of log
+def get_num_memory_errors(type):
+    return (len(search_log_set(type, "OutOfMemoryError")) + 
+            len(search_log_set(type, "OutOfMemoryException")))
+
 # Print a report for the given errors with the report name as name
 # and if no errors are found, print the okay message
 def print_report(errors, name, okay):
@@ -924,7 +986,7 @@ def generate_html():
         html = open(case.html_log, "a")
         # The image title
         title = "<h1><a name='" + case.image_name + "'>" + case.image_name + " \
-                    <span>tested on " + socket.gethostname() + "</span></a></h1>\
+                    <span>tested on <strong>" + socket.gethostname() + "</strong></span></a></h1>\
                  <h2 align='center'>\
                  <a href='#" + case.image_name + "-errors'>Errors and Warnings</a> |\
                  <a href='#" + case.image_name + "-info'>Information</a> |\
@@ -968,10 +1030,24 @@ def generate_html():
         info += "<td>" + case.total_ingest_time + "</td></tr>"
         info += "<tr><td>Exceptions Count:</td>"
         info += "<td>" + str(len(get_exceptions())) + "</td></tr>"
-        info += "<tr><td>OutOfMemoryExceptions:</td>"
+        info += "<tr><td>Autopsy OutOfMemoryExceptions:</td>"
         info += "<td>" + str(len(search_logs("OutOfMemoryException"))) + "</td></tr>"
-        info += "<tr><td>OutOfMemoryErrors:</td>"
+        info += "<tr><td>Autopsy OutOfMemoryErrors:</td>"
         info += "<td>" + str(len(search_logs("OutOfMemoryError"))) + "</td></tr>"
+        info += "<tr><td>Tika OutOfMemoryErrors/Exceptions:</td>"
+        info += "<td>" + str(get_num_memory_errors("tika")) + "</td></tr>"
+        info += "<tr><td>Solr OutOfMemoryErrors/Exceptions:</td>"
+        info += "<td>" + str(get_num_memory_errors("solr")) + "</td></tr>"
+        info += "<tr><td>TskCoreExceptions:</td>"
+        info += "<td>" + str(len(search_log_set("autopsy", "TskCoreException"))) + "</td></tr>"
+        info += "<tr><td>TskDataExceptions:</td>"
+        info += "<td>" + str(len(search_log_set("autopsy", "TskDataException"))) + "</td></tr>"
+        info += "<tr><td>Ingest Messages Count:</td>"
+        info += "<td>" + str(case.ingest_messages) + "</td></tr>"
+        info += "<tr><td>Indexed Files Count:</td>"
+        info += "<td>" + str(case.indexed_files) + "</td></tr>"
+        info += "<tr><td>Indexed File Chunks Count:</td>"
+        info += "<td>" + str(case.indexed_chunks) + "</td></tr>"
         info += "<tr><td>TSK Objects Count:</td>"
         info += "<td>" + str(database.autopsy_objects) + "</td></tr>"
         info += "<tr><td>Artifacts Count:</td>"
@@ -1022,7 +1098,7 @@ def write_html_head():
             #info { background: #D2D3FF; border: 1px solid #0005FF; color: #0005FF; padding: 10px; margin: 20px; }\
             #general { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
             #errors p, #info p, #general p { pading: 0px; margin: 0px; margin-left: 5px; }\
-            #info table td { color: #0005FF; font-size: 12px; min-width: 175px; }\
+            #info table td { color: #0005FF; font-size: 12px; min-width: 215px; }\
             </style>\
             <body>"
     html.write(head)
@@ -1103,7 +1179,7 @@ def copy_logs():
         log_dir = os.path.join("..","build","test","qa-functional","work","userdir0","var","log")
         shutil.copytree(log_dir, make_local_path(case.output_dir, case.image_name, "logs"))
     except Exception as e:
-        printerror("Error: Failed tp copy the logs.")
+        printerror("Error: Failed to copy the logs.")
         printerror(str(e) + "\n")
 
 # Clears all the files from a directory and remakes it
