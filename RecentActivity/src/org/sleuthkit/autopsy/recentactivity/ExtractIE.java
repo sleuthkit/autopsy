@@ -130,7 +130,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
             Long datetime = Favorite.getCrtime();
             String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
-            String domain = Util.getBaseDomain(url);
+            String domain = Util.extractDomain(url);
             try {
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
@@ -174,9 +174,8 @@ public class ExtractIE extends Extract implements IngestServiceImage {
             Long datetime = Cookie.getCrtime();
             String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
-            String domain = url;
-            domain = domain.replaceFirst("^\\.+(?!$)", "");
-            domain = domain.replaceFirst("/", "");
+            String domain = Util.extractDomain(url);
+            
             try {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", "", url));
@@ -423,7 +422,7 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                                             realurl = realurl.replaceAll(":(.*?):", "");
                                             realurl = realurl.replace(":Host:", "");
                                             realurl = realurl.trim();
-                                            domain = Util.getBaseDomain(realurl);
+                                            domain = Util.extractDomain(realurl);
                                         }
                                         if (!ddtime.isEmpty()) {
                                             ddtime = ddtime.replace("T", " ");

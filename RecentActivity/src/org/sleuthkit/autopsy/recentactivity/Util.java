@@ -33,6 +33,7 @@ import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 //import org.apache.commons.lang.NullArgumentException;
@@ -106,26 +107,44 @@ public class Util {
     }
 
     public static String getBaseDomain(String url) {
-    String host = url;
+        String host = null;
+        //strip protocol
+        String cleanUrl = url.replaceFirst("/.*:\\/\\//", "");
+        
+        //strip after slashes
+        String dirToks[] = cleanUrl.split("/\\//");
+        if (dirToks.length > 0) {
+            host = dirToks[0];
+        }
+        else {
+            host = cleanUrl;
+        }
+        
+        //get the domain part from host (last 2)
+        StringTokenizer tok = new StringTokenizer(host, ".");
+        StringBuilder hostB = new StringBuilder();
+        int toks = tok.countTokens();
+        
+        for (int count = 0; count < toks; ++count) {
+            String part = tok.nextToken();
+            int diff = toks - count;
+            if (diff < 3) {
+                hostB.append(part);
+            }
+            if (diff == 2) {
+                hostB.append(".");
+            }
+        }
 
-    int startIndex = 0;
-    int nextIndex = host.indexOf('.');
-    int lastIndex = host.lastIndexOf('.');
-    while (nextIndex < lastIndex) {
-        startIndex = nextIndex + 1;
-        nextIndex = host.indexOf('.', startIndex);
-    }
-    if (startIndex > 0) {
-        return host.substring(startIndex);
-    } else {
-        return host;
-    }
+    
+        return hostB.toString();
 }
     
     
     public static String extractDomain(String value) {
         if (value == null) {
-            throw new java.lang.NullPointerException("domains to extract");
+            return "";
+                    
         }
         String result = "";
         // String domainPattern = "(\\w+)\\.(AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|AQ|AR|ARPA|AS|ASIA|AT|AU|AW|AX|AZ|BA|BB|BD|BE|BF|BG|BH|BI|BIZ|BJ|BM|BN|BO|BR|BS|BT|BV|BW|BY|BZ|CA|CAT|CC|CD|CF|CG|CH|CI|CK|CL|CM|CN|CO|COM|COOP|CR|CU|CV|CW|CX|CY|CZ|DE|DJ|DK|DM|DO|DZ|EC|EDU|EE|EG|ER|ES|ET|EU|FI|FJ|FK|FM|FO|FR|GA|GB|GD|GE|GF|GG|GH|GI|GL|GM|GN|GOV|GP|GQ|GR|GS|GT|GU|GW|GY|HK|HM|HN|HR|HT|HU|ID|IE|IL|IM|IN|INFO|INT|IO|IQ|IR|IS|IT|JE|JM|JO|JOBS|JP|KE|KG|KH|KI|KM|KN|KP|KR|KW|KY|KZ|LA|LB|LC|LI|LK|LR|LS|LT|LU|LV|LY|MA|MC|MD|ME|MG|MH|MIL|MK|ML|MM|MN|MO|MOBI|MP|MQ|MR|MS|MT|MU|MUSEUM|MV|MW|MX|MY|MZ|NA|NAME|NC|NE|NET|NF|NG|NI|NL|NO|NP|NR|NU|NZ|OM|ORG|PA|PE|PF|PG|PH|PK|PL|PM|PN|PR|PRO|PS|PT|PW|PY|QA|RE|RO|RS|RU|RW|SA|SB|SC|SD|SE|SG|SH|SI|SJ|SK|SL|SM|SN|SO|SR|ST|SU|SV|SX|SY|SZ|TC|TD|TEL|TF|TG|TH|TJ|TK|TL|TM|TN|TO|TP|TR|TRAVEL|TT|TV|TW|TZ|UA|UG|UK|US|UY|UZ|VA|VC|VE|VG|VI|VN|VU|WF|WS|XXX|YE|YT|ZA|ZM|ZW(co\\.[a-z].))";
@@ -140,6 +159,11 @@ public class Util {
         } catch (Exception e) 
         {
              logger.log(Level.WARNING, "Error while trying to convert url to domain. " + value, e);
+        }
+        
+        //was not a valid URL, try a less picky method
+        if (result == null || result.trim().isEmpty()) {
+            return getBaseDomain(value);
         }
 
         return result;
