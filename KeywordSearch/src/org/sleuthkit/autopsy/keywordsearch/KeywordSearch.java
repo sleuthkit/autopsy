@@ -58,6 +58,8 @@ class KeywordSearch {
                     0, MAX_TIKA_LOG_FILES);
             tikaLogHandler.setFormatter(new SimpleFormatter());
             TIKA_LOGGER.addHandler(tikaLogHandler);
+            //do not forward to the parent autopsy logger
+            TIKA_LOGGER.setUseParentHandlers(false);
         } catch (IOException ex) {
             Exceptions.printStackTrace(ex);
         } catch (SecurityException ex) {
