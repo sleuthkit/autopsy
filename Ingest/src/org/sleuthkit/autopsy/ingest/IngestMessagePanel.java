@@ -303,6 +303,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
         totalUniqueMessagesNameVal.setText("-");
         messagePcs.firePropertyChange(TOOL_TIP_TEXT_KEY, origMsgGroups, 0);
     }
+    
+     public synchronized int getMessagesCount() {
+         return tableModel.getNumberMessages();
+    }
 
     private synchronized void setVisited(int rowNumber) {
         final int origMsgGroups = tableModel.getNumberUnreadGroups();
