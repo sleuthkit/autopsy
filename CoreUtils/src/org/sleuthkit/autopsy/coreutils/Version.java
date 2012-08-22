@@ -64,6 +64,7 @@ public class Version {
 
     /**
      * Get the application version as set at build time
+     *
      * @return application version string
      */
     public static String getVersion() {
@@ -72,6 +73,7 @@ public class Version {
 
     /**
      * Get the application name as set at build time
+     *
      * @return the application name string
      */
     public static String getName() {
@@ -80,10 +82,23 @@ public class Version {
 
     /**
      * Get the application build type as set at build time
+     *
      * @return the application build type
      */
     public static Version.Type getBuildType() {
         String valueProp = getVersionProperty("build.type");
         return Type.valueOf(valueProp);
+    }
+
+    public static String getJavaRuntimeVersion() {
+        return System.getProperty("java.runtime.version");
+    }
+
+    public static String getNetbeansBuild() {
+        return System.getProperty("netbeans.buildnumber");
+    }
+
+    public static String getNetbeansProductVersion() {
+        return System.getProperty("netbeans.productversion");
     }
 }

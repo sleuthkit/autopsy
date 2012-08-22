@@ -53,6 +53,10 @@ public class Installer extends ModuleInstall {
             autopsyLogger.addHandler(logs);
         }
         
+        autopsyLogger.log(Level.INFO, "Java runtime version: " + Version.getJavaRuntimeVersion());
+        
+        autopsyLogger.log(Level.INFO, "Netbeans Platform build: " + Version.getNetbeansBuild());
+        
         autopsyLogger.log(Level.INFO, "Application name: " + Version.getName() 
                 + ", version: " + Version.getVersion() + ", build: " + Version.getBuildType());
     }
