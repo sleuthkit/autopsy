@@ -61,7 +61,8 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
     private void activateWidgets() {
         final KeywordSearchIngestService service = KeywordSearchIngestService.getDefault();
         skipNSRLCheckBox.setSelected(service.getSkipKnown());
-        boolean enable = !IngestManager.getDefault().isIngestRunning();
+        boolean enable = !IngestManager.getDefault().isIngestRunning()
+                && ! IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault());
         skipNSRLCheckBox.setEnabled(enable);
     }
 
