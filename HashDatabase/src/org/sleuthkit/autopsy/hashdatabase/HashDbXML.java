@@ -284,6 +284,9 @@ public class HashDbXML {
         }
         NodeList setsNList = root.getElementsByTagName(SET_EL);
         int numSets = setsNList.getLength();
+        if(numSets==0) {
+            logger.log(Level.WARNING, "No element hash_set exists.");
+        }
         for (int i = 0; i < numSets; ++i) {
             Element setEl = (Element) setsNList.item(i);
             final String name = setEl.getAttribute(SET_NAME_ATTR);
@@ -292,12 +295,14 @@ public class HashDbXML {
             final String showInboxMessages = setEl.getAttribute(SET_SHOW_INBOX_MESSAGES);
             Boolean useForIngestBool = Boolean.parseBoolean(useForIngest);
             Boolean showInboxMessagesBool = Boolean.parseBoolean(showInboxMessages);
-            DBType typeDBType = DBType.valueOf(type);
             List<String> paths = new ArrayList<String>();
 
             //parse all words
             NodeList pathsNList = setEl.getElementsByTagName(PATH_EL);
             final int numPaths = pathsNList.getLength();
+            if(numPaths==0) {
+                logger.log(Level.WARNING, "No paths have been given for the hash_set at index " + i + ".");
+            }
             for (int j = 0; j < numPaths; ++j) {
                 Element pathEl = (Element) pathsNList.item(j);
                 String number = pathEl.getAttribute(PATH_NUMBER_ATTR);
@@ -305,6 +310,19 @@ public class HashDbXML {
                 paths.add(path);
             }
             
+            // Check everything was properly set
+            if(name.isEmpty()) {
+                logger.log(Level.WARNING, "Name was not set for hash_set at index " + i + ".");
+            } if(type.isEmpty()) {
+                logger.log(Level.SEVERE, "Type was not set for hash_set at index " + i + ", cannot make instance of HashDb class.");
+                return false; // exit because this causes a fatal error
+            } if(useForIngest.isEmpty()) {
+                logger.log(Level.WARNING, "UseForIngest was not set for hash_set at index " + i + ".");
+            } if(showInboxMessages.isEmpty()) {
+                logger.log(Level.WARNING, "ShowInboxMessages was not set for hash_set at index " + i + ".");
+            }
+            
+            DBType typeDBType = DBType.valueOf(type);
             HashDb set = new HashDb(name, paths, useForIngestBool, showInboxMessagesBool, typeDBType);
             
             if(typeDBType == DBType.KNOWN_BAD) {
@@ -316,6 +334,9 @@ public class HashDbXML {
         
         NodeList calcList = root.getElementsByTagName(SET_CALC);
         int numCalc = calcList.getLength(); // Shouldn't be more than 1
+        if(numCalc==0) {
+            logger.log(Level.WARNING, "No element hash_calculate exists.");
+        }
         for(int i=0; i<numCalc; i++) {
             Element calcEl = (Element) calcList.item(i);
             final String value = calcEl.getAttribute(SET_VALUE);
