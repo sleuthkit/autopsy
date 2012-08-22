@@ -1261,35 +1261,30 @@ def required_input_file(name):
 
 # Returns the args of the test script
 def usage():
-    usage = "\
-Usage: ./regression.py [-f FILE] [OPTIONS] \n\n\
-Run the RegressionTest.java file, and compare the result with a gold standard \n\n\
-When the -f flag is set, this script only tests the image given by FILE.\n\
-By default, it tests every image in ./input/\n\n\
-An indexed NSRL database is expected at ./input/nsrl.txt-md5.idx,\n\
-and an indexed notable hash database at ./input/notablehashes.txt-md5.idx\n\
-In addition, any keywords to search for must be in ./input/notablekeywords.xml\n\n\
-When the -l flag is set, the script looks for a config.xml file of the given name\n\
-where images are stored. The above input files may be outsources to a different folder\n\
-via the config file. For usage notes please see the example \"config.xml\" in\n\
-the /script folder.\
-Options:\n\n\
-  -r/--rebuild\n\
-Rebuild the gold standards from the test results for each image.\n\n\
-  -i/--ignore\n\
-Ignores the ./input directory when searching for files. Only use in combinatin with a config file.\n\n\
-  -u/--unallocated\n\
-Ignores unallocated space when ingesting. Faster, but yields less accurate results.\n\n\
-  -k/--keep\n\
-Keeps each image's Solr index instead of deleting it.\n\n\
-  -v/--verbose\n\
-Prints all Warnings and Exceptions after each ingest.\n\n\
-  -e/--exception [exception]\n\
-When followed by a string, will print out all exceptions that occured that contain the string. Case sensitive.\n\n\
-  -l/--list [configuration file]\n\
-Runs from a configuration file, which is given as a path to the file after the argument."
-    
-    return usage
+    return """
+Usage:  ./regression.py [-f FILE] [OPTIONS]
+
+        Run RegressionTest.java, and compare the result with a gold standard.
+        By default, the script tests every image in ./input
+        When the -f flag is set, this script only tests a single given image.
+        When the -l flag is set, the script looks for a configuration file,
+        which may outsource to a new input directory and to individual images.
+        
+        Expected files:
+          An NSRL database at:            ./input/nsrl.txt-md5.idx
+          A notable hash database at:     ./input/notablehashes.txt-md5.idx
+          A notible keyword file at:      ./input/notablekeywords.xml
+        
+Options:
+  -r            Rebuild the gold standards for the image(s) tested.
+  -i            Ignores the ./input directory and all files within it.
+  -u            Tells Autopsy not to ingest unallocated space.
+  -k            Keeps each image's Solr index instead of deleting it.
+  -v            Verbose mode; prints all errors to the screen.
+  -e ex         Prints out all errors containing ex.
+  -l cfg        Runs from configuration file cfg.
+    """
+
 
 
 
