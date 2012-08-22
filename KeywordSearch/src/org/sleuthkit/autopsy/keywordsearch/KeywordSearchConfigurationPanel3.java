@@ -117,7 +117,8 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
 
     private void activateWidgets() {
         reloadScriptsCheckBoxes();
-        boolean enable = !IngestManager.getDefault().isIngestRunning();
+        boolean enable = !IngestManager.getDefault().isIngestRunning()
+        && ! IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault());;
         //enable / disable checboxes
         activateScriptsCheckboxes(enable);
     }
