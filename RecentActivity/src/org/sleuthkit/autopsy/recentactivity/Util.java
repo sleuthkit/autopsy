@@ -23,6 +23,7 @@ package org.sleuthkit.autopsy.recentactivity;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -153,13 +154,16 @@ public class Util {
         //  while (m.find()) {
         //  result = value.substring(m.start(0),m.end(0));
         //  }
+       
+          
         try {
             URL url = new URL(value);
             result = url.getHost();
-        } catch (Exception e) 
-        {
-             logger.log(Level.WARNING, "Error while trying to convert url to domain. " + value, e);
+        } catch (MalformedURLException ex) {
+            //do not log if not a valid URL, and handle later
+            //Logger.getLogger(Util.class.getName()).log(Level.SEVERE, null, ex);
         }
+             
         
         //was not a valid URL, try a less picky method
         if (result == null || result.trim().isEmpty()) {
