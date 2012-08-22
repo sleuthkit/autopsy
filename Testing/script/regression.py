@@ -840,20 +840,21 @@ def csv_header(csv_path):
     csv.write(output)
     csv.close()
         
-# Returns a list of all the exceptions listed in all the case logs
+# Returns a list of all the exceptions listed in all the autopsy logs
 def get_exceptions():
     exceptions = []
     logs_path = make_local_path(case.output_dir, case.image_name, "logs")
     results = []
     for file in os.listdir(logs_path):
-        log = open(make_path(logs_path, file), "r")
-        lines = log.readlines()
-        ex = re.compile("\SException")
-        er = re.compile("\SError")
-        for line in lines:
-            if ex.search(line) or er.search(line):
-                exceptions.append(line)
-        log.close()
+        if "autopsy" in file:
+            log = open(make_path(logs_path, file), "r")
+            lines = log.readlines()
+            ex = re.compile("\SException")
+            er = re.compile("\SError")
+            for line in lines:
+                if ex.search(line) or er.search(line):
+                    exceptions.append(line)
+            log.close()
     return exceptions
     
 # Returns a list of all the warnings listed in the common log
@@ -1227,11 +1228,12 @@ def compare_report_files(a_path, b_path):
     a_list = split(a, 50)
     b_list = split(b, 50)
     exceptions = []
-    for a_split, b_split in zip(a_list, b_list):
-        if a_split != b_split:
-            exceptions.append("Got:\t\t" + a_split + "\n")
-            exceptions.append("Expected:\t" + b_split + "\n")
-            exceptions.append("~~~~~~~~~~\n")
+    if not len(a_list) == len(b_list):
+        exceptions.append("The reports do not match.")
+        test = "The test HTML report has " + str(len(a_list)) + " segments."
+        gold = "The gold HTML report has " + str(len(b_list)) + " segments."
+        exceptions.append(test)
+        exceptions.append(gold)
     return exceptions
 
 # Split a string into an array of string of the given size
