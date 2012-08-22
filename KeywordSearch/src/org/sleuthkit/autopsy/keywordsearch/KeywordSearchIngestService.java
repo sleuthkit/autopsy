@@ -51,9 +51,13 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
  * An ingest service on a file level Performs indexing of allocated and Solr
@@ -98,6 +102,7 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
     private List<AbstractFileExtract> textExtractors;
     private AbstractFileStringExtract stringExtractor;
     private final List<SCRIPT> stringExtractScripts = new ArrayList<SCRIPT>();
+    private final GetIsFileKnownV getIsFileKnown = new GetIsFileKnownV();
 
     private enum IngestStatus {
 
@@ -140,31 +145,50 @@ public final class KeywordSearchIngestService implements IngestServiceAbstractFi
             return ProcessResult.OK;
         }
 
-        //check if we should skip this file according to HashDb service
-        //if so do not index it, also postpone indexing and keyword search threads to later
+        //check if we should index meta-data only when 1) it is known 2) HashDb service errored on it
         IngestServiceAbstractFile.ProcessResult hashDBResult = managerProxy.getAbstractFileServiceResult(hashDBServiceName);
         //logger.log(Level.INFO, "hashdb result: " + hashDBResult + "file: " + AbstractFile.getName());
-        if (hashDBResult == IngestServiceAbstractFile.ProcessResult.COND_STOP && skipKnown) {
-            //index meta-data only
-            indexer.indexFile(abstractFile, false);
-            return ProcessResult.OK;
-        } else if (hashDBResult == IngestServiceAbstractFile.ProcessResult.ERROR) {
+        if (hashDBResult == IngestServiceAbstractFile.ProcessResult.ERROR) {
             //index meta-data only
             indexer.indexFile(abstractFile, false);
             //notify depending service that keyword search (would) encountered error for this file
             return ProcessResult.ERROR;
         }
+        else if (skipKnown && abstractFile.accept(getIsFileKnown) == true) {
+            //index meta-data only
+            indexer.indexFile(abstractFile, false);
+            return ProcessResult.OK;
+        } 
 
         if (processedFiles == false) {
             processedFiles = true;
         }
 
+        //check if it's time to commit after previous processing
         checkRunCommitSearch();
 
         //index the file and content (if the content is supported)
         indexer.indexFile(abstractFile, true);
+        
+        
         return ProcessResult.OK;
+    }
+    
+    /**
+     * Process content hierarchy and return true if content is a file and is set as known
+     */
+    private class GetIsFileKnownV extends ContentVisitor.Default<Boolean> {
 
+        @Override
+        protected Boolean defaultVisit(Content cntnt) {
+            return false;
+        }
+        
+        @Override
+        public Boolean visit(File file) {
+            return file.getKnown() == FileKnown.KNOWN;
+        }
+        
     }
 
     /**
