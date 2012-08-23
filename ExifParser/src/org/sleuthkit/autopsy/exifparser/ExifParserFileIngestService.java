@@ -47,8 +47,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 /**
- * Example implementation of an image ingest service 
- * 
+ * Ingest module to parse image Exif metadata. Currently only supports JPEG files.
+ * Ingests an image file and, if available, adds it's date, latitude, longitude,
+ * altitude, device model, and device make to a blackboard artifact.
  */
 public final class ExifParserFileIngestService implements IngestServiceAbstractFile {
 
@@ -58,9 +59,9 @@ public final class ExifParserFileIngestService implements IngestServiceAbstractF
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
 
-    //public constructor is required
-    //as multiple instances are created for processing multiple images simultenously
-    public ExifParserFileIngestService() {
+    //file ingest services require a private constructor
+    //to ensure singleton instances
+    private ExifParserFileIngestService() {
     }
 
     //default instance used for service registration
@@ -196,7 +197,7 @@ public final class ExifParserFileIngestService implements IngestServiceAbstractF
     
     @Override
     public String getDescription() {
-        return "Ingests all image files and retrieves their metadata.";
+        return "Ingests .jpg and .jpeg files and retrieves their metadata.";
     }
 
     @Override
