@@ -47,6 +47,7 @@ public class Installer extends ModuleInstall {
         if (logs == null) {
             try {
                 logs = new FileHandler(LOG_FILENAME_PATTERN, LOG_SIZE, LOG_FILE_COUNT);
+                logs.setEncoding(PlatformUtil.getLogFileEncoding());
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -56,7 +57,7 @@ public class Installer extends ModuleInstall {
         
         autopsyLogger.log(Level.INFO, "Using encoding for log files: " + logs.getEncoding());
         autopsyLogger.log(Level.INFO, "Default charset: " + Charset.defaultCharset().displayName());
-        autopsyLogger.log(Level.INFO, "Default file encoding: " + System.getProperty("file.encoding"));
+        autopsyLogger.log(Level.INFO, "Default file encoding: " + PlatformUtil.getDefaultPlatformFileEncoding());
         
         autopsyLogger.log(Level.INFO, "Java runtime version: " + Version.getJavaRuntimeVersion());
         
@@ -64,6 +65,9 @@ public class Installer extends ModuleInstall {
         
         autopsyLogger.log(Level.INFO, "Application name: " + Version.getName() 
                 + ", version: " + Version.getVersion() + ", build: " + Version.getBuildType());
+        
+        autopsyLogger.info("   لوك أويل الروسية توقع عقدا بمليار دولار مع سامسونج لتطور حق");
+    
     }
     
     @Override

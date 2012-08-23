@@ -212,7 +212,7 @@ class Server {
             InputStreamReader isr = new InputStreamReader(stream);
             BufferedReader br = new BufferedReader(isr);
             try {
-                OutputStreamWriter osw = new OutputStreamWriter(out);
+                OutputStreamWriter osw = new OutputStreamWriter(out, PlatformUtil.getDefaultPlatformCharset());
                 BufferedWriter bw = new BufferedWriter(osw);
                 String line = null;
                 while (doRun && (line = br.readLine()) != null) {
