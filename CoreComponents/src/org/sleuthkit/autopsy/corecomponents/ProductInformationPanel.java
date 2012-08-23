@@ -36,6 +36,7 @@ import org.openide.awt.HtmlBrowser;
 import org.openide.modules.Places;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 
 /**
@@ -53,7 +54,7 @@ class ProductInformationPanel extends JPanel implements HyperlinkListener {
         jLabel1.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         description.setText(org.openide.util.NbBundle.getMessage(ProductInformationPanel.class,
                 "LBL_Description", new Object[]{getProductVersionValue(), getJavaValue(), getVMValue(),
-                    getOperatingSystemValue(), getEncodingValue(), getSystemLocaleValue(), getUserDirValue(), getSleuthKitVersionValue()}));
+                    getOperatingSystemValue(), getEncodingValue(), getSystemLocaleValue(), getUserDirValue(), getSleuthKitVersionValue(), Version.getNetbeansBuild()}));
         description.addHyperlinkListener(this);
         copyright.addHyperlinkListener(this);
         copyright.setBackground(getBackground());
