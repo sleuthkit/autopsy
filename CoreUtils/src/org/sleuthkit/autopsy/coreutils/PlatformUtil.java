@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.modules.Places;
 
 /**
  *
@@ -61,6 +62,14 @@ public class PlatformUtil {
         
         
         return javaPath;
+    }
+    
+    /**
+     * Get user directory where application wide user settings, cache, temp files are stored
+     * @return File object representing user directory
+     */
+    public static File getUserDirectory() {
+        return Places.getUserDirectory();
     }
     
     
