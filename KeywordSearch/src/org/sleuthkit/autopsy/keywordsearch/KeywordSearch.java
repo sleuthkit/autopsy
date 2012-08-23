@@ -29,6 +29,7 @@ import java.util.logging.SimpleFormatter;
 import org.openide.modules.Places;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWriter;
 
 /**
@@ -54,7 +55,7 @@ class KeywordSearch {
     static {
         try {
             final int MAX_TIKA_LOG_FILES = 3;
-            FileHandler tikaLogHandler = new FileHandler(Places.getUserDirectory().getAbsolutePath() + "/var/log/tika.log",
+            FileHandler tikaLogHandler = new FileHandler(PlatformUtil.getUserDirectory().getAbsolutePath() + "/var/log/tika.log",
                     0, MAX_TIKA_LOG_FILES);
             tikaLogHandler.setFormatter(new SimpleFormatter());
             TIKA_LOGGER.addHandler(tikaLogHandler);
