@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.coreutils;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.modules.InstalledFileLocator;
@@ -70,6 +71,18 @@ public class PlatformUtil {
      */
     public static File getUserDirectory() {
         return Places.getUserDirectory();
+    }
+    
+    public static String getDefaultPlatformFileEncoding() {
+        return System.getProperty("file.encoding");
+    }
+    
+    public static String getDefaultPlatformCharset() {
+        return Charset.defaultCharset().name();
+    }
+    
+    public static String getLogFileEncoding() {
+        return Charset.forName("UTF-8").name();
     }
     
     

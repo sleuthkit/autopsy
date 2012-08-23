@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.coreutils;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.logging.FileHandler;
 import org.openide.modules.ModuleInstall;
 import java.util.logging.Logger;
@@ -46,12 +47,17 @@ public class Installer extends ModuleInstall {
         if (logs == null) {
             try {
                 logs = new FileHandler(LOG_FILENAME_PATTERN, LOG_SIZE, LOG_FILE_COUNT);
+                logs.setEncoding(PlatformUtil.getLogFileEncoding());
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
             logs.setFormatter(new SimpleFormatter());
             autopsyLogger.addHandler(logs);
         }
+        
+        autopsyLogger.log(Level.INFO, "Using encoding for log files: " + logs.getEncoding());
+        autopsyLogger.log(Level.INFO, "Default charset: " + PlatformUtil.getDefaultPlatformCharset());
+        autopsyLogger.log(Level.INFO, "Default file encoding: " + PlatformUtil.getDefaultPlatformFileEncoding());
         
         autopsyLogger.log(Level.INFO, "Java runtime version: " + Version.getJavaRuntimeVersion());
         
