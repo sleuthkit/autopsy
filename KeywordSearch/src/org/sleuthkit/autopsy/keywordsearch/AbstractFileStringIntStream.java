@@ -53,13 +53,13 @@ public class AbstractFileStringIntStream extends InputStream {
     private StringExtractResult lastExtractResult;
 
     /**
-     * Constructs new stream object that does convertion from file, to extracted
-     * strings, then to byte stream, for specified script auto-detected encoding
+     * Constructs new stream object that does conversion from file, to extracted
+     * strings, then to byte stream, for specified script, auto-detected encoding
      * (UTF8, UTF16LE, UTF16BE), and specified output byte stream encoding
      *
-     * @param content
-     * @param script
-     * @param outCharset
+     * @param content input content to process and turn into a stream to convert into strings
+     * @param scripts a list of scripts to consider
+     * @param outCharset encoding to use in the output byte stream
      */
     public AbstractFileStringIntStream(AbstractFile content, List<SCRIPT> scripts, Charset outCharset) {
         this.content = content;

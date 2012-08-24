@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.datamodel;
 
 import java.io.FileOutputStream;
@@ -48,19 +47,17 @@ import org.sleuthkit.datamodel.VolumeSystem;
  * Static class of utility methods for Content objects
  */
 public final class ContentUtils {
-    
+
     private final static Logger logger = Logger.getLogger(ContentUtils.class.getName());
-	private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    
+    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
     // don't instantiate
     private ContentUtils() {
         throw new AssertionError();
     }
-    
     private static final ShortNameVisitor shortName = new ShortNameVisitor();
-    
     private static final GetPathVisitor getDisplayPath = new GetPathVisitor(shortName);
-    
+
     /**
      * Returns full path to this node.
      *
@@ -69,90 +66,94 @@ public final class ContentUtils {
     public static String[] getDisplayPath(Content content) {
         return content.accept(getDisplayPath).toArray(new String[]{});
     }
-    
-    
+
     /**
      * Convert epoch seconds to a string value in the given time zone
+     *
      * @param epochSeconds
      * @param tzone
-     * @return 
+     * @return
      */
-	public static String getStringTime(long epochSeconds, TimeZone tzone) {
-		String time = "0000-00-00 00:00:00";
-		if (epochSeconds != 0) {
-			dateFormatter.setTimeZone(tzone);
-			time = dateFormatter.format(new java.util.Date(epochSeconds * 1000));
-		}
-		return time;
-	}
-    
+    public static String getStringTime(long epochSeconds, TimeZone tzone) {
+        String time = "0000-00-00 00:00:00";
+        if (epochSeconds != 0) {
+            dateFormatter.setTimeZone(tzone);
+            time = dateFormatter.format(new java.util.Date(epochSeconds * 1000));
+        }
+        return time;
+    }
+
     /**
      * Convert epoch seconds to a string value (convenience method)
+     *
      * @param epochSeconds
      * @param c
-     * @return 
+     * @return
      */
-	public static String getStringTime(long epochSeconds, Content c) {
-		return getStringTime(epochSeconds, getTimeZone(c));
-	}
-    
+    public static String getStringTime(long epochSeconds, Content c) {
+        return getStringTime(epochSeconds, getTimeZone(c));
+    }
+
     public static TimeZone getTimeZone(Content c) {
         try {
             return TimeZone.getTimeZone(c.getImage().getTimeZone());
-        } catch(TskException ex) {
+        } catch (TskException ex) {
             return TimeZone.getDefault();
         }
     }
-    
     private static final SystemNameVisitor systemName = new SystemNameVisitor();
-    
     private static final GetPathVisitor getSystemPath = new GetPathVisitor(systemName);
-    
+
     /**
      * Returns full path to this node.
-     * 
+     *
      * @return the path of this node
      */
     public static String[] getSystemPath(Content content) {
         return content.accept(getSystemPath).toArray(new String[]{});
     }
-    
+
     static String getSystemName(Content content) {
         return content.accept(systemName);
     }
-    
+
     private static class SystemNameVisitor extends ContentVisitor.Default<String> {
-        SystemNameVisitor() {}
+
+        SystemNameVisitor() {
+        }
 
         @Override
         protected String defaultVisit(Content cntnt) {
             return cntnt.accept(shortName) + ":" + Long.toString(cntnt.getId());
         }
     }
-   
+
     private static class ShortNameVisitor extends ContentVisitor.Default<String> {
-        ShortNameVisitor() {}
+
+        ShortNameVisitor() {
+        }
 
         @Override
         protected String defaultVisit(Content cntnt) {
             return cntnt.getName();
         }
     }
-    
-    private static class GetPathVisitor implements ContentVisitor<List<String>> { 
+
+    private static class GetPathVisitor implements ContentVisitor<List<String>> {
+
         ContentVisitor<String> toString;
 
         GetPathVisitor(ContentVisitor<String> toString) {
             this.toString = toString;
         }
-        
+
         @Override
         public List<String> visit(LayoutFile lay) {
             List<String> path = lay.getParent().accept(this);
             path.add(toString.visit(lay));
             return path;
         }
-        
+
         @Override
         public List<String> visit(LayoutDirectory ld) {
             List<String> path = ld.getParent().accept(this);
@@ -174,7 +175,7 @@ public final class ContentUtils {
                     throw new RuntimeException("Couldn't get directory path.", ex);
                 }
             }
-            
+
             return path;
         }
 
@@ -196,9 +197,9 @@ public final class ContentUtils {
 
         @Override
         public List<String> visit(Image image) {
-           List<String> path = new LinkedList<String>();
-           path.add(toString.visit(image));
-           return path;
+            List<String> path = new LinkedList<String>();
+            path.add(toString.visit(image));
+            return path;
         }
 
         @Override
@@ -213,24 +214,29 @@ public final class ContentUtils {
             return vs.getParent().accept(this);
         }
     }
-    
-    
     private static final int TO_FILE_BUFFER_SIZE = 8192;
-    
+
     /**
      * Reads all the data from any content object and writes it to a file.
+     *
      * @param content Any content object.
      * @param outputFile Will be created if it doesn't exist, and overwritten if
      * it does
-     * @throws IOException 
+     * @param progress progress bar handle to update, if available. null
+     * otherwise
+     * @param worker the swing worker background thread the process runs within,
+     * or null, if in the main thread, used to handle task cancellation
+     * @param source true if source file
+     * @throws IOException if file could not be written
      */
-    public static void writeToFile(Content content, java.io.File outputFile, ProgressHandle progress, SwingWorker worker, boolean source) throws IOException {
+    public static void writeToFile(Content content, java.io.File outputFile,
+            ProgressHandle progress, SwingWorker worker, boolean source) throws IOException {
 
         InputStream in = new ReadContentInputStream(content);
-        
+
         boolean append = false;
         FileOutputStream out = new FileOutputStream(outputFile, append);
-        
+
         // Get the unit size for a progress bar
         int unit = (int) (content.getSize() / 100);
         long totalRead = 0;
@@ -240,19 +246,19 @@ public final class ContentUtils {
             int len = in.read(buffer);
             while (len != -1) {
                 // If there is a worker, check for a cancelation
-                if (worker!=null && worker.isCancelled()) {
+                if (worker != null && worker.isCancelled()) {
                     break;
                 }
                 out.write(buffer, 0, len);
                 len = in.read(buffer);
-                totalRead+=len;
+                totalRead += len;
                 // If there is a progress bar and this is the source file,
                 // report any progress
-                if(progress!=null && source && totalRead>=TO_FILE_BUFFER_SIZE) {
+                if (progress != null && source && totalRead >= TO_FILE_BUFFER_SIZE) {
                     int totalProgress = (int) (totalRead / unit);
                     progress.progress(content.getName(), totalProgress);
-                // If it's not the source, just update the file being processed
-                } else if(progress!=null && !source) {
+                    // If it's not the source, just update the file being processed
+                } else if (progress != null && !source) {
                     progress.progress(content.getName());
                 }
             }
@@ -260,11 +266,11 @@ public final class ContentUtils {
             out.close();
         }
     }
-    
+
     public static void writeToFile(Content content, java.io.File outputFile) throws IOException {
         writeToFile(content, outputFile, null, null, false);
     }
-    
+
     /**
      * Helper to ignore the '.' and '..' directories
      */
@@ -272,8 +278,7 @@ public final class ContentUtils {
         String name = dir.getName();
         return name.equals(".") || name.equals("..");
     }
-    
-    
+
     /**
      * Extracts file/folder as given destination file, recursing into folders.
      * Assumes there will be no collisions with existing directories/files, and
@@ -288,22 +293,30 @@ public final class ContentUtils {
 
         /**
          * Make new extractor for a specific destination
+         *
          * @param dest The file/folder visited will be extracted as this file
+         * @param progress progress bar handle to update, if available. null
+         * otherwise
+         * @param worker the swing worker background thread the process runs
+         * within, or null, if in the main thread, used to handle task
+         * cancellation
+         * @param source true if source file
          */
-        public ExtractFscContentVisitor(java.io.File dest, ProgressHandle progress, SwingWorker worker, boolean source) {
+        public ExtractFscContentVisitor(java.io.File dest,
+                ProgressHandle progress, SwingWorker worker, boolean source) {
             this.dest = dest;
             this.progress = progress;
             this.worker = worker;
             this.source = source;
         }
-        
+
         public ExtractFscContentVisitor(java.io.File dest) {
             this.dest = dest;
         }
 
         /**
-         * Convenience method to make a new instance for given destination
-         * and extract given content 
+         * Convenience method to make a new instance for given destination and
+         * extract given content
          */
         public static void extract(Content cntnt, java.io.File dest, ProgressHandle progress, SwingWorker worker) {
             cntnt.accept(new ExtractFscContentVisitor(dest, progress, worker, true));
@@ -323,14 +336,14 @@ public final class ContentUtils {
 
         @Override
         public Void visit(Directory dir) {
-            
+
             // don't extract . and .. directories
             if (isDotDirectory(dir)) {
                 return null;
             }
-            
+
             dest.mkdir();
-            
+
             // member visitor to generate destination files for children
             DestFileContentVisitor destFileCV = new DestFileContentVisitor();
 
@@ -339,15 +352,15 @@ public final class ContentUtils {
                 // recurse on children
                 for (Content child : dir.getChildren()) {
                     java.io.File childFile = child.accept(destFileCV);
-                    ExtractFscContentVisitor childVisitor = 
-                        new ExtractFscContentVisitor(childFile, progress, worker, false);
+                    ExtractFscContentVisitor childVisitor =
+                            new ExtractFscContentVisitor(childFile, progress, worker, false);
                     // If this is the source directory of an extract it
                     // will have a progress and worker, and will keep track
                     // of the progress bar's progress
-                    if(worker!=null && worker.isCancelled()) {
+                    if (worker != null && worker.isCancelled()) {
                         break;
                     }
-                    if(progress!=null && source) {
+                    if (progress != null && source) {
                         progress.progress(child.getName(), numProcessed);
                     }
                     child.accept(childVisitor);
@@ -370,12 +383,11 @@ public final class ContentUtils {
         /**
          * Helper visitor to get the destination file for a child Content object
          */
-        private class DestFileContentVisitor extends
-                ContentVisitor.Default<java.io.File> {
+        private class DestFileContentVisitor extends ContentVisitor.Default<java.io.File> {
 
             /**
-             * Get destination file by adding File/Directory name to the path
-             * of parent
+             * Get destination file by adding File/Directory name to the path of
+             * parent
              */
             private java.io.File getFsContentDest(FsContent fsc) {
                 String path = dest.getAbsolutePath() + java.io.File.separator

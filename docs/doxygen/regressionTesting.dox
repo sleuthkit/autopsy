@@ -42,7 +42,7 @@ If you are planning on running the script regularly ("./regression.py"), the inp
 
 		autopsy/Testing/script/input
 
-However, if you are planning on using the configuration file, you can change the input directory using the <indir> tag.
+However, if you are planning on using the configuration file, you can change the input directory using the &lt;indir&gt; tag.
 
 Ensure the following files are in the input directory, whether in the default location or set by the configuration file
 
@@ -50,7 +50,7 @@ Ensure the following files are in the input directory, whether in the default lo
 		nsrl.txt-md5.idx
 		notablekeywords.xml
 
-Place any images you would like to test in the input directory, and/or use the configuration file to point to image files directly using the <image> tag. The input directory will be scanned for images even when the configuration file points to specific ones. Use the -i or --ignore command to prevent this.
+Place any images you would like to test in the input directory, and/or use the configuration file to point to image files directly using the &lt;image&gt; tag. The input directory will be scanned for images even when the configuration file points to specific ones. Use the -i or --ignore command to prevent this.
 
 
 
@@ -105,13 +105,13 @@ An XML configuration file can be pointed to by using the -l or --list command as
 
 The configuration file has three possible tags, all of which are optional.
 
-<indir value="X:\path\to\input\directory">
+&lt;indir value="X:\path\to\input\directory"&gt;
 Changes the default input directory to the one provided.
 
-<global_csv value="X:\path\to\csv\file.txt">
+&lt;global_csv value="X:\path\to\csv\file.txt"&gt;
 Points to an optional CSV file to be added to, anywhere in the user's filesystem.
 
-<image value="X:\path\to\image.img">
+&lt;image value="X:\path\to\image.img"&gt;
 Points to a specific image file to be tested. This tag can be used any number of times in the configuration file.
 
 
@@ -194,7 +194,7 @@ For further reference regarding ContainerOperators, please see
 
 
 When an element has been selected, the individual components may be manipluated with ContainerOperators. 
-To select a button, use the code below, where cont is one of the ContainerOperators from above, text is the text displayed on the button, and index is the button's order if there are multiple with the same name (i.e. if there are three buttons labeled “preview”, the first's index is 0, then 1, then 2).
+To select a button, use the code below, where cont is one of the ContainerOperators from above, text is the text displayed on the button, and index is the button's order if there are multiple with the same name (i.e. if there are three buttons labeled ï¿½previewï¿½, the first's index is 0, then 1, then 2).
 
 JbuttonOperator jbo = new JbuttonOperator(ContainerOperator cont, String text, int index);
 

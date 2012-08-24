@@ -96,7 +96,8 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
      * Returns which of the supported SearchEngines, if any, the given string
      * belongs to.
      *
-     * @param searchEngineName the URL string to be determined
+     * @param domain domain as part of the URL
+     * @return supported search engine the domain belongs to, if any
      *
      */
     private static SearchEngine getSearchEngine(String domain) {
