@@ -135,4 +135,11 @@ public class FileNode extends AbstractFsContentNode<File> {
     public TYPE getDisplayableItemNodeType() {
         return TYPE.CONTENT;
     }
+
+    @Override
+    public boolean isLeafTypeNode() {
+        return true;
+    }
+    
+    
 }
