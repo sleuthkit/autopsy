@@ -82,7 +82,6 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
     /**
      * Don't show expansion button on leaves leaf: all children are (file) or
      * (directory named "." or "..")
-     * TODO check if this method really works, seems it returns false when it shouldn't
      * @param node
      * @return whether node is a leaf
      */
