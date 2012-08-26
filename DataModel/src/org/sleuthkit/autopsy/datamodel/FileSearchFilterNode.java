@@ -28,8 +28,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Node for the file search filter
  */
-public class FileSearchFilterNode extends AbstractNode implements DisplayableItemNode {
-    
+public class FileSearchFilterNode extends DisplayableItemNode {
+
     SearchFilters.SearchFilterInterface filter;
     SleuthkitCase skCase;
 
@@ -46,7 +46,7 @@ public class FileSearchFilterNode extends AbstractNode implements DisplayableIte
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
@@ -55,22 +55,31 @@ public class FileSearchFilterNode extends AbstractNode implements DisplayableIte
             ss = Sheet.createPropertiesSet();
             s.put(ss);
         }
-        
+
         ss.put(new NodeProperty("Filter Type",
-                                "Filter Type",
-                                "no description",
-                                filter.getDisplayName()));
+                "Filter Type",
+                "no description",
+                filter.getDisplayName()));
         String extensions = "";
-        for(String ext : filter.getFilter()){
+        for (String ext : filter.getFilter()) {
             extensions += "'" + ext + "', ";
         }
         extensions = extensions.substring(0, extensions.lastIndexOf(','));
         ss.put(new NodeProperty("File Extensions",
-                                "File Extensions",
-                                "no description",
-                                extensions));
+                "File Extensions",
+                "no description",
+                extensions));
 
         return s;
     }
-    
+
+    @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.META;
+    }
+
+    @Override
+    public boolean isLeafTypeNode() {
+        return true;
+    }
 }

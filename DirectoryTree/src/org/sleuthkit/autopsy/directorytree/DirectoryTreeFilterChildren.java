@@ -20,42 +20,27 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
-import org.sleuthkit.autopsy.datamodel.ImageNode;
-import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.datamodel.ArtifactTypeNode;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedAccountNode;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedFolderNode;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted.EmailExtractedRootNode;
-import org.sleuthkit.autopsy.datamodel.ExtractedContentNode;
-import org.sleuthkit.autopsy.datamodel.FileSearchFilterNode;
-import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsRootNode;
-import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetHitsSetNode;
-import org.sleuthkit.autopsy.datamodel.ImagesNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
-import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
-import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
-import org.sleuthkit.autopsy.datamodel.ResultsNode;
-import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
-import org.sleuthkit.autopsy.datamodel.ViewsNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * This class wraps around nodes that are displayed in the directory tree and 
- * hides files, '..', and other children that should not be displayed. 
- * 
+ * This class wraps around nodes that are displayed in the directory tree and
+ * hides files, '..', and other children that should not be displayed.
+ *
  * @author jantonius
  */
 class DirectoryTreeFilterChildren extends FilterNode.Children {
 
-    /** the constructor */
+    /**
+     * the constructor
+     */
     public DirectoryTreeFilterChildren(Node arg) {
         super(arg);
     }
@@ -70,48 +55,31 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
     }
 
     @Override
-    protected Node[] createNodes(Node arg0) {
+    protected Node[] createNodes(Node origNode) {
 
-        //TODO: ContentNode fix - replace with ContentVisitor
+
+        if (origNode == null || !(origNode instanceof DisplayableItemNode)) {
+            return new Node[]{};
+        } 
+
+        final DisplayableItemNode diNode = (DisplayableItemNode) origNode;
 
         // filter out the FileNode and the "." and ".." directories
-        if (arg0 != null
-                && (arg0 instanceof ImageNode
-                || arg0 instanceof VolumeNode
-                || (arg0 instanceof DirectoryNode
-                && !isDotDirectory((DirectoryNode) arg0)
-                && !isLeafDirectory((DirectoryNode) arg0))
-                || arg0 instanceof ExtractedContentNode
-                || arg0 instanceof SearchFiltersNode
-                || arg0 instanceof RecentFilesNode
-                || arg0 instanceof KeywordHitsRootNode
-                || arg0 instanceof KeywordHitsListNode
-                || arg0 instanceof HashsetHitsRootNode
-                || arg0 instanceof EmailExtractedRootNode
-                || arg0 instanceof EmailExtractedAccountNode
-                || arg0 instanceof ImagesNode
-                || arg0 instanceof ViewsNode
-                || arg0 instanceof ResultsNode)) {
-            return new Node[]{this.copyNode(arg0, true)};
-        } else if (arg0 != null
-                && (arg0 instanceof KeywordHitsKeywordNode
-                || (arg0 instanceof DirectoryNode
-                && !isDotDirectory((DirectoryNode) arg0))
-                || arg0 instanceof ArtifactTypeNode 
-                || arg0 instanceof RecentFilesFilterNode
-                || arg0 instanceof FileSearchFilterNode
-                || arg0 instanceof HashsetHitsSetNode
-                || arg0 instanceof EmailExtractedFolderNode
-                )) {
-            return new Node[]{this.copyNode(arg0, false)};
+        // do not set childrens, if we know the node type is a leaf node type
+        if (!diNode.isLeafTypeNode()
+                || (origNode instanceof DirectoryNode
+                && !isDotDirectory((DirectoryNode) origNode)
+                && !isLeafDirectory((DirectoryNode) origNode))) {
+            return new Node[]{this.copyNode(origNode, true)};
         } else {
-            return new Node[]{};
+            return new Node[]{this.copyNode(origNode, false)};
         }
     }
 
     /**
-     * Don't show expansion button on leaves
-     * leaf: all children are (file) or (directory named "." or "..")
+     * Don't show expansion button on leaves leaf: all children are (file) or
+     * (directory named "." or "..")
+     *
      * @param node
      * @return whether node is a leaf
      */
@@ -120,8 +88,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         boolean ret = true;
         try {
             for (Content c : dir.getChildren()) {
-                if (c instanceof Directory && (!((Directory)c).getName().equals(".")
-                        && !((Directory)c).getName().equals(".."))) {
+                if (c instanceof Directory && (!((Directory) c).getName().equals(".")
+                        && !((Directory) c).getName().equals(".."))) {
                     ret = false;
                     break;
                 }
@@ -144,10 +112,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
     /**
      * Return the children based on the current node given. If the node doesn't
-     * have any directory or volume or image node inside it, it just returns leaf.
-     * 
-     * @param arg        the node
-     * @return children  the children
+     * have any directory or volume or image node inside it, it just returns
+     * leaf.
+     *
+     * @param arg the node
+     * @return children the children
      */
     public static Children createInstance(Node arg, boolean createChildren) {
         if (createChildren) {

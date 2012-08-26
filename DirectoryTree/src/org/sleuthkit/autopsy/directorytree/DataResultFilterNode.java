@@ -51,6 +51,8 @@ import org.sleuthkit.autopsy.datamodel.ImageNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsKeywordNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsListNode;
 import org.sleuthkit.autopsy.datamodel.KeywordHits.KeywordHitsRootNode;
+import org.sleuthkit.autopsy.datamodel.LayoutDirectoryNode;
+import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
 import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
@@ -170,6 +172,24 @@ public class DataResultFilterNode extends FilterNode {
             actions.add(new NewWindowViewAction("View in New Window", dir));
             actions.add(null); // creates a menu separator
             actions.add(new ExtractAction("Extract Directory", dir));
+            actions.add(null); // creates a menu separator
+            actions.add(new FileBookmarkAction("Bookmark Directory", dir));
+            return actions;
+        }
+        
+        @Override
+        public List<Action> visit(LayoutFileNode lf) {
+            List<Action> actions = new ArrayList<Action>();
+           
+            actions.add(new FileBookmarkAction("Bookmark File", lf));
+            return actions;
+        }
+        
+        @Override
+        public List<Action> visit(LayoutDirectoryNode ld) {
+            List<Action> actions = new ArrayList<Action>();
+           
+            actions.add(new FileBookmarkAction("Bookmark Directory", ld));
             return actions;
         }
 
@@ -185,6 +205,8 @@ public class DataResultFilterNode extends FilterNode {
             actions.add(null); // creates a menu separator
             actions.add(new ExtractAction("Extract File", f));
             actions.add(new HashSearchAction("Search for files with the same MD5 hash", f));
+            actions.add(null); // creates a menu separator
+            actions.add(new FileBookmarkAction("Bookmark File", f));
             return actions;
         }
 

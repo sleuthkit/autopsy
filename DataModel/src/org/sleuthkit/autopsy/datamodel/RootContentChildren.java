@@ -49,6 +49,7 @@ public class RootContentChildren extends AbstractContentChildren {
         setKeys(Collections.<Object>emptySet());
     }
     
+    //TODO use visitor
     public void refreshKeys(BlackboardArtifact.ARTIFACT_TYPE... types) {
         for (Object o : contentKeys) {
             for (BlackboardArtifact.ARTIFACT_TYPE type : types) {
@@ -65,6 +66,18 @@ public class RootContentChildren extends AbstractContentChildren {
                         if (o instanceof EmailExtracted)
                             this.refreshKey(o);
                         break;
+                        
+                        //TODO check
+                    case TSK_BOOKMARK_FILE:
+                        if (o instanceof Bookmarks)
+                            this.refreshKey(o);
+                        break;
+                        
+                        //TODO check
+                     case TSK_BOOKMARK_ARTIFACT:
+                        if (o instanceof Bookmarks)
+                            this.refreshKey(o);
+                        break;
                     default:
                         if (o instanceof ExtractedContent)
                             this.refreshKey(o);
@@ -77,6 +90,8 @@ public class RootContentChildren extends AbstractContentChildren {
                 else if (o instanceof KeywordHits)
                     this.refreshKey(o);
                 else if (o instanceof EmailExtracted)
+                    this.refreshKey(o);
+                else if (o instanceof Bookmarks)
                     this.refreshKey(o);
                 else if (o instanceof ExtractedContent)
                     this.refreshKey(o);

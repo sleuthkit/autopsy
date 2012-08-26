@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Node for search filter
  */
-public class SearchFiltersNode extends AbstractNode implements DisplayableItemNode {
+public class SearchFiltersNode extends DisplayableItemNode {
 
     private static final String FNAME = "File Types";
     private static final String DNAME = "Documents";
@@ -65,5 +65,10 @@ public class SearchFiltersNode extends AbstractNode implements DisplayableItemNo
                 "no description",
                 getName()));
         return s;
+    }
+
+    @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.META;
     }
 }

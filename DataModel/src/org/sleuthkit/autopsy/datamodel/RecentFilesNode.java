@@ -27,8 +27,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Node for recent files
  */
-public class RecentFilesNode extends AbstractNode implements DisplayableItemNode {
-    
+public class RecentFilesNode extends DisplayableItemNode {
+
     private static final String NAME = "Recent Files";
     SleuthkitCase skCase;
 
@@ -38,13 +38,18 @@ public class RecentFilesNode extends AbstractNode implements DisplayableItemNode
         super.setDisplayName(NAME);
         this.skCase = skCase;
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png");
-}
+    }
+
+    @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.META;
+    }
 
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();

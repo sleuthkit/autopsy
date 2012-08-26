@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.TskException;
  * Provides basic information such as ID, parent ID, etc.
  * @param <T> type of wrapped Content
  */
-abstract class AbstractContentNode<T extends Content> extends AbstractNode implements ContentNode {
+abstract class AbstractContentNode<T extends Content> extends ContentNode {
     /**
      * Underlying Sleuth Kit Content object
      */

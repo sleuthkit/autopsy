@@ -18,18 +18,31 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.openide.nodes.Children;
+import org.openide.util.Lookup;
+
 /**
  * Interface class that all Data nodes inherit from.
  * Provides basic information such as ID, parent ID, etc.
  */
 
-public interface ContentNode extends DisplayableItemNode{
+public abstract class ContentNode extends DisplayableItemNode{
 
+    public ContentNode(Children children) {
+        super(children);
+    }
+
+    public ContentNode(Children children, Lookup lookup) {
+        super(children, lookup);
+    }
+
+    
+    
     /**
      * Visitor pattern support.
      * 
      * @param v visitor
      * @return visitor's visit return value
      */
-    <T> T accept(ContentNodeVisitor<T> v);
+    public abstract <T> T accept(ContentNodeVisitor<T> v);
 }

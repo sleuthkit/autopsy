@@ -62,6 +62,11 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
     }
 
     @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.CONTENT;
+    }
+
+    @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
