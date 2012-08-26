@@ -21,8 +21,6 @@
 package org.sleuthkit.autopsy.report;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +32,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.sleuthkit.autopsy.recentactivity.dbconnect;
 
@@ -249,16 +248,16 @@ public class Report {
      * @return reportMap a hashmap of all the artifacts for artifact types were
      * input
      */
-    public HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> getAllTypes(ReportConfiguration config) {
-        HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>>();
+    public HashMap<BlackboardArtifact, List<BlackboardAttribute>> getAllTypes(ReportConfiguration config) {
+        HashMap<BlackboardArtifact, List<BlackboardAttribute>> reportMap = new HashMap<BlackboardArtifact, List<BlackboardAttribute>>();
         Case currentCase = Case.getCurrentCase(); // get the most updated case
         SleuthkitCase tempDb = currentCase.getSleuthkitCase();
         try {
             for (Map.Entry<BlackboardArtifact.ARTIFACT_TYPE, Boolean> entry : config.config.entrySet()) {
                 if (entry.getValue()) {
-                    ArrayList<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(entry.getKey());
+                    List<BlackboardArtifact> bbart = tempDb.getBlackboardArtifacts(entry.getKey());
                     for (BlackboardArtifact artifact : bbart) {
-                        ArrayList<BlackboardAttribute> attributes = artifact.getAttributes();
+                        List<BlackboardAttribute> attributes = artifact.getAttributes();
                         reportMap.put(artifact, attributes);
                     }
                 }

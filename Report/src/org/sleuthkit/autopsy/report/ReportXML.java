@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -65,7 +66,7 @@ public class ReportXML implements ReportModule {
     public String generateReport(ReportConfiguration reportconfig) throws ReportModuleException {
         ReportGen reportobj = new ReportGen();
         reportobj.populateReport(reportconfig);
-        HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
+        HashMap<BlackboardArtifact, List<BlackboardAttribute>> report = reportobj.getResults();
         try {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase skCase = currentCase.getSleuthkitCase();
@@ -110,7 +111,7 @@ public class ReportXML implements ReportModule {
             Element nodeWebSearch = new Element("Web-Search-Queries");
             //remove bytes
             Pattern INVALID_XML_CHARS = Pattern.compile("[^\\u0009\\u000A\\u000D\\u0020-\\uD7FF\\uE000-\\uFFFD\uD800\uDC00-\uDBFF\uDFFF]");
-            for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
+            for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
                 if (ReportFilter.cancel == true) {
                     break;
                 }
