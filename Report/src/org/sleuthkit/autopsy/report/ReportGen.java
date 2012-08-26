@@ -20,8 +20,8 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
@@ -32,18 +32,22 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  */
 public class ReportGen {
 
-    HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> Results = new HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>>();
+    private HashMap<BlackboardArtifact, List<BlackboardAttribute>> results = new HashMap<BlackboardArtifact, List<BlackboardAttribute>>();
 
     ReportGen() {
     }
+    
+    HashMap<BlackboardArtifact, List<BlackboardAttribute>> getResults() {
+        return results;
+    }
 
     public void clearReport() {
-        Results.clear();
+        results.clear();
     }
 
     public void populateReport(ReportConfiguration config) {
         clearReport();
         Report bbreport = new Report();
-        Results = bbreport.getAllTypes(config);
+        results = bbreport.getAllTypes(config);
     }
 }

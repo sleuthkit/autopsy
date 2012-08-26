@@ -29,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -65,7 +66,7 @@ public class ReportXLS implements ReportModule {
         config = reportconfig;
         ReportGen reportobj = new ReportGen();
         reportobj.populateReport(reportconfig);
-        HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
+        HashMap<BlackboardArtifact, List<BlackboardAttribute>> report = reportobj.getResults();
         Workbook wbtemp = new XSSFWorkbook();
         int countGen = 0;
         int countBookmark = 0;
@@ -80,7 +81,7 @@ public class ReportXLS implements ReportModule {
         int countDevice = 0;
         int countEmail = 0;
         int countWebSearch = 0;
-        for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
+        for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
                 countGen++;
             }
@@ -305,7 +306,7 @@ public class ReportXLS implements ReportModule {
             int countedWebSearch = 0;
 
             //start populating the sheets in the workbook
-            for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
+            for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
                 if (ReportFilter.cancel == true) {
                     break;
                 }

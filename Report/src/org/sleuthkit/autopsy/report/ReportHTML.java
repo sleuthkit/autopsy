@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
 import java.io.File;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstract;
+import java.util.List;
 
 /**
  * Generates an HTML report for all the Blackboard Artifacts found in the current case.
@@ -71,7 +71,7 @@ public class ReportHTML implements ReportModule {
         config = reportconfig;
         ReportGen reportobj = new ReportGen();
         reportobj.populateReport(reportconfig);
-        HashMap<BlackboardArtifact, ArrayList<BlackboardAttribute>> report = reportobj.Results;
+        HashMap<BlackboardArtifact, List<BlackboardAttribute>> report = reportobj.getResults();
         //This is literally a terrible way to count up all the types of artifacts, and doesn't include any added ones. 
         //Unlike the XML Report, which is dynamic, this is formatted and needs to be redone later instead of being hardcoded.
         //Also, clearing variables to generate new Report.
@@ -92,7 +92,7 @@ public class ReportHTML implements ReportModule {
         int countDevice = 0;
         int countEmail = 0;
         int countWebSearch = 0;
-        for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
+        for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
                 countGen++;
             }
@@ -262,7 +262,7 @@ public class ReportHTML implements ReportModule {
 
         int alt = 0;
         String altRow = "";
-        for (Entry<BlackboardArtifact, ArrayList<BlackboardAttribute>> entry : report.entrySet()) {
+        for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
             if (ReportFilter.cancel == true) {
                 break;
             }
