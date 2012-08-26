@@ -27,10 +27,10 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  *
  * Node for the views
- * 
+ *
  */
-public class ViewsNode extends AbstractNode implements DisplayableItemNode {
-    
+public class ViewsNode extends DisplayableItemNode {
+
     public static final String NAME = "Views";
 
     public ViewsNode(SleuthkitCase sleuthkitCase) {
@@ -44,7 +44,7 @@ public class ViewsNode extends AbstractNode implements DisplayableItemNode {
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
@@ -59,5 +59,10 @@ public class ViewsNode extends AbstractNode implements DisplayableItemNode {
                 "no description",
                 NAME));
         return s;
+    }
+
+    @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.META;
     }
 }

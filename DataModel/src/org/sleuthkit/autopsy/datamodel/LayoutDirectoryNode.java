@@ -30,8 +30,6 @@ import org.sleuthkit.datamodel.LayoutFile;
  */
 public class LayoutDirectoryNode extends AbstractAbstractFileNode<LayoutDirectory> {
 
-   
-
     public static String nameForLayoutFile(LayoutDirectory ld) {
         return ld.getName();
     }
@@ -74,6 +72,11 @@ public class LayoutDirectoryNode extends AbstractAbstractFileNode<LayoutDirector
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
+    }
+
+    @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.CONTENT;
     }
 
     private static void fillPropertyMap(Map<String, Object> map, LayoutDirectory content) {

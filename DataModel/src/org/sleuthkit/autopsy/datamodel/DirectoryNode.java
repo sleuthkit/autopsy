@@ -67,6 +67,11 @@ public class DirectoryNode extends AbstractFsContentNode<Directory> {
         return v.visit(this);
     }
     
+        @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.CONTENT;
+    }
+    
     
 
 }

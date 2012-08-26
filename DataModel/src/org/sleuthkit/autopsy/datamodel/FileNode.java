@@ -23,8 +23,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * This class is used to represent the "Node" for the file.
- * It has no children.
+ * This class is used to represent the "Node" for the file. It has no children.
  *
  */
 public class FileNode extends AbstractFsContentNode<File> {
@@ -35,10 +34,10 @@ public class FileNode extends AbstractFsContentNode<File> {
     public FileNode(File file) {
         this(file, true);
     }
-    
+
     public FileNode(File file, boolean directoryBrowseMode) {
         super(file, directoryBrowseMode);
-        
+
         // set name, display name, and icon
         if (file.getDir_flags() == (TskData.TSK_FS_NAME_FLAG_ENUM.TSK_FS_NAME_FLAG_UNALLOC.getDirFlag())) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
@@ -67,7 +66,7 @@ public class FileNode extends AbstractFsContentNode<File> {
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     // Given a file, returns the correct icon for said
     // file based off it's extension
     static String getIconForFileType(File file) {
@@ -78,41 +77,62 @@ public class FileNode extends AbstractFsContentNode<File> {
             return "org/sleuthkit/autopsy/images/file-icon.png";
         }
         String ext = name.substring(dotIndex).toLowerCase();
-        
+
         // Images
-        for(String s:FileTypeExtensions.getImageExtensions()) {
-            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/image-file.png"; }
+        for (String s : FileTypeExtensions.getImageExtensions()) {
+            if (ext.equals(s)) {
+                return "org/sleuthkit/autopsy/images/image-file.png";
+            }
         }
         // Videos
-        for(String s:FileTypeExtensions.getVideoExtensions()) {
-            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/video-file.png"; }
+        for (String s : FileTypeExtensions.getVideoExtensions()) {
+            if (ext.equals(s)) {
+                return "org/sleuthkit/autopsy/images/video-file.png";
+            }
         }
         // Audio Files
-        for(String s:FileTypeExtensions.getAudioExtensions()) {
-            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/audio-file.png"; }
+        for (String s : FileTypeExtensions.getAudioExtensions()) {
+            if (ext.equals(s)) {
+                return "org/sleuthkit/autopsy/images/audio-file.png";
+            }
         }
         // Documents
-        for(String s:FileTypeExtensions.getDocumentExtensions()) {
-            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/doc-file.png"; }
+        for (String s : FileTypeExtensions.getDocumentExtensions()) {
+            if (ext.equals(s)) {
+                return "org/sleuthkit/autopsy/images/doc-file.png";
+            }
         }
         // Executables / System Files
-        for(String s:FileTypeExtensions.getExecutableExtensions()) {
-            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/exe-file.png"; }
+        for (String s : FileTypeExtensions.getExecutableExtensions()) {
+            if (ext.equals(s)) {
+                return "org/sleuthkit/autopsy/images/exe-file.png";
+            }
         }
         // Text Files
-        for(String s:FileTypeExtensions.getTextExtensions()) {
-            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/text-file.png"; }
+        for (String s : FileTypeExtensions.getTextExtensions()) {
+            if (ext.equals(s)) {
+                return "org/sleuthkit/autopsy/images/text-file.png";
+            }
         }
         // Web Files
-        for(String s:FileTypeExtensions.getWebExtensions()) {
-            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/web-file.png"; }
+        for (String s : FileTypeExtensions.getWebExtensions()) {
+            if (ext.equals(s)) {
+                return "org/sleuthkit/autopsy/images/web-file.png";
+            }
         }
         // PDFs
-        for(String s:FileTypeExtensions.getPDFExtensions()) {
-            if(ext.equals(s)) { return "org/sleuthkit/autopsy/images/pdf-file.png"; }
+        for (String s : FileTypeExtensions.getPDFExtensions()) {
+            if (ext.equals(s)) {
+                return "org/sleuthkit/autopsy/images/pdf-file.png";
+            }
         }
         // Else return the default
         return "org/sleuthkit/autopsy/images/file-icon.png";
-        
+
+    }
+
+    @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.CONTENT;
     }
 }

@@ -27,15 +27,16 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Node for the results view
  */
-public class ResultsNode extends AbstractNode implements DisplayableItemNode {
-    
+public class ResultsNode extends DisplayableItemNode {
+
     public static final String NAME = "Results";
 
     public ResultsNode(SleuthkitCase sleuthkitCase) {
         super(new RootContentChildren(Arrays.asList(new ExtractedContent(sleuthkitCase),
                 new KeywordHits(sleuthkitCase),
                 new HashsetHits(sleuthkitCase),
-                new EmailExtracted(sleuthkitCase)
+                new EmailExtracted(sleuthkitCase),
+                new Bookmarks(sleuthkitCase) //TODO move to the top of the tree 
                 )), Lookups.singleton(NAME));
         setName(NAME);
         setDisplayName(NAME);
@@ -61,5 +62,10 @@ public class ResultsNode extends AbstractNode implements DisplayableItemNode {
                 "no description",
                 NAME));
         return s;
+    }
+
+    @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.META;
     }
 }

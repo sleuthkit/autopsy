@@ -101,7 +101,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
         Map<String, String> parsed = new HashMap<String, String>();
         String[] split = path.split(MAIL_PATH_SEPARATOR);
         if (split.length < 4) {
-            logger.log(Level.WARNING, "Unexpected number of tokens when parsing email PATH: " 
+            logger.log(Level.WARNING, "Unexpected number of tokens when parsing email PATH: "
                     + split.length + ", will use defaults");
             parsed.put(MAIL_ACCOUNT, "Default");
             parsed.put(MAIL_FOLDER, "Default");
@@ -121,7 +121,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
     /**
      * Mail root node showing all emails
      */
-    public class EmailExtractedRootNodeFlat extends AbstractNode implements DisplayableItemNode {
+    public class EmailExtractedRootNodeFlat extends DisplayableItemNode {
 
         public EmailExtractedRootNodeFlat() {
             super(Children.create(new EmailExtractedRootChildrenFlat(), true), Lookups.singleton(DISPLAY_NAME));
@@ -129,6 +129,11 @@ public class EmailExtracted implements AutopsyVisitableItem {
             super.setDisplayName(DISPLAY_NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png");
             initArtifacts();
+        }
+
+        @Override
+        public TYPE getDisplayableItemNodeType() {
+            return TYPE.ARTIFACT;
         }
 
         @Override
@@ -197,7 +202,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
      * Mail root node grouping all mail accounts, supports account-> folder
      * structure
      */
-    public class EmailExtractedRootNode extends AbstractNode implements DisplayableItemNode {
+    public class EmailExtractedRootNode extends DisplayableItemNode {
 
         public EmailExtractedRootNode() {
             super(Children.create(new EmailExtractedRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
@@ -208,8 +213,13 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         @Override
+        public TYPE getDisplayableItemNodeType() {
+            return TYPE.ARTIFACT;
+        }
+
+        @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
-            return v.visit(this); 
+            return v.visit(this);
             //return null;
         }
 
@@ -251,13 +261,18 @@ public class EmailExtracted implements AutopsyVisitableItem {
     /**
      * Account node representation
      */
-    public class EmailExtractedAccountNode extends AbstractNode implements DisplayableItemNode {
+    public class EmailExtractedAccountNode extends DisplayableItemNode {
 
         public EmailExtractedAccountNode(String name, Map<String, List<Long>> children) {
             super(Children.create(new EmailExtractedAccountChildrenNode(children), true), Lookups.singleton(name));
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account-icon-16.png");
+        }
+
+        @Override
+        public TYPE getDisplayableItemNodeType() {
+            return TYPE.ARTIFACT;
         }
 
         @Override
@@ -311,13 +326,23 @@ public class EmailExtracted implements AutopsyVisitableItem {
     /**
      * Node representing mail folder
      */
-    public class EmailExtractedFolderNode extends AbstractNode implements DisplayableItemNode {
+    public class EmailExtractedFolderNode extends DisplayableItemNode {
 
         public EmailExtractedFolderNode(String name, List<Long> children) {
             super(Children.create(new EmailExtractedFolderChildrenNode(children), true), Lookups.singleton(name));
             super.setName(name);
             super.setDisplayName(name + " (" + children.size() + ")");
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-16.png");
+        }
+
+        @Override
+        public TYPE getDisplayableItemNodeType() {
+            return TYPE.ARTIFACT;
+        }
+
+        @Override
+        public boolean isLeafTypeNode() {
+            return true;
         }
 
         @Override

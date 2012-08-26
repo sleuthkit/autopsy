@@ -32,8 +32,8 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Node encapsulating blackboard artifact type
  */
-public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNode{
-    
+public class ArtifactTypeNode extends DisplayableItemNode {
+
     BlackboardArtifact.ARTIFACT_TYPE type;
     int childCount = 0;
 
@@ -52,9 +52,9 @@ public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNod
         super.setDisplayName(type.getDisplayName() + " (" + childCount + ")");
         this.type = type;
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(type));
-        
+
     }
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
@@ -63,16 +63,16 @@ public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNod
             ss = Sheet.createPropertiesSet();
             s.put(ss);
         }
-        
+
         ss.put(new NodeProperty("Artifact Type",
-                                "Artifact Type",
-                                "no description",
-                                type.getDisplayName()));
-        
+                "Artifact Type",
+                "no description",
+                type.getDisplayName()));
+
         ss.put(new NodeProperty("Child Count",
-                                "Child Count",
-                                "no description",
-                                childCount));
+                "Child Count",
+                "no description",
+                childCount));
 
         return s;
     }
@@ -81,8 +81,9 @@ public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNod
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
+
     private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
-        switch(type) {
+        switch (type) {
             case TSK_WEB_BOOKMARK:
                 return "bookmarks.png";
             case TSK_WEB_COOKIE:
@@ -102,5 +103,15 @@ public class ArtifactTypeNode extends AbstractNode implements DisplayableItemNod
 
         }
         return "artifact-icon.png";
+    }
+
+    @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.META;
+    }
+
+    @Override
+    public boolean isLeafTypeNode() {
+        return true;
     }
 }

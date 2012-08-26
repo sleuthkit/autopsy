@@ -27,11 +27,11 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Node for the extracted content
  */
-public class ExtractedContentNode extends AbstractNode implements DisplayableItemNode{
-    
+public class ExtractedContentNode extends DisplayableItemNode {
+
     public static final String NAME = "Extracted Content";
-    
-    public ExtractedContentNode(SleuthkitCase skCase){
+
+    public ExtractedContentNode(SleuthkitCase skCase) {
         super(Children.create(new ExtractedContentChildren(skCase), true), Lookups.singleton(NAME));
         super.setName(NAME);
         super.setDisplayName(NAME);
@@ -42,7 +42,7 @@ public class ExtractedContentNode extends AbstractNode implements DisplayableIte
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
@@ -57,5 +57,10 @@ public class ExtractedContentNode extends AbstractNode implements DisplayableIte
                 "no description",
                 NAME));
         return s;
+    }
+
+    @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.ARTIFACT;
     }
 }

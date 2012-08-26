@@ -18,11 +18,43 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
+import org.openide.util.Lookup;
+
 
 /**
  * Interface for all displayable Nodes
  */
-public interface DisplayableItemNode{
+public abstract class DisplayableItemNode extends AbstractNode {
+
+    public DisplayableItemNode(Children children) {
+        super(children);
+    }
+
+    public DisplayableItemNode(Children children, Lookup lookup) {
+        super(children, lookup);
+    }
+    
+    
+    /**
+     * Possible sub-implementations
+     */
+    public enum TYPE {
+        CONTENT,  ///< content node, such as file, image
+        ARTIFACT, ///< artifact data node
+        META, ///< top-level category node, such as view, filters, etc.
+    };
+    
+    /**
+     * Get possible subtype of the displayable item node
+     * @return 
+     */
+    public abstract TYPE getDisplayableItemNodeType();
+    
+    public boolean isLeafTypeNode() {
+        return false;
+    }
 
     /**
      * Visitor pattern support.
@@ -30,5 +62,5 @@ public interface DisplayableItemNode{
      * @param v visitor
      * @return visitor's visit return value
      */
-    <T> T accept(DisplayableItemNodeVisitor<T> v);
+    public abstract <T> T accept(DisplayableItemNodeVisitor<T> v);
 }

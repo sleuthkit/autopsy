@@ -27,8 +27,8 @@ import org.sleuthkit.datamodel.Content;
 /**
  * Nodes for the images
  */
-public class ImagesNode extends AbstractNode implements DisplayableItemNode {
-    
+public class ImagesNode extends DisplayableItemNode {
+
     public static final String NAME = "Images";
 
     public ImagesNode(List<Content> images) {
@@ -39,10 +39,15 @@ public class ImagesNode extends AbstractNode implements DisplayableItemNode {
     }
 
     @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.CONTENT;
+    }
+
+    @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();

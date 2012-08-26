@@ -38,8 +38,8 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Node wrapping a blackboard artifact object
  */
-public class BlackboardArtifactNode extends AbstractNode implements DisplayableItemNode{
-    
+public class BlackboardArtifactNode extends DisplayableItemNode {
+
     BlackboardArtifact artifact;
     Content associated;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
@@ -52,9 +52,9 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName(associated.getName());
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID())));
-        
+
     }
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
@@ -67,61 +67,65 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
 
         Map<String, Object> map = new LinkedHashMap<String, Object>();
         fillPropertyMap(map, artifact);
-        
+
         ss.put(new NodeProperty("File Name",
-                                "File Name",
-                                NO_DESCR,
-                                associated.getName()));
-        
-        for(Map.Entry<String, Object> entry : map.entrySet()){
+                "File Name",
+                NO_DESCR,
+                associated.getName()));
+
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty(entry.getKey(),
-                        entry.getKey(),
-                        NO_DESCR,
-                        entry.getValue()));
+                    entry.getKey(),
+                    NO_DESCR,
+                    entry.getValue()));
         }
-        
-        if(artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
+
+        if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
                 || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             ss.put(new NodeProperty("File Path",
                     "File Path",
                     NO_DESCR,
                     DataConversion.getformattedPath(ContentUtils.getDisplayPath(associated), 0, 1)));
         }
-        
+
         return s;
     }
 
     /**
      * Fill map with Artifact properties
-     * @param map map with preserved ordering, where property names/values are put
+     *
+     * @param map map with preserved ordering, where property names/values are
+     * put
      * @param artifact to extract properties from
      */
     private void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
         try {
-            for(BlackboardAttribute attribute : artifact.getAttributes()){
-                if(attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID())
+            for (BlackboardAttribute attribute : artifact.getAttributes()) {
+                if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
                     continue;
-                else switch(attribute.getValueType()){
-                    case STRING:
-                        map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueString());
-                        break;
-                    case INTEGER:
-                        map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueInt());
-                        break;
-                    case LONG:
-                        if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                                || attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
-                            map.put(attribute.getAttributeTypeDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
-                        } else {
-                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueLong());
-                        }
-                        break;
-                    case DOUBLE:
-                        map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueDouble());
-                        break;
-                    case BYTE:
-                        map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueBytes());
-                        break;
+                } else {
+                    switch (attribute.getValueType()) {
+                        case STRING:
+                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueString());
+                            break;
+                        case INTEGER:
+                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueInt());
+                            break;
+                        case LONG:
+                            if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
+                                    || attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
+                                map.put(attribute.getAttributeTypeDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
+                            } else {
+                                map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueLong());
+                            }
+                            break;
+                        case DOUBLE:
+                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueDouble());
+                            break;
+                        case BYTE:
+                            map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueBytes());
+                            break;
+                    }
                 }
             }
         } catch (TskException ex) {
@@ -133,21 +137,23 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     private static Lookup getLookups(BlackboardArtifact artifact) {
         Content content = getAssociatedContent(artifact);
         HighlightLookup highlight = getHighlightLookup(artifact, content);
         List<Object> forLookup = new ArrayList<Object>();
         forLookup.add(artifact);
-        if(content != null)
+        if (content != null) {
             forLookup.add(content);
-        if(highlight != null)
+        }
+        if (highlight != null) {
             forLookup.add(highlight);
-        
+        }
+
         return Lookups.fixed(forLookup.toArray(new Object[forLookup.size()]));
     }
-    
-    private static Content getAssociatedContent(BlackboardArtifact artifact){
+
+    private static Content getAssociatedContent(BlackboardArtifact artifact) {
         try {
             return artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
         } catch (TskException ex) {
@@ -157,8 +163,9 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     }
 
     private static HighlightLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
-        if(artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID())
+        if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             return null;
+        }
         Lookup lookup = Lookup.getDefault();
         HighlightLookup highlightFactory = lookup.lookup(HighlightLookup.class);
         try {
@@ -169,16 +176,17 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
             for (BlackboardAttribute att : attributes) {
                 if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                     keyword = att.getValueString();
-                }
-                else if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
+                } else if (att.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
                     regexp = att.getValueString();
                 }
             }
             if (keyword != null) {
-                boolean isRegexp = (regexp != null && ! regexp.equals(""));
-                if (isRegexp)
+                boolean isRegexp = (regexp != null && !regexp.equals(""));
+                if (isRegexp) {
                     origQuery = regexp;
-                else origQuery = keyword;
+                } else {
+                    origQuery = keyword;
+                }
                 return highlightFactory.createInstance(content, keyword, isRegexp, origQuery);
             }
         } catch (TskException ex) {
@@ -188,7 +196,7 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
     }
 
     private String getIcon(BlackboardArtifact.ARTIFACT_TYPE type) {
-        switch(type) {
+        switch (type) {
             case TSK_WEB_BOOKMARK:
                 return "bookmarks.png";
             case TSK_WEB_COOKIE:
@@ -204,5 +212,16 @@ public class BlackboardArtifactNode extends AbstractNode implements DisplayableI
         }
         return "artifact-icon.png";
     }
+
+    @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.ARTIFACT;
+    }
+
+    @Override
+    public boolean isLeafTypeNode() {
+        return true;
+    }
+    
     
 }

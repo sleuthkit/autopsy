@@ -51,6 +51,11 @@ public class ImageNode extends AbstractContentNode<Image> {
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg");
     }
 
+    @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.CONTENT;
+    }
+
     /**
      * Right click action for this node
      *

@@ -31,8 +31,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Node for recent files filter
  */
-public class RecentFilesFilterNode extends AbstractNode implements DisplayableItemNode {
-    
+public class RecentFilesFilterNode extends DisplayableItemNode {
+
     SleuthkitCase skCase;
     RecentFilesFilter filter;
     private final static Logger logger = Logger.getLogger(RecentFilesFilterNode.class.getName());
@@ -45,9 +45,9 @@ public class RecentFilesFilterNode extends AbstractNode implements DisplayableIt
         this.filter = filter;
         Calendar prevDay = (Calendar) lastDay.clone();
         prevDay.add(Calendar.DATE, -filter.getDurationDays());
-        String tooltip = prevDay.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.ENGLISH) + " " +
-                prevDay.get(Calendar.DATE) + ", " +
-                prevDay.get(Calendar.YEAR);
+        String tooltip = prevDay.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.ENGLISH) + " "
+                + prevDay.get(Calendar.DATE) + ", "
+                + prevDay.get(Calendar.YEAR);
         this.setShortDescription(tooltip);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/recent_files.png");
     }
@@ -56,7 +56,7 @@ public class RecentFilesFilterNode extends AbstractNode implements DisplayableIt
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
     }
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
@@ -65,13 +65,22 @@ public class RecentFilesFilterNode extends AbstractNode implements DisplayableIt
             ss = Sheet.createPropertiesSet();
             s.put(ss);
         }
-        
+
         ss.put(new NodeProperty("Filter Type",
-                                "Filter Type",
-                                "no description",
-                                filter.getDisplayName()));
-        
+                "Filter Type",
+                "no description",
+                filter.getDisplayName()));
+
         return s;
     }
-    
+
+    @Override
+    public TYPE getDisplayableItemNodeType() {
+        return TYPE.META;
+    }
+
+    @Override
+    public boolean isLeafTypeNode() {
+        return true;
+    }
 }
