@@ -20,23 +20,27 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
+import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.TskException;
 
 /**
  * This class wraps around nodes that are displayed in the directory tree and
- * hides files, '..', and other children that should not be displayed.
- *
- * @author jantonius
+ * hides files, '..', and other children that should not be displayed. facility
+ * to customize nodes view in dir tree: hide them or set no children
  */
 class DirectoryTreeFilterChildren extends FilterNode.Children {
+
+    private final ShowItemVisitor showItemV = new ShowItemVisitor();
+    private final IsLeafItemVisitor isLeafItemV = new IsLeafItemVisitor();
 
     /**
      * the constructor
@@ -56,30 +60,29 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
     @Override
     protected Node[] createNodes(Node origNode) {
-
-
         if (origNode == null || !(origNode instanceof DisplayableItemNode)) {
             return new Node[]{};
-        } 
+        }
 
         final DisplayableItemNode diNode = (DisplayableItemNode) origNode;
 
-        // filter out the FileNode and the "." and ".." directories
-        // do not set childrens, if we know the node type is a leaf node type
-        if (!diNode.isLeafTypeNode()
-                || (origNode instanceof DirectoryNode
-                && !isDotDirectory((DirectoryNode) origNode)
-                && !isLeafDirectory((DirectoryNode) origNode))) {
-            return new Node[]{this.copyNode(origNode, true)};
-        } else {
-            return new Node[]{this.copyNode(origNode, false)};
+        if (diNode.accept(showItemV) == false) {
+            //do not show
+            return new Node[]{};
         }
+
+        // filter out the FileNode and the "." and ".." directories
+        // do not set children, if we know the node type is a leaf node type
+        final boolean isLeaf = diNode.accept(isLeafItemV);
+
+        return new Node[]{this.copyNode(origNode, !isLeaf)};
+
     }
 
     /**
      * Don't show expansion button on leaves leaf: all children are (file) or
      * (directory named "." or "..")
-     *
+     * TODO check if this method really works, seems it returns false when it shouldn't
      * @param node
      * @return whether node is a leaf
      */
@@ -123,6 +126,45 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             return new DirectoryTreeFilterChildren(arg);
         } else {
             return Children.LEAF;
+        }
+    }
+
+    private static class IsLeafItemVisitor extends DisplayableItemNodeVisitor.Default<Boolean> {
+
+        @Override
+        protected Boolean defaultVisit(DisplayableItemNode c) {
+            return c.isLeafTypeNode();
+        }
+
+        @Override
+        public Boolean visit(DirectoryNode dn) {
+            return isLeafDirectory(dn);
+        }
+    }
+
+    private static class ShowItemVisitor extends DisplayableItemNodeVisitor.Default<Boolean> {
+
+        @Override
+        protected Boolean defaultVisit(DisplayableItemNode c) {
+            return true;
+        }
+
+        @Override
+        public Boolean visit(DirectoryNode dn) {
+            if (isDotDirectory(dn)) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public Boolean visit(FileNode fn) {
+            return false;
+        }
+
+        @Override
+        public Boolean visit(LayoutFileNode ln) {
+            return false;
         }
     }
 }
