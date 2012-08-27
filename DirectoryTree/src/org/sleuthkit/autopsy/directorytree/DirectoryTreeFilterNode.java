@@ -44,7 +44,6 @@ import org.sleuthkit.datamodel.Image;
 class DirectoryTreeFilterNode extends FilterNode {
 
     private static final Action collapseAll = new CollapseAction("Collapse All");
-    private static final DeleteActionsDisplayableItemNodeVisitor getDeleteActionVisitor = new DeleteActionsDisplayableItemNodeVisitor();
 
     /**
      * the constructor
@@ -105,34 +104,7 @@ class DirectoryTreeFilterNode extends FilterNode {
         return actions;
     }
 
-    private static class DeleteActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<List<Action>> {
-
-        @Override
-        public List<Action> visit(KeywordHits.KeywordHitsRootNode khrn) {
-            List<Action> actions = new ArrayList<Action>();
-            actions.add(null); // creates a menu separator
-
-            actions.add(new ResultDeleteAction("Delete Results", BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT));
-            return actions;
-        }
-
-        @Override
-        public List<Action> visit(KeywordHits.KeywordHitsListNode khsn) {
-            //TODO delete by list
-            return super.visit(khsn);
-        }
-
-        @Override
-        public List<Action> visit(KeywordHits.KeywordHitsKeywordNode khmln) {
-            //TODO delete by keyword hit
-            return super.visit(khmln);
-        }
-
-        @Override
-        protected List<Action> defaultVisit(DisplayableItemNode c) {
-            return new ArrayList<Action>();
-        }
-    }
+    
 
     private static List<Action> getDetailActions(Content c) {
         List<Action> actions = new ArrayList<Action>();
