@@ -98,7 +98,7 @@ public class FileBookmarkAction extends AbstractAction {
     private void refreshView() {
         DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();
         viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
-        viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
+        //viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
     }
 
     private boolean doBookmarkFile(AbstractFile file) {
