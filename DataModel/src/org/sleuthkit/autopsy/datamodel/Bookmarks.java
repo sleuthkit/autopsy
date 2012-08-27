@@ -46,8 +46,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class Bookmarks implements AutopsyVisitableItem {
 
-    private static final String LABEL_NAME = "Bookmarks";
-    private static final String DISPLAY_NAME = LABEL_NAME;
+    public static final String NAME = "Bookmarks";
+    
     private static final String FILE_BOOKMARKS_LABEL_NAME = "File Bookmarks";
     private static final String RESULT_BOOKMARKS_LABEL_NAME = "Result Bookmarks";
     //bookmarks are specializations of tags
@@ -75,9 +75,9 @@ public class Bookmarks implements AutopsyVisitableItem {
     public class BookmarksRootNode extends DisplayableItemNode {
 
         public BookmarksRootNode() {
-            super(Children.create(new BookmarksRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
-            super.setName(LABEL_NAME);
-            super.setDisplayName(DISPLAY_NAME);
+            super(Children.create(new BookmarksRootChildren(), true), Lookups.singleton(NAME));
+            super.setName(NAME);
+            super.setDisplayName(NAME);
             this.setIconBaseWithExtension(BOOKMARK_ICON_PATH);
             initData();
         }
