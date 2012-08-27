@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.datamodel.Bookmarks;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -37,13 +38,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Action on a file that bookmarks a file and reloads the bookmark view.
  * Supports bookmarking of a fs file, directory and layout file and layout
- * directory (virtual files/dirs for unalloc content) TODO add use enters
- * description and hierarchy (TSK_TAG_NAME with slashes)
+ * directory (virtual files/dirs for unalloc content) 
+ * 
+ * TODO add use enters description and hierarchy (TSK_TAG_NAME with slashes)
  */
 public class FileBookmarkAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(FileBookmarkAction.class.getName());
-    private static final String BOOKMARKS_ROOT_NAME = "Bookmarks";
     //content to bookmark (AbstractFile)
     private AbstractFile bookmarkFile;
     private final InitializeBookmarkFileV initializer = new InitializeBookmarkFileV();
@@ -104,13 +105,13 @@ public class FileBookmarkAction extends AbstractAction {
         try {
             //TODO popup a dialog and allow user to enter description
             //and optional bookmark name (TSK_TAG_NAME) with slashes representating hierarchy
-            //should always start with "Bookmarks"            
+            //should always start with FILE_BOOKMARK_TAG_NAME           
             final BlackboardArtifact bookArt = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
             List<BlackboardAttribute> attrs = new ArrayList<BlackboardAttribute>();
 
 
             BlackboardAttribute attr1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID(),
-                    "", BOOKMARKS_ROOT_NAME);
+                    "", Bookmarks.FILE_BOOKMARK_TAG_NAME);
             BlackboardAttribute attr2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID(),
                     "", "No Description");
             attrs.add(attr1);
