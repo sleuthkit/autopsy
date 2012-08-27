@@ -149,7 +149,7 @@ public final class ExifParserFileIngestService implements IngestServiceAbstractF
         } catch (TskCoreException ex) {
             Logger.getLogger(ExifParserFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ImageProcessingException ex) {
-            System.out.println("ImageProcessingException: " + ex);
+            logger.log(Level.WARNING, "Failed to process the image.", ex);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "IOException when parsing image file.", ex);
         } finally {
