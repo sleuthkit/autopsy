@@ -37,11 +37,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Action on a file that bookmarks a file and reloads the bookmark view.
  * Supports bookmarking of a fs file, directory and layout file and layout
- * directory (virtual files/dirs for unalloc content)
+ * directory (virtual files/dirs for unalloc content) TODO add use enters
+ * description and hierarchy (TSK_TAG_NAME with slashes)
  */
 public class FileBookmarkAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(FileBookmarkAction.class.getName());
+    private static final String BOOKMARKS_ROOT_NAME = "Bookmarks";
     //content to bookmark (AbstractFile)
     private AbstractFile bookmarkFile;
     private final InitializeBookmarkFileV initializer = new InitializeBookmarkFileV();
@@ -52,7 +54,6 @@ public class FileBookmarkAction extends AbstractAction {
 
         bookmarkFile = content.accept(initializer);
         this.setEnabled(bookmarkFile != null);
-
     }
 
     /**
@@ -95,20 +96,23 @@ public class FileBookmarkAction extends AbstractAction {
 
     private void refreshView() {
         DirectoryTreeTopComponent viewer = DirectoryTreeTopComponent.findInstance();
-        viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_BOOKMARK_FILE);
+        viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
+        viewer.refreshTree(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT);
     }
 
     private boolean doBookmarkFile(AbstractFile file) {
         try {
-            //TODO popup a dialog and allow user to enter category and description
-            //with the currently present categories and descrptions pre-populated (pull-downs)
-
-            final BlackboardArtifact bookArt = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_BOOKMARK_FILE);
+            //TODO popup a dialog and allow user to enter description
+            //and optional bookmark name (TSK_TAG_NAME) with slashes representating hierarchy
+            //should always start with "Bookmarks"            
+            final BlackboardArtifact bookArt = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE);
             List<BlackboardAttribute> attrs = new ArrayList<BlackboardAttribute>();
-            BlackboardAttribute attr1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY.getTypeID(),
-                    "", "", "category1");
+
+
+            BlackboardAttribute attr1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID(),
+                    "", BOOKMARKS_ROOT_NAME);
             BlackboardAttribute attr2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID(),
-                    "", "", "description2");
+                    "", "No Description");
             attrs.add(attr1);
             attrs.add(attr2);
             bookArt.addAttributes(attrs);
