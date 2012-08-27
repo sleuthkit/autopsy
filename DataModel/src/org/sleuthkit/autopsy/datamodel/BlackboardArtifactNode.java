@@ -44,7 +44,26 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     Content associated;
     static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
 
-    public BlackboardArtifactNode(BlackboardArtifact artifact) {
+    /**
+     * Construct blackboard artifact node from an artifact and using provided icon
+     * @param artifact artifact to encapsulate
+     * @param iconPath icon to use for the artifact
+     */
+    public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
+        super(Children.LEAF, getLookups(artifact));
+
+        this.artifact = artifact;
+        this.associated = getAssociatedContent(artifact);
+        this.setName(Long.toString(artifact.getArtifactID()));
+        this.setDisplayName(associated.getName());
+        this.setIconBaseWithExtension(iconPath);
+    }
+    
+     /**
+     * Construct blackboard artifact node from an artifact and using default icon for artifact type
+     * @param artifact artifact to encapsulate
+     */
+     public BlackboardArtifactNode(BlackboardArtifact artifact) {
         super(Children.LEAF, getLookups(artifact));
 
         this.artifact = artifact;
@@ -209,6 +228,10 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 return "programs.png";
             case TSK_RECENT_OBJECT:
                 return "recent_docs.png";
+            case TSK_TAG_FILE:
+                return "blue-tag-icon-16.png";
+            case TSK_TAG_ARTIFACT:
+                return "green-tag-icon-16.png";
         }
         return "artifact-icon.png";
     }

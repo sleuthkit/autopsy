@@ -103,7 +103,7 @@ abstract class AbstractContentChildren extends Keys<Object> {
     }
     
     /**
-     * Creates appropriate Node for each sub-class of Content
+     * Creates appropriate Node for each supported artifact category / grouping
      */
     static class CreateAutopsyNodeVisitor extends AutopsyItemVisitor.Default<AbstractNode> {
         

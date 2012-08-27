@@ -23,26 +23,35 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Support for bookmark (file and result/artifact) nodes and displaying
  * bookmarks in the directory tree Bookmarks are divided into file and result
  * children bookmarks.
+ * 
+ * Bookmarks are specialized tags - TSK_TAG_NAME starts with Bookmark  
+ *
+ * TODO bookmark hierarchy support (TSK_TAG_NAME with slashes)
  */
 public class Bookmarks implements AutopsyVisitableItem {
 
     private static final String LABEL_NAME = "Bookmarks";
     private static final String DISPLAY_NAME = LABEL_NAME;
+    private static final String FILE_BOOKMARKS_LABEL_NAME = "File Bookmarks";
+    private static final String RESULT_BOOKMARKS_LABEL_NAME = "Result Bookmarks";
+    
+    private static final String BOOKMARK_ICON_PATH = "org/sleuthkit/autopsy/images/star-bookmark-icon-16.png";
+    
     private static final Logger logger = Logger.getLogger(Bookmarks.class.getName());
     private SleuthkitCase skCase;
     private final Map<BlackboardArtifact.ARTIFACT_TYPE, List<BlackboardArtifact>> data =
@@ -67,13 +76,13 @@ public class Bookmarks implements AutopsyVisitableItem {
             super(Children.create(new BookmarksRootChildren(), true), Lookups.singleton(DISPLAY_NAME));
             super.setName(LABEL_NAME);
             super.setDisplayName(DISPLAY_NAME);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/mail-icon-16.png");
+            this.setIconBaseWithExtension(BOOKMARK_ICON_PATH);
             initData();
         }
 
         private void initData() {
-            data.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_BOOKMARK_FILE, null);
-            data.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_BOOKMARK_ARTIFACT, null);
+            data.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE, null);
+            data.put(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT, null);
 
             try {
                 for (BlackboardArtifact.ARTIFACT_TYPE artType : data.keySet()) {
@@ -141,10 +150,19 @@ public class Bookmarks implements AutopsyVisitableItem {
 
         public BookmarksNodeRoot(BlackboardArtifact.ARTIFACT_TYPE bookType, List<BlackboardArtifact> bookmarks) {
             super(Children.create(new BookmarksChildrenNode(bookmarks), true), Lookups.singleton(bookType.getDisplayName()));
-            final String name = bookType.getDisplayName();
+            
+            String name = null;
+            if (bookType.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE)) {
+                name = FILE_BOOKMARKS_LABEL_NAME;
+            }
+            else if (bookType.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_ARTIFACT)) {
+                name = RESULT_BOOKMARKS_LABEL_NAME;
+            }
+            
             super.setName(name);
             super.setDisplayName(name + " (" + bookmarks.size() + ")");
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/account-icon-16.png");
+ 
+            this.setIconBaseWithExtension(BOOKMARK_ICON_PATH);
         }
 
         @Override
@@ -200,7 +218,31 @@ public class Bookmarks implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(BlackboardArtifact artifact) {
-            return new BlackboardArtifactNode(artifact);
+            return new BlackboardArtifactNode(artifact, BOOKMARK_ICON_PATH);
         }
+    }
+
+    /**
+     * Links existing blackboard artifact (a tag) to this artifact.
+     * Linkage is made using TSK_TAGGED_ARTIFACT attribute.
+     */
+    void addArtifactTag(BlackboardArtifact art, BlackboardArtifact tag) throws TskCoreException {
+        if (art.equals(tag)) {
+            throw new TskCoreException("Cannot tag the same artifact: id" + art.getArtifactID() );
+        }
+        BlackboardAttribute attrLink = new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID(),
+                "", art.getArtifactID());
+        tag.addAttribute(attrLink);
+    }
+
+    /**
+     * Get tag artifacts linked to the  artifact
+     * @param art artifact to get tags for
+     * @return list of children artifacts or an empty list
+     * @throws TskCoreException exception thrown if a critical error occurs
+     * within tsk core and child artifact could not be queried
+     */
+    List<BlackboardArtifact> getTagArtifacts(BlackboardArtifact art) throws TskCoreException {
+        return skCase.getBlackboardArtifacts(ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT, art.getArtifactID());
     }
 }

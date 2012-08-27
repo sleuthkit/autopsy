@@ -68,13 +68,13 @@ public class RootContentChildren extends AbstractContentChildren {
                         break;
                         
                         //TODO check
-                    case TSK_BOOKMARK_FILE:
+                    case TSK_TAG_FILE:
                         if (o instanceof Bookmarks)
                             this.refreshKey(o);
                         break;
                         
                         //TODO check
-                     case TSK_BOOKMARK_ARTIFACT:
+                     case TSK_TAG_ARTIFACT:
                         if (o instanceof Bookmarks)
                             this.refreshKey(o);
                         break;
