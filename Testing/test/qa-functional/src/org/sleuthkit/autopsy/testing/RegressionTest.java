@@ -18,10 +18,18 @@
  */
 package org.sleuthkit.autopsy.testing;
 
+import java.awt.AWTException;
+import java.awt.Rectangle;
+import java.awt.Robot;
+import java.awt.Toolkit;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 import javax.swing.JDialog;
 import javax.swing.JTextField;
 import junit.framework.Test;
@@ -77,7 +85,7 @@ public class RegressionTest extends TestCase{
                 "testConfigureIngest2a",
                 "testIngest",
                 "testGenerateReportToolbar",
-                "testGenerateReportButton"       
+                "testGenerateReportButton"
                 );
         return  NbModuleSuite.create(conf);
 
@@ -226,6 +234,7 @@ public class RegressionTest extends TestCase{
         //   consistently, making it seem like default behavior
         Random rand = new Random();
         new Timeout("pausing", 10000 + (rand.nextInt(15000) + 5000)).sleep();
+        screenshot("Finished Ingest");
         
     }
     
@@ -254,12 +263,29 @@ public class RegressionTest extends TestCase{
         JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Generate Report");
         jbo0.pushNoBlock();
         new Timeout("pausing", 3000).sleep(); // Give it a few seconds to generate
+        screenshot("Finished Report");
         
         JDialog previewDialog = JDialogOperator.waitJDialog("Report Preview", false, false);
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
         JButtonOperator jbo1 = new JButtonOperator(previewDialogOperator, "Close");
         jbo1.pushNoBlock();
         new Timeout("pausing", 3000).sleep(); // Give the program a second to idle to be safe
+        screenshot("Done Testing");
+    }
+    
+    public void screenshot(String name) {
+        logger.info("Taking screenshot.");
+        try {
+            Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+            BufferedImage capture = new Robot().createScreenCapture(screenRect);
+            String outPath = System.getProperty("out_path");
+            ImageIO.write(capture, "png", new File(outPath + "\\" + name + ".png"));
+            new Timeout("pausing", 1000).sleep(); // give it a second to save
+        } catch (IOException ex) {
+            logger.info("IOException taking screenshot.");
+        } catch (AWTException ex) {
+            logger.info("AWTException taking screenshot.");
+        }
     }
    
 }
