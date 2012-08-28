@@ -1,19 +1,19 @@
 #!/usr/bin/python 
 #en_US.UTF-8
-import sys
-import sqlite3
-import re
-import subprocess
-import os.path
-import shutil
-import time
 import datetime
-import xml
+import logging
+import os
 import re
+import shutil
 import socket
-import time
-from xml.dom.minidom import parse, parseString
+import sqlite3
+import subprocess
+import sys
 from sys import platform as _platform
+import time
+import traceback
+import xml
+from xml.dom.minidom import parse, parseString
 
 #
 # Please read me...
@@ -355,6 +355,7 @@ def run_config_test(config_file):
     except Exception as e:
         printerror("Error: There was an error running with the configuration file.")
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
 
 # Runs the test on the single given file.
 # The path must be guarenteed to be a correct path.
@@ -372,6 +373,10 @@ def run_test(image_file):
     case.keyword_path = make_path(case.input_dir, "notablekeywords.xml")
     case.nsrl_path = make_path(case.input_dir, "nsrl.txt-md5.idx")
     
+    logging.debug("--------------------")
+    logging.debug(case.image_name)
+    logging.debug("--------------------")
+    
     run_ant()
     time.sleep(2) # Give everything a second to process
     
@@ -383,6 +388,7 @@ def run_test(image_file):
     except Exception as e:
         printerror("Error: Unknown fatal error when filling case data.")
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
     
     # If running in rebuild mode (-r)
     if args.rebuild:
@@ -605,6 +611,7 @@ def compare_to_gold_html():
     except Exception as e:
         printerror("Error: Unknown fatal error comparing reports.")
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
 
 # Compares the blackboard artifact counts of two databases
 # given the two database cursors
@@ -682,6 +689,7 @@ def generate_common_log():
     except Exception as e:
         printerror("Error: Unable to generate the common log.")
         printerror(str(e))
+        logging.critical(traceback.format_exc())
 
 # Fill in the global case's variables that require the log files
 def fill_case_data():
@@ -699,6 +707,7 @@ def fill_case_data():
     except Exception as e:
         printerror("Error: Unable to open autopsy.log.0.")
         printerror(str(e) + "\n")
+        logging.warning(traceback.format_exc())
     
     # Set the case total test time
     # Start date must look like: "Jul 16, 2012 12:57:53 PM"
@@ -729,6 +738,7 @@ def fill_case_data():
     except Exception as e:
         printerror("Error: Unable to find the required information to fill case data.")
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
     try:
         service_lines = search_log("autopsy.log.0", "to process()")
         service_list = []
@@ -749,6 +759,7 @@ def fill_case_data():
     except Exception as e:
         printerror("Error: Unknown fatal error when finding service times.")
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
     
 # Generate the CSV log file
 def generate_csv(csv_path):
@@ -804,6 +815,7 @@ def generate_csv(csv_path):
         printerror("Error: Unknown fatal error when creating CSV file at:")
         printerror(csv_path)
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
 
 # Generates the CSV header (column names)
 def csv_header(csv_path):
@@ -879,6 +891,7 @@ def report_all_errors():
     except Exception as e:
         printerror("Error: Unknown fatal error when reporting all errors.")
         printerror(str(e) + "\n")
+        logging.warning(traceback.format_exc())
 
 # Searched all the known logs for the given regex
 # The function expects regex = re.compile(...)
@@ -1098,6 +1111,7 @@ def generate_html():
         printerror("Error: Unknown fatal error when creating HTML log at:")
         printerror(case.html_log)
         printerror(str(e) + "\n")    
+        logging.critical(traceback.format_exc())
 
 # Writed the top of the HTML log file
 def write_html_head():
@@ -1201,6 +1215,7 @@ def copy_logs():
     except Exception as e:
         printerror("Error: Failed to copy the logs.")
         printerror(str(e) + "\n")
+        logging.warning(critical.format_exc())
 
 # Clears all the files from a directory and remakes it
 def clear_dir(dir):
@@ -1371,6 +1386,8 @@ def main():
         case.common_log = make_local_path(case.output_dir, "AutopsyErrors.txt")
         case.csv = make_local_path(case.output_dir, "CSV.txt")
         case.html_log = make_local_path(case.output_dir, "AutopsyTestCase.html")
+        log_name = case.output_dir + "\\regression.log"
+        logging.basicConfig(filename=log_name, level=logging.DEBUG)
         
         # If user wants to do a single file and a list (contradictory?)
         if args.single and args.list:
