@@ -228,10 +228,16 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 return "programs.png";
             case TSK_RECENT_OBJECT:
                 return "recent_docs.png";
+            case TSK_DEVICE_ATTACHED:
+                return "usb_devices.png";
+            case TSK_WEB_SEARCH_QUERY:
+                return "searchquery.png";
             case TSK_TAG_FILE:
                 return "blue-tag-icon-16.png";
             case TSK_TAG_ARTIFACT:
                 return "green-tag-icon-16.png";
+            case TSK_METADATA_EXIF:
+                return "camera-icon-16.png";
         }
         return "artifact-icon.png";
     }
