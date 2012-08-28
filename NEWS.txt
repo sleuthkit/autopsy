@@ -1,3 +1,26 @@
+3.0.0 (August 29, 2012)
+Funded by US Army Intelligence Center of Excellence (USAICoE):
+
+New features:
+- Added international string extraction from unknown file types.
+- Removed size limitations of large files for keyword searching.
+- Added full html parsing and extraction (including comments, scripts, meta tags, etc).
+- Added support for indexing and searching disk images that have no volume and file system.
+- Solr (3.6.1) and Tika (1.0) upgrade.
+- Search a file by hash GUI feature and search other files with same hash.
+- Web search query text extraction from popular search engines.
+- Exif metadata extraction from jpeg files.	
+- Netbeans RCP platform upgrade (7.2).
+- Basic file bookmarks support.
+- Body file report.
+- Improved UI.
+
+Bugfixes:
+- Keyword search memory usage improvements.
+- Directory tree now shows which directories have no children before user clicks.
+- Fixed bug when recent cases would not get updated.
+- Fixed a bug when sometimes a case would get deleted.
+
 3.0.0b4 (June 29, 2012)
 Funded by US Army Intelligence Center of Excellence (USAICoE):
 New Features:
