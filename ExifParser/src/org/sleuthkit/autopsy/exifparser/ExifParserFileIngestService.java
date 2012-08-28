@@ -103,7 +103,7 @@ public final class ExifParserFileIngestService implements IngestServiceAbstractF
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
                 
                 if(date != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), MODULE_NAME, "", date.toString()));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), MODULE_NAME, date.toString()));
                 }
             }
             
@@ -117,11 +117,11 @@ public final class ExifParserFileIngestService implements IngestServiceAbstractF
                 String altitude = gpsDir.getString(GpsDirectory.TAG_GPS_ALTITUDE);
                 
                 if(latitude!= null && latRef!=null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), MODULE_NAME, "", latitude + " " +  latRef));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), MODULE_NAME, latitude + " " +  latRef));
                 } if(longitude!=null && longRef!=null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), MODULE_NAME, "", longitude + " " + longRef));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), MODULE_NAME, longitude + " " + longRef));
                 } if(altitude!=null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), MODULE_NAME, "", altitude));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), MODULE_NAME, altitude));
                 }
             }
             
@@ -132,15 +132,15 @@ public final class ExifParserFileIngestService implements IngestServiceAbstractF
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
                 
                 if(model!=null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), MODULE_NAME, "", model));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), MODULE_NAME, model));
                 } if(make!=null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), MODULE_NAME, "", make));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), MODULE_NAME, make));
                 }
             }
             
             // Add the attributes, if there are any, to a new artifact
             if(!attributes.isEmpty()) {
-                BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO);
+                BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
                 bba.addAttributes(attributes);
             }
             
