@@ -325,10 +325,10 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
                     try {
                         
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), MODULE_NAME, "", searchEngineDomain));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), MODULE_NAME, "", query));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), MODULE_NAME, searchEngineDomain));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), MODULE_NAME, query));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), MODULE_NAME, source, browser));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), MODULE_NAME, "", last_accessed));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), MODULE_NAME, last_accessed));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, fs, bbattributes);
                         se.increment();
                         ++totalQueries;
