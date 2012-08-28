@@ -12,6 +12,7 @@ New features:
 - Exif metadata extraction from jpeg files.	
 - Netbeans RCP platform upgrade (7.2).
 - Basic file bookmarks support.
+- Body file report.
 - Improved UI.
 
 Bugfixes:
