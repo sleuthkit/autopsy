@@ -100,7 +100,8 @@ public class ArtifactTypeNode extends DisplayableItemNode {
                 return "usb_devices.png";
             case TSK_WEB_SEARCH_QUERY:
                 return "searchquery.png";
-
+            case TSK_METADATA_EXIF:
+                return "camera-icon-16.png";
         }
         return "artifact-icon.png";
     }
