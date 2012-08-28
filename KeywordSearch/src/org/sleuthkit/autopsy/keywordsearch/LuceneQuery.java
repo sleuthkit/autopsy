@@ -140,15 +140,15 @@ public class LuceneQuery implements KeywordSearchQuery {
         }
 
         if (snippet != null) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, snippet));
         }
         //keyword
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", termHit));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, termHit));
         //list
         if (listName == null) {
             listName = "";
         }
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, "", listName));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, listName));
         //bogus - workaround the dir tree table issue
         //attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
 
@@ -156,7 +156,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         if (keywordQuery != null) {
             BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
             if (selType != null) {
-                attributes.add(new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", termHit));
+                attributes.add(new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, termHit));
             }
         }
 
