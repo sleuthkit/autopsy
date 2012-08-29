@@ -24,30 +24,30 @@ import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstract.ServiceType;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.ModuleType;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Example implementation of a fscontent image ingest service 
+ * Example implementation of a file ingest module 
  * 
  */
-public class ExampleAbstractFileIngestService implements IngestServiceAbstractFile {
+public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile {
 
-    private static final Logger logger = Logger.getLogger(ExampleAbstractFileIngestService.class.getName());
-    private static ExampleAbstractFileIngestService instance = null;
+    private static final Logger logger = Logger.getLogger(ExampleAbstractFileIngestModule.class.getName());
+    private static ExampleAbstractFileIngestModule instance = null;
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
 
-    //file ingest services require a private constructor
+    //file ingest modules require a private constructor
     //to ensure singleton instances
-    private ExampleAbstractFileIngestService() {
+    private ExampleAbstractFileIngestModule() {
         
     }
     
-    public static synchronized ExampleAbstractFileIngestService getDefault() {
+    public static synchronized ExampleAbstractFileIngestModule getDefault() {
         if (instance == null) {
-            instance = new ExampleAbstractFileIngestService();
+            instance = new ExampleAbstractFileIngestModule();
         }
         return instance;
     }
@@ -56,7 +56,7 @@ public class ExampleAbstractFileIngestService implements IngestServiceAbstractFi
     public ProcessResult process(AbstractFile fsContent) {
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
 
-        //service specific AbstractFile processing code here
+        //module specific AbstractFile processing code here
         try {
             Thread.sleep(100);
         } catch (InterruptedException e) {
@@ -70,17 +70,17 @@ public class ExampleAbstractFileIngestService implements IngestServiceAbstractFi
         logger.log(Level.INFO, "complete()");
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Complete"));
 
-        //service specific cleanup due completion here
+        //module specific cleanup due completion here
     }
 
     @Override
     public String getName() {
-        return "Example AbstractFile Service";
+        return "Example AbstractFile Module";
     }
 
     @Override
     public String getDescription() {
-        return "Example AbstractFile Service description";
+        return "Example AbstractFile Module description";
     }
     
     
@@ -90,7 +90,7 @@ public class ExampleAbstractFileIngestService implements IngestServiceAbstractFi
         logger.log(Level.INFO, "init()");
         this.managerProxy = managerProxy;
 
-        //service specific initialization here
+        //module specific initialization here
     }
 
     @Override
@@ -98,12 +98,12 @@ public class ExampleAbstractFileIngestService implements IngestServiceAbstractFi
         logger.log(Level.INFO, "stop()");
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Stopped"));
 
-        //service specific cleanup due interruption here
+        //module specific cleanup due interruption here
     }
 
     @Override
-    public ServiceType getType() {
-        return ServiceType.AbstractFile;
+    public ModuleType getType() {
+        return ModuleType.AbstractFile;
     }
     
     @Override

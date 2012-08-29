@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
@@ -52,7 +52,7 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
  */
 public class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
-    private static final Logger logger = Logger.getLogger(IngestServiceAbstractFile.class.getName());
+    private static final Logger logger = Logger.getLogger(IngestModuleAbstractFile.class.getName());
     private static final Logger tikaLogger = KeywordSearch.getTikaLogger();
     private static final Charset OUTPUT_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
@@ -60,7 +60,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     private static final int EXTRA_CHARS = 128; //for whitespace
     private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
     //private Tika tika;
-    private KeywordSearchIngestService service;
+    private KeywordSearchIngestModule module;
     private static Ingester ingester;
     private AbstractFile sourceFile; //currently processed file
     private int numChunks = 0;
@@ -74,7 +74,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
     AbstractFileTikaTextExtract() {
-        this.service = KeywordSearchIngestService.getDefault();
+        this.module = KeywordSearchIngestModule.getDefault();
         ingester = Server.getIngester();
         
     }
@@ -216,7 +216,7 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
                 //check if need invoke commit/search between chunks
                 //not to delay commit if timer has gone off
-                service.checkRunCommitSearch();
+                module.checkRunCommitSearch();
             }
         } catch (IOException ex) {
             final String msg = "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName();

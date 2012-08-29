@@ -25,29 +25,29 @@ import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestServiceImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.datamodel.Image;
 
 /**
  * Example implementation of an image ingest service 
  * 
  */
-public final class ExampleImageIngestService implements IngestServiceImage {
+public final class ExampleImageIngestModule implements IngestModuleImage {
 
-    private static final Logger logger = Logger.getLogger(ExampleImageIngestService.class.getName());
-    private static ExampleImageIngestService defaultInstance = null;
+    private static final Logger logger = Logger.getLogger(ExampleImageIngestModule.class.getName());
+    private static ExampleImageIngestModule defaultInstance = null;
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
-    public ExampleImageIngestService() {
+    public ExampleImageIngestModule() {
     }
 
     //default instance used for service registration
-    public static synchronized ExampleImageIngestService getDefault() {
+    public static synchronized ExampleImageIngestModule getDefault() {
         if (defaultInstance == null) {
-            defaultInstance = new ExampleImageIngestService();
+            defaultInstance = new ExampleImageIngestModule();
         }
         return defaultInstance;
     }
@@ -125,8 +125,8 @@ public final class ExampleImageIngestService implements IngestServiceImage {
     }
 
     @Override
-    public ServiceType getType() {
-        return ServiceType.Image;
+    public ModuleType getType() {
+        return ModuleType.Image;
     }
 
      @Override

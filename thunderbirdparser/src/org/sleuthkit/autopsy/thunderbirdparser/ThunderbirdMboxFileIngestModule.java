@@ -36,9 +36,9 @@ import org.apache.tika.metadata.Metadata;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstract.*;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
-import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.*;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -56,19 +56,19 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
 
-public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFile {
+public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile {
 
-    private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName());
-    private static ThunderbirdMboxFileIngestService instance = null;
+    private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
+    private static ThunderbirdMboxFileIngestModule instance = null;
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
     private static final String classname = "Thunderbird Parser";
-    private final String hashDBServiceName = "Hash Lookup";
+    private final String hashDBModuleName = "Hash Lookup";
     private final GetIsFileKnownVisitor getIsFileKnown = new GetIsFileKnownVisitor();
 
-    public static synchronized ThunderbirdMboxFileIngestService getDefault() {
+    public static synchronized ThunderbirdMboxFileIngestModule getDefault() {
         if (instance == null) {
-            instance = new ThunderbirdMboxFileIngestService();
+            instance = new ThunderbirdMboxFileIngestModule();
         }
         return instance;
     }
@@ -78,12 +78,12 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
         ThunderbirdEmailParser mbox = new ThunderbirdEmailParser();
         boolean isMbox = false;
 
-        IngestServiceAbstractFile.ProcessResult hashDBResult = 
-                managerProxy.getAbstractFileServiceResult(hashDBServiceName);
+        IngestModuleAbstractFile.ProcessResult hashDBResult = 
+                managerProxy.getAbstractFileModuleResult(hashDBModuleName);
 
         if (abstractFile.accept(getIsFileKnown) == true) {
             return ProcessResult.OK; //file is known, stop processing it
-        } else if (hashDBResult == IngestServiceAbstractFile.ProcessResult.ERROR) {
+        } else if (hashDBResult == IngestModuleAbstractFile.ProcessResult.ERROR) {
             return ProcessResult.ERROR;  //file has read error, stop processing it
         }
 
@@ -94,7 +94,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
                 isMbox = mbox.isValidMimeTypeMbox(t);
             }
         } catch (TskException ex) {
-            Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
+            Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
         }
 
 
@@ -136,7 +136,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
                 Content msfContent = tskCase.getContentById(msfId);
                 ContentUtils.writeToFile(msfContent, new File(currentCase.getTempDirectory() + File.separator + msfName));
             } catch (IOException ex) {
-                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to obtain msf file for mbox parsing:" + this.getClass().getName(), ex);
             }
@@ -162,7 +162,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
 //            try {
 //                reader = new FileReader(currentCase.getTempDirectory() + File.separator + msfName);
 //            } catch (FileNotFoundException ex) {
-//                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
+//                Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
 //            }
 //            MorkDocument morkDocument = new MorkDocument(reader);
 //            List<Dict> dicts = morkDocument.getDicts();
@@ -217,18 +217,18 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
                         bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
                         bbart.addAttributes(bbattributes);
                     } catch (TskCoreException ex) {
-                        Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
+                        Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
                     }
-                    IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent(classname, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
+                    IngestManagerProxy.fireModuleDataEvent(new ModuleDataEvent(classname, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
                 }
             } catch (FileNotFoundException ex) {
-                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
             } catch (IOException ex) {
-                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
             } catch (SAXException ex) {
-                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
             } catch (TikaException ex) {
-                Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
+                Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
             }
         }
 
@@ -240,7 +240,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
         logger.log(Level.INFO, "complete()");
         managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
 
-        //service specific cleanup due completion here
+        //module specific cleanup due completion here
     }
 
     @Override
@@ -258,19 +258,19 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
         logger.log(Level.INFO, "init()");
         this.managerProxy = managerProxy;
 
-        //service specific initialization here
+        //module specific initialization here
     }
 
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
 
-        //service specific cleanup due interruption here
+        //module specific cleanup due interruption here
     }
 
     @Override
-    public ServiceType getType() {
-        return ServiceType.AbstractFile;
+    public ModuleType getType() {
+        return ModuleType.AbstractFile;
     }
 
     @Override

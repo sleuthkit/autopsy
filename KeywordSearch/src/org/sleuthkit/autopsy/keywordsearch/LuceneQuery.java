@@ -126,7 +126,7 @@ public class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
-        final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
+        final String MODULE_NAME = KeywordSearchIngestModule.MODULE_NAME;
 
         KeywordWriteResult writeResult = null;
         Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();

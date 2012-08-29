@@ -59,10 +59,10 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
     }
 
     private void activateWidgets() {
-        final KeywordSearchIngestService service = KeywordSearchIngestService.getDefault();
+        final KeywordSearchIngestModule service = KeywordSearchIngestModule.getDefault();
         skipNSRLCheckBox.setSelected(service.getSkipKnown());
         boolean enable = !IngestManager.getDefault().isIngestRunning()
-                && ! IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault());
+                && ! IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());
         skipNSRLCheckBox.setEnabled(enable);
     }
 
@@ -139,7 +139,7 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
 private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipNSRLCheckBoxActionPerformed
-    KeywordSearchIngestService.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
+    KeywordSearchIngestModule.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
 }//GEN-LAST:event_skipNSRLCheckBoxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel chunksLabel;
@@ -152,7 +152,7 @@ private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//
     // End of variables declaration//GEN-END:variables
 
     private void customizeComponents() {
-        this.skipNSRLCheckBox.setSelected(KeywordSearchIngestService.getDefault().getSkipKnown());
+        this.skipNSRLCheckBox.setSelected(KeywordSearchIngestModule.getDefault().getSkipKnown());
 
         try {
             filesIndexedValue.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedFiles()));

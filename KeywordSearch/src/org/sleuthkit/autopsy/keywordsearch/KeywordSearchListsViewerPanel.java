@@ -159,7 +159,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             }
         };
         
-        if(IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault())) {
+        if(IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault())) {
             initIngest(true);
         }
         else {
@@ -173,15 +173,15 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
                 String changed = evt.getPropertyName();
                 Object oldValue = evt.getOldValue();
                 if(changed.equals(IngestModuleEvent.COMPLETED.toString() ) &&
-                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
+                        ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
                     initIngest(false);
                 }
                 else if(changed.equals(IngestModuleEvent.STARTED.toString() ) &&
-                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
+                        ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
                     initIngest(true);
                 }
                 else if(changed.equals(IngestModuleEvent.STOPPED.toString() ) &&
-                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
+                        ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
                     initIngest(false);
                 }
             }
@@ -410,7 +410,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            List<String> locked = KeywordSearchIngestService.getDefault().getKeywordLists();
+            List<String> locked = KeywordSearchIngestModule.getDefault().getKeywordLists();
             return (columnIndex == 0 && (!ingestRunning || !locked.contains((String)getValueAt(rowIndex, 1))));
         }
 
@@ -618,7 +618,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             this.setVerticalAlignment(JCheckBox.CENTER);
 
             String name = (String) table.getModel().getValueAt(row, 1);
-            List<String> locked = KeywordSearchIngestService.getDefault().getKeywordLists();
+            List<String> locked = KeywordSearchIngestModule.getDefault().getKeywordLists();
             setEnabled(!locked.contains(name) || !ingestRunning);
             Boolean selected = (Boolean) table.getModel().getValueAt(row, 0);
             setSelected(selected);

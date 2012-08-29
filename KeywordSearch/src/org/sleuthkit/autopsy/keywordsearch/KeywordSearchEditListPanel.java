@@ -178,7 +178,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
 
 
-        if (IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault())) {
+        if (IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault())) {
             initIngest(0);
         } else {
             initIngest(1);
@@ -191,13 +191,13 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                 String changed = evt.getPropertyName();
                 Object oldValue = evt.getOldValue();
                 if (changed.equals(IngestModuleEvent.COMPLETED.toString() )
-                        && ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
+                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
                     initIngest(1);
                 } else if (changed.equals(IngestModuleEvent.STARTED.toString() )
-                        && ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
+                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
                     initIngest(0);
                 } else if (changed.equals(IngestModuleEvent.STOPPED.toString() )
-                        && ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
+                        && ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
                     initIngest(1);
                 }
             }
@@ -249,7 +249,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         // Certain buttons will be disabled if ingest is ongoing on this list
         List<String> ingestLists = new ArrayList<String>();
         if (ingestOngoing) {
-            ingestLists = KeywordSearchIngestService.getDefault().getKeywordLists();
+            ingestLists = KeywordSearchIngestModule.getDefault().getKeywordLists();
         }
         boolean inIngest = !listSet ? false : ingestLists.contains(currentKeywordList.getName());
 
