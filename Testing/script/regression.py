@@ -1,5 +1,6 @@
 #!/usr/bin/python 
-#en_US.UTF-8
+#en_US.latin-1
+import codecs
 import datetime
 import logging
 import os
@@ -669,14 +670,13 @@ def compare_tsk_objects():
 def generate_common_log():
     try:
         logs_path = make_local_path(case.output_dir, case.image_name, "logs")
-        common_log = open(case.common_log, "a")
+        common_log = codecs.open(case.common_log, "a", "latin-1")
         common_log.write("--------------------------------------------------\n")
         common_log.write(case.image_name + "\n")
         common_log.write("--------------------------------------------------\n")
         for file in os.listdir(logs_path):
-            log = open(make_path(logs_path, file), "r")
-            lines = log.readlines()
-            for line in lines:
+            log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+            for line in log:
                 if "exception" in line.lower():
                     common_log.write("From " + file +":\n" +  line + "\n")
                 if "warning" in line.lower():
@@ -863,11 +863,10 @@ def get_exceptions():
     results = []
     for file in os.listdir(logs_path):
         if "autopsy" in file:
-            log = open(make_path(logs_path, file), "r")
-            lines = log.readlines()
+            log = codecs.open(make_path(logs_path, file), "r", "latin-1")
             ex = re.compile("\SException")
             er = re.compile("\SError")
-            for line in lines:
+            for line in log:
                 if ex.search(line) or er.search(line):
                     exceptions.append(line)
             log.close()
@@ -876,9 +875,8 @@ def get_exceptions():
 # Returns a list of all the warnings listed in the common log
 def get_warnings():
     warnings = []
-    common_log = open(case.common_log, "r")
-    lines = common_log.readlines()
-    for line in lines:
+    common_log = codecs.open(case.common_log, "r", "latin-1")
+    for line in common_log:
         if "warning" in line.lower():
             warnings.append(line)
     common_log.close()
@@ -899,9 +897,8 @@ def regex_search_logs(regex):
     logs_path = make_local_path(case.output_dir, case.image_name, "logs")
     results = []
     for file in os.listdir(logs_path):
-        log = open(make_path(logs_path, file), "r")
-        lines = log.readlines()
-        for line in lines:
+        log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+        for line in log:
             if regex.search(line):
                 results.append(line)
         log.close()
@@ -914,9 +911,8 @@ def search_logs(string):
     logs_path = make_local_path(case.output_dir, case.image_name, "logs")
     results = []
     for file in os.listdir(logs_path):
-        log = open(make_path(logs_path, file), "r")
-        lines = log.readlines()
-        for line in lines:
+        log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+        for line in log:
             if string in line:
                 results.append(line)
         log.close()
@@ -925,9 +921,8 @@ def search_logs(string):
 # Searches the common log for any instances of a specific string.
 def search_common_log(string):
     results = []
-    log = open(case.common_log, "r")
-    lines = log.readlines()
-    for line in lines:
+    log = codecs.open(case.common_log, "r", "latin-1")
+    for line in log:
         if string in line:
             results.append(line)
     log.close()
@@ -939,9 +934,8 @@ def search_log(log, string):
     logs_path = make_local_path(case.output_dir, case.image_name, "logs", log)
     try:
         results = []
-        log = open(logs_path, "r")
-        lines = log.readlines()
-        for line in lines:
+        log = codecs.open(logs_path, "r", "latin-1")
+        for line in log:
             if string in line:
                 results.append(line)
         log.close()
@@ -957,9 +951,8 @@ def search_log_set(type, string):
     results = []
     for file in os.listdir(logs_path):
         if type in file:
-            log = open(make_path(logs_path, file), "r")
-            lines = log.readlines()
-            for line in lines:
+            log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+            for line in log:
                 if string in line:
                     results.append(line)
             log.close()
