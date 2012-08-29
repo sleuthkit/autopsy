@@ -1208,7 +1208,7 @@ def copy_logs():
     except Exception as e:
         printerror("Error: Failed to copy the logs.")
         printerror(str(e) + "\n")
-        logging.warning(critical.format_exc())
+        logging.warning(traceback.format_exc())
 
 # Clears all the files from a directory and remakes it
 def clear_dir(dir):
