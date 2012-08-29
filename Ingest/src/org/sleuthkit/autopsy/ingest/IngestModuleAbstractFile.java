@@ -21,9 +21,9 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Ingest service interface that will be called for every file in the image
+ * Ingest module interface that will be called for every file in the image
  */
-public interface IngestServiceAbstractFile extends IngestServiceAbstract {
+public interface IngestModuleAbstractFile extends IngestModuleAbstract {
 
     /**
      * Return value resulting from processing AbstractFile
@@ -37,7 +37,7 @@ public interface IngestServiceAbstractFile extends IngestServiceAbstract {
     };
     
     /**
-     * Entry point to process file / directory by the service.  See \ref ingestmodule_making for details
+     * Entry point to process file / directory by the module.  See \ref ingestmodule_making for details
      * on what modules are responsible for doing. 
      * 
      * @param abstractFile file to process

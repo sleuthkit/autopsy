@@ -43,7 +43,7 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
     private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
-    private KeywordSearchIngestService service;
+    private KeywordSearchIngestModule module;
     private Ingester ingester;
     private AbstractFile sourceFile;
     private int numChunks = 0;
@@ -53,7 +53,7 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     };
 
     AbstractFileHtmlExtract() {
-        this.service = KeywordSearchIngestService.getDefault();
+        this.module = KeywordSearchIngestModule.getDefault();
         ingester = Server.getIngester();
     }
 
@@ -161,7 +161,7 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
 
                 //check if need invoke commit/search between chunks
                 //not to delay commit if timer has gone off
-                service.checkRunCommitSearch();
+                module.checkRunCommitSearch();
             }
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);

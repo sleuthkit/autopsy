@@ -22,9 +22,9 @@ package org.sleuthkit.autopsy.ingest;
 
 
 /**
- * Ingest manager facade used by ingest services
+ * Services available to ingest modules
  * 
- * Facility for services to interact with the ingest manager
+ * Facility for modules to interact with the ingest manager
  * for sending data events, ingest messages, getting configuration, such as
  * update frequency configuration
  * 
@@ -39,36 +39,36 @@ public class IngestManagerProxy {
     
     /**
      * Post ingest message
-     * @param message ingest message to be posted by ingest service
+     * @param message ingest message to be posted by ingest module
      */
     public void postMessage(final IngestMessage message) {
         manager.postMessage(message);
     }
     
     /**
-     * Fire service event to notify registered service event listeners
+     * Fire module event to notify registered module event listeners
      * @param eventType the event type, defined in IngestManager.IngestManagerEvents
-     * @param serviceName the service name
+     * @param moduleName the module name
      */
-    public static void fireServiceEvent(String eventType, String serviceName) {
-        IngestManager.fireServiceEvent(eventType, serviceName);
+    public static void fireModuleEvent(String eventType, String moduleName) {
+        IngestManager.fireModuleEvent(eventType, moduleName);
     }
 
     
     /**
-     * Fire service data event to notify registered service data event listeners
-     * @param serviceDataEvent service data event, encapsulating blackboard artifact data
+     * Fire module data event to notify registered module data event listeners
+     * @param moduleDataEvent module data event, encapsulating blackboard artifact data
      */
-    public static void fireServiceDataEvent(ServiceDataEvent serviceDataEvent) {
-        IngestManager.fireServiceDataEvent(serviceDataEvent);;
+    public static void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
+        IngestManager.fireModuleDataEvent(moduleDataEvent);
     }
     
     
     /**
-     * Facility for the service to query the currently set recommended data update frequency in minutes
-     * Services that post data in controlled time intervals, should obey this setting
+     * Facility for the module to query the currently set recommended data update frequency in minutes
+     * Modules that post data in controlled time intervals, should obey this setting
      * 
-     * @return max. number of minutes before service posts new data, if data is available
+     * @return max. number of minutes before module posts new data, if data is available
      */
     public int getUpdateFrequency() {
         return manager.getUpdateFrequency().getTime();
@@ -76,15 +76,15 @@ public class IngestManagerProxy {
     
     
     /**
-     * Facility for a file ingest service to check a return value from another file ingest service
+     * Facility for a file ingest module to check a return value from another file ingest module
      * that executed for the same file earlier in the file ingest pipeline
-     * The service return value can be used as a guideline to skip processing the file
+     * The module return value can be used as a guideline to skip processing the file
      * 
-     * @param serviceName registered service name of the service to check the return value of
-     * @return the return value of the previously executed service for the currently processed file in the file ingest pipeline
+     * @param moduleName registered module name of the module to check the return value of
+     * @return the return value of the previously executed module for the currently processed file in the file ingest pipeline
      */
-    public IngestServiceAbstractFile.ProcessResult getAbstractFileServiceResult(String serviceName) {
-        return manager.getAbstractFileServiceResult(serviceName);
+    public IngestModuleAbstractFile.ProcessResult getAbstractFileModuleResult(String moduleName) {
+        return manager.getAbstractFileModuleResult(moduleName);
     }
     
     

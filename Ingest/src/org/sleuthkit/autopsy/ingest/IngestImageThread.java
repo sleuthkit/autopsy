@@ -39,11 +39,11 @@ public class IngestImageThread extends SwingWorker<Object, Void> {
     private Logger logger = Logger.getLogger(IngestImageThread.class.getName());
     private ProgressHandle progress;
     private Image image;
-    private IngestServiceImage service;
+    private IngestModuleImage service;
     private IngestImageWorkerController controller;
     private IngestManager manager;
 
-    IngestImageThread(IngestManager manager, Image image, IngestServiceImage service) {
+    IngestImageThread(IngestManager manager, Image image, IngestModuleImage service) {
         this.manager = manager;
         this.image = image;
         this.service = service;
@@ -53,7 +53,7 @@ public class IngestImageThread extends SwingWorker<Object, Void> {
         return image;
     }
 
-    IngestServiceImage getService() {
+    IngestModuleImage getModule() {
         return service;
     }
 
@@ -113,7 +113,7 @@ public class IngestImageThread extends SwingWorker<Object, Void> {
                 catch (Exception e) {
                     logger.log(Level.INFO, "Error completing the service " + service.getName(), e);
                 }
-                IngestManager.fireServiceEvent(IngestModuleEvent.COMPLETED.toString(), service.getName());
+                IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), service.getName());
             } else {
                 logger.log(Level.INFO, "Service " + service.getName() + " stopped");
                 try {
@@ -122,7 +122,7 @@ public class IngestImageThread extends SwingWorker<Object, Void> {
                 catch (Exception e) {
                     logger.log(Level.INFO, "Error stopping the service" + service.getName(), e);
                 }
-                IngestManager.fireServiceEvent(IngestModuleEvent.STOPPED.toString(), service.getName());
+                IngestManager.fireModuleEvent(IngestModuleEvent.STOPPED.toString(), service.getName());
             }
 
         }

@@ -32,12 +32,12 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
  * The object wraps a collection of blackboard artifacts and their associated attributes that are to be reported as the new data to listeners.
  * Passing the data as part of the event reduces memory footprint and decreases number of garbage collections of the blackboard artifacts and attributes objects (the objects are expected to be reused by the data event listeners).
  * 
- * If a service does not pass the data as part of ServiceDataEvent (ServiceDataEvent.getArtifacts() returns null) - it is an indication that the service 
+ * If a service does not pass the data as part of ModuleDataEvent (ModuleDataEvent.getArtifacts() returns null) - it is an indication that the service 
  * has new data but it does not implement new data tracking.  The listener can then perform a blackboard query to get the latest data of interest (e.g. by artifact type).
  * 
  * By design, only a single type of artifacts can be contained in a single data event. 
  */
-public class ServiceDataEvent {
+public class ModuleDataEvent {
 
     private String serviceName;
     private ARTIFACT_TYPE artifactType;
@@ -47,7 +47,7 @@ public class ServiceDataEvent {
      * @param serviceName Module name
      * @param artifactType Type of artifact that was posted to blackboard
      */
-    public ServiceDataEvent(String serviceName, ARTIFACT_TYPE artifactType) {
+    public ModuleDataEvent(String serviceName, ARTIFACT_TYPE artifactType) {
         this.serviceName = serviceName;
         this.artifactType = artifactType;
     }
@@ -57,7 +57,7 @@ public class ServiceDataEvent {
      * @param artifactType Type of artifact that was posted to blackboard
      * @param artifactIDs List of specific artifact ID values that were added to blackboard
      */    
-    public ServiceDataEvent(String serviceName, ARTIFACT_TYPE artifactType, Collection<BlackboardArtifact> artifactIDs) {
+    public ModuleDataEvent(String serviceName, ARTIFACT_TYPE artifactType, Collection<BlackboardArtifact> artifactIDs) {
         this(serviceName, artifactType);
         this.artifactIDs = artifactIDs;
     }

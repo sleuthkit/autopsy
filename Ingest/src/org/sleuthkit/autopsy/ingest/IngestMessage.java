@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Representation of subject posted by ingest services
+ * Representation of subject posted by ingest modules
  * 
  * Message should have a unique ID within context of originating source
  * 
@@ -37,7 +37,7 @@ public class IngestMessage {
     };
     private long ID;
     private MessageType messageType;
-    private IngestServiceAbstract source;
+    private IngestModuleAbstract source;
     private String subject;
     private String detailsHtml;
     private String uniqueKey;
@@ -46,7 +46,7 @@ public class IngestMessage {
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static int managerMessageId = 0;
 
-    private IngestMessage(long ID, MessageType messageType, IngestServiceAbstract source, String subject, String detailsHtml, String uniqueKey) {
+    private IngestMessage(long ID, MessageType messageType, IngestModuleAbstract source, String subject, String detailsHtml, String uniqueKey) {
         this.ID = ID;
         this.source = source;
         this.messageType = messageType;
@@ -63,7 +63,7 @@ public class IngestMessage {
         return ID;
     }
 
-    public IngestServiceAbstract getSource() {
+    public IngestModuleAbstract getSource() {
         return source;
     }
 
@@ -163,12 +163,12 @@ public class IngestMessage {
      * Create a simple message with a subject only
      * @param ID ID of the message, unique in the context of module that generated it
      * @param messageType message type
-     * @param source originating service
+     * @param source originating module
      * @param subject message subject to be displayed
      * @param details message details to be displayed, or null
      * @return 
      */
-    public static IngestMessage createMessage(long ID, MessageType messageType, IngestServiceAbstract source, String subject, String details) {
+    public static IngestMessage createMessage(long ID, MessageType messageType, IngestModuleAbstract source, String subject, String details) {
         if (messageType == null || source == null || subject == null) {
             throw new IllegalArgumentException("message type, source and subject cannot be null");
         }
@@ -179,11 +179,11 @@ public class IngestMessage {
      * Create a simple message with a subject only
      * @param ID ID of the message, unique in the context of module that generated it
      * @param messageType message type
-     * @param source originating service
+     * @param source originating module
      * @param subject message subject to be displayed
      * @return 
      */
-    public static IngestMessage createMessage(long ID, MessageType messageType, IngestServiceAbstract source, String subject) {
+    public static IngestMessage createMessage(long ID, MessageType messageType, IngestModuleAbstract source, String subject) {
         return createMessage(ID, messageType, source, subject, null);
     }
 
@@ -191,12 +191,12 @@ public class IngestMessage {
      /**
      * Create error message
      * @param ID ID of the message, unique in the context of module that generated it
-     * @param source originating service
+     * @param source originating module
      * @param subject message subject to be displayed
      * @param details message details to be displayed, or null
      * @return 
      */
-    public static IngestMessage createErrorMessage(long ID, IngestServiceAbstract source, String subject, String details) {
+    public static IngestMessage createErrorMessage(long ID, IngestModuleAbstract source, String subject, String details) {
         if (source == null || subject == null) {
             throw new IllegalArgumentException("source and subject cannot be null");
         }
@@ -206,12 +206,12 @@ public class IngestMessage {
     /**
      * Create warning message
      * @param ID ID of the message, unique in the context of module that generated it
-     * @param source originating service
+     * @param source originating module
      * @param subject message subject to be displayed
      * @param details message details to be displayed, or null
      * @return 
      */
-    public static IngestMessage createWarningMessage(long ID, IngestServiceAbstract source, String subject, String details) {
+    public static IngestMessage createWarningMessage(long ID, IngestModuleAbstract source, String subject, String details) {
         if (source == null || subject == null) {
             throw new IllegalArgumentException("source and subject cannot be null");
         }
@@ -221,14 +221,14 @@ public class IngestMessage {
     /**
      * 
      * @param ID ID of the message, unique in the context of module that generated it
-     * @param source originating service
+     * @param source originating module
      * @param subject message subject to be displayed
      * @param detailsHtml html formatted detailed message (without leading and closing &lt;html&gt; tags), for instance, a human-readable representation of the data. 
      * @param uniqueKey unique key determining uniqueness of the message, or null. Helps grouping similar messages and determine their importance.  Subsequent messages with the same uniqueKey will be treated with lower priority.
-     * @param data data blackboard artifact associated with the message, the same as fired in ServiceDataEvent by the service
+     * @param data data blackboard artifact associated with the message, the same as fired in ModuleDataEvent by the module
      * @return 
      */
-    public static IngestMessage createDataMessage(long ID, IngestServiceAbstract source, String subject, String detailsHtml, String uniqueKey, BlackboardArtifact data) {
+    public static IngestMessage createDataMessage(long ID, IngestModuleAbstract source, String subject, String detailsHtml, String uniqueKey, BlackboardArtifact data) {
         if (source == null || subject == null || detailsHtml == null || data == null) {
             throw new IllegalArgumentException("source, subject, details and data cannot be null");
         }

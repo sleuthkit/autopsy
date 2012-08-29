@@ -21,32 +21,32 @@ package org.sleuthkit.autopsy.ingest;
 
 
 /**
- * Base interface for ingest services
+ * Base interface for ingest modules
  */
-public interface IngestServiceAbstract {
+public interface IngestModuleAbstract {
     
     /**
-     * Possible service types for the implementing classes
+     * Possible module types for the implementing classes
      */
-    public enum ServiceType {
+    public enum ModuleType {
         /**
-         * Image type service
+         * Image type module
          */
         Image,  
         
         /**
-         * AbstractFile type service
+         * AbstractFile type module
          */
         AbstractFile
     };
 
     /**
      * Notification from manager that brand new ingest should be initiated.
-     * Service loads its configuration and performs initialization
+     * Module loads its configuration and performs initialization
      * Invoked once per new worker thread, per ingest
      * 
-     * @param managerProxy manager facade that can be used by the service to communicate with the manager, e.g.
-     * for posting messages, getting configurations
+     * @param managerProxy services available to the module by the ingest manager, e.g.
+     * for posting messages, getting configurations, firing events
      */
     public void init(IngestManagerProxy managerProxy);
 
@@ -65,31 +65,31 @@ public interface IngestServiceAbstract {
     public void stop();
 
     /**
-     * Gets specific name of the service
-     * The name should be unique across services
-     * @return unique service name
+     * Gets specific name of the module
+     * The name should be unique across modules
+     * @return unique module name
      */
     public String getName();
     
     /**
-     * Gets user-friendly description of the service
-     * @return service description
+     * Gets user-friendly description of the module
+     * @return module description
      */
     public String getDescription();
     
     /**
-     * Returns type of the service
-     * @return service type
+     * Returns type of the module
+     * @return module type
      */
-    public ServiceType getType();
+    public ModuleType getType();
     
      /**
-     * A service can manage and use additional threads to perform some work in the background.
-     * This method provides insight to the manager if the service has truly completed its work or not.
+     * A module can manage and use additional threads to perform some work in the background.
+     * This method provides insight to the manager if the module has truly completed its work or not.
      *
      * 
-     * @return true if any background threads/workers managed by this service are still running or are pending to be run,
-     * false if all work has been done, or if background threads are not used/managed by this service
+     * @return true if any background threads/workers managed by this module are still running or are pending to be run,
+     * false if all work has been done, or if background threads are not used/managed by this module
      */
     public boolean hasBackgroundJobsRunning();
     
@@ -98,7 +98,7 @@ public interface IngestServiceAbstract {
      * Used to determine if a module has implemented a simple (run-time)
      * configuration panel that is displayed by the ingest manager.
      * 
-     * @return true if this service has a simple (run-time) configuration
+     * @return true if this module has a simple (run-time) configuration
      */
     public boolean hasSimpleConfiguration();
     

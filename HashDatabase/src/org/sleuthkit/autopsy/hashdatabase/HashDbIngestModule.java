@@ -28,8 +28,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
-import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -44,12 +44,12 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
-public class HashDbIngestService implements IngestServiceAbstractFile {
+public class HashDbIngestModule implements IngestModuleAbstractFile {
 
-    private static HashDbIngestService instance = null;
+    private static HashDbIngestModule instance = null;
     public final static String MODULE_NAME = "Hash Lookup";
     public final static String MODULE_DESCRIPTION = "Identifies known and notables files using supplied hash databases, such as a standard NSRL database.";
-    private static final Logger logger = Logger.getLogger(HashDbIngestService.class.getName());
+    private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private Processor processor = new Processor();
     private IngestManagerProxy managerProxy;
     private SleuthkitCase skCase;
@@ -66,20 +66,20 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
     private Map<Integer, HashDb> knownBadSets = new HashMap<Integer, HashDb>();
     
 
-    private HashDbIngestService() {
+    private HashDbIngestModule() {
         count = 0;
     }
 
-    public static synchronized HashDbIngestService getDefault() {
+    public static synchronized HashDbIngestModule getDefault() {
         if (instance == null) {
-            instance = new HashDbIngestService();
+            instance = new HashDbIngestModule();
         }
         return instance;
     }
 
     /**
      * notification from manager that brand new processing should be initiated.
-     * Service loads its configuration and performs initialization
+     * Module loads its configuration and performs initialization
      * 
      * @param managerProxy handle to the manager to postMessage() to
      */
@@ -129,7 +129,7 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
 
     /**
      * notification from manager that there is no more content to process and all work is done.
-     * Service performs any clean-up, notifies viewers and may also write results to the black-board
+     * Module performs any clean-up, notifies viewers and may also write results to the black-board
      */
     @Override
     public void complete() {
@@ -173,9 +173,9 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
     }
 
     /**
-     * get specific name of the service
-     * should be unique across services, a user-friendly name of the service shown in GUI
-     * @return  The name of this Ingest Service
+     * get specific name of the module
+     * should be unique across modules, a user-friendly name of the module shown in GUI
+     * @return  The name of this Ingest Module
      */
     @Override
     public String getName() {
@@ -199,8 +199,8 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
     }
 
     @Override
-    public ServiceType getType() {
-        return ServiceType.AbstractFile;
+    public ModuleType getType() {
+        return ModuleType.AbstractFile;
     }
     
     @Override
@@ -272,7 +272,7 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
                         abstractFile.getName() + md5Hash,
                         badFile));
             }
-            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
+            IngestManagerProxy.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error creating blackboard artifact", ex);
         }
@@ -332,12 +332,12 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
                     }
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
-                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestService.this, "Hash Lookup Error: " + name,
+                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
                             "Error encountered while updating the hash values for " + name + "."));
                     ret = ProcessResult.ERROR;
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Error reading file " + name, ex);
-                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestService.this, "Read Error: " + name,
+                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Read Error: " + name,
                             "Error encountered while calculating the hash value for " + name + "."));
                     ret = ProcessResult.ERROR;
                 }
@@ -354,7 +354,7 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
                 }
                 catch (IOException ex) {
                     logger.log(Level.WARNING, "Error reading file " + name, ex);
-                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestService.this, "Read Error: " + name,
+                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Read Error: " + name,
                             "Error encountered while calculating the hash value for " + name + " without databases."));
                 }
             }

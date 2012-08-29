@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 class AbstractFileStringExtract implements AbstractFileExtract {
 
-    private KeywordSearchIngestService service;
+    private KeywordSearchIngestModule module;
     private Ingester ingester;
     private int numChunks;
     private static final Logger logger = Logger.getLogger(AbstractFileStringExtract.class.getName());
@@ -61,7 +61,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     }
 
     public AbstractFileStringExtract() {
-        this.service = KeywordSearchIngestService.getDefault();
+        this.module = KeywordSearchIngestModule.getDefault();
         this.ingester = Server.getIngester();
         this.extractScripts.add(DEFAULT_SCRIPT);
     }
@@ -122,7 +122,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
 
                 //check if need invoke commit/search between chunks
                 //not to delay commit if timer has gone off
-                service.checkRunCommitSearch();
+                module.checkRunCommitSearch();
 
                 //debug.close();    
             }

@@ -28,10 +28,10 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestServiceImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.datamodel.*;
 
-abstract public class Extract implements IngestServiceImage{
+abstract public class Extract implements IngestModuleImage{
 
     protected Case currentCase = Case.getCurrentCase(); // get the most updated case
     protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();

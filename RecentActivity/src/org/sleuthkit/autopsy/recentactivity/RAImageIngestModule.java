@@ -28,17 +28,17 @@ import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestServiceImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * Recent activity image ingest service
+ * Recent activity image ingest module
  *
  */
-public final class RAImageIngestService implements IngestServiceImage {
+public final class RAImageIngestModule implements IngestModuleImage {
 
-    private static final Logger logger = Logger.getLogger(RAImageIngestService.class.getName());
-    private static RAImageIngestService defaultInstance = null;
+    private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
+    private static RAImageIngestModule defaultInstance = null;
     private IngestManagerProxy managerProxy;
     private static int messageId = 0;
     private ArrayList<String> errors = new ArrayList<String>();
@@ -51,13 +51,13 @@ public final class RAImageIngestService implements IngestServiceImage {
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
-    public RAImageIngestService() {
+    public RAImageIngestModule() {
     }
 
-    //default instance used for service registration
-    public static synchronized RAImageIngestService getDefault() {
+    //default instance used for module registration
+    public static synchronized RAImageIngestModule getDefault() {
         if (defaultInstance == null) {
-            defaultInstance = new RAImageIngestService();
+            defaultInstance = new RAImageIngestModule();
         }
         return defaultInstance;
     }
@@ -112,7 +112,7 @@ public final class RAImageIngestService implements IngestServiceImage {
         final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Completed - " + errorsFound, errorMessage.toString());
         managerProxy.postMessage(msg);
 
-        //service specific cleanup due to completion here
+        //module specific cleanup due to completion here
     }
 
     @Override
@@ -139,7 +139,7 @@ public final class RAImageIngestService implements IngestServiceImage {
 
     @Override
     public void stop() {
-        logger.log(Level.INFO, "RAImageIngetService::stop()");
+        logger.log(Level.INFO, "RAImageIngetModule::stop()");
         //Order Matters
         //ExtractRegistry stop        
         this.eree.stop();
@@ -149,8 +149,8 @@ public final class RAImageIngestService implements IngestServiceImage {
     }
 
     @Override
-    public ServiceType getType() {
-        return ServiceType.Image;
+    public ModuleType getType() {
+        return ModuleType.Image;
     }
 
     @Override

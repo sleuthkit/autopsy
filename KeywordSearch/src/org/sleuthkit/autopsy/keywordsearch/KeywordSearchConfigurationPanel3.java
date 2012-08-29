@@ -64,7 +64,7 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
                         toUpdate.add(s);
                     }
                 }
-                KeywordSearchIngestService.getDefault().setStringExtractScripts(toUpdate);
+                KeywordSearchIngestModule.getDefault().setStringExtractScripts(toUpdate);
 
             }
         };
@@ -104,7 +104,7 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
     }
 
     private void reloadScriptsCheckBoxes() {
-        final KeywordSearchIngestService service = KeywordSearchIngestService.getDefault();
+        final KeywordSearchIngestModule service = KeywordSearchIngestModule.getDefault();
         final List<SCRIPT> serviceScripts = service.getStringExtractScripts();
         final int components = checkPanel.getComponentCount();
         for (int i = 0; i < components; ++i) {
@@ -118,7 +118,7 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
     private void activateWidgets() {
         reloadScriptsCheckBoxes();
         boolean enable = !IngestManager.getDefault().isIngestRunning()
-        && ! IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault());;
+        && ! IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());;
         //enable / disable checboxes
         activateScriptsCheckboxes(enable);
     }
