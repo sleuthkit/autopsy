@@ -28,7 +28,7 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="servicesScrollPane" max="32767" attributes="1"/>
+                  <Component id="modulesScrollPane" max="32767" attributes="1"/>
                   <Component id="timePanel" alignment="0" max="32767" attributes="1"/>
                   <Component id="processUnallocPanel" alignment="0" max="32767" attributes="0"/>
               </Group>
@@ -45,7 +45,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jPanel1" pref="235" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <Component id="servicesScrollPane" pref="0" max="32767" attributes="0"/>
+                      <Component id="modulesScrollPane" pref="0" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="processUnallocPanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
@@ -58,7 +58,7 @@
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Container class="javax.swing.JScrollPane" name="servicesScrollPane">
+    <Container class="javax.swing.JScrollPane" name="modulesScrollPane">
       <Properties>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">

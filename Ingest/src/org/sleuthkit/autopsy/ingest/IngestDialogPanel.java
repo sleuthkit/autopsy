@@ -77,13 +77,13 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     private void customizeComponents() {
         modulesTable.setModel(tableModel);
         this.manager = IngestManager.getDefault();
-        Collection<IngestModuleImage> imageServices = IngestManager.enumerateImageModules();
-        for (final IngestModuleImage service : imageServices) {
-            addService(service);
+        Collection<IngestModuleImage> imageModules = IngestManager.enumerateImageModules();
+        for (final IngestModuleImage module : imageModules) {
+            addModule(module);
         }
-        Collection<IngestModuleAbstractFile> fsServices = IngestManager.enumerateAbstractFileModules();
-        for (final IngestModuleAbstractFile service : fsServices) {
-            addService(service);
+        Collection<IngestModuleAbstractFile> fsModules = IngestManager.enumerateAbstractFileModules();
+        for (final IngestModuleAbstractFile module : fsModules) {
+            addModule(module);
         }
 
         //time setting
@@ -120,7 +120,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
 
         ModulesTableRenderer renderer = new ModulesTableRenderer();
         //customize column witdhs
-        final int width = servicesScrollPane.getPreferredSize().width;
+        final int width = modulesScrollPane.getPreferredSize().width;
         TableColumn column = null;
         for (int i = 0; i < modulesTable.getColumnCount(); i++) {
             column = modulesTable.getColumnModel().getColumn(i);
@@ -176,10 +176,10 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         }
     }
 
-    private void addService(IngestModuleAbstract service) {
-        final String serviceName = service.getName();
-        modules.add(service);
-        moduleStates.put(serviceName, true);
+    private void addModule(IngestModuleAbstract module) {
+        final String moduleName = module.getName();
+        modules.add(module);
+        moduleStates.put(moduleName, true);
     }
 
     /** This method is called from within the constructor to
@@ -192,7 +192,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     private void initComponents() {
 
         timeGroup = new javax.swing.ButtonGroup();
-        servicesScrollPane = new javax.swing.JScrollPane();
+        modulesScrollPane = new javax.swing.JScrollPane();
         modulesTable = new javax.swing.JTable();
         jPanel1 = new javax.swing.JPanel();
         advancedButton = new javax.swing.JButton();
@@ -209,8 +209,8 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
 
         setPreferredSize(new java.awt.Dimension(522, 257));
 
-        servicesScrollPane.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
-        servicesScrollPane.setPreferredSize(new java.awt.Dimension(160, 160));
+        modulesScrollPane.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
+        modulesScrollPane.setPreferredSize(new java.awt.Dimension(160, 160));
 
         modulesTable.setBackground(new java.awt.Color(240, 240, 240));
         modulesTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -223,7 +223,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         ));
         modulesTable.setShowHorizontalLines(false);
         modulesTable.setShowVerticalLines(false);
-        servicesScrollPane.setViewportView(modulesTable);
+        modulesScrollPane.setViewportView(modulesTable);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
         jPanel1.setPreferredSize(new java.awt.Dimension(338, 257));
@@ -343,7 +343,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(timePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(processUnallocPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -357,7 +357,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                        .addComponent(modulesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(processUnallocPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -393,10 +393,10 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JScrollPane modulesScrollPane;
     private javax.swing.JTable modulesTable;
     private javax.swing.JCheckBox processUnallocCheckbox;
     private javax.swing.JPanel processUnallocPanel;
-    private javax.swing.JScrollPane servicesScrollPane;
     private javax.swing.JPanel simplePanel;
     private javax.swing.ButtonGroup timeGroup;
     private javax.swing.JLabel timeLabel;
@@ -546,7 +546,7 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
             if (column == 1) {
-                //String serviceName = (String) table.getModel().getValueAt(row, column);
+                //String moduleName = (String) table.getModel().getValueAt(row, column);
                 IngestModuleAbstract module = modules.get(row);
                 String moduleDescr = module.getDescription();
                 setToolTipText(moduleDescr);

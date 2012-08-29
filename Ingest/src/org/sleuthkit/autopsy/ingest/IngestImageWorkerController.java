@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.ingest;
 import org.netbeans.api.progress.ProgressHandle;
 
 /**
- * Controller for image level ingest services
- * Used by services to check task status and to post progress to
+ * Controller for image level ingest modules
+ * Used by modules to check task status and to post progress to
  */
 public class IngestImageWorkerController {
 
@@ -40,8 +40,8 @@ public class IngestImageWorkerController {
     }
 
     /**
-     * Check if the task has been cancelled.  This should be polled by the service periodically
-     * And the service needs to act, i.e. break out of its processing loop and call its stop() to cleanup
+     * Check if the task has been cancelled.  This should be polled by the module periodically
+     * And the module needs to act, i.e. break out of its processing loop and call its stop() to cleanup
      * 
      * @return true if the task has been cancelled, false otherwise
      */
@@ -70,7 +70,7 @@ public class IngestImageWorkerController {
 
     /**
      * Update the progress bar with the number of work units performed, if in the determinate mode
-     * @param workUnits number of work units performed so far by the service
+     * @param workUnits number of work units performed so far by the module
      */
     public void progress(int workUnits) {
         if (progress != null) {

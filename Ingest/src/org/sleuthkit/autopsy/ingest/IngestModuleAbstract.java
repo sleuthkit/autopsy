@@ -45,21 +45,21 @@ public interface IngestModuleAbstract {
      * Module loads its configuration and performs initialization
      * Invoked once per new worker thread, per ingest
      * 
-     * @param managerProxy services available to the module by the ingest manager, e.g.
+     * @param managerProxy modules available to the module by the ingest manager, e.g.
      * for posting messages, getting configurations, firing events
      */
     public void init(IngestManagerProxy managerProxy);
 
     /**
      * Notification from manager that there is no more content to process and all work is done.
-     * Service performs any clean-up of internal resources, and finalizes processing to produce complete result
-     * Service also posts ingest message indicating it is done, and posts ingest stats and errors in the details of the message.
+     * Module performs any clean-up of internal resources, and finalizes processing to produce complete result
+     * Module also posts ingest message indicating it is done, and posts ingest stats and errors in the details of the message.
      */
     public void complete();
 
     /**
      * Notification from manager to stop processing due to some interruption (user, error, exception)
-     * Service performs any clean-up of internal resources
+     * Module performs any clean-up of internal resources
      * It may also discard any pending results, but it should ensure it is in a defined state so that ingest can be rerun later.
      */
     public void stop();
@@ -106,7 +106,7 @@ public interface IngestModuleAbstract {
      * Used to determine if a module has implemented an advanced (general)
      * configuration that can be used for more in-depth module configuration.
      * 
-     * @return true if this service has an advanced configuration
+     * @return true if this module has an advanced configuration
      */
     public boolean hasAdvancedConfiguration();
     
