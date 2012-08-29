@@ -32,13 +32,13 @@ public interface IngestModuleImage extends IngestModuleAbstract {
     /**
      * Entry point to process the image by the module.
      * 
-     * Service does all the processing work in this method.
+     * Module does all the processing work in this method.
      * It is responsible for extracting content of interest from the image (i.e. using DataModel API) and processing it.
      * Results of processing, such as extracted data or analysis results, should be posted to the blackboard. 
      * 
      * The module notifies the ingest inbox of interesting events (data, errors, warnings, infos) 
      * by posting ingest messages
-     * The module notifies data viewers by firing events using IngestManagerProxy.fireServiceDataEvent
+     * The module notifies data viewers by firing events using IngestManagerProxy.fireModuleDataEvent
      * 
      * The module is responsible for posting progress to controller
      * And to periodically check controller if it should break out of the processing loop because task has been canceled

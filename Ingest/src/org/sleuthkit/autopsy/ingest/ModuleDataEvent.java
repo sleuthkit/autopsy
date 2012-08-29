@@ -32,33 +32,33 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
  * The object wraps a collection of blackboard artifacts and their associated attributes that are to be reported as the new data to listeners.
  * Passing the data as part of the event reduces memory footprint and decreases number of garbage collections of the blackboard artifacts and attributes objects (the objects are expected to be reused by the data event listeners).
  * 
- * If a service does not pass the data as part of ModuleDataEvent (ModuleDataEvent.getArtifacts() returns null) - it is an indication that the service 
+ * If a module does not pass the data as part of ModuleDataEvent (ModuleDataEvent.getArtifacts() returns null) - it is an indication that the module 
  * has new data but it does not implement new data tracking.  The listener can then perform a blackboard query to get the latest data of interest (e.g. by artifact type).
  * 
  * By design, only a single type of artifacts can be contained in a single data event. 
  */
 public class ModuleDataEvent {
 
-    private String serviceName;
+    private String moduleName;
     private ARTIFACT_TYPE artifactType;
     private Collection<BlackboardArtifact> artifactIDs;
     
     /**
-     * @param serviceName Module name
+     * @param moduleName Module name
      * @param artifactType Type of artifact that was posted to blackboard
      */
-    public ModuleDataEvent(String serviceName, ARTIFACT_TYPE artifactType) {
-        this.serviceName = serviceName;
+    public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType) {
+        this.moduleName = moduleName;
         this.artifactType = artifactType;
     }
     
     /**
-     * @param serviceName Module name
+     * @param moduleName Module name
      * @param artifactType Type of artifact that was posted to blackboard
      * @param artifactIDs List of specific artifact ID values that were added to blackboard
      */    
-    public ModuleDataEvent(String serviceName, ARTIFACT_TYPE artifactType, Collection<BlackboardArtifact> artifactIDs) {
-        this(serviceName, artifactType);
+    public ModuleDataEvent(String moduleName, ARTIFACT_TYPE artifactType, Collection<BlackboardArtifact> artifactIDs) {
+        this(moduleName, artifactType);
         this.artifactIDs = artifactIDs;
     }
 
@@ -79,11 +79,11 @@ public class ModuleDataEvent {
     }
 
     /**
-     * get service name that created the artifacts and fired the event
+     * get module name that created the artifacts and fired the event
      * @return 
      */
-    public String getServiceName() {
-        return serviceName;
+    public String getModuleName() {
+        return moduleName;
     }
     
     
