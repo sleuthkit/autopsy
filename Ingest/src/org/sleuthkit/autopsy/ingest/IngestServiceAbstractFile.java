@@ -27,13 +27,13 @@ public interface IngestServiceAbstractFile extends IngestServiceAbstract {
 
     /**
      * Return value resulting from processing AbstractFile
-     * Can be used by IngestManager to stop processing the file, or by subsequent module
+     * If ERROR, can be used subsequent module
      * in the pipeline as a hint to stop processing the file
      */
     public enum ProcessResult {
         OK, ///<  Indicates that processing was successful (including if the file was largely ignored by the module)
         ERROR, ///< Indicates that an error was encountered while processing the file, hint for later modules that depend on this module to skip processing the file due to error condition (such as file could not be read)
-        UNKNOWN ///< Indicates that a return value for the module is not known.  This should not be returned directly by modules, but is used when modules want to learn about a return value from a previously run module.  
+        UNKNOWN ///< Indicates that a return value for the module is not known.  This should not be returned directly by modules, but is used to indicate the module has not set its return value (e.g. it never ran)
     };
     
     /**
