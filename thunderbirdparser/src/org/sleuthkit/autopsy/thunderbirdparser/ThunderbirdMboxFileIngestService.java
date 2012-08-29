@@ -33,7 +33,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -52,7 +51,10 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskData;
+
 
 public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFile {
 
@@ -62,6 +64,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
     private static int messageId = 0;
     private static final String classname = "Thunderbird Parser";
     private final String hashDBServiceName = "Hash Lookup";
+    private final GetIsFileKnownVisitor getIsFileKnown = new GetIsFileKnownVisitor();
 
     public static synchronized ThunderbirdMboxFileIngestService getDefault() {
         if (instance == null) {
@@ -71,14 +74,14 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
     }
 
     @Override
-    public ProcessResult process(AbstractFile fsContent) {
+    public ProcessResult process(AbstractFile abstractFile) {
         ThunderbirdEmailParser mbox = new ThunderbirdEmailParser();
         boolean isMbox = false;
 
         IngestServiceAbstractFile.ProcessResult hashDBResult = 
                 managerProxy.getAbstractFileServiceResult(hashDBServiceName);
 
-        if (hashDBResult == IngestServiceAbstractFile.ProcessResult.COND_STOP) {
+        if (abstractFile.accept(getIsFileKnown) == true) {
             return ProcessResult.OK; //file is known, stop processing it
         } else if (hashDBResult == IngestServiceAbstractFile.ProcessResult.ERROR) {
             return ProcessResult.ERROR;  //file has read error, stop processing it
@@ -86,8 +89,8 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
 
         try {
             byte[] t = new byte[64];
-            if(fsContent.getSize() > 64) {
-                int byteRead = fsContent.read(t, 0, 64);
+            if(abstractFile.getSize() > 64) {
+                int byteRead = abstractFile.read(t, 0, 64);
                 isMbox = mbox.isValidMimeTypeMbox(t);
             }
         } catch (TskException ex) {
@@ -96,10 +99,10 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
 
 
         if (isMbox) {
-            managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
-            String mboxName = fsContent.getName();
+            managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + abstractFile.getName()));
+            String mboxName = abstractFile.getName();
             String msfName = mboxName + ".msf";
-            Long mboxId = fsContent.getId();
+            Long mboxId = abstractFile.getId();
             String mboxPath = "";
             Long msfId = 0L;
             Case currentCase = Case.getCurrentCase(); // get the most updated case
@@ -177,7 +180,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
             String cc = "";
             String bcc = "";
             try {
-                ReadContentInputStream contentStream = new ReadContentInputStream(fsContent);
+                ReadContentInputStream contentStream = new ReadContentInputStream(abstractFile);
                 mbox.parse(contentStream);
                 HashMap<String, Map<String, String>> emailMap = new HashMap<String, Map<String, String>>();
                 emailMap = mbox.getAllEmails();
@@ -211,7 +214,7 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), classname, folderPath));
                     BlackboardArtifact bbart;
                     try {
-                        bbart = fsContent.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
+                        bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
                         bbart.addAttributes(bbattributes);
                     } catch (TskCoreException ex) {
                         Logger.getLogger(ThunderbirdMboxFileIngestService.class.getName()).log(Level.WARNING, null, ex);
@@ -301,5 +304,22 @@ public class ThunderbirdMboxFileIngestService implements IngestServiceAbstractFi
 
     @Override
     public void saveSimpleConfiguration() {
+    }
+
+   /**
+     * Process content hierarchy and return true if content is a file and is set as known
+     */
+    private class GetIsFileKnownVisitor extends ContentVisitor.Default<Boolean> {
+
+        @Override
+        protected Boolean defaultVisit(Content cntnt) {
+            return false;
+        }
+        
+        @Override
+        public Boolean visit(org.sleuthkit.datamodel.File file) {
+            return file.getKnown() == TskData.FileKnown.KNOWN;
+        }
+        
     }
 }

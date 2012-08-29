@@ -1143,11 +1143,6 @@ public class IngestManager {
                         stats.logFileServiceStartProcess(service);
                         IngestServiceAbstractFile.ProcessResult result = service.process(fileToProcess);
                         stats.logFileServiceEndProcess(service);
-                        //handle unconditional stop
-                        if (result == IngestServiceAbstractFile.ProcessResult.STOP) {
-                            break;
-                            //will skip other services and start to process next file
-                        }
 
                         //store the result for subsequent services for this file
                         synchronized (abstractFileServiceResults) {
