@@ -117,7 +117,7 @@
         
         <echo message="Setting environment variables..."/>
         <exec executable="${aiPath}">
-            <arg line="/edit ${proj-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]gstreamer\bin -install_operation CreateUpdate -behavior Replace -system_variable"/>
+            <arg line="/edit ${proj-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]gstreamer\bin -install_operation CreateUpdate -behavior Append -system_variable"/>
         </exec>
         <exec executable="${aiPath}">
             <arg line="/edit ${proj-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]gstreamer\lib\gstreamer-0.10 -install_operation CreateUpdate -behavior Append -system_variable"/>
