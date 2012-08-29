@@ -293,11 +293,10 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
 
         private ProcessResult process(FsContent fsContent) {
 
-            ProcessResult ret = ProcessResult.UNKNOWN;
+            ProcessResult ret = ProcessResult.OK;
             boolean processFile = true;
             if (fsContent.getSize() == 0 
                     || fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
-                ret = ProcessResult.OK;
                 processFile = false;
             }
             if (processFile && (nsrlIsSet || knownBadIsSet)) {
@@ -322,7 +321,6 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
                             String hashSetName = entry.getValue().getName();
                             processBadFile(fsContent, md5Hash, hashSetName, entry.getValue().getShowInboxMessages());
                         }
-                        ret = ProcessResult.OK;
                     }
                     if (!foundBad && nsrlIsSet) {
                         long lookupstart = System.currentTimeMillis();
@@ -330,7 +328,6 @@ public class HashDbIngestService implements IngestServiceAbstractFile {
                         lookuptime += (System.currentTimeMillis()-lookupstart);
                         if (status.equals(TskData.FileKnown.KNOWN)) {
                             skCase.setKnown(fsContent, status);
-                            ret = ProcessResult.COND_STOP;
                         }
                     }
                 } catch (TskException ex) {
