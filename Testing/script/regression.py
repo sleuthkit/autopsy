@@ -1,18 +1,20 @@
 #!/usr/bin/python 
-#en_US.UTF-8
-import sys
-import sqlite3
-import re
-import subprocess
-import os.path
-import shutil
-import time
+#en_US.latin-1
+import codecs
 import datetime
-import xml
+import logging
+import os
 import re
+import shutil
 import socket
-from xml.dom.minidom import parse, parseString
+import sqlite3
+import subprocess
+import sys
 from sys import platform as _platform
+import time
+import traceback
+import xml
+from xml.dom.minidom import parse, parseString
 
 #
 # Please read me...
@@ -54,8 +56,6 @@ class Args:
         self.verbose = False
         self.exception = False
         self.exception_string = ""
-        self.output = False
-        self.output_dir = ""
     
     def parse(self):
         sys.argv.pop(0)
@@ -101,22 +101,11 @@ class Args:
                 try:
                     arg = sys.argv.pop(0)
                     printout("Running in exception mode: ")
-                    printout("Printing all exceptions with the string '" + arg + "'.\n")
+                    printout("Printing all exceptions with the string '" + arg + "'\n")
                     self.exception = True
                     self.exception_string = arg
                 except:
                     printerror("Error: No exception string given.")
-            elif(arg == "-o" or arg == "--output"):
-                try:
-                    arg = sys.argv.pop(0)
-                    if dir_exists(arg):
-                        printout("Running with output directory set to " + arg + ".\n")
-                        self.output = True
-                        self.output_dir = arg
-                    else:   
-                        printerror("Error: Given output directory for -o doesn't exist.")
-                except:
-                    printerror("Error: No output directory given.\n")
             elif arg == "-h" or arg == "--help":
                 printout(usage())
                 return False
@@ -367,6 +356,7 @@ def run_config_test(config_file):
     except Exception as e:
         printerror("Error: There was an error running with the configuration file.")
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
 
 # Runs the test on the single given file.
 # The path must be guarenteed to be a correct path.
@@ -379,12 +369,17 @@ def run_test(image_file):
     # Set the case to work for this test
     case.image_file = image_file
     case.image_name = case.get_image_name(image_file)
-    case.antlog_dir = make_path(case.output_dir, case.image_name, "antlog.txt")
+    case.antlog_dir = make_local_path(case.output_dir, case.image_name, "antlog.txt")
     case.known_bad_path = make_path(case.input_dir, "notablehashes.txt-md5.idx")
     case.keyword_path = make_path(case.input_dir, "notablekeywords.xml")
     case.nsrl_path = make_path(case.input_dir, "nsrl.txt-md5.idx")
     
+    logging.debug("--------------------")
+    logging.debug(case.image_name)
+    logging.debug("--------------------")
+    
     run_ant()
+    time.sleep(2) # Give everything a second to process
     
     # After the java has ran:
     copy_logs()
@@ -394,13 +389,14 @@ def run_test(image_file):
     except Exception as e:
         printerror("Error: Unknown fatal error when filling case data.")
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
     
     # If running in rebuild mode (-r)
     if args.rebuild:
         rebuild()
     # If NOT keeping Solr index (-k)
     if not args.keep:
-        solr_index = make_path(case.output_dir, case.image_name, "AutopsyTestCase", "KeywordSearch")
+        solr_index = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "KeywordSearch")
         if clear_dir(solr_index):
             print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
     elif args.keep:
@@ -453,7 +449,7 @@ def run_ant():
     case.ant.append("-Dkeyword_path=" + case.keyword_path)
     case.ant.append("-Dnsrl_path=" + case.nsrl_path)
     case.ant.append("-Dgold_path=" + make_local_path(case.gold))
-    case.ant.append("-Dout_path=" + make_path(case.output_dir, case.image_name))
+    case.ant.append("-Dout_path=" + make_local_path(case.output_dir, case.image_name))
     case.ant.append("-Dignore_unalloc=" + "%s" % args.unallocated)
     case.ant.append("-Dtest.timeout=" + str(case.timeout))
     
@@ -500,9 +496,9 @@ def rebuild():
     clear_dir(gold_dir)
     
     # Rebuild the database
-    gold_from = make_path(case.output_dir, case.image_name,
+    gold_from = make_local_path(case.output_dir, case.image_name,
                                 "AutopsyTestCase", "autopsy.db")
-    gold_to = make_path(case.gold, case.image_name, "standard.db")
+    gold_to = make_local_path(case.gold, case.image_name, "standard.db")
     try:
         copy_file(gold_from, gold_to)
     except FileNotFoundException as e:
@@ -512,7 +508,7 @@ def rebuild():
         errors.append(str(e) + "\n")
     
     # Rebuild the HTML report
-    html_path = make_path(case.output_dir, case.image_name,
+    html_path = make_local_path(case.output_dir, case.image_name,
                                   "AutopsyTestCase", "Reports")
     try:     
         html_from = get_file_in_dir(html_path, ".html")
@@ -589,7 +585,7 @@ def compare_to_gold_db():
 # the regression test against the gold standard html report
 def compare_to_gold_html():
     gold_html_file = make_local_path(case.gold, case.image_name, "standard.html")
-    autopsy_html_path = make_path(case.output_dir, case.image_name,
+    autopsy_html_path = make_local_path(case.output_dir, case.image_name,
                                         "AutopsyTestCase", "Reports")
     try:
         autopsy_html_file = get_file_in_dir(autopsy_html_path, ".html")
@@ -616,6 +612,7 @@ def compare_to_gold_html():
     except Exception as e:
         printerror("Error: Unknown fatal error comparing reports.")
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
 
 # Compares the blackboard artifact counts of two databases
 # given the two database cursors
@@ -672,15 +669,14 @@ def compare_tsk_objects():
 # from each log file generated by Autopsy
 def generate_common_log():
     try:
-        logs_path = make_path(case.output_dir, case.image_name, "logs")
-        common_log = open(case.common_log, "a")
+        logs_path = make_local_path(case.output_dir, case.image_name, "logs")
+        common_log = codecs.open(case.common_log, "a", "latin-1")
         common_log.write("--------------------------------------------------\n")
         common_log.write(case.image_name + "\n")
         common_log.write("--------------------------------------------------\n")
         for file in os.listdir(logs_path):
-            log = open(make_path(logs_path, file), "r")
-            lines = log.readlines()
-            for line in lines:
+            log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+            for line in log:
                 if "exception" in line.lower():
                     common_log.write("From " + file +":\n" +  line + "\n")
                 if "warning" in line.lower():
@@ -693,12 +689,13 @@ def generate_common_log():
     except Exception as e:
         printerror("Error: Unable to generate the common log.")
         printerror(str(e))
+        logging.critical(traceback.format_exc())
 
 # Fill in the global case's variables that require the log files
 def fill_case_data():
     try:
         # Open autopsy.log.0
-        log_path = make_path(case.output_dir, case.image_name, "logs", "autopsy.log.0")
+        log_path = make_local_path(case.output_dir, case.image_name, "logs", "autopsy.log.0")
         log = open(log_path)
         
         # Set the case starting time based off the first line of autopsy.log.0
@@ -710,6 +707,7 @@ def fill_case_data():
     except Exception as e:
         printerror("Error: Unable to open autopsy.log.0.")
         printerror(str(e) + "\n")
+        logging.warning(traceback.format_exc())
     
     # Set the case total test time
     # Start date must look like: "Jul 16, 2012 12:57:53 PM"
@@ -740,6 +738,7 @@ def fill_case_data():
     except Exception as e:
         printerror("Error: Unable to find the required information to fill case data.")
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
     try:
         service_lines = search_log("autopsy.log.0", "to process()")
         service_list = []
@@ -760,6 +759,7 @@ def fill_case_data():
     except Exception as e:
         printerror("Error: Unknown fatal error when finding service times.")
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
     
 # Generate the CSV log file
 def generate_csv(csv_path):
@@ -815,6 +815,7 @@ def generate_csv(csv_path):
         printerror("Error: Unknown fatal error when creating CSV file at:")
         printerror(csv_path)
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
 
 # Generates the CSV header (column names)
 def csv_header(csv_path):
@@ -858,15 +859,14 @@ def csv_header(csv_path):
 # Returns a list of all the exceptions listed in all the autopsy logs
 def get_exceptions():
     exceptions = []
-    logs_path = make_path(case.output_dir, case.image_name, "logs")
+    logs_path = make_local_path(case.output_dir, case.image_name, "logs")
     results = []
     for file in os.listdir(logs_path):
         if "autopsy" in file:
-            log = open(make_path(logs_path, file), "r")
-            lines = log.readlines()
+            log = codecs.open(make_path(logs_path, file), "r", "latin-1")
             ex = re.compile("\SException")
             er = re.compile("\SError")
-            for line in lines:
+            for line in log:
                 if ex.search(line) or er.search(line):
                     exceptions.append(line)
             log.close()
@@ -875,9 +875,8 @@ def get_exceptions():
 # Returns a list of all the warnings listed in the common log
 def get_warnings():
     warnings = []
-    common_log = open(case.common_log, "r")
-    lines = common_log.readlines()
-    for line in lines:
+    common_log = codecs.open(case.common_log, "r", "latin-1")
+    for line in common_log:
         if "warning" in line.lower():
             warnings.append(line)
     common_log.close()
@@ -890,16 +889,16 @@ def report_all_errors():
     except Exception as e:
         printerror("Error: Unknown fatal error when reporting all errors.")
         printerror(str(e) + "\n")
+        logging.warning(traceback.format_exc())
 
 # Searched all the known logs for the given regex
 # The function expects regex = re.compile(...)
 def regex_search_logs(regex):
-    logs_path = make_path(case.output_dir, case.image_name, "logs")
+    logs_path = make_local_path(case.output_dir, case.image_name, "logs")
     results = []
     for file in os.listdir(logs_path):
-        log = open(make_path(logs_path, file), "r")
-        lines = log.readlines()
-        for line in lines:
+        log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+        for line in log:
             if regex.search(line):
                 results.append(line)
         log.close()
@@ -909,12 +908,11 @@ def regex_search_logs(regex):
 # Search through all the known log files for a specific string.
 # Returns a list of all lines with that string
 def search_logs(string):
-    logs_path = make_path(case.output_dir, case.image_name, "logs")
+    logs_path = make_local_path(case.output_dir, case.image_name, "logs")
     results = []
     for file in os.listdir(logs_path):
-        log = open(make_path(logs_path, file), "r")
-        lines = log.readlines()
-        for line in lines:
+        log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+        for line in log:
             if string in line:
                 results.append(line)
         log.close()
@@ -923,9 +921,8 @@ def search_logs(string):
 # Searches the common log for any instances of a specific string.
 def search_common_log(string):
     results = []
-    log = open(case.common_log, "r")
-    lines = log.readlines()
-    for line in lines:
+    log = codecs.open(case.common_log, "r", "latin-1")
+    for line in log:
         if string in line:
             results.append(line)
     log.close()
@@ -934,12 +931,11 @@ def search_common_log(string):
 # Searches the given log for the given string
 # Returns a list of all lines with that string
 def search_log(log, string):
-    logs_path = make_path(case.output_dir, case.image_name, "logs", log)
+    logs_path = make_local_path(case.output_dir, case.image_name, "logs", log)
     try:
         results = []
-        log = open(logs_path, "r")
-        lines = log.readlines()
-        for line in lines:
+        log = codecs.open(logs_path, "r", "latin-1")
+        for line in log:
             if string in line:
                 results.append(line)
         log.close()
@@ -951,13 +947,12 @@ def search_log(log, string):
 # Search through all the the logs of the given type
 # Types include autopsy, tika, and solr
 def search_log_set(type, string):
-    logs_path = make_path(case.output_dir, case.image_name, "logs")
+    logs_path = make_local_path(case.output_dir, case.image_name, "logs")
     results = []
     for file in os.listdir(logs_path):
         if type in file:
-            log = open(make_path(logs_path, file), "r")
-            lines = log.readlines()
-            for line in lines:
+            log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+            for line in log:
                 if string in line:
                     results.append(line)
             log.close()
@@ -1027,7 +1022,7 @@ def generate_html():
         logs = "<div id='logs'>\
                 <h2><a name='" + case.image_name + "-logs'>Logs</a></h2>\
                 <hr color='#00a00f'>"
-        logs_path = make_path(case.output_dir, case.image_name, "logs")
+        logs_path = make_local_path(case.output_dir, case.image_name, "logs")
         for file in os.listdir(logs_path):
             logs += "<p><a href='file:\\" + make_path(logs_path, file) + "' target='_blank'>" + file + "</a></p>"
         logs += "</div>"
@@ -1109,6 +1104,7 @@ def generate_html():
         printerror("Error: Unknown fatal error when creating HTML log at:")
         printerror(case.html_log)
         printerror(str(e) + "\n")    
+        logging.critical(traceback.format_exc())
 
 # Writed the top of the HTML log file
 def write_html_head():
@@ -1208,10 +1204,11 @@ def wgetcwd():
 def copy_logs():
     try:
         log_dir = os.path.join("..","build","test","qa-functional","work","userdir0","var","log")
-        shutil.copytree(log_dir, make_path(case.output_dir, case.image_name, "logs"))
+        shutil.copytree(log_dir, make_local_path(case.output_dir, case.image_name, "logs"))
     except Exception as e:
         printerror("Error: Failed to copy the logs.")
         printerror(str(e) + "\n")
+        logging.warning(critical.format_exc())
 
 # Clears all the files from a directory and remakes it
 def clear_dir(dir):
@@ -1315,7 +1312,6 @@ Options:
   -v            Verbose mode; prints all errors to the screen.
   -e ex         Prints out all errors containing ex.
   -l cfg        Runs from configuration file cfg.
-  -o dir        Uses dir as the output directory. Must be a full path.
     """
 
 
@@ -1378,14 +1374,13 @@ def main():
         pass
     # Otherwise test away!
     else:
-        if not args.output:
-            case.output_dir = make_local_path("output", time.strftime("%Y.%m.%d-%H.%M.%S"))
-        else:
-            case.output_dir = make_path(args.output_dir, time.strftime("%Y.%m.%d-%H.%M.%S"))
+        case.output_dir = make_path("output", time.strftime("%Y.%m.%d-%H.%M.%S"))
         os.makedirs(case.output_dir)
-        case.common_log = make_path(case.output_dir, "AutopsyErrors.txt")
-        case.csv = make_path(case.output_dir, "CSV.txt")
-        case.html_log = make_path(case.output_dir, "AutopsyTestCase.html")
+        case.common_log = make_local_path(case.output_dir, "AutopsyErrors.txt")
+        case.csv = make_local_path(case.output_dir, "CSV.txt")
+        case.html_log = make_local_path(case.output_dir, "AutopsyTestCase.html")
+        log_name = case.output_dir + "\\regression.log"
+        logging.basicConfig(filename=log_name, level=logging.DEBUG)
         
         # If user wants to do a single file and a list (contradictory?)
         if args.single and args.list:
