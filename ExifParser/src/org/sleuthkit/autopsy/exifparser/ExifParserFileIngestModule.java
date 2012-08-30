@@ -32,11 +32,12 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -53,10 +54,11 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  */
 public final class ExifParserFileIngestModule implements IngestModuleAbstractFile {
 
+    private static final IngestServices services = IngestServices.getDefault();
+    
     final String MODULE_NAME = "Exif Parser";
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private static ExifParserFileIngestModule defaultInstance = null;
-    private IngestManagerProxy managerProxy;
     private static int messageId = 0;
 
     //file ingest modules require a private constructor
@@ -185,7 +187,7 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
         logger.log(Level.INFO, "completed exif parsing " + this.toString());
 
         final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Complete");
-        managerProxy.postMessage(msg);
+        services.postMessage(msg);
 
         //module specific cleanup due to completion here
     }
@@ -201,16 +203,15 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     }
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestModuleInit initContext) {
         logger.log(Level.INFO, "init() " + this.toString());
-        this.managerProxy = managerProxy;
 
     }
 
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Stopped"));
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Stopped"));
 
         //module specific cleanup due to interruption here
     }

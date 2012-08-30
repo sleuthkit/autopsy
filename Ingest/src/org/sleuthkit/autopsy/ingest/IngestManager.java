@@ -100,8 +100,6 @@ public class IngestManager {
     private final List<IngestModuleAbstractFile> abstractFileModules = enumerateAbstractFileModules();
     // module return values
     private final Map<String, IngestModuleAbstractFile.ProcessResult> abstractFileModulesRetValues = new HashMap<String, IngestModuleAbstractFile.ProcessResult>();
-    //manager proxy
-    final IngestManagerProxy managerProxy = new IngestManagerProxy(this);
     //notifications
     private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
     //monitor
@@ -293,7 +291,7 @@ public class IngestManager {
                     imageIngesters.add(newImageWorker);
 
                     //image modules are now initialized per instance
-                    quModule.init(managerProxy);
+                    quModule.init(new IngestModuleInit() );
                     newImageWorker.execute();
                     IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), quModule.getName());
                 }
@@ -323,7 +321,7 @@ public class IngestManager {
             abstractFileIngester = new IngestAbstractFileThread();
             //init all fs modules, everytime new worker starts
             for (IngestModuleAbstractFile s : abstractFileModules) {
-                s.init(managerProxy);
+                s.init(new IngestModuleInit() );
             }
             abstractFileIngester.execute();
         }

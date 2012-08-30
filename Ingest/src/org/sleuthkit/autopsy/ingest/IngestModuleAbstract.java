@@ -44,11 +44,9 @@ public interface IngestModuleAbstract {
      * Notification from manager that brand new ingest should be initiated.
      * Module loads its configuration and performs initialization
      * Invoked once per new worker thread, per ingest
-     * 
-     * @param managerProxy modules available to the module by the ingest manager, e.g.
-     * for posting messages, getting configurations, firing events
+     * @param initContext context used to initialize some modules
      */
-    public void init(IngestManagerProxy managerProxy);
+    public void init(IngestModuleInit initContext);
 
     /**
      * Notification from manager that there is no more content to process and all work is done.

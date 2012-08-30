@@ -55,7 +55,7 @@ Module developers are encouraged to use the standard java.util.logging.Logger in
 
 \subsection ingestmodule_making_process Process Method
 The process method is where the work is done in each type of module.  Some notes:
-- File-level modules will be called on each file in an order determined by the IngestManager.  Each module is free to quickly ignore a file based on name, signature, etc.  If a module wants to know the return value from a previously run module, it should use the IngestManagerProxy.getAbstractFileModuleResult() method. 
+- File-level modules will be called on each file in an order determined by the IngestManager.  Each module is free to quickly ignore a file based on name, signature, etc.  If a module wants to know the return value from a previously run module, it should use the IngestServices.getAbstractFileModuleResult() method. 
 - Image-level modules are expected not passed in specific files and are expected to query the database to find the files that they are interested in. 
 
 
@@ -97,11 +97,11 @@ Users will see the results from ingest modules in one of two ways:
 - Results are posted to the blackboard and will be displayed in the navigation tree
 - Messages are sent to the Ingest Inbox to notify a user of what has recently been found. 
 
-See the Blackboard (REFERENCE) documentation for posting results to it.  Modules are free to immediately post results when they find them or they can wait.  The  IngestManagerProxy.getUpdateFrequency() method returns the maximum amount of time that a module can wait before it posts its results. 
+See the Blackboard (REFERENCE) documentation for posting results to it.  Modules are free to immediately post results when they find them or they can wait.  The  IngestServices.getUpdateFrequency() method returns the maximum amount of time that a module can wait before it posts its results. 
 
 An example of waiting to post results is the keyword search module.  It is resource intensive to commit the keyword index and do a keyword search.  Therefore, when its process() method is invoked, it checks if it is close to the getUpdateFrequency() since the last time it did a keyword search.  If it is, then it commits the index and performs the search. 
 
-When they add data to the blackboard, modules should notify listeners of the new data by periodically invoking IngestManagerProxy.fireModuleDataEvent() method. This allows other modules (and the main UI) to know when to query the blackboard for the latest data. 
+When they add data to the blackboard, modules should notify listeners of the new data by periodically invoking IngestServices.fireModuleDataEvent() method. This allows other modules (and the main UI) to know when to query the blackboard for the latest data. 
 
 Modules should post messages to the inbox when interesting data is found.  The messages includes the module name, message subject, message details, a unique message id (in the context of the originating module), and a uniqueness attribute.  The uniqueness attribute is used to group similar messages together and to determine the overall importance priority of the message (if the same message is seen repeatedly, it is considered lower priority).
 
@@ -111,7 +111,7 @@ Ingest messages have different types: there are info messages, warning messages,
 The data messages contain encapsulated blackboard artifacts and attributes. The passed in data is used by the ingest inbox GUI widget to navigate to the artifact view in the directory tree, if requested by the user.
 
 Ingest message API is defined in IngestMessage class.  The class also contains factory methods to create new messages.
-Messages are posted using IngestManagerProxy.postMessage() method, which accepts a message object created using one of the factory methods.
+Messages are posted using IngestServices.postMessage() method, which accepts a message object created using one of the factory methods.
 
 Modules should post inbox messages to the user when stop() or complete() is invoked (refer to the examples).
 It is recommended to populate the description field of the complete inbox message to provide feedback to the user 

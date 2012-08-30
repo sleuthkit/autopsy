@@ -25,10 +25,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -51,7 +51,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     public final static String MODULE_DESCRIPTION = "Identifies known and notables files using supplied hash databases, such as a standard NSRL database.";
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private Processor processor = new Processor();
-    private IngestManagerProxy managerProxy;
+    private static final IngestServices services = IngestServices.getDefault();
     private SleuthkitCase skCase;
     private static int messageId = 0;
     private int count;
@@ -81,14 +81,13 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
      * notification from manager that brand new processing should be initiated.
      * Module loads its configuration and performs initialization
      * 
-     * @param managerProxy handle to the manager to postMessage() to
+     * @param services handle to the manager to postMessage() to
      */
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestModuleInit initContext) {
         HashDbManagementPanel.getDefault().setIngestRunning(true);
         HashDbSimplePanel.setIngestRunning(true);
-        this.managerProxy = managerProxy;
-        this.managerProxy.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));
+        this.services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
             HashDbXML hdbxml = HashDbXML.getCurrent();
@@ -116,10 +115,10 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
             }
             
             if (!nsrlIsSet) {
-                this.managerProxy.postMessage(IngestMessage.createWarningMessage(++messageId, this, "No NSRL database set", "Known file search will not be executed."));
+                this.services.postMessage(IngestMessage.createWarningMessage(++messageId, this, "No NSRL database set", "Known file search will not be executed."));
             }
             if (!knownBadIsSet) {
-                this.managerProxy.postMessage(IngestMessage.createWarningMessage(++messageId, this, "No known bad database set", "Known bad file search will not be executed."));
+                this.services.postMessage(IngestMessage.createWarningMessage(++messageId, this, "No known bad database set", "Known bad file search will not be executed."));
             }
 
         } catch (TskException ex) {
@@ -156,7 +155,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
         }
         
         detailsSb.append("</table>");
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Ingest Complete", detailsSb.toString()));
+        services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Ingest Complete", detailsSb.toString()));
         
         HashDbManagementPanel.getDefault().setIngestRunning(false);
         HashDbSimplePanel.setIngestRunning(false);
@@ -266,13 +265,13 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
 
                 detailsSb.append("</table>");
 
-                managerProxy.postMessage(IngestMessage.createDataMessage(++messageId, this,
+                services.postMessage(IngestMessage.createDataMessage(++messageId, this,
                         "Notable: " + abstractFile.getName(),
                         detailsSb.toString(),
                         abstractFile.getName() + md5Hash,
                         badFile));
             }
-            IngestManagerProxy.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
+            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error creating blackboard artifact", ex);
         }
@@ -332,12 +331,12 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
                     }
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Couldn't analyze file " + name + " - see sleuthkit log for details", ex);
-                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
+                    services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Hash Lookup Error: " + name,
                             "Error encountered while updating the hash values for " + name + "."));
                     ret = ProcessResult.ERROR;
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Error reading file " + name, ex);
-                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Read Error: " + name,
+                    services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Read Error: " + name,
                             "Error encountered while calculating the hash value for " + name + "."));
                     ret = ProcessResult.ERROR;
                 }
@@ -354,7 +353,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
                 }
                 catch (IOException ex) {
                     logger.log(Level.WARNING, "Error reading file " + name, ex);
-                    managerProxy.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Read Error: " + name,
+                    services.postMessage(IngestMessage.createErrorMessage(++messageId, HashDbIngestModule.this, "Read Error: " + name,
                             "Error encountered while calculating the hash value for " + name + " without databases."));
                 }
             }

@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode.FsContentPropertyType;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -536,7 +536,7 @@ public class KeywordSearchResultFactory extends ChildFactory<KeyValueQuery> {
 
 
             if (!this.isCancelled() && !na.isEmpty()) {
-                IngestManagerProxy.fireModuleDataEvent(new ModuleDataEvent(KeywordSearchIngestModule.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
+                IngestServices.getDefault().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchIngestModule.MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, na));
             }
         }
 
