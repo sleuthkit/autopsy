@@ -24,11 +24,11 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JPanel;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -49,6 +49,8 @@ import org.sleuthkit.datamodel.Image;
  */
 public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModuleImage {
 
+    private static final IngestServices services = IngestServices.getDefault();
+    
     static final String MODULE_NAME = "Search Engine Query Analyzer";
 
     /**
@@ -336,7 +338,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                         logger.log(Level.SEVERE, "Error while add artifact.", e + " from " + fs.toString());
                         this.addErrorMessage(this.getName() + ": Error while adding artifact");
                     }
-                    IngestManagerProxy.fireModuleDataEvent(new ModuleDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
+                    services.fireModuleDataEvent(new ModuleDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
                 }
 
 
@@ -368,7 +370,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     }
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestModuleInit initContext) {
         logger.info("running init()");
     }
 

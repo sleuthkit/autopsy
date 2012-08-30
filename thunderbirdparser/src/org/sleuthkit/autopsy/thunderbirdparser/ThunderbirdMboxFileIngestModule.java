@@ -33,7 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.*;
@@ -50,6 +50,7 @@ import org.xml.sax.SAXException;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -60,7 +61,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private static ThunderbirdMboxFileIngestModule instance = null;
-    private IngestManagerProxy managerProxy;
+    private static final IngestServices services = IngestServices.getDefault();
     private static int messageId = 0;
     private static final String classname = "Thunderbird Parser";
     private final String hashDBModuleName = "Hash Lookup";
@@ -79,7 +80,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
         boolean isMbox = false;
 
         IngestModuleAbstractFile.ProcessResult hashDBResult = 
-                managerProxy.getAbstractFileModuleResult(hashDBModuleName);
+                services.getAbstractFileModuleResult(hashDBModuleName);
 
         if (abstractFile.accept(getIsFileKnown) == true) {
             return ProcessResult.OK; //file is known, stop processing it
@@ -99,7 +100,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
 
 
         if (isMbox) {
-            managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + abstractFile.getName()));
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + abstractFile.getName()));
             String mboxName = abstractFile.getName();
             String msfName = mboxName + ".msf";
             Long mboxId = abstractFile.getId();
@@ -219,7 +220,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
                     } catch (TskCoreException ex) {
                         Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
                     }
-                    IngestManagerProxy.fireModuleDataEvent(new ModuleDataEvent(classname, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
+                    services.fireModuleDataEvent(new ModuleDataEvent(classname, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
                 }
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
@@ -238,7 +239,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete()");
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "COMPLETE"));
 
         //module specific cleanup due completion here
     }
@@ -254,9 +255,8 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
     }
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestModuleInit initContext) {
         logger.log(Level.INFO, "init()");
-        this.managerProxy = managerProxy;
 
         //module specific initialization here
     }

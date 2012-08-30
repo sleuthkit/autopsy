@@ -18,14 +18,14 @@
  */
 package org.sleuthkit.autopsy.ingest.example;
 
-import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.ModuleType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -36,7 +36,7 @@ public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile
 
     private static final Logger logger = Logger.getLogger(ExampleAbstractFileIngestModule.class.getName());
     private static ExampleAbstractFileIngestModule instance = null;
-    private IngestManagerProxy managerProxy;
+    private static final IngestServices services = IngestServices.getDefault();
     private static int messageId = 0;
 
     //file ingest modules require a private constructor
@@ -54,7 +54,7 @@ public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile
 
     @Override
     public ProcessResult process(AbstractFile fsContent) {
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
 
         //module specific AbstractFile processing code here
         try {
@@ -68,7 +68,7 @@ public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile
     @Override
     public void complete() {
         logger.log(Level.INFO, "complete()");
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Complete"));
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Complete"));
 
         //module specific cleanup due completion here
     }
@@ -86,9 +86,8 @@ public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile
     
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestModuleInit initContext) {
         logger.log(Level.INFO, "init()");
-        this.managerProxy = managerProxy;
 
         //module specific initialization here
     }
@@ -96,7 +95,7 @@ public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Stopped"));
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Stopped"));
 
         //module specific cleanup due interruption here
     }

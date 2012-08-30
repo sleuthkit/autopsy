@@ -22,19 +22,30 @@ package org.sleuthkit.autopsy.ingest;
 
 
 /**
- * Services available to ingest modules
- * 
- * Facility for modules to interact with the ingest manager
- * for sending data events, ingest messages, getting configuration, such as
- * update frequency configuration
+ * Services available to ingest modules via singleton instance,
+ * e.g. for interacting with the ingest manager
+ * for sending data events, ingest messages, getting configurations, etc.
  * 
  */
-public class IngestManagerProxy {
+public class IngestServices {
     
     private IngestManager manager;
     
-    IngestManagerProxy(IngestManager manager) {
-        this.manager = manager;
+    private static IngestServices instance;
+    
+    private IngestServices() {
+        this.manager = IngestManager.getDefault();
+    }
+    
+    /**
+     * Get handle to module services
+     * @return the services handle
+     */
+    public static synchronized IngestServices getDefault() {
+        if (instance == null) {
+            instance = new IngestServices();
+        }
+        return instance;
     }
     
     /**
@@ -50,7 +61,7 @@ public class IngestManagerProxy {
      * @param eventType the event type, defined in IngestManager.IngestManagerEvents
      * @param moduleName the module name
      */
-    public static void fireModuleEvent(String eventType, String moduleName) {
+    public void fireModuleEvent(String eventType, String moduleName) {
         IngestManager.fireModuleEvent(eventType, moduleName);
     }
 
@@ -59,7 +70,7 @@ public class IngestManagerProxy {
      * Fire module data event to notify registered module data event listeners
      * @param moduleDataEvent module data event, encapsulating blackboard artifact data
      */
-    public static void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
+    public void fireModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         IngestManager.fireModuleDataEvent(moduleDataEvent);
     }
     

@@ -28,7 +28,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JPanel;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -36,8 +35,9 @@ import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.*;
@@ -47,6 +47,8 @@ import org.sleuthkit.datamodel.*;
  */
 public class ExtractRegistry extends Extract implements IngestModuleImage {
 
+    private static final IngestServices services = IngestServices.getDefault();
+    
     public Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
     boolean rrFound = false;
@@ -328,7 +330,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
     }
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestModuleInit initContext) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

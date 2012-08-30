@@ -41,10 +41,11 @@ import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -75,7 +76,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     public static final String MODULE_NAME = "Keyword Search";
     public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
     private static KeywordSearchIngestModule instance = null;
-    private IngestManagerProxy managerProxy;
+    private static final IngestServices services = IngestServices.getDefault();
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runSearcher = false; //whether to run searcher next time
@@ -146,7 +147,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         }
 
         //check if we should index meta-data only when 1) it is known 2) HashDb module errored on it
-        IngestModuleAbstractFile.ProcessResult hashDBResult = managerProxy.getAbstractFileModuleResult(hashDBModuleName);
+        IngestModuleAbstractFile.ProcessResult hashDBResult = services.getAbstractFileModuleResult(hashDBModuleName);
         //logger.log(Level.INFO, "hashdb result: " + hashDBResult + "file: " + AbstractFile.getName());
         if (hashDBResult == IngestModuleAbstractFile.ProcessResult.ERROR) {
             //index meta-data only
@@ -230,7 +231,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             finalSearcher.execute();
         } else {
             finalSearcherDone = true;
-            managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
+            services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Completed"));
         }
 
         //log number of files / chunks in index
@@ -292,16 +293,14 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
      * Initializes the module for new ingest run Sets up threads, timers,
      * retrieves settings, keyword lists to run on
      *
-     * @param managerProxy
+     * @param services
      */
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestModuleInit initContext) {
         logger.log(Level.INFO, "init()");
         initialized = false;
 
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
-
-        this.managerProxy = managerProxy;
 
         ingester = Server.getIngester();
 
@@ -330,7 +329,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         initKeywords();
 
         if (keywords.isEmpty() || keywordLists.isEmpty()) {
-            managerProxy.postMessage(IngestMessage.createWarningMessage(++messageID, instance, "No keywords in keyword list.", "Only indexing will be done and and keyword search will be skipped (it can be executed later again as ingest or using toolbar search feature)."));
+            services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, "No keywords in keyword list.", "Only indexing will be done and and keyword search will be skipped (it can be executed later again as ingest or using toolbar search feature)."));
         }
 
         processedFiles = false;
@@ -341,7 +340,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         indexer = new Indexer();
 
-        final int updateIntervalMs = managerProxy.getUpdateFrequency() * 60 * 1000;
+        final int updateIntervalMs = services.getUpdateFrequency() * 60 * 1000;
         logger.log(Level.INFO, "Using commit interval (ms): " + updateIntervalMs);
         logger.log(Level.INFO, "Using searcher interval (ms): " + updateIntervalMs);
 
@@ -353,7 +352,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         commitTimer.start();
         searchTimer.start();
 
-        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Started"));
+        services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Started"));
     }
 
     @Override
@@ -453,7 +452,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         msg.append("<br />Skipped files: ").append(skipped).append("<br />");
         String indexStats = msg.toString();
         logger.log(Level.INFO, "Keyword Indexing Completed: " + indexStats);
-        managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Keyword Indexing Completed", indexStats));
+        services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, this, "Keyword Indexing Completed", indexStats));
 
     }
 
@@ -910,7 +909,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                                 //check if should send messages on hits on this list
                                 if (list.getIngestMessages()) //post ingest inbox msg
                                 {
-                                    managerProxy.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+                                    services.postMessage(IngestMessage.createDataMessage(++messageID, instance, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
                                 }
 
 
@@ -919,7 +918,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
                         //update artifact browser
                         if (!newArtifacts.isEmpty()) {
-                            IngestManagerProxy.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+                            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
                         }
                     }
                     progress.progress(queryStr, ++numSearched);
@@ -987,7 +986,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                 //reset current resuls earlier to potentially garbage collect sooner
                 currentResults = new HashMap<Keyword, List<Long>>();
 
-                managerProxy.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestModule.instance, "Completed"));
+                services.postMessage(IngestMessage.createMessage(++messageID, MessageType.INFO, KeywordSearchIngestModule.instance, "Completed"));
             } else {
                 //start counting time for a new searcher to start
                 //unless final searcher is pending

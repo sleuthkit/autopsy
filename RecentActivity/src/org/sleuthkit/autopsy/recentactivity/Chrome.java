@@ -24,8 +24,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import javax.swing.JPanel;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import java.util.logging.Level;
@@ -35,8 +34,8 @@ import java.io.File;
 import java.io.FileReader;
 import org.sleuthkit.autopsy.coreutils.DecodeUtil;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -45,11 +44,12 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Image;
 
 /**
- *
- * @author Alex
+ * Chrome recent activity extraction
  */
 public class Chrome extends Extract implements IngestModuleImage {
 
+    private static final IngestServices services = IngestServices.getDefault();
+    
     private static final String chquery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
     private static final String chcookiequery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
@@ -114,7 +114,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManagerProxy.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         }
     }
 
@@ -174,7 +174,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManagerProxy.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
         }
     }
 
@@ -223,7 +223,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManagerProxy.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
         }
     }
 
@@ -274,7 +274,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManagerProxy.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
+            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
         }
     }
 
@@ -321,12 +321,12 @@ public class Chrome extends Extract implements IngestModuleImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManagerProxy.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         }
     }
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestModuleInit initContext) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

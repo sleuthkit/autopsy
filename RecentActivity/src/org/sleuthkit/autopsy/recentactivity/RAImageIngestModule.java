@@ -25,10 +25,11 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -39,7 +40,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
     private static RAImageIngestModule defaultInstance = null;
-    private IngestManagerProxy managerProxy;
+    private static final IngestServices services = IngestServices.getDefault();
     private static int messageId = 0;
     private ArrayList<String> errors = new ArrayList<String>();
     private StringBuilder subCompleted = new StringBuilder();
@@ -71,7 +72,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
         modules.add(chre);
         modules.add(eere);
         modules.add(usq);
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
         controller.switchToDeterminate(modules.size());
         controller.progress(0);
         
@@ -101,7 +102,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
             for (String msg : errors) {
                 i++;
                 final IngestMessage error = IngestMessage.createMessage(++messageId, MessageType.INFO, this, msg + "<br>");
-                managerProxy.postMessage(error);
+                services.postMessage(error);
             }
             errorsFound = i + " errors found!";
         }else
@@ -110,7 +111,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
             errorsFound = "No errors reported";
         }
         final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Completed - " + errorsFound, errorMessage.toString());
-        managerProxy.postMessage(msg);
+        services.postMessage(msg);
 
         //module specific cleanup due to completion here
     }
@@ -126,9 +127,8 @@ public final class RAImageIngestModule implements IngestModuleImage {
     }
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestModuleInit initContext) {
         logger.log(Level.INFO, "init() " + this.toString());
-        this.managerProxy = managerProxy;
         this.eere = new ExtractIE();
         this.chre = new Chrome();
         this.eree = new ExtractRegistry();

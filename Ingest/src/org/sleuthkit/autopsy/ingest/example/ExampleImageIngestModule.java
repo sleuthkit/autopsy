@@ -18,14 +18,14 @@
  */
 package org.sleuthkit.autopsy.ingest.example;
 
-import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -36,7 +36,7 @@ public final class ExampleImageIngestModule implements IngestModuleImage {
 
     private static final Logger logger = Logger.getLogger(ExampleImageIngestModule.class.getName());
     private static ExampleImageIngestModule defaultInstance = null;
-    private IngestManagerProxy managerProxy;
+    private static final IngestServices services = IngestServices.getDefault();
     private static int messageId = 0;
 
     //public constructor is required
@@ -56,7 +56,7 @@ public final class ExampleImageIngestModule implements IngestModuleImage {
     public void process(Image image, IngestImageWorkerController controller) {
         logger.log(Level.INFO, "process() " + this.toString());
 
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + image.getName()));
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + image.getName()));
 
         //service specific Image processing code here
         //example:
@@ -76,7 +76,7 @@ public final class ExampleImageIngestModule implements IngestModuleImage {
                 //do the work
                 Thread.sleep(500);
                 //post message to user if found something interesting
-                managerProxy.postMessage(IngestMessage.createMessage(processedFiles, MessageType.INFO, this, "Processed " + image.getName() + ": " + Integer.toString(processedFiles)));
+                services.postMessage(IngestMessage.createMessage(processedFiles, MessageType.INFO, this, "Processed " + image.getName() + ": " + Integer.toString(processedFiles)));
 
                 //update progress
                 controller.progress(++processedFiles);
@@ -92,7 +92,7 @@ public final class ExampleImageIngestModule implements IngestModuleImage {
         logger.log(Level.INFO, "complete() " + this.toString());
 
         final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Complete");
-        managerProxy.postMessage(msg);
+        services.postMessage(msg);
 
         //service specific cleanup due to completion here
     }
@@ -108,9 +108,8 @@ public final class ExampleImageIngestModule implements IngestModuleImage {
     }
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestModuleInit initContext) {
         logger.log(Level.INFO, "init() " + this.toString());
-        this.managerProxy = managerProxy;
 
         //service specific initialization here
 
@@ -119,7 +118,7 @@ public final class ExampleImageIngestModule implements IngestModuleImage {
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Stopped"));
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Stopped"));
 
         //service specific cleanup due to interruption here
     }
