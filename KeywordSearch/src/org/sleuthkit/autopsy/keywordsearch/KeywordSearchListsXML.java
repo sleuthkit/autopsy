@@ -167,13 +167,28 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
                 final String name = listEl.getAttribute(LIST_NAME_ATTR);
                 final String created = listEl.getAttribute(LIST_CREATE_ATTR);
                 final String modified = listEl.getAttribute(LIST_MOD_ATTR);
-                final String useForIngest = listEl.getAttribute(LIST_USE_FOR_INGEST);
-                final String ingestMessages = listEl.getAttribute(LIST_INGEST_MSGS);
+                
+                //set these bools to true by default, if they don't exist in XML
+                Boolean useForIngestBool;
+                Boolean ingestMessagesBool; 
+                
+                if (listEl.hasAttribute(LIST_USE_FOR_INGEST) ) {
+                    useForIngestBool = Boolean.parseBoolean(listEl.getAttribute(LIST_USE_FOR_INGEST));
+                }
+                else {
+                    useForIngestBool = true;
+                }
+
+                if (listEl.hasAttribute(LIST_INGEST_MSGS)) {
+                    ingestMessagesBool = Boolean.parseBoolean(listEl.getAttribute(LIST_INGEST_MSGS));
+                }
+                else {
+                    ingestMessagesBool = true;
+                }
                 
                 Date createdDate = dateFormatter.parse(created);
                 Date modDate = dateFormatter.parse(modified);
-                Boolean useForIngestBool = Boolean.parseBoolean(useForIngest);
-                Boolean ingestMessagesBool = Boolean.parseBoolean(ingestMessages);
+
                 List<Keyword> words = new ArrayList<Keyword>();
                 KeywordSearchList list = new KeywordSearchList(name, createdDate, modDate, useForIngestBool, ingestMessagesBool, words);
 
