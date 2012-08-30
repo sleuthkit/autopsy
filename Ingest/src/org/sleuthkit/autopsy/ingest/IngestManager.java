@@ -59,6 +59,9 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class IngestManager {
 
+    /**
+     * @Deprecated individual modules are be responsible for maintaining such settings
+     */
     enum UpdateFrequency {
 
         FAST(20),
@@ -66,10 +69,16 @@ public class IngestManager {
         SLOW(5);
         private final int time;
 
+        /**
+        * @Deprecated individual modules are be responsible for maintaining such settings
+        */
         UpdateFrequency(int time) {
             this.time = time;
         }
 
+        /**
+        * @Deprecated individual modules are be responsible for maintaining such settings
+        */
         int getTime() {
             return time;
         }

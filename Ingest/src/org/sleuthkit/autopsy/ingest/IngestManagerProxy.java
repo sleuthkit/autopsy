@@ -69,6 +69,8 @@ public class IngestManagerProxy {
      * Modules that post data in controlled time intervals, should obey this setting
      * 
      * @return max. number of minutes before module posts new data, if data is available
+     *
+     * @Deprecated individual modules are be responsible for maintaining such settings
      */
     public int getUpdateFrequency() {
         return manager.getUpdateFrequency().getTime();
