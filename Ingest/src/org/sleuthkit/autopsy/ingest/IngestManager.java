@@ -143,12 +143,18 @@ public class IngestManager {
         DATA
     };
     //ui
-    private final IngestUI ui = IngestMessageTopComponent.findInstance();
+    private IngestUI ui = IngestMessageTopComponent.findInstance();
     //singleton
     private static IngestManager instance;
 
     private IngestManager() {
         imageIngesters = new ArrayList<IngestImageThread>();
+    }
+    
+    void initUI() {
+        if (ui == null) {
+            IngestMessageTopComponent.findInstance();
+        }
     }
 
     /**
@@ -209,14 +215,16 @@ public class IngestManager {
     void execute(final List<IngestModuleAbstract> modules, final List<Image> images) {
         logger.log(Level.INFO, "Will enqueue number of images: " + images.size() + " to " + modules.size() + " modules.");
 
-        if (!isIngestRunning()) {
+        if (!isIngestRunning() && ui != null) {
             ui.clearMessages();
         }
 
         queueWorker = new EnqueueWorker(modules, images);
         queueWorker.execute();
 
-        ui.restoreMessages();
+        if (ui != null) {
+            ui.restoreMessages();
+        }
         //logger.log(Level.INFO, "Queues: " + imageQueue.toString() + " " + AbstractFileQueue.toString());
     }
 
@@ -575,7 +583,9 @@ public class IngestManager {
                 stats.addError(message.getSource());
             }
         }
-        ui.displayMessage(message);
+        if (ui != null) {
+            ui.displayMessage(message);
+        }
     }
 
     /**
@@ -1204,8 +1214,10 @@ public class IngestManager {
                 if (!this.isCancelled()) {
                     logger.log(Level.INFO, "Summary Report: " + stats.toString());
                     logger.log(Level.INFO, "File module timings: " + stats.getFileModuleStats());
-                    logger.log(Level.INFO, "Ingest messages count: " + ui.getMessagesCount());
-                    //ui.displayReport(stats.toHtmlString());
+                    if (ui != null) {
+                        logger.log(Level.INFO, "Ingest messages count: " + ui.getMessagesCount());
+                    }
+
                     IngestManager.this.postMessage(IngestMessage.createManagerMessage("File Ingest Complete", stats.toHtmlString()));
                 }
             }
