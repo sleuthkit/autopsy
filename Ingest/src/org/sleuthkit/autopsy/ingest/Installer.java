@@ -38,7 +38,7 @@ public class Installer extends ModuleInstall {
 
             @Override
             public void run() {
-                manager.initUI();
+                //manager.initUI();
                 //force ingest inbox closed, even if previous state was open
                 //IngestMessageTopComponent.findInstance().close();
             }
