@@ -157,7 +157,7 @@ public class IngestManager {
      */
     void initUI() {
         if (ui == null) {
-            IngestMessageTopComponent.findInstance();
+            ui = IngestMessageTopComponent.findInstance();
         }
     }
 
