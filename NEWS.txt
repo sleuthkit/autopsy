@@ -14,6 +14,7 @@ New features:
 - Basic file bookmarks support.
 - Body file report.
 - Improved UI.
+- Updated Ingest Module API.
 
 Bugfixes:
 - Keyword search memory usage improvements.
