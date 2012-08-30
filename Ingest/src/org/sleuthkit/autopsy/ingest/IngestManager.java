@@ -143,7 +143,8 @@ public class IngestManager {
         DATA
     };
     //ui
-    private IngestUI ui = IngestMessageTopComponent.findInstance();
+    //Initialized by Installer in AWT thread once the Window System is ready
+    private IngestUI ui = null; //IngestMessageTopComponent.findInstance();
     //singleton
     private static IngestManager instance;
 
@@ -151,6 +152,9 @@ public class IngestManager {
         imageIngesters = new ArrayList<IngestImageThread>();
     }
     
+    /**
+     * called by Installer in AWT thread once the Window System is ready
+     */
     void initUI() {
         if (ui == null) {
             IngestMessageTopComponent.findInstance();
