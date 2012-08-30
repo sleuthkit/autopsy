@@ -1,4 +1,4 @@
-3.0.0 (August 29, 2012)
+3.0.0b5 (August 30, 2012)
 Funded by US Army Intelligence Center of Excellence (USAICoE):
 
 New features:
