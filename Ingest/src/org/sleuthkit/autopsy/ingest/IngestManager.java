@@ -143,7 +143,7 @@ public class IngestManager {
         DATA
     };
     //ui
-    private IngestUI ui = null;
+    private final IngestUI ui = IngestMessageTopComponent.findInstance();
     //singleton
     private static IngestManager instance;
 
@@ -164,9 +164,6 @@ public class IngestManager {
         return instance;
     }
 
-    void initUI() {
-        ui = IngestMessageTopComponent.findInstance();
-    }
 
     /**
      * Add property change listener to listen to ingest events
