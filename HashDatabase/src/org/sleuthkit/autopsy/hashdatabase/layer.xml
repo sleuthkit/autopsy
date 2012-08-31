@@ -12,31 +12,23 @@
     <folder name="Services">
         <file name="org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.directorytree.HashSearchProvider"/>
-            <!--<attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.filesearch.FileSearchAction.getDefault"/>-->
             <attr name="position" intvalue="250"/>
         </file>
     </folder>
     <folder name="Menu">
-        
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-hashdatabase-HashDbPanelSearchAction.instance"/>
-                <attr name="position" intvalue="801"/>
+                <attr name="position" intvalue="201"/>
             </file>
-            <file name="org-sleuthkit-autopsy-report-generatereport-separatorAfter.instance">
+            <file name="org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction-separatorAfter.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="802"/>
+                <attr name="position" intvalue="202"/>
             </file>
             <file name="org-sleuthkit-autopsy-hashdatabase-HashDatabaseSettingsAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-hashdatabase-HashDbMgmtAction.instance"/>
-                <attr name="position" intvalue="1000"/>
+                <attr name="position" intvalue="301"/>
             </file>
-            <file name="Separator1.instance_hidden"/>
-            <file name="Separator3.instance_hidden"/>
-            <file name="org-netbeans-modules-autoupdate-ui-actions-PluginManagerAction.shadow_hidden"/>
-            <file name="org-netbeans-modules-favorites-templates-TemplatesAction.shadow_hidden"/>
-            <file name="org-netbeans-modules-options-OptionsWindowAction.shadow_hidden"/>
-            <file name="org-openide-actions-ToolsAction.shadow_hidden"/>
         </folder>
     </folder>
     <folder name="Services">
