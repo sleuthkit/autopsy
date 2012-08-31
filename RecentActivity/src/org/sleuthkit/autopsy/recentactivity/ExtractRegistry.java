@@ -46,8 +46,6 @@ import org.sleuthkit.datamodel.*;
  * Extracting windows registry data using regripper
  */
 public class ExtractRegistry extends Extract implements IngestModuleImage {
-
-    private static final IngestServices services = IngestServices.getDefault();
     
     public Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;

@@ -76,7 +76,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     public static final String MODULE_NAME = "Keyword Search";
     public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
     private static KeywordSearchIngestModule instance = null;
-    private static final IngestServices services = IngestServices.getDefault();
+    private IngestServices services;
     private Ingester ingester = null;
     private volatile boolean commitIndex = false; //whether to commit index next time
     private volatile boolean runSearcher = false; //whether to run searcher next time
@@ -298,6 +298,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     @Override
     public void init(IngestModuleInit initContext) {
         logger.log(Level.INFO, "init()");
+        services = IngestServices.getDefault();
         initialized = false;
 
         caseHandle = Case.getCurrentCase().getSleuthkitCase();

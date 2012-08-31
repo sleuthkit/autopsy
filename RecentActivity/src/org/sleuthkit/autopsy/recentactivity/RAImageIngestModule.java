@@ -40,7 +40,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
     private static RAImageIngestModule defaultInstance = null;
-    private static final IngestServices services = IngestServices.getDefault();
+    private IngestServices services;
     private static int messageId = 0;
     private ArrayList<String> errors = new ArrayList<String>();
     private StringBuilder subCompleted = new StringBuilder();
@@ -129,12 +129,22 @@ public final class RAImageIngestModule implements IngestModuleImage {
     @Override
     public void init(IngestModuleInit initContext) {
         logger.log(Level.INFO, "init() " + this.toString());
-        this.eere = new ExtractIE();
-        this.chre = new Chrome();
-        this.eree = new ExtractRegistry();
-        this.ffre = new Firefox();
-        this.usq = new SearchEngineURLQueryAnalyzer();
-
+        services = IngestServices.getDefault();
+        
+        eere = new ExtractIE();
+        eere.init(initContext);
+        
+        chre = new Chrome();
+        chre.init(initContext);
+        
+        eree = new ExtractRegistry();
+        eree.init(initContext);
+        
+        ffre = new Firefox();
+        ffre.init(initContext);
+        
+        usq = new SearchEngineURLQueryAnalyzer();
+        usq.init(initContext);
     }
 
     @Override

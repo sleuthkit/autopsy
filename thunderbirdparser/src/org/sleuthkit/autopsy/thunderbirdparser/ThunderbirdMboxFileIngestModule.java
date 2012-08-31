@@ -61,7 +61,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private static ThunderbirdMboxFileIngestModule instance = null;
-    private static final IngestServices services = IngestServices.getDefault();
+    private IngestServices services;
     private static int messageId = 0;
     private static final String classname = "Thunderbird Parser";
     private final String hashDBModuleName = "Hash Lookup";
@@ -257,6 +257,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
     @Override
     public void init(IngestModuleInit initContext) {
         logger.log(Level.INFO, "init()");
+        services = IngestServices.getDefault();
 
         //module specific initialization here
     }

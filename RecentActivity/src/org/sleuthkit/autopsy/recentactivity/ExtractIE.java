@@ -69,7 +69,9 @@ import org.sleuthkit.datamodel.*;
 public class ExtractIE extends Extract implements IngestModuleImage {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    private static final IngestServices services = IngestServices.getDefault();
+  
+    private IngestServices services;
+    
     private String indexDatQueryStr = "select * from tsk_files where name LIKE '%index.dat%'";
     private String favoriteQuery = "select * from `tsk_files` where parent_path LIKE '%/Favorites%' and name LIKE '%.url'";
     private String cookiesQuery = "select * from `tsk_files` where parent_path LIKE '%/Cookies%' and name LIKE '%.txt'";
@@ -142,6 +144,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, Favorite, bbattributes);
+                
                 services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
@@ -194,7 +197,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             }
 
         }
-
+        
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
 
@@ -225,6 +228,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             }
 
         }
+        
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
 
     }
@@ -493,7 +497,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
 
     @Override
     public void init(IngestModuleInit initContext) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        services = IngestServices.getDefault();
     }
 
     @Override

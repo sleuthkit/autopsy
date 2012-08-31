@@ -36,7 +36,7 @@ public final class ExampleImageIngestModule implements IngestModuleImage {
 
     private static final Logger logger = Logger.getLogger(ExampleImageIngestModule.class.getName());
     private static ExampleImageIngestModule defaultInstance = null;
-    private static final IngestServices services = IngestServices.getDefault();
+    private IngestServices services;
     private static int messageId = 0;
 
     //public constructor is required
@@ -110,6 +110,7 @@ public final class ExampleImageIngestModule implements IngestModuleImage {
     @Override
     public void init(IngestModuleInit initContext) {
         logger.log(Level.INFO, "init() " + this.toString());
+        services = IngestServices.getDefault();
 
         //service specific initialization here
 

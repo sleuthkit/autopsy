@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  */
 public final class ExifParserFileIngestModule implements IngestModuleAbstractFile {
 
-    private static final IngestServices services = IngestServices.getDefault();
+    private IngestServices services;
     
     final String MODULE_NAME = "Exif Parser";
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
@@ -64,6 +64,7 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
     //file ingest modules require a private constructor
     //to ensure singleton instances
     private ExifParserFileIngestModule() {
+       
     }
 
     //default instance used for module registration
@@ -204,6 +205,7 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
 
     @Override
     public void init(IngestModuleInit initContext) {
+        services = IngestServices.getDefault();
         logger.log(Level.INFO, "init() " + this.toString());
 
     }
