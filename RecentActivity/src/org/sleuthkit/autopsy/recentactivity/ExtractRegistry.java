@@ -51,6 +51,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
     private String RR_PATH;
     boolean rrFound = false;
     private int sysid;
+    private IngestServices services;
 
     ExtractRegistry() {
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false);
@@ -329,7 +330,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
 
     @Override
     public void init(IngestModuleInit initContext) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        services = IngestServices.getDefault();
     }
 
     @Override
