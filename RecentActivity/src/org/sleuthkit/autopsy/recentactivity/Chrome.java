@@ -47,8 +47,6 @@ import org.sleuthkit.datamodel.Image;
  * Chrome recent activity extraction
  */
 public class Chrome extends Extract implements IngestModuleImage {
-
-    private static final IngestServices services = IngestServices.getDefault();
     
     private static final String chquery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
@@ -58,6 +56,8 @@ public class Chrome extends Extract implements IngestModuleImage {
     private static final String chloginquery = "select origin_url, username_value, signon_realm from logins";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public int ChromeCount = 0;
+    
+    private IngestServices services;
 
     public Chrome() {
         moduleName = "Chrome";
@@ -114,6 +114,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 j++;
                 dbFile.delete();
             }
+            
             services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         }
     }
@@ -174,6 +175,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 j++;
                 dbFile.delete();
             }
+            
             services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
         }
     }
@@ -223,6 +225,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 j++;
                 dbFile.delete();
             }
+            
             services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
         }
     }
@@ -274,6 +277,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 j++;
                 dbFile.delete();
             }
+            
             services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
         }
     }
@@ -321,13 +325,14 @@ public class Chrome extends Extract implements IngestModuleImage {
                 j++;
                 dbFile.delete();
             }
+            
             services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         }
     }
 
     @Override
     public void init(IngestModuleInit initContext) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        services = IngestServices.getDefault();
     }
 
     @Override

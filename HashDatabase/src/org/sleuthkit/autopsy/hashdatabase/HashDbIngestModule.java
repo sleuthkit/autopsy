@@ -51,7 +51,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     public final static String MODULE_DESCRIPTION = "Identifies known and notables files using supplied hash databases, such as a standard NSRL database.";
     private static final Logger logger = Logger.getLogger(HashDbIngestModule.class.getName());
     private Processor processor = new Processor();
-    private static final IngestServices services = IngestServices.getDefault();
+    private IngestServices services;
     private SleuthkitCase skCase;
     private static int messageId = 0;
     private int count;
@@ -85,6 +85,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
      */
     @Override
     public void init(IngestModuleInit initContext) {
+        services = IngestServices.getDefault();
         HashDbManagementPanel.getDefault().setIngestRunning(true);
         HashDbSimplePanel.setIngestRunning(true);
         this.services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));

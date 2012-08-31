@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.Image;
  */
 public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModuleImage {
 
-    private static final IngestServices services = IngestServices.getDefault();
+    private IngestServices services;
     
     static final String MODULE_NAME = "Search Engine Query Analyzer";
 
@@ -371,6 +371,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     @Override
     public void init(IngestModuleInit initContext) {
+        services = IngestServices.getDefault();
         logger.info("running init()");
     }
 

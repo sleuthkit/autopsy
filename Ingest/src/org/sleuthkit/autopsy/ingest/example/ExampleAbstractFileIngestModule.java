@@ -36,7 +36,7 @@ public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile
 
     private static final Logger logger = Logger.getLogger(ExampleAbstractFileIngestModule.class.getName());
     private static ExampleAbstractFileIngestModule instance = null;
-    private static final IngestServices services = IngestServices.getDefault();
+    private IngestServices services;
     private static int messageId = 0;
 
     //file ingest modules require a private constructor
@@ -88,6 +88,7 @@ public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile
     @Override
     public void init(IngestModuleInit initContext) {
         logger.log(Level.INFO, "init()");
+        services = IngestServices.getDefault();
 
         //module specific initialization here
     }

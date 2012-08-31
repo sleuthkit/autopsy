@@ -96,8 +96,8 @@ public class IngestManager {
     private List<IngestImageThread> imageIngesters;
     private SwingWorker<Object, Void> queueWorker;
     //modules
-    private final List<IngestModuleImage> imageModules = enumerateImageModules();
-    private final List<IngestModuleAbstractFile> abstractFileModules = enumerateAbstractFileModules();
+    private List<IngestModuleImage> imageModules;
+    private final List<IngestModuleAbstractFile> abstractFileModules;
     // module return values
     private final Map<String, IngestModuleAbstractFile.ProcessResult> abstractFileModulesRetValues = new HashMap<String, IngestModuleAbstractFile.ProcessResult>();
     //notifications
@@ -144,20 +144,22 @@ public class IngestManager {
     };
     //ui
     //Initialized by Installer in AWT thread once the Window System is ready
-    private IngestUI ui = null; //IngestMessageTopComponent.findInstance();
+    private volatile IngestUI ui; // = null; //IngestMessageTopComponent.findInstance();
     //singleton
-    private static IngestManager instance;
+    private static volatile IngestManager instance;
 
     private IngestManager() {
         imageIngesters = new ArrayList<IngestImageThread>();
+        abstractFileModules = enumerateAbstractFileModules();
+        imageModules = enumerateImageModules();
     }
     
     /**
      * called by Installer in AWT thread once the Window System is ready
      */
     void initUI() {
-        if (ui == null) {
-            ui = IngestMessageTopComponent.findInstance();
+        if (this.ui == null) {
+            this.ui = IngestMessageTopComponent.findInstance();
         }
     }
 
