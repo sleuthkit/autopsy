@@ -1,4 +1,4 @@
-<?xml version="1.1" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <AuxValues>
@@ -32,10 +32,10 @@
           <Group type="102" alignment="1" attributes="0">
               <Component id="videoPanel" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="pauseButton" min="-2" max="-2" attributes="0"/>
-                  <Component id="progressLabel" min="-2" max="-2" attributes="0"/>
-                  <Component id="progressSlider" min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                  <Component id="pauseButton" max="32767" attributes="0"/>
+                  <Component id="progressSlider" max="32767" attributes="0"/>
+                  <Component id="progressLabel" alignment="1" max="32767" attributes="0"/>
               </Group>
           </Group>
       </Group>
@@ -68,6 +68,9 @@
       </Layout>
     </Container>
     <Component class="javax.swing.JSlider" name="progressSlider">
+      <Properties>
+        <Property name="value" type="int" value="0"/>
+      </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="progressLabel">
       <Properties>
