@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Component;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BoxLayout;
@@ -57,6 +58,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
     private File currentFile;
     private long durationMillis = 0;
     private boolean autoTracking = false; // true if the slider is moving automatically
+    private final Object lock = new Object(); // lock for synchronization
+    
     /**
      * Creates new form DataContentViewerVideo
      */
@@ -69,19 +72,23 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         Gst.init();
         progressSlider.addChangeListener(new ChangeListener() {
 
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    int time = progressSlider.getValue();
-                    if(playbin2 != null && !autoTracking) {
-                        State orig = playbin2.getState();
-                        playbin2.pause();
-                        playbin2.getState();
-                        playbin2.seek(ClockTime.fromMillis(time));
-                        playbin2.setState(orig);
-                    }
+            /**
+             * Should always try to synchronize any call to
+             * progressSlider.setValue() to avoid a different thread
+             * changing playbin while stateChanged() is processing
+             */
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                int time = progressSlider.getValue();
+                if(playbin2 != null && !autoTracking) {
+                    State orig = playbin2.getState();
+                    playbin2.pause();
+                    playbin2.seek(ClockTime.fromMillis(time));
+                    playbin2.setState(orig);
                 }
-                
-            });
+            }
+
+        });
     }
 
     /**
@@ -116,6 +123,8 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             .addGap(0, 242, Short.MAX_VALUE)
         );
 
+        progressSlider.setValue(0);
+
         progressLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerMedia.class, "DataContentViewerMedia.progressLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -136,10 +145,10 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pauseButton)
-                    .addComponent(progressLabel)
-                    .addComponent(progressSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(pauseButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -147,10 +156,12 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         if(playbin2.getState().equals(State.PLAYING)){
             playbin2.pause();
             pauseButton.setText("►");
+            playbin2.setState(State.PAUSED);
         } else if(playbin2.getState().equals(State.PAUSED)) {
             playbin2.play();
             pauseButton.setText("||");
-        } else {
+            playbin2.setState(State.PLAYING);
+        } else if(playbin2.getState().equals(State.READY)) {
             ExtractMedia em = new ExtractMedia(currentFile, getJFile(currentFile));
             em.execute();
         }
@@ -165,44 +176,78 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public void setNode(Node selectedNode) {
-        pauseButton.setText("►");
-        if(selectedNode == null) {
-            setDataView(null);
-            return;
-        }
-        File file = selectedNode.getLookup().lookup(File.class);
-        setDataView(file);
-        if(file == null) {
-            return;
-        }
-        boolean isVidOrAud = containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS);
-        pauseButton.setVisible(isVidOrAud);
-        progressLabel.setVisible(isVidOrAud);
-        progressSlider.setVisible(isVidOrAud);
-    }
-
-    private void setDataView(File file) {
-        if(file == null) {
-            setComponentsVisibility(false);
-            return;
-        } else {
-             setComponentsVisibility(true);
-        }
-        this.currentFile = file;
+        reset();
+        setComponentsVisibility(false);
+        if(selectedNode == null) { return; }
         
-        if (containsExt(file.getName(), IMAGES)) {
-            java.io.File ioFile = getJFile(file);
-            if (!ioFile.exists()) {
-                try {
-                    ContentUtils.writeToFile(file, ioFile);
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Error buffering file", ex);
-                }
-            }
-            playbin2.setInputFile(ioFile);
-            playbin2.play();
+        File file = selectedNode.getLookup().lookup(File.class);
+        if(file == null) { return; }
+        
+        currentFile = file;
+        if(containsExt(file.getName(), IMAGES)) {
+            showImage(file);
+        } else if(containsExt(file.getName(), VIDEOS) || containsExt(file.getName(), AUDIOS)) {
+            setupVideo(file);
         }
     }
+    
+    /**
+     * Initialize vars and display the image on the panel.
+     * @param file 
+     */
+    private void showImage(File file) {
+        java.io.File ioFile = getJFile(file);
+        if (!ioFile.exists()) {
+            try {
+                ContentUtils.writeToFile(file, ioFile);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Error buffering file", ex);
+            }
+        }
+        
+        playbin2 = new PlayBin2("ImageViewer");
+        videoComponent = new VideoComponent();
+        playbin2.setVideoSink(videoComponent.getElement());
+        
+        videoPanel.removeAll();
+        videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
+        videoPanel.add(videoComponent);
+        videoPanel.revalidate();
+        videoPanel.repaint();
+        
+        playbin2.setInputFile(ioFile);
+        videoPanel.setVisible(true);
+        playbin2.play();
+    }
+    
+    /**
+     * Initialize all the necessary vars to play a video/audio file.
+     * @param file the File to play
+     */
+    private void setupVideo(File file) {
+        java.io.File ioFile = getJFile(file);
+        
+        pauseButton.setText("►");
+        synchronized(lock) { // defensive programming
+            progressSlider.setValue(0);
+        }
+        
+        playbin2 = new PlayBin2("VideoPlayer");
+        videoComponent = new VideoComponent();
+        playbin2.setVideoSink(videoComponent.getElement());
+        
+        videoPanel.removeAll();
+        videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
+        videoPanel.add(videoComponent);
+        videoPanel.revalidate();
+        videoPanel.repaint();
+        
+        playbin2.setInputFile(ioFile);
+        
+        setComponentsVisibility(true);
+        playbin2.setState(State.READY);
+    }
+    
     /**
      * To set the visibility of specific components in this class.
      *
@@ -237,42 +282,31 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
 
     @Override
     public void resetComponent() {
+        // we don't want this to do anything
+        // because we already reset on each selected node
     }
     
-    private void resetVideo() {
-        if(playbin2 != null) {
-            if(playbin2.isPlaying()) {
-                playbin2.stop();
+    private void reset() {
+        synchronized(lock) {
+            if(playbin2 != null) {
+                if(playbin2.isPlaying()) {
+                    playbin2.stop();
+                }
+                playbin2.setState(State.NULL);
+//                try {
+//                    Thread.sleep(20); // gstreamer needs to catch up
+//                } catch (InterruptedException ex) { }
+                if(playbin2.getState().equals(State.NULL)) {
+                    playbin2.dispose();
+                }
+                playbin2 = null;
             }
-            playbin2.setState(State.NULL);
-            if(playbin2.getState() == State.NULL) {
-                playbin2.dispose();
-            }
-            playbin2 = null;
-        }
-        
-        videoComponent = null;
-        
-        playbin2 = new PlayBin2("VideoPlayer");
-        videoComponent = new VideoComponent();
-        playbin2.setVideoSink(videoComponent.getElement());
-        
-        videoPanel.removeAll();
-        videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
-        videoPanel.add(videoComponent);
-        videoPanel.revalidate();
-        videoPanel.repaint();
-    }
-    
-    private void stopVideo() {
-        if(playbin2 != null && playbin2.isPlaying()) {
-            playbin2.stop();
+            videoComponent = null;
         }
     }
 
     @Override
     public boolean isSupported(Node node) {
-        stopVideo();
         if (node == null) {
             return false;
         }
@@ -293,7 +327,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         String name = file.getName().toLowerCase();
         
         if(containsExt(name, IMAGES) || containsExt(name, AUDIOS) || containsExt(name, VIDEOS)) {
-            resetVideo();
             return true;
         }
         
@@ -357,9 +390,9 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             });
             progressLabel.setText("Buffering...");
             progress.start();
-            progress.switchToIndeterminate();
+            progress.switchToDeterminate(100);
             try {
-                ContentUtils.writeToFile(sFile, jFile);
+                ContentUtils.writeToFile(sFile, jFile, progress, this, true);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Error buffering file", ex);
             }
@@ -370,9 +403,19 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
         /* clean up or start the worker threads */
         @Override
         protected void done() {
-            progress.finish();
-            if (success) {
-                play();
+            try {
+                super.get(); //block and get all exceptions thrown while doInBackground()
+            } catch (CancellationException ex) {
+                logger.log(Level.INFO, "Media buffering was canceled.");
+            } catch (InterruptedException ex) {
+                logger.log(Level.INFO, "Media buffering was interrupted.");
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Fatal error during media buffering.", ex);
+            } finally {
+                progress.finish();
+                if (!this.isCancelled()) {
+                    play();
+                }
             }
         }
 
@@ -381,7 +424,6 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                 progressLabel.setText("Error buffering file");
                 return;
             }
-            playbin2.setInputFile(jFile);
             playbin2.play(); // must play, then pause and get state to get duration.
             playbin2.pause();
             playbin2.getState();
@@ -413,9 +455,11 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                             position = position.substring(3);
                         }
                         progressLabel.setText(position + "/" + finalDuration);
-                        autoTracking = true;
-                        progressSlider.setValue((int) positionMillis);
-                        autoTracking = false;
+                        synchronized(lock) { // defensive programming
+                            autoTracking = true;
+                            progressSlider.setValue((int) positionMillis);
+                            autoTracking = false;
+                        }
                         try {
                             Thread.sleep(20);
                         } catch (InterruptedException ex) {
@@ -426,11 +470,20 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
                     } else {
                         progressLabel.setText("00:00:00/" + finalDuration);
                     }
-                    if (playbin2 != null) {
-                        playbin2.stop();
-                        playbin2.getState();
-                        pauseButton.setText("►");
-                        progressSlider.setValue(0);
+                    // If it reaches the end
+                    if(progressSlider.getValue() == progressSlider.getMaximum()) {
+                        restartVideo();
+                    }
+                }
+                
+                public void restartVideo() {
+                    synchronized(lock) {
+                        if (playbin2 != null) {
+                            playbin2.stop();
+                            playbin2.setState(State.READY); // ready to be played again
+                            pauseButton.setText("►");
+                            progressSlider.setValue(0);
+                        }
                     }
                 }
             }).start();
