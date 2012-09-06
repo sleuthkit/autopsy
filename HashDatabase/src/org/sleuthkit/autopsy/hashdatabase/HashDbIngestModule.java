@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.netbeans.api.options.OptionsDisplayer;
+import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -226,7 +228,9 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
 
     @Override
     public javax.swing.JPanel getAdvancedConfiguration() {
-        return HashDbManagementPanel.getDefault();
+        OptionsDisplayer.getDefault().open("HashDatabase");
+        return null;
+        //return HashDbManagementPanel.getDefault();
     }
     
     @Override

@@ -3,6 +3,12 @@
 <filesystem>
     <attr name="Menu\File\org-netbeans-modules-print-action-PageSetupAction.shadow_hidden\position" intvalue="300"/>
     <attr name="Menu\File\org-netbeans-modules-print-action-PrintAction.shadow_hidden\position" intvalue="500"/>
+    <folder name="OptionsDialog"> 
+        <folder name="General.instance_hidden"/>
+        <folder name="Keymaps.instance_hidden"/> <!-- Keymap -->
+        <folder name="Java.instance_hidden"/>
+        <folder name="Advanced.instance_hidden"/> <!-- Miscellaneous -->
+    </folder> 
     
 <!--<attr name="Menu\File\Separator2.instance_hidden\position" intvalue="100"/>
     <attr name="Menu\File\Separator3.instance_hidden\position" intvalue="200"/>
@@ -49,8 +55,8 @@
             <file name="CloseAllButThisAction.shadow_hidden"/>
             <file name="CloseAllDocumentsAction.shadow_hidden"/>
             <file name="DocumentsAction.shadow_hidden"/>
-            <file name="FileBrowserAction.shadow"/>
-            <file name="FileBrowserAction.shadow_hidden"/>
+            <!--<file name="FileBrowserAction.shadow"/>
+            <file name="FileBrowserAction.shadow_hidden"/>-->
             <file name="Output_hidden"/>
             <file name="ProgressListAction.shadow_hidden"/>
             <file name="SwitchToRecentDocumentAction.shadow_hidden"/>
@@ -61,7 +67,7 @@
         <folder name="Tools">
             <file name="org-netbeans-modules-autoupdate-ui-actions-PluginManagerAction.shadow_hidden"/>
             <file name="org-netbeans-modules-favorites-templates-TemplatesAction.shadow_hidden"/>
-            <file name="org-netbeans-modules-options-OptionsWindowAction.shadow_hidden"/>
+            <file name="org-netbeans-modules-options-OptionsWindowAction.shadow"/>
             <file name="org-openide-actions-ToolsAction.shadow_hidden"/>
             
         <!--<file name="Separator1.instance_hidden"/>

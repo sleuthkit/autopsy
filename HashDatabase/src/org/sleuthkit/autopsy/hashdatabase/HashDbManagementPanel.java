@@ -158,6 +158,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         hashSetTable = new javax.swing.JTable();
         importButton = new javax.swing.JButton();
         rightPanel = new javax.swing.JPanel();
+        ingestRunningLabel = new javax.swing.JLabel();
         nameLabel = new javax.swing.JLabel();
         hashDbNameLabel = new javax.swing.JLabel();
         locationLabel = new javax.swing.JLabel();
@@ -166,7 +167,6 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
         showInboxMessagesCheckBox = new javax.swing.JCheckBox();
         indexLabel = new javax.swing.JLabel();
         indexButton = new javax.swing.JButton();
-        ingestRunningLabel = new javax.swing.JLabel();
         hashDbIndexStatusLabel = new javax.swing.JLabel();
         typeLabel = new javax.swing.JLabel();
         hashDbTypeLabel = new javax.swing.JLabel();
@@ -218,6 +218,8 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
 
         jSplitPane1.setLeftComponent(leftPanel);
 
+        ingestRunningLabel.setText(org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.ingestRunningLabel.text")); // NOI18N
+
         nameLabel.setText(org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.nameLabel.text")); // NOI18N
 
         hashDbNameLabel.setText(org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.hashDbNameLabel.text")); // NOI18N
@@ -251,8 +253,6 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
                 indexButtonActionPerformed(evt);
             }
         });
-
-        ingestRunningLabel.setText(org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.ingestRunningLabel.text")); // NOI18N
 
         hashDbIndexStatusLabel.setText(org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.hashDbIndexStatusLabel.text")); // NOI18N
 

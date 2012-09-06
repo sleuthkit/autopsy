@@ -14,15 +14,15 @@
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
-            <file name="org-sleuthkit-autopsy-casemodule-CaseOpenActionOld.instance">
+            <!--<file name="org-sleuthkit-autopsy-casemodule-CaseOpenActionOld.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseOpenActionOld"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_CaseOpenActionOld"/>
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
-            </file>
+            </file>-->
             <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance">
             </file>
-            <file name="org-sleuthkit-autopsy-casemodule-NewCaseAct.instance">
+            <!--<file name="org-sleuthkit-autopsy-casemodule-NewCaseAct.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.NewCaseAct"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_NewCaseAct"/>
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
@@ -33,7 +33,7 @@
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_NewCaseAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
-            </file>
+            </file>-->
             <file name="org-sleuthkit-autopsy-casemodule-CaseOpenAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseOpenAction"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_OpenAction"/>
@@ -50,7 +50,7 @@
             </file>
         </folder>
         <folder name="Tools">
-            <file name="org-sleuthkit-autopsy-filebrowser-FileBrowserAction.instance"></file>
+            <!--<file name="org-sleuthkit-autopsy-filebrowser-FileBrowserAction.instance"></file>-->
         </folder>
         <folder name="View">
             <file name="org-netbeans-core-windows-actions-ToolbarsListAction.instance">
@@ -62,7 +62,7 @@
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_testAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
             </file>
-            <file name="org-sleuthkit-autopsy-filebrowser-FileBrowserAction.instance">
+            <!--<file name="org-sleuthkit-autopsy-filebrowser-FileBrowserAction.instance">
                 <attr name="component" methodvalue="org.sleuthkit.autopsy.filebrowser.FileBrowserTopComponent.findInstance"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.filebrowser.Bundle#CTL_FileBrowserAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
@@ -77,7 +77,7 @@
                 <attr name="component" methodvalue="org.sleuthkit.autopsy.filebrowser.DetailWindowTopComponent.findInstance"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.filebrowser.Bundle#CTL_DetailWindowAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
-            </file>
+            </file>-->
         </folder>
     </folder>
     <folder name="Menu">

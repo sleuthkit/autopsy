@@ -3,11 +3,11 @@
 <filesystem>
     <folder name="Actions">
         <folder name="Tools">
-            <file name="org-sleuthkit-autopsy-menuactions-FileBrowserAction.instance">
+            <!--<file name="org-sleuthkit-autopsy-menuactions-FileBrowserAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.menuactions.FileBrowserAction"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.menuactions.Bundle#CTL_FileBrowserAction"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
-            </file>
+            </file>-->
             <file name="org-sleuthkit-autopsy-menuactions-SpacerAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.menuactions.SpacerAction"/>
             </file>
