@@ -121,6 +121,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         removeButton.setEnabled(!ingestRunning);
         hashTable.setEnabled(!ingestRunning);
         hashLabel.setEnabled(!ingestRunning);
+        saveBox.setEnabled(!ingestRunning);
     }
 
     /**

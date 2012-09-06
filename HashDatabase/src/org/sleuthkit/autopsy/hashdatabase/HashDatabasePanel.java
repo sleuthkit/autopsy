@@ -14,24 +14,35 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.ingest.IngestDialogPanel;
 import org.sleuthkit.datamodel.TskException;
 
 final class HashDatabasePanel extends javax.swing.JPanel {
 
-    private final HashDatabaseOptionsPanelController controller;
+    //private final HashDatabaseOptionsPanelController controller;
     private HashSetTableModel hashSetTableModel;
     private static final Logger logger = Logger.getLogger(HashDatabasePanel.class.getName());
     private static boolean ingestRunning = false;
+    static HashDatabasePanel instance;
 
-    HashDatabasePanel(HashDatabaseOptionsPanelController controller) {
-        this.controller = controller;
+    HashDatabasePanel() {//HashDatabaseOptionsPanelController controller) {
+        //this.controller = controller;
         this.hashSetTableModel = new HashSetTableModel();
         initComponents();
         customizeComponents();
         // TODO listen to changes in form fields and call controller.changed()
     }
     
+    public static HashDatabasePanel getDefault() {
+        if(instance==null) {
+            instance = new HashDatabasePanel();
+        }
+        return instance;
+    }
+    
     private void customizeComponents() {
+        this.ingestWarningLabel.setVisible(false);
         this.hashSetTable.setModel(hashSetTableModel);
         this.hashSetTable.setTableHeader(null);
         hashSetTable.getParent().setBackground(hashSetTable.getBackground());
@@ -92,11 +103,7 @@ final class HashDatabasePanel extends javax.swing.JPanel {
      */
     void setIngestRunning(boolean running) {
         ingestRunning = running;
-        if(running) {
-            ingestRunningLabel.setText("Ingest is ongoing; some settings will be unavailable until it finishes.");
-        } else {
-            ingestRunningLabel.setText("");
-        }
+        ingestWarningLabel.setVisible(running);
         
         int selection = getSelection();
         if(selection != -1) {
@@ -134,7 +141,7 @@ final class HashDatabasePanel extends javax.swing.JPanel {
         jPanel4 = new javax.swing.JPanel();
         useForIngestCheckbox = new javax.swing.JCheckBox();
         showInboxMessagesCheckBox = new javax.swing.JCheckBox();
-        ingestRunningLabel = new javax.swing.JLabel();
+        ingestWarningLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.jLabel2.text")); // NOI18N
 
@@ -297,7 +304,7 @@ final class HashDatabasePanel extends javax.swing.JPanel {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(useForIngestCheckbox)
                     .addComponent(showInboxMessagesCheckBox))
-                .addContainerGap(135, Short.MAX_VALUE))
+                .addContainerGap(128, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -308,8 +315,8 @@ final class HashDatabasePanel extends javax.swing.JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        ingestRunningLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(ingestRunningLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.ingestRunningLabel.text")); // NOI18N
+        ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/warning.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ingestWarningLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.ingestWarningLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -318,14 +325,12 @@ final class HashDatabasePanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(ingestRunningLabel)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                    .addComponent(ingestWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -338,7 +343,7 @@ final class HashDatabasePanel extends javax.swing.JPanel {
                         .addGap(18, 18, 18)
                         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(ingestRunningLabel)
+                        .addComponent(ingestWarningLabel)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -467,7 +472,7 @@ final class HashDatabasePanel extends javax.swing.JPanel {
     private javax.swing.JButton importButton;
     private javax.swing.JButton indexButton;
     private javax.swing.JLabel indexLabel;
-    private javax.swing.JLabel ingestRunningLabel;
+    private javax.swing.JLabel ingestWarningLabel;
     private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel4;
