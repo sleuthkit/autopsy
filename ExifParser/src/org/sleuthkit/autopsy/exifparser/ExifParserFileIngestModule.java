@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.exifparser;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
+import com.drew.imaging.jpeg.JpegProcessingException;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
@@ -152,7 +153,7 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
         } catch (TskCoreException ex) {
             Logger.getLogger(ExifParserFileIngestModule.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, "Failed to process the image.", ex);
+            logger.log(Level.WARNING, "Failed to process the image.");
         } catch (IOException ex) {
             logger.log(Level.WARNING, "IOException when parsing image file.", ex);
         } finally {
