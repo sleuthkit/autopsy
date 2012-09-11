@@ -1,4 +1,4 @@
-3.0.0b5 (August 30, 2012)
+3.0.0b5 (September 12, 2012)
 Funded by US Army Intelligence Center of Excellence (USAICoE):
 
 New features:
@@ -21,6 +21,7 @@ Bugfixes:
 - Directory tree now shows which directories have no children before user clicks.
 - Fixed bug when recent cases would not get updated.
 - Fixed a bug when sometimes a case would get deleted.
+- Fixed occasional Media View crashes.
 
 3.0.0b4 (June 29, 2012)
 Funded by US Army Intelligence Center of Excellence (USAICoE):
