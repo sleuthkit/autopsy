@@ -41,9 +41,13 @@ public interface IngestModuleAbstract {
     };
 
     /**
-     * Notification from manager that brand new ingest should be initiated.
-     * Module loads its configuration and performs initialization
-     * Invoked once per new worker thread, per ingest
+     * Notification from manager that brand new ingest should be initiated..
+     * Module loads its configuration and performs initialization.
+     * Invoked once per new worker thread, per ingest.
+     * In this method initialize always IngestServices handle 
+     * using IngestServices.getDefault() lazy-loading approach.
+     * NEVER initialize IngestServices handle in the member declaration, because it might result
+     * in multiple instances of the singleton -- different class loaders are used in different modules.
      * @param initContext context used to initialize some modules
      */
     public void init(IngestModuleInit initContext);
