@@ -471,7 +471,7 @@ public class DataContentViewerMedia extends javax.swing.JPanel implements DataCo
             new Thread(new Runnable() {
                 private boolean isPlayBinReady() {
                     synchronized (playbinLock) {
-                        return playbin2 != null && playbin2.getState().equals(State.NULL);
+                        return playbin2 != null && !playbin2.getState().equals(State.NULL);
                     }
                 }
 
