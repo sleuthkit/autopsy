@@ -237,7 +237,7 @@ public class StringExtract {
             byteVal += b[0];
 
             //skip if beyond range
-            if (byteVal > StringExtractUnicodeTable.getUnicodeTableSize() - 1) {
+            if (byteVal > StringExtractUnicodeTable.UNICODE_TABLE_SIZE - 1) {
                 break;
             }
 
@@ -421,7 +421,7 @@ public class StringExtract {
             curOffset += chBytes;
 
             //skip if beyond range
-            if (ch > StringExtractUnicodeTable.getUnicodeTableSize() - 1) {
+            if (ch > StringExtractUnicodeTable.UNICODE_TABLE_SIZE - 1) {
                 break;
             }
 
