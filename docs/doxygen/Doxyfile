@@ -655,7 +655,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = main.dox blackboard.dox workflow.dox \
+INPUT                  = main.dox workflow.dox \
                          modContent.dox modDev.dox modIngest.dox modReport.dox \
                          modResult.dox platformConcepts.dox \
                          regressionTesting.dox \
