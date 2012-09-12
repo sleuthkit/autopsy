@@ -117,7 +117,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private KeywordSearchIngestModule() {
         //set default script 
         stringExtractScripts.add(SCRIPT.LATIN_1);
-        stringExtractScripts.add(SCRIPT.LATIN_2);
+        
         stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
         stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
     }
