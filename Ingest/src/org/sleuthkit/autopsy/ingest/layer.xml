@@ -14,17 +14,17 @@
         <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.IngestMessageTopComponent.findInstance"/>
         <attr name="position" intvalue="100"/> 
     </file> -->
-    <!-- example services -->
+    <!-- example modules -->
     <!--
-        <file name="org-sleuthkit-autopsy-ingest-example-ExampleImageIngestService.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceImage"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.example.ExampleImageIngestService.getDefault"/>
+        <file name="org-sleuthkit-autopsy-ingest-example-ExampleImageIngestModule.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestModuleImage"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.example.ExampleImageIngestModule.getDefault"/>
             <attr name="position" intvalue="1000"/>
         </file>
         
-        <file name="org-sleuthkit-autopsy-ingest-example-ExampleAbstractFileIngestService.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.example.ExampleAbstractFileIngestService.getDefault"/>
+        <file name="org-sleuthkit-autopsy-ingest-example-ExampleAbstractFileIngestModule.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.example.ExampleAbstractFileIngestModule.getDefault"/>
             <attr name="position" intvalue="1100"/>
         </file>
         -->

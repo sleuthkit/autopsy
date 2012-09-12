@@ -160,7 +160,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
 
     @Override
     public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
-        final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
+        final String MODULE_NAME = KeywordSearchIngestModule.MODULE_NAME;
 
         //there is match actually in this file, create artifact only then
         BlackboardArtifact bba = null;

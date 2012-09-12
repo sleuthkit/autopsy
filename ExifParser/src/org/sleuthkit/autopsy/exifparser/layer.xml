@@ -2,9 +2,9 @@
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
        <folder name="Services">
-        <file name="org-sleuthkit-autopsy-exifparser-ExifParserFileIngestService.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.exifparser.ExifParserFileIngestService.getDefault"/>
+        <file name="org-sleuthkit-autopsy-exifparser-ExifParserFileIngestModule.instance">
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.exifparser.ExifParserFileIngestModule.getDefault"/>
             <attr name="position" intvalue="110"/>
         </file>
         </folder>

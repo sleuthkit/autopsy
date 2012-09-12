@@ -44,15 +44,15 @@ import org.sleuthkit.autopsy.ingest.IngestManager.UpdateFrequency;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * main configuration panel for all ingest services, reusable JPanel component
+ * main configuration panel for all ingest modules, reusable JPanel component
  */
 public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfigurator {
 
     private IngestManager manager = null;
-    private List<IngestServiceAbstract> services;
-    private IngestServiceAbstract currentService;
-    private Map<String, Boolean> serviceStates;
-    private ServicesTableModel tableModel;
+    private List<IngestModuleAbstract> modules;
+    private IngestModuleAbstract currentModule;
+    private Map<String, Boolean> moduleStates;
+    private ModulesTableModel tableModel;
     private static final Logger logger = Logger.getLogger(IngestDialogPanel.class.getName());
     // The image that's just been added to the database
     private Image image;
@@ -60,9 +60,9 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
 
     /** Creates new form IngestDialogPanel */
     private IngestDialogPanel() {
-        tableModel = new ServicesTableModel();
-        services = new ArrayList<IngestServiceAbstract>();
-        serviceStates = new HashMap<String, Boolean>();
+        tableModel = new ModulesTableModel();
+        modules = new ArrayList<IngestModuleAbstract>();
+        moduleStates = new HashMap<String, Boolean>();
         initComponents();
         customizeComponents();
     }
@@ -75,15 +75,15 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     }
 
     private void customizeComponents() {
-        servicesTable.setModel(tableModel);
+        modulesTable.setModel(tableModel);
         this.manager = IngestManager.getDefault();
-        Collection<IngestServiceImage> imageServices = IngestManager.enumerateImageServices();
-        for (final IngestServiceImage service : imageServices) {
-            addService(service);
+        Collection<IngestModuleImage> imageModules = IngestManager.enumerateImageModules();
+        for (final IngestModuleImage module : imageModules) {
+            addModule(module);
         }
-        Collection<IngestServiceAbstractFile> fsServices = IngestManager.enumerateAbstractFileServices();
-        for (final IngestServiceAbstractFile service : fsServices) {
-            addService(service);
+        Collection<IngestModuleAbstractFile> fsModules = IngestManager.enumerateAbstractFileModules();
+        for (final IngestModuleAbstractFile module : fsModules) {
+            addModule(module);
         }
 
         //time setting
@@ -113,17 +113,17 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             //
         }
 
-        servicesTable.setTableHeader(null);
-        servicesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        modulesTable.setTableHeader(null);
+        modulesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         //custom renderer for tooltips
 
-        ServiceTableRenderer renderer = new ServiceTableRenderer();
+        ModulesTableRenderer renderer = new ModulesTableRenderer();
         //customize column witdhs
-        final int width = servicesScrollPane.getPreferredSize().width;
+        final int width = modulesScrollPane.getPreferredSize().width;
         TableColumn column = null;
-        for (int i = 0; i < servicesTable.getColumnCount(); i++) {
-            column = servicesTable.getColumnModel().getColumn(i);
+        for (int i = 0; i < modulesTable.getColumnCount(); i++) {
+            column = modulesTable.getColumnModel().getColumn(i);
             if (i == 0) {
                 column.setPreferredWidth(((int) (width * 0.15)));
             } else {
@@ -132,7 +132,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             }
         }
 
-        servicesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        modulesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -140,11 +140,11 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 if (!listSelectionModel.isSelectionEmpty()) {
                     save();
                     int index = listSelectionModel.getMinSelectionIndex();
-                    currentService = services.get(index);
+                    currentModule = modules.get(index);
                     reloadSimpleConfiguration();
-                    advancedButton.setEnabled(currentService.hasAdvancedConfiguration());
+                    advancedButton.setEnabled(currentModule.hasAdvancedConfiguration());
                 } else {
-                    currentService = null;
+                    currentModule = null;
                 }
             }
         });
@@ -176,10 +176,10 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         }
     }
 
-    private void addService(IngestServiceAbstract service) {
-        final String serviceName = service.getName();
-        services.add(service);
-        serviceStates.put(serviceName, true);
+    private void addModule(IngestModuleAbstract module) {
+        final String moduleName = module.getName();
+        modules.add(module);
+        moduleStates.put(moduleName, true);
     }
 
     /** This method is called from within the constructor to
@@ -192,8 +192,8 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     private void initComponents() {
 
         timeGroup = new javax.swing.ButtonGroup();
-        servicesScrollPane = new javax.swing.JScrollPane();
-        servicesTable = new javax.swing.JTable();
+        modulesScrollPane = new javax.swing.JScrollPane();
+        modulesTable = new javax.swing.JTable();
         jPanel1 = new javax.swing.JPanel();
         advancedButton = new javax.swing.JButton();
         jSeparator2 = new javax.swing.JSeparator();
@@ -209,11 +209,11 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
 
         setPreferredSize(new java.awt.Dimension(522, 257));
 
-        servicesScrollPane.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
-        servicesScrollPane.setPreferredSize(new java.awt.Dimension(160, 160));
+        modulesScrollPane.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
+        modulesScrollPane.setPreferredSize(new java.awt.Dimension(160, 160));
 
-        servicesTable.setBackground(new java.awt.Color(240, 240, 240));
-        servicesTable.setModel(new javax.swing.table.DefaultTableModel(
+        modulesTable.setBackground(new java.awt.Color(240, 240, 240));
+        modulesTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -221,9 +221,9 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
 
             }
         ));
-        servicesTable.setShowHorizontalLines(false);
-        servicesTable.setShowVerticalLines(false);
-        servicesScrollPane.setViewportView(servicesTable);
+        modulesTable.setShowHorizontalLines(false);
+        modulesTable.setShowVerticalLines(false);
+        modulesScrollPane.setViewportView(modulesTable);
 
         jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
         jPanel1.setPreferredSize(new java.awt.Dimension(338, 257));
@@ -290,14 +290,10 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             .addGroup(timePanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(timePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(timePanelLayout.createSequentialGroup()
-                        .addGap(0, 0, 0)
-                        .addComponent(timeRadioButton1))
-                    .addGroup(timePanelLayout.createSequentialGroup()
-                        .addGroup(timePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(timeLabel)
-                            .addComponent(timeRadioButton2)
-                            .addComponent(timeRadioButton3))))
+                    .addComponent(timeRadioButton1)
+                    .addComponent(timeLabel)
+                    .addComponent(timeRadioButton2)
+                    .addComponent(timeRadioButton3))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         timePanelLayout.setVerticalGroup(
@@ -347,7 +343,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(servicesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(timePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(processUnallocPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -361,7 +357,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(servicesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                        .addComponent(modulesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(processUnallocPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -377,11 +373,11 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             @Override
             public void actionPerformed(ActionEvent e) {
                 dialog.close();
-                currentService.saveAdvancedConfiguration();
+                currentModule.saveAdvancedConfiguration();
                 reloadSimpleConfiguration();
             }
         });
-        dialog.display(currentService.getAdvancedConfiguration());
+        dialog.display(currentModule.getAdvancedConfiguration());
     }//GEN-LAST:event_advancedButtonActionPerformed
 
 private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_timeRadioButton1ActionPerformed
@@ -397,10 +393,10 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JScrollPane modulesScrollPane;
+    private javax.swing.JTable modulesTable;
     private javax.swing.JCheckBox processUnallocCheckbox;
     private javax.swing.JPanel processUnallocPanel;
-    private javax.swing.JScrollPane servicesScrollPane;
-    private javax.swing.JTable servicesTable;
     private javax.swing.JPanel simplePanel;
     private javax.swing.ButtonGroup timeGroup;
     private javax.swing.JLabel timeLabel;
@@ -410,11 +406,11 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
     private javax.swing.JRadioButton timeRadioButton3;
     // End of variables declaration//GEN-END:variables
 
-    private class ServicesTableModel extends AbstractTableModel {
+    private class ModulesTableModel extends AbstractTableModel {
 
         @Override
         public int getRowCount() {
-            return services.size();
+            return modules.size();
         }
 
         @Override
@@ -424,9 +420,9 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            String name = services.get(rowIndex).getName();
+            String name = modules.get(rowIndex).getName();
             if (columnIndex == 0) {
-                return serviceStates.get(name);
+                return moduleStates.get(name);
             } else {
                 return name;
             }
@@ -440,7 +436,7 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
         @Override
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
-                serviceStates.put((String) getValueAt(rowIndex, 1), (Boolean) aValue);
+                moduleStates.put((String) getValueAt(rowIndex, 1), (Boolean) aValue);
 
             }
         }
@@ -451,15 +447,15 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
         }
     }
 
-    List<IngestServiceAbstract> getServicesToStart() {
-        List<IngestServiceAbstract> servicesToStart = new ArrayList<IngestServiceAbstract>();
-        for (IngestServiceAbstract service : services) {
-            boolean serviceEnabled = serviceStates.get(service.getName());
-            if (serviceEnabled) {
-                servicesToStart.add(service);
+    List<IngestModuleAbstract> getModulesToStart() {
+        List<IngestModuleAbstract> modulesToStart = new ArrayList<IngestModuleAbstract>();
+        for (IngestModuleAbstract module : modules) {
+            boolean moduleEnabled = moduleStates.get(module.getName());
+            if (moduleEnabled) {
+                modulesToStart.add(module);
             }
         }
-        return servicesToStart;
+        return modulesToStart;
     }
 
     private boolean timeSelectionEnabled() {
@@ -482,8 +478,8 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
 
     private void reloadSimpleConfiguration() {
         simplePanel.removeAll();
-        if (currentService.hasSimpleConfiguration()) {
-            simplePanel.add(currentService.getSimpleConfiguration());
+        if (currentModule.hasSimpleConfiguration()) {
+            simplePanel.add(currentModule.getSimpleConfiguration());
         }
         simplePanel.revalidate();
         simplePanel.repaint();
@@ -495,8 +491,8 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
      */
     @Override
     public void save() {
-        if (currentService != null && currentService.hasSimpleConfiguration()) {
-            currentService.saveSimpleConfiguration();
+        if (currentModule != null && currentModule.hasSimpleConfiguration()) {
+            currentModule.saveSimpleConfiguration();
         }
     }
 
@@ -512,11 +508,11 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
 
     @Override
     public void start() {
-        //pick the services
-        List<IngestServiceAbstract> servicesToStart = getServicesToStart();
+        //pick the modules
+        List<IngestModuleAbstract> modulesToStart = getModulesToStart();
 
-        if (!servicesToStart.isEmpty()) {
-            manager.execute(servicesToStart, image);
+        if (!modulesToStart.isEmpty()) {
+            manager.execute(modulesToStart, image);
         }
 
         //update ingest freq. refresh
@@ -537,9 +533,9 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
     
 
     /**
-     * Custom cell renderer for tooltips with service description
+     * Custom cell renderer for tooltips with module description
      */
-    private class ServiceTableRenderer extends DefaultTableCellRenderer {
+    private class ModulesTableRenderer extends DefaultTableCellRenderer {
 
         @Override
         public Component getTableCellRendererComponent(
@@ -550,10 +546,10 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
             if (column == 1) {
-                //String serviceName = (String) table.getModel().getValueAt(row, column);
-                IngestServiceAbstract service = services.get(row);
-                String serviceDescr = service.getDescription();
-                setToolTipText(serviceDescr);
+                //String moduleName = (String) table.getModel().getValueAt(row, column);
+                IngestModuleAbstract module = modules.get(row);
+                String moduleDescr = module.getDescription();
+                setToolTipText(moduleDescr);
             }
 
 

@@ -1,4 +1,4 @@
-<?xml version="1.1" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <NonVisualComponents>
@@ -88,10 +88,7 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="1" attributes="0">
-              <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-              <Component id="listsButton" max="32767" attributes="1"/>
-          </Group>
+          <Component id="listsButton" alignment="1" max="32767" attributes="1"/>
           <Component id="searchBoxPanel" alignment="0" pref="27" max="32767" attributes="2"/>
       </Group>
     </DimensionLayout>
@@ -125,9 +122,9 @@
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Component id="searchBox" alignment="0" pref="25" max="32767" attributes="3"/>
-              <Component id="settingsLabel" alignment="0" pref="25" max="32767" attributes="1"/>
-              <Component id="searchButton" alignment="0" pref="25" max="32767" attributes="1"/>
+              <Component id="searchBox" alignment="0" max="32767" attributes="3"/>
+              <Component id="settingsLabel" alignment="0" max="32767" attributes="1"/>
+              <Component id="searchButton" alignment="0" max="32767" attributes="1"/>
           </Group>
         </DimensionLayout>
       </Layout>

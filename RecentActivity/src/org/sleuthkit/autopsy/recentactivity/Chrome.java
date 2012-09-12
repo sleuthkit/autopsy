@@ -24,8 +24,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import javax.swing.JPanel;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import java.util.logging.Level;
@@ -35,9 +34,9 @@ import java.io.File;
 import java.io.FileReader;
 import org.sleuthkit.autopsy.coreutils.DecodeUtil;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestServiceImage;
-import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
+import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -45,11 +44,10 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Image;
 
 /**
- *
- * @author Alex
+ * Chrome recent activity extraction
  */
-public class Chrome extends Extract implements IngestServiceImage {
-
+public class Chrome extends Extract implements IngestModuleImage {
+    
     private static final String chquery = "SELECT urls.url, urls.title, urls.visit_count, urls.typed_count, "
             + "last_visit_time, urls.hidden, visits.visit_time, (SELECT urls.url FROM urls WHERE urls.id=visits.url) as from_visit, visits.transition FROM urls, visits WHERE urls.id = visits.url";
     private static final String chcookiequery = "select name, value, host_key, expires_utc,last_access_utc, creation_utc from cookies";
@@ -58,6 +56,8 @@ public class Chrome extends Extract implements IngestServiceImage {
     private static final String chloginquery = "select origin_url, username_value, signon_realm from logins";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public int ChromeCount = 0;
+    
+    private IngestServices services;
 
     public Chrome() {
         moduleName = "Chrome";
@@ -114,7 +114,8 @@ public class Chrome extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+            
+            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         }
     }
 
@@ -174,7 +175,8 @@ public class Chrome extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+            
+            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
         }
     }
 
@@ -223,7 +225,8 @@ public class Chrome extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+            
+            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
         }
     }
 
@@ -274,7 +277,8 @@ public class Chrome extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
+            
+            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
         }
     }
 
@@ -321,13 +325,14 @@ public class Chrome extends Extract implements IngestServiceImage {
                 j++;
                 dbFile.delete();
             }
-            IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+            
+            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
         }
     }
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void init(IngestModuleInit initContext) {
+        services = IngestServices.getDefault();
     }
 
     @Override
@@ -346,8 +351,8 @@ public class Chrome extends Extract implements IngestServiceImage {
     }
 
     @Override
-    public ServiceType getType() {
-        return ServiceType.Image;
+    public ModuleType getType() {
+        return ModuleType.Image;
     }
 
     @Override

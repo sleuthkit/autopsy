@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage.*;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
- * Notification window showing messages from services to user
+ * Notification window showing messages from modules to user
  * 
  */
 class IngestMessagePanel extends javax.swing.JPanel {
@@ -62,7 +62,7 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
     private enum COLUMN {
 
-        SUBJECT, COUNT, SERVICE
+        SUBJECT, COUNT, MODULE
     };
     private static PropertyChangeSupport messagePcs = new PropertyChangeSupport(IngestMessagePanel.class);
     static final String MESSAGE_CHANGE_EVT = "MESSAGE_CHANGE_EVT"; //number of unread messages changed
@@ -320,10 +320,10 @@ class IngestMessagePanel extends javax.swing.JPanel {
         //data
 
         private List<TableEntry> messageData = new ArrayList<TableEntry>();
-        //for keeping track of messages to group, per service, by uniqness
-        private Map<IngestServiceAbstract, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<IngestServiceAbstract, Map<String, List<IngestMessageGroup>>>();
+        //for keeping track of messages to group, per module, by uniqness
+        private Map<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>> groupings = new HashMap<IngestModuleAbstract, Map<String, List<IngestMessageGroup>>>();
         private boolean chronoSort = true; //chronological sort default
-        private static final int MESSAGE_GROUP_THRESH = 3; //group messages after 3 messages per service with same uniqness
+        private static final int MESSAGE_GROUP_THRESH = 3; //group messages after 3 messages per module with same uniqness
         private Logger logger = Logger.getLogger(MessageTableModel.class.getName());
 
         MessageTableModel() {
@@ -331,12 +331,12 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         private void init() {
-            //initialize groupings map with services
-            for (IngestServiceAbstract service : IngestManager.enumerateAbstractFileServices()) {
-                groupings.put(service, new HashMap<String, List<IngestMessageGroup>>());
+            //initialize groupings map with modules
+            for (IngestModuleAbstract module : IngestManager.enumerateAbstractFileModules()) {
+                groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
             }
-            for (IngestServiceAbstract service : IngestManager.enumerateImageServices()) {
-                groupings.put(service, new HashMap<String, List<IngestMessageGroup>>());
+            for (IngestModuleAbstract module : IngestManager.enumerateImageModules()) {
+                groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
             }
         }
 
@@ -418,8 +418,8 @@ class IngestMessagePanel extends javax.swing.JPanel {
 
             switch (columnIndex) {
                 case 0:
-                    Object service = entry.messageGroup.getSource();
-                    if (service == null) {
+                    Object module = entry.messageGroup.getSource();
+                    if (module == null) {
                         ret = "";
                     } else {
                         ret = (Object) entry.messageGroup.getSource().getName();
@@ -462,13 +462,13 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         synchronized public void addMessage(IngestMessage m) {
-            //check how many messages per service with the same uniqness
+            //check how many messages per module with the same uniqness
             //and add to existing group or create a new group
-            IngestServiceAbstract service = m.getSource();
+            IngestModuleAbstract module = m.getSource();
             IngestMessageGroup messageGroup = null;
-            if (service != null && m.getMessageType() == IngestMessage.MessageType.DATA) {
+            if (module != null && m.getMessageType() == IngestMessage.MessageType.DATA) {
                 //not a manager message, a data message, then group
-                final Map<String, List<IngestMessageGroup>> groups = groupings.get(service);
+                final Map<String, List<IngestMessageGroup>> groups = groupings.get(module);
                 //groups for this uniqueness
                 final String uniqueness = m.getUniqueKey();
                 List<IngestMessageGroup> uniqGroups = groups.get(uniqueness);
@@ -732,9 +732,9 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         /*
-         * return source service, should be the same for all msgs
+         * return source module, should be the same for all msgs
          */
-        IngestServiceAbstract getSource() {
+        IngestModuleAbstract getSource() {
             return messages.get(0).getSource();
         }
 

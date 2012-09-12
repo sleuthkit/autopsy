@@ -52,11 +52,22 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
     private KeywordPropertyChangeListener listener;
     private boolean active = false;
     private boolean entered = false;
+    private static KeywordSearchPanel instance;
 
     /** Creates new form KeywordSearchPanel */
-    public KeywordSearchPanel() {
+    private KeywordSearchPanel() {
         initComponents();
         customizeComponents();
+    }
+
+    /**
+     * @return the default instance KeywordSearchPanel
+     */
+    public static KeywordSearchPanel getDefault() {
+        if (instance == null) {
+            instance = new KeywordSearchPanel();
+        }
+        return instance;
     }
 
     private void customizeComponents() {
