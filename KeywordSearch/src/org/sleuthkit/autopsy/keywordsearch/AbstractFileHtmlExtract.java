@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -65,6 +66,16 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     @Override
     public List<SCRIPT> getScripts() {
         return null;
+    }
+    
+    @Override
+    public Map<String, String> getOptions() {
+        return null;
+    }
+
+    @Override
+    public void setOptions(Map<String, String> options) {
+
     }
 
     @Override

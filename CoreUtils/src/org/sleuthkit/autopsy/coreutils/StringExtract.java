@@ -50,6 +50,8 @@ public class StringExtract {
      * currently enabled scripts
      */
     private List<SCRIPT> enabledScripts;
+    private boolean enableUTF8;
+    private boolean enableUTF16;
     /**
      * supported scripts, can be overridden with enableScriptX methods
      */
@@ -73,9 +75,29 @@ public class StringExtract {
             throw new IllegalStateException("Unicode table not properly initialized, cannot instantiate StringExtract");
         }
 
-        this.setEnabledScripts(SUPPORTED_SCRIPTS);
+        setEnabledScripts(SUPPORTED_SCRIPTS);
+        enableUTF8 = true;
+        enableUTF16 = true;
     }
 
+    public boolean isEnableUTF8() {
+        return enableUTF8;
+    }
+
+    public void setEnableUTF8(boolean enableUTF8) {
+        this.enableUTF8 = enableUTF8;
+    }
+
+    public boolean isEnableUTF16() {
+        return enableUTF16;
+    }
+
+    public void setEnableUTF16(boolean enableUTF16) {
+        this.enableUTF16 = enableUTF16;
+    }
+
+    
+    
     /**
      * Sets the enabled scripts to ones provided, resets previous setting
      *
@@ -84,6 +106,7 @@ public class StringExtract {
     public final void setEnabledScripts(List<SCRIPT> scripts) {
         this.enabledScripts = scripts;
     }
+
 
     /**
      * Sets the enabled script to one provided, resets previous setting
@@ -108,8 +131,8 @@ public class StringExtract {
 
     /**
      * Check if extraction of the script is enabled by this instance of the
-     * utility.
-     * For LATIN_2 (extended LATIN), enable also LATIN_1, even if it's not explicitely enabled.
+     * utility. For LATIN_2 (extended LATIN), enable also LATIN_1, even if it's
+     * not explicitely enabled.
      *
      * @param script script that was identified, to check if it is enabled
      * @return true if the the script extraction is enabled
@@ -118,8 +141,7 @@ public class StringExtract {
         if (script.equals(SCRIPT.LATIN_1)) {
             return enabledScripts.contains(SCRIPT.LATIN_1)
                     || enabledScripts.contains(SCRIPT.LATIN_2);
-        }
-        else {
+        } else {
             return enabledScripts.contains(script);
         }
 
@@ -139,6 +161,10 @@ public class StringExtract {
      * additional info
      */
     public StringExtractResult extract(byte[] buff, int len, int offset) {
+        if (this.enableUTF16 == false && this.enableUTF8 == false) {
+             return new StringExtractResult();
+        }
+        
         final int buffLen = buff.length;
 
         int processedBytes = 0;
@@ -162,16 +188,28 @@ public class StringExtract {
 
             //extract using all methods and see which one wins
             StringExtractResult resUTF16 = null;
-            if (curOffset % 2 == 0) {
+            if (enableUTF16 && curOffset % 2 == 0) {
                 StringExtractResult resUTF16En1 = extractUTF16(buff, len, curOffset, true);
                 StringExtractResult resUTF16En2 = extractUTF16(buff, len, curOffset, false);
                 resUTF16 = resUTF16En1.numChars > resUTF16En2.numChars ? resUTF16En1 : resUTF16En2;
-            }
+            } 
+            
             //results.add(extractUTF8(buff, len, curOffset));
-            StringExtractResult resUTF8 = extractUTF8(buff, len, curOffset);
+            StringExtractResult resUTF8 = null;
 
-            StringExtractResult resWin;
-            resWin = resUTF16 != null && resUTF16.numChars > resUTF8.numChars ? resUTF16 : resUTF8;
+            if (enableUTF8) {
+                resUTF8 = extractUTF8(buff, len, curOffset);
+            }
+
+            StringExtractResult resWin = null;
+            if (enableUTF8 && enableUTF16) {
+                resWin = resUTF16 != null && resUTF16.numChars > resUTF8.numChars ? resUTF16 : resUTF8;
+            } else if (enableUTF16){
+                resWin = resUTF16;
+            }
+            else if (enableUTF8) {
+                resWin = resUTF8;
+            }
 
             if (resWin.numChars >= MIN_CHARS_STRING) {
                 //record string 
@@ -189,9 +227,12 @@ public class StringExtract {
                 processedBytes += resWin.numBytes;
                 firstUnprocessedOff = resWin.offset + resWin.numBytes;
             } else {
-                //if no encodings worked, advance 1 byte
-                ++curOffset;
-                //++processedBytes;
+                //if no encodings worked, advance byte
+                if (enableUTF8 == false) {
+                    curOffset += 2;
+                } else {
+                    ++curOffset;
+                }
             }
         }
 
@@ -237,7 +278,7 @@ public class StringExtract {
             byteVal += b[0];
 
             //skip if beyond range
-            if (byteVal > StringExtractUnicodeTable.getUnicodeTableSize() - 1) {
+            if (byteVal > StringExtractUnicodeTable.UNICODE_TABLE_SIZE - 1) {
                 break;
             }
 
@@ -421,7 +462,7 @@ public class StringExtract {
             curOffset += chBytes;
 
             //skip if beyond range
-            if (ch > StringExtractUnicodeTable.getUnicodeTableSize() - 1) {
+            if (ch > StringExtractUnicodeTable.UNICODE_TABLE_SIZE - 1) {
                 break;
             }
 
@@ -549,10 +590,11 @@ public class StringExtract {
                 }
             },
             LATIN_1 {
-                 @Override
+                @Override
                 public String toString() {
                     return "Latin - Basic";
                 }
+
                 @Override
                 public String getLanguages() {
                     return "English";
