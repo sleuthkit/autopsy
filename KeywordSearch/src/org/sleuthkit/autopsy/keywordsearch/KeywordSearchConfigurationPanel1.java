@@ -78,15 +78,18 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel {
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
 
+        mainSplitPane.setBorder(null);
+        mainSplitPane.setDividerLocation(275);
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
+            .addGap(0, 275, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 242, Short.MAX_VALUE)
+            .addGap(0, 327, Short.MAX_VALUE)
         );
 
         mainSplitPane.setLeftComponent(jPanel1);
@@ -95,11 +98,11 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel {
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 291, Short.MAX_VALUE)
+            .addGap(0, 318, Short.MAX_VALUE)
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 242, Short.MAX_VALUE)
+            .addGap(0, 327, Short.MAX_VALUE)
         );
 
         mainSplitPane.setRightComponent(jPanel2);
@@ -108,11 +111,11 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(mainSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 598, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(mainSplitPane)
         );
     }// </editor-fold>//GEN-END:initComponents
 

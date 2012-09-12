@@ -378,7 +378,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
     @Override
     public javax.swing.JPanel getAdvancedConfiguration() {
-        return KeywordSearchConfigurationPanel.getDefault();
+        //return KeywordSearchConfigurationPanel.getDefault();
+        return KeywordSearchOptionsPanel.getDefault();
     }
 
     @Override

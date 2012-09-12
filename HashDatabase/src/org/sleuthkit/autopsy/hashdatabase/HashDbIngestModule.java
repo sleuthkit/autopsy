@@ -234,9 +234,8 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
 
     @Override
     public javax.swing.JPanel getAdvancedConfiguration() {
-        OptionsDisplayer.getDefault().open("HashDatabase");
-        return null;
         //return HashDbManagementPanel.getDefault();
+        return HashDatabasePanel.getDefault();
     }
     
     @Override

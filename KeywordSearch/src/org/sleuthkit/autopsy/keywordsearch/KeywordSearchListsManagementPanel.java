@@ -112,9 +112,10 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         listsTable = new javax.swing.JTable();
         newListButton = new javax.swing.JButton();
         importButton = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(200, 0));
-        setPreferredSize(new java.awt.Dimension(200, 297));
+        setPreferredSize(new java.awt.Dimension(250, 492));
 
         jScrollPane1.setPreferredSize(new java.awt.Dimension(200, 402));
 
@@ -129,6 +130,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
         });
         jScrollPane1.setViewportView(listsTable);
 
+        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
         newListButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.newListButton.text")); // NOI18N
         newListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -136,6 +138,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
             }
         });
 
+        importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/import16.png"))); // NOI18N
         importButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.importButton.text")); // NOI18N
         importButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -143,29 +146,38 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
             }
         });
 
+        jLabel1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsManagementPanel.class, "KeywordSearchListsManagementPanel.jLabel1.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addComponent(newListButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(importButton))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
-                .addGap(0, 0, 0)
+                .addContainerGap()
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newListButton)
                     .addComponent(importButton))
-                .addGap(25, 25, 25))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -294,6 +306,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton importButton;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable listsTable;
     private javax.swing.JButton newListButton;
