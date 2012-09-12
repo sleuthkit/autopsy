@@ -20,6 +20,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.List;
+import java.util.Map;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -28,6 +29,14 @@ import org.sleuthkit.datamodel.AbstractFile;
  * chunks
  */
 interface AbstractFileExtract {
+    
+    /**
+     * Common options that can be used by some extractors
+     */
+    enum ExtractOptions {
+        EXTRACT_UTF16, ///< extract UTF16 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
+        EXTRACT_UTF8, ///< extract UTF8 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
+    };
 
     /**
      * Get number of chunks resulted from extracting this AbstractFile
@@ -61,6 +70,18 @@ interface AbstractFileExtract {
      * @return scripts currently used or null if not supported
      */
     List<SCRIPT> getScripts();
+    
+    /**
+     * Get current options
+     * @return currently used, extractor specific options, or null of not supported
+     */
+    Map<String,String> getOptions();
+    
+    /**
+     * Set extractor specific options
+     * @param options options to use
+     */
+    void setOptions(Map<String,String> options);
     
     /**
      * Determines if the extractor works only for specified types
