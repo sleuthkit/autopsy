@@ -79,12 +79,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
         return instance;
     }
 
-    /**
-     * notification from manager that brand new processing should be initiated.
-     * Module loads its configuration and performs initialization
-     * 
-     * @param services handle to the manager to postMessage() to
-     */
+
     @Override
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
@@ -131,10 +126,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
         }
     }
 
-    /**
-     * notification from manager that there is no more content to process and all work is done.
-     * Module performs any clean-up, notifies viewers and may also write results to the black-board
-     */
+
     @Override
     public void complete() {
         StringBuilder detailsSb = new StringBuilder();
