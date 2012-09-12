@@ -16,17 +16,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import org.openide.util.actions.Presenter;
-import org.openide.windows.Mode;
-import org.openide.windows.WindowManager;
-
 
 //@ActionID(category = "File",
 //id = "org.sleuthkit.autopsy.ingest.IngestMessagesAction")
@@ -36,15 +31,14 @@ import org.openide.windows.WindowManager;
 //    @ActionReference(path = "Toolbars/File", position = 575)
 //})
 //@Messages("CTL_IngestMessagesAction=Messages")
-public final class IngestMessagesAction  extends AbstractAction implements Presenter.Toolbar {
-    
+public final class IngestMessagesAction extends AbstractAction implements Presenter.Toolbar {
+
     @Override
     public void actionPerformed(ActionEvent e) {
-        
     }
-    
+
     @Override
     public Component getToolbarPresenter() {
-        return new IngestMessagesToolbar();
+        return IngestMessagesToolbar.getDefault();
     }
 }

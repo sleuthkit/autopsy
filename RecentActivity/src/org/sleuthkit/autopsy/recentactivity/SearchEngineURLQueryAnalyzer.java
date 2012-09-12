@@ -24,12 +24,12 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JPanel;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
-import org.sleuthkit.autopsy.ingest.IngestServiceImage;
-import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -47,8 +47,10 @@ import org.sleuthkit.datamodel.Image;
  * enum, getSearchEngine(), extractSearchEngineQuery()
  *
  */
-public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServiceImage {
+public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModuleImage {
 
+    private IngestServices services;
+    
     static final String MODULE_NAME = "Search Engine Query Analyzer";
 
     /**
@@ -336,7 +338,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
                         logger.log(Level.SEVERE, "Error while add artifact.", e + " from " + fs.toString());
                         this.addErrorMessage(this.getName() + ": Error while adding artifact");
                     }
-                    IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
+                    services.fireModuleDataEvent(new ModuleDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
                 }
 
 
@@ -368,7 +370,8 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
     }
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestModuleInit initContext) {
+        services = IngestServices.getDefault();
         logger.info("running init()");
     }
 
@@ -404,8 +407,8 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestServi
     }
 
     @Override
-    public ServiceType getType() {
-        return ServiceType.Image;
+    public ModuleType getType() {
+        return ModuleType.Image;
     }
 
     @Override

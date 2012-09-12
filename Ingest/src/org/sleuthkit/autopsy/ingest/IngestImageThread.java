@@ -31,42 +31,42 @@ import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * worker for every ingest image service there is a separate instance per image
- * / service pair
+ * worker for every ingest image module there is a separate instance per image
+ * / module pair
  */
 public class IngestImageThread extends SwingWorker<Object, Void> {
 
     private Logger logger = Logger.getLogger(IngestImageThread.class.getName());
     private ProgressHandle progress;
     private Image image;
-    private IngestServiceImage service;
+    private IngestModuleImage module;
     private IngestImageWorkerController controller;
     private IngestManager manager;
 
-    IngestImageThread(IngestManager manager, Image image, IngestServiceImage service) {
+    IngestImageThread(IngestManager manager, Image image, IngestModuleImage module) {
         this.manager = manager;
         this.image = image;
-        this.service = service;
+        this.module = module;
     }
 
     Image getImage() {
         return image;
     }
 
-    IngestServiceImage getService() {
-        return service;
+    IngestModuleImage getModule() {
+        return module;
     }
 
     @Override
     protected Object doInBackground() throws Exception {
 
-        logger.log(Level.INFO, "Starting processing of service: " + service.getName());
+        logger.log(Level.INFO, "Starting processing of module: " + module.getName());
 
-        final String displayName = service.getName() + " image id:" + image.getId();
+        final String displayName = module.getName() + " image id:" + image.getId();
         progress = ProgressHandleFactory.createHandle(displayName, new Cancellable() {
             @Override
             public boolean cancel() {
-                logger.log(Level.INFO, "Image ingest service " + service.getName() + " cancelled by user.");
+                logger.log(Level.INFO, "Image ingest module " + module.getName() + " cancelled by user.");
                 if (progress != null) {
                     progress.setDisplayName(displayName + " (Cancelling...)");
                 }
@@ -80,18 +80,18 @@ public class IngestImageThread extends SwingWorker<Object, Void> {
         controller = new IngestImageWorkerController(this, progress);
 
         if (isCancelled()) {
-            logger.log(Level.INFO, "Terminating image ingest service " + service.getName() + " due to cancellation.");
+            logger.log(Level.INFO, "Terminating image ingest module " + module.getName() + " due to cancellation.");
             return null;
         }
         final StopWatch timer = new StopWatch();
         timer.start();
         try {
-            service.process(image, controller);
+            module.process(image, controller);
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Exception in service: " + service.getName() + " image: " + image.getName(), e);
+            logger.log(Level.WARNING, "Exception in module: " + module.getName() + " image: " + image.getName(), e);
         } finally {
             timer.stop();
-            logger.log(Level.INFO, "Done processing of service: " + service.getName() 
+            logger.log(Level.INFO, "Done processing of module: " + module.getName() 
                     + " took " + timer.getElapsedTimeSecs() + " secs. to process()" );
 
             EventQueue.invokeLater(new Runnable() {
@@ -102,27 +102,27 @@ public class IngestImageThread extends SwingWorker<Object, Void> {
             });
 
 
-            //cleanup queues (worker and image/service)
+            //cleanup queues (worker and image/module)
             manager.removeImageIngestWorker(this);
 
             if (!this.isCancelled()) {
-                logger.log(Level.INFO, "Service " + service.getName() + " completed");
+                logger.log(Level.INFO, "Module " + module.getName() + " completed");
                 try {
-                    service.complete();
+                    module.complete();
                 }
                 catch (Exception e) {
-                    logger.log(Level.INFO, "Error completing the service " + service.getName(), e);
+                    logger.log(Level.INFO, "Error completing the module " + module.getName(), e);
                 }
-                IngestManager.fireServiceEvent(IngestModuleEvent.COMPLETED.toString(), service.getName());
+                IngestManager.fireModuleEvent(IngestModuleEvent.COMPLETED.toString(), module.getName());
             } else {
-                logger.log(Level.INFO, "Service " + service.getName() + " stopped");
+                logger.log(Level.INFO, "Module " + module.getName() + " stopped");
                 try {
-                    service.stop();
+                    module.stop();
                 }
                 catch (Exception e) {
-                    logger.log(Level.INFO, "Error stopping the service" + service.getName(), e);
+                    logger.log(Level.INFO, "Error stopping the module" + module.getName(), e);
                 }
-                IngestManager.fireServiceEvent(IngestModuleEvent.STOPPED.toString(), service.getName());
+                IngestManager.fireModuleEvent(IngestModuleEvent.STOPPED.toString(), module.getName());
             }
 
         }

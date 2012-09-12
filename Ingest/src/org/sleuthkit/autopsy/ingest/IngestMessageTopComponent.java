@@ -280,7 +280,7 @@ public final class IngestMessageTopComponent extends TopComponent implements Ing
     }
 
     /**
-     * Display IngestMessage from service (forwarded by IngestManager)
+     * Display IngestMessage from module (forwarded by IngestManager)
      */
     @Override
     public void displayMessage(IngestMessage ingestMessage) {

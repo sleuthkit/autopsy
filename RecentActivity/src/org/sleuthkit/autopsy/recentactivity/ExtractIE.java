@@ -50,12 +50,10 @@ import org.sleuthkit.autopsy.coreutils.DecodeUtil;
 import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
-import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -64,12 +62,16 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.IngestServiceImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.*;
 
-public class ExtractIE extends Extract implements IngestServiceImage {
+public class ExtractIE extends Extract implements IngestModuleImage {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
+  
+    private IngestServices services;
+    
     private String indexDatQueryStr = "select * from tsk_files where name LIKE '%index.dat%'";
     private String favoriteQuery = "select * from `tsk_files` where parent_path LIKE '%/Favorites%' and name LIKE '%.url'";
     private String cookiesQuery = "select * from `tsk_files` where parent_path LIKE '%/Cookies%' and name LIKE '%.txt'";
@@ -142,7 +144,8 @@ public class ExtractIE extends Extract implements IngestServiceImage {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, Favorite, bbattributes);
-                IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+                
+                services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
                 this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + Favorite.getName());
@@ -194,8 +197,8 @@ public class ExtractIE extends Extract implements IngestServiceImage {
             }
 
         }
-
-        IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+        
+        services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
 
     //Recent Documents section
@@ -225,7 +228,8 @@ public class ExtractIE extends Extract implements IngestServiceImage {
             }
 
         }
-        IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
+        
+        services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
 
     }
 
@@ -488,12 +492,12 @@ public class ExtractIE extends Extract implements IngestServiceImage {
             }
         }
 
-        IngestManagerProxy.fireServiceDataEvent(new ServiceDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+        services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
     }
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void init(IngestModuleInit initContext) {
+        services = IngestServices.getDefault();
     }
 
     @Override
@@ -515,8 +519,8 @@ public class ExtractIE extends Extract implements IngestServiceImage {
     }
 
     @Override
-    public ServiceType getType() {
-        return ServiceType.Image;
+    public ModuleType getType() {
+        return ModuleType.Image;
     }
 
     @Override

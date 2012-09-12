@@ -21,75 +21,77 @@ package org.sleuthkit.autopsy.ingest;
 
 
 /**
- * Base interface for ingest services
+ * Base interface for ingest modules
  */
-public interface IngestServiceAbstract {
+public interface IngestModuleAbstract {
     
     /**
-     * Possible service types for the implementing classes
+     * Possible module types for the implementing classes
      */
-    public enum ServiceType {
+    public enum ModuleType {
         /**
-         * Image type service
+         * Image type module
          */
         Image,  
         
         /**
-         * AbstractFile type service
+         * AbstractFile type module
          */
         AbstractFile
     };
 
     /**
-     * Notification from manager that brand new ingest should be initiated.
-     * Service loads its configuration and performs initialization
-     * Invoked once per new worker thread, per ingest
-     * 
-     * @param managerProxy manager facade that can be used by the service to communicate with the manager, e.g.
-     * for posting messages, getting configurations
+     * Notification from manager that brand new ingest should be initiated..
+     * Module loads its configuration and performs initialization.
+     * Invoked once per new worker thread, per ingest.
+     * In this method initialize always IngestServices handle 
+     * using IngestServices.getDefault() lazy-loading approach.
+     * NEVER initialize IngestServices handle in the member declaration, because it might result
+     * in multiple instances of the singleton -- different class loaders are used in different modules.
+     * @param initContext context used to initialize some modules
      */
-    public void init(IngestManagerProxy managerProxy);
+    public void init(IngestModuleInit initContext);
 
     /**
      * Notification from manager that there is no more content to process and all work is done.
-     * Service performs any clean-up of internal resources, and finalizes processing to produce complete result
-     * Service also posts ingest message indicating it is done, and posts ingest stats and errors in the details of the message.
+     * Module performs any clean-up of internal resources, and finalizes processing to produce complete result
+     * Module also posts ingest message indicating it is done, and posts ingest stats and errors in the details of the message.
      */
     public void complete();
 
     /**
      * Notification from manager to stop processing due to some interruption (user, error, exception)
-     * Service performs any clean-up of internal resources
+     * Module performs any clean-up of internal resources
      * It may also discard any pending results, but it should ensure it is in a defined state so that ingest can be rerun later.
      */
     public void stop();
 
     /**
-     * Gets specific name of the service
-     * The name should be unique across services
-     * @return unique service name
+     * Gets specific name of the module
+     * The name should be unique across modules
+     * @return unique module name
      */
     public String getName();
     
     /**
-     * Gets user-friendly description of the service
-     * @return service description
+     * Gets user-friendly description of the module
+     * @return module description
      */
     public String getDescription();
     
     /**
-     * Returns type of the service
-     * @return service type
+     * Returns type of the module
+     * @return module type
      */
-    public ServiceType getType();
+    public ModuleType getType();
     
      /**
-     * A service can manage and use additional threads to perform some work in the background.
-     * This method provides insight to the manager if the service has truly completed its work or not.
+     * A module can manage and use additional threads to perform some work in the background.
+     * This method provides insight to the manager if the module has truly completed its work or not.
      *
      * 
-     * @return true if any background threads/workers managed by this service are still running or are pending to be run,
-     * false if all work has been done, or if background threads are not used/managed by this service
+     * @return true if any background threads/workers managed by this module are still running or are pending to be run,
+     * false if all work has been done, or if background threads are not used/managed by this module
      */
     public boolean hasBackgroundJobsRunning();
     
@@ -98,7 +100,7 @@ public interface IngestServiceAbstract {
      * Used to determine if a module has implemented a simple (run-time)
      * configuration panel that is displayed by the ingest manager.
      * 
-     * @return true if this service has a simple (run-time) configuration
+     * @return true if this module has a simple (run-time) configuration
      */
     public boolean hasSimpleConfiguration();
     
@@ -106,7 +108,7 @@ public interface IngestServiceAbstract {
      * Used to determine if a module has implemented an advanced (general)
      * configuration that can be used for more in-depth module configuration.
      * 
-     * @return true if this service has an advanced configuration
+     * @return true if this module has an advanced configuration
      */
     public boolean hasAdvancedConfiguration();
     

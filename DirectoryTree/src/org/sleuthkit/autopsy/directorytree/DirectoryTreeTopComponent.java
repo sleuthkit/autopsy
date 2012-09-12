@@ -64,7 +64,7 @@ import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
-import org.sleuthkit.autopsy.ingest.ServiceDataEvent;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -685,7 +685,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
 
         if (changed.equals(IngestModuleEvent.DATA.toString())) {
-            final ServiceDataEvent event = (ServiceDataEvent) oldValue;
+            final ModuleDataEvent event = (ModuleDataEvent) oldValue;
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {

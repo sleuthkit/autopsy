@@ -32,11 +32,12 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManagerProxy;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstract;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
+import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -51,29 +52,31 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  * Ingests an image file and, if available, adds it's date, latitude, longitude,
  * altitude, device model, and device make to a blackboard artifact.
  */
-public final class ExifParserFileIngestService implements IngestServiceAbstractFile {
+public final class ExifParserFileIngestModule implements IngestModuleAbstractFile {
 
+    private IngestServices services;
+    
     final String MODULE_NAME = "Exif Parser";
-    private static final Logger logger = Logger.getLogger(ExifParserFileIngestService.class.getName());
-    private static ExifParserFileIngestService defaultInstance = null;
-    private IngestManagerProxy managerProxy;
+    private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
+    private static ExifParserFileIngestModule defaultInstance = null;
     private static int messageId = 0;
 
-    //file ingest services require a private constructor
+    //file ingest modules require a private constructor
     //to ensure singleton instances
-    private ExifParserFileIngestService() {
+    private ExifParserFileIngestModule() {
+       
     }
 
-    //default instance used for service registration
-    public static synchronized ExifParserFileIngestService getDefault() {
+    //default instance used for module registration
+    public static synchronized ExifParserFileIngestModule getDefault() {
         if (defaultInstance == null) {
-            defaultInstance = new ExifParserFileIngestService();
+            defaultInstance = new ExifParserFileIngestModule();
         }
         return defaultInstance;
     }
 
     @Override
-    public IngestServiceAbstractFile.ProcessResult process(AbstractFile content) {
+    public IngestModuleAbstractFile.ProcessResult process(AbstractFile content) {
         if(content.getType().equals(TSK_DB_FILES_TYPE_ENUM.FS)) {
             FsContent fsContent = (FsContent) content;
             if(fsContent.isFile()) {
@@ -83,10 +86,10 @@ public final class ExifParserFileIngestService implements IngestServiceAbstractF
             }
         }
         
-        return IngestServiceAbstractFile.ProcessResult.UNKNOWN;
+        return IngestModuleAbstractFile.ProcessResult.UNKNOWN;
     }
     
-    public IngestServiceAbstractFile.ProcessResult processFile(FsContent f) {
+    public IngestModuleAbstractFile.ProcessResult processFile(FsContent f) {
         InputStream in = null;
         BufferedInputStream bin = null;
         
@@ -144,10 +147,10 @@ public final class ExifParserFileIngestService implements IngestServiceAbstractF
                 bba.addAttributes(attributes);
             }
             
-            return IngestServiceAbstractFile.ProcessResult.OK;
+            return IngestModuleAbstractFile.ProcessResult.OK;
             
         } catch (TskCoreException ex) {
-            Logger.getLogger(ExifParserFileIngestService.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ExifParserFileIngestModule.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ImageProcessingException ex) {
             logger.log(Level.WARNING, "Failed to process the image.", ex);
         } catch (IOException ex) {
@@ -162,7 +165,7 @@ public final class ExifParserFileIngestService implements IngestServiceAbstractF
         }
         
         // If we got here, there was an error
-        return IngestServiceAbstractFile.ProcessResult.ERROR;
+        return IngestModuleAbstractFile.ProcessResult.ERROR;
     }
     
     private boolean parsableFormat(FsContent f) {
@@ -185,9 +188,9 @@ public final class ExifParserFileIngestService implements IngestServiceAbstractF
         logger.log(Level.INFO, "completed exif parsing " + this.toString());
 
         final IngestMessage msg = IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Complete");
-        managerProxy.postMessage(msg);
+        services.postMessage(msg);
 
-        //service specific cleanup due to completion here
+        //module specific cleanup due to completion here
     }
 
     @Override
@@ -201,23 +204,23 @@ public final class ExifParserFileIngestService implements IngestServiceAbstractF
     }
 
     @Override
-    public void init(IngestManagerProxy managerProxy) {
+    public void init(IngestModuleInit initContext) {
+        services = IngestServices.getDefault();
         logger.log(Level.INFO, "init() " + this.toString());
-        this.managerProxy = managerProxy;
 
     }
 
     @Override
     public void stop() {
         logger.log(Level.INFO, "stop()");
-        managerProxy.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Stopped"));
+        services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Stopped"));
 
-        //service specific cleanup due to interruption here
+        //module specific cleanup due to interruption here
     }
 
     @Override
-    public IngestServiceAbstract.ServiceType getType() {
-        return IngestServiceAbstract.ServiceType.AbstractFile;
+    public IngestModuleAbstract.ModuleType getType() {
+        return IngestModuleAbstract.ModuleType.AbstractFile;
     }
 
      @Override
