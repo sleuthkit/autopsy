@@ -3,9 +3,8 @@
 <h3>Overview</h3>
 Autopsy has been designed as a platform for open source tools besides just The Sleuth Kit.  This document is for developers who want to add functionality into Autopsy.  This could be in the form of enhancing the existing functionality or by making a module that plugs into it and you may distribute from your own site or push it back into the base distribution. 
 
-- \subpage design_page
-- \subpage framework_page (Basic concepts of framework and types of modules)
-- \subpage blackboard_page (what is the blackboard)
+- \subpage workflow_page
+- \subpage platform_page (Basic concepts of framework and types of modules)
 - \subpage mod_dev_page (Developing modules:get dev env setup, getting sersvices, properties etc.)
 - \subpage mod_ingest_page (developing ingest modules)
 - \subpage mod_report_page (developing report modules)
@@ -13,6 +12,7 @@ Autopsy has been designed as a platform for open source tools besides just The S
 - \subpage mod_result_page (developing result viewers)
 - \subpage regression_test_page 
 
+<!-- Note that Case still has lots of content in package.dox -->
 */
 
 

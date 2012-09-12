@@ -1,6 +1,10 @@
-/*! \page framework_page Autopsy Platform Concepts
+/*! \page platform_page Autopsy Platform Concepts
 
-What frameworks / modules exist
+What frameworks / modules exist and what each does. They have already been mentioned on the previous page, so this should just be a bullet list with links to other pages for more details.
+
+blackboard 
+
+igest inbox
 
 
 */
