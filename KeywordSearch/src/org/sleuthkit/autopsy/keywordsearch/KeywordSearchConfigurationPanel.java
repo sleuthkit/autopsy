@@ -41,7 +41,7 @@ public class KeywordSearchConfigurationPanel extends javax.swing.JPanel {
     private void customizeComponents() {
         setName("Advanced Keyword Search Configuration");
         tabbedPane.insertTab("Lists", null, KeywordSearchConfigurationPanel1.getDefault(), "List configuration", 0);
-        tabbedPane.insertTab("String Extraction", null, KeywordSearchConfigurationPanel3.getDefault(), "Languages configuration", 1);
+        tabbedPane.insertTab("String Extraction", null, KeywordSearchConfigurationPanel3.getDefault(), "String extraction configuration for Keyword Search Ingest", 1);
         tabbedPane.insertTab("General", null, KeywordSearchConfigurationPanel2.getDefault(), "General configuration", 2);
         
     }

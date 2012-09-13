@@ -109,17 +109,29 @@ class AbstractFileStringExtract implements AbstractFileExtract {
         this.numChunks = 0; //unknown until indexing is done
         boolean success = false;
         
-        //construct stream that extracts text as we read it
-        //final InputStream stringStream = new AbstractFileStringStream(sourceFile, INDEX_CHARSET);
-        
+     
         final boolean extractUTF8 = 
                 Boolean.parseBoolean(extractOptions.get(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()));
         
         final boolean extractUTF16 = 
                 Boolean.parseBoolean(extractOptions.get(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
         
-        final InputStream stringStream = new AbstractFileStringIntStream(
+        if (extractUTF8 == false && extractUTF16 == false) {
+            //nothing to do
+            return true;
+        }
+        
+        InputStream stringStream = null;
+        //check which extract stream to use
+        if (extractScripts.size() == 1 && extractScripts.get(0).equals(SCRIPT.LATIN_1) ) {
+            //optimal for english, english only
+            stringStream = new AbstractFileStringStream(sourceFile, INDEX_CHARSET);
+        }
+        else {
+            stringStream = new AbstractFileStringIntStream(
                 sourceFile, extractScripts, extractUTF8, extractUTF16, INDEX_CHARSET);
+        }
+        
 
         try {
             success = true;

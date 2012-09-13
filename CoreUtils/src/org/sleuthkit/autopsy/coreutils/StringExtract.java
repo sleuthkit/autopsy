@@ -34,9 +34,9 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
  * Currently supports UTF-16 LE, UTF-16 BE and UTF8 Latin, Cyrillic, Chinese,
  * Arabic
  *
- * TODO: - process control characters - testing: check non-printable common
- * chars sometimes extracted (font?) - handle tie better (when number of chars
- * in result is equal)
+ * TODO: process control characters 
+ * 
+ * TODO: handle tie better (when number of chars in 2 results is equal)
  */
 public class StringExtract {
 
@@ -145,6 +145,20 @@ public class StringExtract {
             return enabledScripts.contains(script);
         }
 
+    }
+    
+    /**
+     * Determine if Basic Latin/English extraction is set enabled only 
+     * @return true if only Basic Latin/English extraction is set enabled only
+     */
+    public boolean isExtractionLatinBasicOnly() {
+        if (enabledScripts.size() == 1
+                && enabledScripts.get(0).equals(SCRIPT.LATIN_1)) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     public static List<SCRIPT> getSupportedScripts() {
@@ -519,6 +533,69 @@ public class StringExtract {
 
         return res;
     }
+    
+    /*
+     * Extract UTF8/16 ASCII characters from byte buffer - only works for Latin, but fast
+     *
+     * The definition of printable are:
+     *  -- All of the letters, numbers, and punctuation.
+     *  -- space and tab
+     *  -- It does NOT include newlines or control chars.
+     *  -- When looking for ASCII strings, they evaluate each byte and when they find four or more printable characters they get printed out with a newline in between each string.
+     *  -- When looking for Unicode strings, they evaluate each two byte sequence and look for four or more printable characters…
+     *
+     * @param readBuf          the bytes that the string read from
+     * @param len           buffer length
+     * @param offset offset to start converting from
+     *
+     */
+    public static String extractASCII(byte[] readBuf, int len, int offset) {
+        final StringBuilder result = new StringBuilder();
+        StringBuilder temp = new StringBuilder();
+        int curLen = 0;
+
+        final char NL = (char) 10; // ASCII char for new line
+        final String NLS = Character.toString(NL);
+        boolean singleConsecZero = false; //preserve the current sequence of chars if 1 consecutive zero char
+        for (int i = offset; i < len; i++) {
+            char curChar = (char) readBuf[i];
+            if (curChar == 0 && singleConsecZero == false) {
+                //preserve the current sequence if max consec. 1 zero char 
+                singleConsecZero = true;
+            } else {
+                singleConsecZero = false;
+            }
+            //ignore non-printable ASCII chars
+            if (isPrintableAscii(curChar)) {
+                temp.append(curChar);
+                ++curLen;
+            } else if (!singleConsecZero) {
+                if (curLen >= MIN_CHARS_STRING) {
+                    // add to the result and also add the new line at the end
+                    result.append(temp);
+                    result.append(NLS);
+                }
+                // reset the temp and curLen
+                temp = new StringBuilder();
+                curLen = 0;
+
+            }
+        }
+
+        result.append(temp);
+        return result.toString();
+    }
+
+    /**
+     * Determine if char is a printable ASCII char
+     * in range <32,126> and a tab
+     * @param c char to test
+     * @return true if it's a printable char, or false otherwise
+     */
+    public static boolean isPrintableAscii(char c) {
+        return (c >= 32 && c <= 126) || c == 9;
+    }
+
 
     /**
      * Representation of the string extraction result

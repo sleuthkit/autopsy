@@ -193,10 +193,10 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         nsrl = HashDbXML.getCurrent().getNSRLSet();
 
         if (nsrl == null || nsrl.getUseForIngest() == false) {
-            nsrlDbLabelVal.setText("Not Configured");
+            nsrlDbLabelVal.setText("Disabled");
         }
         else {
-            nsrlDbLabelVal.setText("Configured");
+            nsrlDbLabelVal.setText("Enabled");
         }
         
         reloadCalc();
@@ -231,7 +231,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
                 if (columnIndex == 0) {
                     return "";
                 } else {
-                    return "Not Configured";
+                    return "Disabled";
                 }
             } else {
                 HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);

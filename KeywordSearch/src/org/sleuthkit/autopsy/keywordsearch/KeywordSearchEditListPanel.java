@@ -587,9 +587,15 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
     }//GEN-LAST:event_saveListButtonActionPerformed
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
+        if (KeywordSearchUtil.displayConfirmDialog("Removing a keyword"
+                , "This will remove a keyword from the list globally (for all Cases). "
+                + "Do you want to proceed? "
+                , KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) ) {
+        
         tableModel.deleteSelected(keywordTable.getSelectedRows());
         KeywordSearchListsXML.getCurrent().addList(currentKeywordList);
         initButtons();
+        }
     }//GEN-LAST:event_deleteWordButtonActionPerformed
 
     private void addWordFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addWordFieldActionPerformed
@@ -638,17 +644,24 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             final KeywordSearchListsXML exporter = new KeywordSearchListsXML(fileAbs);
             boolean written = exporter.writeLists(toWrite);
             if (written) {
-                KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword lists exported", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword lists exported",
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
             }
         }
     }//GEN-LAST:event_exportButtonActionPerformed
 
     private void deleteListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteListButtonActionPerformed
+        if (KeywordSearchUtil.displayConfirmDialog("Delete a keyword list"
+                , "This will delete the keyword list globally (for all Cases). "
+                + "Do you want to proceed with the deletion? "
+                , KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) ) {
+        
         KeywordSearchListsXML deleter = KeywordSearchListsXML.getCurrent();
         String toDelete = currentKeywordList.getName();
         currentKeywordList = null;
         initButtons();
         deleter.deleteList(toDelete);
+        }
     }//GEN-LAST:event_deleteListButtonActionPerformed
 
     private void chRegexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chRegexActionPerformed
