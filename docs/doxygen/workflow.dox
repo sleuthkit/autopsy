@@ -54,17 +54,6 @@ When ingest is complete, the user can generate reports.  There is a reporting fr
 \ref report_making for details on building a new report module. 
 
 
-<!--Each reporting submodule implements org.sleuthkit.autopsy.report.ReportModule interface and registers itself in layer.xml
-
-Reporting submodule typically interacts with 3 components:
-- org.sleuthkit.autopsy.report.ReportConfiguration - to read current reporting configuration set by the user,
-- Blackboard API in org.sleuthkit.datamodel.SleuthkitCase class - to traverse and read blackboard artifacts and attributes,
-- an API (possibly external/thirdparty API) to convert blackboard artifacts data structures to the desired reporting format.
-
-Please refer to report.dox and org.sleuthkit.autopsy.report package API documentation for more details on how to implement a custom reporting submodule.
--->
-
-
 
 <!-- @@@ MOVE THIS SOMEWHERE ELSE -- the directory tree package maybe??
 
@@ -79,7 +68,7 @@ and performs a final refresh of all viewer-supported data in the blackboard.
 Node content support capabilities are registered in the node's Lookup.
 -->
 
-<!-- This is too detailed for here, but maybe should be broken up and put into the sections on making a result viewer and such…
+<!-- @@@ This is too detailed for here, but maybe should be broken up and put into the sections on making a result viewer and such…
 
 \section design_data_flow Data Flow
 
