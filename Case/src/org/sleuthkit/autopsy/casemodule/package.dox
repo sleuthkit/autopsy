@@ -2,20 +2,23 @@
 /**
 \package org.sleuthkit.autopsy.casemodule
 
-The org.sleuthkit.autopsy.casemodule Module is responsible for organizing a case. A case contains one or more disk images and is the highest-level unit of an investigation. 
+The org.sleuthkit.autopsy.casemodule Module is responsible for organizing a case. A case contains one or more disk images and is the highest-level unit of an investigation.  
 
 \section casemodule_contents Package Contents
 The important classes in this case are:
 - Case
 
 \section casemodule_overview Overview
+
 All data in a case will be stored in a single database and configuration file.  A case must be open before analysis can occur. You will use a Case object to get access to the data being analyzed.
 
 Case settings are stored in an XML file.  See the XMLCaseManagement class for more details.
 
 Currently, only one case can be opened at a time.  To determine the open case, use the Case.getCurrentCase()  method.  
+
 Do not cache the case handle object obtained from this method (for example, in member variables) unless you are sure your are acting within case context; 
 It is safer to call the method more frequently to ensure the validity of the case handle object as new cases are opened.
+
 Once you have the object for the currently open case, Case.getRootObjects() will return the top-level Sleuth Kit Content modules. You can then get their children to go down the tree of data types.
 
 
