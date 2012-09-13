@@ -353,7 +353,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
-        if (JOptionPane.showConfirmDialog(null, "This will remove a hash database entry globally (for all Cases).",
+        if (JOptionPane.showConfirmDialog(null, "This will remove the hash database entry globally (for all Cases).",
                 "Deleting a Hash Database Entry", 
                 JOptionPane.YES_NO_OPTION, 
                 JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
