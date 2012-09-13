@@ -20,11 +20,13 @@
 
 package org.sleuthkit.autopsy.ingest;
 
+import java.util.logging.Logger;
+
 
 /**
  * Services available to ingest modules via singleton instance,
- * e.g. for interacting with the ingest manager
- * for sending data events, ingest messages, getting configurations, etc.
+ * e.g. for logging, interacting with the ingest manager
+ * sending data events notifications, ingest messages, getting configurations, etc.
  * 
  */
 public class IngestServices {
@@ -46,6 +48,16 @@ public class IngestServices {
             instance = new IngestServices();
         }
         return instance;
+    }
+    
+    
+    /**
+     * Get a logger to be used by the module to log messages to log files
+     * @param module module to get the logger for
+     * @return logger object
+     */
+    public Logger getLogger(IngestModuleAbstract module) {
+        return Logger.getLogger(module.getName());
     }
     
     /**

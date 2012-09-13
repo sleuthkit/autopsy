@@ -109,72 +109,7 @@ public class DataConversion {
         }
     }
 
-    /*
-     * Gets only the printable string from the given characters
-     *
-     * The definition of printable are:
-     *  -- All of the letters, numbers, and punctuation.
-     *  -- space and tab
-     *  -- It does NOT include newlines or control chars.
-     *  -- When looking for ASCII strings, they evaluate each byte and when they find four or more printable characters they get printed out with a newline in between each string.
-     *  -- When looking for Unicode strings, they evaluate each two byte sequence and look for four or more printable characters…
-     *
-     * @param readBuf          the bytes that the string read from
-     * @param len           length of text in the buffer to convert, starting at position 0
-     * @param minStringLen     minimum length of consecutive chars to qualify as a string
-     *
-     * TODO should be encoding specific and detect UTF8, UTF16LE, UTF16BE
-     * then process remainder of the string using detected encoding  
-     * 
-     * @author jantonius
-     */
-    public static String getString(byte[] readBuf, int len, int minStringLen) {
-        final StringBuilder result = new StringBuilder();
-        StringBuilder temp = new StringBuilder();
-        int curLen = 0;
-
-        final char NL = (char) 10; // ASCII char for new line
-        final String NLS = Character.toString(NL);
-        boolean singleConsecZero = false; //preserve the current sequence of chars if 1 consecutive zero char
-        for (int i = 0; i < len; i++) {
-            char curChar = (char) readBuf[i];
-            if (curChar == 0 && singleConsecZero == false) {
-                //preserve the current sequence if max consec. 1 zero char 
-                singleConsecZero = true;
-            } else {
-                singleConsecZero = false;
-            }
-            //ignore non-printable ASCII chars
-            if (isPrintableAscii(curChar)) {
-                temp.append(curChar);
-                ++curLen;
-            } else if (!singleConsecZero) {
-                if (curLen >= minStringLen) {
-                    // add to the result and also add the new line at the end
-                    result.append(temp);
-                    result.append(NLS);
-                }
-                // reset the temp and curLen
-                temp = new StringBuilder();
-                curLen = 0;
-
-            }
-        }
-
-        result.append(temp);
-        return result.toString();
-    }
-
-    /**
-     * Determine if char is a printable ASCII char
-     * in range <32,126> and a tab
-     * @param c char to test
-     * @return true if it's a printable char, or false otherwise
-     */
-    public static boolean isPrintableAscii(char c) {
-        return (c >= 32 && c <= 126) || c == 9;
-    }
-
+    
     /**
      * Converts the given paths into the formatted path. This mainly used for
      * the paths for the "new directory table" and "new output view".
