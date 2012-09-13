@@ -8,7 +8,8 @@
         <folder name="Keymaps.instance_hidden"/> <!-- Keymap -->
         <folder name="Java.instance_hidden"/>
         <folder name="Advanced.instance_hidden"/> <!-- Miscellaneous -->
-    </folder> 
+    </folder>
+    <file name="OptionsExport_hidden"/> <!-- Hide import/export in Options -->
     
 <!--<attr name="Menu\File\Separator2.instance_hidden\position" intvalue="100"/>
     <attr name="Menu\File\Separator3.instance_hidden\position" intvalue="200"/>

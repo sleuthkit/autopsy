@@ -66,6 +66,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     static long calctime = 0;
     static long lookuptime = 0;
     private Map<Integer, HashDb> knownBadSets = new HashMap<Integer, HashDb>();
+    private HashDatabasePanel panel;
     
 
     private HashDbIngestModule() {
@@ -84,7 +85,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
         HashDbManagementPanel.getDefault().setIngestRunning(true);
-        HashDatabasePanel.getDefault().setIngestRunning(true);
+        getPanel().setIngestRunning(true);
         HashDbSimplePanel.setIngestRunning(true);
         HashDbSearchPanel.getDefault().setIngestRunning(true);
         this.services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));
@@ -155,7 +156,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
         services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Ingest Complete", detailsSb.toString()));
         
         HashDbManagementPanel.getDefault().setIngestRunning(false);
-        HashDatabasePanel.getDefault().setIngestRunning(false);
+        getPanel().setIngestRunning(false);
         HashDbSimplePanel.setIngestRunning(false);
         HashDbSearchPanel.getDefault().setIngestRunning(false);
     }
@@ -167,7 +168,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     public void stop() {
         //manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "STOP"));
         HashDbManagementPanel.getDefault().setIngestRunning(false);
-        HashDatabasePanel.getDefault().setIngestRunning(false);
+        getPanel().setIngestRunning(false);
         HashDbSimplePanel.setIngestRunning(false);
         HashDbSearchPanel.getDefault().setIngestRunning(false);
     }
@@ -227,11 +228,20 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     @Override
     public javax.swing.JPanel getAdvancedConfiguration() {
         //return HashDbManagementPanel.getDefault();
-        return HashDatabasePanel.getDefault();
+        getPanel().load();
+        return getPanel();
     }
     
     @Override
     public void saveAdvancedConfiguration() {
+        getPanel().store();
+    }
+
+    private HashDatabasePanel getPanel() {
+        if (panel == null) {
+            panel = new HashDatabasePanel();
+        }
+        return panel;
     }
     
     @Override
