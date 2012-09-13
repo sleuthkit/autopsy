@@ -1,6 +1,12 @@
 /*! \page mod_report_page Developing Report Modules
 
 
-How to write a report module.
+<!-- @@@ Cleanup -->
+Each reporting submodule implements org.sleuthkit.autopsy.report.ReportModule interface and registers itself in layer.xml
+
+Reporting submodule typically interacts with 3 components:
+- org.sleuthkit.autopsy.report.ReportConfiguration - to read current reporting configuration set by the user,
+- Blackboard API in org.sleuthkit.datamodel.SleuthkitCase class - to traverse and read blackboard artifacts and attributes,
+- an API (possibly external/thirdparty API) to convert blackboard artifacts data structures to the desired reporting format.
 
 */
