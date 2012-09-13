@@ -165,6 +165,7 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
         checkPanel = new javax.swing.JPanel();
         enableUTF8Checkbox = new javax.swing.JCheckBox();
         enableUTF16Checkbox = new javax.swing.JCheckBox();
+        jLabel1 = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(languagesLabel, org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel3.class, "KeywordSearchConfigurationPanel3.languagesLabel.text")); // NOI18N
 
@@ -199,30 +200,38 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel3.class, "KeywordSearchConfigurationPanel3.jLabel1.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(langPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(enableUTF16Checkbox)
-                    .addComponent(languagesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(enableUTF8Checkbox))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(langPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(enableUTF16Checkbox)
+                            .addComponent(languagesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(enableUTF8Checkbox)))
+                    .addComponent(jLabel1))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(4, 4, 4)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(enableUTF16Checkbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(enableUTF8Checkbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(4, 4, 4)
                 .addComponent(languagesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(langPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(langPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -253,6 +262,7 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
     private javax.swing.JPanel checkPanel;
     private javax.swing.JCheckBox enableUTF16Checkbox;
     private javax.swing.JCheckBox enableUTF8Checkbox;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane langPanel;
     private javax.swing.JLabel languagesLabel;
     // End of variables declaration//GEN-END:variables
