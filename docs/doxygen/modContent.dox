@@ -5,7 +5,7 @@ Note that this needs cleanup and updating.  it has been copied from the CoreComp
 
 <h3>Creating a DataContentViewer</h3>
 
-DataContentTopComponent is the high-level window in the DataContent area.  Each instance of this loads up all instances of DataContentViewers that have been registered with the system. Example viewers include the strings and hexdump views.  If you want to make your own type of viewer, follow the steps below.  Note that the strings, hexdump, and image viewers come with Autopsy by default and can be used by all DataExplorers and DataResults. You only need to make a new DataContentViewer if these viewers do not satisfy your needs.
+DataContentTopComponent is the high-level window in the DataContent area.  Each instance of this loads up all instances of DataContentViewers that have been registered with the system. Example viewers include the strings and hexdump views.  If you want to make your own type of viewer, follow the steps below.  
 
 <ol>
 <li>Create a module from within NetBeans.  It must be dependent on these modules:

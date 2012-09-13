@@ -82,6 +82,9 @@ Dropped in module will be automatically recognized next time Autopsy starts.
 
 \subsection ingestmodule_making_results Posting Results
 
+<!-- @@@ -->
+NOTE: This needs to be made more in sync with the \ref platform_blackboard and \ref platform_inbox sections.  
+
 Users will see the results from ingest modules in one of two ways:
 - Results are posted to the blackboard and will be displayed in the navigation tree
 - Messages are sent to the Ingest Inbox to notify a user of what has recently been found. 
@@ -108,6 +111,9 @@ summarizing the module ingest run and if any errors were encountered.
 
 
 \subsection ingestmodule_making_configuration Module Configuration
+
+<!-- @@@ -->
+NOTE: Make sure we update this to reflect \ref mod_dev_properties and reduce duplicate comments.
 
 Ingest modules may require user configuration. The framework 
 supports two levels of configuration: run-time and general. Run-time configuration 
@@ -136,6 +142,8 @@ methods should be used for general configuration.
 
 \section ingestmodule_events Getting Ingest Status and Events
 
+<!-- @@@ -->
+NOTE: Sync this up with \ref mod_dev_events.
 
 Other modules and core Autopsy classes may want to get the status of the ingest manager.  The IngestManager provides access to this data with the sleuthkit.autopsy.ingest.IngestManager.isIngestRunning() method.
 

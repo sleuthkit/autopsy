@@ -1,10 +1,20 @@
-/*! \page platform_page Autopsy Platform Concepts
+/*! \page platform_page Platform Concepts
 
-What frameworks / modules exist and what each does. They have already been mentioned on the previous page, so this should just be a bullet list with links to other pages for more details.
+\section platform_basics Basic Concepts
 
-blackboard 
+- Central database
+- Ingest Modules that analyze data quickly and provide quick results
+- Single tree to browse for results
+- Framework to view sets of results with (table, thumbnail, etc.)
+- Framework to view file content (hex, strings, etc.)
 
-igest inbox
+\section platform_blackboard The Blackboard
+
+Provide some basic details, link to the C++ docs, and link to the Java API.
+
+\section platform_inbox Ingest Inbox
+
+Provide some details and API
 
 
 */
