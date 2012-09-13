@@ -73,7 +73,7 @@ public final class HashDatabaseOptionsPanelController extends OptionsPanelContro
 
     private HashDatabasePanel getPanel() {
         if (panel == null) {
-            panel = HashDatabasePanel.getDefault();
+            panel = new HashDatabasePanel();
         }
         return panel;
     }

@@ -22,7 +22,7 @@ final class HashDatabasePanel extends javax.swing.JPanel {
     private HashSetTableModel hashSetTableModel;
     private static final Logger logger = Logger.getLogger(HashDatabasePanel.class.getName());
     private static boolean ingestRunning = false;
-    static HashDatabasePanel instance;
+    //static HashDatabasePanel instance;
 
     HashDatabasePanel() {//HashDatabaseOptionsPanelController controller) {
         //this.controller = controller;
@@ -32,12 +32,21 @@ final class HashDatabasePanel extends javax.swing.JPanel {
         // TODO listen to changes in form fields and call controller.changed()
     }
     
-    public static HashDatabasePanel getDefault() {
+    /*public static HashDatabasePanel getDefault() {
+        System.out.println("----->Hash getDefault()");
         if(instance==null) {
+            System.out.println("----->Hash instance==null");
             instance = new HashDatabasePanel();
         }
-        return instance;
-    }
+        System.out.println("----->Hash instance: " + instance);
+        //JDialog display = new JDialog(new JFrame());
+        //display.setResizable(true);
+        //display.setTitle("Test stuff");
+        //display.add(new HashDatabasePanel(), 0);
+        //display.pack();
+        //display.setVisible(true);
+        return new HashDatabasePanel();
+    }*/
     
     private void customizeComponents() {
         this.ingestWarningLabel.setVisible(false);
@@ -94,6 +103,8 @@ final class HashDatabasePanel extends javax.swing.JPanel {
         this.showInboxMessagesCheckBox.setEnabled(showInboxMessagesEnabled);
         this.deleteButton.setEnabled(deleteButtonEnabled);
         this.importButton.setEnabled(importButtonEnabled);
+        this.optionsLabel.setEnabled(useForIngestEnabled || showInboxMessagesEnabled);
+        this.optionsSeparator.setEnabled(useForIngestEnabled || showInboxMessagesEnabled);
     }
     
     /**
@@ -139,9 +150,9 @@ final class HashDatabasePanel extends javax.swing.JPanel {
         useForIngestCheckbox = new javax.swing.JCheckBox();
         showInboxMessagesCheckBox = new javax.swing.JCheckBox();
         jLabel3 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
+        optionsLabel = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
-        jSeparator2 = new javax.swing.JSeparator();
+        optionsSeparator = new javax.swing.JSeparator();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.jLabel2.text")); // NOI18N
 
@@ -236,7 +247,7 @@ final class HashDatabasePanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.jLabel3.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.jLabel5.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(optionsLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.optionsLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -278,9 +289,9 @@ final class HashDatabasePanel extends javax.swing.JPanel {
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                     .addComponent(jSeparator1))
                                 .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                    .addComponent(jLabel5)
+                                    .addComponent(optionsLabel)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                    .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                     .addComponent(jLabel1))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -317,10 +328,10 @@ final class HashDatabasePanel extends javax.swing.JPanel {
                         .addComponent(indexButton)
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel5)
+                            .addComponent(optionsLabel)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(8, 8, 8)
-                                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(useForIngestCheckbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -428,6 +439,13 @@ final class HashDatabasePanel extends javax.swing.JPanel {
 
     void load() {
         logger.log(Level.WARNING, "----->HASH LOAD<-----");
+        // Deselect all rows so incorrect data isn't shown
+        hashSetTable.clearSelection();
+        // Reload the XML so there are no 'ghost' instances of vars
+        HashDbXML loader = HashDbXML.getCurrent();
+        loader.reload();
+        // Update the GUI
+        initUI(null);
         // TODO read settings and initialize GUI
         // Example:        
         // someCheckBox.setSelected(Preferences.userNodeForPackage(HashDatabasePanel.class).getBoolean("someFlag", false));
@@ -439,6 +457,7 @@ final class HashDatabasePanel extends javax.swing.JPanel {
 
     void store() {
         logger.log(Level.WARNING, "----->HASH STORE<-----");
+        HashDbXML.getCurrent().save();
         // TODO store modified settings
         // Example:
         // Preferences.userNodeForPackage(HashDatabasePanel.class).putBoolean("someFlag", someCheckBox.isSelected());
@@ -468,13 +487,13 @@ final class HashDatabasePanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JLabel locationLabel;
     private javax.swing.JLabel nameLabel;
+    private javax.swing.JLabel optionsLabel;
+    private javax.swing.JSeparator optionsSeparator;
     private javax.swing.JCheckBox showInboxMessagesCheckBox;
     private javax.swing.JLabel typeLabel;
     private javax.swing.JCheckBox useForIngestCheckbox;
