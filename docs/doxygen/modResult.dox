@@ -3,7 +3,7 @@
 NOTE: This has been moved from a package-level description and needs cleanup.
 
 <h3>Creating a DataResultViewer</h3>
-<p>DataResultTopComponent is the high-level window in the DataResult area.  Each instance of this loads up all instances of DataResultViewers that have been registered with the system. Example viewers include the table and thumbnail views.  If you want to make your own type of viewer, follow the steps below.  Note that the table and thumbnail viewers come with Autopsy by default and can be used by all DataExplorers. 
+<p>DataResultTopComponent is the high-level window in the DataResult area.  Each instance of this loads up all instances of DataResultViewers that have been registered with the system. Example viewers include the table and thumbnail views.  If you want to make your own type of viewer, follow the steps below.  
 
 <ol>
 <li>Create a module from within NetBeans.  It must be dependent on these modules:
