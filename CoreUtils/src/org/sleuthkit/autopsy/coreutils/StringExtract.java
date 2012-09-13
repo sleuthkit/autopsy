@@ -34,9 +34,9 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
  * Currently supports UTF-16 LE, UTF-16 BE and UTF8 Latin, Cyrillic, Chinese,
  * Arabic
  *
- * TODO: - process control characters - testing: check non-printable common
- * chars sometimes extracted (font?) - handle tie better (when number of chars
- * in result is equal)
+ * TODO: process control characters 
+ * 
+ * TODO: handle tie better (when number of chars in 2 results is equal)
  */
 public class StringExtract {
 
@@ -177,16 +177,6 @@ public class StringExtract {
     public StringExtractResult extract(byte[] buff, int len, int offset) {
         if (this.enableUTF16 == false && this.enableUTF8 == false) {
              return new StringExtractResult();
-        }
-        
-        //special case for Latin basic, use ASCII (fast extraction)
-        if (isExtractionLatinBasicOnly()) {
-            String extrStr = extractASCII(buff, len, offset);
-            StringExtractResult res = new StringExtractResult();
-            res.numBytes = len;
-            res.numChars = extrStr.length();
-            res.textString = extrStr;
-            return res;
         }
         
         final int buffLen = buff.length;
