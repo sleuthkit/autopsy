@@ -584,6 +584,7 @@ final class HashDatabasePanel extends javax.swing.JPanel implements OptionsPanel
         }
     }
     void resync() {
+        // TODO: call this function from property event listener
         int index = getSelection();
         this.hashSetTableModel.resync();
         setSelection(index);

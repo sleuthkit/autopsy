@@ -3,8 +3,6 @@
 <filesystem>
     <folder name="Actions">
         <folder name="Tools">
-            <file name="org-sleuthkit-autopsy-hashdatabase-HashDbMgmtAction.instance">
-            </file>
             <file name="org-sleuthkit-autopsy-hashdatabase-HashDbPanelSearchAction.instance">
             </file>
         </folder>    
@@ -20,14 +18,6 @@
             <file name="org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-hashdatabase-HashDbPanelSearchAction.instance"/>
                 <attr name="position" intvalue="201"/>
-            </file>
-            <file name="org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction-separatorAfter.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="202"/>
-            </file>
-            <file name="org-sleuthkit-autopsy-hashdatabase-HashDatabaseSettingsAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-hashdatabase-HashDbMgmtAction.instance"/>
-                <attr name="position" intvalue="301"/>
             </file>
         </folder>
     </folder>
