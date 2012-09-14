@@ -200,7 +200,7 @@ public class RegressionTest extends TestCase{
         jbo0.pushNoBlock();
         JFileChooserOperator jfco0 = new JFileChooserOperator();
         jfco0.chooseFile(words);
-        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Use during ingest", 0);
+        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Enable for ingest", 0);
         jcbo.doClick();
         JButtonOperator jbo2 = new JButtonOperator(jdo, "OK", 0);
         jbo2.pushNoBlock();

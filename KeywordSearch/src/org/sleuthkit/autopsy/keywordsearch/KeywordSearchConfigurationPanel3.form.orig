@@ -16,6 +16,15 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
+<<<<<<< HEAD
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="langPanel" pref="0" max="32767" attributes="0"/>
+                  <Component id="languagesLabel" max="32767" attributes="0"/>
+              </Group>
+              <EmptySpace pref="93" max="32767" attributes="0"/>
+=======
           <Group type="102" attributes="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
@@ -29,7 +38,8 @@
                   </Group>
                   <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="93" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+>>>>>>> f2892f26fb0e8e3f6774d4feb5b4731162b92db6
           </Group>
       </Group>
     </DimensionLayout>
@@ -45,7 +55,11 @@
               <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
               <Component id="languagesLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
+<<<<<<< HEAD
               <Component id="langPanel" pref="308" max="32767" attributes="0"/>
+=======
+              <Component id="langPanel" min="-2" pref="346" max="-2" attributes="0"/>
+>>>>>>> f2892f26fb0e8e3f6774d4feb5b4731162b92db6
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -78,12 +92,20 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
+<<<<<<< HEAD
                   <EmptySpace min="0" pref="492" max="32767" attributes="0"/>
+=======
+                  <EmptySpace min="0" pref="411" max="32767" attributes="0"/>
+>>>>>>> f2892f26fb0e8e3f6774d4feb5b4731162b92db6
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
+<<<<<<< HEAD
                   <EmptySpace min="0" pref="378" max="32767" attributes="0"/>
+=======
+                  <EmptySpace min="0" pref="361" max="32767" attributes="0"/>
+>>>>>>> f2892f26fb0e8e3f6774d4feb5b4731162b92db6
               </Group>
             </DimensionLayout>
           </Layout>

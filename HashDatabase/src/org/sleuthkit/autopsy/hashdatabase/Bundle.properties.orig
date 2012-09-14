@@ -3,7 +3,33 @@ HashDbSimplePanel.knownLabel.text=NSRL Database:
 HashDbSimplePanel.notableLabel.text=Known Bad Database(s):
 HashDbSimplePanel.knownValLabel.text=-
 HashDbSimplePanel.notableValLabel.text=-
+<<<<<<< HEAD
+HashDbSimplePanel.jLabel1.text=Select known bad databases to use during ingest:
+=======
+HashDbMgmtPanel.addNotableButton.text=Add Known Bad Database
+HashDbMgmtPanel.removeNotableButton.text=Remove Selected
 HashDbSimplePanel.jLabel1.text=Enable known bad databases for ingest:
+HashDbMgmtPanel.nsrlNameLabel.text=Not Configured
+HashDbMgmtPanel.setNSRLButton.text=Change
+HashDbMgmtPanel.jLabel1.text=Known Bad Database(s):
+HashDbMgmtPanel.jLabel2.text=NSRL Database:
+HashDbMgmtPanel.indexNSRLButton.text=Index
+HashDbMgmtPanel.removeNSRLButton.text=Remove
+HashDbMgmtPanel.ingestRunningLabel.text=\ 
+HashDbManagementPanel.nameLabel.text=Hash DB Name:
+HashDbManagementPanel.hashDbNameLabel.text=No database selected
+HashDbManagementPanel.locationLabel.text=Location:
+HashDbManagementPanel.hashDbLocationLabel.text=No database selected
+HashDbManagementPanel.deleteButton.text=Delete
+HashDbManagementPanel.useForIngestCheckbox.text=Enable for ingest
+HashDbManagementPanel.showInboxMessagesCheckBox.text=Enable sending messages to inbox during ingest
+HashDbManagementPanel.indexLabel.text=Index Status:
+HashDbManagementPanel.indexButton.text=Index
+HashDbManagementPanel.ingestRunningLabel.text=
+HashDbManagementPanel.hashDbIndexStatusLabel.text=No database selected
+HashDbManagementPanel.typeLabel.text=Type:
+HashDbManagementPanel.hashDbTypeLabel.text=No database selected
+>>>>>>> f2892f26fb0e8e3f6774d4feb5b4731162b92db6
 HashDbAddDatabaseDialog.cancelButton.text=Cancel
 HashDbAddDatabaseDialog.okButton.text=OK
 HashDbAddDatabaseDialog.nsrlRadioButton.text=NSRL
@@ -13,8 +39,14 @@ HashDbAddDatabaseDialog.browseButton.text=Browse
 HashDbAddDatabaseDialog.jLabel1.text=Enter the name of the database:
 HashDbAddDatabaseDialog.databaseNameTextField.text=
 HashDbAddDatabaseDialog.jLabel2.text=Select the type of database:
+<<<<<<< HEAD
+HashDbAddDatabaseDialog.useForIngestCheckbox.text=Use during ingest
+HashDbAddDatabaseDialog.sendInboxMessagesCheckbox.text=Send messages to inbox during ingest
+=======
 HashDbAddDatabaseDialog.useForIngestCheckbox.text=Enable for ingest
 HashDbAddDatabaseDialog.sendInboxMessagesCheckbox.text=Enable sending messages to inbox during ingest
+HashDbManagementPanel.importButton.text=Import
+>>>>>>> f2892f26fb0e8e3f6774d4feb5b4731162b92db6
 HashDbSearchPanel.hashTable.columnModel.title0=MD5 Hashes
 HashDbSearchPanel.hashTable.columnModel.title3=Title 4
 HashDbSearchPanel.hashTable.columnModel.title2=Title 3

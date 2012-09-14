@@ -211,14 +211,16 @@ class Server {
         public void run() {
             InputStreamReader isr = new InputStreamReader(stream);
             BufferedReader br = new BufferedReader(isr);
+            final Version.Type builtType = Version.getBuildType();
             try {
                 OutputStreamWriter osw = new OutputStreamWriter(out, PlatformUtil.getDefaultPlatformCharset());
                 BufferedWriter bw = new BufferedWriter(osw);
                 String line = null;
                 while (doRun && (line = br.readLine()) != null) {
-                    bw.write(line);
-                    bw.newLine();
-                    if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
+                    if (builtType == Version.Type.DEVELOPMENT) {
+                        bw.write(line);
+                        bw.newLine();
+                    //if (builtType == Version.Type.DEVELOPMENT) {
                         //flush buffers if dev version for debugging
                         bw.flush();
                     }
@@ -397,11 +399,11 @@ class Server {
 
         return currentCore.queryNumIndexedFiles();
     }
-    
-     /**
-     * Execute query that gets only number of all Solr file chunks (not logical files) indexed without
-     * actually returning the content. 
-     * 
+
+    /**
+     * Execute query that gets only number of all Solr file chunks (not logical
+     * files) indexed without actually returning the content.
+     *
      * @return int representing number of indexed chunks
      * @throws SolrServerException
      */
@@ -675,10 +677,10 @@ class Server {
         private int queryNumIndexedFiles() throws SolrServerException {
             return queryNumIndexedDocuments() - queryNumIndexedChunks();
         }
-        
-         /**
-         * Execute query that gets only number of all chunks (not logical files, or all documents)
-         * indexed without actually returning the content
+
+        /**
+         * Execute query that gets only number of all chunks (not logical files,
+         * or all documents) indexed without actually returning the content
          *
          * @return int representing number of indexed chunks
          * @throws SolrServerException
