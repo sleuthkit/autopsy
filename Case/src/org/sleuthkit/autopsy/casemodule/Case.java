@@ -24,7 +24,6 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -34,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -45,7 +43,7 @@ import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
@@ -190,7 +188,7 @@ public class Case {
      * @param examiner the examiner for this case
      */
     static void create(String caseDir, String caseName, String caseNumber, String examiner) throws Exception {
-        Log.get(Case.class).log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName});
+        Logger.getLogger(Case.class.getName()).log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName});
 
         String configFilePath = caseDir + File.separator + caseName + ".aut";
 
@@ -213,7 +211,7 @@ public class Case {
      * @throws Exception
      */
     static void open(String configFilePath) throws Exception {
-        Log.get(Case.class).log(Level.INFO, "Opening case.\nconfigFilePath: {0}", configFilePath);
+        Logger.getLogger(Case.class.getName()).log(Level.INFO, "Opening case.\nconfigFilePath: {0}", configFilePath);
 
         try {
             XMLCaseManagement xmlcm = new XMLCaseManagement();
@@ -306,7 +304,7 @@ public class Case {
      * @param timeZone  the timeZone of the image where it's added
      */
     Image addImage(String imgPath, long imgId, String timeZone) throws Exception {
-        Log.get(this.getClass()).log(Level.INFO, "Adding image to Case.  imgPath: {0}  ID: {1} TimeZone: {2}", new Object[]{imgPath, imgId, timeZone});
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Adding image to Case.  imgPath: {0}  ID: {1} TimeZone: {2}", new Object[]{imgPath, imgId, timeZone});
 
         try {
             Image newImage = db.getImageById(imgId);
@@ -346,7 +344,7 @@ public class Case {
      * Delete this case. This methods delete all folders and files of this case.
      */
     boolean deleteCase(File caseDir) {
-        Log.get(this.getClass()).log(Level.FINE, "Deleting case.\ncaseDir: {0}", caseDir);
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "Deleting case.\ncaseDir: {0}", caseDir);
 
         try {
 

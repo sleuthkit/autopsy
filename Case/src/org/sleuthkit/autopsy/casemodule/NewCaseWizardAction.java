@@ -24,7 +24,6 @@ import java.awt.Dialog;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JComponent;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
@@ -33,7 +32,7 @@ import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Action to open the New Case wizard.
@@ -46,7 +45,7 @@ public final class NewCaseWizardAction extends CallableSystemAction {
 
     @Override
     public void performAction() {
-        Log.noteAction(this.getClass());
+        Logger.noteAction(this.getClass());
 
 
         // there's a case open

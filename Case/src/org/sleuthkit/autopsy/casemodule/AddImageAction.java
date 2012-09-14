@@ -24,7 +24,6 @@ import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -41,7 +40,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -105,7 +104,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Log.noteAction(AddImageAction.class);
+        Logger.noteAction(AddImageAction.class);
         
         final IngestConfigurator ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
         if (ingestConfig.isIngestRunning()) {

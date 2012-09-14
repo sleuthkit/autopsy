@@ -26,14 +26,13 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JMenuItem;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.coreutils.Log;
 import org.openide.filesystems.FileUtil;
 import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * The action in this class is to clear the list of "Recent Cases".
@@ -208,7 +207,7 @@ public final class RecentCases extends CallableSystemAction implements Presenter
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Log.noteAction(this.getClass());
+        Logger.noteAction(this.getClass());
 
         UpdateRecentCases.hasRecentCase = false;
 

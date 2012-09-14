@@ -40,22 +40,12 @@ public class Installer extends ModuleInstall {
     static final String LOG_FILENAME_PATTERN = Places.getUserDirectory().getAbsolutePath() + "/var/log/autopsy.log"; //%t is system temp dir, %g is log number
     static final int LOG_SIZE = 0; // in bytes, zero is unlimited
     static final int LOG_FILE_COUNT = 10;
-    static Handler logs;
+
 
     @Override
     public void restored() {
-        if (logs == null) {
-            try {
-                logs = new FileHandler(LOG_FILENAME_PATTERN, LOG_SIZE, LOG_FILE_COUNT);
-                logs.setEncoding(PlatformUtil.getLogFileEncoding());
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-            logs.setFormatter(new SimpleFormatter());
-            autopsyLogger.addHandler(logs);
-        }
         
-        autopsyLogger.log(Level.INFO, "Using encoding for log files: " + logs.getEncoding());
+        //autopsyLogger.log(Level.INFO, "Using encoding for log files: " + logs.getEncoding());
         autopsyLogger.log(Level.INFO, "Default charset: " + PlatformUtil.getDefaultPlatformCharset());
         autopsyLogger.log(Level.INFO, "Default file encoding: " + PlatformUtil.getDefaultPlatformFileEncoding());
         
@@ -69,9 +59,7 @@ public class Installer extends ModuleInstall {
     
     @Override
     public void uninstalled() {
-        autopsyLogger.removeHandler(logs);
-        logs.close();
-        logs = null;
+        
     }
 
 

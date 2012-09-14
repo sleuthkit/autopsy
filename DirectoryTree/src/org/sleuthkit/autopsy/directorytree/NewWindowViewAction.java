@@ -25,10 +25,10 @@ import javax.swing.AbstractAction;
 import org.openide.nodes.Node;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -45,7 +45,7 @@ public class NewWindowViewAction extends AbstractAction{
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Log.noteAction(this.getClass());
+        Logger.noteAction(this.getClass());
         
         String name = "DataContent";
         Content c = contentNode.getLookup().lookup(Content.class);
