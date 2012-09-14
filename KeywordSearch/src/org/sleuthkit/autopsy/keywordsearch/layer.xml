@@ -10,14 +10,6 @@
             </file>
         </folder>    
     </folder>
-    <folder name="Menu">
-        <folder name="Tools">
-            <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchConfigurationAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-keywordsearch-KeywordSearchConfigurationAction.instance"/>
-                <attr name="position" intvalue="300"/>
-            </file>
-        </folder>
-    </folder>
     <folder name="Services">
         <file name="org-sleuthkit-autopsy-keywordsearch-HighlightedMatchesSource.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.datamodel.HighlightLookup"/>

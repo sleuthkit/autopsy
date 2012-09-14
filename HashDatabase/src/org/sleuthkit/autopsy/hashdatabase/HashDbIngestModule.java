@@ -84,7 +84,6 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     @Override
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
-        HashDbManagementPanel.getDefault().setIngestRunning(true);
         getPanel().setIngestRunning(true);
         HashDbSimplePanel.setIngestRunning(true);
         HashDbSearchPanel.getDefault().setIngestRunning(true);
@@ -155,7 +154,6 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
         detailsSb.append("</table>");
         services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Ingest Complete", detailsSb.toString()));
         
-        HashDbManagementPanel.getDefault().setIngestRunning(false);
         getPanel().setIngestRunning(false);
         HashDbSimplePanel.setIngestRunning(false);
         HashDbSearchPanel.getDefault().setIngestRunning(false);
@@ -167,7 +165,6 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     @Override
     public void stop() {
         //manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "STOP"));
-        HashDbManagementPanel.getDefault().setIngestRunning(false);
         getPanel().setIngestRunning(false);
         HashDbSimplePanel.setIngestRunning(false);
         HashDbSearchPanel.getDefault().setIngestRunning(false);
