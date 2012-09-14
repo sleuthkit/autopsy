@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.netbeans.api.options.OptionsDisplayer;
+import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -64,6 +66,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     static long calctime = 0;
     static long lookuptime = 0;
     private Map<Integer, HashDb> knownBadSets = new HashMap<Integer, HashDb>();
+    private HashDbManagementPanel panel;
     
 
     private HashDbIngestModule() {
@@ -81,8 +84,9 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     @Override
     public void init(IngestModuleInit initContext) {
         services = IngestServices.getDefault();
-        HashDbManagementPanel.getDefault().setIngestRunning(true);
+        getPanel().setIngestRunning(true);
         HashDbSimplePanel.setIngestRunning(true);
+        HashDbSearchPanel.getDefault().setIngestRunning(true);
         this.services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Started"));
         this.skCase = Case.getCurrentCase().getSleuthkitCase();
         try {
@@ -150,8 +154,9 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
         detailsSb.append("</table>");
         services.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "Hash Ingest Complete", detailsSb.toString()));
         
-        HashDbManagementPanel.getDefault().setIngestRunning(false);
+        getPanel().setIngestRunning(false);
         HashDbSimplePanel.setIngestRunning(false);
+        HashDbSearchPanel.getDefault().setIngestRunning(false);
     }
 
     /**
@@ -160,8 +165,9 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     @Override
     public void stop() {
         //manager.postMessage(IngestMessage.createMessage(++messageId, IngestMessage.MessageType.INFO, this, "STOP"));
-        HashDbManagementPanel.getDefault().setIngestRunning(false);
+        getPanel().setIngestRunning(false);
         HashDbSimplePanel.setIngestRunning(false);
+        HashDbSearchPanel.getDefault().setIngestRunning(false);
     }
 
     /**
@@ -213,20 +219,32 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
 
     @Override
     public javax.swing.JPanel getSimpleConfiguration() {
+        HashDbXML.getCurrent().reload();
         return new HashDbSimplePanel();
     }
 
     @Override
     public javax.swing.JPanel getAdvancedConfiguration() {
-        return HashDbManagementPanel.getDefault();
+        //return HashDbManagementPanel.getDefault();
+        getPanel().load();
+        return getPanel();
     }
     
     @Override
     public void saveAdvancedConfiguration() {
+        getPanel().store();
+    }
+
+    private HashDbManagementPanel getPanel() {
+        if (panel == null) {
+            panel = new HashDbManagementPanel();
+        }
+        return panel;
     }
     
     @Override
     public void saveSimpleConfiguration() {
+       HashDbXML.getCurrent().save();
     }
     
     private void processBadFile(AbstractFile abstractFile, String md5Hash, String hashSetName, boolean showInboxMessage) {

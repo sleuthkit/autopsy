@@ -57,7 +57,7 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
 
         
         panel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        applyButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        //applyButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         this.add(panel, 0);
         this.pack();
         
@@ -83,6 +83,7 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
 
         jSeparator1 = new javax.swing.JSeparator();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 4), new java.awt.Dimension(0, 4), new java.awt.Dimension(0, 4));
+        jPanel1 = new javax.swing.JPanel();
         applyButton = new javax.swing.JButton();
         filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 4), new java.awt.Dimension(0, 4), new java.awt.Dimension(0, 4));
 
@@ -91,8 +92,30 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
         getContentPane().add(jSeparator1);
         getContentPane().add(filler1);
 
+        jPanel1.setMaximumSize(new java.awt.Dimension(4000, 27));
+        jPanel1.setMinimumSize(new java.awt.Dimension(100, 27));
+        jPanel1.setPreferredSize(new java.awt.Dimension(400, 27));
+
         applyButton.setText(org.openide.util.NbBundle.getMessage(AdvancedConfigurationDialog.class, "AdvancedConfigurationDialog.applyButton.text")); // NOI18N
-        getContentPane().add(applyButton);
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap(343, Short.MAX_VALUE)
+                .addComponent(applyButton)
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(2, 2, 2)
+                .addComponent(applyButton)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        getContentPane().add(jPanel1);
         getContentPane().add(filler2);
 
         pack();
@@ -102,6 +125,7 @@ public class AdvancedConfigurationDialog extends javax.swing.JDialog {
     private javax.swing.JButton applyButton;
     private javax.swing.Box.Filler filler1;
     private javax.swing.Box.Filler filler2;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JSeparator jSeparator1;
     // End of variables declaration//GEN-END:variables
 

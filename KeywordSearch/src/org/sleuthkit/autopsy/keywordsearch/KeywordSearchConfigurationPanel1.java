@@ -25,37 +25,38 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.logging.Logger;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  *
  * @author dfickling
  */
-public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel {
+public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements OptionsPanel {
 
     KeywordSearchListsManagementPanel listsManagementPanel;
     KeywordSearchEditListPanel editListPanel;
     private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel1.class.getName());
     private static final String KEYWORD_CONFIG_NAME = org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig");
-    private static KeywordSearchConfigurationPanel1 instance;
+    //private static KeywordSearchConfigurationPanel1 instance;
     
     /** Creates new form KeywordSearchConfigurationPanel1 */
-    private KeywordSearchConfigurationPanel1() {
+    KeywordSearchConfigurationPanel1() {
         
         initComponents();
         customizeComponents();
         setName(KEYWORD_CONFIG_NAME);
     }
     
-    public static KeywordSearchConfigurationPanel1 getDefault() {
+    /*public static KeywordSearchConfigurationPanel1 getDefault() {
         if(instance == null)
             instance = new KeywordSearchConfigurationPanel1();
         return instance;
-    }
+    }*/
 
     private void customizeComponents() {
-        listsManagementPanel = KeywordSearchListsManagementPanel.getDefault();
-        editListPanel = KeywordSearchEditListPanel.getDefault();
+        listsManagementPanel = new KeywordSearchListsManagementPanel();
+        editListPanel = new KeywordSearchEditListPanel();
 
         listsManagementPanel.addListSelectionListener(editListPanel);
         
@@ -63,6 +64,16 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel {
         mainSplitPane.setRightComponent(editListPanel);
         mainSplitPane.revalidate();
         mainSplitPane.repaint();
+    }
+    
+    @Override
+    public void store() {
+        KeywordSearchListsXML.getCurrent().save();
+    }
+    
+    @Override
+    public void load() {
+        listsManagementPanel.load();
     }
 
     /** This method is called from within the constructor to
@@ -78,15 +89,18 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel {
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
 
+        mainSplitPane.setBorder(null);
+        mainSplitPane.setDividerLocation(275);
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
+            .addGap(0, 275, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 242, Short.MAX_VALUE)
+            .addGap(0, 327, Short.MAX_VALUE)
         );
 
         mainSplitPane.setLeftComponent(jPanel1);
@@ -95,11 +109,11 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel {
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 291, Short.MAX_VALUE)
+            .addGap(0, 318, Short.MAX_VALUE)
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 242, Short.MAX_VALUE)
+            .addGap(0, 327, Short.MAX_VALUE)
         );
 
         mainSplitPane.setRightComponent(jPanel2);
@@ -108,11 +122,11 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(mainSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 598, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(mainSplitPane)
         );
     }// </editor-fold>//GEN-END:initComponents
 

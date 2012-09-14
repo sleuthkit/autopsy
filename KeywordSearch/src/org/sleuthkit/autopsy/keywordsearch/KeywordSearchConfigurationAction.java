@@ -20,6 +20,9 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
@@ -31,19 +34,38 @@ import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 class KeywordSearchConfigurationAction extends CallableSystemAction{
     
     private static final String ACTION_NAME = org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig");
+    private KeywordSearchConfigurationPanel panel;
 
     @Override
     public void performAction() {
-        final KeywordSearchConfigurationPanel panel = KeywordSearchConfigurationPanel.getDefault();
+        final KeywordSearchConfigurationPanel panel = getPanel();
+        panel.load();
         final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog();
         dialog.addApplyButtonListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+                panel.store();
                 dialog.close();
             }
         });
+        WindowListener exitListener = new WindowAdapter() {
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                dialog.close();
+                KeywordSearchListsXML.getCurrent().reload();
+            }
+        };
+        dialog.addWindowListener(exitListener);
         dialog.display(panel);
+    }
+    
+    private KeywordSearchConfigurationPanel getPanel() {
+        if(panel==null) {
+            panel = new KeywordSearchConfigurationPanel();
+        }
+        return panel;
     }
 
     @Override

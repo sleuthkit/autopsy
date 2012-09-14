@@ -3,7 +3,6 @@
 <filesystem>
     <folder name="Actions">
         <folder name="Help">
-            <file name="org-netbeans-core-actions-AboutAction.instance_hidden"/>
             <file name="org-sleuthkit-autopsy-corecomponents-CustomAboutAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.corecomponents.CustomAboutAction"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.corecomponents.Bundle#CTL_CustomAboutAction"/>
@@ -22,13 +21,11 @@
     <folder name="Menu">
         <folder name="Help">
             <attr name="master-help.xml/org-sleuthkit-autopsy-corecomponents-CustomAboutAction.shadow" boolvalue="true"/>
-            <file name="org-netbeans-core-actions-AboutAction.shadow_hidden"/>
             <file name="org-sleuthkit-autopsy-corecomponents-CustomAboutAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Help/org-sleuthkit-autopsy-corecomponents-CustomAboutAction.instance"/>
                 <attr name="position" intvalue="3000"/>
             </file>
         </folder>
-        <folder name="Window"/>
     </folder>
     <folder name="Services">
         <folder name="JavaHelp">
@@ -43,7 +40,6 @@
     </folder>
     <folder name="Windows2">
         <folder name="Components">
-
         </folder>
         <folder name="Modes">
             <folder name="editor">
