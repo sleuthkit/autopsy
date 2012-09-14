@@ -46,6 +46,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -53,7 +54,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 /**
  *  KeywordSearchEditListPanel widget to manage keywords in lists
  */
-class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelectionListener {
+class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelectionListener, OptionsPanel {
 
     private static Logger logger = Logger.getLogger(KeywordSearchEditListPanel.class.getName());
     private KeywordTableModel tableModel;
@@ -747,6 +748,16 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
             tableModel.resync();
             initButtons();
         }
+    }
+
+    @Override
+    public void store() {
+        // Implemented by parent panel
+    }
+
+    @Override
+    public void load() {
+        // Implemented by parent panel
     }
 
 

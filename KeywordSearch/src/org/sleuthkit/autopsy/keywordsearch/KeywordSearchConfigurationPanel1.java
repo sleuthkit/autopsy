@@ -25,13 +25,14 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.logging.Logger;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  *
  * @author dfickling
  */
-public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel {
+public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements OptionsPanel {
 
     KeywordSearchListsManagementPanel listsManagementPanel;
     KeywordSearchEditListPanel editListPanel;
@@ -63,6 +64,16 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel {
         mainSplitPane.setRightComponent(editListPanel);
         mainSplitPane.revalidate();
         mainSplitPane.repaint();
+    }
+    
+    @Override
+    public void store() {
+        KeywordSearchListsXML.getCurrent().save();
+    }
+    
+    @Override
+    public void load() {
+        listsManagementPanel.load();
     }
 
     /** This method is called from within the constructor to

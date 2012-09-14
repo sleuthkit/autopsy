@@ -72,7 +72,7 @@ public class IngestDialog extends JDialog {
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
 
-        panel.reloadIfSelected();
+        panel.reload();
         add(panel, BorderLayout.PAGE_START);
         JButton startButton = new JButton("Start");
         JButton closeButton = new JButton("Close");
@@ -125,7 +125,6 @@ public class IngestDialog extends JDialog {
      * Closes the Ingest dialog
      */
     public void close() {
-        System.out.println("-----> Close?");
         setVisible(false);
         dispose();
     }

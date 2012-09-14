@@ -14,9 +14,10 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.datamodel.TskException;
 
-final class HashDatabasePanel extends javax.swing.JPanel {
+final class HashDatabasePanel extends javax.swing.JPanel implements OptionsPanel {
 
     //private final HashDatabaseOptionsPanelController controller;
     private HashSetTableModel hashSetTableModel;
@@ -437,8 +438,8 @@ final class HashDatabasePanel extends javax.swing.JPanel {
         importHashSet(evt);
     }//GEN-LAST:event_importButtonActionPerformed
 
-    void load() {
-        logger.log(Level.WARNING, "----->HASH LOAD<-----");
+    @Override
+    public void load() {
         // Deselect all rows so incorrect data isn't shown
         hashSetTable.clearSelection();
         // Reload the XML so there are no 'ghost' instances of vars
@@ -447,8 +448,8 @@ final class HashDatabasePanel extends javax.swing.JPanel {
         initUI(null);
     }
 
-    void store() {
-        logger.log(Level.WARNING, "----->HASH STORE<-----");
+    @Override
+    public void store() {
         HashDbXML.getCurrent().save();
     }
 

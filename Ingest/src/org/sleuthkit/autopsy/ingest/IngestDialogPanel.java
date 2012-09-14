@@ -144,7 +144,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                     save();
                     int index = listSelectionModel.getMinSelectionIndex();
                     currentModule = modules.get(index);
-                    reloadSimpleConfiguration();
+                    reload();
                     advancedButton.setEnabled(currentModule.hasAdvancedConfiguration());
                 } else {
                     currentModule = null;
@@ -377,7 +377,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             public void actionPerformed(ActionEvent e) {
                 dialog.close();
                 currentModule.saveAdvancedConfiguration();
-                reloadSimpleConfiguration();
+                reload();
             }
         });
         dialog.addWindowListener(new WindowAdapter() {
@@ -385,7 +385,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             @Override
             public void windowClosing(WindowEvent e) {
                 dialog.close();
-                reloadSimpleConfiguration();
+                reload();
             }
         });
         save(); // save the simple panel
@@ -488,21 +488,6 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
         }
     }
 
-    private void reloadSimpleConfiguration() {
-        simplePanel.removeAll();
-        if (currentModule.hasSimpleConfiguration()) {
-            simplePanel.add(currentModule.getSimpleConfiguration());
-        }
-        simplePanel.revalidate();
-        simplePanel.repaint();
-    }
-    
-    public void reloadIfSelected() {
-        if(this.modulesTable.getSelectedRow() != -1) {
-            reloadSimpleConfiguration();
-        }
-    }
-
     /**
      * To be called whenever the next, close, or start buttons are pressed.
      * 
@@ -511,6 +496,22 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
     public void save() {
         if (currentModule != null && currentModule.hasSimpleConfiguration()) {
             currentModule.saveSimpleConfiguration();
+        }
+    }
+    
+    /**
+     * Called when the simple panel needs to be reloaded with more
+     * recent data.
+     */
+    @Override
+    public void reload() {
+        if(this.modulesTable.getSelectedRow() != -1) {
+            simplePanel.removeAll();
+            if (currentModule.hasSimpleConfiguration()) {
+                simplePanel.add(currentModule.getSimpleConfiguration());
+            }
+            simplePanel.revalidate();
+            simplePanel.repaint();
         }
     }
 
