@@ -306,7 +306,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         selectorsCombo = new javax.swing.JComboBox();
         deleteWordButton = new javax.swing.JButton();
         ingestMessagesCheckbox = new javax.swing.JCheckBox();
-        jLabel1 = new javax.swing.JLabel();
+        keywordsLabel = new javax.swing.JLabel();
         keywordOptionsLabel = new javax.swing.JLabel();
         listOptionsLabel = new javax.swing.JLabel();
         keywordOptionsSeparator = new javax.swing.JSeparator();
@@ -418,7 +418,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             }
         });
 
-        jLabel1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.jLabel1.text")); // NOI18N
+        keywordsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.keywordsLabel.text")); // NOI18N
 
         keywordOptionsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.keywordOptionsLabel.text")); // NOI18N
 
@@ -471,7 +471,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(listEditorPanelLayout.createSequentialGroup()
                                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel1)
+                                    .addComponent(keywordsLabel)
                                     .addGroup(listEditorPanelLayout.createSequentialGroup()
                                         .addGap(10, 10, 10)
                                         .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -490,7 +490,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, listEditorPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
+                .addComponent(keywordsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 188, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -510,7 +510,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                 .addComponent(useForIngestCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(ingestMessagesCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 46, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 33, Short.MAX_VALUE)
                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(exportButton)
                     .addComponent(saveListButton)
@@ -727,11 +727,11 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
     private javax.swing.JButton deleteWordButton;
     private javax.swing.JButton exportButton;
     private javax.swing.JCheckBox ingestMessagesCheckbox;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel keywordOptionsLabel;
     private javax.swing.JSeparator keywordOptionsSeparator;
     private javax.swing.JTable keywordTable;
+    private javax.swing.JLabel keywordsLabel;
     private javax.swing.JPanel listEditorPanel;
     private javax.swing.JLabel listOptionsLabel;
     private javax.swing.JSeparator listOptionsSeparator;

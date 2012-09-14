@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -138,7 +139,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         hashSetTable = new javax.swing.JTable();
         deleteButton = new javax.swing.JButton();
         importButton = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
+        hashDatabasesLabel = new javax.swing.JLabel();
         nameLabel = new javax.swing.JLabel();
         hashDbNameLabel = new javax.swing.JLabel();
         hashDbLocationLabel = new javax.swing.JLabel();
@@ -150,9 +151,9 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         indexButton = new javax.swing.JButton();
         useForIngestCheckbox = new javax.swing.JCheckBox();
         showInboxMessagesCheckBox = new javax.swing.JCheckBox();
-        jLabel3 = new javax.swing.JLabel();
+        informationLabel = new javax.swing.JLabel();
         optionsLabel = new javax.swing.JLabel();
-        jSeparator1 = new javax.swing.JSeparator();
+        informationSeparator = new javax.swing.JSeparator();
         optionsSeparator = new javax.swing.JSeparator();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.jLabel2.text")); // NOI18N
@@ -206,7 +207,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(hashDatabasesLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.hashDatabasesLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.nameLabel.text")); // NOI18N
 
@@ -246,7 +247,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.jLabel3.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(informationLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.informationLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(optionsLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.optionsLabel.text")); // NOI18N
 
@@ -286,29 +287,29 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
                                     .addComponent(showInboxMessagesCheckBox)))
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                    .addComponent(jLabel3)
+                                    .addComponent(informationLabel)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(jSeparator1))
+                                    .addComponent(informationSeparator))
                                 .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                     .addComponent(optionsLabel)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                     .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                    .addComponent(jLabel1))
+                    .addComponent(hashDatabasesLabel))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
+                .addComponent(hashDatabasesLabel)
                 .addGap(6, 6, 6)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel3)
+                            .addComponent(informationLabel)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(8, 8, 8)
-                                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(informationSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(7, 7, 7)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(nameLabel)
@@ -361,7 +362,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     }//GEN-LAST:event_indexButtonActionPerformed
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
-        if (JOptionPane.showConfirmDialog(null, "This will remove the hash database entry globally (for all Cases).",
+        if (JOptionPane.showConfirmDialog(null, "This will remove the hash database entry globally (for all Cases). Do you want to proceed? ",
                 "Deleting a Hash Database Entry", 
                 JOptionPane.YES_NO_OPTION, 
                 JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
@@ -465,6 +466,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton deleteButton;
+    private javax.swing.JLabel hashDatabasesLabel;
     private javax.swing.JLabel hashDbIndexStatusLabel;
     private javax.swing.JLabel hashDbLocationLabel;
     private javax.swing.JLabel hashDbNameLabel;
@@ -473,15 +475,14 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     private javax.swing.JButton importButton;
     private javax.swing.JButton indexButton;
     private javax.swing.JLabel indexLabel;
+    private javax.swing.JLabel informationLabel;
+    private javax.swing.JSeparator informationSeparator;
     private javax.swing.JLabel ingestWarningLabel;
     private javax.swing.JButton jButton3;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel locationLabel;
     private javax.swing.JLabel nameLabel;
     private javax.swing.JLabel optionsLabel;

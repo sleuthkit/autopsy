@@ -75,10 +75,10 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
         filesIndexedValue = new javax.swing.JLabel();
         chunksLabel = new javax.swing.JLabel();
         chunksValLabel = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jSeparator1 = new javax.swing.JSeparator();
-        jSeparator3 = new javax.swing.JSeparator();
+        settingsLabel = new javax.swing.JLabel();
+        informationLabel = new javax.swing.JLabel();
+        settingsSeparator = new javax.swing.JSeparator();
+        informationSeparator = new javax.swing.JSeparator();
 
         skipNSRLCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.skipNSRLCheckBox.text")); // NOI18N
         skipNSRLCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.skipNSRLCheckBox.toolTipText")); // NOI18N
@@ -97,9 +97,9 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
 
         chunksValLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.chunksValLabel.text")); // NOI18N
 
-        jLabel1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.jLabel1.text")); // NOI18N
+        settingsLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.settingsLabel.text")); // NOI18N
 
-        jLabel2.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.jLabel2.text")); // NOI18N
+        informationLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.informationLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -109,13 +109,13 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
+                        .addComponent(settingsLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 326, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(settingsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 326, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel2)
+                        .addComponent(informationLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jSeparator3))
+                        .addComponent(informationSeparator))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -135,14 +135,14 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel1)
-                    .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(settingsLabel)
+                    .addComponent(settingsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(skipNSRLCheckBox)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel2)
-                    .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 7, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(informationLabel)
+                    .addComponent(informationSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 7, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(filesIndexedLabel)
@@ -164,11 +164,11 @@ private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//
     private javax.swing.JLabel chunksValLabel;
     private javax.swing.JLabel filesIndexedLabel;
     private javax.swing.JLabel filesIndexedValue;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSeparator jSeparator3;
+    private javax.swing.JLabel informationLabel;
+    private javax.swing.JSeparator informationSeparator;
     private javax.swing.ButtonGroup langButtonGroup;
+    private javax.swing.JLabel settingsLabel;
+    private javax.swing.JSeparator settingsSeparator;
     private javax.swing.JCheckBox skipNSRLCheckBox;
     // End of variables declaration//GEN-END:variables
 
