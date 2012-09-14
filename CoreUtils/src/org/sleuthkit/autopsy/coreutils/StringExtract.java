@@ -34,9 +34,9 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
  * Currently supports UTF-16 LE, UTF-16 BE and UTF8 Latin, Cyrillic, Chinese,
  * Arabic
  *
- * TODO: - process control characters - testing: check non-printable common
- * chars sometimes extracted (font?) - handle tie better (when number of chars
- * in result is equal)
+ * TODO: process control characters 
+ * 
+ * TODO: handle tie better (when number of chars in 2 results is equal)
  */
 public class StringExtract {
 
@@ -50,6 +50,8 @@ public class StringExtract {
      * currently enabled scripts
      */
     private List<SCRIPT> enabledScripts;
+    private boolean enableUTF8;
+    private boolean enableUTF16;
     /**
      * supported scripts, can be overridden with enableScriptX methods
      */
@@ -73,9 +75,29 @@ public class StringExtract {
             throw new IllegalStateException("Unicode table not properly initialized, cannot instantiate StringExtract");
         }
 
-        this.setEnabledScripts(SUPPORTED_SCRIPTS);
+        setEnabledScripts(SUPPORTED_SCRIPTS);
+        enableUTF8 = true;
+        enableUTF16 = true;
     }
 
+    public boolean isEnableUTF8() {
+        return enableUTF8;
+    }
+
+    public void setEnableUTF8(boolean enableUTF8) {
+        this.enableUTF8 = enableUTF8;
+    }
+
+    public boolean isEnableUTF16() {
+        return enableUTF16;
+    }
+
+    public void setEnableUTF16(boolean enableUTF16) {
+        this.enableUTF16 = enableUTF16;
+    }
+
+    
+    
     /**
      * Sets the enabled scripts to ones provided, resets previous setting
      *
@@ -84,6 +106,7 @@ public class StringExtract {
     public final void setEnabledScripts(List<SCRIPT> scripts) {
         this.enabledScripts = scripts;
     }
+
 
     /**
      * Sets the enabled script to one provided, resets previous setting
@@ -108,8 +131,8 @@ public class StringExtract {
 
     /**
      * Check if extraction of the script is enabled by this instance of the
-     * utility.
-     * For LATIN_2 (extended LATIN), enable also LATIN_1, even if it's not explicitely enabled.
+     * utility. For LATIN_2 (extended LATIN), enable also LATIN_1, even if it's
+     * not explicitely enabled.
      *
      * @param script script that was identified, to check if it is enabled
      * @return true if the the script extraction is enabled
@@ -118,11 +141,24 @@ public class StringExtract {
         if (script.equals(SCRIPT.LATIN_1)) {
             return enabledScripts.contains(SCRIPT.LATIN_1)
                     || enabledScripts.contains(SCRIPT.LATIN_2);
-        }
-        else {
+        } else {
             return enabledScripts.contains(script);
         }
 
+    }
+    
+    /**
+     * Determine if Basic Latin/English extraction is set enabled only 
+     * @return true if only Basic Latin/English extraction is set enabled only
+     */
+    public boolean isExtractionLatinBasicOnly() {
+        if (enabledScripts.size() == 1
+                && enabledScripts.get(0).equals(SCRIPT.LATIN_1)) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     public static List<SCRIPT> getSupportedScripts() {
@@ -139,6 +175,10 @@ public class StringExtract {
      * additional info
      */
     public StringExtractResult extract(byte[] buff, int len, int offset) {
+        if (this.enableUTF16 == false && this.enableUTF8 == false) {
+             return new StringExtractResult();
+        }
+        
         final int buffLen = buff.length;
 
         int processedBytes = 0;
@@ -162,16 +202,28 @@ public class StringExtract {
 
             //extract using all methods and see which one wins
             StringExtractResult resUTF16 = null;
-            if (curOffset % 2 == 0) {
+            if (enableUTF16 && curOffset % 2 == 0) {
                 StringExtractResult resUTF16En1 = extractUTF16(buff, len, curOffset, true);
                 StringExtractResult resUTF16En2 = extractUTF16(buff, len, curOffset, false);
                 resUTF16 = resUTF16En1.numChars > resUTF16En2.numChars ? resUTF16En1 : resUTF16En2;
-            }
+            } 
+            
             //results.add(extractUTF8(buff, len, curOffset));
-            StringExtractResult resUTF8 = extractUTF8(buff, len, curOffset);
+            StringExtractResult resUTF8 = null;
 
-            StringExtractResult resWin;
-            resWin = resUTF16 != null && resUTF16.numChars > resUTF8.numChars ? resUTF16 : resUTF8;
+            if (enableUTF8) {
+                resUTF8 = extractUTF8(buff, len, curOffset);
+            }
+
+            StringExtractResult resWin = null;
+            if (enableUTF8 && enableUTF16) {
+                resWin = resUTF16 != null && resUTF16.numChars > resUTF8.numChars ? resUTF16 : resUTF8;
+            } else if (enableUTF16){
+                resWin = resUTF16;
+            }
+            else if (enableUTF8) {
+                resWin = resUTF8;
+            }
 
             if (resWin.numChars >= MIN_CHARS_STRING) {
                 //record string 
@@ -189,9 +241,12 @@ public class StringExtract {
                 processedBytes += resWin.numBytes;
                 firstUnprocessedOff = resWin.offset + resWin.numBytes;
             } else {
-                //if no encodings worked, advance 1 byte
-                ++curOffset;
-                //++processedBytes;
+                //if no encodings worked, advance byte
+                if (enableUTF8 == false) {
+                    curOffset += 2;
+                } else {
+                    ++curOffset;
+                }
             }
         }
 
@@ -237,7 +292,7 @@ public class StringExtract {
             byteVal += b[0];
 
             //skip if beyond range
-            if (byteVal > StringExtractUnicodeTable.getUnicodeTableSize() - 1) {
+            if (byteVal > StringExtractUnicodeTable.UNICODE_TABLE_SIZE - 1) {
                 break;
             }
 
@@ -421,7 +476,7 @@ public class StringExtract {
             curOffset += chBytes;
 
             //skip if beyond range
-            if (ch > StringExtractUnicodeTable.getUnicodeTableSize() - 1) {
+            if (ch > StringExtractUnicodeTable.UNICODE_TABLE_SIZE - 1) {
                 break;
             }
 
@@ -478,6 +533,69 @@ public class StringExtract {
 
         return res;
     }
+    
+    /*
+     * Extract UTF8/16 ASCII characters from byte buffer - only works for Latin, but fast
+     *
+     * The definition of printable are:
+     *  -- All of the letters, numbers, and punctuation.
+     *  -- space and tab
+     *  -- It does NOT include newlines or control chars.
+     *  -- When looking for ASCII strings, they evaluate each byte and when they find four or more printable characters they get printed out with a newline in between each string.
+     *  -- When looking for Unicode strings, they evaluate each two byte sequence and look for four or more printable characters…
+     *
+     * @param readBuf          the bytes that the string read from
+     * @param len           buffer length
+     * @param offset offset to start converting from
+     *
+     */
+    public static String extractASCII(byte[] readBuf, int len, int offset) {
+        final StringBuilder result = new StringBuilder();
+        StringBuilder temp = new StringBuilder();
+        int curLen = 0;
+
+        final char NL = (char) 10; // ASCII char for new line
+        final String NLS = Character.toString(NL);
+        boolean singleConsecZero = false; //preserve the current sequence of chars if 1 consecutive zero char
+        for (int i = offset; i < len; i++) {
+            char curChar = (char) readBuf[i];
+            if (curChar == 0 && singleConsecZero == false) {
+                //preserve the current sequence if max consec. 1 zero char 
+                singleConsecZero = true;
+            } else {
+                singleConsecZero = false;
+            }
+            //ignore non-printable ASCII chars
+            if (isPrintableAscii(curChar)) {
+                temp.append(curChar);
+                ++curLen;
+            } else if (!singleConsecZero) {
+                if (curLen >= MIN_CHARS_STRING) {
+                    // add to the result and also add the new line at the end
+                    result.append(temp);
+                    result.append(NLS);
+                }
+                // reset the temp and curLen
+                temp = new StringBuilder();
+                curLen = 0;
+
+            }
+        }
+
+        result.append(temp);
+        return result.toString();
+    }
+
+    /**
+     * Determine if char is a printable ASCII char
+     * in range <32,126> and a tab
+     * @param c char to test
+     * @return true if it's a printable char, or false otherwise
+     */
+    public static boolean isPrintableAscii(char c) {
+        return (c >= 32 && c <= 126) || c == 9;
+    }
+
 
     /**
      * Representation of the string extraction result
@@ -549,10 +667,11 @@ public class StringExtract {
                 }
             },
             LATIN_1 {
-                 @Override
+                @Override
                 public String toString() {
                     return "Latin - Basic";
                 }
+
                 @Override
                 public String getLanguages() {
                     return "English";

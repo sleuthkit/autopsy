@@ -103,6 +103,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private List<AbstractFileExtract> textExtractors;
     private AbstractFileStringExtract stringExtractor;
     private final List<SCRIPT> stringExtractScripts = new ArrayList<SCRIPT>();
+    private Map<String,String> stringExtractOptions = new HashMap<String,String>();
+    
     private final GetIsFileKnownV getIsFileKnown = new GetIsFileKnownV();
     private KeywordSearchConfigurationPanel panel;
 
@@ -116,7 +118,9 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private KeywordSearchIngestModule() {
         //set default script 
         stringExtractScripts.add(SCRIPT.LATIN_1);
-        stringExtractScripts.add(SCRIPT.LATIN_2);
+        
+        stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+        stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
     }
 
     /**
@@ -309,6 +313,9 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         //initialize extractors
         stringExtractor = new AbstractFileStringExtract();
         stringExtractor.setScripts(stringExtractScripts);
+        stringExtractor.setOptions(stringExtractOptions);
+        
+        
         //log the scripts used for debugging
         final StringBuilder sbScripts = new StringBuilder();
         for (SCRIPT s : stringExtractScripts) {
@@ -1086,4 +1093,28 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     List<SCRIPT> getStringExtractScripts() {
         return new ArrayList<SCRIPT>(this.stringExtractScripts);
     }
+    
+    /**
+     * Set / override string extract option
+     * @param key option name to set
+     * @param val option value to set
+     */
+    void setStringExtractOption(String key, String val) {
+        this.stringExtractOptions.put(key, val);
+    }
+    
+    /**
+     * get string extract option for the key
+     * @param key option name
+     * @return option string value, or empty string if the option is not set
+     */
+    String getStringExtractOption(String key) {
+        if (this.stringExtractOptions.containsKey(key)) {
+            return this.stringExtractOptions.get(key);
+        }
+        else {
+            return "";
+        }
+    }
+    
 }
