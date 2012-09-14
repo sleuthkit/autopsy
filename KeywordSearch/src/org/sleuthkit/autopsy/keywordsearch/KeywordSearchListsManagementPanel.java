@@ -36,12 +36,13 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
 /**
  *
  * @author dfickling
  */
-class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
+class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private Logger logger = Logger.getLogger(KeywordSearchListsManagementPanel.class.getName());
     private KeywordListTableModel tableModel;
@@ -99,10 +100,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
             }
         });
 
-    }
-    
-    void reload() {
-        listsTable.clearSelection();
     }
 
     /** This method is called from within the constructor to
@@ -317,6 +314,16 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
     private javax.swing.JTable listsTable;
     private javax.swing.JButton newListButton;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void store() {
+        // Implemented by parent panel
+    }
+
+    @Override
+    public void load() {
+        listsTable.clearSelection();
+    }
 
     
     private class KeywordListTableModel extends AbstractTableModel {

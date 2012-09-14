@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import javax.swing.JCheckBox;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -21,12 +22,13 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * Advanced configuration panel handling languages config.
  */
-public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
+public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel implements OptionsPanel {
 
     //private static KeywordSearchConfigurationPanel3 instance = null;
     private final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel3.class.getName());
     private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<String, StringExtract.StringExtractUnicodeTable.SCRIPT>();
     private ActionListener updateLanguagesAction;
+    private List<SCRIPT> toUpdate;
 
     /**
      * Creates new form KeywordSearchConfigurationPanel3
@@ -43,19 +45,13 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
         return instance;
     }*/
 
-    @Override
-    public void paint(Graphics g) {
-        super.paint(g);
-        activateWidgets();
-    }
-
     private void customizeComponents() {
 
 
         updateLanguagesAction = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                List<SCRIPT> toUpdate = new ArrayList<SCRIPT>();
+                toUpdate = new ArrayList<SCRIPT>();
                 final int components = checkPanel.getComponentCount();
                 for (int i = 0; i < components; ++i) {
                     JCheckBox ch = (JCheckBox) checkPanel.getComponent(i);
@@ -64,7 +60,7 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
                         toUpdate.add(s);
                     }
                 }
-                KeywordSearchIngestModule.getDefault().setStringExtractScripts(toUpdate);
+                //KeywordSearchIngestModule.getDefault().setStringExtractScripts(toUpdate);
 
             }
         };
@@ -121,6 +117,18 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
         && ! IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());;
         //enable / disable checboxes
         activateScriptsCheckboxes(enable);
+    }
+    
+    @Override
+    public void store() {
+        if(toUpdate!=null) {
+            KeywordSearchIngestModule.getDefault().setStringExtractScripts(toUpdate);
+        }
+    }
+    
+    @Override
+    public void load() {
+        activateWidgets();
     }
 
     /**

@@ -6,15 +6,16 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
-final class KeywordSearchOptionsPanel extends javax.swing.JPanel {
+final class KeywordSearchOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
 
     //private final KeywordSearchOptionsPanelController controller;
     //private static KeywordSearchOptionsPanel instance = null;
     private static final Logger logger = Logger.getLogger(KeywordSearchOptionsPanel.class.getName());
-    private KeywordSearchConfigurationPanel1 panel1;
-    private KeywordSearchConfigurationPanel3 panel3;
-    private KeywordSearchConfigurationPanel2 panel2;
+    private KeywordSearchConfigurationPanel1 listsPanel;
+    private KeywordSearchConfigurationPanel3 languagesPanel;
+    private KeywordSearchConfigurationPanel2 generalPanel;
 
     KeywordSearchOptionsPanel() {//KeywordSearchOptionsPanelController controller) {
         //this.controller = controller;
@@ -32,12 +33,12 @@ final class KeywordSearchOptionsPanel extends javax.swing.JPanel {
     
     private void customizeComponents() {
         setName("Advanced Keyword Search Configuration");
-        panel1 = new KeywordSearchConfigurationPanel1();
-        panel3 = new KeywordSearchConfigurationPanel3();
-        panel2 = new KeywordSearchConfigurationPanel2();
-        tabbedPane.insertTab("Lists", null, panel1, "List configuration", 0);
-        tabbedPane.insertTab("Languages", null, panel3, "Languages configuration", 1);
-        tabbedPane.insertTab("General", null, panel2, "General configuration", 2);
+        listsPanel = new KeywordSearchConfigurationPanel1();
+        languagesPanel = new KeywordSearchConfigurationPanel3();
+        generalPanel = new KeywordSearchConfigurationPanel2();
+        tabbedPane.insertTab("Lists", null, listsPanel, "List configuration", 0);
+        tabbedPane.insertTab("Languages", null, languagesPanel, "Languages configuration", 1);
+        tabbedPane.insertTab("General", null, generalPanel, "General configuration", 2);
         
     }
 
@@ -63,17 +64,19 @@ final class KeywordSearchOptionsPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    void load() {
-        logger.log(Level.WARNING, "----->KEYWORD LOAD<-----");
+    public void load() {
         // Deselect all table rows
-        panel1.listsManagementPanel.reload();
+        listsPanel.load();
+        languagesPanel.load();
+        generalPanel.load();
         // Reload the XML to avoid 'ghost' vars
         KeywordSearchListsXML.getCurrent().reload();
     }
 
-    void store() {
-        logger.log(Level.WARNING, "----->KEYWORD STORE<-----");
-        KeywordSearchListsXML.getCurrent().save();
+    public void store() {
+        listsPanel.store();
+        languagesPanel.store();
+        generalPanel.store();
     }
 
     boolean valid() {

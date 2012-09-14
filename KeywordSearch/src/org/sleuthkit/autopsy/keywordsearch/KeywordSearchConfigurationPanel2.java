@@ -25,13 +25,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  *
  * General, not per list, keyword search configuration and status display widget
  */
-public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
+public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel implements OptionsPanel {
 
     //private static KeywordSearchConfigurationPanel2 instance = null;
     private final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel2.class.getName());
@@ -50,13 +51,6 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
         }
         return instance;
     }*/
-
-    @Override
-    public void paint(Graphics g) {
-        super.paint(g);
-
-        activateWidgets();
-    }
 
     private void activateWidgets() {
         final KeywordSearchIngestModule service = KeywordSearchIngestModule.getDefault();
@@ -162,7 +156,8 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
 private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipNSRLCheckBoxActionPerformed
-    KeywordSearchIngestModule.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
+    //KeywordSearchIngestModule.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
+    // Do nothing
 }//GEN-LAST:event_skipNSRLCheckBoxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel chunksLabel;
@@ -177,6 +172,16 @@ private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//
     private javax.swing.JCheckBox skipNSRLCheckBox;
     // End of variables declaration//GEN-END:variables
 
+    @Override
+    public void store() {
+        KeywordSearchIngestModule.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
+    }
+    
+    @Override
+    public void load() {
+        activateWidgets();
+    }
+    
     private void customizeComponents() {
         this.skipNSRLCheckBox.setSelected(KeywordSearchIngestModule.getDefault().getSkipKnown());
 
