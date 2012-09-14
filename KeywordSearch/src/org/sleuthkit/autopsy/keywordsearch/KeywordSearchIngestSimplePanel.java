@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;

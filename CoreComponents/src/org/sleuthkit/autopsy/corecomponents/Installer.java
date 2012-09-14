@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Color;
 import java.awt.Insets;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;

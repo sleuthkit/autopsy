@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.coreutils;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 
@@ -30,9 +30,7 @@ import org.openide.modules.Places;
  *
  * Platform utililities
  */
-public class PlatformUtil {
-    private static final Logger logger = Logger.getLogger(PlatformUtil.class.getName());
-    
+public class PlatformUtil {    
     private static String javaPath = null;
     
     /**
@@ -50,7 +48,7 @@ public class PlatformUtil {
         File jrePath = new File(rootPath.getAbsolutePath() + File.separator + "jre6");
  
         if (jrePath != null && jrePath.exists() && jrePath.isDirectory()) {
-            logger.log(Level.INFO, "Embedded jre6 directory found in: " + jrePath.getAbsolutePath());
+            System.out.println("Embedded jre6 directory found in: " + jrePath.getAbsolutePath());
             javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java";
         }
         else {
@@ -59,7 +57,7 @@ public class PlatformUtil {
             
         }
         
-        logger.log(Level.INFO, "Using java binary path: " + javaPath);
+        System.out.println("Using java binary path: " + javaPath);
         
         
         return javaPath;

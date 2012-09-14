@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Decoding utilities.

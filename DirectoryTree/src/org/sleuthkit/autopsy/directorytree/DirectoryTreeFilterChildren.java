@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;

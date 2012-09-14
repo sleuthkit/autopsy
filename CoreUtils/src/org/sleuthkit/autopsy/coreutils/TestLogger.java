@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.coreutils;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.logging.Formatter;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.logging.Level;
 
 /*

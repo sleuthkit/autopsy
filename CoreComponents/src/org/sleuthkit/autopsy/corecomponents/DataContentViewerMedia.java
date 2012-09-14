@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
