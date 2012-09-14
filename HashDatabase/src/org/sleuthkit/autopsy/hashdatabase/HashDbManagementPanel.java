@@ -17,15 +17,15 @@ import javax.swing.table.AbstractTableModel;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.datamodel.TskException;
 
-final class HashDatabasePanel extends javax.swing.JPanel implements OptionsPanel {
+final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsPanel {
 
     //private final HashDatabaseOptionsPanelController controller;
     private HashSetTableModel hashSetTableModel;
-    private static final Logger logger = Logger.getLogger(HashDatabasePanel.class.getName());
+    private static final Logger logger = Logger.getLogger(HashDbManagementPanel.class.getName());
     private static boolean ingestRunning = false;
-    //static HashDatabasePanel instance;
+    //static HashDbManagementPanel instance;
 
-    HashDatabasePanel() {//HashDatabaseOptionsPanelController controller) {
+    HashDbManagementPanel() {//HashDatabaseOptionsPanelController controller) {
         //this.controller = controller;
         this.hashSetTableModel = new HashSetTableModel();
         initComponents();
@@ -33,20 +33,20 @@ final class HashDatabasePanel extends javax.swing.JPanel implements OptionsPanel
         // TODO listen to changes in form fields and call controller.changed()
     }
     
-    /*public static HashDatabasePanel getDefault() {
+    /*public static HashDbManagementPanel getDefault() {
         System.out.println("----->Hash getDefault()");
         if(instance==null) {
             System.out.println("----->Hash instance==null");
-            instance = new HashDatabasePanel();
+            instance = new HashDbManagementPanel();
         }
         System.out.println("----->Hash instance: " + instance);
         //JDialog display = new JDialog(new JFrame());
         //display.setResizable(true);
         //display.setTitle("Test stuff");
-        //display.add(new HashDatabasePanel(), 0);
+        //display.add(new HashDbManagementPanel(), 0);
         //display.pack();
         //display.setVisible(true);
-        return new HashDatabasePanel();
+        return new HashDbManagementPanel();
     }*/
     
     private void customizeComponents() {
@@ -155,19 +155,19 @@ final class HashDatabasePanel extends javax.swing.JPanel implements OptionsPanel
         jSeparator1 = new javax.swing.JSeparator();
         optionsSeparator = new javax.swing.JSeparator();
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.jLabel2.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.jLabel4.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel4, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.jLabel4.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.jLabel6.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel6, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.jLabel6.text")); // NOI18N
 
         jButton3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(jButton3, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.jButton3.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jButton3, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.jButton3.text")); // NOI18N
 
         setMinimumSize(new java.awt.Dimension(385, 500));
 
         ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/warning16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(ingestWarningLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.ingestWarningLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ingestWarningLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.ingestWarningLabel.text")); // NOI18N
 
         hashSetTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -185,7 +185,7 @@ final class HashDatabasePanel extends javax.swing.JPanel implements OptionsPanel
         jScrollPane1.setViewportView(hashSetTable);
 
         deleteButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/delete16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(deleteButton, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.deleteButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(deleteButton, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.deleteButton.text")); // NOI18N
         deleteButton.setMaximumSize(new java.awt.Dimension(140, 25));
         deleteButton.setMinimumSize(new java.awt.Dimension(140, 25));
         deleteButton.setPreferredSize(new java.awt.Dimension(140, 25));
@@ -196,7 +196,7 @@ final class HashDatabasePanel extends javax.swing.JPanel implements OptionsPanel
         });
 
         importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/import16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(importButton, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.importButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(importButton, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.importButton.text")); // NOI18N
         importButton.setMaximumSize(new java.awt.Dimension(140, 25));
         importButton.setMinimumSize(new java.awt.Dimension(140, 25));
         importButton.setPreferredSize(new java.awt.Dimension(140, 25));
@@ -206,25 +206,25 @@ final class HashDatabasePanel extends javax.swing.JPanel implements OptionsPanel
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.jLabel1.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.nameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.nameLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(hashDbNameLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.hashDbNameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(hashDbNameLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.hashDbNameLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(hashDbLocationLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.hashDbLocationLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(hashDbLocationLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.hashDbLocationLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(locationLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.locationLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(locationLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.locationLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(typeLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.typeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(typeLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.typeLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(hashDbTypeLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.hashDbTypeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(hashDbTypeLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.hashDbTypeLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(hashDbIndexStatusLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.hashDbIndexStatusLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(hashDbIndexStatusLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.hashDbIndexStatusLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(indexLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.indexLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(indexLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.indexLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(indexButton, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.indexButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(indexButton, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.indexButton.text")); // NOI18N
         indexButton.setEnabled(false);
         indexButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -232,23 +232,23 @@ final class HashDatabasePanel extends javax.swing.JPanel implements OptionsPanel
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(useForIngestCheckbox, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.useForIngestCheckbox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(useForIngestCheckbox, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.useForIngestCheckbox.text")); // NOI18N
         useForIngestCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 useForIngestCheckboxActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(showInboxMessagesCheckBox, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.showInboxMessagesCheckBox.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(showInboxMessagesCheckBox, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.showInboxMessagesCheckBox.text")); // NOI18N
         showInboxMessagesCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 showInboxMessagesCheckBoxActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.jLabel3.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.jLabel3.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(optionsLabel, org.openide.util.NbBundle.getMessage(HashDatabasePanel.class, "HashDatabasePanel.optionsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(optionsLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.optionsLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

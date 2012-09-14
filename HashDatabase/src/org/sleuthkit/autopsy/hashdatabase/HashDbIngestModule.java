@@ -66,7 +66,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     static long calctime = 0;
     static long lookuptime = 0;
     private Map<Integer, HashDb> knownBadSets = new HashMap<Integer, HashDb>();
-    private HashDatabasePanel panel;
+    private HashDbManagementPanel panel;
     
 
     private HashDbIngestModule() {
@@ -235,9 +235,9 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
         getPanel().store();
     }
 
-    private HashDatabasePanel getPanel() {
+    private HashDbManagementPanel getPanel() {
         if (panel == null) {
-            panel = new HashDatabasePanel();
+            panel = new HashDbManagementPanel();
         }
         return panel;
     }

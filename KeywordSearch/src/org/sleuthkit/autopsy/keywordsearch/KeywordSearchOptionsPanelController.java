@@ -19,7 +19,7 @@ keywordsCategory = "KeywordSearchOptions")
 @org.openide.util.NbBundle.Messages({"OptionsCategory_Name_KeywordSearchOptions=Keyword Search", "OptionsCategory_Keywords_KeywordSearchOptions=Keyword Search"})
 public final class KeywordSearchOptionsPanelController extends OptionsPanelController {
 
-    private KeywordSearchOptionsPanel panel;
+    private KeywordSearchConfigurationPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
 
@@ -62,9 +62,9 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
         pcs.removePropertyChangeListener(l);
     }
 
-    private KeywordSearchOptionsPanel getPanel() {
+    private KeywordSearchConfigurationPanel getPanel() {
         if (panel == null) {
-            panel = new KeywordSearchOptionsPanel();//this);
+            panel = new KeywordSearchConfigurationPanel();//this);
         }
         return panel;
     }
