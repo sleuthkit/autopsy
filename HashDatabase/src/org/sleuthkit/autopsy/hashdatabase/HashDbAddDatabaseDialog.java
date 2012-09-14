@@ -131,6 +131,11 @@ class HashDbAddDatabaseDialog extends javax.swing.JDialog {
 
         useForIngestCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(useForIngestCheckbox, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.useForIngestCheckbox.text")); // NOI18N
+        useForIngestCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                useForIngestCheckboxActionPerformed(evt);
+            }
+        });
 
         sendInboxMessagesCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(sendInboxMessagesCheckbox, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.sendInboxMessagesCheckbox.text")); // NOI18N
@@ -171,7 +176,7 @@ class HashDbAddDatabaseDialog extends javax.swing.JDialog {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(useForIngestCheckbox)
                             .addComponent(sendInboxMessagesCheckbox))
-                        .addGap(0, 183, Short.MAX_VALUE))))
+                        .addGap(0, 135, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -292,6 +297,10 @@ class HashDbAddDatabaseDialog extends javax.swing.JDialog {
         }
         this.dispose();
     }//GEN-LAST:event_okButtonActionPerformed
+
+    private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useForIngestCheckboxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_useForIngestCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
