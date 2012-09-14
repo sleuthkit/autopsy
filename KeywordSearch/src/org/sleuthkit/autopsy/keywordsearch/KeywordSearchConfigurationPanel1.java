@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2012 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,11 +17,7 @@
  * limitations under the License.
  */
 
-/*
- * KeywordSearchConfigurationPanel1.java
- *
- * Created on Feb 28, 2012, 4:12:47 PM
- */
+
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.logging.Logger;
@@ -29,8 +25,7 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- *
- * @author dfickling
+ * List configuration panel
  */
 public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements OptionsPanel {
 
