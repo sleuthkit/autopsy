@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  */
 public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
 
-    private static KeywordSearchConfigurationPanel3 instance = null;
+    //private static KeywordSearchConfigurationPanel3 instance = null;
     private final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel3.class.getName());
     private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<String, StringExtract.StringExtractUnicodeTable.SCRIPT>();
     private ActionListener updateLanguagesAction;
@@ -31,17 +31,17 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
     /**
      * Creates new form KeywordSearchConfigurationPanel3
      */
-    public KeywordSearchConfigurationPanel3() {
+    KeywordSearchConfigurationPanel3() {
         initComponents();
         customizeComponents();
     }
 
-    public static KeywordSearchConfigurationPanel3 getDefault() {
+    /*public static KeywordSearchConfigurationPanel3 getDefault() {
         if (instance == null) {
             instance = new KeywordSearchConfigurationPanel3();
         }
         return instance;
-    }
+    }*/
 
     @Override
     public void paint(Graphics g) {

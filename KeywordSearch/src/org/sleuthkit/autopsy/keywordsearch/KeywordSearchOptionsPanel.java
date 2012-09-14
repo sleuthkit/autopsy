@@ -10,8 +10,11 @@ import java.util.logging.Logger;
 final class KeywordSearchOptionsPanel extends javax.swing.JPanel {
 
     //private final KeywordSearchOptionsPanelController controller;
-    private static KeywordSearchOptionsPanel instance = null;
+    //private static KeywordSearchOptionsPanel instance = null;
     private static final Logger logger = Logger.getLogger(KeywordSearchOptionsPanel.class.getName());
+    private KeywordSearchConfigurationPanel1 panel1;
+    private KeywordSearchConfigurationPanel3 panel3;
+    private KeywordSearchConfigurationPanel2 panel2;
 
     KeywordSearchOptionsPanel() {//KeywordSearchOptionsPanelController controller) {
         //this.controller = controller;
@@ -20,18 +23,21 @@ final class KeywordSearchOptionsPanel extends javax.swing.JPanel {
         // TODO listen to changes in form fields and call controller.changed()
     }
     
-    public static KeywordSearchOptionsPanel getDefault() {
+    /*public static KeywordSearchOptionsPanel getDefault() {
         if(instance == null) {
             instance = new KeywordSearchOptionsPanel();
         }
         return instance;
-    }
+    }*/
     
     private void customizeComponents() {
         setName("Advanced Keyword Search Configuration");
-        tabbedPane.insertTab("Lists", null, KeywordSearchConfigurationPanel1.getDefault(), "List configuration", 0);
-        tabbedPane.insertTab("Languages", null, KeywordSearchConfigurationPanel3.getDefault(), "Languages configuration", 1);
-        tabbedPane.insertTab("General", null, KeywordSearchConfigurationPanel2.getDefault(), "General configuration", 2);
+        panel1 = new KeywordSearchConfigurationPanel1();
+        panel3 = new KeywordSearchConfigurationPanel3();
+        panel2 = new KeywordSearchConfigurationPanel2();
+        tabbedPane.insertTab("Lists", null, panel1, "List configuration", 0);
+        tabbedPane.insertTab("Languages", null, panel3, "Languages configuration", 1);
+        tabbedPane.insertTab("General", null, panel2, "General configuration", 2);
         
     }
 
@@ -59,24 +65,15 @@ final class KeywordSearchOptionsPanel extends javax.swing.JPanel {
 
     void load() {
         logger.log(Level.WARNING, "----->KEYWORD LOAD<-----");
-        // TODO read settings and initialize GUI
-        // Example:        
-        // someCheckBox.setSelected(Preferences.userNodeForPackage(KeywordSearchOptionsPanel.class).getBoolean("someFlag", false));
-        // or for org.openide.util with API spec. version >= 7.4:
-        // someCheckBox.setSelected(NbPreferences.forModule(KeywordSearchOptionsPanel.class).getBoolean("someFlag", false));
-        // or:
-        // someTextField.setText(SomeSystemOption.getDefault().getSomeStringProperty());
+        // Deselect all table rows
+        panel1.listsManagementPanel.reload();
+        // Reload the XML to avoid 'ghost' vars
+        KeywordSearchListsXML.getCurrent().reload();
     }
 
     void store() {
         logger.log(Level.WARNING, "----->KEYWORD STORE<-----");
-        // TODO store modified settings
-        // Example:
-        // Preferences.userNodeForPackage(KeywordSearchOptionsPanel.class).putBoolean("someFlag", someCheckBox.isSelected());
-        // or for org.openide.util with API spec. version >= 7.4:
-        // NbPreferences.forModule(KeywordSearchOptionsPanel.class).putBoolean("someFlag", someCheckBox.isSelected());
-        // or:
-        // SomeSystemOption.getDefault().setSomeStringProperty(someTextField.getText());
+        KeywordSearchListsXML.getCurrent().save();
     }
 
     boolean valid() {

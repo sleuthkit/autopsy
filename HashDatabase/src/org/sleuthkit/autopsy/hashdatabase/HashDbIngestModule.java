@@ -222,6 +222,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
 
     @Override
     public javax.swing.JPanel getSimpleConfiguration() {
+        HashDbXML.getCurrent().reload();
         return new HashDbSimplePanel();
     }
 
@@ -246,6 +247,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     
     @Override
     public void saveSimpleConfiguration() {
+       HashDbXML.getCurrent().save();
     }
     
     private void processBadFile(AbstractFile abstractFile, String md5Hash, String hashSetName, boolean showInboxMessage) {

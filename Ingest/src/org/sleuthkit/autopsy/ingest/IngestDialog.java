@@ -23,6 +23,8 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.logging.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -70,6 +72,7 @@ public class IngestDialog extends JDialog {
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
 
+        panel.reloadIfSelected();
         add(panel, BorderLayout.PAGE_START);
         JButton startButton = new JButton("Start");
         JButton closeButton = new JButton("Close");
@@ -88,6 +91,14 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+                panel.save();
+                close();
+            }
+        });
+        this.addWindowListener(new WindowAdapter() {
+
+            @Override
+            public void windowClosing(WindowEvent e) {
                 panel.save();
                 close();
             }
@@ -114,6 +125,7 @@ public class IngestDialog extends JDialog {
      * Closes the Ingest dialog
      */
     public void close() {
+        System.out.println("-----> Close?");
         setVisible(false);
         dispose();
     }

@@ -33,23 +33,23 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  */
 public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel {
 
-    private static KeywordSearchConfigurationPanel2 instance = null;
+    //private static KeywordSearchConfigurationPanel2 instance = null;
     private final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel2.class.getName());
 
     /**
      * Creates new form KeywordSearchConfigurationPanel2
      */
-    public KeywordSearchConfigurationPanel2() {
+    KeywordSearchConfigurationPanel2() {
         initComponents();
         customizeComponents();
     }
 
-    public static KeywordSearchConfigurationPanel2 getDefault() {
+    /*public static KeywordSearchConfigurationPanel2 getDefault() {
         if (instance == null) {
             instance = new KeywordSearchConfigurationPanel2();
         }
         return instance;
-    }
+    }*/
 
     @Override
     public void paint(Graphics g) {
