@@ -104,7 +104,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private AbstractFileStringExtract stringExtractor;
     private final List<SCRIPT> stringExtractScripts = new ArrayList<SCRIPT>();
     private final GetIsFileKnownV getIsFileKnown = new GetIsFileKnownV();
-    private KeywordSearchOptionsPanel panel;
+    private KeywordSearchConfigurationPanel panel;
 
     private enum IngestStatus {
 
@@ -385,9 +385,9 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         return getPanel();
     }
 
-    private KeywordSearchOptionsPanel getPanel() {
+    private KeywordSearchConfigurationPanel getPanel() {
         if (panel == null) {
-            panel = new KeywordSearchOptionsPanel();
+            panel = new KeywordSearchConfigurationPanel();
         }
         return panel;
     }

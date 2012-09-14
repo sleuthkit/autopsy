@@ -8,25 +8,25 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
-final class KeywordSearchOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
+final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implements OptionsPanel {
 
     //private final KeywordSearchOptionsPanelController controller;
-    //private static KeywordSearchOptionsPanel instance = null;
-    private static final Logger logger = Logger.getLogger(KeywordSearchOptionsPanel.class.getName());
+    //private static KeywordSearchConfigurationPanel instance = null;
+    private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel.class.getName());
     private KeywordSearchConfigurationPanel1 listsPanel;
     private KeywordSearchConfigurationPanel3 languagesPanel;
     private KeywordSearchConfigurationPanel2 generalPanel;
 
-    KeywordSearchOptionsPanel() {//KeywordSearchOptionsPanelController controller) {
+    KeywordSearchConfigurationPanel() {//KeywordSearchOptionsPanelController controller) {
         //this.controller = controller;
         initComponents();
         customizeComponents();
         // TODO listen to changes in form fields and call controller.changed()
     }
     
-    /*public static KeywordSearchOptionsPanel getDefault() {
+    /*public static KeywordSearchConfigurationPanel getDefault() {
         if(instance == null) {
-            instance = new KeywordSearchOptionsPanel();
+            instance = new KeywordSearchConfigurationPanel();
         }
         return instance;
     }*/
