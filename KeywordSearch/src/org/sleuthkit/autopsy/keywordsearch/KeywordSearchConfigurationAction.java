@@ -28,8 +28,7 @@ import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 
 /**
- *
- * @author dfickling
+ * System action to open the KeywordSearch Options panel.
  */
 class KeywordSearchConfigurationAction extends CallableSystemAction{
     

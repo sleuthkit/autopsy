@@ -29,8 +29,7 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- *
- * @author dfickling
+ * Panel containing all other Keyword search Options panels.
  */
 public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel implements OptionsPanel {
 
@@ -38,7 +37,6 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel impleme
     KeywordSearchEditListPanel editListPanel;
     private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel1.class.getName());
     private static final String KEYWORD_CONFIG_NAME = org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig");
-    //private static KeywordSearchConfigurationPanel1 instance;
     
     /** Creates new form KeywordSearchConfigurationPanel1 */
     KeywordSearchConfigurationPanel1() {
@@ -47,12 +45,6 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel impleme
         customizeComponents();
         setName(KEYWORD_CONFIG_NAME);
     }
-    
-    /*public static KeywordSearchConfigurationPanel1 getDefault() {
-        if(instance == null)
-            instance = new KeywordSearchConfigurationPanel1();
-        return instance;
-    }*/
 
     private void customizeComponents() {
         listsManagementPanel = new KeywordSearchListsManagementPanel();

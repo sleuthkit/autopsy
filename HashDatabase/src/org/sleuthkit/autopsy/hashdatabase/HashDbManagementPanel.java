@@ -1,6 +1,20 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
@@ -20,35 +34,15 @@ import org.sleuthkit.datamodel.TskException;
 
 final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    //private final HashDatabaseOptionsPanelController controller;
     private HashSetTableModel hashSetTableModel;
     private static final Logger logger = Logger.getLogger(HashDbManagementPanel.class.getName());
     private static boolean ingestRunning = false;
-    //static HashDbManagementPanel instance;
 
-    HashDbManagementPanel() {//HashDatabaseOptionsPanelController controller) {
-        //this.controller = controller;
+    HashDbManagementPanel() {
         this.hashSetTableModel = new HashSetTableModel();
         initComponents();
         customizeComponents();
-        // TODO listen to changes in form fields and call controller.changed()
     }
-    
-    /*public static HashDbManagementPanel getDefault() {
-        System.out.println("----->Hash getDefault()");
-        if(instance==null) {
-            System.out.println("----->Hash instance==null");
-            instance = new HashDbManagementPanel();
-        }
-        System.out.println("----->Hash instance: " + instance);
-        //JDialog display = new JDialog(new JFrame());
-        //display.setResizable(true);
-        //display.setTitle("Test stuff");
-        //display.add(new HashDbManagementPanel(), 0);
-        //display.pack();
-        //display.setVisible(true);
-        return new HashDbManagementPanel();
-    }*/
     
     private void customizeComponents() {
         this.ingestWarningLabel.setVisible(false);
@@ -447,12 +441,9 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
 
     @Override
     public void load() {
-        // Deselect all rows so incorrect data isn't shown
-        hashSetTable.clearSelection();
-        // Reload the XML so there are no 'ghost' instances of vars
-        HashDbXML.getCurrent().reload();
-        // Update the GUI
-        initUI(null);
+        hashSetTable.clearSelection(); // Deselect all rows
+        HashDbXML.getCurrent().reload(); // Reload XML
+        initUI(null); // Update the UI
     }
 
     @Override
