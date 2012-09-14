@@ -37,25 +37,25 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel {
     KeywordSearchEditListPanel editListPanel;
     private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel1.class.getName());
     private static final String KEYWORD_CONFIG_NAME = org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "ListBundleConfig");
-    private static KeywordSearchConfigurationPanel1 instance;
+    //private static KeywordSearchConfigurationPanel1 instance;
     
     /** Creates new form KeywordSearchConfigurationPanel1 */
-    private KeywordSearchConfigurationPanel1() {
+    KeywordSearchConfigurationPanel1() {
         
         initComponents();
         customizeComponents();
         setName(KEYWORD_CONFIG_NAME);
     }
     
-    public static KeywordSearchConfigurationPanel1 getDefault() {
+    /*public static KeywordSearchConfigurationPanel1 getDefault() {
         if(instance == null)
             instance = new KeywordSearchConfigurationPanel1();
         return instance;
-    }
+    }*/
 
     private void customizeComponents() {
-        listsManagementPanel = KeywordSearchListsManagementPanel.getDefault();
-        editListPanel = KeywordSearchEditListPanel.getDefault();
+        listsManagementPanel = new KeywordSearchListsManagementPanel();
+        editListPanel = new KeywordSearchEditListPanel();
 
         listsManagementPanel.addListSelectionListener(editListPanel);
         

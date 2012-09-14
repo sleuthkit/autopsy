@@ -249,15 +249,15 @@ public abstract class KeywordSearchListsAbstract {
         final Date now = new Date();
         if (curList == null) {
             theLists.put(name, new KeywordSearchList(name, now, now, useForIngest, ingestMessages, newList, locked));
-            if (!locked) {
-                save();
-            }
+//            if (!locked) {
+//                save();
+//            }
             changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
         } else {
             theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, ingestMessages, newList, locked));
-            if (!locked) {
-                save();
-            }
+//            if (!locked) {
+//                save();
+//            }
             replaced = true;
             changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
         }
@@ -295,8 +295,8 @@ public abstract class KeywordSearchListsAbstract {
             }
             theLists.put(list.getName(), list);
         }
-        boolean saved = save();
-        if (saved) {
+        //boolean saved = save();
+        if (true) {
             for (KeywordSearchList list : newLists) {
                 changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
             }
@@ -304,7 +304,7 @@ public abstract class KeywordSearchListsAbstract {
                 changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
             }
         }
-        return saved;
+        return true;
     }
 
     /**
@@ -317,10 +317,10 @@ public abstract class KeywordSearchListsAbstract {
         KeywordSearchList delList = getList(name);
         if (delList != null && !delList.isLocked()) {
             theLists.remove(name);
-            deleted = save();
+            //deleted = save();
         }
         changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), null, name);
-        return deleted;
+        return true;
 
     }
 

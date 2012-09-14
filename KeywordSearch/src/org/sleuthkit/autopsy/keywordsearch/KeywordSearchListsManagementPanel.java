@@ -46,21 +46,21 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
     private Logger logger = Logger.getLogger(KeywordSearchListsManagementPanel.class.getName());
     private KeywordListTableModel tableModel;
     
-    private static KeywordSearchListsManagementPanel instance = null;
+    //private static KeywordSearchListsManagementPanel instance = null;
     
     /** Creates new form KeywordSearchListImportExportForm */
-    private KeywordSearchListsManagementPanel() {
+    KeywordSearchListsManagementPanel() {
         tableModel = new KeywordListTableModel();
         initComponents();
         customizeComponents();
     }
     
-    public static synchronized KeywordSearchListsManagementPanel getDefault() {
+    /*public static synchronized KeywordSearchListsManagementPanel getDefault() {
         if (instance == null) {
             instance = new KeywordSearchListsManagementPanel();
         }
         return instance;
-    }
+    }*/
     
     private void customizeComponents() {
 
@@ -82,21 +82,27 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel {
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_ADDED.toString())) {
                     tableModel.resync();
-                    for(int i = 0; i<listsTable.getRowCount(); i++){
+                    for(int i = 0; i<listsTable.getRowCount(); i++) {
                             String name = (String) listsTable.getValueAt(i, 0);
-                            if(((String) evt.getNewValue()).equals(name))
+                            if(((String) evt.getNewValue()).equals(name)) {
                                 listsTable.getSelectionModel().setSelectionInterval(i, i);
+                            }
                     }
                 } else if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_DELETED.toString())) {
                     tableModel.resync();
-                    if(listsTable.getRowCount() > 0)
+                    if(listsTable.getRowCount() > 0) {
                         listsTable.getSelectionModel().setSelectionInterval(0, 0);
-                    else
+                    } else {
                         listsTable.getSelectionModel().clearSelection();
+                    }
                 }
             }
         });
 
+    }
+    
+    void reload() {
+        listsTable.clearSelection();
     }
 
     /** This method is called from within the constructor to

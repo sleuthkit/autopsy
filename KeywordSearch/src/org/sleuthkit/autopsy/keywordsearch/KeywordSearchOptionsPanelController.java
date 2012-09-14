@@ -34,7 +34,8 @@ public final class KeywordSearchOptionsPanelController extends OptionsPanelContr
     }
 
     public void cancel() {
-        // need not do anything special, if no changes have been persisted yet
+        // Reload XML on cancel
+        KeywordSearchListsXML.getCurrent().reload();
     }
 
     public boolean isValid() {

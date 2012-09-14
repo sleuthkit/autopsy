@@ -23,6 +23,9 @@ import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -246,10 +249,10 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 336, Short.MAX_VALUE)
-            .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 336, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 326, Short.MAX_VALUE)
+            .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(245, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(advancedButton)
                 .addContainerGap())
         );
@@ -347,7 +350,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                     .addComponent(timePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(processUnallocPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 328, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -377,6 +380,15 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 reloadSimpleConfiguration();
             }
         });
+        dialog.addWindowListener(new WindowAdapter() {
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                dialog.close();
+                reloadSimpleConfiguration();
+            }
+        });
+        save(); // save the simple panel
         dialog.display(currentModule.getAdvancedConfiguration());
     }//GEN-LAST:event_advancedButtonActionPerformed
 
@@ -483,6 +495,12 @@ private void timeRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//
         }
         simplePanel.revalidate();
         simplePanel.repaint();
+    }
+    
+    public void reloadIfSelected() {
+        if(this.modulesTable.getSelectedRow() != -1) {
+            reloadSimpleConfiguration();
+        }
     }
 
     /**

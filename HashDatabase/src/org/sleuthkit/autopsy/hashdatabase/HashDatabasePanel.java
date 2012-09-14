@@ -442,29 +442,14 @@ final class HashDatabasePanel extends javax.swing.JPanel {
         // Deselect all rows so incorrect data isn't shown
         hashSetTable.clearSelection();
         // Reload the XML so there are no 'ghost' instances of vars
-        HashDbXML loader = HashDbXML.getCurrent();
-        loader.reload();
+        HashDbXML.getCurrent().reload();
         // Update the GUI
         initUI(null);
-        // TODO read settings and initialize GUI
-        // Example:        
-        // someCheckBox.setSelected(Preferences.userNodeForPackage(HashDatabasePanel.class).getBoolean("someFlag", false));
-        // or for org.openide.util with API spec. version >= 7.4:
-        // someCheckBox.setSelected(NbPreferences.forModule(HashDatabasePanel.class).getBoolean("someFlag", false));
-        // or:
-        // someTextField.setText(SomeSystemOption.getDefault().getSomeStringProperty());
     }
 
     void store() {
         logger.log(Level.WARNING, "----->HASH STORE<-----");
         HashDbXML.getCurrent().save();
-        // TODO store modified settings
-        // Example:
-        // Preferences.userNodeForPackage(HashDatabasePanel.class).putBoolean("someFlag", someCheckBox.isSelected());
-        // or for org.openide.util with API spec. version >= 7.4:
-        // NbPreferences.forModule(HashDatabasePanel.class).putBoolean("someFlag", someCheckBox.isSelected());
-        // or:
-        // SomeSystemOption.getDefault().setSomeStringProperty(someTextField.getText());
     }
 
     boolean valid() {
