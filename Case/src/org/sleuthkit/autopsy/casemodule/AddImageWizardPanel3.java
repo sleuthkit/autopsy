@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;

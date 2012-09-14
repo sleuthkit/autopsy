@@ -22,7 +22,7 @@ import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;

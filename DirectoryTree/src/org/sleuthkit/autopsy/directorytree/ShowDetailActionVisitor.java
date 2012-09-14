@@ -43,7 +43,6 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Volume;
-import sun.rmi.runtime.Log;
 
 /**
  * 

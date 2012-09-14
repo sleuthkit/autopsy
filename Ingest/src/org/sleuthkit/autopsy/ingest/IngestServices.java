@@ -20,7 +20,7 @@
 
 package org.sleuthkit.autopsy.ingest;
 
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 
 /**

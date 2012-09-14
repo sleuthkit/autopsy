@@ -20,7 +20,7 @@
 
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 

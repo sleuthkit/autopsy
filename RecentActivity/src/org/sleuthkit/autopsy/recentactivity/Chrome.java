@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.*;
 import java.io.File;
 import java.io.FileReader;

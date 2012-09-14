@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskException;

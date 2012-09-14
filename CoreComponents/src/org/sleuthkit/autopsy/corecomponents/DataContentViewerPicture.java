@@ -24,7 +24,7 @@ import java.awt.Image;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import org.openide.nodes.Node;
