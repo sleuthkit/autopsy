@@ -152,7 +152,7 @@
                   <Component id="useForIngestCheckbox" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="ingestMessagesCheckbox" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace pref="33" max="32767" attributes="0"/>
+                  <EmptySpace pref="52" max="32767" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="exportButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="saveListButton" alignment="3" min="-2" max="-2" attributes="0"/>

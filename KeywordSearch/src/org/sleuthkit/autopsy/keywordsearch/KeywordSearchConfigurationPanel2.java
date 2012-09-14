@@ -29,12 +29,10 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- *
  * General, not per list, keyword search configuration and status display widget
  */
 public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel implements OptionsPanel {
 
-    //private static KeywordSearchConfigurationPanel2 instance = null;
     private final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel2.class.getName());
 
     /**
@@ -44,13 +42,6 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
         initComponents();
         customizeComponents();
     }
-
-    /*public static KeywordSearchConfigurationPanel2 getDefault() {
-        if (instance == null) {
-            instance = new KeywordSearchConfigurationPanel2();
-        }
-        return instance;
-    }*/
 
     private void activateWidgets() {
         final KeywordSearchIngestModule service = KeywordSearchIngestModule.getDefault();

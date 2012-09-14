@@ -39,15 +39,12 @@ import javax.swing.table.AbstractTableModel;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
 /**
- *
- * @author dfickling
+ * A panel to manage all keyword lists created/imported in Autopsy.
  */
 class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private Logger logger = Logger.getLogger(KeywordSearchListsManagementPanel.class.getName());
     private KeywordListTableModel tableModel;
-    
-    //private static KeywordSearchListsManagementPanel instance = null;
     
     /** Creates new form KeywordSearchListImportExportForm */
     KeywordSearchListsManagementPanel() {
@@ -55,13 +52,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
         initComponents();
         customizeComponents();
     }
-    
-    /*public static synchronized KeywordSearchListsManagementPanel getDefault() {
-        if (instance == null) {
-            instance = new KeywordSearchListsManagementPanel();
-        }
-        return instance;
-    }*/
     
     private void customizeComponents() {
 

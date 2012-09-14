@@ -1,35 +1,37 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
 final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    //private final KeywordSearchOptionsPanelController controller;
-    //private static KeywordSearchConfigurationPanel instance = null;
     private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel.class.getName());
     private KeywordSearchConfigurationPanel1 listsPanel;
     private KeywordSearchConfigurationPanel3 languagesPanel;
     private KeywordSearchConfigurationPanel2 generalPanel;
 
-    KeywordSearchConfigurationPanel() {//KeywordSearchOptionsPanelController controller) {
-        //this.controller = controller;
+    KeywordSearchConfigurationPanel() {
         initComponents();
         customizeComponents();
-        // TODO listen to changes in form fields and call controller.changed()
     }
-    
-    /*public static KeywordSearchConfigurationPanel getDefault() {
-        if(instance == null) {
-            instance = new KeywordSearchConfigurationPanel();
-        }
-        return instance;
-    }*/
     
     private void customizeComponents() {
         setName("Advanced Keyword Search Configuration");
@@ -64,6 +66,10 @@ final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implement
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Load each of the tabs and reload the XML.
+     */
+    @Override
     public void load() {
         // Deselect all table rows
         listsPanel.load();
@@ -73,6 +79,10 @@ final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implement
         KeywordSearchListsXML.getCurrent().reload();
     }
 
+    /**
+     * Store each panel's settings.
+     */
+    @Override
     public void store() {
         listsPanel.store();
         languagesPanel.store();
