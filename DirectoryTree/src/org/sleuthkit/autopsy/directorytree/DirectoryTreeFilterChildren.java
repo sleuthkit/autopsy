@@ -28,9 +28,12 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
+import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.Volume;
 
 /**
  * This class wraps around nodes that are displayed in the directory tree and
@@ -82,6 +85,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
     /**
      * Don't show expansion button on leaves leaf: all children are (file) or
      * (directory named "." or "..")
+     *
      * @param node
      * @return whether node is a leaf
      */
@@ -99,6 +103,26 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         } catch (TskException ex) {
             Logger.getLogger(DirectoryTreeFilterChildren.class.getName())
                     .log(Level.WARNING, "Error getting directory children", ex);
+            return false;
+        }
+        return ret;
+    }
+
+    private static boolean isLeafVolume(VolumeNode node) {
+        Volume vol = node.getLookup().lookup(Volume.class);
+        boolean ret = true;
+
+        try {
+            for (Content c : vol.getChildren()) {
+                if (! (c instanceof LayoutFile) ){
+                    ret = false;
+                    break;
+                }
+            }
+
+        } catch (TskException ex) {
+            Logger.getLogger(DirectoryTreeFilterChildren.class.getName())
+                    .log(Level.WARNING, "Error getting volume children", ex);
             return false;
         }
         return ret;
@@ -138,6 +162,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         @Override
         public Boolean visit(DirectoryNode dn) {
             return isLeafDirectory(dn);
+        }
+
+        @Override
+        public Boolean visit(VolumeNode vn) {
+            return isLeafVolume(vn);
         }
     }
 

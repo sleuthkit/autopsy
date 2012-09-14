@@ -303,7 +303,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(rightPanelLayout.createSequentialGroup()
                         .addComponent(showInboxMessagesCheckBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 16, Short.MAX_VALUE)
                         .addComponent(deleteButton)))
                 .addContainerGap())
         );
@@ -353,6 +353,11 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
+        if (JOptionPane.showConfirmDialog(null, "This will remove the hash database entry globally (for all Cases).",
+                "Deleting a Hash Database Entry", 
+                JOptionPane.YES_NO_OPTION, 
+                JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
+
         int selected = getSelection();
         HashDbXML xmlHandle = HashDbXML.getCurrent();
         if (xmlHandle.getNSRLSet() != null) {
@@ -365,6 +370,7 @@ public class HashDbManagementPanel extends javax.swing.JPanel {
             HashDbXML.getCurrent().removeKnownBadSetAt(selected);
         }
         hashSetTableModel.resync();
+        }
     }//GEN-LAST:event_deleteButtonActionPerformed
 
     private void hashSetTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_hashSetTableKeyPressed

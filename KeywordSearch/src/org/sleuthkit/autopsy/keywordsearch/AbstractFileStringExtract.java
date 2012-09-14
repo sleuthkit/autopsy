@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -52,6 +54,7 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     
     private static final SCRIPT DEFAULT_SCRIPT = SCRIPT.LATIN_2;
     private final List<SCRIPT> extractScripts = new ArrayList<SCRIPT>();
+    private Map<String,String> extractOptions = new HashMap<String,String>();
 
     static {
         //prepend UTF-8 BOM to start of the buffer
@@ -90,15 +93,45 @@ class AbstractFileStringExtract implements AbstractFileExtract {
     }
 
     @Override
+    public Map<String, String> getOptions() {
+        return extractOptions;
+    }
+
+    @Override
+    public void setOptions(Map<String, String> options) {
+        this.extractOptions = options;
+    }
+    
+
+    @Override
     public boolean index(AbstractFile sourceFile) throws IngesterException {
         this.sourceFile = sourceFile;
         this.numChunks = 0; //unknown until indexing is done
         boolean success = false;
         
-        //construct stream that extracts text as we read it
-        //final InputStream stringStream = new AbstractFileStringStream(sourceFile, INDEX_CHARSET);
-        final InputStream stringStream = new AbstractFileStringIntStream(
-                sourceFile, extractScripts, INDEX_CHARSET);
+     
+        final boolean extractUTF8 = 
+                Boolean.parseBoolean(extractOptions.get(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()));
+        
+        final boolean extractUTF16 = 
+                Boolean.parseBoolean(extractOptions.get(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
+        
+        if (extractUTF8 == false && extractUTF16 == false) {
+            //nothing to do
+            return true;
+        }
+        
+        InputStream stringStream = null;
+        //check which extract stream to use
+        if (extractScripts.size() == 1 && extractScripts.get(0).equals(SCRIPT.LATIN_1) ) {
+            //optimal for english, english only
+            stringStream = new AbstractFileStringStream(sourceFile, INDEX_CHARSET);
+        }
+        else {
+            stringStream = new AbstractFileStringIntStream(
+                sourceFile, extractScripts, extractUTF8, extractUTF16, INDEX_CHARSET);
+        }
+        
 
         try {
             success = true;

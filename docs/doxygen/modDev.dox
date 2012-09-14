@@ -1,0 +1,28 @@
+/*! \page mod_dev_page Development Overview 
+
+<!-- @@@ Update -->
+
+\section mod_dev_setup Basic Setup
+
+what do they need to download and configure to develop modules?  Refer to BUILDING.txt as much as possible. Do they need to download source to develop modules or can they use a releae version?
+
+\section mod_dev_module How to Create a Module
+
+Steps to make a module (Netbeans menu options, adding in Autopsy as a platform, etc.
+
+\section mod_dev_services Getting Access to Services
+
+List the services and how to get access to them. Currently, I can think of Case, Loging, IngestManager.... The class description for each service class should have the details.
+
+\section mod_dev_properties Saving Settings and Properties
+
+If a module needs to have options and properties, how should they store them and get themsevles setup in the options viewer.
+
+\section mod_dev_events Registering for events
+
+What events hsould modules register for..  I'm not sure what goes in here with the new design.  
+- Case Updates?
+
+We also need to sync this up with \ref ingestmodule_events.
+
+*/

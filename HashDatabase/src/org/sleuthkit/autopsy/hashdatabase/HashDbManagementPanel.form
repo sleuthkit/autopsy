@@ -152,7 +152,7 @@
                           </Group>
                           <Group type="102" alignment="1" attributes="0">
                               <Component id="showInboxMessagesCheckBox" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="21" max="32767" attributes="0"/>
+                              <EmptySpace pref="16" max="32767" attributes="0"/>
                               <Component id="deleteButton" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
