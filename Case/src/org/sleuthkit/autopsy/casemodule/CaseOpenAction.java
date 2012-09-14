@@ -25,12 +25,11 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Collections;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * The action to open a existing case. This class is always enabled.
@@ -65,7 +64,7 @@ public final class CaseOpenAction implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Log.noteAction(this.getClass());
+        Logger.noteAction(this.getClass());
 
 
         int retval = fc.showOpenDialog((Component) e.getSource());

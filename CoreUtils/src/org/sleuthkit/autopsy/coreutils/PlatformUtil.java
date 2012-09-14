@@ -73,6 +73,10 @@ public class PlatformUtil {
         return Places.getUserDirectory();
     }
     
+    public static String getLogDirectory() {
+        return Places.getUserDirectory().getAbsolutePath() + "/var/log/";  
+    }
+    
     public static String getDefaultPlatformFileEncoding() {
         return System.getProperty("file.encoding");
     }

@@ -20,7 +20,6 @@
 
 package org.sleuthkit.autopsy.directorytree;
 
-import javax.swing.*;
 import java.awt.Toolkit;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -31,18 +30,20 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
-import org.sleuthkit.autopsy.coreutils.Log;
-import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.Volume;
+import sun.rmi.runtime.Log;
 
 /**
  * 
@@ -86,7 +87,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                Log.noteAction(ShowDetailActionVisitor.class);
+                Logger.noteAction(ShowDetailActionVisitor.class);
 
                 final JFrame frame = new JFrame(title);
                 final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
@@ -148,7 +149,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
             public void actionPerformed(ActionEvent e) {
                 Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
                 
-                Log.noteAction(ShowDetailActionVisitor.class);
+                Logger.noteAction(ShowDetailActionVisitor.class);
 
                 final JFrame frame = new JFrame(title);
                 final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
@@ -218,7 +219,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
 
                     popUpWindow.add(fsdPanel);
                 } catch (Exception ex) {
-                    Log.get(ShowDetailActionVisitor.class).log(Level.WARNING, "Error setting up File System Details panel.", ex);
+                    Logger.getLogger(ShowDetailActionVisitor.class.getName()).log(Level.WARNING, "Error setting up File System Details panel.", ex);
                 }
 
                 popUpWindow.pack();
@@ -237,7 +238,7 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                Log.noteAction(ShowDetailActionVisitor.class);
+                Logger.noteAction(ShowDetailActionVisitor.class);
 
                 final JFrame frame = new JFrame(title);
                 final JDialog popUpWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal

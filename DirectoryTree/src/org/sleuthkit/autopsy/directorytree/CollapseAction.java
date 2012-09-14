@@ -24,7 +24,7 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.BeanTreeView;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  *
@@ -38,7 +38,7 @@ class CollapseAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        Log.noteAction(this.getClass());
+        Logger.noteAction(this.getClass());
 
         ExplorerManager em = DirectoryTreeTopComponent.findInstance().getExplorerManager();
         Node[] selectedNode = em.getSelectedNodes();
