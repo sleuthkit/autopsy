@@ -283,7 +283,7 @@ public class HashDb implements Comparable<HashDb> {
         protected void done() {
             indexing = false;
             progress.finish();
-            HashDbManagementPanel.getDefault().resync();
+            // TODO: Fire property event telling to resync
         }
     }
 }

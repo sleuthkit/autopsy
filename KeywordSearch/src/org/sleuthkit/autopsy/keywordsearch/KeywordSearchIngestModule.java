@@ -106,6 +106,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private Map<String,String> stringExtractOptions = new HashMap<String,String>();
     
     private final GetIsFileKnownV getIsFileKnown = new GetIsFileKnownV();
+    private KeywordSearchConfigurationPanel panel;
 
     private enum IngestStatus {
 
@@ -380,20 +381,32 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
     @Override
     public javax.swing.JPanel getSimpleConfiguration() {
+        KeywordSearchListsXML.getCurrent().reload();
         return new KeywordSearchIngestSimplePanel();
     }
 
     @Override
     public javax.swing.JPanel getAdvancedConfiguration() {
-        return KeywordSearchConfigurationPanel.getDefault();
+        //return KeywordSearchConfigurationPanel.getDefault();
+        getPanel().load();
+        return getPanel();
+    }
+
+    private KeywordSearchConfigurationPanel getPanel() {
+        if (panel == null) {
+            panel = new KeywordSearchConfigurationPanel();
+        }
+        return panel;
     }
 
     @Override
     public void saveAdvancedConfiguration() {
+        getPanel().store();
     }
 
     @Override
     public void saveSimpleConfiguration() {
+        KeywordSearchListsXML.getCurrent().save();
     }
 
     /**
