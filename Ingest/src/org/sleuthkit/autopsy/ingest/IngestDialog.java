@@ -31,7 +31,6 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -44,7 +43,7 @@ public class IngestDialog extends JDialog {
     private Image image = null;
     private IngestDialogPanel panel = null;
     
-    private static Logger logger = Logger.getLogger(IngestDialog.class.getName());
+    private static final Logger logger = Logger.getLogger(IngestDialog.class.getName());
 
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
@@ -72,7 +71,7 @@ public class IngestDialog extends JDialog {
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
 
-        panel.reload();
+        panel.reload(); // reload the simple panel
         add(panel, BorderLayout.PAGE_START);
         JButton startButton = new JButton("Start");
         JButton closeButton = new JButton("Close");

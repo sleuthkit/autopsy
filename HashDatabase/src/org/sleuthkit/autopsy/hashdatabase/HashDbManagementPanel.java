@@ -35,35 +35,15 @@ import org.sleuthkit.datamodel.TskException;
 
 final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    //private final HashDatabaseOptionsPanelController controller;
     private HashSetTableModel hashSetTableModel;
     private static final Logger logger = Logger.getLogger(HashDbManagementPanel.class.getName());
     private static boolean ingestRunning = false;
-    //static HashDbManagementPanel instance;
 
-    HashDbManagementPanel() {//HashDatabaseOptionsPanelController controller) {
-        //this.controller = controller;
+    HashDbManagementPanel() {
         this.hashSetTableModel = new HashSetTableModel();
         initComponents();
         customizeComponents();
-        // TODO listen to changes in form fields and call controller.changed()
     }
-    
-    /*public static HashDbManagementPanel getDefault() {
-        System.out.println("----->Hash getDefault()");
-        if(instance==null) {
-            System.out.println("----->Hash instance==null");
-            instance = new HashDbManagementPanel();
-        }
-        System.out.println("----->Hash instance: " + instance);
-        //JDialog display = new JDialog(new JFrame());
-        //display.setResizable(true);
-        //display.setTitle("Test stuff");
-        //display.add(new HashDbManagementPanel(), 0);
-        //display.pack();
-        //display.setVisible(true);
-        return new HashDbManagementPanel();
-    }*/
     
     private void customizeComponents() {
         this.ingestWarningLabel.setVisible(false);
@@ -462,12 +442,9 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
 
     @Override
     public void load() {
-        // Deselect all rows so incorrect data isn't shown
-        hashSetTable.clearSelection();
-        // Reload the XML so there are no 'ghost' instances of vars
-        HashDbXML.getCurrent().reload();
-        // Update the GUI
-        initUI(null);
+        hashSetTable.clearSelection(); // Deselect all rows
+        HashDbXML.getCurrent().reload(); // Reload XML
+        initUI(null); // Update the UI
     }
 
     @Override
