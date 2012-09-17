@@ -25,18 +25,16 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.KeyEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.AbstractTableModel;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A panel to manage all keyword lists created/imported in Autopsy.
@@ -66,29 +64,6 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
         listsTable.setCellSelectionEnabled(false);
         listsTable.setRowSelectionAllowed(true);
         tableModel.resync();
-        
-        KeywordSearchListsXML.getCurrent().addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_ADDED.toString())) {
-                    tableModel.resync();
-                    for(int i = 0; i<listsTable.getRowCount(); i++) {
-                            String name = (String) listsTable.getValueAt(i, 0);
-                            if(((String) evt.getNewValue()).equals(name)) {
-                                listsTable.getSelectionModel().setSelectionInterval(i, i);
-                            }
-                    }
-                } else if (evt.getPropertyName().equals(KeywordSearchListsXML.ListsEvt.LIST_DELETED.toString())) {
-                    tableModel.resync();
-                    if(listsTable.getRowCount() > 0) {
-                        listsTable.getSelectionModel().setSelectionInterval(0, 0);
-                    } else {
-                        listsTable.getSelectionModel().clearSelection();
-                    }
-                }
-            }
-        });
 
     }
 
@@ -156,7 +131,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
                                 .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
                                 .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 4, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(

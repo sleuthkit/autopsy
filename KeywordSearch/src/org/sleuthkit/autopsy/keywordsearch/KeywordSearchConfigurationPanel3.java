@@ -176,7 +176,6 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel impleme
         enableUTF8Checkbox = new javax.swing.JCheckBox();
         enableUTF16Checkbox = new javax.swing.JCheckBox();
         ingestSettingsLabel = new javax.swing.JLabel();
-        languagesSeparator = new javax.swing.JSeparator();
 
         org.openide.awt.Mnemonics.setLocalizedText(languagesLabel, org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel3.class, "KeywordSearchConfigurationPanel3.languagesLabel.text")); // NOI18N
 
@@ -226,11 +225,8 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel impleme
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(enableUTF16Checkbox)
                             .addComponent(enableUTF8Checkbox)))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                            .addComponent(languagesLabel)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(languagesSeparator))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(languagesLabel, javax.swing.GroupLayout.Alignment.LEADING)
                         .addComponent(langPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(255, Short.MAX_VALUE))
         );
@@ -244,9 +240,7 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel impleme
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(enableUTF8Checkbox)
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(languagesLabel)
-                    .addComponent(languagesSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 5, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(languagesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(langPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 397, Short.MAX_VALUE)
                 .addContainerGap())
@@ -275,7 +269,6 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel impleme
     private javax.swing.JLabel ingestSettingsLabel;
     private javax.swing.JScrollPane langPanel;
     private javax.swing.JLabel languagesLabel;
-    private javax.swing.JSeparator languagesSeparator;
     // End of variables declaration//GEN-END:variables
 
     @Override
