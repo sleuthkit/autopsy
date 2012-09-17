@@ -28,26 +28,15 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
  */
 final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    //private final KeywordSearchOptionsPanelController controller;
-    //private static KeywordSearchConfigurationPanel instance = null;
     private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel.class.getName());
     private KeywordSearchConfigurationPanel1 listsPanel;
     private KeywordSearchConfigurationPanel3 languagesPanel;
     private KeywordSearchConfigurationPanel2 generalPanel;
 
-    KeywordSearchConfigurationPanel() {//KeywordSearchOptionsPanelController controller) {
-        //this.controller = controller;
+    KeywordSearchConfigurationPanel() {
         initComponents();
         customizeComponents();
-        // TODO listen to changes in form fields and call controller.changed()
     }
-    
-    /*public static KeywordSearchConfigurationPanel getDefault() {
-        if(instance == null) {
-            instance = new KeywordSearchConfigurationPanel();
-        }
-        return instance;
-    }*/
     
     private void customizeComponents() {
         setName("Advanced Keyword Search Configuration");
@@ -82,6 +71,10 @@ final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implement
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Load each of the tabs and reload the XML.
+     */
+    @Override
     public void load() {
         // Deselect all table rows
         listsPanel.load();
@@ -91,6 +84,10 @@ final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implement
         KeywordSearchListsXML.getCurrent().reload();
     }
 
+    /**
+     * Store each panel's settings.
+     */
+    @Override
     public void store() {
         listsPanel.store();
         languagesPanel.store();

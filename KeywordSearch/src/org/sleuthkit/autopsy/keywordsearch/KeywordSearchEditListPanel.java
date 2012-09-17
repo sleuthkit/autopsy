@@ -62,7 +62,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
     
     private boolean ingestRunning;
-    //private static KeywordSearchEditListPanel instance = null;
 
     /** Creates new form KeywordSearchEditListPanel */
     KeywordSearchEditListPanel() {
@@ -70,13 +69,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         initComponents();
         customizeComponents();
     }
-
-    /*public static synchronized KeywordSearchEditListPanel getDefault() {
-        if (instance == null) {
-            instance = new KeywordSearchEditListPanel();
-        }
-        return instance;
-    }*/
     
 
     private void customizeComponents() {
@@ -510,7 +502,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                 .addComponent(useForIngestCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(ingestMessagesCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 33, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 52, Short.MAX_VALUE)
                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(exportButton)
                     .addComponent(saveListButton)
