@@ -47,11 +47,12 @@ public class Logger extends java.util.logging.Logger {
     static final int LOG_FILE_COUNT = 10;
     
     //File Handlers which point to the output logs
-    private static final FileHandler traces = initTraces();
-    private static final FileHandler normal = initNormal();
-    private static final java.util.logging.Logger actionsLogger = initActionsLogger();
+    private static  final FileHandler traces = initTraces();
+    private static  final FileHandler normal = initNormal();
+    private static final Handler console = new java.util.logging.ConsoleHandler();
+    private static  java.util.logging.Logger actionsLogger = initActionsLogger();
    
-    
+
     /**
      * Main messages log file name
      */
@@ -104,6 +105,7 @@ public class Logger extends java.util.logging.Logger {
             java.util.logging.Logger _actionsLogger = java.util.logging.Logger.getLogger("Actions");
             _actionsLogger.setUseParentHandlers(false);
             _actionsLogger.addHandler(f);
+            _actionsLogger.addHandler(console);
             return _actionsLogger;
         } catch (IOException e) {
             throw new RuntimeException("Error initializing actions logger", e);
@@ -113,8 +115,18 @@ public class Logger extends java.util.logging.Logger {
     //</editor-fold>
     private Logger(java.util.logging.Logger log) {
         super(log.getName(), log.getResourceBundleName());
-        log.setUseParentHandlers(false); //do not forward to parent logger, sharing static handlers anyway
+        //do forward to messages, so that IDE window shows them
+        if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
+            addHandler(console);
+        }
+        setUseParentHandlers(false); //do not forward to parent logger, sharing static handlers anyway
+        //addHandler(new AutopsyExceptionHandler());
+        addHandler(normal);
+        addHandler(traces);
     }
+
+
+       
     
     /**
      * Log an action to autopsy_actions.log
@@ -135,8 +147,6 @@ public class Logger extends java.util.logging.Logger {
      */
     public static Logger getLogger(String name) {
         Logger l = new Logger(java.util.logging.Logger.getLogger(name));
-        l.addHandler(normal);
-        l.addHandler(traces);
         return l;
     }
 
@@ -153,15 +163,15 @@ public class Logger extends java.util.logging.Logger {
     }
 
     @Override
-    public synchronized void log(Level level, String message, Throwable thrown) {
-        super.log(level, message + " : Exception:  " + thrown.toString());
+    public void log(Level level, String message, Throwable thrown) {
+        super.log(level, message + "\nException:  " + thrown.toString());
         removeHandler(normal);
         super.log(level, message, thrown);
         addHandler(normal);
     }
 
     @Override
-    public synchronized void throwing(String sourceClass, String sourceMethod, Throwable thrown) {
+    public void throwing(String sourceClass, String sourceMethod, Throwable thrown) {
         removeHandler(normal);
         super.throwing(sourceClass, sourceMethod, thrown);
         addHandler(normal);
