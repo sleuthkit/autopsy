@@ -29,7 +29,6 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JCheckBox;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -39,6 +38,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.util.actions.SystemAction;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 
@@ -116,28 +116,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
                 });
         
         loader = KeywordSearchListsXML.getCurrent();
-        loader.addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String changed = evt.getPropertyName();
-                Object oldValue = evt.getOldValue();
-                Object newValue = evt.getNewValue();
-                
-                if (changed.equals(KeywordSearchListsXML.ListsEvt.LIST_ADDED.toString())) {
-                    listsTableModel.resync();
-                } else if (changed.equals(KeywordSearchListsXML.ListsEvt.LIST_DELETED.toString())) {
-                    listsTableModel.resync();
-                    if(listsTable.getRowCount() > 0)
-                        listsTable.getSelectionModel().setSelectionInterval(0, 0);
-                    else
-                        listsTable.getSelectionModel().clearSelection();
-                } else if (changed.equals(KeywordSearchListsXML.ListsEvt.LIST_UPDATED.toString())) {
-                    //keywordsTableModel.resync(loader.getList((String) newValue));
-                    listsTableModel.resync();
-                }
-            }
-        });
         listsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
             @Override

@@ -27,12 +27,8 @@
                           <Component id="enableUTF8Checkbox" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
-                  <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
-                      <Group type="102" alignment="0" attributes="0">
-                          <Component id="languagesLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="languagesSeparator" max="32767" attributes="0"/>
-                      </Group>
+                  <Group type="103" alignment="0" groupAlignment="1" attributes="0">
+                      <Component id="languagesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                       <Component id="langPanel" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -50,10 +46,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="enableUTF8Checkbox" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="languagesLabel" min="-2" max="-2" attributes="0"/>
-                  <Component id="languagesSeparator" min="-2" pref="5" max="-2" attributes="0"/>
-              </Group>
+              <Component id="languagesLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="langPanel" pref="397" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -126,8 +119,6 @@
           <ResourceString bundle="org/sleuthkit/autopsy/keywordsearch/Bundle.properties" key="KeywordSearchConfigurationPanel3.ingestSettingsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
-    </Component>
-    <Component class="javax.swing.JSeparator" name="languagesSeparator">
     </Component>
   </SubComponents>
 </Form>
