@@ -72,6 +72,23 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  */
 public final class KeywordSearchIngestModule implements IngestModuleAbstractFile {
 
+    enum UpdateFrequency {
+
+        FAST(20),
+        AVG(10),
+        SLOW(5);
+        private final int time;
+
+        UpdateFrequency(int time) {
+            this.time = time;
+        }
+
+        int getTime() {
+            return time;
+        }
+    };
+    private volatile UpdateFrequency updateFrequency = UpdateFrequency.AVG;
+    
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     public static final String MODULE_NAME = "Keyword Search";
     public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
@@ -85,7 +102,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private Map<String, KeywordSearchList> keywordToList; //keyword to list name mapping
     private Timer commitTimer;
     private Timer searchTimer;
-    //private static final int COMMIT_INTERVAL_MS = 10 * 60 * 1000;
     private Indexer indexer;
     private Searcher currentSearcher;
     private Searcher finalSearcher;
@@ -133,6 +149,22 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             instance = new KeywordSearchIngestModule();
         }
         return instance;
+    }
+    
+    /**
+     * returns the current minimal update frequency setting in minutes 
+     */
+    UpdateFrequency getUpdateFrequency() {
+        return updateFrequency;
+    }
+
+    /**
+     * set new minimal update frequency module should use
+     *
+     * @param frequency to use in minutes
+     */
+    void setUpdateFrequency(UpdateFrequency frequency) {
+        this.updateFrequency = frequency;
     }
 
     /**
@@ -349,7 +381,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         indexer = new Indexer();
 
-        final int updateIntervalMs = services.getUpdateFrequency() * 60 * 1000;
+        final int updateIntervalMs = updateFrequency.getTime() * 60 * 1000;
         logger.log(Level.INFO, "Using commit interval (ms): " + updateIntervalMs);
         logger.log(Level.INFO, "Using searcher interval (ms): " + updateIntervalMs);
 

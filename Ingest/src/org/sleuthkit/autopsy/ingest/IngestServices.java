@@ -87,18 +87,6 @@ public class IngestServices {
     }
     
     
-    /**
-     * Facility for the module to query the currently set recommended data update frequency in minutes
-     * Modules that post data in controlled time intervals, should obey this setting
-     * 
-     * @return max. number of minutes before module posts new data, if data is available
-     *
-     * @Deprecated individual modules are be responsible for maintaining such settings
-     */
-    public int getUpdateFrequency() {
-        return manager.getUpdateFrequency().getTime();
-    }
-    
     
     /**
      * Facility for a file ingest module to check a return value from another file ingest module
