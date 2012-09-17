@@ -18,15 +18,14 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.UpdateFrequency;
 
 /**
  * General, not per list, keyword search configuration and status display widget
@@ -47,8 +46,25 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
         final KeywordSearchIngestModule service = KeywordSearchIngestModule.getDefault();
         skipNSRLCheckBox.setSelected(service.getSkipKnown());
         boolean enable = !IngestManager.getDefault().isIngestRunning()
-                && ! IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());
+                && !IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());
         skipNSRLCheckBox.setEnabled(enable);
+        setTimeSettingEnabled(enable);
+
+        final UpdateFrequency curFreq = service.getUpdateFrequency();
+        switch (curFreq) {
+            case FAST:
+                timeRadioButton1.setSelected(true);
+                break;
+            case AVG:
+                timeRadioButton2.setSelected(true);
+                break;
+            case SLOW:
+                timeRadioButton3.setSelected(true);
+                break;
+            default:
+            //
+        }
+
     }
 
     /**
@@ -60,7 +76,7 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        langButtonGroup = new javax.swing.ButtonGroup();
+        timeGroup = new javax.swing.ButtonGroup();
         skipNSRLCheckBox = new javax.swing.JCheckBox();
         filesIndexedLabel = new javax.swing.JLabel();
         filesIndexedValue = new javax.swing.JLabel();
@@ -70,14 +86,13 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
         informationLabel = new javax.swing.JLabel();
         settingsSeparator = new javax.swing.JSeparator();
         informationSeparator = new javax.swing.JSeparator();
+        jLabel1 = new javax.swing.JLabel();
+        timeRadioButton1 = new javax.swing.JRadioButton();
+        timeRadioButton2 = new javax.swing.JRadioButton();
+        timeRadioButton3 = new javax.swing.JRadioButton();
 
         skipNSRLCheckBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.skipNSRLCheckBox.text")); // NOI18N
         skipNSRLCheckBox.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.skipNSRLCheckBox.toolTipText")); // NOI18N
-        skipNSRLCheckBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                skipNSRLCheckBoxActionPerformed(evt);
-            }
-        });
 
         filesIndexedLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.filesIndexedLabel.text")); // NOI18N
 
@@ -92,13 +107,24 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
 
         informationLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.informationLabel.text")); // NOI18N
 
+        jLabel1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.jLabel1.text")); // NOI18N
+
+        timeRadioButton1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton1.text")); // NOI18N
+        timeRadioButton1.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton1.toolTipText")); // NOI18N
+
+        timeRadioButton2.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton2.text")); // NOI18N
+        timeRadioButton2.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton2.toolTipText")); // NOI18N
+
+        timeRadioButton3.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton3.text")); // NOI18N
+        timeRadioButton3.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton3.toolTipText")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(settingsLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -106,20 +132,27 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(informationLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(informationSeparator))
+                        .addComponent(informationSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 309, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(filesIndexedLabel)
                             .addGroup(layout.createSequentialGroup()
+                                .addGap(141, 141, 141)
+                                .addComponent(filesIndexedValue, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(skipNSRLCheckBox)
+                            .addComponent(jLabel1)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(10, 10, 10)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(chunksLabel)
-                                    .addComponent(filesIndexedLabel))
+                                    .addComponent(timeRadioButton2)
+                                    .addComponent(timeRadioButton1)
+                                    .addComponent(timeRadioButton3)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(chunksLabel)
                                 .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(filesIndexedValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(chunksValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addComponent(skipNSRLCheckBox))))
-                .addContainerGap(67, Short.MAX_VALUE))
+                                .addComponent(chunksValLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -130,6 +163,14 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
                     .addComponent(settingsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(skipNSRLCheckBox)
+                .addGap(13, 13, 13)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(timeRadioButton1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(timeRadioButton2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(timeRadioButton3)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(informationLabel)
@@ -142,14 +183,10 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(chunksLabel)
                     .addComponent(chunksValLabel))
-                .addContainerGap(107, Short.MAX_VALUE))
+                .addContainerGap(37, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipNSRLCheckBoxActionPerformed
-    //KeywordSearchIngestModule.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
-    // Do nothing
-}//GEN-LAST:event_skipNSRLCheckBoxActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel chunksLabel;
     private javax.swing.JLabel chunksValLabel;
@@ -157,23 +194,53 @@ private void skipNSRLCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//
     private javax.swing.JLabel filesIndexedValue;
     private javax.swing.JLabel informationLabel;
     private javax.swing.JSeparator informationSeparator;
-    private javax.swing.ButtonGroup langButtonGroup;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel settingsLabel;
     private javax.swing.JSeparator settingsSeparator;
     private javax.swing.JCheckBox skipNSRLCheckBox;
+    private javax.swing.ButtonGroup timeGroup;
+    private javax.swing.JRadioButton timeRadioButton1;
+    private javax.swing.JRadioButton timeRadioButton2;
+    private javax.swing.JRadioButton timeRadioButton3;
     // End of variables declaration//GEN-END:variables
 
     @Override
     public void store() {
-        KeywordSearchIngestModule.getDefault().setSkipKnown(skipNSRLCheckBox.isSelected());
+        final KeywordSearchIngestModule km =
+                KeywordSearchIngestModule.getDefault();
+
+        km.setSkipKnown(skipNSRLCheckBox.isSelected());
+        km.setUpdateFrequency(getSelectedTimeValue());
     }
-    
+
     @Override
     public void load() {
         activateWidgets();
     }
-    
+
+    private void setTimeSettingEnabled(boolean enabled) {
+        timeRadioButton1.setEnabled(enabled);
+        timeRadioButton2.setEnabled(enabled);
+        timeRadioButton3.setEnabled(enabled);
+    }
+
+
+    private UpdateFrequency getSelectedTimeValue() {
+        if (timeRadioButton1.isSelected()) {
+            return UpdateFrequency.FAST;
+        } else if (timeRadioButton2.isSelected()) {
+            return UpdateFrequency.AVG;
+        } else {
+            return UpdateFrequency.SLOW;
+        }
+    }
+
     private void customizeComponents() {
+
+        timeGroup.add(timeRadioButton1);
+        timeGroup.add(timeRadioButton2);
+        timeGroup.add(timeRadioButton3);
+
         this.skipNSRLCheckBox.setSelected(KeywordSearchIngestModule.getDefault().getSkipKnown());
 
         try {
