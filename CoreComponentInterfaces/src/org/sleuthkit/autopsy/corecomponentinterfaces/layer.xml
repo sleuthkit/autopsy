@@ -10,6 +10,9 @@
         <folder name="Advanced.instance_hidden"/> <!-- Miscellaneous -->
     </folder>
     <file name="OptionsExport_hidden"/> <!-- Hide import/export in Options -->
+    <folder name="PluginsDialog">
+        <folder name="RCPPlatform.instance_hidden"/>
+    </folder>
     
 <!--<attr name="Menu\File\Separator2.instance_hidden\position" intvalue="100"/>
     <attr name="Menu\File\Separator3.instance_hidden\position" intvalue="200"/>
@@ -66,7 +69,7 @@
             <file name="testAction.shadow_hidden"/>
         </folder>
         <folder name="Tools">
-            <file name="org-netbeans-modules-autoupdate-ui-actions-PluginManagerAction.shadow_hidden"/>
+            <file name="org-netbeans-modules-autoupdate-ui-actions-PluginManagerAction.shadow"/>
             <file name="org-netbeans-modules-favorites-templates-TemplatesAction.shadow_hidden"/>
             <file name="org-netbeans-modules-options-OptionsWindowAction.shadow"/>
             <file name="org-openide-actions-ToolsAction.shadow_hidden"/>

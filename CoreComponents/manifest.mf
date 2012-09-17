@@ -1,4 +1,5 @@
 Manifest-Version: 1.0
+AutoUpdate-Show-In-Client: false
 OpenIDE-Module: org.sleuthkit.autopsy.corecomponents/1
 OpenIDE-Module-Implementation-Version: 2
 OpenIDE-Module-Install: org/sleuthkit/autopsy/corecomponents/Installer.class
