@@ -17,11 +17,7 @@
  * limitations under the License.
  */
 
-/*
- * KeywordSearchIngestSimplePanel.java
- *
- * Created on Feb 28, 2012, 1:11:34 PM
- */
+
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
@@ -33,8 +29,7 @@ import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 
 /**
- *
- * @author dfickling
+ * Simple ingest config panel
  */
 public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
     

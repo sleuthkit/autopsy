@@ -153,9 +153,9 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
         } catch (TskCoreException ex) {
             Logger.getLogger(ExifParserFileIngestModule.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, "Failed to process the image.");
+            logger.log(Level.WARNING, "Failed to process the image file: " + f.getName());
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "IOException when parsing image file.", ex);
+            logger.log(Level.WARNING, "IOException when parsing image file: " +  f.getName(), ex);
         } finally {
             try {
                 if(in!=null) { in.close(); }

@@ -16,11 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.logging.Logger;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
+/**
+ * Container panel for keyword search advanced configuration options
+ */
 final class KeywordSearchConfigurationPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel.class.getName());
