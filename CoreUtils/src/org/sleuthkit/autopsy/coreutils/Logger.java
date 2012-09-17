@@ -27,21 +27,21 @@ import org.openide.modules.Places;
  * Custom Autopsy logger wrapper over java.util.logging.Logger with default file
  * streams logging to autopsy.log (general high level messages),
  * autopsy_traces.log (also including exception traces).
+ * In development build, those are also redirected to console / messages log.
  *
- * Contains a utility to log actions to autopsy_actions.log via noteAction()
+ * Contains a utility method to log user actions to autopsy_actions.log via noteAction()
  * 
  * Use like java.util.logging.Logger API, get a
  * org.sleuthkit.autopsy.coreutils.Logger handle using factory method
  * org.sleuthkit.autopsy.coreutils.Logger.getLogger(String name) passing
- * component or a class name.
+ * component/module/class name.
  *
  * If logging behavior is to be customized, you can add or remove handlers or
  * filters from the provided Logger object.
  */
 public class Logger extends java.util.logging.Logger {
 
-    
-     private static final String LOG_ENCODING = PlatformUtil.getLogFileEncoding();
+    private static final String LOG_ENCODING = PlatformUtil.getLogFileEncoding();
     private static final String LOG_DIR = PlatformUtil.getLogDirectory();
     static final int LOG_SIZE = 0; // in bytes, zero is unlimited
     static final int LOG_FILE_COUNT = 10;
@@ -50,7 +50,7 @@ public class Logger extends java.util.logging.Logger {
     private static  final FileHandler traces = initTraces();
     private static  final FileHandler normal = initNormal();
     private static final Handler console = new java.util.logging.ConsoleHandler();
-    private static  java.util.logging.Logger actionsLogger = initActionsLogger();
+    private static final java.util.logging.Logger actionsLogger = initActionsLogger();
    
 
     /**
