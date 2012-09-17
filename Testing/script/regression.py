@@ -700,7 +700,7 @@ def fill_case_data():
         
         # Set the case starting time based off the first line of autopsy.log.0
         # *** If logging time format ever changes this will break ***
-        case.start_date = log.readline().split(" java.")[0]
+        case.start_date = log.readline().split(" org.")[0]
     
         # Set the case ending time based off the "create" time (when the file was copied)
         case.end_date = time.ctime(os.path.getmtime(log_path))
@@ -724,7 +724,7 @@ def fill_case_data():
         
         case.heap_space = search_logs("Heap memory usage:")[0].rstrip().split(": ")[1]
         
-        ingest_line = search_logs("INFO: Ingest (including enqueue)")[0]
+        ingest_line = search_logs("Ingest (including enqueue)")[0]
         case.total_ingest_time = get_word_at(ingest_line, 5).rstrip()
         
         message_line = search_log_set("autopsy", "Ingest messages count:")[0]
@@ -862,7 +862,7 @@ def get_exceptions():
     logs_path = make_local_path(case.output_dir, case.image_name, "logs")
     results = []
     for file in os.listdir(logs_path):
-        if "autopsy" in file:
+        if "autopsy.log" in file:
             log = codecs.open(make_path(logs_path, file), "r", "latin-1")
             ex = re.compile("\SException")
             er = re.compile("\SError")

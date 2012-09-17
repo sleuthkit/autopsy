@@ -22,7 +22,6 @@ package org.sleuthkit.autopsy.hashdatabase;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -31,6 +30,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskException;
 
 final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsPanel {
@@ -46,6 +46,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     }
     
     private void customizeComponents() {
+        setName("Hash Database Configuration");
         this.ingestWarningLabel.setVisible(false);
         this.hashSetTable.setModel(hashSetTableModel);
         this.hashSetTable.setTableHeader(null);
