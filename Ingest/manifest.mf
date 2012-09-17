@@ -1,4 +1,5 @@
 Manifest-Version: 1.0
+AutoUpdate-Show-In-Client: false
 Bundle-Localization: org/sleuthkit/autopsy/ingest/Bundle
 Bundle-Name: %OpenIDE-Module-Name
 Bundle-SymbolicName: org.sleuthkit.autopsy.ingest/1
