@@ -18,14 +18,16 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
@@ -39,11 +41,19 @@ public abstract class KeywordSearchListsAbstract {
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";
     private static String CUR_LISTS_FILE = AutopsyPropFile.getUserDirPath() + File.separator + CUR_LISTS_FILE_NAME;
     protected static final Logger logger = Logger.getLogger(KeywordSearchListsAbstract.class.getName());
+    PropertyChangeSupport changeSupport;
 
     public KeywordSearchListsAbstract(String filePath) {
         this.filePath = filePath;
         theLists = new LinkedHashMap<String, KeywordSearchList>();
+        changeSupport = new PropertyChangeSupport(this);
     }
+
+    //property support
+    public enum ListsEvt {
+
+        LIST_ADDED, LIST_DELETED, LIST_UPDATED
+    };
 
     /**
      * get instance for managing the current keyword list of the application
@@ -54,6 +64,10 @@ public abstract class KeywordSearchListsAbstract {
             currentInstance.reload();
         }
         return currentInstance;
+    }
+
+    void addPropertyChangeListener(PropertyChangeListener l) {
+        changeSupport.addPropertyChangeListener(l);
     }
 
     private void prepopulateLists() {
@@ -236,12 +250,14 @@ public abstract class KeywordSearchListsAbstract {
 //            if (!locked) {
 //                save();
 //            }
+            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, name);
         } else {
             theLists.put(name, new KeywordSearchList(name, curList.getDateCreated(), now, useForIngest, ingestMessages, newList, locked));
 //            if (!locked) {
 //                save();
 //            }
             replaced = true;
+            changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, name);
         }
 
         return replaced;
@@ -278,6 +294,14 @@ public abstract class KeywordSearchListsAbstract {
             theLists.put(list.getName(), list);
         }
         //boolean saved = save();
+        if (true) {
+            for (KeywordSearchList list : newLists) {
+                changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
+            }
+            for (KeywordSearchList over : overwritten) {
+                changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
+            }
+        }
         return true;
     }
 
@@ -293,6 +317,7 @@ public abstract class KeywordSearchListsAbstract {
             theLists.remove(name);
             //deleted = save();
         }
+        changeSupport.firePropertyChange(ListsEvt.LIST_DELETED.toString(), null, name);
         return true;
 
     }
