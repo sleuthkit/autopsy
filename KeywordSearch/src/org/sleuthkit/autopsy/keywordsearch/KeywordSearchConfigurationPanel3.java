@@ -1,10 +1,24 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2012 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,7 +42,7 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel impleme
     private final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel3.class.getName());
     private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<String, StringExtract.StringExtractUnicodeTable.SCRIPT>();
     private ActionListener updateLanguagesAction;
-    List<SCRIPT> toUpdate;
+    private List<SCRIPT> toUpdate;
 
     /**
      * Creates new form KeywordSearchConfigurationPanel3
@@ -240,25 +254,17 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel impleme
     }// </editor-fold>//GEN-END:initComponents
 
     private void enableUTF8CheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableUTF8CheckboxActionPerformed
-//        final KeywordSearchIngestModule service = KeywordSearchIngestModule.getDefault();
-//        
+      
         boolean selected = this.enableUTF8Checkbox.isSelected();
-//        
-//        service.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(),
-//                Boolean.toString(selected));
-//        
+       
         activateScriptsCheckboxes(selected || this.enableUTF16Checkbox.isSelected());
         
     }//GEN-LAST:event_enableUTF8CheckboxActionPerformed
 
     private void enableUTF16CheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableUTF16CheckboxActionPerformed
-//        final KeywordSearchIngestModule service = KeywordSearchIngestModule.getDefault();
-//        
+        
         boolean selected = this.enableUTF16Checkbox.isSelected();
-//        
-//        service.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(),
-//                Boolean.toString(selected));
-//        
+        
         activateScriptsCheckboxes(selected || this.enableUTF8Checkbox.isSelected());
     }//GEN-LAST:event_enableUTF16CheckboxActionPerformed
 
