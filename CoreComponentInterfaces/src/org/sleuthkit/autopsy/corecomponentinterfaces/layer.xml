@@ -1,4 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
+    <attr name="Menu\File\org-netbeans-modules-print-action-PageSetupAction.shadow_hidden\position" intvalue="300"/>
+    <attr name="Menu\File\org-netbeans-modules-print-action-PrintAction.shadow_hidden\position" intvalue="500"/>
+    <folder name="OptionsDialog"> 
+        <folder name="General.instance_hidden"/>
+        <folder name="Keymaps.instance_hidden"/> <!-- Keymap -->
+        <folder name="Java.instance_hidden"/>
+        <folder name="Advanced.instance_hidden"/> <!-- Miscellaneous -->
+    </folder>
+    <file name="OptionsExport_hidden"/> <!-- Hide import/export in Options -->
+    <folder name="PluginsDialog">
+        <folder name="RCPPlatform.instance_hidden"/>
+    </folder>
+    
+<!--<attr name="Menu\File\Separator2.instance_hidden\position" intvalue="100"/>
+    <attr name="Menu\File\Separator3.instance_hidden\position" intvalue="200"/>
+    <attr name="Menu\File\Separator4.instance_hidden\position" intvalue="400"/>-->
+    
+    <folder name="Actions">
+        <folder name="Help">
+            <file name="org-netbeans-core-actions-AboutAction.instance_hidden"/>
+        </folder>
+        <folder name="Window">
+            <file name="org-netbeans-core-windows-actions-GlobalPropertiesAction.instance_hidden"/>
+        </folder>
+        <folder name="Toolbars">
+             <folder name="QuickSearch_hidden"/>
+        </folder>
+    </folder>
+    
+    <folder name="Menu">
+        <folder name="File">
+            <file name="org-netbeans-modules-print-action-PageSetupAction.shadow_hidden"/>
+            <file name="org-netbeans-modules-print-action-PrintAction.shadow_hidden"/>
+            <file name="org-openide-actions-SaveAction.shadow_hidden"/>
+            <file name="org-openide-actions-SaveAllAction.shadow_hidden"/>
+            <file name="org-openide-actions-SaveAsAction.shadow_hidden"/>
+            
+        <!--<file name="Separator2.instance_hidden"/>
+            <file name="Separator3.instance_hidden"/>
+            <file name="Separator4.instance_hidden"/>-->
+        </folder>
+        <file name="GoTo_hidden"/>
+        <folder name="Help">
+            <file name="org-netbeans-core-actions-AboutAction.shadow_hidden"/>
+            <file name="org-netbeans-modules-autoupdate-ui-actions-CheckForUpdatesAction.shadow_hidden"/>
+        </folder>
+        <file name="Reports_hidden"/>
+        <folder name="View">
+            <file name="org-netbeans-core-actions-HTMLViewAction.shadow_hidden"/>
+            <file name="org-netbeans-core-actions-LogAction.shadow_hidden"/>
+            <file name="org-netbeans-core-windows-actions-ToolbarsListAction.instance_hidden"/>
+        </folder>
+        <folder name="Window">
+            <file name="org-netbeans-modules-favorites-View.shadow_hidden"/>
+            <file name="CloneDocumentAction.shadow_hidden"/>
+            <file name="CloseAllButThisAction.shadow_hidden"/>
+            <file name="CloseAllDocumentsAction.shadow_hidden"/>
+            <file name="DocumentsAction.shadow_hidden"/>
+            <!--<file name="FileBrowserAction.shadow"/>
+            <file name="FileBrowserAction.shadow_hidden"/>-->
+            <file name="Output_hidden"/>
+            <file name="ProgressListAction.shadow_hidden"/>
+            <file name="SwitchToRecentDocumentAction.shadow_hidden"/>
+            <file name="ViewFavoritesTabAction.shadow_hidden"/>
+            <file name="org-netbeans-core-windows-actions-ResetWindowsAction.shadow_hidden"/>
+            <file name="testAction.shadow_hidden"/>
+        </folder>
+        <folder name="Tools">
+            <file name="org-netbeans-modules-autoupdate-ui-actions-PluginManagerAction.shadow"/>
+            <file name="org-netbeans-modules-favorites-templates-TemplatesAction.shadow_hidden"/>
+            <file name="org-netbeans-modules-options-OptionsWindowAction.shadow"/>
+            <file name="org-openide-actions-ToolsAction.shadow_hidden"/>
+            
+        <!--<file name="Separator1.instance_hidden"/>
+            <file name="Separator3.instance_hidden"/>-->
+        </folder>
+    </folder>
+    
+    <folder name="Toolbars">
+        <folder name="File">
+            <file name="org-openide-actions-SaveAllAction.shadow_hidden"/>
+        </folder>
+        <file name="UndoRedo_hidden"/>
+    </folder>
 </filesystem>

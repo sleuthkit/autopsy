@@ -36,7 +36,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 //import org.apache.commons.lang.NullArgumentException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

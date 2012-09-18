@@ -1,6 +1,4 @@
 3.0.0b5 (September 12, 2012)
-Funded by US Army Intelligence Center of Excellence (USAICoE):
-
 New features:
 - Added international string extraction from unknown file types.
 - Removed size limitations of large files for keyword searching.

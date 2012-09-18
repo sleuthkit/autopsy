@@ -20,7 +20,7 @@
 
 package org.sleuthkit.autopsy.ingest;
 
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 
 /**
@@ -86,18 +86,6 @@ public class IngestServices {
         IngestManager.fireModuleDataEvent(moduleDataEvent);
     }
     
-    
-    /**
-     * Facility for the module to query the currently set recommended data update frequency in minutes
-     * Modules that post data in controlled time intervals, should obey this setting
-     * 
-     * @return max. number of minutes before module posts new data, if data is available
-     *
-     * @Deprecated individual modules are be responsible for maintaining such settings
-     */
-    public int getUpdateFrequency() {
-        return manager.getUpdateFrequency().getTime();
-    }
     
     
     /**

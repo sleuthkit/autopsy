@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.coreutils;
 import java.io.*;
 import java.util.Properties;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.Places;
 /**
  * This class contains the framework to read, add, update, and remove

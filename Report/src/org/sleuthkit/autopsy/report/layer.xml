@@ -3,7 +3,14 @@
 <filesystem>
     <folder name="Menu">
         <folder name="Tools">
-            <file name="org-sleuthkit-autopsy-report-ReportAction.shadow"/>
+            <file name="org-sleuthkit-autopsy-report-ReportAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportAction.instance"/>
+                <attr name="position" intvalue="100"/>
+            </file>
+            <file name="org-sleuthkit-autopsy-report-ReportAction-separatorAfter.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="101"/>
+            </file>
         </folder>
     </folder>
     <folder name="Services">
@@ -33,7 +40,7 @@
             <file name="org-sleuthkit-autopsy-report-ReportAction.shadow">
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.report.Bundle#Toolbars/Reports/org-sleuthkit-autopsy-report-ReportAction.shadow"/>
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportAction.instance"/>
-                <attr name="position" intvalue="650"/>
+                <attr name="position" intvalue="102"/>
             </file>
         </folder>
     </folder>

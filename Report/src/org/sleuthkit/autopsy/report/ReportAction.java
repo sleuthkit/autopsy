@@ -30,7 +30,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.*;
 import javax.swing.border.Border;
 import org.openide.awt.ActionID;
@@ -43,7 +43,6 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Log;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.report.ReportAction")
@@ -276,7 +275,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
 
 
         } catch (Exception ex) {
-            Log.get(ReportFilterAction.class).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
+            Logger.getLogger(ReportFilterAction.class.getName()).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
         }
     }
 

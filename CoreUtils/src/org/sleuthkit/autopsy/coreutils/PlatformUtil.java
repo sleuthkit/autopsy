@@ -16,13 +16,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.coreutils;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 
@@ -31,59 +36,107 @@ import org.openide.modules.Places;
  * Platform utililities
  */
 public class PlatformUtil {
-    private static final Logger logger = Logger.getLogger(PlatformUtil.class.getName());
-    
+
     private static String javaPath = null;
-    
+
     /**
-     * get file path to the java executable binary
-     * use embedded java if available, otherwise use system java in PATH
-     * no validation is done if java exists in PATH
+     * get file path to the java executable binary use embedded java if
+     * available, otherwise use system java in PATH no validation is done if
+     * java exists in PATH
+     *
      * @return file path to java binary
      */
     public synchronized static String getJavaPath() {
-        if (javaPath != null)
+        if (javaPath != null) {
             return javaPath;
-    
+        }
+
         File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false);
         File rootPath = coreFolder.getParentFile().getParentFile();
         File jrePath = new File(rootPath.getAbsolutePath() + File.separator + "jre6");
- 
+
         if (jrePath != null && jrePath.exists() && jrePath.isDirectory()) {
-            logger.log(Level.INFO, "Embedded jre6 directory found in: " + jrePath.getAbsolutePath());
+            System.out.println("Embedded jre6 directory found in: " + jrePath.getAbsolutePath());
             javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java";
-        }
-        else {
+        } else {
             //else use system installed java in PATH env variable
             javaPath = "java";
-            
+
         }
-        
-        logger.log(Level.INFO, "Using java binary path: " + javaPath);
-        
-        
+
+        System.out.println("Using java binary path: " + javaPath);
+
+
         return javaPath;
     }
-    
+
     /**
-     * Get user directory where application wide user settings, cache, temp files are stored
+     * Get user directory where application wide user settings, cache, temp
+     * files are stored
+     *
      * @return File object representing user directory
      */
     public static File getUserDirectory() {
         return Places.getUserDirectory();
     }
-    
+
+    public static String getLogDirectory() {
+        return Places.getUserDirectory().getAbsolutePath() + "/var/log/";
+    }
+
     public static String getDefaultPlatformFileEncoding() {
         return System.getProperty("file.encoding");
     }
-    
+
     public static String getDefaultPlatformCharset() {
         return Charset.defaultCharset().name();
     }
-    
+
     public static String getLogFileEncoding() {
         return Charset.forName("UTF-8").name();
     }
-    
-    
+
+    /**
+     * Utility to extract a resource file to a user directory, if it does not
+     * exist
+     *
+     * @param resourceClass class in the same package as the resourceFile to
+     * extract
+     * @param resourceFile resource file name to extract
+     * @return true if extracted, false otherwise (if file already exists)
+     * @throws IOException exception thrown if extract the file failed for IO
+     * reasons
+     */
+    public static boolean extractResourceToUserDir(final Class resourceClass, final String resourceFile) throws IOException {
+        final File userDir = getUserDirectory();
+
+        final File resourceFileF = new File(userDir + File.separator + resourceFile);
+        if (resourceFileF.exists()) {
+            return false;
+        }
+
+        InputStream inputStream = resourceClass.getResourceAsStream(resourceFile);
+
+        OutputStream out = null;
+        InputStream in = null;
+        try {
+
+            in = new BufferedInputStream(inputStream);
+            OutputStream outFile = new FileOutputStream(resourceFileF);
+            out = new BufferedOutputStream(outFile);
+            int readBytes = 0;
+            while ((readBytes = in.read()) != -1) {
+                out.write(readBytes);
+            }
+        } finally {
+            if (in != null) {
+                in.close();
+            }
+            if (out != null) {
+                out.flush();
+                out.close();
+            }
+        }
+        return true;
+    }
 }

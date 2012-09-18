@@ -31,7 +31,7 @@ import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  *
@@ -106,7 +106,7 @@ public class ReportPanelAction {
                             }
                             
                         } catch (Exception e) {
-                           Log.get(ReportFilterAction.class).log(Level.WARNING, "Error generating " + s + "! Reason: ", e);
+                           Logger.getLogger(ReportFilterAction.class.getName()).log(Level.WARNING, "Error generating " + s + "! Reason: ", e);
                         }
                     }
 
@@ -194,7 +194,7 @@ public class ReportPanelAction {
 
             }
         } catch (Exception ex) {
-            Log.get(ReportFilterAction.class).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
+            Logger.getLogger(ReportFilterAction.class.getName()).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
         }
     }
     

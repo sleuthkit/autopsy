@@ -24,7 +24,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.AttributeSet;
@@ -121,6 +121,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         removeButton.setEnabled(!ingestRunning);
         hashTable.setEnabled(!ingestRunning);
         hashLabel.setEnabled(!ingestRunning);
+        saveBox.setEnabled(!ingestRunning);
     }
 
     /**

@@ -20,11 +20,9 @@
 package org.sleuthkit.autopsy.coreutils;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.logging.FileHandler;
-import org.openide.modules.ModuleInstall;
-import java.util.logging.Logger;
 import java.util.logging.Handler;
+import org.openide.modules.ModuleInstall;
 import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
 import org.openide.modules.Places;
@@ -36,26 +34,13 @@ import org.openide.modules.Places;
  */
 public class Installer extends ModuleInstall {
 
-    static final Logger autopsyLogger = Logger.getLogger("");
-    static final String LOG_FILENAME_PATTERN = Places.getUserDirectory().getAbsolutePath() + "/var/log/autopsy.log"; //%t is system temp dir, %g is log number
-    static final int LOG_SIZE = 0; // in bytes, zero is unlimited
-    static final int LOG_FILE_COUNT = 10;
-    static Handler logs;
+    static final Logger autopsyLogger = Logger.getLogger(""); //root logger
+
+static Handler logs;
 
     @Override
     public void restored() {
-        if (logs == null) {
-            try {
-                logs = new FileHandler(LOG_FILENAME_PATTERN, LOG_SIZE, LOG_FILE_COUNT);
-                logs.setEncoding(PlatformUtil.getLogFileEncoding());
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-            logs.setFormatter(new SimpleFormatter());
-            autopsyLogger.addHandler(logs);
-        }
-        
-        autopsyLogger.log(Level.INFO, "Using encoding for log files: " + logs.getEncoding());
+        //Logger.init();
         autopsyLogger.log(Level.INFO, "Default charset: " + PlatformUtil.getDefaultPlatformCharset());
         autopsyLogger.log(Level.INFO, "Default file encoding: " + PlatformUtil.getDefaultPlatformFileEncoding());
         
@@ -63,15 +48,13 @@ public class Installer extends ModuleInstall {
         
         autopsyLogger.log(Level.INFO, "Netbeans Platform build: " + Version.getNetbeansBuild());
         
-        autopsyLogger.log(Level.INFO, "Application name: " + Version.getName() 
+        autopsyLogger.log(Level.INFO, "Application name: " + Version.getName()
                 + ", version: " + Version.getVersion() + ", build: " + Version.getBuildType());
     }
     
     @Override
     public void uninstalled() {
-        autopsyLogger.removeHandler(logs);
-        logs.close();
-        logs = null;
+        
     }
 
 

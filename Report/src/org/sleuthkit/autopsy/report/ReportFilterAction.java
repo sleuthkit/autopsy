@@ -25,7 +25,7 @@ import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import org.openide.util.HelpCtx;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * The ReportFilterAction opens the reportFilterPanel in a dialog, and saves the
@@ -39,7 +39,7 @@ class ReportFilterAction {
 
     //@Override
     public void performAction() {
-        Log.noteAction(this.getClass());
+        Logger.noteAction(this.getClass());
 
         try {
 
@@ -66,7 +66,7 @@ class ReportFilterAction {
 
 
         } catch (Exception ex) {
-            Log.get(ReportFilterAction.class).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
+            Logger.getLogger(ReportFilterAction.class.getName()).log(Level.WARNING, "Error displaying " + ACTION_NAME + " window.", ex);
         }
     }
 

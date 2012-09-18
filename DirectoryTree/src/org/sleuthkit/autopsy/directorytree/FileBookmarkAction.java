@@ -22,7 +22,7 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.datamodel.Bookmarks;

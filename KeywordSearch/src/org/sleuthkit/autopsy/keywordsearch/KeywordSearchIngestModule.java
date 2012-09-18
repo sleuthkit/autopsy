@@ -29,7 +29,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
@@ -72,6 +72,23 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
  */
 public final class KeywordSearchIngestModule implements IngestModuleAbstractFile {
 
+    enum UpdateFrequency {
+
+        FAST(20),
+        AVG(10),
+        SLOW(5);
+        private final int time;
+
+        UpdateFrequency(int time) {
+            this.time = time;
+        }
+
+        int getTime() {
+            return time;
+        }
+    };
+    private volatile UpdateFrequency updateFrequency = UpdateFrequency.AVG;
+    
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     public static final String MODULE_NAME = "Keyword Search";
     public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";
@@ -85,7 +102,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private Map<String, KeywordSearchList> keywordToList; //keyword to list name mapping
     private Timer commitTimer;
     private Timer searchTimer;
-    //private static final int COMMIT_INTERVAL_MS = 10 * 60 * 1000;
     private Indexer indexer;
     private Searcher currentSearcher;
     private Searcher finalSearcher;
@@ -106,6 +122,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private Map<String,String> stringExtractOptions = new HashMap<String,String>();
     
     private final GetIsFileKnownV getIsFileKnown = new GetIsFileKnownV();
+    private KeywordSearchConfigurationPanel panel;
 
     private enum IngestStatus {
 
@@ -132,6 +149,22 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             instance = new KeywordSearchIngestModule();
         }
         return instance;
+    }
+    
+    /**
+     * returns the current minimal update frequency setting in minutes 
+     */
+    UpdateFrequency getUpdateFrequency() {
+        return updateFrequency;
+    }
+
+    /**
+     * set new minimal update frequency module should use
+     *
+     * @param frequency to use in minutes
+     */
+    void setUpdateFrequency(UpdateFrequency frequency) {
+        this.updateFrequency = frequency;
     }
 
     /**
@@ -348,7 +381,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         indexer = new Indexer();
 
-        final int updateIntervalMs = services.getUpdateFrequency() * 60 * 1000;
+        final int updateIntervalMs = updateFrequency.getTime() * 60 * 1000;
         logger.log(Level.INFO, "Using commit interval (ms): " + updateIntervalMs);
         logger.log(Level.INFO, "Using searcher interval (ms): " + updateIntervalMs);
 
@@ -380,20 +413,32 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
     @Override
     public javax.swing.JPanel getSimpleConfiguration() {
+        KeywordSearchListsXML.getCurrent().reload();
         return new KeywordSearchIngestSimplePanel();
     }
 
     @Override
     public javax.swing.JPanel getAdvancedConfiguration() {
-        return KeywordSearchConfigurationPanel.getDefault();
+        //return KeywordSearchConfigurationPanel.getDefault();
+        getPanel().load();
+        return getPanel();
+    }
+
+    private KeywordSearchConfigurationPanel getPanel() {
+        if (panel == null) {
+            panel = new KeywordSearchConfigurationPanel();
+        }
+        return panel;
     }
 
     @Override
     public void saveAdvancedConfiguration() {
+        getPanel().store();
     }
 
     @Override
     public void saveSimpleConfiguration() {
+        KeywordSearchListsXML.getCurrent().save();
     }
 
     /**

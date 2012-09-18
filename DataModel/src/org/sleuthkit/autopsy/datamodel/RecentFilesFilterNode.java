@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Calendar;
 import java.util.Locale;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;

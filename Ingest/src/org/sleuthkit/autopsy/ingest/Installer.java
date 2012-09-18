@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
 import org.openide.windows.WindowManager;
 

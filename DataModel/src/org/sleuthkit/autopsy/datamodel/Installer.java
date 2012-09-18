@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.awt.Component;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import org.openide.LifecycleManager;
 import org.openide.modules.ModuleInstall;

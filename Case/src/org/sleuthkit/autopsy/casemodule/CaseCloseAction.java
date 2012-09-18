@@ -23,8 +23,7 @@ import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.logging.Level;;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -32,7 +31,15 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import javax.swing.Action;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
+import org.openide.util.actions.CallableSystemAction;
+import org.openide.util.actions.Presenter;
+
 
 /**
  * The action to close the current Case. This class should be disabled on
@@ -68,7 +75,7 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Log.noteAction(this.getClass());
+        Logger.noteAction(this.getClass());
 
         if (Case.existsCurrentCase() == false)
             return;

@@ -23,13 +23,14 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.logging.Logger;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -42,7 +43,7 @@ public class IngestDialog extends JDialog {
     private Image image = null;
     private IngestDialogPanel panel = null;
     
-    private static Logger logger = Logger.getLogger(IngestDialog.class.getName());
+    private static final Logger logger = Logger.getLogger(IngestDialog.class.getName());
 
     public IngestDialog(JFrame frame, String title, boolean modal) {
         super(frame, title, modal);
@@ -70,6 +71,7 @@ public class IngestDialog extends JDialog {
         // set the location of the popUp Window on the center of the screen
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
 
+        panel.reload(); // reload the simple panel
         add(panel, BorderLayout.PAGE_START);
         JButton startButton = new JButton("Start");
         JButton closeButton = new JButton("Close");
@@ -88,6 +90,14 @@ public class IngestDialog extends JDialog {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+                panel.save();
+                close();
+            }
+        });
+        this.addWindowListener(new WindowAdapter() {
+
+            @Override
+            public void windowClosing(WindowEvent e) {
                 panel.save();
                 close();
             }
