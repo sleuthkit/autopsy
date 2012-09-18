@@ -69,7 +69,7 @@ public class ArtifactStringContent implements StringContent {
                 buffer.append("</td>");
                 buffer.append("<td>");
                 if (attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                        || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
+                        || attr.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
                     long epoch = attr.getValueLong();
                     String time = "0000-00-00 00:00:00";
                     if (epoch != 0) {
