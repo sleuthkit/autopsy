@@ -278,7 +278,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                     else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()) {
                         searchEngineDomain = attribute.getValueString();
                     }
-                    else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
+                    else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
                         last_accessed = attribute.getValueLong();
                     }
                 }
@@ -290,7 +290,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), MODULE_NAME, searchEngineDomain));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), MODULE_NAME, query));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), MODULE_NAME, browser));
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), MODULE_NAME, last_accessed));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), MODULE_NAME, last_accessed));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, fs, bbattributes);
                         se.increment();
                         ++totalQueries;
