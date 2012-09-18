@@ -81,6 +81,7 @@ public class ReportXLS implements ReportModule {
         int countDevice = 0;
         int countEmail = 0;
         int countWebSearch = 0;
+        int countExif = 0;
         for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
                 countGen++;
@@ -123,6 +124,9 @@ public class ReportXLS implements ReportModule {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
                 countWebSearch++;
             }
+            if(entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()){
+                countExif++;
+            }
         }
 
         try {
@@ -156,6 +160,7 @@ public class ReportXLS implements ReportModule {
             Sheet sheetHistory = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getDisplayName());
             Sheet sheetEmail = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getDisplayName());
             Sheet sheetWebSearch = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getDisplayName());
+            Sheet sheetExif = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getDisplayName());
 
             //Bold/underline cell style for the top header rows
             CellStyle style = wbtemp.createCellStyle();
@@ -278,6 +283,16 @@ public class ReportXLS implements ReportModule {
             sheetWebSearch.getRow(0).createCell(1).setCellValue("Domain");
             sheetWebSearch.getRow(0).createCell(2).setCellValue("Text");
             sheetWebSearch.getRow(0).createCell(3).setCellValue("Last Accesed");
+            
+            sheetExif.setDefaultColumnStyle(1, defaultstyle);
+            sheetExif.createRow(0).setRowStyle(style);
+            sheetExif.getRow(0).createCell(0).setCellValue("File Name");
+            sheetExif.getRow(0).createCell(1).setCellValue("Date Taken");
+            sheetExif.getRow(0).createCell(2).setCellValue("Device Manufacturer");
+            sheetExif.getRow(0).createCell(3).setCellValue("Device Model");
+            sheetExif.getRow(0).createCell(4).setCellValue("Latitude");
+            sheetExif.getRow(0).createCell(5).setCellValue("Longitude");
+            sheetExif.getRow(0).createCell(6).setCellValue("Altitude");
 
             for (int i = 0; i < wbtemp.getNumberOfSheets(); i++) {
                 Sheet tempsheet = wbtemp.getSheetAt(i);
@@ -304,6 +319,7 @@ public class ReportXLS implements ReportModule {
             int countedDevice = 0;
             int countedEmail = 0;
             int countedWebSearch = 0;
+            int countedExif = 0;
 
             //start populating the sheets in the workbook
             for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
@@ -437,6 +453,19 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()));
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
                     temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()));
+                }
+                if(entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()){
+                    countedExif++;
+                    Row temp = sheetExif.createRow(countedExif);
+                    temp.createCell(0).setCellValue(currentCase.getSleuthkitCase().getContentById(entry.getKey().getObjectID()).getName());
+                    temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
+                    temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
+                    temp.createCell(4).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                    temp.createCell(5).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                    temp.createCell(6).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                    
+                    
                 }
             }
 
