@@ -132,7 +132,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                             break;
                         case LONG:
                             if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                                    || attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID()) {
+                                    || attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
                                 map.put(attribute.getAttributeTypeDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
                             } else {
                                 map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueLong());

@@ -47,6 +47,7 @@ import java.util.List;
 public class ReportHTML implements ReportModule {
     //Declare our publically accessible formatted Report, this will change everytime they run a Report
 
+    private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
     public static StringBuilder formatted_Report = new StringBuilder();
     private static StringBuilder unformatted_header = new StringBuilder();
     private static StringBuilder formatted_header = new StringBuilder();
@@ -92,47 +93,51 @@ public class ReportHTML implements ReportModule {
         int countDevice = 0;
         int countEmail = 0;
         int countWebSearch = 0;
+        int countExif = 0;
         for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
                 countGen++;
             }
-            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
+           else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
                 countWebBookmark++;
             }
-            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
+           else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
 
                 countWebCookie++;
             }
-            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
+           else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
 
                 countWebHistory++;
             }
-            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
+           else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
                 countWebDownload++;
             }
-            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()) {
+           else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()) {
                 countRecentObjects++;
             }
-            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getTypeID()) {
+           else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getTypeID()) {
                 countTrackPoint++;
             }
-            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
+           else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID()) {
                 countInstalled++;
             }
-            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+           else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 countKeyword++;
             }
-            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+           else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                 countHash++;
             }
-            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
+          else  if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                 countDevice++;
             }
-            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+           else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
                 countEmail++;
             }
-            if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
+           else if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
                 countWebSearch++;
+            }
+           else if(entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()){
+                countExif++;
             }
         }
 
@@ -244,6 +249,9 @@ public class ReportHTML implements ReportModule {
         if (countWebSearch > 0) {
             formatted_Report.append("<tr><td><a href=\"#search\">Web Search Queries</a></td><td>").append(countWebSearch).append("</td></tr>");
         }
+        if(countExif > 0){
+            formatted_Report.append("<tr><td><a href=\"#exif\">Exif Metadata</a></td><td>").append(countExif).append("</td></tr>");
+        }
         formatted_Report.append("</tbody></table><br />");
         String tableHeader = "<table><thead><tr>";
         StringBuilder nodeGen = new StringBuilder("<h3>General Information (").append(countGen).append(")</h3>").append(tableHeader).append("<th>Attribute</th><th>Value</th></tr></thead><tbody>");
@@ -259,7 +267,9 @@ public class ReportHTML implements ReportModule {
         StringBuilder nodeDevice = new StringBuilder("<h3><a name=\"device\">Attached Devices (").append(countDevice).append(")</h3>").append(tableHeader).append("<th>Name</th><th>Serial #</th><th>Time</th></tr></thead><tbody>");
         StringBuilder nodeEmail = new StringBuilder("<h3><a name=\"email\">Email Messages (").append(countEmail).append(")</h3>");
         StringBuilder nodeWebSearch = new StringBuilder("<h3><a name=\"search\">Web Search Queries (").append(countWebSearch).append(")</h3>").append(tableHeader).append("<th>Program Name</th><th>Domain</th><th>Text</th><th>Last Modified</th></tr></thead><tbody>");
-
+        StringBuilder nodeExif = new StringBuilder("<h3><a name=\"exif\">Exif Metadata(").append(countExif).append(")</h3>").append(tableHeader).append("<th>File Name</th><th>Date Taken</th><th>Device Manufacturer</th><th>Device Model</th><th>Latitude</th><th>Longitude</th><th>Altitude</th></tr></thead><tbody>");
+                
+        
         int alt = 0;
         String altRow = "";
         for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
@@ -300,7 +310,7 @@ public class ReportHTML implements ReportModule {
                 }
                 String value = "";
                 Integer type = tempatt.getAttributeTypeID();
-                if (type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()) || type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())) {
+                if (type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()) || type.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID())) {
 
                     SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
                     value = sdf.format(new java.util.Date((tempatt.getValueLong() * 1000)));
@@ -340,7 +350,7 @@ public class ReportHTML implements ReportModule {
             }
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
                 artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
-                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID())).append("</td>");
                 artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID())).append("</td>");
                 artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>");
                 artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
@@ -350,7 +360,7 @@ public class ReportHTML implements ReportModule {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
                 artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID())).append("</td>");
                 artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>");
-                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID())).append("</td>");
                 artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
                 artifact.append("</tr>");
                 nodeWebDownload.append(artifact);
@@ -403,9 +413,26 @@ public class ReportHTML implements ReportModule {
                 artifact.append("<tr").append(altRow).append("><td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>");
                 artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID())).append("</td>");
                 artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID())).append("</td>");
-                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID())).append("</td>");
                 artifact.append("</tr>");
                 nodeWebSearch.append(artifact);
+            }
+            if(entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()){
+                try{
+                artifact.append("<tr").append(altRow).append("><td>").append(currentCase.getSleuthkitCase().getContentById(entry.getKey().getObjectID()).getName());
+                }
+                catch(Exception e){
+                logger.log(Level.WARNING, "Could not get file name attrached to EXIF artifact!", e);
+                artifact.append("<tr").append(altRow).append("><td>").append("Error");
+            }
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID())).append("</td>");
+                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID())).append("</td>");
+                artifact.append("</tr>");
+                nodeExif.append(artifact); 
             }
         }
         //Add them back in order
@@ -466,6 +493,10 @@ public class ReportHTML implements ReportModule {
             formatted_Report.append(nodeWebSearch);
             formatted_Report.append("</tbody></table>");
         }
+        if(countExif > 0 ){
+            formatted_Report.append(nodeExif);
+            formatted_Report.append("</tbody></table>");
+        }
         //end of master loop
         formatted_Report.append("</div></div></body></html>");
         formatted_header.append(formatted_Report);
@@ -497,7 +528,6 @@ public class ReportHTML implements ReportModule {
         } catch (IOException e) {
             Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Could not write out HTML report!", e);
         }
-
     }
 
     @Override

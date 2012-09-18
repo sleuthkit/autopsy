@@ -33,7 +33,7 @@ import org.openide.modules.Places;
 
 /**
  *
- * Platform utililities
+ * Platform utilities
  */
 public class PlatformUtil {
 
