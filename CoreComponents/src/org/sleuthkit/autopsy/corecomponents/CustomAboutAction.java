@@ -23,7 +23,7 @@ import org.openide.util.NbBundle;
 import org.netbeans.core.actions.AboutAction;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Action to open custom implementation of the "About" window from the Help menu.
@@ -32,7 +32,7 @@ public class CustomAboutAction extends AboutAction {
 
     @Override
     public void performAction() {
-        Log.noteAction(this.getClass());
+        Logger.noteAction(this.getClass());
 
         DialogDescriptor descriptor = new DialogDescriptor(
                 new ProductInformationPanel(),

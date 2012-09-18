@@ -1,4 +1,5 @@
 Manifest-Version: 1.0
+AutoUpdate-Show-In-Client: false
 OpenIDE-Module: org.sleuthkit.autopsy.testing
 OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/testing/Bundle.properties
 OpenIDE-Module-Specification-Version: 1.0

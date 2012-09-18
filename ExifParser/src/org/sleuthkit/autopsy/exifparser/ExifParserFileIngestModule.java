@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.exifparser;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
+import com.drew.imaging.jpeg.JpegProcessingException;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
@@ -152,9 +153,9 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
         } catch (TskCoreException ex) {
             Logger.getLogger(ExifParserFileIngestModule.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, "Failed to process the image.", ex);
+            logger.log(Level.WARNING, "Failed to process the image file: " + f.getName());
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "IOException when parsing image file.", ex);
+            logger.log(Level.WARNING, "IOException when parsing image file: " +  f.getName(), ex);
         } finally {
             try {
                 if(in!=null) { in.close(); }

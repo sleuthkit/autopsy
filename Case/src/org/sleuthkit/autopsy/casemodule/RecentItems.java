@@ -23,10 +23,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * This class is used to add the action to the recent case menu item. When the
@@ -51,7 +50,7 @@ class RecentItems implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Log.noteAction(this.getClass());
+        Logger.noteAction(this.getClass());
         
         // check if the file exists
         if(caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())){

@@ -23,8 +23,6 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.Action;
@@ -33,7 +31,8 @@ import javax.swing.JFrame;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import sun.rmi.runtime.Log;
 
 /**
  * The action to pop up the Case Properties Form window. By using this form,
@@ -60,7 +59,7 @@ public final class CasePropertiesAction extends CallableSystemAction {
      */
     @Override
     public void performAction() {
-        Log.noteAction(this.getClass());
+        Logger.noteAction(this.getClass());
         
         try {
             // create the popUp window for it
@@ -104,7 +103,7 @@ public final class CasePropertiesAction extends CallableSystemAction {
 
             popUpWindow.setVisible(true);
         } catch (Exception ex) {
-            Log.get(CasePropertiesAction.class).log(Level.WARNING, "Error displaying Case Properties window.", ex);
+            Logger.getLogger(CasePropertiesAction.class.getName()).log(Level.WARNING, "Error displaying Case Properties window.", ex);
         }
     }
 

@@ -89,9 +89,9 @@ Users will see the results from ingest modules in one of two ways:
 - Results are posted to the blackboard and will be displayed in the navigation tree
 - Messages are sent to the Ingest Inbox to notify a user of what has recently been found. 
 
-See the Blackboard (REFERENCE) documentation for posting results to it.  Modules are free to immediately post results when they find them or they can wait.  The  IngestServices.getUpdateFrequency() method returns the maximum amount of time that a module can wait before it posts its results. 
+See the Blackboard (REFERENCE) documentation for posting results to it.  Modules are free to immediately post results when they find them or they can wait until they are ready to post the results or until ingest is done.  
 
-An example of waiting to post results is the keyword search module.  It is resource intensive to commit the keyword index and do a keyword search.  Therefore, when its process() method is invoked, it checks if it is close to the getUpdateFrequency() since the last time it did a keyword search.  If it is, then it commits the index and performs the search. 
+An example of waiting to post results is the keyword search module.  It is resource intensive to commit the keyword index and do a keyword search.  Therefore, when its process() method is invoked, it checks if it is internal timer and result posting frequency setting to check if it is close to it since the last time it did a keyword search.  If it is, then it commits the index and performs the search. 
 
 When they add data to the blackboard, modules should notify listeners of the new data by periodically invoking IngestServices.fireModuleDataEvent() method. This allows other modules (and the main UI) to know when to query the blackboard for the latest data. 
 

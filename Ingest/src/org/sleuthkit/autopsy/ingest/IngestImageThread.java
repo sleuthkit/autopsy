@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 //ingester worker for image queue
 import java.awt.EventQueue;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;

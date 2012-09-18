@@ -34,7 +34,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.SwingWorker;
@@ -59,33 +59,8 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class IngestManager {
 
-    /**
-     * @Deprecated individual modules are be responsible for maintaining such settings
-     */
-    enum UpdateFrequency {
-
-        FAST(20),
-        AVG(10),
-        SLOW(5);
-        private final int time;
-
-        /**
-        * @Deprecated individual modules are be responsible for maintaining such settings
-        */
-        UpdateFrequency(int time) {
-            this.time = time;
-        }
-
-        /**
-        * @Deprecated individual modules are be responsible for maintaining such settings
-        */
-        int getTime() {
-            return time;
-        }
-    };
     private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
     private IngestManagerStats stats;
-    private volatile UpdateFrequency updateFrequency = UpdateFrequency.AVG;
     private boolean processUnallocSpace = true;
     //queues
     private final ImageQueue imageQueue = new ImageQueue();   // list of modules and images to analyze
@@ -531,23 +506,6 @@ public class IngestManager {
 
     }
 
-    /**
-     * returns the current minimal update frequency setting in minutes Modules
-     * should call this at init() to get current setting and use the setting to
-     * change notification and data refresh intervals
-     */
-    UpdateFrequency getUpdateFrequency() {
-        return updateFrequency;
-    }
-
-    /**
-     * set new minimal update frequency modules should use
-     *
-     * @param frequency to use in minutes
-     */
-    void setUpdateFrequency(UpdateFrequency frequency) {
-        this.updateFrequency = frequency;
-    }
 
     /**
      * returns if manager is currently configured to process unalloc space

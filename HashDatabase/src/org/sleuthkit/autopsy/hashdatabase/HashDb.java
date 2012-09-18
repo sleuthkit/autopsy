@@ -20,16 +20,12 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.io.File;
 import java.util.List;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskException;
 
@@ -128,7 +124,7 @@ public class HashDb implements Comparable<HashDb> {
         try {
             return hasIndex(databasePaths.get(0)); // TODO: support multiple paths
         } catch (TskException ex) {
-            Log.get(this.getClass()).log(Level.WARNING, "Error checking if index exists.", ex);
+            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Error checking if index exists.", ex);
             return false;
         }
     }
@@ -283,7 +279,7 @@ public class HashDb implements Comparable<HashDb> {
         protected void done() {
             indexing = false;
             progress.finish();
-            HashDbManagementPanel.getDefault().resync();
+            // TODO: Fire property event telling to resync
         }
     }
 }

@@ -24,7 +24,7 @@ import java.awt.Cursor;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.ListSelectionModel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.IconView;

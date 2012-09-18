@@ -31,7 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -123,7 +123,7 @@ public class HashDbXML {
      */
     public void addKnownBadSet(HashDb set) {
         knownBadSets.add(set);
-        save();
+        //save();
     }
     
     /**
@@ -131,7 +131,7 @@ public class HashDbXML {
      */
     public void addKnownBadSet(int index, HashDb set) {
         knownBadSets.add(index, set);
-        save();
+        //save();
     }
     
     /**
@@ -139,7 +139,7 @@ public class HashDbXML {
      */
     public void setNSRLSet(HashDb set) {
         this.nsrlSet = set;
-        save();
+        //save();
     }
     
     /**
@@ -147,7 +147,7 @@ public class HashDbXML {
      */
     public void removeKnownBadSetAt(int index) {
         knownBadSets.remove(index);
-        save();
+        //save();
     }
     
     /** 
@@ -155,7 +155,7 @@ public class HashDbXML {
      */
     public void removeNSRLSet() {
         this.nsrlSet = null;
-        save();
+        //save();
     }
     
     /**
@@ -186,7 +186,7 @@ public class HashDbXML {
      */
     public void setCalculate(boolean set) {
         this.calculate = set;
-        save();
+        //save();
     }
     
     /**
@@ -200,7 +200,7 @@ public class HashDbXML {
     /**
      * writes out current sets file replacing the last one
      */
-    private boolean save() {
+    public boolean save() {
         boolean success = false;
 
         DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();

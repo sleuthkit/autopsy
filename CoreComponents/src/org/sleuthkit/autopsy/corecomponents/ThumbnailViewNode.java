@@ -34,7 +34,7 @@ import javax.swing.JFrame;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
@@ -116,7 +116,7 @@ class ThumbnailViewNode extends FilterNode {
             mTracker.waitForID(1);
         } catch (InterruptedException ex) {
             // TODO: maybe make bubble instead
-            Log.get(ThumbnailViewNode.class).log(Level.WARNING, "Error while trying to scale the icon.", ex);
+            Logger.getLogger(ThumbnailViewNode.class.getName()).log(Level.WARNING, "Error while trying to scale the icon.", ex);
         }
         int width = result.getWidth(null);
         int height = result.getHeight(null);
@@ -137,7 +137,7 @@ class ThumbnailViewNode extends FilterNode {
             mTracker.waitForID(1);
         } catch (InterruptedException ex) {
             // TODO: maybe make bubble instead
-            Log.get(ThumbnailViewNode.class).log(Level.WARNING, "Error while trying to load the icon.", ex);
+            Logger.getLogger(ThumbnailViewNode.class.getName()).log(Level.WARNING, "Error while trying to load the icon.", ex);
         }
 
         // create 75x75 image for the icon with the icon on the center

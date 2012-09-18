@@ -48,6 +48,11 @@ public interface IngestConfigurator {
     void save();
     
     /**
+     * reload the simple panel
+     */
+    void reload();
+    
+    /**
      * find out if ingest is currently running
      * 
      * @return  true if ingest process is running, false otherwise

@@ -27,7 +27,7 @@ import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataContentViewerHex;
 import org.sleuthkit.autopsy.corecomponents.DataContentViewerString;
-import org.sleuthkit.autopsy.coreutils.Log;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * The actions to change between the "Hex View" and "String View".
@@ -56,7 +56,7 @@ public class ChangeViewAction extends AbstractAction implements Presenter.Popup 
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        Log.noteAction(this.getClass());
+        Logger.noteAction(this.getClass());
 
         DataContentTopComponent dctc = DataContentTopComponent.findInstance();
         int totalTabs = dctc.getTabPanels().getTabCount();

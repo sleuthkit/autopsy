@@ -15,19 +15,14 @@
         </folder>
         <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.directorytree.FileSearchProvider"/>
-            <!--<attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.filesearch.FileSearchAction.getDefault"/>-->
             <attr name="position" intvalue="250"/>
         </file>
     </folder>
     <folder name="Menu">
         <folder name="Tools">
-            <file name="org-sleuthkit-autopsy-report-generatereport-separatorBefore.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="799"/>
-            </file>
             <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-filesearch-FileSearchAction.instance"/>
-                <attr name="position" intvalue="800"/>
+                <attr name="position" intvalue="200"/>
             </file>
         </folder>
     </folder>
