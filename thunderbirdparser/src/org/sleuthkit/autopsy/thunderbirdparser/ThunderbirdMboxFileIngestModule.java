@@ -63,8 +63,13 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
     private static ThunderbirdMboxFileIngestModule instance = null;
     private IngestServices services;
     private static int messageId = 0;
-    private static final String classname = "Thunderbird Parser";
+    private static final String MODULE_NAME = "Thunderbird Parser";
     private final String hashDBModuleName = "Hash Lookup";
+    
+    final public static String MODULE_VERSION = "1.0";
+    
+    private String args;
+    
     private final GetIsFileKnownVisitor getIsFileKnown = new GetIsFileKnownVisitor();
 
     public static synchronized ThunderbirdMboxFileIngestModule getDefault() {
@@ -201,18 +206,18 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
                     bcc = ((propertyMap.get(Metadata.MESSAGE_BCC) != null) ? propertyMap.get(Metadata.MESSAGE_BCC) : "");
 
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(), classname, to));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID(), classname, cc));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID(), classname, bcc));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID(), classname, from));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID(), classname, content.replaceAll("\\<[^>]*>", "")));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID(), classname, content));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), classname, StringEscapeUtils.escapeHtml(emailId)));
-                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_REPLY_ID.getTypeID(), classname, "",));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(), classname, date));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(), classname, date));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), classname, subject));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), classname, folderPath));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(), MODULE_NAME, to));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID(), MODULE_NAME, cc));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID(), MODULE_NAME, bcc));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID(), MODULE_NAME, from));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID(), MODULE_NAME, content.replaceAll("\\<[^>]*>", "")));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID(), MODULE_NAME, content));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID.getTypeID(), MODULE_NAME, StringEscapeUtils.escapeHtml(emailId)));
+                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_REPLY_ID.getTypeID(), MODULE_NAME, "",));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID(), MODULE_NAME, date));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID(), MODULE_NAME, date));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT.getTypeID(), MODULE_NAME, subject));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), MODULE_NAME, folderPath));
                     BlackboardArtifact bbart;
                     try {
                         bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
@@ -220,7 +225,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
                     } catch (TskCoreException ex) {
                         Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
                     }
-                    services.fireModuleDataEvent(new ModuleDataEvent(classname, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
+                    services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
                 }
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
@@ -246,13 +251,29 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
 
     @Override
     public String getName() {
-        return "Thunderbird Parser";
+        return MODULE_NAME;
     }
 
     @Override
     public String getDescription() {
-        return "This class parses through a file to determine if it is an mbox file and if so, populates an email artifact for it in the blackboard.";
+        return "This module detects and parses mbox Thunderbird files and populates email artifacts in the blackboard.";
     }
+    
+    @Override
+    public String getVersion() {
+        return MODULE_VERSION;
+    }
+
+    @Override
+    public String getArguments() {
+        return args;
+    }
+
+    @Override
+    public void setArguments(String args) {
+        this.args = args;
+    }
+	
 
     @Override
     public void init(IngestModuleInit initContext) {

@@ -46,12 +46,14 @@ import org.sleuthkit.datamodel.*;
  * Extracting windows registry data using regripper
  */
 public class ExtractRegistry extends Extract implements IngestModuleImage {
-    
+
     public Logger logger = Logger.getLogger(this.getClass().getName());
     private String RR_PATH;
     boolean rrFound = false;
     private int sysid;
     private IngestServices services;
+    final public static String MODULE_VERSION = "1.0";
+    private String args;
 
     ExtractRegistry() {
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false);
@@ -76,6 +78,21 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
         logger.log(Level.INFO, "RegRipper home: " + rrHome);
 
         RR_PATH = rrHome + File.separator + "rip.exe";
+    }
+
+    @Override
+    public String getVersion() {
+        return MODULE_VERSION;
+    }
+
+    @Override
+    public String getArguments() {
+        return args;
+    }
+
+    @Override
+    public void setArguments(String args) {
+        this.args = args;
     }
 
     private void getregistryfiles(Image image, IngestImageWorkerController controller) {
@@ -301,7 +318,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                                 bbart.addAttributes(bbattributes);
                             }
                         } else if ("office".equals(context)) {
-                                                       
+
                             BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));

@@ -49,6 +49,10 @@ public final class RAImageIngestModule implements IngestModuleImage {
     private Chrome chre = null;
     private ExtractIE eere = null;
     private SearchEngineURLQueryAnalyzer usq = null;
+    
+    final public static String MODULE_VERSION = "1.0";
+    
+    private String args;
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
@@ -162,6 +166,22 @@ public final class RAImageIngestModule implements IngestModuleImage {
     public ModuleType getType() {
         return ModuleType.Image;
     }
+    
+    @Override
+    public String getVersion() {
+        return MODULE_VERSION;
+    }
+
+    @Override
+    public String getArguments() {
+        return args;
+    }
+
+    @Override
+    public void setArguments(String args) {
+        this.args = args;
+    }
+	
 
     @Override
     public boolean hasSimpleConfiguration() {
