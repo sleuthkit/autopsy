@@ -57,11 +57,31 @@ public class Chrome extends Extract implements IngestModuleImage {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     public int ChromeCount = 0;
     
+    final public static String MODULE_VERSION = "1.0";
+    
+    private String args;
+    
     private IngestServices services;
 
     public Chrome() {
         moduleName = "Chrome";
     }
+    
+    @Override
+    public String getVersion() {
+        return MODULE_VERSION;
+    }
+
+    @Override
+    public String getArguments() {
+        return args;
+    }
+
+    @Override
+    public void setArguments(String args) {
+        this.args = args;
+    }
+	
 
     @Override
     public void process(Image image, IngestImageWorkerController controller) {

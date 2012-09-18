@@ -64,6 +64,9 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     private IngestServices services;
     static final String MODULE_NAME = "Search Engine Query Analyzer";
+    final public static String MODULE_VERSION = "1.0";
+    private String args;
+    
     public static final String XMLFile = "SEQUAMappings.xml";
     private static String[] searchEngineNames;
     private static SearchEngine[] engines;
@@ -147,10 +150,10 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     /**
      * Returns which of the supported SearchEngines, if any, the given string
      * belongs to.
-     *     
+     *
      * @param domain domain as part of the URL
      * @return supported search engine the domain belongs to, if any
-     *     
+     *
      */
     private static SearchEngine getSearchEngine(String domain) {
         for (int i = 0; i < engines.length; i++) {
@@ -171,7 +174,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     /**
      * Attempts to extract the query from a URL.
-     *     
+     *
      * @param url The URL string to be dissected.
      * @return The extracted search query.
      */
@@ -368,7 +371,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     @Override
     public String getName() {
-        return this.moduleName;
+        return MODULE_NAME;
     }
 
     @Override
@@ -378,6 +381,21 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
             total += name + "\n";
         }
         return "Extracts search queries on the following search engines: " + total;
+    }
+
+    @Override
+    public String getVersion() {
+        return MODULE_VERSION;
+    }
+
+    @Override
+    public String getArguments() {
+        return args;
+    }
+
+    @Override
+    public void setArguments(String args) {
+        this.args = args;
     }
 
     @Override

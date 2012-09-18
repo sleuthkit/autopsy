@@ -29,8 +29,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Example implementation of a file ingest module 
- * 
+ * Example implementation of a file ingest module
+ *
  */
 public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile {
 
@@ -38,13 +38,16 @@ public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile
     private static ExampleAbstractFileIngestModule instance = null;
     private IngestServices services;
     private static int messageId = 0;
+    public static final String MODULE_NAME = "Example AbstractFile Module";
+    public static final String MODULE_DESC = "Example AbstractFile Module description";
+    public static final String MODULE_VERSION = "1.0";
+    private String args;
 
     //file ingest modules require a private constructor
     //to ensure singleton instances
     private ExampleAbstractFileIngestModule() {
-        
     }
-    
+
     public static synchronized ExampleAbstractFileIngestModule getDefault() {
         if (instance == null) {
             instance = new ExampleAbstractFileIngestModule();
@@ -75,15 +78,28 @@ public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile
 
     @Override
     public String getName() {
-        return "Example AbstractFile Module";
+        return MODULE_NAME;
     }
 
     @Override
     public String getDescription() {
-        return "Example AbstractFile Module description";
+        return MODULE_DESC;
     }
-    
-    
+
+    @Override
+    public String getVersion() {
+        return MODULE_VERSION;
+    }
+
+    @Override
+    public String getArguments() {
+        return args;
+    }
+
+    @Override
+    public void setArguments(String args) {
+        this.args = args;
+    }
 
     @Override
     public void init(IngestModuleInit initContext) {
@@ -105,12 +121,12 @@ public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile
     public ModuleType getType() {
         return ModuleType.AbstractFile;
     }
-    
+
     @Override
     public boolean hasSimpleConfiguration() {
         return false;
     }
-    
+
     @Override
     public boolean hasAdvancedConfiguration() {
         return false;
@@ -120,22 +136,21 @@ public class ExampleAbstractFileIngestModule implements IngestModuleAbstractFile
     public javax.swing.JPanel getSimpleConfiguration() {
         return null;
     }
-    
+
     @Override
     public javax.swing.JPanel getAdvancedConfiguration() {
         return null;
     }
-    
+
     @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
     }
-    
-    
+
     @Override
     public void saveAdvancedConfiguration() {
     }
-    
+
     @Override
     public void saveSimpleConfiguration() {
     }
