@@ -74,6 +74,12 @@ public interface IngestModuleAbstract {
     public String getName();
     
     /**
+     * Gets the module version
+     * @return module version string
+     */
+    public String getVersion();
+    
+    /**
      * Gets user-friendly description of the module
      * @return module description
      */
@@ -84,6 +90,19 @@ public interface IngestModuleAbstract {
      * @return module type
      */
     public ModuleType getType();
+    
+    
+    /**
+     * Gets the arguments as set in XML
+     * @return arguments string
+     */
+    public String getArguments();
+    
+    /**
+     * Sets the arguments from XML
+     * @param args arguments string in XML
+     */
+    public void setArguments(String args);
     
      /**
      * A module can manage and use additional threads to perform some work in the background.

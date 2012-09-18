@@ -89,10 +89,31 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     private KeyValue IE_PASCO_LUT = new KeyValue(BrowserType.IE.name(), BrowserType.IE.getType());
     public LinkedHashMap<String, Object> IE_OBJ;
     boolean pascoFound = false;
+    
+    final public static String MODULE_VERSION = "1.0";
+    
+    private String args;
 
     public ExtractIE() {
         moduleName = "Internet Explorer";
     }
+    
+    @Override
+    public String getVersion() {
+        return MODULE_VERSION;
+    }
+
+    @Override
+    public String getArguments() {
+        return args;
+    }
+
+    @Override
+    public void setArguments(String args) {
+        this.args = args;
+    }
+	
+	
 
     @Override
     public void process(Image image, IngestImageWorkerController controller) {

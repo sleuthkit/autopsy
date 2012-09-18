@@ -29,8 +29,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * Example implementation of an image ingest service 
- * 
+ * Example implementation of an image ingest service
+ *
  */
 public final class ExampleImageIngestModule implements IngestModuleImage {
 
@@ -38,6 +38,10 @@ public final class ExampleImageIngestModule implements IngestModuleImage {
     private static ExampleImageIngestModule defaultInstance = null;
     private IngestServices services;
     private static int messageId = 0;
+    public static final String MODULE_NAME = "Example Image Module";
+    public static final String MODULE_DESC = "Example Image Module description";
+    public static final String MODULE_VERSION = "1.0";
+    private String args;
 
     //public constructor is required
     //as multiple instances are created for processing multiple images simultenously
@@ -99,12 +103,27 @@ public final class ExampleImageIngestModule implements IngestModuleImage {
 
     @Override
     public String getName() {
-        return "Example Image Service";
+        return MODULE_NAME;
     }
-    
+
     @Override
     public String getDescription() {
-        return "Example Image Service description";
+        return MODULE_DESC;
+    }
+
+    @Override
+    public String getVersion() {
+        return MODULE_VERSION;
+    }
+
+    @Override
+    public String getArguments() {
+        return args;
+    }
+
+    @Override
+    public void setArguments(String args) {
+        this.args = args;
     }
 
     @Override
@@ -129,11 +148,11 @@ public final class ExampleImageIngestModule implements IngestModuleImage {
         return ModuleType.Image;
     }
 
-     @Override
+    @Override
     public boolean hasSimpleConfiguration() {
         return false;
     }
-    
+
     @Override
     public boolean hasAdvancedConfiguration() {
         return false;
@@ -143,22 +162,21 @@ public final class ExampleImageIngestModule implements IngestModuleImage {
     public javax.swing.JPanel getSimpleConfiguration() {
         return null;
     }
-    
+
     @Override
     public javax.swing.JPanel getAdvancedConfiguration() {
         return null;
     }
-    
+
     @Override
     public boolean hasBackgroundJobsRunning() {
         return false;
     }
-    
-    
+
     @Override
     public void saveAdvancedConfiguration() {
     }
-    
+
     @Override
     public void saveSimpleConfiguration() {
     }

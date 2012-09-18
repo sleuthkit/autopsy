@@ -54,11 +54,31 @@ public class Firefox extends Extract implements IngestModuleImage {
     private static final String ffdownloadquery = "select target, source,(startTime/1000000) as startTime, maxBytes  from moz_downloads";
     public int FireFoxCount = 0;
     
+    final public static String MODULE_VERSION = "1.0";
+    
+    private String args;
+    
     private IngestServices services;
 
     public Firefox() {
         moduleName = "FireFox";
     }
+    
+    @Override
+    public String getVersion() {
+        return MODULE_VERSION;
+    }
+
+    @Override
+    public String getArguments() {
+        return args;
+    }
+
+    @Override
+    public void setArguments(String args) {
+        this.args = args;
+    }
+	
 
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
