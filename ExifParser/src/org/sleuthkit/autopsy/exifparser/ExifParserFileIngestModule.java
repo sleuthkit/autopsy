@@ -57,7 +57,11 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
 
     private IngestServices services;
     
-    final String MODULE_NAME = "Exif Parser";
+    final public static String MODULE_NAME = "Exif Parser";
+    final public static String MODULE_VERSION = "1.0";
+    
+    private String args;
+    
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private static ExifParserFileIngestModule defaultInstance = null;
     private static int messageId = 0;
@@ -194,6 +198,23 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
         //module specific cleanup due to completion here
     }
 
+    @Override
+    public String getVersion() {
+        return MODULE_VERSION;
+    }
+
+    @Override
+    public String getArguments() {
+        return args;
+    }
+
+    @Override
+    public void setArguments(String args) {
+        this.args = args;
+    }
+
+    
+    
     @Override
     public String getName() {
         return "Exif Image Parser";

@@ -65,8 +65,13 @@ import org.w3c.dom.NodeList;
 public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModuleImage {
 
     private IngestServices services;
-    static final String MODULE_NAME = "Search Engine URL Query Analyzer";
-    public static final String XMLFile = "SEUQAMappings.xml";
+    
+    public static final String MODULE_NAME = "Search Engine URL Query Analyzer";
+    public final static String MODULE_VERSION = "1.0";
+    private String args;
+    
+    public static final String XMLFile = "SEQUAMappings.xml";
+
     
     private static String[] searchEngineNames;
     private static SearchEngine[] engines;
@@ -380,7 +385,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     @Override
     public String getName() {
-        return this.moduleName;
+        return MODULE_NAME;
     }
 
     @Override
@@ -390,6 +395,21 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
             total += name + "\n";
         }
         return "Extracts search queries on the following search engines: \n" + total;
+    }
+
+    @Override
+    public String getVersion() {
+        return MODULE_VERSION;
+    }
+
+    @Override
+    public String getArguments() {
+        return args;
+    }
+
+    @Override
+    public void setArguments(String args) {
+        this.args = args;
     }
 
     @Override
