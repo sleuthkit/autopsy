@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -425,12 +426,24 @@ public class ReportHTML implements ReportModule {
                 logger.log(Level.WARNING, "Could not get file name attrached to EXIF artifact!", e);
                 artifact.append("<tr").append(altRow).append("><td>").append("Error");
             }
-                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>");
-                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID())).append("</td>");
-                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID())).append("</td>");
-                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID())).append("</td>");
-                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID())).append("</td>");
-                artifact.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID())).append("</td>");
+
+
+                Collection<String> bbats = new ArrayList<String>();
+                bbats.add(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                bbats.add(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
+                bbats.add(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
+                bbats.add(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
+                bbats.add(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
+                bbats.add(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
+                
+                for(String s : bbats){
+                    String modified = "";
+                     if(s != null && !s.equals("null")){
+                        modified = s;
+                    }
+                    artifact.append("<td>").append(modified).append("</td>");
+                   
+                }
                 artifact.append("</tr>");
                 nodeExif.append(artifact); 
             }
