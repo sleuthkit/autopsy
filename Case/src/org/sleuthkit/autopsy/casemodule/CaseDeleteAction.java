@@ -32,7 +32,6 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import sun.rmi.runtime.Log;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;

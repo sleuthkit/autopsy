@@ -158,7 +158,9 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             try {
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", datetime));
+                    //TODO revisit usage of deprecated constructor as per TSK-583
+                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", datetime));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", datetime));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", DecodeUtil.decodeURL(url)));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
@@ -206,9 +208,13 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", DecodeUtil.decodeURL(url)));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", datetime));
+                    //TODO Revisit usage of deprecated Constructor as of TSK-583
+                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", datetime));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", (name != null) ? name : ""));
+                    //TODO Revisit usage of deprecated Constructor as of TSK-583
+                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", (name != null) ? name : ""));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", (name != null) ? name : ""));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, Cookie, bbattributes);
@@ -241,7 +247,9 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", path));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", Util.getFileName(path)));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(path)));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Date Created", datetime));
+                    //TODO Revisit usage of deprecated constructor as per TSK-583
+                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Date Created", datetime));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity",  datetime));
                 this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, Recent, bbattributes);
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
@@ -473,7 +481,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", realurl));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", DecodeUtil.decodeURL(realurl)));
 
-                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", ftime));
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", ftime));
 
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID(), "RecentActivity", ""));
 
