@@ -117,13 +117,17 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
             
             // GPS Stuff
             GpsDirectory gpsDir = metadata.getDirectory(GpsDirectory.class);
+            String latitude, latRef, longitude, longRef, altitude;
+            latitude = latRef = longitude = longRef = altitude = "";
+            
             if(gpsDir != null) {
-                String latitude = gpsDir.getString(GpsDirectory.TAG_GPS_LATITUDE);
-                String latRef = gpsDir.getString(GpsDirectory.TAG_GPS_LATITUDE_REF);
-                String longitude = gpsDir.getString(GpsDirectory.TAG_GPS_LONGITUDE);
-                String longRef = gpsDir.getString(GpsDirectory.TAG_GPS_LONGITUDE_REF);
-                String altitude = gpsDir.getString(GpsDirectory.TAG_GPS_ALTITUDE);
-                
+                 latitude = gpsDir.getString(GpsDirectory.TAG_GPS_LATITUDE);
+                 latRef = gpsDir.getString(GpsDirectory.TAG_GPS_LATITUDE_REF);
+                 longitude = gpsDir.getString(GpsDirectory.TAG_GPS_LONGITUDE);
+                 longRef = gpsDir.getString(GpsDirectory.TAG_GPS_LONGITUDE_REF);
+                 altitude = gpsDir.getString(GpsDirectory.TAG_GPS_ALTITUDE);
+            }
+ 
                 if(latitude!= null && latRef!=null) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), MODULE_NAME, latitude + " " +  latRef));
                 } if(longitude!=null && longRef!=null) {
@@ -131,7 +135,8 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
                 } if(altitude!=null) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), MODULE_NAME, altitude));
                 }
-            }
+            
+           
             
             // Device info
             ExifIFD0Directory devDir = metadata.getDirectory(ExifIFD0Directory.class);
