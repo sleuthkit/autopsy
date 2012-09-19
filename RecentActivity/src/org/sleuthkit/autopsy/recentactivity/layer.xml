@@ -2,10 +2,6 @@
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
        <folder name="Services">
-        <file name="org-sleuthkit-autopsy-recentactivity-RAImageIngestModule.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestModuleImage"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.recentactivity.RAImageIngestModule.getDefault"/>
-            <attr name="position" intvalue="110"/>
-        </file>
+       
         </folder>
 </filesystem>

@@ -22,10 +22,6 @@
         </folder>
     </folder>
     <folder name="Services">
-        <file name="org-sleuthkit-autopsy-hashdatabase-HashDbIngestModule.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.hashdatabase.HashDbIngestModule.getDefault"/>
-            <attr name="position" intvalue="200"/>
-        </file>
+       
     </folder>
 </filesystem>

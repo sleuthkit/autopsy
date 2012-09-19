@@ -16,11 +16,7 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.keywordsearch.HighlightedMatchesSource.getDefault"/>
             <attr name="position" intvalue="250"/>
         </file>
-        <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchIngestModule.instance">
-            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.getDefault"/>
-            <attr name="position" intvalue="300"/>
-        </file>
+       
     </folder>
     <folder name="Toolbars">
         <folder name="Keyword">
