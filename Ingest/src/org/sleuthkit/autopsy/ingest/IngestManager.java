@@ -41,7 +41,6 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -79,6 +78,8 @@ public class IngestManager {
     private final static PropertyChangeSupport pcs = new PropertyChangeSupport(IngestManager.class);
     //monitor
     private final IngestMonitor ingestMonitor = new IngestMonitor();
+    //module loader
+    private IngestModuleLoader moduleLoader = null;
 
     /**
      * Possible events about ingest modules Event listeners can get the event
@@ -124,11 +125,17 @@ public class IngestManager {
     private static volatile IngestManager instance;
 
     private IngestManager() {
+        try {
+            moduleLoader = IngestModuleLoader.getDefault();
+        } catch (IngestModuleLoaderException ex) {
+            logger.log(Level.SEVERE, "Error getting module loader");
+        }
+
         imageIngesters = new ArrayList<IngestImageThread>();
         abstractFileModules = enumerateAbstractFileModules();
         imageModules = enumerateImageModules();
     }
-    
+
     /**
      * called by Installer in AWT thread once the Window System is ready
      */
@@ -150,7 +157,6 @@ public class IngestManager {
         }
         return instance;
     }
-
 
     /**
      * Add property change listener to listen to ingest events
@@ -212,9 +218,9 @@ public class IngestManager {
     /**
      * IngestManager entry point, enqueues image to be processed. Spawns
      * background thread which enumerates all sorted files and executes chosen
-     * modules per file in a pre-determined order. Notifies modules when work
-     * is complete or should be interrupted using complete() and stop() calls.
-     * Does not block and can be called multiple times to enqueue more work to
+     * modules per file in a pre-determined order. Notifies modules when work is
+     * complete or should be interrupted using complete() and stop() calls. Does
+     * not block and can be called multiple times to enqueue more work to
      * already running background process.
      *
      * @param modules modules to execute on the image
@@ -233,8 +239,8 @@ public class IngestManager {
      * if AbstractFile module is still running, do nothing and allow it to
      * consume queue otherwise start /restart AbstractFile worker
      *
-     * image workers run per (module,image). Check if one for the
-     * (module,image) is already running otherwise start/restart the worker
+     * image workers run per (module,image). Check if one for the (module,image)
+     * is already running otherwise start/restart the worker
      */
     private synchronized void startAll() {
         logger.log(Level.INFO, "Image queue: " + this.imageQueue.toString());
@@ -277,7 +283,9 @@ public class IngestManager {
                     imageIngesters.add(newImageWorker);
 
                     //image modules are now initialized per instance
-                    quModule.init(new IngestModuleInit() );
+                    IngestModuleInit moduleInit = new IngestModuleInit();
+                    moduleInit.setModuleArgs(quModule.getArguments());
+                    quModule.init(moduleInit);
                     newImageWorker.execute();
                     IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), quModule.getName());
                 }
@@ -307,7 +315,9 @@ public class IngestManager {
             abstractFileIngester = new IngestAbstractFileThread();
             //init all fs modules, everytime new worker starts
             for (IngestModuleAbstractFile s : abstractFileModules) {
-                s.init(new IngestModuleInit() );
+                IngestModuleInit moduleInit = new IngestModuleInit();
+                moduleInit.setModuleArgs(s.getArguments());
+                s.init(moduleInit);
             }
             abstractFileIngester.execute();
         }
@@ -393,20 +403,20 @@ public class IngestManager {
         }
 
     }
-    
+
     /**
      * Test is any file ingest modules are running.
-     * 
+     *
      * @return true if any ingest modules are running, false otherwise
      */
     public synchronized boolean areModulesRunning() {
         for (IngestModuleAbstract serv : abstractFileModules) {
-            if(serv.hasBackgroundJobsRunning()) {
+            if (serv.hasBackgroundJobsRunning()) {
                 return true;
             }
         }
         for (IngestImageThread thread : imageIngesters) {
-            if(isModuleRunning(thread.getModule())) {
+            if (isModuleRunning(thread.getModule())) {
                 return false;
             }
         }
@@ -457,9 +467,9 @@ public class IngestManager {
     }
 
     /**
-     * check if the module is running (was started and not yet
-     * complete/stopped) give a complete answer, i.e. it's already consumed all
-     * files but it might have background threads running
+     * check if the module is running (was started and not yet complete/stopped)
+     * give a complete answer, i.e. it's already consumed all files but it might
+     * have background threads running
      *
      */
     public boolean isModuleRunning(final IngestModuleAbstract module) {
@@ -505,7 +515,6 @@ public class IngestManager {
 
 
     }
-
 
     /**
      * returns if manager is currently configured to process unalloc space
@@ -553,27 +562,19 @@ public class IngestManager {
     }
 
     /**
-     * helper to return all image modules managed (using Lookup API) sorted in
-     * Lookup position order
+     * helper to return all loaded image modules managed sorted in
+     * order as specified in pipeline_config XML
      */
-    public static List<IngestModuleImage> enumerateImageModules() {
-        List<IngestModuleImage> ret = new ArrayList<IngestModuleImage>();
-        for (IngestModuleImage list : Lookup.getDefault().lookupAll(IngestModuleImage.class)) {
-            ret.add(list);
-        }
-        return ret;
+    public List<IngestModuleImage> enumerateImageModules() {
+        return moduleLoader.getImageIngestModules();
     }
 
-    /**
-     * helper to return all file/dir modules managed (using Lookup API) sorted
-     * in Lookup position order
+     /**
+     * helper to return all loaded file modules managed sorted in
+     * order as specified in pipeline_config XML
      */
-    public static List<IngestModuleAbstractFile> enumerateAbstractFileModules() {
-        List<IngestModuleAbstractFile> ret = new ArrayList<IngestModuleAbstractFile>();
-        for (IngestModuleAbstractFile list : Lookup.getDefault().lookupAll(IngestModuleAbstractFile.class)) {
-            ret.add(list);
-        }
-        return ret;
+    public List<IngestModuleAbstractFile> enumerateAbstractFileModules() {
+        return moduleLoader.getAbstractFileIngestModules();
     }
 
     /**
@@ -940,8 +941,8 @@ public class IngestManager {
         }
 
         /**
-         * records stop time of the file process for the module must be
-         * preceded by logFileModuleStartProcess for the same module
+         * records stop time of the file process for the module must be preceded
+         * by logFileModuleStartProcess for the same module
          *
          * @param module to record stop time for processing a file
          */
@@ -1283,18 +1284,17 @@ public class IngestManager {
                     progress.progress(moduleName + " " + imageName, processed);
                     switch (module.getType()) {
                         case Image:
-                            //enqueue a new instance of image module
-                            try {
-                                final IngestModuleImage newModuleInstance = (IngestModuleImage) (module.getClass()).newInstance();
+                            final IngestModuleImage newModuleInstance =
+                                    (IngestModuleImage) moduleLoader.getNewIngestModuleInstance(module);
+                            if (newModuleInstance != null) {
                                 addImage(newModuleInstance, image);
                                 logger.log(Level.INFO, "Added image " + image.getName() + " with module " + module.getName());
-                            } catch (InstantiationException e) {
-                                logger.log(Level.SEVERE, "Cannot instantiate module: " + module.getName(), e);
-                            } catch (IllegalAccessException e) {
-                                logger.log(Level.SEVERE, "Cannot instantiate module: " + module.getName(), e);
-                            }
 
-                            //addImage((IngestModuleImage) module, image);
+
+                                //addImage((IngestModuleImage) module, image);
+                            } else {
+                                logger.log(Level.INFO, "Error loading module and adding image " + image.getName() + " with module " + module.getName());
+                            }
                             break;
                         case AbstractFile:
                             if (files == null) {

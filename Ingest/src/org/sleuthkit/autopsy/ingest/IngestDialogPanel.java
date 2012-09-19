@@ -76,11 +76,11 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     private void customizeComponents() {
         modulesTable.setModel(tableModel);
         this.manager = IngestManager.getDefault();
-        Collection<IngestModuleImage> imageModules = IngestManager.enumerateImageModules();
+        Collection<IngestModuleImage> imageModules = manager.enumerateImageModules();
         for (final IngestModuleImage module : imageModules) {
             addModule(module);
         }
-        Collection<IngestModuleAbstractFile> fsModules = IngestManager.enumerateAbstractFileModules();
+        Collection<IngestModuleAbstractFile> fsModules = manager.enumerateAbstractFileModules();
         for (final IngestModuleAbstractFile module : fsModules) {
             addModule(module);
         }

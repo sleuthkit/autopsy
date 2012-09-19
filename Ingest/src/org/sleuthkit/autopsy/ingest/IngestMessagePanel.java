@@ -331,11 +331,12 @@ class IngestMessagePanel extends javax.swing.JPanel {
         }
 
         private void init() {
+            final IngestManager manager = IngestManager.getDefault();
             //initialize groupings map with modules
-            for (IngestModuleAbstract module : IngestManager.enumerateAbstractFileModules()) {
+            for (IngestModuleAbstract module : manager.enumerateAbstractFileModules()) {
                 groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
             }
-            for (IngestModuleAbstract module : IngestManager.enumerateImageModules()) {
+            for (IngestModuleAbstract module : manager.enumerateImageModules()) {
                 groupings.put(module, new HashMap<String, List<IngestMessageGroup>>());
             }
         }
