@@ -156,7 +156,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
                                 .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
                                 .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 4, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -206,6 +206,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
                 listsTable.getSelectionModel().addSelectionInterval(i, i);
             }
         }
+        tableModel.resync();
     }//GEN-LAST:event_newListButtonActionPerformed
 
     private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
@@ -283,6 +284,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
             }
 
         }
+        tableModel.resync();
     }//GEN-LAST:event_importButtonActionPerformed
 
     private void listsTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_listsTableKeyPressed
@@ -295,6 +297,7 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
             String listName = deleter.getListNames().get(selected[0]);
             KeywordSearchListsXML.getCurrent().deleteList(listName);
         }
+        tableModel.resync();
     }//GEN-LAST:event_listsTableKeyPressed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -313,6 +316,10 @@ class KeywordSearchListsManagementPanel extends javax.swing.JPanel implements Op
     @Override
     public void load() {
         listsTable.clearSelection();
+    }
+    
+    void resync() {
+        tableModel.resync();
     }
 
     
