@@ -70,7 +70,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     public final static String MODULE_VERSION = "1.0";
     private String args;
     
-    public static final String XMLFile = "SEQUAMappings.xml";
+    public static final String XMLFile = "SEUQAMappings.xml";
 
     
     private static String[] searchEngineNames;
