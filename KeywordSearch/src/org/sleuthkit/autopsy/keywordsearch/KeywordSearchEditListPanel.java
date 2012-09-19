@@ -418,11 +418,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
         deleteListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/delete16.png"))); // NOI18N
         deleteListButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.deleteListButton.text")); // NOI18N
-        deleteListButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteListButtonActionPerformed(evt);
-            }
-        });
 
         saveListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/save16.png"))); // NOI18N
         saveListButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.saveListButton.text")); // NOI18N
@@ -485,7 +480,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                 .addComponent(keywordsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 188, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(listEditorPanelLayout.createSequentialGroup()
                         .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
@@ -502,7 +496,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
                 .addComponent(useForIngestCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(ingestMessagesCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 52, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(exportButton)
                     .addComponent(saveListButton)
@@ -677,20 +671,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
         }
     }//GEN-LAST:event_exportButtonActionPerformed
 
-    private void deleteListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteListButtonActionPerformed
-        if (KeywordSearchUtil.displayConfirmDialog("Delete a keyword list"
-                , "This will delete the keyword list globally (for all Cases). "
-                + "Do you want to proceed with the deletion? "
-                , KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) ) {
-        
-        KeywordSearchListsXML deleter = KeywordSearchListsXML.getCurrent();
-        String toDelete = currentKeywordList.getName();
-        currentKeywordList = null;
-        initButtons();
-        deleter.deleteList(toDelete);
-        }
-    }//GEN-LAST:event_deleteListButtonActionPerformed
-
     private void chRegexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chRegexActionPerformed
         selectorsCombo.setEnabled(chRegex.isEnabled() && chRegex.isSelected());
     }//GEN-LAST:event_chRegexActionPerformed
@@ -763,6 +743,18 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
     @Override
     public void load() {
         // Implemented by parent panel
+    }
+    
+    KeywordSearchList getCurrentKeywordList() {
+        return currentKeywordList;
+    }
+    
+    void setCurrentKeywordList(KeywordSearchList list) {
+        currentKeywordList = list;
+    }
+    
+    void addDeleteButtonActionPerformed(ActionListener l) {
+        deleteListButton.addActionListener(l);
     }
 
 
