@@ -39,6 +39,11 @@ abstract public class Extract implements IngestModuleImage{
     protected ArrayList<String> errorMessages = null;
     protected String moduleName = "";
     
+    //hide public constructor to prevent from instantiation by ingest module loader
+    Extract() {
+        
+    }
+    
     List<String> getErrorMessages() {
         if(errorMessages == null) {
             errorMessages = new ArrayList<String>();

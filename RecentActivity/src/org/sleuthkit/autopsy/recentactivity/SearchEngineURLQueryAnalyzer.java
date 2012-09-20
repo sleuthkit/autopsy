@@ -79,6 +79,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     private static final SearchEngine NullEngine = new SearchEngine("NONE", "NONE", new HashMap<String,String>());
 
     
+    //hide public constructor to prevent from instantiation by ingest module loader
     SearchEngineURLQueryAnalyzer() {
           
     }
