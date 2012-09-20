@@ -1,0 +1,12 @@
+
+<ivy-module version="2.0">
+    <info organisation="org.sleuthkit.autopsy" module="ingest"/>
+    <configurations >
+        <!-- module dependencies -->
+        <conf name="autopsy_ingest"/>
+        
+    </configurations>
+    <dependencies>
+        <dependency conf="autopsy_ingest->*" org="org.reflections" name="reflections" rev="0.9.8"/>
+    </dependencies>
+</ivy-module>

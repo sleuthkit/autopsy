@@ -40,6 +40,54 @@ public class PlatformUtil {
     private static String javaPath = null;
 
     /**
+     * Get root path where the application is installed
+     *
+     * @return absolute path string to the install root dir
+     */
+    public static String getInstallPath() {
+        File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false);
+        File rootPath = coreFolder.getParentFile().getParentFile();
+        return rootPath.getAbsolutePath();
+    }
+
+    /**
+     * Get root path where the application modules are installed
+     *
+     * @return absolute path string to the install modules root dir, or null if
+     * not found
+     */
+    public static String getInstallModulesPath() {
+        File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false);
+
+        File rootPath = coreFolder.getParentFile();
+        String modulesPath = rootPath.getAbsolutePath() + File.separator + "modules";
+        File modulesPathF = new File(modulesPath);
+        if (modulesPathF.exists() && modulesPathF.isDirectory()) {
+            return modulesPath;
+        } else {
+            rootPath = rootPath.getParentFile();
+            modulesPath = rootPath.getAbsolutePath() + File.separator + "modules";
+            modulesPathF = new File(modulesPath);
+            if (modulesPathF.exists() && modulesPathF.isDirectory()) {
+                return modulesPath;
+            } else {
+                return null;
+            }
+        }
+
+    }
+
+    /**
+     * Get root path where the user modules are installed
+     *
+     * @return absolute path string to the install modules root dir, or null if
+     * not found
+     */
+    public static String getUserModulesPath() {
+        return getUserDirectory().getAbsolutePath() + File.separator + "modules";
+    }
+
+    /**
      * get file path to the java executable binary use embedded java if
      * available, otherwise use system java in PATH no validation is done if
      * java exists in PATH
@@ -51,9 +99,7 @@ public class PlatformUtil {
             return javaPath;
         }
 
-        File coreFolder = InstalledFileLocator.getDefault().locate("core", PlatformUtil.class.getPackage().getName(), false);
-        File rootPath = coreFolder.getParentFile().getParentFile();
-        File jrePath = new File(rootPath.getAbsolutePath() + File.separator + "jre6");
+        File jrePath = new File(getInstallPath() + File.separator + "jre6");
 
         if (jrePath != null && jrePath.exists() && jrePath.isDirectory()) {
             System.out.println("Embedded jre6 directory found in: " + jrePath.getAbsolutePath());

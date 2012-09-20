@@ -63,7 +63,8 @@ public class Chrome extends Extract implements IngestModuleImage {
     
     private IngestServices services;
 
-    public Chrome() {
+    //hide public constructor to prevent from instantiation by ingest module loader
+    Chrome() {
         moduleName = "Chrome";
     }
     

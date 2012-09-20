@@ -18,28 +18,60 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Result;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import org.openide.modules.ModuleInfo;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
+import org.openide.util.LookupEvent;
+import org.openide.util.LookupListener;
+import org.reflections.Reflections;
+import org.reflections.scanners.ResourcesScanner;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -50,6 +82,13 @@ import org.xml.sax.SAXException;
  * pipeline XML file. Maintains a singleton instance. Requires restart of
  * application for changes in XML to take effect.
  *
+ * Supports module auto-discovery from system-wide and user-dir wide jar files.
+ * Discovered modules are validated, and if valid, they are added to end of configuration 
+ * and saved in the XML.
+ * 
+ * If module is removed/uninstalled, it will remain in the XML file, but it will not load
+ * because it will fail the validation.
+ * 
  * Refer to
  * http://sleuthkit.org/sleuthkit/docs/framework-docs/pipeline_config_page.html
  * for the pipeline XML fiel schema details.
@@ -71,11 +110,24 @@ public final class IngestModuleLoader {
     //for default module order if not specified/invalid
     private int currentLast = 0;
     private ClassLoader classLoader;
+    private PropertyChangeSupport pcs;
+    private static final String ENCODING = "UTF-8";
+    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    private SimpleDateFormat dateFormatter;
+
+    //events supported
+    enum Event {
+
+        ModulesReloaded
+    };
 
     private IngestModuleLoader() {
         pipelinesXML = new ArrayList<XmlPipelineRaw>();
         filePipeline = new ArrayList<IngestModuleAbstractFile>();
         imagePipeline = new ArrayList<IngestModuleImage>();
+        dateFormatter = new SimpleDateFormat(DATE_FORMAT);
+        pcs = new PropertyChangeSupport(this);
+        registerModulesChange();
     }
 
     synchronized static IngestModuleLoader getDefault() throws IngestModuleLoaderException {
@@ -88,8 +140,34 @@ public final class IngestModuleLoader {
     }
 
     /**
+     * Add a listener to listen for modules reloaded events such as when new
+     * modules have been added / removed / reconfigured
+     *
+     * @param l listener to add
+     */
+    void addModulesReloadedListener(PropertyChangeListener l) {
+        pcs.addPropertyChangeListener(l);
+    }
+
+    /**
+     * Remove a listener to listen for modules reloaded events such as when new
+     * modules have been added / removed / reconfigured
+     *
+     * @param l listener to remove
+     */
+    void removeModulesReloadedListener(PropertyChangeListener l) {
+        pcs.removePropertyChangeListener(l);
+    }
+
+    /**
      * validate raw pipeline, set valid to true member on pipeline and modules
      * if valid log if invalid
+     *
+     * valid pipeline: valid pipeline type, modules have unique ordering
+     *
+     * valid module: module class exists, module can be loaded, module
+     * implements correct interface, module has proper methods and modifiers to
+     * create an instance
      *
      * @throws IngestModuleLoaderException
      */
@@ -228,17 +306,392 @@ public final class IngestModuleLoader {
 
     }
 
+    private Set<URL> getJarPaths(String modulesDir) {
+        Set<URL> urls = new HashSet<URL>();
+
+        final File modulesDirF = new File(modulesDir);
+        FilenameFilter jarFilter = new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return dir.equals(modulesDirF) && name.endsWith(".jar");
+            }
+        };
+        File[] dirJars = modulesDirF.listFiles(jarFilter);
+        if (dirJars != null) {
+            //modules dir exists
+            for (int i = 0; i < dirJars.length; ++i) {
+                String urlPath = "file:/" + dirJars[i].getAbsolutePath();
+                try {
+                    urlPath = URLDecoder.decode(urlPath, ENCODING);
+                } catch (UnsupportedEncodingException ex) {
+                    logger.log(Level.SEVERE, "Could not decode file path. ", ex);
+                }
+
+                try {
+                    urls.add(new URL(urlPath));
+                    logger.log(Level.INFO, "JAR: " + urlPath);
+                } catch (MalformedURLException ex) {
+                    logger.log(Level.WARNING, "Invalid URL: " + urlPath, ex);
+                }
+            }
+        }
+
+        return urls;
+    }
+
     /**
-     * Autodiscover ingest modules that are not in the config XML and add them
-     * to the end of the config
+     * Get jar paths of autodiscovered modules
+     *
+     * @param moduleInfos to look into to discover module jar paths
+     * @return
+     */
+    private Set<URL> getJarPaths(Collection<? extends ModuleInfo> moduleInfos) {
+        Set<URL> urls = new HashSet<URL>();
+
+        //TODO lookup module jar file paths by "seed" class or resource, using the module loader
+        //problem: we don't have a reliable "seed" class in every moduke
+        //and loading by Bundle.properties resource does not seem to work with the module class loader
+        //for now hardcoding jar file locations
+
+        /*
+         for (ModuleInfo moduleInfo : moduleInfos) {
+
+         if (moduleInfo.isEnabled() == false) {
+         continue;
+         }
+
+         String basePackageName = moduleInfo.getCodeNameBase();
+         if (basePackageName.startsWith("org.netbeans")
+         || basePackageName.startsWith("org.openide")) {
+         //skip
+         continue;
+         }
+
+            
+         ClassLoader moduleClassLoader = moduleInfo.getClassLoader();
+            
+         URL modURL = moduleClassLoader.getResource(basePackageName);
+         logger.log(Level.INFO, "GOT MOD URL1 : " + modURL);
+
+         modURL = moduleClassLoader.getParent().getResource(basePackageName);
+         logger.log(Level.INFO, "GOT MOD URL2 : " + modURL);
+            
+         modURL = classLoader.getResource(basePackageName);
+         logger.log(Level.INFO, "GOT MOD URL3 : " + modURL);
+         } */
+        /*
+         URL modURL = moduleClassLoader.getParent().getResource("Bundle.properties");
+         //URL modURL = classLoader.getResource(basePackageName);
+         logger.log(Level.INFO, "GOT MOD URL : " + modURL);
+
+         modURL = moduleClassLoader.getResource(basePackageName + ".Bundle.properties");
+         //URL modURL = classLoader.getResource(basePackageName);
+         logger.log(Level.INFO, "GOT MOD URL : " + modURL);
+
+         modURL = moduleClassLoader.getResource("Bundle");
+         //URL modURL = classLoader.getResource(basePackageName);
+         logger.log(Level.INFO, "GOT MOD URL : " + modURL);
+
+         Class<?> modClass;
+         try {
+         modClass = classLoader.loadClass(basePackageName + ".Installer");
+         URL modURL2 = modClass.getProtectionDomain().getCodeSource().getLocation();
+         logger.log(Level.INFO, "GOT MOD URL2 : " + modURL2);
+         } catch (ClassNotFoundException ex) {
+         //  Exceptions.printStackTrace(ex);
+         }
+         try {
+         Class<?> moduleBundleClass =
+         Class.forName(basePackageName, false, classLoader);
+         URL modURL3 = moduleBundleClass.getProtectionDomain().getCodeSource().getLocation();
+         logger.log(Level.INFO, "GOT MOD URL3 : " + modURL3);
+         } catch (ClassNotFoundException ex) {
+         // Exceptions.printStackTrace(ex);
+         }
+
+
+         URL urltry;
+         try {
+         urltry = moduleClassLoader.loadClass("Bundle").getProtectionDomain().getCodeSource().getLocation();
+         logger.log(Level.INFO, "GOT TRY URL : " + urltry);
+         } catch (ClassNotFoundException ex) {
+         // Exceptions.printStackTrace(ex);
+         }
+
+         }
+         * */
+
+        //core modules
+        urls.addAll(getJarPaths(PlatformUtil.getInstallModulesPath()));
+
+        //user modules
+        urls.addAll(getJarPaths(PlatformUtil.getUserModulesPath()));
+
+        return urls;
+    }
+
+    /**
+     * Auto-discover ingest modules in all platform modules that are "enabled"
+     * If discovered ingest module is not already in XML config, add it do
+     * config and add to in-memory pipeline.
      *
      * @throws IngestModuleLoaderException
      */
     private void autodiscover() throws IngestModuleLoaderException {
+
+        Collection<? extends ModuleInfo> moduleInfos = Lookup.getDefault().lookupAll(ModuleInfo.class);
+        logger.log(Level.INFO, "Autodiscovery, found #platform modules: " + moduleInfos.size());
+
+        Set<URL> urls = getJarPaths(moduleInfos);
+
+        for (final ModuleInfo moduleInfo : moduleInfos) {
+            if (moduleInfo.isEnabled()) {
+                String basePackageName = moduleInfo.getCodeNameBase();
+                if (basePackageName.startsWith("org.netbeans")
+                        || basePackageName.startsWith("org.openide")) {
+                    //skip
+                    continue;
+                }
+
+                //logger.log(Level.INFO, "Module enabled: " + moduleInfo.getDisplayName() + " " + basePackageName + " " + moduleInfo.getCodeName());
+
+                ConfigurationBuilder cb = new ConfigurationBuilder();
+                cb.filterInputsBy(new FilterBuilder().include(FilterBuilder.prefix(basePackageName)));
+                cb.setUrls(urls);
+                cb.setScanners(new SubTypesScanner(), new ResourcesScanner());
+                Reflections reflections = new Reflections(cb);
+
+                Set<?> fileModules = reflections.getSubTypesOf(IngestModuleAbstractFile.class);
+                Iterator<?> it = fileModules.iterator();
+                while (it.hasNext()) {
+                    logger.log(Level.INFO, "Found file ingest module in: " + basePackageName + ": " + it.next().toString());
+                }
+
+                Set<?> imageModules = reflections.getSubTypesOf(IngestModuleImage.class);
+                it = imageModules.iterator();
+                while (it.hasNext()) {
+                    logger.log(Level.INFO, "Found image ingest module in: " + basePackageName + ": " + it.next().toString());
+                }
+
+                //find out which modules to add
+                //TODO check which modules to remove (which modules were uninstalled)
+                boolean modulesChanged = false;
+
+                it = fileModules.iterator();
+                while (it.hasNext()) {
+                    boolean exists = false;
+                    Class<IngestModuleAbstractFile> foundClass = (Class<IngestModuleAbstractFile>) it.next();
+
+                    for (XmlPipelineRaw rawP : pipelinesXML) {
+                        if (!rawP.type.equals(XmlPipelineRaw.PIPELINE_TYPE.FILE_ANALYSIS.toString())) {
+                            continue; //skip
+                        }
+
+                        for (XmlModuleRaw rawM : rawP.modules) {
+                            //logger.log(Level.INFO, "CLASS NAME : " + foundClass.getName());
+                            if (foundClass.getName().equals(rawM.location)) {
+                                exists = true;
+                                break;
+                            }
+                        }
+                        if (exists == true) {
+                            break;
+                        }
+                    }
+
+                    if (exists == false) {
+                        logger.log(Level.INFO, "Discovered a new file module to load: " + foundClass.getName());
+                        //ADD MODULE
+                        addModuleToRawPipeline(foundClass, XmlPipelineRaw.PIPELINE_TYPE.FILE_ANALYSIS);
+                        modulesChanged = true;
+                    }
+
+                }
+
+                it = imageModules.iterator();
+                while (it.hasNext()) {
+                    boolean exists = false;
+                    Class<IngestModuleImage> foundClass = (Class<IngestModuleImage>) it.next();
+
+                    for (XmlPipelineRaw rawP : pipelinesXML) {
+                        if (!rawP.type.equals(XmlPipelineRaw.PIPELINE_TYPE.IMAGE_ANALYSIS.toString())) {
+                            continue; //skip
+                        }
+
+
+                        for (XmlModuleRaw rawM : rawP.modules) {
+                            //logger.log(Level.INFO, "CLASS NAME : " + foundClass.getName());
+                            if (foundClass.getName().equals(rawM.location)) {
+                                exists = true;
+                                break;
+                            }
+                        }
+                        if (exists == true) {
+                            break;
+                        }
+                    }
+
+                    if (exists == false) {
+                        logger.log(Level.INFO, "Discovered a new image module to load: " + foundClass.getName());
+                        //ADD MODULE 
+                        addModuleToRawPipeline(foundClass, XmlPipelineRaw.PIPELINE_TYPE.IMAGE_ANALYSIS);
+                        modulesChanged = true;
+                    }
+
+                }
+
+                if (modulesChanged) {
+                    save();
+                    pcs.firePropertyChange(Event.ModulesReloaded.toString(), 0, 1);
+                }
+
+                /*
+                 //Enumeration<URL> resources = moduleClassLoader.getResources(basePackageName);
+                 Enumeration<URL> resources = classLoader.getResources(basePackageName);
+                 while (resources.hasMoreElements()) {
+                 System.out.println(resources.nextElement());
+                 } */
+
+            } else {
+                //logger.log(Level.INFO, "Module disabled: " + moduleInfo.getDisplayName() );
+            }
+        }
+
     }
 
     /**
-     * Instantiate valid pipeline and modules and keep the references
+     * add autodiscovered module to raw pipeline to be validated and
+     * instantiated
+     *
+     * @param moduleClass
+     * @param pipelineType
+     */
+    private void addModuleToRawPipeline(Class<?> moduleClass, XmlPipelineRaw.PIPELINE_TYPE pipelineType) throws IngestModuleLoaderException {
+        String moduleLocation = moduleClass.getName();
+
+        XmlModuleRaw modRaw = new XmlModuleRaw();
+        modRaw.arguments = ""; //default, no arguments
+        modRaw.location = moduleLocation;
+        modRaw.order = Integer.MAX_VALUE - (currentLast++); //add to end
+        modRaw.type = XmlModuleRaw.MODULE_TYPE.PLUGIN.toString();
+        modRaw.valid = false; //to be validated
+
+        //find the pipeline of that type
+        XmlPipelineRaw pipeline = null;
+        for (XmlPipelineRaw rawP : this.pipelinesXML) {
+            if (rawP.type.equals(pipelineType.toString())) {
+                pipeline = rawP;
+                break;
+            }
+        }
+        if (pipeline == null) {
+            throw new IngestModuleLoaderException("Could not find expected pipeline of type: " + pipelineType.toString() + ", cannot add autodiscovered module: " + moduleLocation);
+        } else {
+            pipeline.modules.add(modRaw);
+        }
+    }
+
+    /**
+     * Register a listener for module install/uninstall
+     * //TODO ensure that module is actually loadable when Lookup event is fired
+     */
+    private void registerModulesChange() {
+        final Lookup.Result<ModuleInfo> result =
+                Lookup.getDefault().lookupResult(ModuleInfo.class);
+        result.addLookupListener(new LookupListener() {
+            @Override
+            public void resultChanged(LookupEvent event) {
+                try {
+                    logger.log(Level.INFO, "Module change occured, reloading.");
+                    init();
+                } catch (IngestModuleLoaderException ex) {
+                    logger.log(Level.SEVERE, "Error reloading the module loader. ", ex);
+                }
+            }
+        });
+    }
+
+    /**
+     * Save the current in memory pipeline config, including autodiscovered
+     * modules
+     *
+     * @throws IngestModuleLoaderException
+     */
+    public void save() throws IngestModuleLoaderException {
+        DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
+
+        try {
+            DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
+            Document doc = docBuilder.newDocument();
+
+   
+            Comment comment = doc.createComment("Saved by: " + getClass().getName() 
+                    + " on: " + dateFormatter.format(System.currentTimeMillis()));
+            doc.appendChild(comment);
+            Element rootEl = doc.createElement(XmlPipelineRaw.XML_PIPELINE_ROOT);
+            doc.appendChild(rootEl);
+
+            for (XmlPipelineRaw rawP : this.pipelinesXML) {
+                Element pipelineEl = doc.createElement(XmlPipelineRaw.XML_PIPELINE_EL);
+                pipelineEl.setAttribute(XmlPipelineRaw.XML_PIPELINE_TYPE_ATTR, rawP.type);
+                rootEl.appendChild(pipelineEl);
+                
+                for (XmlModuleRaw rawM : rawP.modules) {
+                    Element moduleEl = doc.createElement(XmlModuleRaw.XML_MODULE_EL);
+                    
+                    moduleEl.setAttribute(XmlModuleRaw.XML_MODULE_LOC_ATTR, rawM.location);
+                    moduleEl.setAttribute(XmlModuleRaw.XML_MODULE_TYPE_ATTR, rawM.type);
+                    moduleEl.setAttribute(XmlModuleRaw.XML_MODULE_ORDER_ATTR, Integer.toString(rawM.order));
+                    moduleEl.setAttribute(XmlModuleRaw.XML_MODULE_TYPE_ATTR, rawM.type);
+                    
+                    pipelineEl.appendChild(moduleEl);
+                }
+            }
+            
+            saveDoc(doc);
+            logger.log(Level.INFO, "Pipeline configuration saved to: " + this.absFilePath);
+        } catch (ParserConfigurationException e) {
+            logger.log(Level.SEVERE, "Error saving pipeline config XML: can't initialize parser.", e);
+        }
+        
+    }
+    
+     private boolean saveDoc(final Document doc) {
+        TransformerFactory xf = TransformerFactory.newInstance();
+        xf.setAttribute("indent-number", new Integer(1));
+        boolean success = false;
+        try {
+            Transformer xformer = xf.newTransformer();
+            xformer.setOutputProperty(OutputKeys.METHOD, "xml");
+            xformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            xformer.setOutputProperty(OutputKeys.ENCODING, ENCODING);
+            xformer.setOutputProperty(OutputKeys.STANDALONE, "yes");
+            xformer.setOutputProperty(OutputKeys.VERSION, "1.0");
+            File file = new File(this.absFilePath);
+            FileOutputStream stream = new FileOutputStream(file);
+            Result out = new StreamResult(new OutputStreamWriter(stream, ENCODING));
+            xformer.transform(new DOMSource(doc), out);
+            stream.flush();
+            stream.close();
+            success = true;
+
+        } catch (UnsupportedEncodingException e) {
+            logger.log(Level.SEVERE, "Should not happen", e);
+        } catch (TransformerConfigurationException e) {
+            logger.log(Level.SEVERE, "Error writing pipeline config XML", e);
+        } catch (TransformerException e) {
+            logger.log(Level.SEVERE, "Error writing pipeline config XML", e);
+        } catch (FileNotFoundException e) {
+            logger.log(Level.SEVERE, "Error writing pipeline config XML: cannot write to file: " + this.absFilePath, e);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Error writing pipeline config XML: cannot write to file: " + this.absFilePath, e);
+        }
+        return success;
+    }
+
+    /**
+     * Instantiate valid pipeline and modules and store the module object
+     * references
      *
      * @throws IngestModuleLoaderException
      */
@@ -248,7 +701,12 @@ public final class IngestModuleLoader {
         filePipeline.clear();
         imagePipeline.clear();
 
+        //add autodiscovered modules to pipelinesXML
         autodiscover();
+
+        //validate all modules: from XML + just autodiscovered
+
+        validate();
 
         for (XmlPipelineRaw pRaw : pipelinesXML) {
             if (pRaw.valid == false) {
@@ -286,13 +744,17 @@ public final class IngestModuleLoader {
                                     fileModuleInstance = (IngestModuleAbstractFile) getDefaultMethod.invoke(null);
                                 }
                             } catch (NoSuchMethodException ex) {
-                                logger.log(Level.SEVERE, "Validated module, but not public getDefault() found: " + pMod.location);
+                                logger.log(Level.WARNING, "Validated module, but not public getDefault() found: " + pMod.location);
+                                pMod.valid = false; //prevent from trying to load again
                             } catch (SecurityException ex) {
-                                logger.log(Level.SEVERE, "Validated module, but not public getDefault() found: " + pMod.location);
+                                logger.log(Level.WARNING, "Validated module, but not public getDefault() found: " + pMod.location);
+                                pMod.valid = false; //prevent from trying to load again
                             } catch (IllegalAccessException ex) {
-                                logger.log(Level.SEVERE, "Validated module, but not public getDefault() found: " + pMod.location);
+                                logger.log(Level.WARNING, "Validated module, but not public getDefault() found: " + pMod.location);
+                                pMod.valid = false; //prevent from trying to load again
                             } catch (InvocationTargetException ex) {
-                                logger.log(Level.SEVERE, "Validated module, but not public getDefault() found: " + pMod.location);
+                                logger.log(Level.WARNING, "Validated module, but not public getDefault() found: " + pMod.location);
+                                pMod.valid = false; //prevent from trying to load again
                             }
                             //final IngestModuleAbstract fileModuleInstance =
                             //      getNewIngestModuleInstance(fileModuleClass);
@@ -317,17 +779,23 @@ public final class IngestModuleLoader {
                                 }
 
                             } catch (NoSuchMethodException ex) {
-                                logger.log(Level.SEVERE, "Validated module, should not happen.", ex);
+                                logger.log(Level.WARNING, "Validated module, could not initialize, check for bugs in the module: " + pMod.location, ex);
+                                pMod.valid = false;
                             } catch (SecurityException ex) {
-                                logger.log(Level.SEVERE, "Validated module, should not happen.", ex);
+                                logger.log(Level.WARNING, "Validated module, could not initialize, check for bugs in the module: " + pMod.location, ex);
+                                pMod.valid = false;
                             } catch (InstantiationException ex) {
-                                logger.log(Level.SEVERE, "Validated module, should not happen.", ex);
+                                logger.log(Level.WARNING, "Validated module, could not initialize, check for bugs in the module: " + pMod.location, ex);
+                                pMod.valid = false; //prevent from trying to load again
                             } catch (IllegalAccessException ex) {
-                                logger.log(Level.SEVERE, "Validated module, should not happen.", ex);
+                                logger.log(Level.WARNING, "Validated module, could not initialize, check for bugs in the module: " + pMod.location, ex);
+                                pMod.valid = false; //prevent from trying to load again
                             } catch (IllegalArgumentException ex) {
-                                logger.log(Level.SEVERE, "Validated module, should not happen.", ex);
+                                logger.log(Level.WARNING, "Validated module, could not initialize, check for bugs in the module: " + pMod.location, ex);
+                                pMod.valid = false; //prevent from trying to load again
                             } catch (InvocationTargetException ex) {
-                                logger.log(Level.SEVERE, "Validated module, should not happen.", ex);
+                                logger.log(Level.WARNING, "Validated module, could not initialize, check for bugs in the module: " + pMod.location, ex);
+                                pMod.valid = false; //prevent from trying to load again
                             }
 
 
@@ -342,7 +810,9 @@ public final class IngestModuleLoader {
                 }
             }
 
-        }
+        } //end instantiating modules in XML
+
+
 
     }
 
@@ -488,8 +958,6 @@ public final class IngestModuleLoader {
         //load the pipeline config
         loadRawPipeline();
 
-        validate();
-
         instantiate();
 
 
@@ -557,6 +1025,7 @@ public final class IngestModuleLoader {
             }
             throw new IllegalArgumentException("No PIPELINE_TYPE for string: " + s);
         }
+        private static final String XML_PIPELINE_ROOT = "PIPELINE_CONFIG";
         private static final String XML_PIPELINE_EL = "PIPELINE";
         private static final String XML_PIPELINE_TYPE_ATTR = "type";
         String type;
