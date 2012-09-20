@@ -329,19 +329,18 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     @Override
     public void init(IngestModuleInit initContext) {
-
         try{
         services = IngestServices.getDefault();   
         if(PlatformUtil.extractResourceToUserDir(SearchEngineURLQueryAnalyzer.class, XMLFile)){
             init2();
             }
         else{
-            logger.warning("Unable to find SEUQAMappings.xml");
+            logger.warning("Unable to find " + XMLFile);
            }
         }
         
         catch(IOException e){
-            logger.log(Level.WARNING, "Unable to find SEUQAMappings.xml!", e);
+            logger.log(Level.WARNING, "Unable to find " + XMLFile , e);
         }
     }
     
@@ -366,7 +365,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                 logger.log(Level.WARNING, "Was not able to load SEUQAMappings.xml", e);
             }
     }
-
+    
     @Override
     public void complete() {
         logger.info("running complete()");
