@@ -31,7 +31,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.filesystems.FileUtil;
-import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -46,7 +46,7 @@ public final class RecentCases extends CallableSystemAction implements Presenter
     static final String PATH_PROP_KEY = "LBL_RecentCase_Path";
     static final RecentCase BLANK_RECENTCASE = new RecentCase("", "");
     // get the path of the case.properties file in the user directory
-    private final static AutopsyPropFile apf = AutopsyPropFile.getInstance();
+    private final static ModuleSettings apf = ModuleSettings.getInstance();
 
     private final static RecentCases INSTANCE = new RecentCases();
 
@@ -67,10 +67,15 @@ public final class RecentCases extends CallableSystemAction implements Presenter
     private RecentCases() {
         
         for (int i = 0; i < LENGTH; i++) {
-            if(apf.getProperty(nameKey(i)) == null)
-                apf.setProperty(nameKey(i), "");
-            if(apf.getProperty(pathKey(i)) == null)
-                apf.setProperty(pathKey(i), "");
+            try{
+            if(apf.getConfigSetting("Case", nameKey(i)) == null)
+                apf.setConfigSetting("Case", nameKey(i), "");
+            if(apf.getConfigSetting("Case", pathKey(i)) == null)
+                apf.setConfigSetting("Case", pathKey(i), "");
+            }
+            catch(Exception e ){
+                
+            }
         }
         
         // Load recentCases from properties
@@ -101,19 +106,29 @@ public final class RecentCases extends CallableSystemAction implements Presenter
     }
 
     private String getName(int i) {
-        return apf.getProperty(nameKey(i));
+        try{
+        return apf.getConfigSetting("Case", nameKey(i));
+        }
+        catch(Exception e){
+            return null;
+        }
     }
 
     private String getPath(int i) {
-        return apf.getProperty(pathKey(i));
+        try{
+        return apf.getConfigSetting("Case", pathKey(i));
+        }
+        catch(Exception e){
+            return null;
+        }
     }
 
     private void setName(int i, String name) {
-        apf.setProperty(nameKey(i), name);
+        apf.setConfigSetting("Case", nameKey(i), name);
     }
 
     private void setPath(int i, String path) {
-        apf.setProperty(pathKey(i), path);
+        apf.setConfigSetting("Case", pathKey(i), path);
     }
 
     private void setRecentCase(int i, RecentCase rc) {

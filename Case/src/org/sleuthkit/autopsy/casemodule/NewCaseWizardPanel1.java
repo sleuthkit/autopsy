@@ -33,14 +33,12 @@ import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
 import org.openide.util.HelpCtx;
-import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * The "New Case" wizard panel with a component on it. This class represents 
  * data of wizard step. It defers creation and initialization of UI component
  * of wizard panel into getComponent() method.
- *
- * @author jantonius
  */
 class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
 
@@ -167,12 +165,17 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     @Override
     public void readSettings(WizardDescriptor settings) {
         NewCaseVisualPanel1 component = getComponent();
-        String lastBaseDirectory = AutopsyPropFile.getInstance().getProperty(PROP_BASECASE);
+        try{
+        String lastBaseDirectory = ModuleSettings.getInstance().getConfigSetting("Autopsy", PROP_BASECASE);
         component.getCaseParentDirTextField().setText(lastBaseDirectory);
         createdDirectory = (String) settings.getProperty("createdDirectory");
         if(createdDirectory != null && !createdDirectory.equals("")) {
             logger.log(Level.INFO, "Deleting a case dir in readSettings(): " + createdDirectory);
             Case.deleteCaseDirectory(new File(createdDirectory));
+        }
+        }
+        catch(Exception e){
+            
         }
     }
 
@@ -190,7 +193,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
         settings.putProperty("caseName", getComponent().getCaseName());
         settings.putProperty("caseParentDir", getComponent().getCaseParentDir());
         settings.putProperty("createdDirectory", createdDirectory);
-        AutopsyPropFile.getInstance().setProperty(PROP_BASECASE, getComponent().getCaseParentDir());
+        ModuleSettings.getInstance().setConfigSetting("Case", PROP_BASECASE, getComponent().getCaseParentDir());
     }
 
     @Override
