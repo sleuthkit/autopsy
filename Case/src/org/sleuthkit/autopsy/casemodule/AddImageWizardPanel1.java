@@ -32,7 +32,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
@@ -49,6 +49,7 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
     private static final String PROP_LASTIMAGE = "LBL_LastImage_PATH";
      // paths to any set hash lookup databases (can be null)
     private String NSRLPath, knownBadPath;
+    private static ModuleSettings apf = ModuleSettings.getInstance();
     
     /**
      * Get the visual component for the panel. In this template, the component
@@ -172,7 +173,9 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
         AddImageVisualPanel1 component = getComponent();
         
         // Prepopulate the image directory from the properties file
-        String lastImageDirectory = AutopsyPropFile.getInstance().getProperty(PROP_LASTIMAGE);
+        try{
+        String lastImageDirectory = apf.getConfigSetting("Case", PROP_LASTIMAGE);
+       
         component.getImagePathTextField().setText(lastImageDirectory);
         
         // Load hash database settings, enable or disable the checkbox
@@ -193,6 +196,9 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
             }finally{
                 cleanupTask.disable();
             }
+        }
+         }
+        catch(Exception e){
         }
         
     }
@@ -217,7 +223,7 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
         // Store the path to the first image selected into the properties file
         String firstImage = getComponent().getImagePath();
         String firstImagePath = firstImage.substring(0, firstImage.lastIndexOf(File.separator) + 1);
-        AutopsyPropFile.getInstance().setProperty(PROP_LASTIMAGE, firstImagePath);
+        apf.setConfigSetting("Case", PROP_LASTIMAGE, firstImagePath);
     }
 
 
