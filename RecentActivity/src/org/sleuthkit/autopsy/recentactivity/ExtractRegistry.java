@@ -55,6 +55,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
     final public static String MODULE_VERSION = "1.0";
     private String args;
 
+    //hide public constructor to prevent from instantiation by ingest module loader
     ExtractRegistry() {
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false);
         if (rrRoot == null) {

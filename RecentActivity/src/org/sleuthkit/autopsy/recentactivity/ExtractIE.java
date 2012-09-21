@@ -94,7 +94,8 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     
     private String args;
 
-    public ExtractIE() {
+    //hide public constructor to prevent from instantiation by ingest module loader
+    ExtractIE() {
         moduleName = "Internet Explorer";
     }
     

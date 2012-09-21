@@ -20,11 +20,7 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -33,7 +29,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JPanel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -79,6 +74,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     private static final SearchEngine NullEngine = new SearchEngine("NONE", "NONE", new HashMap<String,String>());
 
     
+    //hide public constructor to prevent from instantiation by ingest module loader
     SearchEngineURLQueryAnalyzer() {
           
     }
@@ -334,19 +330,18 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     @Override
     public void init(IngestModuleInit initContext) {
-
         try{
         services = IngestServices.getDefault();   
         if(PlatformUtil.extractResourceToUserDir(SearchEngineURLQueryAnalyzer.class, XMLFile)){
             init2();
             }
         else{
-            logger.warning("Unable to find SEUQAMappings.xml");
+            logger.warning("Unable to find " + XMLFile);
            }
         }
         
         catch(IOException e){
-            logger.log(Level.WARNING, "Unable to find SEUQAMappings.xml!", e);
+            logger.log(Level.WARNING, "Unable to find " + XMLFile , e);
         }
     }
     
@@ -371,7 +366,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                 logger.log(Level.WARNING, "Was not able to load SEUQAMappings.xml", e);
             }
     }
-
+    
     @Override
     public void complete() {
         logger.info("running complete()");
