@@ -26,8 +26,8 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
@@ -39,7 +39,7 @@ public abstract class KeywordSearchListsAbstract {
     Map<String, KeywordSearchList> theLists; //the keyword data
     static KeywordSearchListsXML currentInstance = null;
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";
-    private static String CUR_LISTS_FILE = ModuleSettings.getUserDirPath() + File.separator + CUR_LISTS_FILE_NAME;
+    private static String CUR_LISTS_FILE = PlatformUtil.getUserDirectory() + File.separator + CUR_LISTS_FILE_NAME;
     protected static final Logger logger = Logger.getLogger(KeywordSearchListsAbstract.class.getName());
     PropertyChangeSupport changeSupport;
 
