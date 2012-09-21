@@ -31,6 +31,9 @@ Autopsy has now been added as a "NetBeans Platform", meaning the development env
 Click Next, and fill out the rest of the module-creation wizard. Press Finish when complete, and the module will be added as a standalone project in NetBeans.
 
 See \ref mod_ingest_page for instructions on programming ingest modules for Autopsy.
+Or read <a href="http://bits.netbeans.org/dev/javadoc/org-openide-modules/org/openide/modules/doc-files/api.html">this guide from NetBeans.org</a> for general module development tips.
+
+Autopsy requires that all modules restart Autopsy after they are installed. To setup your module in this fashion, right click on the module and choose Properties. Under Build > Packaging, check the box that says Needs Restart on Install.
 
 
 
@@ -111,7 +114,7 @@ The plugins menu can be used to add modules (i.e. plugins) to Autopsy in a numbe
 
 To generate an NBM file, right click on the module and select Create NBM.
 
-Then, launch Autopsy and choose Plugins under the Tools menu. Open the Downloaded tab and click Add Plugins. Navigate to the NBM file and open it. Next, click Install and follow the wizard. Autopsy may require a restart, depending on the plugin's settings, but afterwards the plugin should be integrated into Autopsy.
+Then, launch Autopsy and choose Plugins under the Tools menu. Open the Downloaded tab and click Add Plugins. Navigate to the NBM file and open it. Next, click Install and follow the wizard. Autopsy will require a restart after installing the module, but afterwards the plugin will be integrated into Autopsy.
 
 The options to uninstall or temporarily disable a plugin are also available under the plugins menu.
 
