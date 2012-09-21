@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Contains only the modules that ship with Autopsy -->
+<!-- Default initial pipeline_config.xml
+Contains only the core ingest modules that ship with Autopsy -->
 <PIPELINE_CONFIG>
     <PIPELINE type="FileAnalysis">
       <MODULE order="1" type="plugin" location="org.sleuthkit.autopsy.hashdatabase.HashDbIngestModule" arguments="" />

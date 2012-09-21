@@ -78,6 +78,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import org.openide.filesystems.Repository;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Class responsible for discovery and loading ingest modules specified in
@@ -114,13 +115,15 @@ public final class IngestModuleLoader {
     private final List<IngestModuleAbstractFile> filePipeline;
     private final List<IngestModuleImage> imagePipeline;
     private static final Logger logger = Logger.getLogger(IngestModuleLoader.class.getName());
-    //for default module order if not specified/invalid
-    private int currentLast = 0;
     private ClassLoader classLoader;
     private PropertyChangeSupport pcs;
     private static final String ENCODING = "UTF-8";
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private SimpleDateFormat dateFormatter;
+    //used to specify default unique module order of autodiscovered modules
+    //if not specified
+    private int numModDiscovered = 0;
+    private static String CUR_MODULES_DISCOVERED_SETTING = "curModulesDiscovered";
 
     //events supported
     enum Event {
@@ -133,6 +136,17 @@ public final class IngestModuleLoader {
         filePipeline = new ArrayList<IngestModuleAbstractFile>();
         imagePipeline = new ArrayList<IngestModuleImage>();
         dateFormatter = new SimpleDateFormat(DATE_FORMAT);
+
+        String numModDiscoveredStr = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, CUR_MODULES_DISCOVERED_SETTING);
+        if (numModDiscoveredStr != null) {
+            try {
+                numModDiscovered = Integer.valueOf(numModDiscoveredStr);
+            } catch (NumberFormatException e) {
+                numModDiscovered = 0;
+                logger.log(Level.WARNING, "Could not parse numModDiscovered setting, defaulting to 0", e);
+            }
+        }
+
         pcs = new PropertyChangeSupport(this);
         registerModulesChange();
     }
@@ -345,15 +359,15 @@ public final class IngestModuleLoader {
 
         /*
          * netbeans way, but not public API
-        org.openide.filesystems.Repository defaultRepository = Repository.getDefault();
-        FileSystem masterFilesystem = defaultRepository.getDefaultFileSystem();
-        org.netbeans.core.startup.ModuleSystem moduleSystem = new org.netbeans.core.startup.ModuleSystem(masterFilesystem);
-        List<File> jars = moduleSystem.getModuleJars();
-        for (File jar : jars) {
-            logger.log(Level.INFO, " JAR2: " + jar.getAbsolutePath());
-        }
-        //org.netbeans.ModuleManager moduleManager = moduleSystem.getManager();
-        */
+         org.openide.filesystems.Repository defaultRepository = Repository.getDefault();
+         FileSystem masterFilesystem = defaultRepository.getDefaultFileSystem();
+         org.netbeans.core.startup.ModuleSystem moduleSystem = new org.netbeans.core.startup.ModuleSystem(masterFilesystem);
+         List<File> jars = moduleSystem.getModuleJars();
+         for (File jar : jars) {
+         logger.log(Level.INFO, " JAR2: " + jar.getAbsolutePath());
+         }
+         //org.netbeans.ModuleManager moduleManager = moduleSystem.getManager();
+         */
 
         return urls;
     }
@@ -577,14 +591,16 @@ public final class IngestModuleLoader {
         }
 
     }
-    
+
     /**
      * Set a new order of the module
+     *
      * @param pipeLineType pipeline type where the module to reorder is present
-     * @param moduleLocation loaded module name (location), fully qualified class path
+     * @param moduleLocation loaded module name (location), fully qualified
+     * class path
      * @param newOrder new order to set
      */
-    void setModuleOrder(XmlPipelineRaw.PIPELINE_TYPE  pipeLineType, String moduleLocation, int newOrder) throws IngestModuleLoaderException{
+    void setModuleOrder(XmlPipelineRaw.PIPELINE_TYPE pipeLineType, String moduleLocation, int newOrder) throws IngestModuleLoaderException {
         throw new IngestModuleLoaderException("Not yet implemented");
     }
 
@@ -601,9 +617,12 @@ public final class IngestModuleLoader {
         XmlModuleRaw modRaw = new XmlModuleRaw();
         modRaw.arguments = ""; //default, no arguments
         modRaw.location = moduleLocation;
-        modRaw.order = Integer.MAX_VALUE - (currentLast++); //add to end
+        modRaw.order = Integer.MAX_VALUE - (numModDiscovered++); //add to end
         modRaw.type = XmlModuleRaw.MODULE_TYPE.PLUGIN.toString();
         modRaw.valid = false; //to be validated
+
+        //save the current numModDiscovered
+        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, CUR_MODULES_DISCOVERED_SETTING, Integer.toString(numModDiscovered));
 
         //find the pipeline of that type
         XmlPipelineRaw pipeline = null;
@@ -958,8 +977,11 @@ public final class IngestModuleLoader {
                 try {
                     module.order = Integer.parseInt(moduleOrder);
                 } catch (NumberFormatException e) {
-                    logger.log(Level.WARNING, "Invalid module order, need integer: " + moduleOrder);
-                    module.order = Integer.MAX_VALUE - (currentLast++);
+                    logger.log(Level.WARNING, "Invalid module order, need integer: " + moduleOrder + ", adding to end of the list");
+                    module.order = Integer.MAX_VALUE - (numModDiscovered++);
+                    //save the current numModDiscovered
+                    ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, CUR_MODULES_DISCOVERED_SETTING, Integer.toString(numModDiscovered));
+
                 }
                 module.type = moduleType;
                 pipelineRaw.modules.add(module);

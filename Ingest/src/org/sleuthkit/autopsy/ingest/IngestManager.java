@@ -81,6 +81,8 @@ public class IngestManager {
     private final IngestMonitor ingestMonitor = new IngestMonitor();
     //module loader
     private IngestModuleLoader moduleLoader = null;
+    //property file name id for the module
+    final static String MODULE_PROPERTIES = "ingest";
 
     /**
      * Possible events about ingest modules Event listeners can get the event
