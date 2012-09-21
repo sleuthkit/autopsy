@@ -33,7 +33,7 @@ public class ModuleSettings {
 
     // The directory where the properties file is lcoated
     private final static String moduleDirPath = PlatformUtil.getUserConfigDirectory();
-    public static final String MAIN_SETTINGS="Autopsy";
+    public static final String MAIN_SETTINGS="Case";
 
     
     /** the constructor */
