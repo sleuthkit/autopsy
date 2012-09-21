@@ -108,7 +108,7 @@ public class IngestServices {
      * Gets a configuration setting for a module
      * @param moduleName moduleName identifier unique to that module
      * @param settingName setting name to retrieve
-     * @return setting value for the module / setting name
+     * @return setting value for the module / setting name, or null if not found
      */
     public String getConfigSetting(String moduleName, String settingName) {
         return ModuleSettings.getConfigSetting(moduleName, settingName);
