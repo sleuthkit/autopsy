@@ -376,7 +376,12 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         
         //Grabbing skipKnown
         if(! ModuleSettings.getConfigSettings(PROP_NSRL).isEmpty()){
+            try{
             skipKnown = Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROP_NSRL, "SkipKnown"));
+             }
+          catch(Exception e){
+              Logger.getLogger(KeywordSearchIngestModule.class.getName()).log(Level.WARNING, "Could not parse boolean value from properties file.", e);
+          }
         }
         
       
@@ -385,16 +390,18 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             stringExtractOptions = ModuleSettings.getConfigSettings(PROP_OPTIONS);
         }
         
-        System.out.println("PRE-EMPTY TEST: SCRIPTS EXISTS?: " + ModuleSettings.configExists(PROP_SCRIPTS));
         //populating stringExtractScripts
         if(! ModuleSettings.getConfigSettings(PROP_SCRIPTS).isEmpty()){
-            System.out.println("POST-EMPTY TEST: CONFIG SCRIPTS EXISTS?: " + ModuleSettings.configExists(PROP_SCRIPTS));
-            System.out.println("CONFIG SCRIPTS VALUES: " + ModuleSettings.getConfigSettings(PROP_SCRIPTS).values().toString());
+          try{
             for(Map.Entry<String,String> kvp: ModuleSettings.getConfigSettings(PROP_SCRIPTS).entrySet()){
                 if(kvp.getKey() != null && Boolean.parseBoolean(kvp.getValue())){
                    stringExtractScripts.add(SCRIPT.valueOf(kvp.getKey()));
                 }
             }
+          }
+          catch(Exception e ){
+              Logger.getLogger(KeywordSearchIngestModule.class.getName()).log(Level.WARNING, "Could not parse boolean value from properties file.", e);
+          }
         }
 
 
@@ -1158,9 +1165,14 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     }
 
     boolean getSkipKnown() {
+        try{
         if(ModuleSettings.getConfigSetting(PROP_NSRL, "SkipKnown") != null){
             skipKnown = Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROP_NSRL, "SkipKnown"));
         }
+         }
+          catch(Exception e ){
+              Logger.getLogger(KeywordSearchIngestModule.class.getName()).log(Level.WARNING, "Could not parse boolean value from properties file.", e);
+          }
         return skipKnown;
     }
 
