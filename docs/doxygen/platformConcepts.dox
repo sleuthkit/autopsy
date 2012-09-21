@@ -2,6 +2,16 @@
 
 \section platform_basics Basic Concepts
 
+Autopsy is designed around the Sleuth Kit framework, giving it a central database in which to store artifacts, artifact attributes, and general file information. Everything stored in this database (i.e. the "blackboard") is accessible through Autopsy and thus to module developers.
+
+The most common use of the blackboard is through ingest modules. Autopsy provides a number of ingest modules to analyze data and quickly provide results. Often, these results are saved to blackboard in a generalized format for other modules to use.
+
+The UI of Autopsy contains two main views: a single tree on the left to browse results, and a more complex view on the right for more individual analysis. The single tree shows not only the file structure of the disk image(s) provided, it also generates additional nodes based off the results saved into blackboard.
+
+As for the complex view, frameworks are provided through Autopsy for viewing and analysis. There is a framework to view sets of results in tables, thumbnails, and a few others. Another framework allows the user to view a file as text, a string, in hex, or as a form of media.
+
+All of these robust features in the Autopsy platform are readily available for any and all modules to utilize.
+
 - Central database
 - Ingest Modules that analyze data quickly and provide quick results
 - Single tree to browse for results

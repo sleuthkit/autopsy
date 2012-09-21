@@ -40,7 +40,7 @@ Every module should support multiple init() - process() - complete(), and init()
 The modules should also support multiple init() - complete() and init() - stop() invocations, 
 which can occur if ingest pipeline is started but no work is enqueued for the particular module.
 
-Module developers are encouraged to use the standard java.util.logging.Logger infrastructure to log errors to the Autopsy log.
+Module developers are encouraged to use Autopsy's org.sleuthkit.autopsy.coreutils.Logger infrastructure to log errors to the Autopsy log.
 
 \subsection ingestmodule_making_process Process Method
 The process method is where the work is done in each type of module.  Some notes:
@@ -50,35 +50,27 @@ The process method is where the work is done in each type of module.  Some notes
 
 \subsection ingestmodule_making_registration Module Registration
 
-Ingest modules need to be registered using the Netbeans Lookup infrastructure in package's layer.xml file.
+TODO: Add more about the new pipeline xml
 
-An example Image-level module is: 
-\verbatim
-<file name="org-sleuthkit-autopsy-ingest-example-ExampleImageIngestModule.instance">
-  <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestModuleImage"/>
-  <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.example.ExampleImageIngestModule.getDefault"/>
-  <attr name="position" intvalue="1000"/>
-</file>
-\endverbatim
-      
-An example file-level module is: 
-  
-\verbatim
-<file name="org-sleuthkit-autopsy-ingest-example-ExampleAbstractFileIngestModule.instance">
-  <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile"/>
-  <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.example.ExampleAbstractFileIngestModule.getDefault"/>
-  <attr name="position" intvalue="1100"/>
-</file>
-\endverbatim
+Modules are automatically registered when \ref mod_dev_plugin "added as a plugin to Autopsy". Autopsy uses an XML based registration system, similar to the sample below.
 
-Note the "position" attribute.  The attribute determines the ordering of the module in the ingest pipeline.
-Modules with lower position attribute will execute earlier.
-Use high numbers (higher than 1000) for non-core modules. If your module depends on results from another module, use a higher position attribute to enforce the dependency.
+\code
+<PIPELINE_CONFIG>
+    <PIPELINE type="FileAnalysis">
+      <MODULE order="1" type="plugin" location="org.sleuthkit.autopsy.hashdatabase.HashDbIngestModule" arguments="" />
+      <MODULE order="2" type="plugin" location="org.sleuthkit.autopsy.exifparser.ExifParserFileIngestModule"/>
+    </PIPELINE>
 
-Note: we plan to implement a more flexible and robust module dependency system in future versions of the Autopsy ingest framework.
+    <PIPELINE type="ImageAnalysis">
+      <MODULE order="1" type="plugin" location="org.sleuthkit.autopsy.recentactivity.RAImageIngestModule" arguments=""/>      
+    </PIPELINE>
+</PIPELINE_CONFIG>
+\endcode
 
-New modules can be added to the Autopsy ingest pipeline by dropping in jar files into build/cluster/modules.
-Dropped in module will be automatically recognized next time Autopsy starts.
+The two types of ingest modules are implemented in the XML above. The order element determines the ordering of the module in the ingest pipeline.
+
+No developer or user be forced to manually edit the XML registration, but Autopsy does allow manual editing if it's desired.
+
 
 \subsection ingestmodule_making_results Posting Results
 
@@ -125,8 +117,7 @@ As an example, the keyword search module uses both configuration methods.  The r
 to choose which lists of keywords to search for.  However, if the user wants to edit the lists or create lists, they 
 need to do go the general configuration window. 
 
-Module configuration is decentralized and module-specific; every module maintains its
-own configuration state and is responsible for implementing the graphical interface.
+Module configuration is module-specific: every module maintains its own configuration state and is responsible for implementing the graphical interface. However, Autopsy does provide \ref mod_dev_configuration "a centralized location to display your settings to the user".
 
 The run-time configuration (also called simple configuration), is achieved by each
 ingest module providing a JPanel.   The IngestModuleAbstract.hasSimpleConfiguration(),
