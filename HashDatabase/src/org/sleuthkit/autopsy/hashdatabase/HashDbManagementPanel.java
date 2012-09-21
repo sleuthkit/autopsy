@@ -19,16 +19,20 @@
 
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.logging.Level;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskException;
@@ -132,7 +136,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         jButton3 = new javax.swing.JButton();
         ingestWarningLabel = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        hashSetTable = new javax.swing.JTable();
+        hashSetTable = new HashSetTable();
         deleteButton = new javax.swing.JButton();
         importButton = new javax.swing.JButton();
         hashDatabasesLabel = new javax.swing.JLabel();
@@ -161,7 +165,8 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         jButton3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(jButton3, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.jButton3.text")); // NOI18N
 
-        setMinimumSize(new java.awt.Dimension(385, 500));
+        setMinimumSize(new java.awt.Dimension(700, 500));
+        setPreferredSize(new java.awt.Dimension(700, 500));
 
         ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/hashdatabase/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(ingestWarningLabel, org.openide.util.NbBundle.getMessage(HashDbManagementPanel.class, "HashDbManagementPanel.ingestWarningLabel.text")); // NOI18N
@@ -174,6 +179,8 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
 
             }
         ));
+        hashSetTable.setShowHorizontalLines(false);
+        hashSetTable.setShowVerticalLines(false);
         hashSetTable.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 hashSetTableKeyPressed(evt);
@@ -254,15 +261,16 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(hashDatabasesLabel)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(deleteButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 298, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(ingestWarningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 358, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(deleteButton, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -274,24 +282,23 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
                                             .addComponent(typeLabel, javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(indexLabel))
                                         .addGap(18, 18, 18)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(hashDbTypeLabel)
-                                            .addComponent(hashDbLocationLabel)
-                                            .addComponent(hashDbNameLabel)
-                                            .addComponent(hashDbIndexStatusLabel)))
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                            .addComponent(hashDbTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(hashDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(hashDbIndexStatusLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(hashDbNameLabel)))
                                     .addComponent(useForIngestCheckbox)
                                     .addComponent(showInboxMessagesCheckBox)))
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                    .addComponent(informationLabel)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(informationSeparator))
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                    .addComponent(optionsLabel)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                    .addComponent(hashDatabasesLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(informationLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(informationSeparator))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(optionsLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(ingestWarningLabel))))
+                .addContainerGap(41, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -304,8 +311,8 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(informationLabel)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(8, 8, 8)
-                                .addComponent(informationSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addGap(7, 7, 7)
+                                .addComponent(informationSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 3, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(7, 7, 7)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(nameLabel)
@@ -325,11 +332,9 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
                         .addGap(5, 5, 5)
                         .addComponent(indexButton)
                         .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(optionsLabel)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(8, 8, 8)
-                                .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(optionsSeparator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(useForIngestCheckbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -492,6 +497,17 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             size = HashDbXML.getCurrent().getKnownBadSets().size();
         }
         setSelection(size);*/
+    }
+    
+    public class HashSetTable extends JTable {
+        @Override
+        public Component prepareRenderer(TableCellRenderer renderer,
+            int row, int column) {
+            Component c = super.prepareRenderer(renderer, row, column);
+            JComponent jc = (JComponent) c;
+            jc.setToolTipText((String) getValueAt(row, column));
+            return c;
+        }
     }
     
     private class HashSetTableModel extends AbstractTableModel {
