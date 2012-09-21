@@ -40,7 +40,7 @@ public abstract class KeywordSearchListsAbstract {
     Map<String, KeywordSearchList> theLists; //the keyword data
     static KeywordSearchListsXML currentInstance = null;
     private static final String CUR_LISTS_FILE_NAME = "keywords.xml";
-    private static String CUR_LISTS_FILE = PlatformUtil.getUserDirectory().getAbsolutePath() + File.separator + CUR_LISTS_FILE_NAME;
+    private static String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;
     protected static final Logger logger = Logger.getLogger(KeywordSearchListsAbstract.class.getName());
     PropertyChangeSupport changeSupport;
 

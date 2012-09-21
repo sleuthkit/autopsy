@@ -998,7 +998,7 @@ public final class IngestModuleLoader {
      * @throws IngestModuleLoaderException
      */
     public synchronized void init() throws IngestModuleLoaderException {
-        absFilePath = PlatformUtil.getUserDirectory() + File.separator + PIPELINE_CONFIG_XML;
+        absFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + PIPELINE_CONFIG_XML;
         classLoader = Lookup.getDefault().lookup(ClassLoader.class);
 
         try {

@@ -140,7 +140,7 @@ public class PlatformUtil {
      */
     public static String getLogDirectory() {
         return Places.getUserDirectory().getAbsolutePath() + File.separator
-                + "var" + File.separator + "log" + File.separator;
+                + "var" + File.separator + "log";
     }
 
     public static String getDefaultPlatformFileEncoding() {
@@ -167,7 +167,7 @@ public class PlatformUtil {
      * reasons
      */
     public static boolean extractResourceToUserDir(final Class resourceClass, final String resourceFile) throws IOException {
-        final File userDir = getUserDirectory();
+        final File userDir = new File(getUserConfigDirectory());
 
         final File resourceFileF = new File(userDir + File.separator + resourceFile);
         if (resourceFileF.exists()) {

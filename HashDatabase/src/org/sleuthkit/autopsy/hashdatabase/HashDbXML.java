@@ -58,7 +58,7 @@ public class HashDbXML {
     private static final String PATH_NUMBER_ATTR = "number";
     private static final String CUR_HASHSETS_FILE_NAME = "hashsets.xml";
     private static final String ENCODING = "UTF-8";
-    private static final String CUR_HASHSET_FILE = PlatformUtil.getUserDirectory() + File.separator + CUR_HASHSETS_FILE_NAME;
+    private static final String CUR_HASHSET_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_HASHSETS_FILE_NAME;
     private static final String SET_CALC = "hash_calculate";
     private static final String SET_VALUE = "value";
     private static final Logger logger = Logger.getLogger(HashDbXML.class.getName());

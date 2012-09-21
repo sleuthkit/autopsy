@@ -128,12 +128,6 @@ public class IngestManager {
     private static volatile IngestManager instance;
 
     private IngestManager() {
-        try {
-            moduleLoader = IngestModuleLoader.getDefault();
-        } catch (IngestModuleLoaderException ex) {
-            logger.log(Level.SEVERE, "Error getting module loader");
-        }
-
         imageIngesters = new ArrayList<IngestImageThread>();
 
         //setup current modules and listeners for modules changes
@@ -142,19 +136,26 @@ public class IngestManager {
     }
 
     private void initModules() {
-        abstractFileModules = moduleLoader.getAbstractFileIngestModules();
-        imageModules = moduleLoader.getImageIngestModules();
+        try {
+            moduleLoader = IngestModuleLoader.getDefault();
+            abstractFileModules = moduleLoader.getAbstractFileIngestModules();
 
-        moduleLoader.addModulesReloadedListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(IngestModuleLoader.Event.ModulesReloaded.toString())) {
-                    //TODO might need to not allow to remove modules if they are running
-                    abstractFileModules = moduleLoader.getAbstractFileIngestModules();
-                    imageModules = moduleLoader.getImageIngestModules();
+            moduleLoader.addModulesReloadedListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (evt.getPropertyName().equals(IngestModuleLoader.Event.ModulesReloaded.toString())) {
+                        //TODO might need to not allow to remove modules if they are running
+                        abstractFileModules = moduleLoader.getAbstractFileIngestModules();
+                        imageModules = moduleLoader.getImageIngestModules();
+                    }
                 }
-            }
-        });
+            });
+            imageModules = moduleLoader.getImageIngestModules();
+        } catch (IngestModuleLoaderException ex) {
+            logger.log(Level.SEVERE, "Error getting module loader");
+        }
+
+
     }
 
     /**
