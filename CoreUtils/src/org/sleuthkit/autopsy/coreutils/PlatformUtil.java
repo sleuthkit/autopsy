@@ -125,9 +125,22 @@ public class PlatformUtil {
     public static File getUserDirectory() {
         return Places.getUserDirectory();
     }
+    
+    /**
+     * Get user config directory path
+     * @return Get user config directory path string
+     */
+    public static String getUserConfigDirectory() {
+        return Places.getUserDirectory() + File.separator + "config";
+    }
 
+    /**
+     * Get log directory path
+     * @return Get log directory path string
+     */
     public static String getLogDirectory() {
-        return Places.getUserDirectory().getAbsolutePath() + "/var/log/";
+        return Places.getUserDirectory().getAbsolutePath() + File.separator
+                + "var" + File.separator + "log" + File.separator;
     }
 
     public static String getDefaultPlatformFileEncoding() {
