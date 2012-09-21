@@ -35,7 +35,8 @@ import org.netbeans.core.actions.HTMLViewAction;
 import org.openide.awt.HtmlBrowser;
 import org.openide.modules.Places;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.SleuthkitJNI;
 
@@ -267,7 +268,7 @@ private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:eve
      */
     public void startVerboseLogging() {
         verboseLogging = true;
-        String logPath = AutopsyPropFile.getUserDirPath() + File.separator + "sleuthkit.txt";
+        String logPath = PlatformUtil.getUserDirectory() + File.separator + "sleuthkit.txt";
         
         SleuthkitJNI.startVerboseLogging(logPath);
     }
