@@ -39,6 +39,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -92,6 +93,9 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     public static final String MODULE_NAME = "Keyword Search";
     public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";     final public static String MODULE_VERSION = "1.0";
+    public static final String PROP_SCRIPTS = MODULE_NAME + "_Scripts";
+    public static final String PROP_OPTIONS = MODULE_NAME + "_Options";
+    public static final String PROP_NSRL = MODULE_NAME + "_NSRL";
     private String args;
     private static KeywordSearchIngestModule instance = null;
     private IngestServices services;
@@ -122,6 +126,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private final List<SCRIPT> stringExtractScripts = new ArrayList<SCRIPT>();
     private Map<String,String> stringExtractOptions = new HashMap<String,String>();
     
+    
     private final GetIsFileKnownV getIsFileKnown = new GetIsFileKnownV();
     private KeywordSearchConfigurationPanel panel;
 
@@ -134,10 +139,18 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     //private constructor to ensure singleton instance 
     private KeywordSearchIngestModule() {
         //set default script 
-        stringExtractScripts.add(SCRIPT.LATIN_1);
         
-        stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+     if(ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()) == null){
+         stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+     }
+     if(ModuleSettings.getConfigSetting(PROP_SCRIPTS, SCRIPT.LATIN_1.name()) == null){
+        ModuleSettings.setConfigSetting(PROP_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
+        stringExtractScripts.add(SCRIPT.LATIN_1);
+     }
+     if(ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()) == null){
         stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
+     }
+     
     }
 
     /**
@@ -354,10 +367,43 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         logger.log(Level.INFO, "init()");
         services = IngestServices.getDefault();
         initialized = false;
-
+        
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
 
         ingester = Server.getIngester();
+
+        //use the settings files to set values
+        
+        //Grabbing skipKnown
+        if(! ModuleSettings.getConfigSettings(PROP_NSRL).isEmpty()){
+            try{
+            skipKnown = Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROP_NSRL, "SkipKnown"));
+             }
+          catch(Exception e){
+              Logger.getLogger(KeywordSearchIngestModule.class.getName()).log(Level.WARNING, "Could not parse boolean value from properties file.", e);
+          }
+        }
+        
+      
+        //populating stringExtractOptions
+        if(! ModuleSettings.getConfigSettings(PROP_OPTIONS).isEmpty()){
+            stringExtractOptions = ModuleSettings.getConfigSettings(PROP_OPTIONS);
+        }
+        
+        //populating stringExtractScripts
+        if(! ModuleSettings.getConfigSettings(PROP_SCRIPTS).isEmpty()){
+          try{
+            for(Map.Entry<String,String> kvp: ModuleSettings.getConfigSettings(PROP_SCRIPTS).entrySet()){
+                if(kvp.getKey() != null && Boolean.parseBoolean(kvp.getValue())){
+                   stringExtractScripts.add(SCRIPT.valueOf(kvp.getKey()));
+                }
+            }
+          }
+          catch(Exception e ){
+              Logger.getLogger(KeywordSearchIngestModule.class.getName()).log(Level.WARNING, "Could not parse boolean value from properties file.", e);
+          }
+        }
+
 
         //initialize extractors
         stringExtractor = new AbstractFileStringExtract();
@@ -1114,10 +1160,19 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
      * reported by HashDB module
      */
     void setSkipKnown(boolean skip) {
-        this.skipKnown = skip;
+        ModuleSettings.setConfigSetting(PROP_NSRL, "SkipKnown", Boolean.toString(skip));
+        skipKnown = skip;
     }
 
     boolean getSkipKnown() {
+        try{
+        if(ModuleSettings.getConfigSetting(PROP_NSRL, "SkipKnown") != null){
+            skipKnown = Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROP_NSRL, "SkipKnown"));
+        }
+         }
+          catch(Exception e ){
+              Logger.getLogger(KeywordSearchIngestModule.class.getName()).log(Level.WARNING, "Could not parse boolean value from properties file.", e);
+          }
         return skipKnown;
     }
 
@@ -1131,6 +1186,15 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     void setStringExtractScripts(List<SCRIPT> scripts) {
         this.stringExtractScripts.clear();
         this.stringExtractScripts.addAll(scripts);
+        
+        for(String s : ModuleSettings.getConfigSettings(PROP_SCRIPTS).keySet()){
+            if (! scripts.contains(SCRIPT.valueOf(s))){
+                ModuleSettings.setConfigSetting(PROP_SCRIPTS, s, "false");
+            }
+        }
+        for(SCRIPT s : stringExtractScripts){
+            ModuleSettings.setConfigSetting(PROP_SCRIPTS, s.name(), "true");
+        }
 
     }
 
@@ -1139,7 +1203,17 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
      *
      * @return the list of currently used script
      */
-    List<SCRIPT> getStringExtractScripts() {
+    List<SCRIPT> getStringExtractScripts(){
+        if(ModuleSettings.getConfigSettings(PROP_SCRIPTS) != null && !ModuleSettings.getConfigSettings(PROP_SCRIPTS).isEmpty()){
+            List<SCRIPT> scripts = new ArrayList<SCRIPT>();
+            for(Map.Entry<String,String> kvp : ModuleSettings.getConfigSettings(PROP_SCRIPTS).entrySet()){
+                if(kvp.getValue().equals("true")){
+                    scripts.add(SCRIPT.valueOf(kvp.getKey()));
+                }
+            }
+            return scripts;
+        }
+        //if it failed, try to return the built-in list maintained by the singleton.
         return new ArrayList<SCRIPT>(this.stringExtractScripts);
     }
     
@@ -1150,6 +1224,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
      */
     void setStringExtractOption(String key, String val) {
         this.stringExtractOptions.put(key, val);
+        ModuleSettings.setConfigSetting(PROP_OPTIONS, key, val);
     }
     
     /**
@@ -1158,12 +1233,13 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
      * @return option string value, or empty string if the option is not set
      */
     String getStringExtractOption(String key) {
-        if (this.stringExtractOptions.containsKey(key)) {
-            return this.stringExtractOptions.get(key);
+        if (ModuleSettings.getConfigSetting(PROP_OPTIONS, key) != null){
+            return ModuleSettings.getConfigSetting(PROP_OPTIONS, key);
         }
         else {
-            return "";
+            return this.stringExtractOptions.get(key);
         }
+        
     }
     
 }
