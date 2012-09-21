@@ -110,7 +110,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private Indexer indexer;
     private Searcher currentSearcher;
     private Searcher finalSearcher;
-    private volatile boolean searcherDone = true; //mark as done, until it's initedf
+    private volatile boolean searcherDone = true; //mark as done, until it's inited
     private Map<Keyword, List<Long>> currentResults;
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
     private static final Lock searcherLock = rwLock.writeLock();
