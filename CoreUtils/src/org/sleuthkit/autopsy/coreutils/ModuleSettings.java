@@ -32,8 +32,7 @@ import java.util.logging.Level;
 public class ModuleSettings {
 
     // The directory where the properties file is lcoated
-    private final static String userDirPath = PlatformUtil.getUserDirectory().getAbsolutePath();
-    private final static String moduleDirPath = userDirPath + File.separator + "config";
+    private final static String moduleDirPath = PlatformUtil.getUserConfigDirectory();
     public static final String MAIN_SETTINGS="Autopsy";
 
     
