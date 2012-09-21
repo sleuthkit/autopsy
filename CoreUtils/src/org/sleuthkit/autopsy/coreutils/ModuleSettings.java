@@ -113,13 +113,20 @@ public class ModuleSettings {
      * @return - the value associated with the setting.
      * @throws IOException 
      */
-    public static String getConfigSetting(String moduleName, String settingName) throws IOException{
+    public static String getConfigSetting(String moduleName, String settingName){
         if(configExists(moduleName)){
+            try{
             InputStream inputStream = new FileInputStream(getPropertyPath(moduleName));
             Properties props = new Properties();
             props.load(inputStream);
             inputStream.close();
             return props.getProperty(settingName);
+            }
+            
+           catch(IOException e){
+                Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not read config file [" + moduleName + "]", e);
+                return null;
+            }
 
         }
         else{ 
@@ -135,13 +142,15 @@ public class ModuleSettings {
      * @return - the map of all key:value pairs representing the settings of the config.
      * @throws IOException 
      */
-    public static Map< String, String> getConfigSettings(String moduleName) throws IOException {
+    public static Map< String, String> getConfigSettings(String moduleName) {
 
         if (configExists(moduleName)) {
+            try{
             InputStream inputStream = new FileInputStream(getPropertyPath(moduleName));
             Properties props = new Properties();
             props.load(inputStream);
             inputStream.close();
+            
 
             Set<String> keys = props.stringPropertyNames();
             Map<String, String> map = new HashMap<String, String>();
@@ -151,6 +160,11 @@ public class ModuleSettings {
             }
             
             return map;
+            }
+            catch(IOException e){
+                Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not read config file [" + moduleName + "]", e);
+                return null;
+            }
         } 
         else {
             makeConfigFile(moduleName);
