@@ -24,11 +24,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JPanel;
 import javax.swing.JTable;
@@ -38,6 +41,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.datamodel.Image;
@@ -72,10 +76,10 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         }
         return instance;
     }
-
-    private void customizeComponents() {
-        modulesTable.setModel(tableModel);
-        this.manager = IngestManager.getDefault();
+    
+    private void loadModules() {
+        this.modules.clear();
+        //this.moduleStates.clear(); maintain the state
         Collection<IngestModuleImage> imageModules = manager.enumerateImageModules();
         for (final IngestModuleImage module : imageModules) {
             addModule(module);
@@ -83,6 +87,27 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         Collection<IngestModuleAbstractFile> fsModules = manager.enumerateAbstractFileModules();
         for (final IngestModuleAbstractFile module : fsModules) {
             addModule(module);
+        }
+    }
+
+    private void customizeComponents() {
+        modulesTable.setModel(tableModel);
+        this.manager = IngestManager.getDefault();
+      
+        loadModules();
+        try {
+            IngestModuleLoader.getDefault().addModulesReloadedListener(new PropertyChangeListener() {
+
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (evt.getPropertyName().equals(IngestModuleLoader.Event.ModulesReloaded.toString())) {
+                        loadModules();
+                    }
+                }
+                
+            });
+        } catch (IngestModuleLoaderException ex) {
+            logger.log(Level.SEVERE, "Could not initialize ingest module loader to listen for module config changes", ex);
         }
 
         modulesTable.setTableHeader(null);

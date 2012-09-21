@@ -59,6 +59,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.openide.filesystems.FileSystem;
 import org.openide.modules.ModuleInfo;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
@@ -76,6 +77,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import org.openide.filesystems.Repository;
 
 /**
  * Class responsible for discovery and loading ingest modules specified in
@@ -83,12 +85,17 @@ import org.xml.sax.SAXException;
  * application for changes in XML to take effect.
  *
  * Supports module auto-discovery from system-wide and user-dir wide jar files.
- * Discovered modules are validated, and if valid, they are added to end of configuration 
- * and saved in the XML.
- * 
- * If module is removed/uninstalled, it will remain in the XML file, but it will not load
- * because it will fail the validation.
- * 
+ * Discovered modules are validated, and if valid, they are added to end of
+ * configuration and saved in the XML.
+ *
+ * If module is removed/uninstalled, it will remain in the XML file, but it will
+ * not load because it will fail the validation.
+ *
+ * Get a handle to the object by calling static getDefault() method. The
+ * singleton instance will initialize itself the first time - it will load XML
+ * and autodiscover currently present ingest modules in the jar classpath..
+ *
+ *
  * Refer to
  * http://sleuthkit.org/sleuthkit/docs/framework-docs/pipeline_config_page.html
  * for the pipeline XML fiel schema details.
@@ -336,6 +343,18 @@ public final class IngestModuleLoader {
             }
         }
 
+        /*
+         * netbeans way, but not public API
+        org.openide.filesystems.Repository defaultRepository = Repository.getDefault();
+        FileSystem masterFilesystem = defaultRepository.getDefaultFileSystem();
+        org.netbeans.core.startup.ModuleSystem moduleSystem = new org.netbeans.core.startup.ModuleSystem(masterFilesystem);
+        List<File> jars = moduleSystem.getModuleJars();
+        for (File jar : jars) {
+            logger.log(Level.INFO, " JAR2: " + jar.getAbsolutePath());
+        }
+        //org.netbeans.ModuleManager moduleManager = moduleSystem.getManager();
+        */
+
         return urls;
     }
 
@@ -558,6 +577,16 @@ public final class IngestModuleLoader {
         }
 
     }
+    
+    /**
+     * Set a new order of the module
+     * @param pipeLineType pipeline type where the module to reorder is present
+     * @param moduleLocation loaded module name (location), fully qualified class path
+     * @param newOrder new order to set
+     */
+    void setModuleOrder(XmlPipelineRaw.PIPELINE_TYPE  pipeLineType, String moduleLocation, int newOrder) throws IngestModuleLoaderException{
+        throw new IngestModuleLoaderException("Not yet implemented");
+    }
 
     /**
      * add autodiscovered module to raw pipeline to be validated and
@@ -588,12 +617,13 @@ public final class IngestModuleLoader {
             throw new IngestModuleLoaderException("Could not find expected pipeline of type: " + pipelineType.toString() + ", cannot add autodiscovered module: " + moduleLocation);
         } else {
             pipeline.modules.add(modRaw);
+            logger.log(Level.INFO, "Added a new module " + moduleClass.getName() + " to pipeline " + pipelineType.toString());
         }
     }
 
     /**
-     * Register a listener for module install/uninstall
-     * //TODO ensure that module is actually loadable when Lookup event is fired
+     * Register a listener for module install/uninstall //TODO ensure that
+     * module is actually loadable when Lookup event is fired
      */
     private void registerModulesChange() {
         final Lookup.Result<ModuleInfo> result =
@@ -624,8 +654,8 @@ public final class IngestModuleLoader {
             DocumentBuilder docBuilder = dbfac.newDocumentBuilder();
             Document doc = docBuilder.newDocument();
 
-   
-            Comment comment = doc.createComment("Saved by: " + getClass().getName() 
+
+            Comment comment = doc.createComment("Saved by: " + getClass().getName()
                     + " on: " + dateFormatter.format(System.currentTimeMillis()));
             doc.appendChild(comment);
             Element rootEl = doc.createElement(XmlPipelineRaw.XML_PIPELINE_ROOT);
@@ -635,28 +665,28 @@ public final class IngestModuleLoader {
                 Element pipelineEl = doc.createElement(XmlPipelineRaw.XML_PIPELINE_EL);
                 pipelineEl.setAttribute(XmlPipelineRaw.XML_PIPELINE_TYPE_ATTR, rawP.type);
                 rootEl.appendChild(pipelineEl);
-                
+
                 for (XmlModuleRaw rawM : rawP.modules) {
                     Element moduleEl = doc.createElement(XmlModuleRaw.XML_MODULE_EL);
-                    
+
                     moduleEl.setAttribute(XmlModuleRaw.XML_MODULE_LOC_ATTR, rawM.location);
                     moduleEl.setAttribute(XmlModuleRaw.XML_MODULE_TYPE_ATTR, rawM.type);
                     moduleEl.setAttribute(XmlModuleRaw.XML_MODULE_ORDER_ATTR, Integer.toString(rawM.order));
                     moduleEl.setAttribute(XmlModuleRaw.XML_MODULE_TYPE_ATTR, rawM.type);
-                    
+
                     pipelineEl.appendChild(moduleEl);
                 }
             }
-            
+
             saveDoc(doc);
             logger.log(Level.INFO, "Pipeline configuration saved to: " + this.absFilePath);
         } catch (ParserConfigurationException e) {
             logger.log(Level.SEVERE, "Error saving pipeline config XML: can't initialize parser.", e);
         }
-        
+
     }
-    
-     private boolean saveDoc(final Document doc) {
+
+    private boolean saveDoc(final Document doc) {
         TransformerFactory xf = TransformerFactory.newInstance();
         xf.setAttribute("indent-number", new Integer(1));
         boolean success = false;
