@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.DateFormat;
@@ -71,7 +72,7 @@ public class IngestManager {
     private SwingWorker<Object, Void> queueWorker;
     //modules
     private List<IngestModuleImage> imageModules;
-    private final List<IngestModuleAbstractFile> abstractFileModules;
+    private List<IngestModuleAbstractFile> abstractFileModules;
     // module return values
     private final Map<String, IngestModuleAbstractFile.ProcessResult> abstractFileModulesRetValues = new HashMap<String, IngestModuleAbstractFile.ProcessResult>();
     //notifications
@@ -132,8 +133,26 @@ public class IngestManager {
         }
 
         imageIngesters = new ArrayList<IngestImageThread>();
-        abstractFileModules = enumerateAbstractFileModules();
-        imageModules = enumerateImageModules();
+
+        //setup current modules and listeners for modules changes
+        initModules();
+
+    }
+
+    private void initModules() {
+        abstractFileModules = moduleLoader.getAbstractFileIngestModules();
+        imageModules = moduleLoader.getImageIngestModules();
+
+        moduleLoader.addModulesReloadedListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals(IngestModuleLoader.Event.ModulesReloaded.toString())) {
+                    //TODO might need to not allow to remove modules if they are running
+                    abstractFileModules = moduleLoader.getAbstractFileIngestModules();
+                    imageModules = moduleLoader.getImageIngestModules();
+                }
+            }
+        });
     }
 
     /**
@@ -562,16 +581,16 @@ public class IngestManager {
     }
 
     /**
-     * helper to return all loaded image modules managed sorted in
-     * order as specified in pipeline_config XML
+     * helper to return all loaded image modules managed sorted in order as
+     * specified in pipeline_config XML
      */
     public List<IngestModuleImage> enumerateImageModules() {
         return moduleLoader.getImageIngestModules();
     }
 
-     /**
-     * helper to return all loaded file modules managed sorted in
-     * order as specified in pipeline_config XML
+    /**
+     * helper to return all loaded file modules managed sorted in order as
+     * specified in pipeline_config XML
      */
     public List<IngestModuleAbstractFile> enumerateAbstractFileModules() {
         return moduleLoader.getAbstractFileIngestModules();
