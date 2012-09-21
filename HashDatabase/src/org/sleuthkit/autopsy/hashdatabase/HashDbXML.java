@@ -26,10 +26,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.xml.parsers.DocumentBuilder;
@@ -43,17 +40,13 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-/**
- *
- * @author dfickling
- */
 public class HashDbXML {
     private static final String ROOT_EL = "hash_sets";
     private static final String SET_EL = "hash_set";
@@ -65,7 +58,7 @@ public class HashDbXML {
     private static final String PATH_NUMBER_ATTR = "number";
     private static final String CUR_HASHSETS_FILE_NAME = "hashsets.xml";
     private static final String ENCODING = "UTF-8";
-    private static final String CUR_HASHSET_FILE = AutopsyPropFile.getUserDirPath() + File.separator + CUR_HASHSETS_FILE_NAME;
+    private static final String CUR_HASHSET_FILE = PlatformUtil.getUserDirectory() + File.separator + CUR_HASHSETS_FILE_NAME;
     private static final String SET_CALC = "hash_calculate";
     private static final String SET_VALUE = "value";
     private static final Logger logger = Logger.getLogger(HashDbXML.class.getName());
