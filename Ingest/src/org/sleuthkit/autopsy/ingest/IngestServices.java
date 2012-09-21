@@ -20,13 +20,17 @@
 
 package org.sleuthkit.autopsy.ingest;
 
+import java.util.Map;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 
 /**
  * Services available to ingest modules via singleton instance,
- * e.g. for logging, interacting with the ingest manager
- * sending data events notifications, ingest messages, getting configurations, etc.
+ * for:
+ * logging, interacting with the ingest manager
+ * sending data events notifications, sending ingest inbox messages,
+ * getting and setting module configurations
  * 
  */
 public class IngestServices {
@@ -98,6 +102,46 @@ public class IngestServices {
      */
     public IngestModuleAbstractFile.ProcessResult getAbstractFileModuleResult(String moduleName) {
         return manager.getAbstractFileModuleResult(moduleName);
+    }
+    
+    /**
+     * Gets a configuration setting for a module
+     * @param moduleName moduleName identifier unique to that module
+     * @param settingName setting name to retrieve
+     * @return setting value for the module / setting name
+     */
+    public String getConfigSetting(String moduleName, String settingName) {
+        return ModuleSettings.getConfigSetting(moduleName, settingName);
+    }
+    
+    /**
+     * Sets a configuration setting for a module
+     * @param moduleName moduleName identifier unique to that module
+     * @param settingName setting name to set
+     * @param settingVal setting value to set
+     */
+    public void setConfigSetting(String moduleName, String settingName, String settingVal) {
+        ModuleSettings.setConfigSetting(moduleName, settingName, settingVal);
+    }
+    
+    /**
+     * Gets configuration settings for a module
+     * @param moduleName moduleName identifier unique to that module
+     * @return settings for the module / setting name
+     */
+    public Map<String,String> getConfigSettings(String moduleName) {
+        return ModuleSettings.getConfigSettings(moduleName);
+    }
+    
+   /**
+     * Sets configuration settings for a module, while preserving the module settings not specified
+     * to be set.
+     * @param moduleName moduleName identifier unique to that module
+     * @param settings settings to set and replace old settings, keeping settings not specified in the map.
+     * 
+     */
+    public void setConfigSettings(String moduleName, Map<String,String>settings) {
+        ModuleSettings.setConfigSettings(moduleName, settings);
     }
     
     
