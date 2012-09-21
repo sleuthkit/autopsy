@@ -45,8 +45,6 @@ public final class RecentCases extends CallableSystemAction implements Presenter
     static final String NAME_PROP_KEY = "LBL_RecentCase_Name";
     static final String PATH_PROP_KEY = "LBL_RecentCase_Path";
     static final RecentCase BLANK_RECENTCASE = new RecentCase("", "");
-    // get the path of the case.properties file in the user directory
-    private final static ModuleSettings apf = ModuleSettings.getInstance();
 
     private final static RecentCases INSTANCE = new RecentCases();
 
@@ -68,10 +66,10 @@ public final class RecentCases extends CallableSystemAction implements Presenter
         
         for (int i = 0; i < LENGTH; i++) {
             try{
-            if(apf.getConfigSetting("Case", nameKey(i)) == null)
-                apf.setConfigSetting("Case", nameKey(i), "");
-            if(apf.getConfigSetting("Case", pathKey(i)) == null)
-                apf.setConfigSetting("Case", pathKey(i), "");
+            if(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, nameKey(i)) == null)
+                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, nameKey(i), "");
+            if(ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, pathKey(i)) == null)
+                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, pathKey(i), "");
             }
             catch(Exception e ){
                 
@@ -107,7 +105,7 @@ public final class RecentCases extends CallableSystemAction implements Presenter
 
     private String getName(int i) {
         try{
-        return apf.getConfigSetting("Case", nameKey(i));
+        return ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, nameKey(i));
         }
         catch(Exception e){
             return null;
@@ -116,7 +114,7 @@ public final class RecentCases extends CallableSystemAction implements Presenter
 
     private String getPath(int i) {
         try{
-        return apf.getConfigSetting("Case", pathKey(i));
+        return ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, pathKey(i));
         }
         catch(Exception e){
             return null;
@@ -124,11 +122,11 @@ public final class RecentCases extends CallableSystemAction implements Presenter
     }
 
     private void setName(int i, String name) {
-        apf.setConfigSetting("Case", nameKey(i), name);
+        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, nameKey(i), name);
     }
 
     private void setPath(int i, String path) {
-        apf.setConfigSetting("Case", pathKey(i), path);
+        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, pathKey(i), path);
     }
 
     private void setRecentCase(int i, RecentCase rc) {

@@ -21,13 +21,10 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.openide.modules.Places;
 /**
  * This class contains the framework to read, add, update, and remove
  * from the property files located at %USERDIR%/Config/x.properties
@@ -35,18 +32,10 @@ import org.openide.modules.Places;
 public class ModuleSettings {
 
     // The directory where the properties file is lcoated
-    private final static String userDirPath = Places.getUserDirectory().getAbsolutePath();
+    private final static String userDirPath = PlatformUtil.getUserDirectory().getAbsolutePath();
     private final static String moduleDirPath = userDirPath + File.separator + "config";
+    public static final String MAIN_SETTINGS="Autopsy";
 
-    // The ModuleSettings singleton
-    private static final ModuleSettings INSTANCE = new ModuleSettings();
-    
-    /**
-     * Get the instance of the ModuleSettings singleton
-     */
-    public static ModuleSettings getInstance(){
-        return INSTANCE;
-    }
     
     /** the constructor */
     private ModuleSettings() {
@@ -274,7 +263,4 @@ public class ModuleSettings {
         return new File(getPropertyPath(moduleName));
     }
     
-    public static File getUserDirPath() {
-        return new File(userDirPath);
-    }
 }

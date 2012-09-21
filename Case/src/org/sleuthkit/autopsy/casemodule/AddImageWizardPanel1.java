@@ -49,7 +49,6 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
     private static final String PROP_LASTIMAGE = "LBL_LastImage_PATH";
      // paths to any set hash lookup databases (can be null)
     private String NSRLPath, knownBadPath;
-    private static ModuleSettings apf = ModuleSettings.getInstance();
     
     /**
      * Get the visual component for the panel. In this template, the component
@@ -174,7 +173,7 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
         
         // Prepopulate the image directory from the properties file
         try{
-        String lastImageDirectory = apf.getConfigSetting("Case", PROP_LASTIMAGE);
+        String lastImageDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTIMAGE);
        
         component.getImagePathTextField().setText(lastImageDirectory);
         
@@ -223,7 +222,7 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
         // Store the path to the first image selected into the properties file
         String firstImage = getComponent().getImagePath();
         String firstImagePath = firstImage.substring(0, firstImage.lastIndexOf(File.separator) + 1);
-        apf.setConfigSetting("Case", PROP_LASTIMAGE, firstImagePath);
+        ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTIMAGE, firstImagePath);
     }
 
 
