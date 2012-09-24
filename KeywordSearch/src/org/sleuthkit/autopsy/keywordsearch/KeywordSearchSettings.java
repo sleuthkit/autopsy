@@ -49,7 +49,7 @@ public class KeywordSearchSettings {
     /**
      * Gets the update Frequency from  KeywordSearch_Options.properties
      * @return KeywordSearchIngestModule's update frequency
-     */
+     */ 
     static UpdateFrequency getUpdateFrequency(){
         if(ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency") != null){
          return UpdateFrequency.valueOf(ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency"));
@@ -166,27 +166,27 @@ public class KeywordSearchSettings {
         logger.log(Level.INFO, "Detecting default settings.");
              //setting default NSRL
      if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")){
-         logger.log(Level.INFO, "Default configuration for NSRL not found, generating default...");
+         logger.log(Level.INFO, "No configuration for NSRL not found, generating default...");
           KeywordSearchSettings.setSkipKnown(true);
        }
      //setting default Update Frequency
      if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")){
-         logger.log(Level.INFO, "Default configuration for Update Frequency not found, generating default...");
+         logger.log(Level.INFO, "No configuration for Update Frequency not found, generating default...");
          KeywordSearchSettings.setUpdateFrequency(UpdateFrequency.AVG);
       }
      //setting default Extract UTF8
      if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString())){
-         logger.log(Level.INFO, "Default configuration for UTF8 not found, generating default...");
+         logger.log(Level.INFO, "No configuration for UTF8 not found, generating default...");
          KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
          }
         //setting default Extract UTF16
      if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString())){
-         logger.log(Level.INFO, "Default configuration for UTF16 not found, generating defaults...");
+         logger.log(Level.INFO, "No configuration for UTF16 not found, generating defaults...");
          KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
        }
         //setting default Latin-1 Script
      if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name())){
-         logger.log(Level.INFO, "Default configuration for Scripts not found, generating defaults...");
+         logger.log(Level.INFO, "No configuration for Scripts not found, generating defaults...");
          ModuleSettings.setConfigSetting(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
         }
     }
