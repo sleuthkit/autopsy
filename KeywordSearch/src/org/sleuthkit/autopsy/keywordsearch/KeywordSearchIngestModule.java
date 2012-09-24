@@ -138,6 +138,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private KeywordSearchIngestModule() {
         //set default script 
         
+
      if(ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()) == null){
          KeywordSearchSettings.stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
          
@@ -149,6 +150,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
      if(ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()) == null){
         KeywordSearchSettings.stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
      }
+
      
     }
 

@@ -60,6 +60,8 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     private Map<String, Boolean> moduleStates;
     private ModulesTableModel tableModel;
     private static final Logger logger = Logger.getLogger(IngestDialogPanel.class.getName());
+    public static final String ENABLED_MOD = "Enabled_Ingest_Modules";
+    public static final String PARSE_UNALLOC = "Process_Unallocated_Space";
     // The image that's just been added to the database
     private Image image;
     private static IngestDialogPanel instance = null;
@@ -196,7 +198,9 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         processUnallocPanel = new javax.swing.JPanel();
         processUnallocCheckbox = new javax.swing.JCheckBox();
 
-        setPreferredSize(new java.awt.Dimension(522, 257));
+        setMaximumSize(new java.awt.Dimension(5750, 3000));
+        setMinimumSize(new java.awt.Dimension(522, 257));
+        setPreferredSize(new java.awt.Dimension(575, 300));
 
         modulesScrollPane.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
         modulesScrollPane.setPreferredSize(new java.awt.Dimension(160, 160));
@@ -270,7 +274,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             .addGroup(processUnallocPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(processUnallocCheckbox)
-                .addContainerGap(7, Short.MAX_VALUE))
+                .addContainerGap(60, Short.MAX_VALUE))
         );
         processUnallocPanelLayout.setVerticalGroup(
             processUnallocPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -298,9 +302,9 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 190, Short.MAX_VALUE)
+                        .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 233, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(processUnallocPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
@@ -436,9 +440,9 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 list += ", ";
             }
         }
-        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, "Enabled Ingest Modules", list);
+        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, ENABLED_MOD, list);
         String processUnalloc = Boolean.toString(processUnallocCheckbox.isSelected());
-        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, "Process Unallocated Space", processUnalloc);
+        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, PARSE_UNALLOC, processUnalloc);
         
     }
     
@@ -460,7 +464,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             simplePanel.repaint();
         }
         // Reload this panel
-        String list = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, "Enabled Ingest Modules");
+        String list = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, ENABLED_MOD);
         if(list!=null) { // if no property is found, list will be null
             ArrayList<String> modulesEnabled = new ArrayList<String>(Arrays.asList(list.split(", ")));
             // For every row, see if that module name is in the ArrayList
@@ -473,7 +477,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 }
             }
         }
-        String processUnalloc = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, "Process Unallocated Space");
+        String processUnalloc = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, PARSE_UNALLOC);
         if(processUnalloc!=null) {
             processUnallocCheckbox.setSelected(Boolean.parseBoolean(processUnalloc));
         }
