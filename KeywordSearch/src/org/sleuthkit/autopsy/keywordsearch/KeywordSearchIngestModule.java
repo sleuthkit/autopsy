@@ -133,8 +133,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
     //private constructor to ensure singleton instance 
     private KeywordSearchIngestModule() {
-        //set default script 
-        KeywordSearchSettings.setDefaults();
+
     }
 
     /**
@@ -148,14 +147,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         }
         return instance;
     }
-    
-    /**
-     * returns the current minimal update frequency setting in minutes 
-     */
-    private UpdateFrequency getUpdateFrequency() {
-        return KeywordSearchSettings.getUpdateFrequency();
-    }
-
 
     /**
      * Starts processing of every file provided by IngestManager. Checks if it
