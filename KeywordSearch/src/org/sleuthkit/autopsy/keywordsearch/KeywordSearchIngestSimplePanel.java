@@ -187,8 +187,8 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
     }
     
     private void reloadEncodings() {
-        String utf8 = ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString());
-        String utf16 = ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString());
+        String utf8 = KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString());
+        String utf16 = KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString());
         ArrayList<String> encodingsList = new ArrayList<String>();
         if(utf8==null || Boolean.parseBoolean(utf8)) {
             encodingsList.add("UTF8");
