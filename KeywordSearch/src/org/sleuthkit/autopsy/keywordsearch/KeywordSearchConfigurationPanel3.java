@@ -150,7 +150,7 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel impleme
         final boolean extractEnabled = utf16 || utf8;
         
         boolean ingestNotRunning = !IngestManager.getDefault().isIngestRunning()
-        && ! IngestManager.getDefault().isModuleRunning(KeywordSearchSettings.getDefault());;
+        && ! IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());
         //enable / disable checboxes
         activateScriptsCheckboxes(extractEnabled && ingestNotRunning);
         enableUTF16Checkbox.setEnabled(ingestNotRunning);
