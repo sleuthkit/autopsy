@@ -172,7 +172,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-                this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + Favorite.getName());
+                this.addErrorMessage(this.getName() + ": Error analyzing file:" + Favorite.getName());
             }
 
         }
@@ -221,7 +221,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, Cookie, bbattributes);
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-                this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + Cookie.getName());
+                this.addErrorMessage(this.getName() + ": Error analyzing file:" + Cookie.getName());
             }
 
         }
@@ -254,7 +254,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, Recent, bbattributes);
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-                this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + Recent.getName());
+                this.addErrorMessage(this.getName() + ": Error analyzing file:" + Recent.getName());
             }
 
         }
@@ -494,7 +494,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                                             bbart.addAttributes(bbattributes);
                                         } catch (Exception ex) {
                                             logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
-                                            this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + tempDb.getAbstractFileById(artObjId).getName());
+                                            this.addErrorMessage(this.getName() + ": Error analyzing file:" + tempDb.getAbstractFileById(artObjId).getName());
                                         }
 
                                         //KeyValueThing
