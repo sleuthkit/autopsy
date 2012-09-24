@@ -88,7 +88,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             return time;
         }
     };
-    private volatile UpdateFrequency updateFrequency = UpdateFrequency.AVG;
     
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     public static final String MODULE_NAME = "Keyword Search";
@@ -134,20 +133,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
     //private constructor to ensure singleton instance 
     private KeywordSearchIngestModule() {
-        //set default script 
-        
-     if(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()) == null){
-         KeywordSearchSettings.stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
-         
-     }
-     if(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name()) == null){
-        ModuleSettings.setConfigSetting(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
-        KeywordSearchSettings.stringExtractScripts.add(SCRIPT.LATIN_1);
-     }
-     if(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()) == null){
-        KeywordSearchSettings.stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
-     }
-     
+        KeywordSearchSettings.setDefaults();
     }
 
     /**
@@ -165,18 +151,10 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     /**
      * returns the current minimal update frequency setting in minutes 
      */
-    UpdateFrequency getUpdateFrequency() {
-        return updateFrequency;
+    private UpdateFrequency getUpdateFrequency() {
+        return KeywordSearchSettings.getUpdateFrequency();
     }
 
-    /**
-     * set new minimal update frequency module should use
-     *
-     * @param frequency to use in minutes
-     */
-    void setUpdateFrequency(UpdateFrequency frequency) {
-        this.updateFrequency = frequency;
-    }
 
     /**
      * Starts processing of every file provided by IngestManager. Checks if it
@@ -371,17 +349,13 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         //use the settings files to set values
         
-        //Grabbing skipKnown
-        if(! ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_NSRL).isEmpty()){
-            try{
-            KeywordSearchSettings.setSkipKnown(Boolean.parseBoolean(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")));
-             }
-          catch(Exception e){
-              Logger.getLogger(KeywordSearchIngestModule.class.getName()).log(Level.WARNING, "Could not parse boolean value from properties file.", e);
-          }
+    
+        
+        //setting default skip known
+        if(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown") == null){
+            KeywordSearchSettings.setSkipKnown(true);
         }
         
-      
         //populating stringExtractOptions
         if(! ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_OPTIONS).isEmpty()){
             KeywordSearchSettings.stringExtractOptions = ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_OPTIONS);
@@ -389,16 +363,11 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         
         //populating stringExtractScripts
         if(! ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_SCRIPTS).isEmpty()){
-          try{
             for(Map.Entry<String,String> kvp: ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_SCRIPTS).entrySet()){
                 if(kvp.getKey() != null && Boolean.parseBoolean(kvp.getValue())){
                    KeywordSearchSettings.stringExtractScripts.add(SCRIPT.valueOf(kvp.getKey()));
                 }
             }
-          }
-          catch(Exception e ){
-              Logger.getLogger(KeywordSearchIngestModule.class.getName()).log(Level.WARNING, "Could not parse boolean value from properties file.", e);
-          }
         }
 
 
@@ -441,7 +410,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         indexer = new Indexer();
 
-        final int updateIntervalMs = updateFrequency.getTime() * 60 * 1000;
+        final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
         logger.log(Level.INFO, "Using commit interval (ms): " + updateIntervalMs);
         logger.log(Level.INFO, "Using searcher interval (ms): " + updateIntervalMs);
 
