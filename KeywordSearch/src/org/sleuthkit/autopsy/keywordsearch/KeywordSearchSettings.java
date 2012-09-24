@@ -39,37 +39,36 @@ public class KeywordSearchSettings {
     static final String PROPERTIES_NSRL = MODULE_NAME+"_NSRL";
     static final String PROPERTIES_SCRIPTS = MODULE_NAME+"_Scripts";
     private static boolean skipKnown = true;
+    private static final Logger logger = Logger.getLogger(KeywordSearchSettings.class.getName());
+    private static UpdateFrequency UpdateFreq = UpdateFrequency.AVG;
     static List<StringExtract.StringExtractUnicodeTable.SCRIPT> stringExtractScripts = new ArrayList<StringExtract.StringExtractUnicodeTable.SCRIPT>();
     static Map<String,String> stringExtractOptions = new HashMap<String,String>();
     
 
-    
+           
     /**
-     * 
-     * @return IngestModule singleton
-     */
-    static KeywordSearchIngestModule getDefault(){
-        return KeywordSearchIngestModule.getDefault();
-    }
-    
-    /**
-     * 
-     * @return IngestModule's update frequency
+     * Gets the update Frequency from  KeywordSearch_Options.properties
+     * @return KeywordSearchIngestModule's update frequency
      */
     static UpdateFrequency getUpdateFrequency(){
-        return KeywordSearchIngestModule.getDefault().getUpdateFrequency();
+        if(ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency") != null){
+         return UpdateFrequency.valueOf(ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency"));
+        }
+        //if it failed, return the default/last known value
+        logger.log(Level.WARNING, "Could not read property for UpdateFrequency, returning backup value.");
+        return UpdateFreq;
     }
+    
     
     /**
-     * Sets the ingest module's update frequency.
-     * @param c Update frequency to set.
+     * Sets the update frequency and writes to KeywordSearch_Options.properties
+     * @param freq Sets KeywordSearchIngestModule to this value.
      */
-    static void setUpdateFrequency(UpdateFrequency c){
-        KeywordSearchIngestModule.getDefault().setUpdateFrequency(c);
+    static void setUpdateFrequency(UpdateFrequency freq){
+        ModuleSettings.setConfigSetting(PROPERTIES_OPTIONS, "UpdateFrequency", freq.name());
+        UpdateFreq = freq;
     }
     
-    
-            
     /**
      * Sets whether or not to skip adding known good files to the search during index.
      * @param skip 
@@ -77,6 +76,19 @@ public class KeywordSearchSettings {
     static void setSkipKnown(boolean skip) {
         ModuleSettings.setConfigSetting(PROPERTIES_NSRL, "SkipKnown", Boolean.toString(skip));
         skipKnown = skip;
+    }
+    
+   /**
+     * Gets the setting for whether or not this ingest is skipping adding known good files to the index.
+     * @return skip setting
+     */
+    static boolean getSkipKnown() {
+       if(ModuleSettings.getConfigSetting(PROPERTIES_NSRL, "SkipKnown") != null){
+            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROPERTIES_NSRL, "SkipKnown"));
+        }
+       //if it fails, return the default/last known value
+       logger.log(Level.WARNING, "Could not read property for SkipKnown, returning backup value.");
+       return skipKnown;
     }
    
 
@@ -126,6 +138,7 @@ public class KeywordSearchSettings {
             return scripts;
         }
         //if it failed, try to return the built-in list maintained by the singleton.
+        logger.log(Level.WARNING, "Could not read properties for extracting scripts, returning backup values.");
         return new ArrayList<SCRIPT>(stringExtractScripts);
     }
     
@@ -141,25 +154,43 @@ public class KeywordSearchSettings {
             return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, key);
         }
         else {
+            logger.log(Level.WARNING, "Could not read property for Key "+ key + ", returning backup value.");
             return stringExtractOptions.get(key);
+            
+        }
+    }
+    /**
+     * Sets the default values of the KeywordSearch properties files if none already exist.
+     */
+    static void setDefaults(){
+        logger.log(Level.INFO, "Detecting default settings.");
+             //setting default NSRL
+     if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")){
+         logger.log(Level.INFO, "Default configuration for NSRL not found, generating default...");
+          KeywordSearchSettings.setSkipKnown(true);
+       }
+     //setting default Update Frequency
+     if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "UpdateFrequency")){
+         logger.log(Level.INFO, "Default configuration for Update Frequency not found, generating default...");
+         KeywordSearchSettings.setUpdateFrequency(UpdateFrequency.AVG);
+      }
+     //setting default Extract UTF8
+     if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString())){
+         logger.log(Level.INFO, "Default configuration for UTF8 not found, generating default...");
+         KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+         }
+        //setting default Extract UTF16
+     if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString())){
+         logger.log(Level.INFO, "Default configuration for UTF16 not found, generating defaults...");
+         KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
+       }
+        //setting default Latin-1 Script
+     if(!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name())){
+         logger.log(Level.INFO, "Default configuration for Scripts not found, generating defaults...");
+         ModuleSettings.setConfigSetting(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
         }
     }
     
-    /**
-     * Gets the setting for whether or not this ingest is skipping adding known good files to the index.
-     * @return skip setting
-     */
-    static boolean getSkipKnown() {
-        try{
-        if(ModuleSettings.getConfigSetting(PROPERTIES_NSRL, "SkipKnown") != null){
-            skipKnown = Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROPERTIES_NSRL, "SkipKnown"));
-        }
-         }
-          catch(Exception e ){
-              Logger.getLogger(KeywordSearchIngestModule.class.getName()).log(Level.WARNING, "Could not parse boolean value from properties file.", e);
-          }
-        return skipKnown;
-    }
        
     
 }

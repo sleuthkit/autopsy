@@ -81,6 +81,20 @@ public class ModuleSettings {
         return f.exists();
     }
     
+    public static boolean settingExists(String moduleName, String settingName){
+        if(! configExists(moduleName)){
+            return false;
+        }
+        try{
+            Properties props = fetchProperties(moduleName);
+            return (props.getProperty(settingName) != null);
+        }
+        catch(IOException e){
+            return false;
+        }
+        
+    }
+    
     /**
      * Returns the path of the given properties file.
      * @param moduleName - The name of the config file to evaluate
@@ -155,7 +169,7 @@ public class ModuleSettings {
      * @param moduleName - The name of the module to be written to.
      * @param settings - The mapping of all key:value pairs of settings to add to the config.
      */
-    public static void setConfigSettings(String moduleName, Map<String, String> settings) {
+    public static synchronized void setConfigSettings(String moduleName, Map<String, String> settings) {
         if (!configExists(moduleName)) {
             makeConfigFile(moduleName);
             Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]");
@@ -182,7 +196,7 @@ public class ModuleSettings {
      * @param settingName - The name of the setting to be modified.
      * @param settingVal - the value to set the setting to.
      */
-    public static void setConfigSetting(String moduleName, String settingName, String settingVal) {
+    public static synchronized void setConfigSetting(String moduleName, String settingName, String settingVal) {
         if (!configExists(moduleName)) {
             makeConfigFile(moduleName);
             Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]");
@@ -209,7 +223,7 @@ public class ModuleSettings {
      * @param key - the name of the key to remove.
      */
     
-    public static void removeProperty(String moduleName, String key){
+    public static synchronized void removeProperty(String moduleName, String key){
         try{
             if(getConfigSetting(moduleName, key) != null){
             Properties props = fetchProperties(moduleName);
@@ -243,10 +257,16 @@ public class ModuleSettings {
     /**
      * Gets the property file as specified.
      * @param moduleName
-     * @return A new file handle
+     * @return A new file handle, returns null if the file does not exist.
      */
     public static File getPropertyFile(String moduleName) {
+        String path = getPropertyPath(moduleName);
+        if (path == null){
+            return null;
+        }
+        else{
         return new File(getPropertyPath(moduleName));
+        }
     }
     
 }
