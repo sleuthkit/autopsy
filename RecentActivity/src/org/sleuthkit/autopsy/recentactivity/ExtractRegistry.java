@@ -240,7 +240,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                     String Tempdate = time.toString();
                     time = Long.valueOf(Tempdate) / 1000;
                 } catch (ParseException e) {
-                    logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> ", e);
+                    logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> failed for: " + etime);
                 }
                 Element artroot = tempnode.getChild("artifacts");
                 List<Element> artlist = artroot.getChildren();
