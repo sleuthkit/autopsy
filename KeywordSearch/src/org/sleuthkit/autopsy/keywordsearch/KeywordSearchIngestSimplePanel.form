@@ -55,7 +55,7 @@
               <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
               <Component id="titleLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="listsScrollPane" pref="135" max="32767" attributes="0"/>
+              <Component id="listsScrollPane" pref="62" max="32767" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="languagesLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
