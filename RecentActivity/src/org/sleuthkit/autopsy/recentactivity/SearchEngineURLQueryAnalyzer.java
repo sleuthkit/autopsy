@@ -319,6 +319,9 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
    private String getTotals() {
         String total = "";
+        if (engines == null) {
+            return total;
+        }
         for (SearchEngine se : engines) {
            total+= se.getEngineName() + " : "+ se.getTotal() + "\n";
         }
