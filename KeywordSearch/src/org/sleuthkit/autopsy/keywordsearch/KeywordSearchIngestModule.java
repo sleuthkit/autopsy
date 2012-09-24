@@ -140,16 +140,16 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private KeywordSearchIngestModule() {
         //set default script 
         
-     if(ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()) == null){
-         stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
-     }
-     if(ModuleSettings.getConfigSetting(PROP_SCRIPTS, SCRIPT.LATIN_1.name()) == null){
-        ModuleSettings.setConfigSetting(PROP_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
-        stringExtractScripts.add(SCRIPT.LATIN_1);
-     }
-     if(ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()) == null){
-        stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
-     }
+        if(ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()) == null){
+            stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+        }
+        if(ModuleSettings.getConfigSetting(PROP_SCRIPTS, SCRIPT.LATIN_1.name()) == null){
+           ModuleSettings.setConfigSetting(PROP_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
+           stringExtractScripts.add(SCRIPT.LATIN_1);
+        }
+        if(ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()) == null){
+           stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
+        }
      
     }
 
