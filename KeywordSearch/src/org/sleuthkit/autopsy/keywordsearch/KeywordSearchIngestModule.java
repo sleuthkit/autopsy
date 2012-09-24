@@ -92,10 +92,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
     public static final String MODULE_NAME = "Keyword Search";
-    public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";     final public static String MODULE_VERSION = "1.0";
-    public static final String PROP_SCRIPTS = MODULE_NAME + "_Scripts";
-    public static final String PROP_OPTIONS = MODULE_NAME + "_Options";
-    public static final String PROP_NSRL = MODULE_NAME + "_NSRL";
+    public static final String MODULE_DESCRIPTION = "Performs file indexing and periodic search using keywords and regular expressions in lists.";  
+    final public static String MODULE_VERSION = "1.0";
     private String args;
     private static KeywordSearchIngestModule instance = null;
     private IngestServices services;
@@ -139,15 +137,15 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         //set default script 
         
 
-     if(ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()) == null){
+     if(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()) == null){
          KeywordSearchSettings.stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
          
      }
-     if(ModuleSettings.getConfigSetting(PROP_SCRIPTS, SCRIPT.LATIN_1.name()) == null){
-        ModuleSettings.setConfigSetting(PROP_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
+     if(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name()) == null){
+        ModuleSettings.setConfigSetting(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
         KeywordSearchSettings.stringExtractScripts.add(SCRIPT.LATIN_1);
      }
-     if(ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()) == null){
+     if(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()) == null){
         KeywordSearchSettings.stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
      }
 
@@ -376,9 +374,9 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         //use the settings files to set values
         
         //Grabbing skipKnown
-        if(! ModuleSettings.getConfigSettings(PROP_NSRL).isEmpty()){
+        if(! ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_NSRL).isEmpty()){
             try{
-            KeywordSearchSettings.setSkipKnown(Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROP_NSRL, "SkipKnown")));
+            KeywordSearchSettings.setSkipKnown(Boolean.parseBoolean(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown")));
              }
           catch(Exception e){
               Logger.getLogger(KeywordSearchIngestModule.class.getName()).log(Level.WARNING, "Could not parse boolean value from properties file.", e);
@@ -387,14 +385,14 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         
       
         //populating stringExtractOptions
-        if(! ModuleSettings.getConfigSettings(PROP_OPTIONS).isEmpty()){
-            KeywordSearchSettings.stringExtractOptions = ModuleSettings.getConfigSettings(PROP_OPTIONS);
+        if(! ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_OPTIONS).isEmpty()){
+            KeywordSearchSettings.stringExtractOptions = ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_OPTIONS);
         }
         
         //populating stringExtractScripts
-        if(! ModuleSettings.getConfigSettings(PROP_SCRIPTS).isEmpty()){
+        if(! ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_SCRIPTS).isEmpty()){
           try{
-            for(Map.Entry<String,String> kvp: ModuleSettings.getConfigSettings(PROP_SCRIPTS).entrySet()){
+            for(Map.Entry<String,String> kvp: ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_SCRIPTS).entrySet()){
                 if(kvp.getKey() != null && Boolean.parseBoolean(kvp.getValue())){
                    KeywordSearchSettings.stringExtractScripts.add(SCRIPT.valueOf(kvp.getKey()));
                 }
