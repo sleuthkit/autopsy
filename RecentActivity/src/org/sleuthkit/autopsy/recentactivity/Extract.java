@@ -36,7 +36,7 @@ abstract public class Extract implements IngestModuleImage{
     protected Case currentCase = Case.getCurrentCase(); // get the most updated case
     protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
     public final Logger logger = Logger.getLogger(this.getClass().getName());
-    protected ArrayList<String> errorMessages = null;
+    protected final ArrayList<String> errorMessages = new ArrayList<String>();
     protected String moduleName = "";
     
     //hide public constructor to prevent from instantiation by ingest module loader
@@ -45,9 +45,6 @@ abstract public class Extract implements IngestModuleImage{
     }
     
     List<String> getErrorMessages() {
-        if(errorMessages == null) {
-            errorMessages = new ArrayList<String>();
-        }
         return errorMessages;
     }
 

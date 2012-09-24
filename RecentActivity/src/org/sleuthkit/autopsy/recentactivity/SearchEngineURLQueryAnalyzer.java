@@ -163,6 +163,9 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
      */
     
     private static SearchEngine getSearchEngine(String domain){     
+        if (engines == null) {
+            return SearchEngineURLQueryAnalyzer.NullEngine;
+        }
             for(int i = 0; i < engines.length; i++){
                     if(domain.contains(engines[i].getDomainSubstring())){
                         return engines[i];
