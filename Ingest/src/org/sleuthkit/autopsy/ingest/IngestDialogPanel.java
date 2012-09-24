@@ -60,6 +60,8 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
     private Map<String, Boolean> moduleStates;
     private ModulesTableModel tableModel;
     private static final Logger logger = Logger.getLogger(IngestDialogPanel.class.getName());
+    public static final String ENABLED_MOD = "Enabled_Ingest_Modules";
+    public static final String PARSE_UNALLOC = "Process_Unallocated_Space";
     // The image that's just been added to the database
     private Image image;
     private static IngestDialogPanel instance = null;
@@ -438,9 +440,9 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 list += ", ";
             }
         }
-        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, "Enabled Ingest Modules", list);
+        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, ENABLED_MOD, list);
         String processUnalloc = Boolean.toString(processUnallocCheckbox.isSelected());
-        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, "Process Unallocated Space", processUnalloc);
+        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, PARSE_UNALLOC, processUnalloc);
         
     }
     
@@ -462,7 +464,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             simplePanel.repaint();
         }
         // Reload this panel
-        String list = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, "Enabled Ingest Modules");
+        String list = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, ENABLED_MOD);
         if(list!=null) { // if no property is found, list will be null
             ArrayList<String> modulesEnabled = new ArrayList<String>(Arrays.asList(list.split(", ")));
             // For every row, see if that module name is in the ArrayList
@@ -475,7 +477,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
                 }
             }
         }
-        String processUnalloc = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, "Process Unallocated Space");
+        String processUnalloc = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, PARSE_UNALLOC);
         if(processUnalloc!=null) {
             processUnallocCheckbox.setSelected(Boolean.parseBoolean(processUnalloc));
         }
