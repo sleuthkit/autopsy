@@ -1002,7 +1002,7 @@ public final class IngestModuleLoader {
         classLoader = Lookup.getDefault().lookup(ClassLoader.class);
 
         try {
-            boolean extracted = PlatformUtil.extractResourceToUserDir(IngestModuleLoader.class, PIPELINE_CONFIG_XML);
+            boolean extracted = PlatformUtil.extractResourceToUserConfigDir(IngestModuleLoader.class, PIPELINE_CONFIG_XML);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error copying default pipeline configuration to user dir ", ex);
         }

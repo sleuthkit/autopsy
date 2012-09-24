@@ -156,8 +156,8 @@ public class PlatformUtil {
     }
 
     /**
-     * Utility to extract a resource file to a user directory, if it does not
-     * exist
+     * Utility to extract a resource file to a user configuration directory, if it does not
+     * exist - useful for setting up default configurations.
      *
      * @param resourceClass class in the same package as the resourceFile to
      * extract
@@ -166,7 +166,7 @@ public class PlatformUtil {
      * @throws IOException exception thrown if extract the file failed for IO
      * reasons
      */
-    public static boolean extractResourceToUserDir(final Class resourceClass, final String resourceFile) throws IOException {
+    public static boolean extractResourceToUserConfigDir(final Class resourceClass, final String resourceFile) throws IOException {
         final File userDir = new File(getUserConfigDirectory());
 
         final File resourceFileF = new File(userDir + File.separator + resourceFile);
