@@ -60,6 +60,9 @@ public class Installer extends ModuleInstall {
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
+        
+        //Setup the default KeywordSearch configuration files
+        KeywordSearchSettings.setDefaults();
 
     }
 
