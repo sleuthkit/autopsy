@@ -75,7 +75,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     
     //hide public constructor to prevent from instantiation by ingest module loader
-    SearchEngineURLQueryAnalyzer() {
+     SearchEngineURLQueryAnalyzer() {
           
     }
 

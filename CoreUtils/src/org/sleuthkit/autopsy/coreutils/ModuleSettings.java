@@ -101,26 +101,21 @@ public class ModuleSettings {
      * @return - the value associated with the setting.
      * @throws IOException 
      */
-    public static String getConfigSetting(String moduleName, String settingName){
-        if(configExists(moduleName)){
-            try{
-            InputStream inputStream = new FileInputStream(getPropertyPath(moduleName));
-            Properties props = new Properties();
-            props.load(inputStream);
-            inputStream.close();
-            return props.getProperty(settingName);
-            }
-            
-           catch(IOException e){
-                Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not read config file [" + moduleName + "]", e);
-                return null;
-            }
-
-        }
-        else{ 
+    public static String getConfigSetting(String moduleName, String settingName) {
+        if (!configExists(moduleName)) {
             makeConfigFile(moduleName);
-           return getConfigSetting(moduleName, settingName);
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]");
         }
+
+        try {
+            Properties props = fetchProperties(moduleName);
+
+            return props.getProperty(settingName);
+        } catch (IOException e) {
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not read config file [" + moduleName + "]", e);
+            return null;
+        }
+
     }
        
     
@@ -132,63 +127,52 @@ public class ModuleSettings {
      */
     public static Map< String, String> getConfigSettings(String moduleName) {
 
-        if (configExists(moduleName)) {
-            try{
-            InputStream inputStream = new FileInputStream(getPropertyPath(moduleName));
-            Properties props = new Properties();
-            props.load(inputStream);
-            inputStream.close();
-            
+        if (!configExists(moduleName)) {
+            makeConfigFile(moduleName);
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]");
+        }
+        try {
+            Properties props = fetchProperties(moduleName);
 
             Set<String> keys = props.stringPropertyNames();
             Map<String, String> map = new HashMap<String, String>();
-            
+
             for (String s : keys) {
                 map.put(s, props.getProperty(s));
             }
-            
+
             return map;
-            }
-            catch(IOException e){
-                Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not read config file [" + moduleName + "]", e);
-                return null;
-            }
-        } 
-        else {
-            makeConfigFile(moduleName);
-            return getConfigSettings(moduleName);
+        } catch (IOException e) {
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not read config file [" + moduleName + "]", e);
+            return null;
         }
     }
+    
+  
     
     /**
      * Sets the given properties file to the given setting map.
      * @param moduleName - The name of the module to be written to.
      * @param settings - The mapping of all key:value pairs of settings to add to the config.
      */
-    public static void setConfigSettings(String moduleName, Map<String,String> settings){
-        if(configExists(moduleName)){
-          try{
-            InputStream inputStream = new FileInputStream(getPropertyPath(moduleName));
-            Properties props = new Properties();
-            props.load(inputStream);
-            inputStream.close();
+    public static void setConfigSettings(String moduleName, Map<String, String> settings) {
+        if (!configExists(moduleName)) {
+            makeConfigFile(moduleName);
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]");
+        }
+        try {
+            Properties props = fetchProperties(moduleName);
 
-            for(Map.Entry<String,String> kvp : settings.entrySet()){
+            for (Map.Entry<String, String> kvp : settings.entrySet()) {
                 props.setProperty(kvp.getKey(), kvp.getValue());
             }
-            
+
             File path = new File(getPropertyPath(moduleName));
             FileOutputStream fos = new FileOutputStream(path);
-            props.store(fos, "Changed config settings");
+            props.store(fos, "Changed config settings(batch)");
             fos.close();
-          }
-          catch(IOException e ){
-              Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Property file exists for [" + moduleName + "] at [" + getPropertyPath(moduleName) + "] but could not be loaded.", e);
-          }
-        }
-        else{
-            makeConfigFile(moduleName);
-            setConfigSettings(moduleName, settings);
+        } catch (IOException e) {
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Property file exists for [" + moduleName + "] at [" + getPropertyPath(moduleName) + "] but could not be loaded.", e);
         }
     }
     
@@ -199,30 +183,22 @@ public class ModuleSettings {
      * @param settingVal - the value to set the setting to.
      */
     public static void setConfigSetting(String moduleName, String settingName, String settingVal) {
-        if(configExists(moduleName)){
-          try{
-            InputStream inputStream = new FileInputStream(getPropertyPath(moduleName));
-            Properties props = new Properties();
-            props.load(inputStream);
-            inputStream.close();
-          
-            props.setProperty(settingName, settingVal);
-            
-             File path = new File(getPropertyPath(moduleName));
-            FileOutputStream fos = new FileOutputStream(path);
-            props.store(fos, "Changed config settings");
-            fos.close();
-          }
-          catch(IOException e ){
-              Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Property file exists for [" + moduleName + "] at [" + getPropertyPath(moduleName) + "] but could not be loaded.", e);
-          }
-        }
-        
-        else{
-         //throw new FileNotFoundException("No property file found for [" + moduleName + "]");
+        if (!configExists(moduleName)) {
             makeConfigFile(moduleName);
             Logger.getLogger(ModuleSettings.class.getName()).log(Level.INFO, "File did not exist. Created file [" + moduleName + ".properties]");
-            setConfigSetting(moduleName, settingName, settingVal);
+        }
+
+        try {
+            Properties props = fetchProperties(moduleName);
+
+            props.setProperty(settingName, settingVal);
+
+            File path = new File(getPropertyPath(moduleName));
+            FileOutputStream fos = new FileOutputStream(path);
+            props.store(fos, "Changed config settings(single)");
+            fos.close();
+        } catch (IOException e) {
+            Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Property file exists for [" + moduleName + "] at [" + getPropertyPath(moduleName) + "] but could not be loaded.", e);
         }
     }
     
@@ -236,11 +212,8 @@ public class ModuleSettings {
     public static void removeProperty(String moduleName, String key){
         try{
             if(getConfigSetting(moduleName, key) != null){
-               // setConfigSetting(moduleName, key, "");
-            InputStream inputStream = new FileInputStream(getPropertyPath(moduleName));
-            Properties props = new Properties();
-            props.load(inputStream);
-            inputStream.close();
+            Properties props = fetchProperties(moduleName);
+            
             props.remove(key);
             File path = new File(getPropertyPath(moduleName));
             FileOutputStream fos = new FileOutputStream(path);
@@ -251,6 +224,20 @@ public class ModuleSettings {
         catch(IOException e ){
             Logger.getLogger(ModuleSettings.class.getName()).log(Level.WARNING, "Could not remove property from file, file not found", e);
         }
+    }
+    
+    /**
+     * Returns the properties file as specified by moduleName. 
+     * @param moduleName
+     * @return Properties file as specified by moduleName.
+     * @throws IOException 
+     */
+    private static Properties fetchProperties(String moduleName)throws IOException{
+        InputStream inputStream = new FileInputStream(getPropertyPath(moduleName));
+        Properties props = new Properties();
+        props.load(inputStream);
+        inputStream.close();
+        return props;
     }
     
     /**
