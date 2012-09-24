@@ -27,11 +27,13 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.swing.JCheckBox;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JPanel;
 import javax.swing.JTable;
@@ -44,6 +46,7 @@ import javax.swing.table.TableColumn;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.IngestConfigurator;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -410,17 +413,44 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
      */
     @Override
     public void save() {
+        // Save the current module
         if (currentModule != null && currentModule.hasSimpleConfiguration()) {
             currentModule.saveSimpleConfiguration();
         }
+        // Save this panel
+        ArrayList<String> modulesEnabled = new ArrayList<String>();
+        for(int i=0; i<modulesTable.getRowCount(); i++) {
+            // Column 0 is always the module's checkbox (which is retreived as a boolean)
+            Boolean enabled = (Boolean) modulesTable.getValueAt(i, 0);
+            if(enabled) {
+                // Column 1 is always the module name
+                String moduleName = (String) modulesTable.getValueAt(i, 1);
+                modulesEnabled.add(moduleName);
+            }
+        }
+        // Add all the enabled modules to the properties separated by a coma
+        String list = "";
+        for(int i=0; i<modulesEnabled.size(); i++) {
+            list += modulesEnabled.get(i);
+            if(i+1 < modulesEnabled.size()) {
+                list += ", ";
+            }
+        }
+        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, "Enabled Ingest Modules", list);
+        String processUnalloc = Boolean.toString(processUnallocCheckbox.isSelected());
+        ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, "Process Unallocated Space", processUnalloc);
+        
     }
     
     /**
-     * Called when the simple panel needs to be reloaded with more
-     * recent data.
+     * Called when the dialog needs to be reloaded. Most commonly used
+     * to refresh the simple panel.
+     * 
+     * Called every time this panel is displayed.
      */
     @Override
     public void reload() {
+        // Reload the simple panel
         if(this.modulesTable.getSelectedRow() != -1) {
             simplePanel.removeAll();
             if (currentModule.hasSimpleConfiguration()) {
@@ -429,10 +459,29 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             simplePanel.revalidate();
             simplePanel.repaint();
         }
+        // Reload this panel
+        String list = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, "Enabled Ingest Modules");
+        if(list!=null) { // if no property is found, list will be null
+            ArrayList<String> modulesEnabled = new ArrayList<String>(Arrays.asList(list.split(", ")));
+            // For every row, see if that module name is in the ArrayList
+            for(int i=0; i<modulesTable.getRowCount(); i++) {
+                String moduleName = (String) modulesTable.getValueAt(i, 1);
+                if(modulesEnabled.contains(moduleName)) {
+                    modulesTable.setValueAt(true, i, 0); // we found it!
+                } else {
+                    modulesTable.setValueAt(false, i, 0); // not so lucky..
+                }
+            }
+        }
+        String processUnalloc = ModuleSettings.getConfigSetting(IngestManager.MODULE_PROPERTIES, "Process Unallocated Space");
+        if(processUnalloc!=null) {
+            processUnallocCheckbox.setSelected(Boolean.parseBoolean(processUnalloc));
+        }
     }
 
     @Override
     public JPanel getIngestConfigPanel() {
+        this.reload();
         return this;
     }
 
