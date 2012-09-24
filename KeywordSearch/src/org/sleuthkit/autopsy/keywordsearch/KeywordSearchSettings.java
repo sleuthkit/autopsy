@@ -44,20 +44,36 @@ public class KeywordSearchSettings {
     
 
     
+    /**
+     * 
+     * @return IngestModule singleton
+     */
     static KeywordSearchIngestModule getDefault(){
         return KeywordSearchIngestModule.getDefault();
     }
     
+    /**
+     * 
+     * @return IngestModule's update frequency
+     */
     static UpdateFrequency getUpdateFrequency(){
         return KeywordSearchIngestModule.getDefault().getUpdateFrequency();
     }
     
+    /**
+     * Sets the ingest module's update frequency.
+     * @param c Update frequency to set.
+     */
     static void setUpdateFrequency(UpdateFrequency c){
         KeywordSearchIngestModule.getDefault().setUpdateFrequency(c);
     }
     
     
             
+    /**
+     * Sets whether or not to skip adding known good files to the search during index.
+     * @param skip 
+     */
     static void setSkipKnown(boolean skip) {
         ModuleSettings.setConfigSetting(PROPERTIES_NSRL, "SkipKnown", Boolean.toString(skip));
         skipKnown = skip;
@@ -65,6 +81,10 @@ public class KeywordSearchSettings {
    
 
     
+    /**
+     * Sets what scripts to extract during ingest
+     * @param scripts List of scripts to extract
+     */
     static void setStringExtractScripts(List<StringExtract.StringExtractUnicodeTable.SCRIPT> scripts) {
         stringExtractScripts.clear();
         stringExtractScripts.addAll(scripts);
@@ -125,6 +145,10 @@ public class KeywordSearchSettings {
         }
     }
     
+    /**
+     * Gets the setting for whether or not this ingest is skipping adding known good files to the index.
+     * @return skip setting
+     */
     static boolean getSkipKnown() {
         try{
         if(ModuleSettings.getConfigSetting(PROPERTIES_NSRL, "SkipKnown") != null){
