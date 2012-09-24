@@ -75,7 +75,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     
     //hide public constructor to prevent from instantiation by ingest module loader
-    SearchEngineURLQueryAnalyzer() {
+     SearchEngineURLQueryAnalyzer() {
           
     }
 
@@ -347,7 +347,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     
     private void init2(){
         try{
-                String path = PlatformUtil.getUserDirectory().getAbsolutePath() + File.separator + XMLFile;
+                String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFile;
                 File f = new File(path);
                 System.out.println("Load successful");
                 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
