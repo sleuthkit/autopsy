@@ -332,7 +332,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     public void init(IngestModuleInit initContext) {
         try{
         services = IngestServices.getDefault();   
-        if(PlatformUtil.extractResourceToUserDir(SearchEngineURLQueryAnalyzer.class, XMLFile)){
+        if(PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFile)){
             init2();
             }
         else{
@@ -347,7 +347,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     
     private void init2(){
         try{
-                String path = PlatformUtil.getUserDirectory().getAbsolutePath() + File.separator + XMLFile;
+                String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFile;
                 File f = new File(path);
                 System.out.println("Load successful");
                 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
