@@ -196,7 +196,9 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
         processUnallocPanel = new javax.swing.JPanel();
         processUnallocCheckbox = new javax.swing.JCheckBox();
 
-        setPreferredSize(new java.awt.Dimension(522, 257));
+        setMaximumSize(new java.awt.Dimension(5750, 3000));
+        setMinimumSize(new java.awt.Dimension(522, 257));
+        setPreferredSize(new java.awt.Dimension(575, 300));
 
         modulesScrollPane.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
         modulesScrollPane.setPreferredSize(new java.awt.Dimension(160, 160));
@@ -270,7 +272,7 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             .addGroup(processUnallocPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(processUnallocCheckbox)
-                .addContainerGap(7, Short.MAX_VALUE))
+                .addContainerGap(60, Short.MAX_VALUE))
         );
         processUnallocPanelLayout.setVerticalGroup(
             processUnallocPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -298,9 +300,9 @@ public class IngestDialogPanel extends javax.swing.JPanel implements IngestConfi
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 190, Short.MAX_VALUE)
+                        .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 233, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(processUnallocPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
