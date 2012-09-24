@@ -152,7 +152,7 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
 
     private void reloadLangs() {
         //TODO multiple
-        List<SCRIPT> scripts = KeywordSearchIngestModule.getDefault().getStringExtractScripts();
+        List<SCRIPT> scripts = KeywordSearchSettings.getStringExtractScripts();
         StringBuilder langs = new StringBuilder();
         langs.append("<html>");
         for (SCRIPT s : scripts) {
