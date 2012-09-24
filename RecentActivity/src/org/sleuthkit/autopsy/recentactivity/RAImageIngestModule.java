@@ -108,7 +108,13 @@ public final class RAImageIngestModule implements IngestModuleImage {
                 final IngestMessage error = IngestMessage.createMessage(++messageId, MessageType.INFO, this, msg + "<br>");
                 services.postMessage(error);
             }
-            errorsFound = i + " errors found!";
+            
+            if (i == 1) {
+                errorsFound = i + " error found";
+            }
+            else {
+                errorsFound = i + " errors found";
+            }
         }else
         {
             errorMessage.append("<br> No errors encountered.");
@@ -127,7 +133,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
 
     @Override
     public String getDescription() {
-        return "Extracts recent user activity, such as Internet browsing, recently used documents and installed programs.";
+        return "Extracts recent user activity, such as Web browsing, recently used documents and installed programs.";
     }
 
     @Override
