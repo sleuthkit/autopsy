@@ -74,8 +74,6 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel impleme
                         toUpdate.add(s);
                     }
                 }
-                //KeywordSearchIngestModule.getDefault().setStringExtractScripts(toUpdate);
-
             }
         };
 
@@ -114,18 +112,17 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel impleme
     }
 
     private void reloadScriptsCheckBoxes() {
-        final KeywordSearchIngestModule service = KeywordSearchIngestModule.getDefault();
-        
+       
         boolean utf16 = 
-                Boolean.parseBoolean(service.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
+                Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
        
         enableUTF16Checkbox.setSelected(utf16);
         
         boolean utf8 = 
-                Boolean.parseBoolean(service.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()));
+                Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
         
-        final List<SCRIPT> serviceScripts = service.getStringExtractScripts();
+        final List<SCRIPT> serviceScripts = KeywordSearchSettings.getStringExtractScripts();
         final int components = checkPanel.getComponentCount();
         
         for (int i = 0; i < components; ++i) {
@@ -141,20 +138,19 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel impleme
     private void activateWidgets() {
         reloadScriptsCheckBoxes();
         
-        final KeywordSearchIngestModule service = KeywordSearchIngestModule.getDefault();
         
          boolean utf16 = 
-                Boolean.parseBoolean(service.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
+                Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
        
         enableUTF16Checkbox.setSelected(utf16);
         
         boolean utf8 = 
-                Boolean.parseBoolean(service.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()));
+                Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
         final boolean extractEnabled = utf16 || utf8;
         
         boolean ingestNotRunning = !IngestManager.getDefault().isIngestRunning()
-        && ! IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());;
+        && ! IngestManager.getDefault().isModuleRunning(KeywordSearchSettings.getDefault());;
         //enable / disable checboxes
         activateScriptsCheckboxes(extractEnabled && ingestNotRunning);
         enableUTF16Checkbox.setEnabled(ingestNotRunning);
@@ -273,14 +269,13 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel impleme
 
     @Override
     public void store() {
-        final KeywordSearchIngestModule service = KeywordSearchIngestModule.getDefault();
-        service.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(),
+        KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(),
                 Boolean.toString(enableUTF8Checkbox.isSelected()));
-        service.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(),
+        KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(),
                 Boolean.toString(enableUTF16Checkbox.isSelected()));
         
         if(toUpdate!=null) {
-            KeywordSearchIngestModule.getDefault().setStringExtractScripts(toUpdate);
+           KeywordSearchSettings.setStringExtractScripts(toUpdate);
         }
         
     }
@@ -288,5 +283,6 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel impleme
     @Override
     public void load() {
         activateWidgets();
+  
     }
 }

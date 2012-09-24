@@ -119,12 +119,10 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     private volatile boolean finalSearcherDone = true;  //mark as done, until it's inited
     private final String hashDBModuleName = "Hash Lookup"; //NOTE this needs to match the HashDB module getName()
     private SleuthkitCase caseHandle = null;
-    private boolean skipKnown = true;
+    private static List<AbstractFileExtract> textExtractors;
+    private static AbstractFileStringExtract stringExtractor;
+    
     private boolean initialized = false;
-    private List<AbstractFileExtract> textExtractors;
-    private AbstractFileStringExtract stringExtractor;
-    private final List<SCRIPT> stringExtractScripts = new ArrayList<SCRIPT>();
-    private Map<String,String> stringExtractOptions = new HashMap<String,String>();
     
     
     private final GetIsFileKnownV getIsFileKnown = new GetIsFileKnownV();
@@ -141,14 +139,15 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         //set default script 
         
      if(ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()) == null){
-         stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+         KeywordSearchSettings.stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+         
      }
      if(ModuleSettings.getConfigSetting(PROP_SCRIPTS, SCRIPT.LATIN_1.name()) == null){
         ModuleSettings.setConfigSetting(PROP_SCRIPTS, SCRIPT.LATIN_1.name(), Boolean.toString(true));
-        stringExtractScripts.add(SCRIPT.LATIN_1);
+        KeywordSearchSettings.stringExtractScripts.add(SCRIPT.LATIN_1);
      }
      if(ModuleSettings.getConfigSetting(PROP_OPTIONS, AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()) == null){
-        stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
+        KeywordSearchSettings.stringExtractOptions.put(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
      }
      
     }
@@ -206,7 +205,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             //notify depending module that keyword search (would) encountered error for this file
             return ProcessResult.ERROR;
         }
-        else if (skipKnown && abstractFile.accept(getIsFileKnown) == true) {
+        else if (KeywordSearchSettings.getSkipKnown() && abstractFile.accept(getIsFileKnown) == true) {
             //index meta-data only
             indexer.indexFile(abstractFile, false);
             return ProcessResult.OK;
@@ -377,7 +376,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         //Grabbing skipKnown
         if(! ModuleSettings.getConfigSettings(PROP_NSRL).isEmpty()){
             try{
-            skipKnown = Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROP_NSRL, "SkipKnown"));
+            KeywordSearchSettings.setSkipKnown(Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROP_NSRL, "SkipKnown")));
              }
           catch(Exception e){
               Logger.getLogger(KeywordSearchIngestModule.class.getName()).log(Level.WARNING, "Could not parse boolean value from properties file.", e);
@@ -387,7 +386,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
       
         //populating stringExtractOptions
         if(! ModuleSettings.getConfigSettings(PROP_OPTIONS).isEmpty()){
-            stringExtractOptions = ModuleSettings.getConfigSettings(PROP_OPTIONS);
+            KeywordSearchSettings.stringExtractOptions = ModuleSettings.getConfigSettings(PROP_OPTIONS);
         }
         
         //populating stringExtractScripts
@@ -395,7 +394,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
           try{
             for(Map.Entry<String,String> kvp: ModuleSettings.getConfigSettings(PROP_SCRIPTS).entrySet()){
                 if(kvp.getKey() != null && Boolean.parseBoolean(kvp.getValue())){
-                   stringExtractScripts.add(SCRIPT.valueOf(kvp.getKey()));
+                   KeywordSearchSettings.stringExtractScripts.add(SCRIPT.valueOf(kvp.getKey()));
                 }
             }
           }
@@ -407,13 +406,13 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         //initialize extractors
         stringExtractor = new AbstractFileStringExtract();
-        stringExtractor.setScripts(stringExtractScripts);
-        stringExtractor.setOptions(stringExtractOptions);
+        stringExtractor.setScripts(KeywordSearchSettings.stringExtractScripts);
+        stringExtractor.setOptions(KeywordSearchSettings.stringExtractOptions);
         
         
         //log the scripts used for debugging
         final StringBuilder sbScripts = new StringBuilder();
-        for (SCRIPT s : stringExtractScripts) {
+        for (SCRIPT s : KeywordSearchSettings.stringExtractScripts) {
             sbScripts.append(s.name()).append(" ");
         }
         logger.log(Level.INFO, "Using string extract scripts: " + sbScripts.toString());
@@ -1152,94 +1151,4 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         }
     }
-
-    /**
-     * Set the skip known files setting on the module
-     *
-     * @param skip true if skip, otherwise, will process known files as well, as
-     * reported by HashDB module
-     */
-    void setSkipKnown(boolean skip) {
-        ModuleSettings.setConfigSetting(PROP_NSRL, "SkipKnown", Boolean.toString(skip));
-        skipKnown = skip;
-    }
-
-    boolean getSkipKnown() {
-        try{
-        if(ModuleSettings.getConfigSetting(PROP_NSRL, "SkipKnown") != null){
-            skipKnown = Boolean.parseBoolean(ModuleSettings.getConfigSetting(PROP_NSRL, "SkipKnown"));
-        }
-         }
-          catch(Exception e ){
-              Logger.getLogger(KeywordSearchIngestModule.class.getName()).log(Level.WARNING, "Could not parse boolean value from properties file.", e);
-          }
-        return skipKnown;
-    }
-
-    /**
-     * Set the scripts to use for string extraction. Takes effect on next ingest
-     * start / at init(), not in effect if ingest is running
-     *
-     * @param scripts scripts to use for string extraction next time ingest
-     * inits and runs
-     */
-    void setStringExtractScripts(List<SCRIPT> scripts) {
-        this.stringExtractScripts.clear();
-        this.stringExtractScripts.addAll(scripts);
-        
-        for(String s : ModuleSettings.getConfigSettings(PROP_SCRIPTS).keySet()){
-            if (! scripts.contains(SCRIPT.valueOf(s))){
-                ModuleSettings.setConfigSetting(PROP_SCRIPTS, s, "false");
-            }
-        }
-        for(SCRIPT s : stringExtractScripts){
-            ModuleSettings.setConfigSetting(PROP_SCRIPTS, s.name(), "true");
-        }
-
-    }
-
-    /**
-     * gets the currently set scripts to use
-     *
-     * @return the list of currently used script
-     */
-    List<SCRIPT> getStringExtractScripts(){
-        if(ModuleSettings.getConfigSettings(PROP_SCRIPTS) != null && !ModuleSettings.getConfigSettings(PROP_SCRIPTS).isEmpty()){
-            List<SCRIPT> scripts = new ArrayList<SCRIPT>();
-            for(Map.Entry<String,String> kvp : ModuleSettings.getConfigSettings(PROP_SCRIPTS).entrySet()){
-                if(kvp.getValue().equals("true")){
-                    scripts.add(SCRIPT.valueOf(kvp.getKey()));
-                }
-            }
-            return scripts;
-        }
-        //if it failed, try to return the built-in list maintained by the singleton.
-        return new ArrayList<SCRIPT>(this.stringExtractScripts);
-    }
-    
-    /**
-     * Set / override string extract option
-     * @param key option name to set
-     * @param val option value to set
-     */
-    void setStringExtractOption(String key, String val) {
-        this.stringExtractOptions.put(key, val);
-        ModuleSettings.setConfigSetting(PROP_OPTIONS, key, val);
-    }
-    
-    /**
-     * get string extract option for the key
-     * @param key option name
-     * @return option string value, or empty string if the option is not set
-     */
-    String getStringExtractOption(String key) {
-        if (ModuleSettings.getConfigSetting(PROP_OPTIONS, key) != null){
-            return ModuleSettings.getConfigSetting(PROP_OPTIONS, key);
-        }
-        else {
-            return this.stringExtractOptions.get(key);
-        }
-        
-    }
-    
 }
