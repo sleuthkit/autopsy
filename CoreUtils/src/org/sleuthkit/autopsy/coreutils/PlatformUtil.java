@@ -140,7 +140,7 @@ public class PlatformUtil {
      */
     public static String getLogDirectory() {
         return Places.getUserDirectory().getAbsolutePath() + File.separator
-                + "var" + File.separator + "log";
+                + "var" + File.separator + "log" + File.separator;
     }
 
     public static String getDefaultPlatformFileEncoding() {
