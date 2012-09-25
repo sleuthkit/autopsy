@@ -659,7 +659,7 @@ INPUT                  = main.dox workflow.dox \
                          modContent.dox modDev.dox modIngest.dox modReport.dox \
                          modResult.dox platformConcepts.dox \
                          regressionTesting.dox \
-                         ../../Case/src \
+                         ../../Core/src \
                          ../../CoreComponentInterfaces/src \
                          ../../CoreComponents/src \
                          ../../DataModel/src \
