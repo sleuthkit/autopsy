@@ -30,6 +30,11 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
  * Installer checks that the JNI library is working when the module is loaded.
  */
 public class Installer extends ModuleInstall {
+    
+    public Installer() {
+        super();
+    }
+
 
     @Override
     public void validate() throws IllegalStateException {

@@ -36,6 +36,12 @@ import org.sleuthkit.autopsy.casemodule.Case;
  */
 public class Installer extends ModuleInstall {
 
+    public Installer() {
+        super();
+    }
+
+    
+    
     @Override
     public void restored() {
 

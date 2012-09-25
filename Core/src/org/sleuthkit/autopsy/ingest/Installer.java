@@ -28,6 +28,11 @@ import org.openide.windows.WindowManager;
  */
 public class Installer extends ModuleInstall {
 
+    public Installer() {
+        super();
+    }
+
+    
     @Override
     public void restored() {
 
