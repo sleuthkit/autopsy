@@ -4,13 +4,22 @@
 
 \section mod_dev_setup Basic Setup
 
+\subsection mod_dev_setup_java The Java Enviroment
+
+Currently, to develop modules for Autopsy, you must be using Java 1.6.
+
+If you have the Autopsy source code open in NetBeans, you can verify the Autopsy project is running with Java 1.6 by right clicking the project, choosing Properties, and checking that under Libraries the Java Platform is JDK 1.6 and under Sources the Source Level is 1.6.
+
+
+\subsection mod_dev_setup_autopsy Autopsy as a Development Enviroment
+
 To setup a module development environment for Autopsy, you must have either:
 \li Autopsy installed on your machine
 \li The Autopsy source code, downloaded from GitHub
 
 If you have Autopsy installed on your machine and would like to use that as your development environment, proceed to \ref mod_dev_module. Note that older versions of Autopsy may not have the latest features available for module development.
 
-To use the latest Autopsy source code as your development environment, first follow BUILDING.TXT to properly build and setup Autopsy in NetBeans.
+To use the latest Autopsy source code as your development environment, first follow BUILDING.TXT to properly build and setup Autopsy in NetBeans. Make sure you are using Java 1.6.
 
 Once Autopsy has been successfully built, right click on the Autopsy project in NetBeans and select Package as > ZIP Distribution. Then extract the ZIP file to any directory of your choosing.
 
@@ -29,6 +38,8 @@ Select Standalone Module, and click the Manage button. Click on Add Platform and
 Autopsy has now been added as a "NetBeans Platform", meaning the development environment for NetBeans has been set to use the code from within Autopsy. This grants access to Autopsy's methods and modules to third party developers, without having to program inside the Autopsy project itself.
 
 Click Next, and fill out the rest of the module-creation wizard. Press Finish when complete, and the module will be added as a standalone project in NetBeans.
+
+After the module is created, it is important to verify the new project is using Java 1.6. Any other version of Java may have unforeseen consequences. To check the version of Java, right click on the module in the Projects window and go to Properties. Make sure that under the Libraries category the Java Platform is JDK 1.6, and under Sources the Source Level is 1.6.
 
 See \ref mod_ingest_page for instructions on programming ingest modules for Autopsy.
 Or read <a href="http://bits.netbeans.org/dev/javadoc/org-openide-modules/org/openide/modules/doc-files/api.html">this guide from NetBeans.org</a> for general module development tips.
