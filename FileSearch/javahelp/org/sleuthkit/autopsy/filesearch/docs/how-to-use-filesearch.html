@@ -12,7 +12,7 @@ and open the template in the editor.
     <body>
         <h2>How to Use File Search</h2>
         <p>
-            Currently, there are 3 categories that you can use to filter and show the directories and files within the images in the current opened case.
+            Currently, there are 4 categories that you can use to filter and show the directories and files within the images in the current opened case.
             <br><br>
             The categories are:
             <br><br>
@@ -25,6 +25,9 @@ and open the template in the editor.
             <br><br>
             &nbsp;&nbsp;&nbsp;&nbsp; 3. Date <br>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Search for all files and directory whose "date property" is within the date range given. The "date properties" are "Modified Date", "Accessed Date", "Changed Date", and "Created Date". You must also specify the timezone for the date given.
+            <br><br>
+            &nbsp;&nbsp;&nbsp;&nbsp; 4. Known Status <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Search for all files and directory whose known status is recognized as either Unknown, Known, or Known Bad. For more on Known Status, see <a href="nbdocs:/org/sleuthkit/autopsy/case/docs/hashDbMgmt.html">Hash Database Management</a>.
             <br><br><br>
             To use any of these filters, check the box next to the category and click "Search" button to start the search process. The result will show up in the "<a href="nbdocs:/org/sleuthkit/autopsy/corecomponents/docs/dataresult-about.html">Result Viewer</a>".
             <br><br>
@@ -32,7 +35,7 @@ and open the template in the editor.
         
         <h2>Example</h2>
         <p>
-            Here's an example where I try to get all the directories and files whose name contains "hello", has a size greater than 1000 Bytes, and was created between 06/15/2010 and 06/16/2010 (in GMT-5 timezone):
+            Here's an example where I try to get all the directories and files whose name contains "hello", has a size greater than 1000 Bytes,was created between 06/15/2010 and 06/16/2010 (in GMT-5 timezone), and is an unknown file:
             <br><br>
             &nbsp;&nbsp;&nbsp;&nbsp;<img src="FileSearch_usage.png" alt="Example of File Search usage" />
         </p>
