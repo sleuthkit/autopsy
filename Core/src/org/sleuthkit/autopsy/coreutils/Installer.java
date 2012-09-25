@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.coreutils;
 
 import java.io.IOException;
@@ -27,35 +26,33 @@ import java.util.logging.Level;
 import java.util.logging.SimpleFormatter;
 import org.openide.modules.Places;
 
-
-
 /**
  * Manages a this module's lifecycle. Sets up logging to file.
  */
 public class Installer extends ModuleInstall {
 
     static final Logger autopsyLogger = Logger.getLogger(""); //root logger
+    static Handler logs;
 
-static Handler logs;
+    public Installer() {
+        super();
+    }
 
     @Override
     public void restored() {
         //Logger.init();
         autopsyLogger.log(Level.INFO, "Default charset: " + PlatformUtil.getDefaultPlatformCharset());
         autopsyLogger.log(Level.INFO, "Default file encoding: " + PlatformUtil.getDefaultPlatformFileEncoding());
-        
+
         autopsyLogger.log(Level.INFO, "Java runtime version: " + Version.getJavaRuntimeVersion());
-        
+
         autopsyLogger.log(Level.INFO, "Netbeans Platform build: " + Version.getNetbeansBuild());
-        
+
         autopsyLogger.log(Level.INFO, "Application name: " + Version.getName()
                 + ", version: " + Version.getVersion() + ", build: " + Version.getBuildType());
     }
-    
+
     @Override
     public void uninstalled() {
-        
     }
-
-
 }
