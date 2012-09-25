@@ -90,12 +90,12 @@
                         <specification-version>6.40.1</specification-version>
                     </run-dependency>
                 </dependency>
-
                 <dependency>
                     <code-name-base>org.sleuthkit.autopsy.core</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
+                        <release-version>3</release-version>
                         <specification-version>1.0</specification-version>
                     </run-dependency>
                 </dependency>
