@@ -25,10 +25,15 @@ limitations under the License.
     <body>
         <h2>Keyword Search Configuration Dialog</h2>
         <p>
-            The keyword search configuration dialog is used to add, remove, and modify keyword search lists.
+            The keyword search configuration dialog has three tabs, each with it's own purpose:<br/>
+            <ul>
+                <li>The Lists tab is used to add, remove, and modify keyword search lists.</li>
+                <li>The String Extraction tab is used to enable language scripts and extraction type.</li>
+                <li>The General tab is used to configure the ingest timings and display information.</li>
+            </ul>
         </p>
         <p>
-            To begin, select the 'New List' button and choose a name for the new Keyword List.
+            To create a list, select the 'New List' button and choose a name for the new Keyword List.
             Once the list has been created, keywords can be added to it. Regular expressions are supported using
             <a href="http://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html">Java Regex Syntax</a>.
             Lists can be added to the keyword search ingest process; searches will happen at regular intervals as content is added to the index.
@@ -44,6 +49,11 @@ limitations under the License.
             The hash database ingest service can be configured to use the NIST NSRL hash database of known files.
             The keyword search configuration dialog contains an option to skip keyword indexing and search on files found in the NSRL.
         </p>
-            <img src="keywordsearch-configuration.png" alt="Keyword Search Configuration Dialog" />
+        <strong>Lists tab:</strong><br>
+        <img src="keywordsearch-configuration.png" alt="Keyword Search Configuration Dialog" /><br><br>
+        <strong>String Extraction tab:</strong><br>
+        <img src="keywordsearch-string.png" alt="Keyword Search Configuration Dialog String Extraction" /><br><br>
+        <strong>General tab:</strong><br>
+        <img src="keywordsearch-general.png" alt="Keyword Search Configuration Dialog General" /><br><br>
     </body>
 </html>
