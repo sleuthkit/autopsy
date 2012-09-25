@@ -486,7 +486,10 @@ public final class IngestModuleLoader {
                     continue;
                 }
 
-                //logger.log(Level.INFO, "Module enabled: " + moduleInfo.getDisplayName() + " " + basePackageName + " " + moduleInfo.getCodeName());
+                logger.log(Level.INFO, "Module enabled: " + moduleInfo.getDisplayName() + " " + basePackageName 
+                        + " Build version: " + moduleInfo.getBuildVersion()
+                        + " Spec version: " + moduleInfo.getSpecificationVersion()
+                        + " Impl version: " + moduleInfo.getImplementationVersion());
 
                 ConfigurationBuilder cb = new ConfigurationBuilder();
                 cb.filterInputsBy(new FilterBuilder().include(FilterBuilder.prefix(basePackageName)));
