@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.report.SQLiteDBConnect;
 import org.sleuthkit.datamodel.*;
 
 abstract public class Extract implements IngestModuleImage{
@@ -122,7 +123,7 @@ abstract public class Extract implements IngestModuleImage{
         List<HashMap<String,Object>> list = new ArrayList<HashMap<String,Object>>();
         String connectionString = "jdbc:sqlite:" + path;
         try {
-            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", connectionString);
+            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString);
             temprs = tempdbconnect.executeQry(query);
             list = this.resultSetToArrayList(temprs);
             tempdbconnect.closeConnection();

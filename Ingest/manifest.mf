@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-AutoUpdate-Show-In-Client: false
-OpenIDE-Module: org.sleuthkit.autopsy.ingest/0
-OpenIDE-Module-Layer: org/sleuthkit/autopsy/ingest/layer.xml
-OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/ingest/Bundle.properties
-OpenIDE-Module-Implementation-Version: 1
-OpenIDE-Module-Requires: org.openide.windows.WindowManager
-OpenIDE-Module-Install: org/sleuthkit/autopsy/ingest/Installer.class
-
