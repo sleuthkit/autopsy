@@ -162,7 +162,7 @@
         
         <echo>${app.name} branding</echo>
         
-        <copy file="${basedir}/branding_${app.name}/welcome_logo.png" tofile="${basedir}/Case/src/org/sleuthkit/autopsy/casemodule/welcome_logo.png" overwrite="true"/>
+        <copy file="${basedir}/branding_${app.name}/welcome_logo.png" tofile="${basedir}/Coresrc/org/sleuthkit/autopsy/casemodule/welcome_logo.png" overwrite="true"/>
         
         <propertyfile
         file="${branding.dir}/core/core.jar/org/netbeans/core/startup/Bundle.properties" 
