@@ -1,0 +1,36 @@
+<html>
+    <head>
+        <title>Image Ingest</title>
+        <link rel="stylesheet" href="nbdocs:/org/netbeans/modules/usersguide/ide.css" type="text/css">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+	<h2>Image Ingest</h2>
+	   <p>Autopsy tries to automate as many things as possible for you. There are many tasks that will always be performed in a digital investigation and the ingest manager is responsible for making sure that they happen. </p>
+	   
+	<p>The ingest process begins after the basic file system information has been added to the database. The ingest process is similar to triage.  A series of ingest modules (described in a following section) run automatically behind the scenes and make their results available as soon as possible. </p>
+	   
+	<p>You can start image ingest in two ways.  When you add an image with the <a href="nbdocs:/org/sleuthkit/autopsy/casemodule/docs/addImage.html">Add Image wizard</a>, you will be shown the list of ingest modules and you can choose which you want to run and you can do some basic configuration of the modules.  You can also launch the Ingest Manager run ingest by right clicking on an image in the explorer tree and choosing "Restart Image Ingest".  </p>
+	    <p>The results from the ingest module can typically be found in the Results area of the explorer tree.  However, some modules may choose to write results to a local file or to some other location and not make them available in the UI. </p>
+	
+	<h2>Ingest Modules</h2>
+        <p>
+		An ingest module is responsible for extracting data from and searching images. Different modules will do different things.  Examples include:
+	<ul>
+	<li>Calculate MD5 hash of each file</li>
+	<li>Lookup MD5 hash in database</li>
+	<li>Detect file type of each file</li>
+	<li>Keyword search each file</li>
+	<li>Extract web artifacts (downloads, history, etc.)</li>
+	</ul>
+	<p>
+
+	<p>Ingest modules can be created by third-party-developers and can be added independently of Autopsy. </p> 
+
+	<h2>Configuring Ingest Modules</h2>
+	There are two places to configure ingest modules. When the Ingest Manager is launched, there may be a small set of options the module allows you to edit directly in the Ingest Manager. Additionally, the Ingest Manager may display an "Advanced" button, which will open up a larger configuration menu with more available settings. This advanced configuration menu can often be found in the "Tools" > "Options" menu, along with the advanced settings for numerous other ingest modules.
+
+	<h2>Adding Ingest Modules</h2>
+	Ingest modules can be added through Autopsy's plugin manager. This is accessible through the "Tools" > "Plugins" menu. Currently, the best way to add an ingest module is by navigating to the module's NBM file after choosing "Add Plugin..." in the "Downloaded" tab of the plugin manager. Autopsy will require a restart after any modules are installed in order to properly load and display them.
+</body>
+</html>

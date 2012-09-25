@@ -10,9 +10,9 @@
         </condition>
         <fail unless="ewfFound" message="LIBEWF_HOME must be set as an environment variable."/>
 
-        <copy file="${env.TSK_HOME}/win32/${TSK_BUILD_TYPE}/libtsk_jni.dll" tofile="${basedir}/DataModel/release/modules/lib/libtsk_jni.dll"/>
-        <copy file="${env.LIBEWF_HOME}/msvscpp/Release/libewf.dll" tofile="${basedir}/DataModel/release/modules/lib/libewf.dll"/> 
-        <copy file="${env.LIBEWF_HOME}/msvscpp/Release/zlib.dll" tofile="${basedir}/DataModel/release/modules/lib/zlib.dll"/>
+        <copy file="${env.TSK_HOME}/win32/${TSK_BUILD_TYPE}/libtsk_jni.dll" tofile="${basedir}/Core/release/modules/lib/libtsk_jni.dll"/>
+        <copy file="${env.LIBEWF_HOME}/msvscpp/Release/libewf.dll" tofile="${basedir}/Core/release/modules/lib/libewf.dll"/> 
+        <copy file="${env.LIBEWF_HOME}/msvscpp/Release/zlib.dll" tofile="${basedir}/Core/release/modules/lib/zlib.dll"/>
     </target>
     
     <target name="copyExternalLibsToZip">

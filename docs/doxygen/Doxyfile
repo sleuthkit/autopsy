@@ -660,17 +660,9 @@ INPUT                  = main.dox workflow.dox \
                          modResult.dox platformConcepts.dox \
                          regressionTesting.dox \
                          ../../Core/src \
-                         ../../CoreComponentInterfaces/src \
-                         ../../CoreComponents/src \
-                         ../../DataModel/src \
-                         ../../DirectoryTree/src \
-                         ../../FileSearch/src \
                          ../../HashDatabase/src \
-                         ../../Ingest/src \
                          ../../KeywordSearch/src \
-                         ../../MenuActions/src \
                          ../../RecentActivity/src \
-                         ../../Report/src \
                          ../../Testing/src \
                          ../../thunderbirdparser/src
 

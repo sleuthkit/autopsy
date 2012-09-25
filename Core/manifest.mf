@@ -5,4 +5,5 @@ OpenIDE-Module-Layer: org/sleuthkit/autopsy/core/layer.xml
 OpenIDE-Module-Implementation-Version: 1
 OpenIDE-Module-Requires: org.openide.windows.WindowManager, org.netbeans.api.javahelp.Help
 AutoUpdate-Show-In-Client: true
+OpenIDE-Module-Install: org/sleuthkit/autopsy/corecomponents/Installer.class
 
