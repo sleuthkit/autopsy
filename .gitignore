@@ -6,6 +6,8 @@
 /Core/release/modules/lib/
 /Core/release/modules/ext/
 /Core/src/org/sleuthkit/autopsy/coreutils/Version.properties
+/CoreLibs/release/modules/lib/
+/CoreLibs/release/modules/ext/
 /KeywordSearch/release/modules/ext/
 /KeywordSearch/release/solr/lib/
 /KeywordSearch/release/solr/solr/lib/
