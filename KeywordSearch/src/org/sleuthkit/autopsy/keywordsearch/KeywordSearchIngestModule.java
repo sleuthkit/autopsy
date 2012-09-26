@@ -338,29 +338,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         ingester = Server.getIngester();
 
-        //use the settings files to set values
-        
-    
-        
-        //setting default skip known
-        if(ModuleSettings.getConfigSetting(KeywordSearchSettings.PROPERTIES_NSRL, "SkipKnown") == null){
-            KeywordSearchSettings.setSkipKnown(true);
-        }
-        
-        //populating stringExtractOptions
-        if(! ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_OPTIONS).isEmpty()){
-            KeywordSearchSettings.stringExtractOptions = ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_OPTIONS);
-        }
-        
-        //populating stringExtractScripts
-        if(! ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_SCRIPTS).isEmpty()){
-            for(Map.Entry<String,String> kvp: ModuleSettings.getConfigSettings(KeywordSearchSettings.PROPERTIES_SCRIPTS).entrySet()){
-                if(kvp.getKey() != null && Boolean.parseBoolean(kvp.getValue())){
-                   KeywordSearchSettings.stringExtractScripts.add(SCRIPT.valueOf(kvp.getKey()));
-                }
-            }
-        }
-
 
         //initialize extractors
         stringExtractor = new AbstractFileStringExtract();
