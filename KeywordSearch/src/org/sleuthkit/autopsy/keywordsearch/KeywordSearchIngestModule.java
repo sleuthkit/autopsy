@@ -338,16 +338,21 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         ingester = Server.getIngester();
 
+        //use the settings files to set values
+        
+    
+
+
 
         //initialize extractors
         stringExtractor = new AbstractFileStringExtract();
-        stringExtractor.setScripts(KeywordSearchSettings.stringExtractScripts);
-        stringExtractor.setOptions(KeywordSearchSettings.stringExtractOptions);
+        stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
+        stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
         
         
         //log the scripts used for debugging
         final StringBuilder sbScripts = new StringBuilder();
-        for (SCRIPT s : KeywordSearchSettings.stringExtractScripts) {
+        for (SCRIPT s : KeywordSearchSettings.getStringExtractScripts()) {
             sbScripts.append(s.name()).append(" ");
         }
         logger.log(Level.INFO, "Using string extract scripts: " + sbScripts.toString());
