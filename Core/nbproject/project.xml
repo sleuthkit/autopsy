@@ -207,6 +207,10 @@
                 <binary-origin>release/modules/ext/xml-apis-1.0.b2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-logging-1.1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-1.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/slf4j-simple-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/slf4j-simple-1.6.1.jar</binary-origin>
             </class-path-extension>
@@ -261,6 +265,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/Tsk_DataModel.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/Tsk_DataModel.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xmlbeans-2.3.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xmlbeans-2.3.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/reflections-0.9.8.jar</runtime-relative-path>
