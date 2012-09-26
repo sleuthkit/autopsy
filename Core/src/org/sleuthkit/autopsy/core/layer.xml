@@ -2,6 +2,9 @@
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
     
+    <!-- TODO merge folders with the same names (coming from different modules/packages)
+    into single folders (Services, File, View, Tools, etc) -->
+    
     <!-- Casemodule package -->
     <attr name="Toolbars\File\org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance\iconBase" stringvalue="org/sleuthkit/autopsy/images/close-icon.gif"/>
     <folder name="Actions">
