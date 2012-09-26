@@ -128,11 +128,11 @@
         </folder>
     </folder>
     <folder name="Services">
-        <folder name="JavaHelp">
+<!--        <folder name="JavaHelp">
             <file name="casemodule-helpset.xml" url="casemodule-helpset.xml">
                 <attr name="position" intvalue="3075"/>
             </file>
-        </folder>
+        </folder>-->
     </folder>
     <folder name="Shortcuts">
         <file name="D-N.shadow">
@@ -285,11 +285,11 @@
         </folder>
     </folder>
     <folder name="Services">
-        <folder name="JavaHelp">
+<!--        <folder name="JavaHelp">
             <file name="corecomponents-helpset.xml" url="corecomponents-helpset.xml">
                 <attr name="position" intvalue="3801"/>
             </file>
-        </folder>
+        </folder>-->
         <file name="org-sleuthkit-autopsy-corecomponents-DataContentTopComponent.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.DataContent"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.corecomponents.DataContentTopComponent.getDefault"/>
@@ -308,11 +308,11 @@
     
     <!-- DirectoryTree package -->
     <folder name="Services">
-        <folder name="JavaHelp">
+<!--        <folder name="JavaHelp">
             <file name="directorytree-helpset.xml" url="directorytree-helpset.xml">
                 <attr name="position" intvalue="3086"/>
             </file>
-        </folder>
+        </folder>-->
         <file name="org-sleuthkit-autopsy-directorytree-DirectoryTreeTopComponent.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.DataExplorer"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent.getDefault"/>
@@ -338,11 +338,11 @@
         </folder>    
     </folder>
     <folder name="Services">
-        <folder name="JavaHelp">
+<!--        <folder name="JavaHelp">
             <file name="filesearch-helpset.xml" url="filesearch-helpset.xml">
                 <attr name="position" intvalue="3662"/>
             </file>
-        </folder>
+        </folder>-->
         <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.directorytree.FileSearchProvider"/>
             <attr name="position" intvalue="250"/>
