@@ -168,11 +168,14 @@ public class KeywordSearchSettings {
     static Map<String,String> getStringExtractOptions(){
         Map<String,String> settings = ModuleSettings.getConfigSettings(PROPERTIES_OPTIONS);
         if(settings == null){
+            Map<String,String> settingsv2 = new HashMap<String,String>();
             logger.log(Level.WARNING, "Could not read properties for " + PROPERTIES_OPTIONS + ".properties, returning backup values");
-            settings.clear();
-            settings.putAll(stringExtractOptions);
+            settingsv2.putAll(stringExtractOptions);
+            return settingsv2;
         }
-        return settings;
+        else {
+            return settings;
+        }
     }
     /**
      * Sets the default values of the KeywordSearch properties files if none already exist.
