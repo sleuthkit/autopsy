@@ -41,8 +41,8 @@ public class KeywordSearchSettings {
     private static boolean skipKnown = true;
     private static final Logger logger = Logger.getLogger(KeywordSearchSettings.class.getName());
     private static UpdateFrequency UpdateFreq = UpdateFrequency.AVG;
-    static List<StringExtract.StringExtractUnicodeTable.SCRIPT> stringExtractScripts = new ArrayList<StringExtract.StringExtractUnicodeTable.SCRIPT>();
-    static Map<String,String> stringExtractOptions = new HashMap<String,String>();
+    private static List<StringExtract.StringExtractUnicodeTable.SCRIPT> stringExtractScripts = new ArrayList<StringExtract.StringExtractUnicodeTable.SCRIPT>();
+    private static Map<String,String> stringExtractOptions = new HashMap<String,String>();
     
 
            
@@ -101,11 +101,13 @@ public class KeywordSearchSettings {
         stringExtractScripts.clear();
         stringExtractScripts.addAll(scripts);
         
+        //Disabling scripts that weren't selected
         for(String s : ModuleSettings.getConfigSettings(PROPERTIES_SCRIPTS).keySet()){
             if (! scripts.contains(StringExtract.StringExtractUnicodeTable.SCRIPT.valueOf(s))){
                 ModuleSettings.setConfigSetting(PROPERTIES_SCRIPTS, s, "false");
             }
         }
+        //Writing and enabling selected scripts
         for(StringExtract.StringExtractUnicodeTable.SCRIPT s : stringExtractScripts){
             ModuleSettings.setConfigSetting(PROPERTIES_SCRIPTS, s.name(), "true");
         }
@@ -154,9 +156,25 @@ public class KeywordSearchSettings {
             return ModuleSettings.getConfigSetting(PROPERTIES_OPTIONS, key);
         }
         else {
-            logger.log(Level.WARNING, "Could not read property for Key "+ key + ", returning backup value.");
+            logger.log(Level.WARNING, "Could not read property for key "+ key + ", returning backup value.");
             return stringExtractOptions.get(key);
-            
+        }
+    }
+    
+    /**
+     * get the map of string extract options.
+     * @return Map<String,String> of extract options.
+     */
+    static Map<String,String> getStringExtractOptions(){
+        Map<String,String> settings = ModuleSettings.getConfigSettings(PROPERTIES_OPTIONS);
+        if(settings == null){
+            Map<String,String> settingsv2 = new HashMap<String,String>();
+            logger.log(Level.WARNING, "Could not read properties for " + PROPERTIES_OPTIONS + ".properties, returning backup values");
+            settingsv2.putAll(stringExtractOptions);
+            return settingsv2;
+        }
+        else {
+            return settings;
         }
     }
     /**
