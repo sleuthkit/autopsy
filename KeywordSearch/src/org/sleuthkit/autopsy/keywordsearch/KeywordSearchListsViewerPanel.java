@@ -52,7 +52,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     private KeywordSearchListsXML loader;
     private KeywordListsTableModel listsTableModel;
     private KeywordsTableModel keywordsTableModel;
-    private ActionListener ingestListener;
     private ActionListener searchListener;
     private boolean ingestRunning;
 
@@ -176,14 +175,13 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     private void initIngest(boolean running) {
         ActionListener[] current = searchAddButton.getActionListeners();
         for (int i = 0; i < current.length; i++) {
-            if (current[i].equals(ingestListener) || current[i].equals(searchListener)) {
+            if (current[i].equals(searchListener)) {
                 searchAddButton.removeActionListener(current[i]);
             }
         }
         if (running) {
             ingestRunning = true;
             searchAddButton.setText("Add to Ingest");
-            searchAddButton.addActionListener(ingestListener);
             listsTableModel.resync();
             ingestIndexLabel.setText("Ingest is ongoing. Results will appear as the index is populated.");
         } else {
@@ -249,16 +247,17 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(searchAddButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 220, Short.MAX_VALUE)
-                .addComponent(manageListsButton)
-                .addContainerGap())
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(ingestIndexLabel)
-                .addContainerGap(327, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(searchAddButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 220, Short.MAX_VALUE)
+                        .addComponent(manageListsButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(ingestIndexLabel)
+                        .addGap(0, 317, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
