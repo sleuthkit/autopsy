@@ -28,7 +28,9 @@
              casesensitive="false" />      
         <echo>Found CRT.version linked against: ${CRT.version}</echo>
         -->
-        <property name="CRT.version">10.0.40219.1</property>
+        <!-- <property name="CRT.version">10.0.40219.1</property> -->
+        <property name="CRT.version">10.0.40219.325</property>
+        
         
         <!-- Get C++ Runtime dlls -->
         <property environment="env"/>
