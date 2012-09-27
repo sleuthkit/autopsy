@@ -28,7 +28,9 @@
              casesensitive="false" />      
         <echo>Found CRT.version linked against: ${CRT.version}</echo>
         -->
-        <property name="CRT.version">10.0.40219.1</property>
+        <!-- <property name="CRT.version">10.0.40219.1</property> -->
+        <property name="CRT.version">10.0.40219.325</property>
+        
         
         <!-- Get C++ Runtime dlls -->
         <property environment="env"/>
@@ -40,7 +42,7 @@
         <property name="CRT.path">${thirdparty.dir}/crt/x86-32/${CRT.version}/crt.zip</property>
         <available file="${CRT.path}"  property="crtFound"/>
         
-        <fail unless="crtFound" message="Detected CRT version ${CRT.version} not found in the thirdparty repo."/>
+        <fail unless="crtFound" message="Detected CRT version ${CRT.version} not found in the thirdparty repo in path: ${CRT.path}"/>
 
         <!-- unzip from thirdparty repo to modules/lib in staged dir -->
         <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/${app.name}/modules/lib"/>
