@@ -158,7 +158,7 @@
     </target>
     
     <!-- override build to add branding -->
-    <target name="build" depends="build-brand,suite.build"/>
+    <target name="build" depends="build-brand,suite.build" description="Compiles autopsy and produces a basic branded build that can run on a dev. system" />
  
     <target name="build-brand" depends="-init">
         
@@ -207,11 +207,11 @@
     </target>
      
     
-    <target name="build-installer-dir" depends="build-zip" >
+    <target name="build-installer-dir" depends="build-zip" description="Builds Autopsy with branding and all dependencies" >
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
     </target>
     
-    <target name="build-installer" depends="build-installer-dir">
+    <target name="build-installer" depends="build-installer-dir" description="Builds Autopsy installer.">
         <antcall target="build-installer-${os.family}" />
     </target>
 </project>
