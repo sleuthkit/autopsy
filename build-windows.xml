@@ -18,6 +18,7 @@
     <target name="copyExternalLibsToZip">
         
         <!-- Find CRT version we linked against from libtsk_jni manifest -->
+        <!-- disable auto-detection for CRT100
         <property name="libtsk.manifest.path">${env.TSK_HOME}/win32/tsk_jni/${TSK_BUILD_TYPE}/libtsk_jni.dll.intermediate.manifest</property>
         <loadfile property="libtsk.manifest" srcFile="${libtsk.manifest.path}" />
         <propertyregex property="CRT.version"
@@ -26,6 +27,8 @@
              select="\1"
              casesensitive="false" />      
         <echo>Found CRT.version linked against: ${CRT.version}</echo>
+        -->
+        <property name="CRT.version">10.0.40219.1</property>
         
         <!-- Get C++ Runtime dlls -->
         <property environment="env"/>
