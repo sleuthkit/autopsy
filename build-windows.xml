@@ -40,7 +40,7 @@
         <property name="CRT.path">${thirdparty.dir}/crt/x86-32/${CRT.version}/crt.zip</property>
         <available file="${CRT.path}"  property="crtFound"/>
         
-        <fail unless="crtFound" message="Detected CRT version ${CRT.version} not found in the thirdparty repo."/>
+        <fail unless="crtFound" message="Detected CRT version ${CRT.version} not found in the thirdparty repo in path: ${CRT.path}"/>
 
         <!-- unzip from thirdparty repo to modules/lib in staged dir -->
         <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/${app.name}/modules/lib"/>
