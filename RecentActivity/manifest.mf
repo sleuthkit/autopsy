@@ -1,10 +1,10 @@
 Manifest-Version: 1.0
-OpenIDE-Module: org.sleuthkit.autopsy.recentactivity
+OpenIDE-Module: org.sleuthkit.autopsy.recentactivity/3
+OpenIDE-Module-Implementation-Version: 1
 OpenIDE-Module-Layer: org/sleuthkit/autopsy/recentactivity/layer.xml
 OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/recentactivity/Bundle.properties
 OpenIDE-Module-Requires: 
   org.openide.modules.InstalledFileLocator,
   org.openide.windows.TopComponent$Registry,
   org.openide.windows.WindowManager
-OpenIDE-Module-Specification-Version: 1.0
 
