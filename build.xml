@@ -180,7 +180,7 @@
         </propertyfile>
         
         <propertyfile
-        file="${basedir}/Core/src/org/sleuthkit/autopsy/CoreUtils/Version.properties"
+        file="${basedir}/Core/src/org/sleuthkit/autopsy/coreutils/Version.properties"
         comment="Updated by build script">
             <entry key="app.name" value="${app.title}" />
             <entry key="app.version" value="${app.version}" />
