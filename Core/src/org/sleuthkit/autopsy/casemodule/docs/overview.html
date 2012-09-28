@@ -12,10 +12,26 @@ and open the template in the editor.
     <body>
         <h2>Overview</h2>
         <p>
-            Autopsy allows you to conduct a digital forensic investigation.  It is a graphical interface to The Sleuth Kit and other open source tools. This page outlines the basic concepts of the program. The remainder of the help guide is organized around these concepts.
+            Autopsy allows you to conduct a digital forensic investigation.  
+            It is a graphical interface to The Sleuth Kit and other tools.
+            This page outlines the basic concepts of the program. 
+            The remainder of the help guide is organized around these concepts.
+        </p>
+        
+        <p>
+            The main Autopsy features include: importing and image and exploring its file systems,
+            running analysis modules (ingest), viewing ingest results, viewing content and generating reports.
+        </p>
+        
+        <p>
+            Autopsy is an extensible application; it provides a plug-in framework that allows
+            other other parties to supply plug-ins and supply additional: 
+            image and file ingest for new types of analysis, different content viewers and different types of reports to be supported.
+            There are plug-ins for for several ingest modules, viewers and reports that are bundled by default with Autopsy.
         </p>
 
-        <p>All data is organized around the concept of a <a href="nbdocs:/org/sleuthkit/autopsy/casemodule/docs/casemodule-about.html">case</a>.  A case can have one or more disk <a href="nbdocs:/org/sleuthkit/autopsy/casemodule/docs/aboutImage.html">images</a> loaded into it.</p>
+        <p>All data is organized around the concept of a <a href="nbdocs:/org/sleuthkit/autopsy/casemodule/docs/casemodule-about.html">case</a>.  
+            A case can have one or more disk <a href="nbdocs:/org/sleuthkit/autopsy/casemodule/docs/aboutImage.html">images</a> loaded into it.</p>
 
         <p>The main window has three major areas:
         <ul>
@@ -23,7 +39,7 @@ and open the template in the editor.
             <li><a href="nbdocs:/org/sleuthkit/autopsy/corecomponents/docs/dataresult-about.html">Result Viewers</a>: This area is where the files and directories that were found from the explorer window can be viewed. There are different formatting options for the files.</li>
             <li><a href="nbdocs:/org/sleuthkit/autopsy/corecomponents/docs/datacontent-about.html">Content Viewers</a>: This area is where file content can be viewed after they are selected from the Result Viewer area.</li>
         </ul>
-        </p>
+        
         <p>The main take away from this should be that analysis techniques and result categories can be found on the left-hand side, the results from choosing something on the left are always listed in the upper right, and the file contents are displayed in the lower left.
 
         <p>
