@@ -97,3 +97,6 @@ Metadata Extractor 2.6.2 for extracting Exif metadata
 - Web page: http://www.drewnoakes.com/code/exif/
 - License: http://www.apache.org/licenses/LICENSE-2.0
 
+Reflections 0.9.8 for ingest module loading
+- Web page: http://code.google.com/p/reflections 
+- License: http://en.wikipedia.org/wiki/WTFPL
