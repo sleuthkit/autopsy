@@ -22,10 +22,11 @@ body {
 
 
 <h1>Installation</h1>
-<p >The current version of Autopsy 3 runs only on Microsoft Windows.  We have gotten it to run on other platforms, such
-as Linux and OS X, but we do not have it in a state that makes it easy to distribute and find the needed libraries. </p>
+<p >The current version of Autopsy 3 runs only on Microsoft Windows.  
+    We have gotten it to run on other platforms, such as Linux and OS X, but we do not have it in a state that makes it easy to distribute and find the needed libraries. </p>
 
-<p>The Windows intsaller will make a directory for Autopsy and place all of the needed files inside of it. The installer includes all dependencies, including Sleuth Kit and Java.</p>
+<p>The Windows installer will make a directory for Autopsy and place all of the needed files inside of it. 
+    The installer includes all dependencies, including Sleuth Kit and Java.</p>
 
 <p>Note that Autopsy 3 is a complete rewrite from Autopsy 2 and none of this document is relevant to Autopsy 2.</p> 
 
@@ -91,20 +92,21 @@ For example, you can configure which keyword search lists to use during ingest
 and which hash databases to use.  Refer to the help system inside of Autopsy
 for details on configuring each module.</p>
 
-<p>Whe selecting the ingest modules, you will also need to choose
+<p>When selecting the ingest modules, you will also need to choose
 the update frequency.  This setting configures how often you will
 get updates from the ingest modules when they are running in the
 background. The more frequent the updates, the longer the overall
 process will take. </p>
 
-<p>While modules are running in the background, you will see a progress
-bar in the lower right. </p>
+<p>While ingest modules are running in the background, you will see a progress
+bar in the lower right. You can use the GUI to review incoming results 
+and perform other tasks while ingest at that time.  </p>
 
 
 <h1>Analysis Basics</h1>
 
 <p>
-  <a href="screenshot.png"><img src="screenshot.png" alt="SCREEN SHOT HERE" width="30%" height="30%"/></a>
+  <a href="screenshot.png"><img src="screenshot.png" alt="SCREEN SHOT HERE" width="30%" height="30%" /></a>
   <br />(Click on the image for a full-size version)
 </p>
 
@@ -128,7 +130,7 @@ the tabs in the lower right to view the text of the file, an image, or the hex
 data.</p>
 
 <p>If you are viewing files from the Views and Results nodes,
-you can right click on a file to go to its file system location. This
+you can right-click on a file to go to its file system location. This
 feature is useful to see what else the user stored in the same folder as the
 file that you are currently looking at. You can also right click on a
 file to extract it to the local system.</p>
@@ -141,7 +143,7 @@ shown in a table in the upper right. </p>
 
 <p>As you are going through the results in the tree, the ingest
 modules are running in the background. The results are shown in the tree
-based on the update frequency selected when the image was added to the case. </p>
+as soon as the ingest modules find them and report them. </p>
 
 <p>The Ingest Inbox receives messages from the ingest modules
 as they find results. You can open the inbox to see what has been recently
@@ -206,7 +208,8 @@ view the video or image in the lower right. Video will be played with sound. </p
 analysis results. Use the &quot;Generate Report&quot; button to create this. It will
 create an HTML or XLS report in the Reports folder of the case folder. If you
 forgot the location of your case folder, you can determine it using the &quot;Case
-Properties&quot; option in the &quot;File&quot; menu. </p>
+Properties&quot; option in the &quot;File&quot; menu. There is also an option
+to export report files to a separate folder outside of the case folder.  </p>
 
 <hr>
 <p><i>Copyright &#169; 2012 Basis Technology.</br>

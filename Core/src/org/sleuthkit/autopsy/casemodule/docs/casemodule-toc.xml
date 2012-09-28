@@ -6,6 +6,7 @@ and open the template in the editor.
 <!DOCTYPE toc PUBLIC "-//Sun Microsystems Inc.//DTD JavaHelp TOC Version 2.0//EN" "http://java.sun.com/products/javahelp/toc_2_0.dtd">
 <toc version="2.0">
     <tocitem text="Overview" target="org.sleuthkit.autopsy.casemodule.overview"/>
+     <tocitem text="Quick Start Guide" target="org.sleuthkit.autopsy.casemodule.quickstart"/>
     <tocitem text="Case Management">
        <tocitem text="Case">
             <tocitem text="About Cases" target="org.sleuthkit.autopsy.casemodule.about"/>
