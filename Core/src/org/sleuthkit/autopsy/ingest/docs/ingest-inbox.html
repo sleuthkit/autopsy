@@ -19,24 +19,36 @@ limitations under the License.
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Message Inbox</title>
+        <title>Ingest Message Inbox</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     </head>
     <body>
-        <h2>Message Inbox</h2>
+        <h2>Ingest Message Inbox</h2>
             <p>
-                The message inbox is used by Autopsy to provide real-time updates during ingest.
+                The ingest message inbox is used by Autopsy to provide real-time updates during ingest.
                 To open the inbox, click on the yellow warning sign in the top/right corner of the Autopsy window.
+                The sign can display a number of incoming unread (not yet clicked) messages during ingest in its upper-right corner.
             </p>
             <p>
                 <img src="inbox-button.png" alt="Inbox button" />
             </p>
             <p>
-                Ingest modules are able to post messages when notable events occur, such as a keyword or hash database hit.
+                Ingest modules are able to post messages when notable events occur, 
+                such as a keyword or hash database hit.
                 If a module posts many similar messages in a short time span,
                 the inbox will group those messages so that unique updates are not lost among the noise.
+            </p>
+            <p>
+                The grouped messages are colored with different shades to indicate their importance; if a message group contains a lower number of unique messages, it is
+                potentially more important than another group with a large number of unique messages.  The more unique important messages have a lighter background color.
+            </p>
+            <p>
+                The ingest messages can be sorted by uniqueness/importance, or by chronological order in which they had appeared.
+            </p>
+            <p>
+                A message can be clicked to view the message details.  When a message is clicked, it is marked as "read".
                 When updates are posted with regard to a specific result or file, the message is linked to that file
-                and the buttons in the top/right corner of the inbox can be used to browse to that data.
+                and the buttons in the top/right corner of the message details view can be used to browse to that data.
             </p>
                 <img src="inbox-main.PNG" alt="Inbox Main Screen" /><br /><br />
                 <img src="inbox-details.PNG" alt="Inbox Details Screen" />
