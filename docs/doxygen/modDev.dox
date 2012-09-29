@@ -1,17 +1,23 @@
-/*! \page mod_dev_page Development Overview 
+/*! \page mod_dev_page Development Basics
+
+<!-- NOTE: This doc contains the concepts that apply when developing
+any type of module. Information about specific types of modules should
+go into the page for that module type. -->
 
 <!-- @@@ Update -->
 
+This page describes the basic concepts and setup that are needed regardless of the module type that you are building. 
+
 \section mod_dev_setup Basic Setup
 
-\subsection mod_dev_setup_java The Java Enviroment
+\subsection mod_dev_setup_java The Java Environment
 
 Currently, to develop modules for Autopsy, you must be using Java 1.6.
 
 If you have the Autopsy source code open in NetBeans, you can verify the Autopsy project is running with Java 1.6 by right clicking the project, choosing Properties, and checking that under Libraries the Java Platform is JDK 1.6 and under Sources the Source Level is 1.6.
 
 
-\subsection mod_dev_setup_autopsy Autopsy as a Development Enviroment
+\subsection mod_dev_setup_autopsy Autopsy as a Development Environment
 
 To setup a module development environment for Autopsy, you must have either:
 \li Autopsy installed on your machine
@@ -47,10 +53,13 @@ Or read <a href="http://bits.netbeans.org/dev/javadoc/org-openide-modules/org/op
 Autopsy requires that all modules restart Autopsy after they are installed. To setup your module in this fashion, right click on the module and choose Properties. Under Build > Packaging, check the box that says Needs Restart on Install.
 
 
+\section mod_dev_services Services
 
-\section mod_dev_services Getting Access to Services
+In order to use Autopsy's services, each module with a desired service has to be added as a dependency to your module. After a dependency is added, you can import Autopsy's packages and utilize it's modules and methods. Some modules include specific services to help with third party module development.
 
-In order to use Autopy's services, each module with a desired service has to be added as a dependency to your module. After a dependency is added, you can import Autopsy's packages and utilize it's modules and methods. Some modules include specific services to help with third party module development.
+<!-- @@@ -->
+TODO: With the new module design, each new module should be dependent on core, right?  If so, that should be listed as a required step and the below section should be deprecated because this section should only be about core services. 
+
 
 \subsection mod_dev_services_dependency Adding a Dependency
 
@@ -63,7 +72,9 @@ When a module is added as a dependency, all of it's methods and services become 
 
 \subsection mod_dev_services_services Module Services
 
-TODO: Add additional info about service classes
+TODO: Add additional info about service classes (log, Case, database, etc.)  Similar to the C++ section about services (http://sleuthkit.org/sleuthkit/docs/framework-docs/mod_devpage.html)
+
+TODO: Move the log content from the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_3_Logging_and_Error_Checking) to here.
 
 \ref IngestModuleServices provides a number of services specifically targeted towards ingest modules.
 
