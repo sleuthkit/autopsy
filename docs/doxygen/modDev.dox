@@ -73,20 +73,19 @@ Or read <a href="http://bits.netbeans.org/dev/javadoc/org-openide-modules/org/op
 
 \subsection mod_dev_services_dependency Adding a Dependency
 
-You need to first add dependencies to your module import the relevant APIs needed for development of your module.
-Adding the dependency will also help to resolve the dependencies of your module at runtime and let the framework properly load your module.
+You need to first add dependencies to your module to import the relevant APIs needed for development of your module.
+Adding the dependency will also help to resolve the dependencies of your module at runtime 
+and let the framework properly load your module.
 
-In NetBeans IDE, right click the module and go to Properties. 
+To add a dependency on a module, in NetBeans IDE, right click the module and go to Properties. 
 In the Libraries category, you can see the current dependencies your module has.
-
-To add a dependency on a module, click the Add button and either scroll through the list of available modules 
+Click the Add button and either scroll through the list of available modules 
 or filter the modules by class, package name, path, or display name. 
 When the desired module is found, press OK and it will appear in the list of current dependencies.
 
-
 Currently you only need to specify Autopsy-Core as one of your module dependencies 
-- this will give you access to the Autopsy Framework API (such as interfaces and services) and allow for plugging-in your custom Ingest Modules, 
-Content Viewers and Reports.
+- this will give you access to the Autopsy Framework Core API (such as interfaces and services) 
+and allow for plugging-in your custom Ingest Modules, Content Viewers and Reports.
 
 Ensure that you select which Build and Specification version of the Autopsy-Core module your module depends on.  
 This will later help the plugin manager detect if dependencies are met for your module when the module is being loaded, 
@@ -98,6 +97,10 @@ The relevant APIs for module development are the interfaces for different module
 defining which methods the module should be implementing.  Also, there are services APIs, which are tools that framework provides for modules, 
 such as data storage, configuration, logging, etc.
 
+TODO we should outline the process of adding a JAR file dependency for an external library.
+E.g. adding jar directly to the module project, or (preferred) wrapping set of jars in another module
+e.g. NewModuleName-Libs and adding a dependency on the libs module. Add info how to bundle OS-specific dlls in the jar (work in progress).
+
 
 \section mod_dev_services Getting Access to Services
 
@@ -108,7 +111,9 @@ Among the Core APIs there are general services available to the Autopsy modules.
 - org.sleuthkit.autopsy.coreutils package has classes providing utilities for getting access to Autopsy loggers, configuration persistance API,
 getting information about the Platform (such as locations of files and folders, info about the runtime environment), 
 extracting default settings files from the jar file to a user settings folder, etc.
-Relevant service classes are org.sleuthkit.autopsy.coreutils.Version, org.sleuthkit.autopsy.coreutils.PlatformUtil and ModuleSettings.
+Relevant service classes are org.sleuthkit.autopsy.coreutils.Version, 
+org.sleuthkit.autopsy.coreutils.PlatformUtil, org.sleuthkit.autopsy.coreutils.ModuleSettings, 
+org.sleuthkit.autopsy.coreutils.Logger and org.sleuthkit.autopsy.coreutils.FileUtil.
 
 TODO: Add additional info about service classes (log, Case, database, etc.)  Similar to the C++ section about services (http://sleuthkit.org/sleuthkit/docs/framework-docs/mod_devpage.html)
 
