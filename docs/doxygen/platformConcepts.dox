@@ -2,29 +2,38 @@
 
 \section platform_basics Basic Concepts
 
-Autopsy is designed around the Sleuth Kit framework, giving it a central database in which to store artifacts, artifact attributes, and general file information. Everything stored in this database (i.e. the "blackboard") is accessible through Autopsy and thus to module developers.
+- <b>Central Database</b>: All data except for the disk image is stored in a SQLite database.  This includes information about what files exist in the disk image and the output from modules. Access to this database can be found from the SleuthKitCase class. <!-- @@@ IS THAT CORRECT -->
+- <b>Services</b>: There are core services that the platform provides to modules. See the \ref mod_dev_services section for more details. 
+- <b>Pipelines and Plug-in Modules:</b> The platform has several places where plug-in modules can be incorporated. This modular approach allows other developers to extend the functionality of the system.   See the \ref platform_frameworks section for more details. 
+- <b>Blackboard:</b> The platform uses the blackboard to enable modules to communicate with each other and to display data in the GUI. See the \ref platform_blackboard section for more details. 
+- <b>Single tree:</b> Results from the various modules can generally be found in a single tree. This makes it easy for users to find their results. 
+- <b>Phases:</b> The platform has been design to support different phases in the investigation process:
+ - Case Creation: Use wizards to create a new case.
+ - File Extraction: Where files are identified and the basic metadata are added to the central database. This happens in the Add Image Wizard.
+ - Ingest Modules: A variety of analysis modules then run on the extracted files to perform specific tasks.
+ - Browsing and searching: User can manually browse and search the data using the user interface.
+ - Report: A final report is generated at the end of the case.
 
-The most common use of the blackboard is through ingest modules. Autopsy provides a number of ingest modules to analyze data and quickly provide results. Often, these results are saved to blackboard in a generalized format for other modules to use.
-
-The UI of Autopsy contains two main views: a single tree on the left to browse results, and a more complex view on the right for more individual analysis. The single tree shows not only the file structure of the disk image(s) provided, it also generates additional nodes based off the results saved into blackboard.
-
-As for the complex view, frameworks are provided through Autopsy for viewing and analysis. There is a framework to view sets of results in tables, thumbnails, and a few others. Another framework allows the user to view a file as text, a string, in hex, or as a form of media.
-
-All of these robust features in the Autopsy platform are readily available for any and all modules to utilize.
-
-- Central database
-- Ingest Modules that analyze data quickly and provide quick results
-- Single tree to browse for results
-- Framework to view sets of results with (table, thumbnail, etc.)
-- Framework to view file content (hex, strings, etc.)
+\section platform_frameworks Frameworks in the Platform
+There are several places in the platform where plug-in modules can be applied. 
+- <b>Ingest Modules:</b> These modules are run when a new image is added to a case (and can be re-run afterwards too).  See \ref mod_ingest_page for details on building these modules. These modules come in two forms:
+ - File Ingest Modules are called for every file in the image.  Use this type of module if you want to examine the contents of all or most of the files.  Examples include hash calculation, hash lookup, file type identification, and entropy calculation. 
+ - Image Ingest Modules are called once for every image.  These modules can use the database to query for one or more files and perform analysis on them.  Examples include web artifact analysis and searches that can rely only file names and extensions. 
+- <b>Content Viewers:</b> These modules show information about a specific file. These are the modules in the lower right of the interface.  The platform comes with viewers to view the file in hexadecimal, extract the strings from the file, and view images and movies.  See \ref mod_content_page for details on creating these modules. 
+- <b>Result Viewers:</b> These modules show information about a set of files. These modules are in the upper right of the interface. The platform comes with viewers to view the set of files in a table and thumbnails.  See \ref mod_result_page for details on creating these modules. 
 
 \section platform_blackboard The Blackboard
 
-Provide some basic details, link to the C++ docs, and link to the Java API.
+The blackboard allows modules to communicate. It has three main uses in Autopsy:
+- Ingest modules can communicate with each other. For example, one module can calculate a MD5 hash of a file and post it to the blackboard.  Then another module can retrieve the hash value from the blackboard and not need to calculate it again.
+- The tree in the right-hand side of the UI uses the blackboard to populate its Results section.  The bookmarks, hashset hits, etc. are all populated from Ingest modules that created blackboard entries. 
+- The report modules query the blackboard to identify what they should report on.
 
-\section platform_inbox Ingest Inbox
+For more details on the blackboard, refer to the TSK Framework documentation at http://sleuthkit.org/sleuthkit/docs/framework-docs/mod_bbpage.html. These documents are about the C++ implementation of the blackboard, but it is the same concepts.  
 
-Provide some details and API
+For details on the Java API, refer to the JNI docs:
+    http://sleuthkit.org/sleuthkit/docs/jni-docs/
+
 
 
 */
