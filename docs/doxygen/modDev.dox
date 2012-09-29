@@ -1,6 +1,12 @@
-/*! \page mod_dev_page Development Overview 
+/*! \page mod_dev_page Development Basics
+
+<!-- NOTE: This doc contains the concepts that apply when developing
+any type of module. Information about specific types of modules should
+go into the page for that module type. -->
 
 <!-- @@@ Update -->
+
+This page describes the basic concepts and setup that are needed regardless of the module type that you are building. 
 
 \section mod_dev_setup Basic Setup
 
@@ -12,6 +18,7 @@ You can verify the module project is built for Java 1.6 by right clicking the pr
 
 
 \subsection mod_dev_setup_autopsy Setting up Development Environment
+
 
 To setup a module development environment for Autopsy, you must have either:
 \li Autopsy installed on your machine 
@@ -69,12 +76,13 @@ Or read <a href="http://bits.netbeans.org/dev/javadoc/org-openide-modules/org/op
 You need to first add dependencies to your module import the relevant APIs needed for development of your module.
 Adding the dependency will also help to resolve the dependencies of your module at runtime and let the framework properly load your module.
 
-In the NetBeans, right click the module and go to Properties. 
+In NetBeans IDE, right click the module and go to Properties. 
 In the Libraries category, you can see the current dependencies your module has.
 
 To add a dependency on a module, click the Add button and either scroll through the list of available modules 
 or filter the modules by class, package name, path, or display name. 
 When the desired module is found, press OK and it will appear in the list of current dependencies.
+
 
 Currently you only need to specify Autopsy-Core as one of your module dependencies 
 - this will give you access to the Autopsy Framework API (such as interfaces and services) and allow for plugging-in your custom Ingest Modules, 
@@ -96,22 +104,17 @@ such as data storage, configuration, logging, etc.
 Autopsy-Core module contains the core Autopsy application, and also the framework the application is built upon that other modules can use.
 Among the Core APIs there are general services available to the Autopsy modules.  The relevant packages include:
 
-- org.sleuthkit.autopsy.casemodule.Case class - for the module to access Case data and subscribe to Case change events
+- org.sleuthkit.autopsy.casemodule.Case class - for the module to access Case data (TSK database) and subscribe to Case change events
 - org.sleuthkit.autopsy.coreutils package has classes providing utilities for getting access to Autopsy loggers, configuration persistance API,
 getting information about the Platform (such as locations of files and folders, info about the runtime environment), 
 extracting default settings files from the jar file to a user settings folder, etc.
 Relevant service classes are org.sleuthkit.autopsy.coreutils.Version, org.sleuthkit.autopsy.coreutils.PlatformUtil and ModuleSettings.
 
-\ref IngestModuleServices provides a number of services specifically targeted towards ingest modules.
+TODO: Add additional info about service classes (log, Case, database, etc.)  Similar to the C++ section about services (http://sleuthkit.org/sleuthkit/docs/framework-docs/mod_devpage.html)
 
-To use it, a handle to IngestModuleServices singleton object should be retrieved in the module's \c init() method.  For example:
-\code
-IngestModuleServices services = IngestModuleServices.getDefault() 
-\endcode
+TODO: Move the log content from the wiki (http://wiki.sleuthkit.org/index.php?title=Autopsy_3_Logging_and_Error_Checking) to here.
 
-It is safe to store handle to services in your module private member variable.
-However, DO NOT initialize the services handle statically in the member variable declaration.  
-Use the init() method to do that to ensure proper order of initialization of the objects.
+Note: \ref IngestModuleServices provides services specifically for the ingest modules.
 
 
 \section mod_dev_configuration Making a Configuration Panel
@@ -155,7 +158,7 @@ Any storing or loading of settings or properties should be done in the \c store(
 
 \section mod_dev_properties Saving Settings and Properties
 
-It is recommended to have the module settings persistant, so that when a change is made and Autopsy is re-opened 
+It is recommended to have the module settings persistent, so that when a change is made and Autopsy is re-opened 
 the user made changes remain effective and not reset back to defaults.
 Use org.sleuthkit.autopsy.coreutils.ModuleSettings class for saving and reading back settings for your module.
 
