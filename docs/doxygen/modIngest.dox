@@ -75,7 +75,7 @@ No developer or user be forced to manually edit the XML registration, but Autops
 \subsection ingestmodule_making_results Posting Results
 
 <!-- @@@ -->
-NOTE: This needs to be made more in sync with the \ref platform_blackboard and \ref platform_inbox sections.  
+NOTE: This needs to be made more in sync with the \ref platform_blackboard.  This section (or one near this) needs to be the sole source of ingest inbox API information. 
 
 Users will see the results from ingest modules in one of two ways:
 - Results are posted to the blackboard and will be displayed in the navigation tree
