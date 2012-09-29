@@ -4,25 +4,34 @@
 
 \section mod_dev_setup Basic Setup
 
-\subsection mod_dev_setup_java The Java Enviroment
+\subsection mod_dev_setup_java The Java Environment
 
 Currently, to develop modules for Autopsy, you must be using Java 1.6.
 
-If you have the Autopsy source code open in NetBeans, you can verify the Autopsy project is running with Java 1.6 by right clicking the project, choosing Properties, and checking that under Libraries the Java Platform is JDK 1.6 and under Sources the Source Level is 1.6.
+You can verify the module project is built for Java 1.6 by right clicking the project, choosing Properties, and checking that under Libraries the Java Platform is JDK 1.6 and under Sources the Source Level is 1.6.
 
 
-\subsection mod_dev_setup_autopsy Autopsy as a Development Enviroment
+\subsection mod_dev_setup_autopsy Setting up Development Environment
 
 To setup a module development environment for Autopsy, you must have either:
-\li Autopsy installed on your machine
+\li Autopsy installed on your machine 
 \li The Autopsy source code, downloaded from GitHub
 
-If you have Autopsy installed on your machine and would like to use that as your development environment, proceed to \ref mod_dev_module. Note that older versions of Autopsy may not have the latest features available for module development.
+in order to for your project to import the Autopsy framework API.
+
+If you used Autopsy installer that comes with an official release of Autopsy, you will get the more stable version of the framework, but possibly not the latest.
+If you import Autopsy libraries pulled from GitHub, 
+you may get the latest version of the framework, but not the most stable and official one,
+ and still likely to be changed before the next official release.
+
+If you have Autopsy installed on your machine and would like to use that as your development environment, 
+proceed to \ref mod_dev_module. 
+Note that older versions of Autopsy may not have the latest features available for module development.
 
 To use the latest Autopsy source code as your development environment, first follow BUILDING.TXT to properly build and setup Autopsy in NetBeans. Make sure you are using Java 1.6.
 
-Once Autopsy has been successfully built, right click on the Autopsy project in NetBeans and select Package as > ZIP Distribution. Then extract the ZIP file to any directory of your choosing.
-
+Once Autopsy has been successfully built, right click on the Autopsy project in NetBeans and select Package as > ZIP Distribution. 
+Then extract the ZIP file to any directory of your choosing. 
 
 
 \section mod_dev_module How to Create a Module
@@ -35,57 +44,96 @@ Click Next, name the module, and set the project location.
 
 Select Standalone Module, and click the Manage button. Click on Add Platform and either browse to the directory Autopsy is installed or to the directory the ZIP distribution was extracted. Press Finish and then Close.
 
-Autopsy has now been added as a "NetBeans Platform", meaning the development environment for NetBeans has been set to use the code from within Autopsy. This grants access to Autopsy's methods and modules to third party developers, without having to program inside the Autopsy project itself.
+Autopsy has now been added as a "NetBeans Platform", meaning the development environment for NetBeans has been set to use the code from within Autopsy. This grants access to Autopsy Framework API (exported packages and classes) to external developers, without having to program inside the Autopsy project itself.
 
-Click Next, and fill out the rest of the module-creation wizard. Press Finish when complete, and the module will be added as a standalone project in NetBeans.
+Click Next, and fill out the rest of the module-creation wizard. 
+Make sure to fill out the Module Name, Module Category (use "Ingest Module" for an Autopsy ingest module), Short and Long Descriptions.
+Also fill out the Module Major Build version and Specification version in API Versioning section. 
 
-After the module is created, it is important to verify the new project is using Java 1.6. Any other version of Java may have unforeseen consequences. To check the version of Java, right click on the module in the Projects window and go to Properties. Make sure that under the Libraries category the Java Platform is JDK 1.6, and under Sources the Source Level is 1.6.
+Autopsy requires that all modules restart Autopsy after they are installed -- otherwise the module might not be fully loaded and functional. 
+To setup your module in this fashion, right click on the module and choose Properties. 
+Under Build > Packaging, check the box that says Needs Restart on Install.
+
+Press Finish when complete, and the module will be added as a standalone project in NetBeans.
+
+After the module is created, it is important to verify the new project is using Java 1.6. 
+To check the version of Java, right click on the module in the Projects window and go to Properties. 
+Make sure that under the Libraries category the Java Platform is JDK 1.6, and under Sources the Source Level is 1.6.
 
 See \ref mod_ingest_page for instructions on programming ingest modules for Autopsy.
 Or read <a href="http://bits.netbeans.org/dev/javadoc/org-openide-modules/org/openide/modules/doc-files/api.html">this guide from NetBeans.org</a> for general module development tips.
 
-Autopsy requires that all modules restart Autopsy after they are installed. To setup your module in this fashion, right click on the module and choose Properties. Under Build > Packaging, check the box that says Needs Restart on Install.
 
+\subsection mod_dev_services_dependency Adding a Dependency
+
+You need to first add dependencies to your module import the relevant APIs needed for development of your module.
+Adding the dependency will also help to resolve the dependencies of your module at runtime and let the framework properly load your module.
+
+In the NetBeans, right click the module and go to Properties. 
+In the Libraries category, you can see the current dependencies your module has.
+
+To add a dependency on a module, click the Add button and either scroll through the list of available modules 
+or filter the modules by class, package name, path, or display name. 
+When the desired module is found, press OK and it will appear in the list of current dependencies.
+
+Currently you only need to specify Autopsy-Core as one of your module dependencies 
+- this will give you access to the Autopsy Framework API (such as interfaces and services) and allow for plugging-in your custom Ingest Modules, 
+Content Viewers and Reports.
+
+Ensure that you select which Build and Specification version of the Autopsy-Core module your module depends on.  
+This will later help the plugin manager detect if dependencies are met for your module when the module is being loaded, 
+into a potentially different version of the framework.
+
+When a module is added as a dependency, its APIs become available to the dependant module. 
+
+The relevant APIs for module development are the interfaces for different module types (for example, Ingest Modules), 
+defining which methods the module should be implementing.  Also, there are services APIs, which are tools that framework provides for modules, 
+such as data storage, configuration, logging, etc.
 
 
 \section mod_dev_services Getting Access to Services
 
-In order to use Autopy's services, each module with a desired service has to be added as a dependency to your module. After a dependency is added, you can import Autopsy's packages and utilize it's modules and methods. Some modules include specific services to help with third party module development.
+Autopsy-Core module contains the core Autopsy application, and also the framework the application is built upon that other modules can use.
+Among the Core APIs there are general services available to the Autopsy modules.  The relevant packages include:
 
-\subsection mod_dev_services_dependency Adding a Dependency
-
-In the NetBeans, right click the module and go to Properties. In the Libraries category, you can see the current dependencies your module has.
-
-To add a dependency to one of Autopsy's modules, click the Add button and either scroll through the list of available modules or filter the modules by class, package name, path, or display name. When the desired module is found, press OK and it will appear in the list of current dependencies.
-
-When a module is added as a dependency, all of it's methods and services become available to the dependant module. You cannot import a package or class from Autopsy without first adding the proper dependency, but after adding the dependency, it is as if your module is inside the original Autopsy source code.
-
-
-\subsection mod_dev_services_services Module Services
-
-TODO: Add additional info about service classes
+- org.sleuthkit.autopsy.casemodule.Case class - for the module to access Case data and subscribe to Case change events
+- org.sleuthkit.autopsy.coreutils package has classes providing utilities for getting access to Autopsy loggers, configuration persistance API,
+getting information about the Platform (such as locations of files and folders, info about the runtime environment), 
+extracting default settings files from the jar file to a user settings folder, etc.
+Relevant service classes are org.sleuthkit.autopsy.coreutils.Version, org.sleuthkit.autopsy.coreutils.PlatformUtil and ModuleSettings.
 
 \ref IngestModuleServices provides a number of services specifically targeted towards ingest modules.
 
-In general, a handle to any services should be created in the module's \c init() method, by getting a singleton instance of the services. For example:
+To use it, a handle to IngestModuleServices singleton object should be retrieved in the module's \c init() method.  For example:
 \code
 IngestModuleServices services = IngestModuleServices.getDefault() 
 \endcode
 
+It is safe to store handle to services in your module private member variable.
+However, DO NOT initialize the services handle statically in the member variable declaration.  
+Use the init() method to do that to ensure proper order of initialization of the objects.
+
 
 \section mod_dev_configuration Making a Configuration Panel
 
-Some modules may have advanced configuration settings which you need users to have available. Autopsy provides two centralized locations for users to see these settings: the \ref mod_dev_configuration_ingest, and the \ref mod_dev_configuration_options.
-
+Some modules may have configuration settings for the users to set or review using GUI components, such as JPanels. 
+Autopsy provides two centralized locations for users to accesss these settings via panels registered by the module: the \ref mod_dev_configuration_ingest, 
+and the \ref mod_dev_configuration_options.
 
 \subsection mod_dev_configuration_ingest Ingest Dialog Panel
 
-The ingest dialog panel (IDP) is shown anytime ingest is to be started/restarted. It provides framework for a "simple panel" as well as an "advanced panel". The simple panel is shown directly in the IDP, while the advanced panel is opened in a new window if the user presses the Advanced button in the IDP. For method specifics, see \ref ingestmodule_making_configuration.
+The ingest configuration dialog panel is displayed anytime ingest is to be started/restarted. 
+It provides framework for two-levels of settings:  "simple panel" as well as an "advanced panel". 
+The simple panel is shown directly in the ingest configuration panel on the right-hand side when a specific module is selected.
+The advanced panel is opened in a new window if the user presses the Advanced button in the ingest configuration dialog. 
 
-Both of these panels can be created as a standard \c JPanel, and returned by your ingest module using the inherited ingest functions.
+Both of these panels can be created as a standard \c JPanel, and returned by your ingest module using 
+of the the ingest module methods implemented, that are declared in the ingest module interface.
 
-It is recommended when making an ingest module to have the advanced panel also be an options panel, allowing the user access to the settings from Tools > Options.
+It is recommended when making an ingest module to have the advanced panel also be accessible also via the main Options panel, 
+allowing the user access to the settings from Tools > Options and not only via the ingest module configuration.
 
+See \ref ingestmodule_making_configuration how to implement hooks for having your ingest module configurations registered.
 
 \subsection mod_dev_configuration_options Options Panel
 
@@ -107,14 +155,23 @@ Any storing or loading of settings or properties should be done in the \c store(
 
 \section mod_dev_properties Saving Settings and Properties
 
-If a module needs to have options and properties, how should they store them and get themselves setup in the options viewer.
-
+It is recommended to have the module settings persistant, so that when a change is made and Autopsy is re-opened 
+the user made changes remain effective and not reset back to defaults.
+Use org.sleuthkit.autopsy.coreutils.ModuleSettings class for saving and reading back settings for your module.
 
 
 \section mod_dev_events Registering for events
 
-Module life cycle is managed by ingest manager and module do not need to catch events to keep track of cases or other general system-wide events.
+Modules may want to register for case change events using org.sleuthkit.autopsy.casemodule.Case.addPropertyChangeListener() method.
+Modules may want to reinitialize and update their data views as case is changed.
 
+If a module is a viewer interested in knowing when new data is available from ingest, it can register for listening of the ingest result updates using:
+org.sleuthkit.autopsy.ingest.IngestManager.addPropertyChangeListener()
+
+When developing Ingest modules specifically - their life cycle is managed by ingest manager 
+and an ingest module does not need to listen for case change events 
+or other general system-wide events.  
+However, it should make sure that it gets a new handle to the current Case every time the module's init() is invoked.
 
 
 \section mod_dev_plugin Adding a Module to Autopsy
