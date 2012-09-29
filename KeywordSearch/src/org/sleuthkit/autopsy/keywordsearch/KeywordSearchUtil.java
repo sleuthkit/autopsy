@@ -23,7 +23,7 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FsContent;

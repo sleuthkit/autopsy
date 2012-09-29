@@ -1,6 +1,7 @@
 Manifest-Version: 1.0
-OpenIDE-Module: org.sleuthkit.autopsy.hashdatabase
+AutoUpdate-Show-In-Client: true
+OpenIDE-Module: org.sleuthkit.autopsy.hashdatabase/3
+OpenIDE-Module-Implementation-Version: 1
 OpenIDE-Module-Layer: org/sleuthkit/autopsy/hashdatabase/layer.xml
 OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/hashdatabase/Bundle.properties
-OpenIDE-Module-Specification-Version: 1.0
 

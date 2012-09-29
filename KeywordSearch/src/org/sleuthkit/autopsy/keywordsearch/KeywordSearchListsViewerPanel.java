@@ -29,7 +29,6 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
 import javax.swing.JCheckBox;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -39,6 +38,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.util.actions.SystemAction;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent;
 
@@ -52,7 +52,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     private KeywordSearchListsXML loader;
     private KeywordListsTableModel listsTableModel;
     private KeywordsTableModel keywordsTableModel;
-    private ActionListener ingestListener;
     private ActionListener searchListener;
     private boolean ingestRunning;
 
@@ -116,28 +115,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
                 });
         
         loader = KeywordSearchListsXML.getCurrent();
-        loader.addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String changed = evt.getPropertyName();
-                Object oldValue = evt.getOldValue();
-                Object newValue = evt.getNewValue();
-                
-                if (changed.equals(KeywordSearchListsXML.ListsEvt.LIST_ADDED.toString())) {
-                    listsTableModel.resync();
-                } else if (changed.equals(KeywordSearchListsXML.ListsEvt.LIST_DELETED.toString())) {
-                    listsTableModel.resync();
-                    if(listsTable.getRowCount() > 0)
-                        listsTable.getSelectionModel().setSelectionInterval(0, 0);
-                    else
-                        listsTable.getSelectionModel().clearSelection();
-                } else if (changed.equals(KeywordSearchListsXML.ListsEvt.LIST_UPDATED.toString())) {
-                    //keywordsTableModel.resync(loader.getList((String) newValue));
-                    listsTableModel.resync();
-                }
-            }
-        });
         listsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
             @Override
@@ -159,7 +136,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             }
         };
         
-        if(IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault())) {
+        if(IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault())) {
             initIngest(true);
         }
         else {
@@ -173,15 +150,15 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
                 String changed = evt.getPropertyName();
                 Object oldValue = evt.getOldValue();
                 if(changed.equals(IngestModuleEvent.COMPLETED.toString() ) &&
-                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
+                        ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
                     initIngest(false);
                 }
                 else if(changed.equals(IngestModuleEvent.STARTED.toString() ) &&
-                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
+                        ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
                     initIngest(true);
                 }
                 else if(changed.equals(IngestModuleEvent.STOPPED.toString() ) &&
-                        ((String) oldValue).equals(KeywordSearchIngestService.MODULE_NAME)) {
+                        ((String) oldValue).equals(KeywordSearchIngestModule.MODULE_NAME)) {
                     initIngest(false);
                 }
             }
@@ -198,14 +175,13 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     private void initIngest(boolean running) {
         ActionListener[] current = searchAddButton.getActionListeners();
         for (int i = 0; i < current.length; i++) {
-            if (current[i].equals(ingestListener) || current[i].equals(searchListener)) {
+            if (current[i].equals(searchListener)) {
                 searchAddButton.removeActionListener(current[i]);
             }
         }
         if (running) {
             ingestRunning = true;
             searchAddButton.setText("Add to Ingest");
-            searchAddButton.addActionListener(ingestListener);
             listsTableModel.resync();
             ingestIndexLabel.setText("Ingest is ongoing. Results will appear as the index is populated.");
         } else {
@@ -271,16 +247,17 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(searchAddButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 220, Short.MAX_VALUE)
-                .addComponent(manageListsButton)
-                .addContainerGap())
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(ingestIndexLabel)
-                .addContainerGap(327, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(searchAddButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 220, Short.MAX_VALUE)
+                        .addComponent(manageListsButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(ingestIndexLabel)
+                        .addGap(0, 317, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -410,7 +387,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            List<String> locked = KeywordSearchIngestService.getDefault().getKeywordLists();
+            List<String> locked = KeywordSearchIngestModule.getDefault().getKeywordLists();
             return (columnIndex == 0 && (!ingestRunning || !locked.contains((String)getValueAt(rowIndex, 1))));
         }
 
@@ -618,7 +595,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             this.setVerticalAlignment(JCheckBox.CENTER);
 
             String name = (String) table.getModel().getValueAt(row, 1);
-            List<String> locked = KeywordSearchIngestService.getDefault().getKeywordLists();
+            List<String> locked = KeywordSearchIngestModule.getDefault().getKeywordLists();
             setEnabled(!locked.contains(name) || !ingestRunning);
             Boolean selected = (Boolean) table.getModel().getValueAt(row, 0);
             setSelected(selected);

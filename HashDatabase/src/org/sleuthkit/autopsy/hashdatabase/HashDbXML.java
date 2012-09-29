@@ -26,12 +26,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -43,17 +40,13 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-/**
- *
- * @author dfickling
- */
 public class HashDbXML {
     private static final String ROOT_EL = "hash_sets";
     private static final String SET_EL = "hash_set";
@@ -65,13 +58,16 @@ public class HashDbXML {
     private static final String PATH_NUMBER_ATTR = "number";
     private static final String CUR_HASHSETS_FILE_NAME = "hashsets.xml";
     private static final String ENCODING = "UTF-8";
-    private static final String CUR_HASHSET_FILE = AutopsyPropFile.getUserDirPath() + File.separator + CUR_HASHSETS_FILE_NAME;
+    private static final String CUR_HASHSET_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_HASHSETS_FILE_NAME;
+    private static final String SET_CALC = "hash_calculate";
+    private static final String SET_VALUE = "value";
     private static final Logger logger = Logger.getLogger(HashDbXML.class.getName());
     private static HashDbXML currentInstance;
     
     private List<HashDb> knownBadSets;
     private HashDb nsrlSet;
     private String xmlFile;
+    private boolean calculate;
     
     private HashDbXML(String xmlFile) {
         knownBadSets = new ArrayList<HashDb>();
@@ -81,7 +77,7 @@ public class HashDbXML {
     /**
      * get instance for managing the current keyword list of the application
      */
-    static HashDbXML getCurrent() {
+    static synchronized HashDbXML getCurrent() {
         if (currentInstance == null) {
             currentInstance = new HashDbXML(CUR_HASHSET_FILE);
             currentInstance.reload();
@@ -120,7 +116,7 @@ public class HashDbXML {
      */
     public void addKnownBadSet(HashDb set) {
         knownBadSets.add(set);
-        save();
+        //save();
     }
     
     /**
@@ -128,7 +124,7 @@ public class HashDbXML {
      */
     public void addKnownBadSet(int index, HashDb set) {
         knownBadSets.add(index, set);
-        save();
+        //save();
     }
     
     /**
@@ -136,7 +132,7 @@ public class HashDbXML {
      */
     public void setNSRLSet(HashDb set) {
         this.nsrlSet = set;
-        save();
+        //save();
     }
     
     /**
@@ -144,7 +140,7 @@ public class HashDbXML {
      */
     public void removeKnownBadSetAt(int index) {
         knownBadSets.remove(index);
-        save();
+        //save();
     }
     
     /** 
@@ -152,7 +148,7 @@ public class HashDbXML {
      */
     public void removeNSRLSet() {
         this.nsrlSet = null;
-        save();
+        //save();
     }
     
     /**
@@ -178,9 +174,26 @@ public class HashDbXML {
     }
     
     /**
+     * Sets the local variable calculate to the given boolean.
+     * @param set the state to make calculate
+     */
+    public void setCalculate(boolean set) {
+        this.calculate = set;
+        //save();
+    }
+    
+    /**
+     * Returns the value of the local boolean calculate.
+     * @return true if calculate is true, false otherwise
+     */
+    public boolean getCalculate() {
+        return this.calculate;
+    }
+    
+    /**
      * writes out current sets file replacing the last one
      */
-    private boolean save() {
+    public boolean save() {
         boolean success = false;
 
         DocumentBuilderFactory dbfac = DocumentBuilderFactory.newInstance();
@@ -235,6 +248,11 @@ public class HashDbXML {
                 }
                 rootEl.appendChild(setEl);
             }
+            
+            String calcValue = Boolean.toString(calculate);
+            Element setCalc = doc.createElement(SET_CALC);
+            setCalc.setAttribute(SET_VALUE, calcValue);
+            rootEl.appendChild(setCalc);
 
             success = saveDoc(doc);
         } catch (ParserConfigurationException e) {
@@ -259,6 +277,9 @@ public class HashDbXML {
         }
         NodeList setsNList = root.getElementsByTagName(SET_EL);
         int numSets = setsNList.getLength();
+        if(numSets==0) {
+            logger.log(Level.WARNING, "No element hash_set exists.");
+        }
         for (int i = 0; i < numSets; ++i) {
             Element setEl = (Element) setsNList.item(i);
             final String name = setEl.getAttribute(SET_NAME_ATTR);
@@ -267,12 +288,14 @@ public class HashDbXML {
             final String showInboxMessages = setEl.getAttribute(SET_SHOW_INBOX_MESSAGES);
             Boolean useForIngestBool = Boolean.parseBoolean(useForIngest);
             Boolean showInboxMessagesBool = Boolean.parseBoolean(showInboxMessages);
-            DBType typeDBType = DBType.valueOf(type);
             List<String> paths = new ArrayList<String>();
 
             //parse all words
             NodeList pathsNList = setEl.getElementsByTagName(PATH_EL);
             final int numPaths = pathsNList.getLength();
+            if(numPaths==0) {
+                logger.log(Level.WARNING, "No paths have been given for the hash_set at index " + i + ".");
+            }
             for (int j = 0; j < numPaths; ++j) {
                 Element pathEl = (Element) pathsNList.item(j);
                 String number = pathEl.getAttribute(PATH_NUMBER_ATTR);
@@ -280,6 +303,19 @@ public class HashDbXML {
                 paths.add(path);
             }
             
+            // Check everything was properly set
+            if(name.isEmpty()) {
+                logger.log(Level.WARNING, "Name was not set for hash_set at index " + i + ".");
+            } if(type.isEmpty()) {
+                logger.log(Level.SEVERE, "Type was not set for hash_set at index " + i + ", cannot make instance of HashDb class.");
+                return false; // exit because this causes a fatal error
+            } if(useForIngest.isEmpty()) {
+                logger.log(Level.WARNING, "UseForIngest was not set for hash_set at index " + i + ".");
+            } if(showInboxMessages.isEmpty()) {
+                logger.log(Level.WARNING, "ShowInboxMessages was not set for hash_set at index " + i + ".");
+            }
+            
+            DBType typeDBType = DBType.valueOf(type);
             HashDb set = new HashDb(name, paths, useForIngestBool, showInboxMessagesBool, typeDBType);
             
             if(typeDBType == DBType.KNOWN_BAD) {
@@ -287,6 +323,17 @@ public class HashDbXML {
             } else if(typeDBType == DBType.NSRL) {
                 this.nsrlSet = set;
             }
+        }
+        
+        NodeList calcList = root.getElementsByTagName(SET_CALC);
+        int numCalc = calcList.getLength(); // Shouldn't be more than 1
+        if(numCalc==0) {
+            logger.log(Level.WARNING, "No element hash_calculate exists.");
+        }
+        for(int i=0; i<numCalc; i++) {
+            Element calcEl = (Element) calcList.item(i);
+            final String value = calcEl.getAttribute(SET_VALUE);
+            calculate = Boolean.parseBoolean(value);
         }
         return true;
     }

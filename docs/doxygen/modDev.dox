@@ -1,0 +1,132 @@
+/*! \page mod_dev_page Development Overview 
+
+<!-- @@@ Update -->
+
+\section mod_dev_setup Basic Setup
+
+\subsection mod_dev_setup_java The Java Enviroment
+
+Currently, to develop modules for Autopsy, you must be using Java 1.6.
+
+If you have the Autopsy source code open in NetBeans, you can verify the Autopsy project is running with Java 1.6 by right clicking the project, choosing Properties, and checking that under Libraries the Java Platform is JDK 1.6 and under Sources the Source Level is 1.6.
+
+
+\subsection mod_dev_setup_autopsy Autopsy as a Development Enviroment
+
+To setup a module development environment for Autopsy, you must have either:
+\li Autopsy installed on your machine
+\li The Autopsy source code, downloaded from GitHub
+
+If you have Autopsy installed on your machine and would like to use that as your development environment, proceed to \ref mod_dev_module. Note that older versions of Autopsy may not have the latest features available for module development.
+
+To use the latest Autopsy source code as your development environment, first follow BUILDING.TXT to properly build and setup Autopsy in NetBeans. Make sure you are using Java 1.6.
+
+Once Autopsy has been successfully built, right click on the Autopsy project in NetBeans and select Package as > ZIP Distribution. Then extract the ZIP file to any directory of your choosing.
+
+
+
+\section mod_dev_module How to Create a Module
+
+In NetBeans go to File > New Project.
+
+From the categories, choose NetBeans Modules, and then Module under Projects.
+
+Click Next, name the module, and set the project location.
+
+Select Standalone Module, and click the Manage button. Click on Add Platform and either browse to the directory Autopsy is installed or to the directory the ZIP distribution was extracted. Press Finish and then Close.
+
+Autopsy has now been added as a "NetBeans Platform", meaning the development environment for NetBeans has been set to use the code from within Autopsy. This grants access to Autopsy's methods and modules to third party developers, without having to program inside the Autopsy project itself.
+
+Click Next, and fill out the rest of the module-creation wizard. Press Finish when complete, and the module will be added as a standalone project in NetBeans.
+
+After the module is created, it is important to verify the new project is using Java 1.6. Any other version of Java may have unforeseen consequences. To check the version of Java, right click on the module in the Projects window and go to Properties. Make sure that under the Libraries category the Java Platform is JDK 1.6, and under Sources the Source Level is 1.6.
+
+See \ref mod_ingest_page for instructions on programming ingest modules for Autopsy.
+Or read <a href="http://bits.netbeans.org/dev/javadoc/org-openide-modules/org/openide/modules/doc-files/api.html">this guide from NetBeans.org</a> for general module development tips.
+
+Autopsy requires that all modules restart Autopsy after they are installed. To setup your module in this fashion, right click on the module and choose Properties. Under Build > Packaging, check the box that says Needs Restart on Install.
+
+
+
+\section mod_dev_services Getting Access to Services
+
+In order to use Autopy's services, each module with a desired service has to be added as a dependency to your module. After a dependency is added, you can import Autopsy's packages and utilize it's modules and methods. Some modules include specific services to help with third party module development.
+
+\subsection mod_dev_services_dependency Adding a Dependency
+
+In the NetBeans, right click the module and go to Properties. In the Libraries category, you can see the current dependencies your module has.
+
+To add a dependency to one of Autopsy's modules, click the Add button and either scroll through the list of available modules or filter the modules by class, package name, path, or display name. When the desired module is found, press OK and it will appear in the list of current dependencies.
+
+When a module is added as a dependency, all of it's methods and services become available to the dependant module. You cannot import a package or class from Autopsy without first adding the proper dependency, but after adding the dependency, it is as if your module is inside the original Autopsy source code.
+
+
+\subsection mod_dev_services_services Module Services
+
+TODO: Add additional info about service classes
+
+\ref IngestModuleServices provides a number of services specifically targeted towards ingest modules.
+
+In general, a handle to any services should be created in the module's \c init() method, by getting a singleton instance of the services. For example:
+\code
+IngestModuleServices services = IngestModuleServices.getDefault() 
+\endcode
+
+
+\section mod_dev_configuration Making a Configuration Panel
+
+Some modules may have advanced configuration settings which you need users to have available. Autopsy provides two centralized locations for users to see these settings: the \ref mod_dev_configuration_ingest, and the \ref mod_dev_configuration_options.
+
+
+\subsection mod_dev_configuration_ingest Ingest Dialog Panel
+
+The ingest dialog panel (IDP) is shown anytime ingest is to be started/restarted. It provides framework for a "simple panel" as well as an "advanced panel". The simple panel is shown directly in the IDP, while the advanced panel is opened in a new window if the user presses the Advanced button in the IDP. For method specifics, see \ref ingestmodule_making_configuration.
+
+Both of these panels can be created as a standard \c JPanel, and returned by your ingest module using the inherited ingest functions.
+
+It is recommended when making an ingest module to have the advanced panel also be an options panel, allowing the user access to the settings from Tools > Options.
+
+
+\subsection mod_dev_configuration_options Options Panel
+
+To add panel to the options menu, right click the module and choose New > Other. Under the Module Development category, select Options Panel and press Next.
+
+Select Create Primary Panel, name the panel (preferably with the module's name), select an icon, and add keywords, then click Next and Finish. Note that NetBeans will automatically copy the selected icon to the module's directory if not already there.
+
+NetBeans will generate two Java files for you, the panel and the controller. For now, we only need to focus on the panel.
+
+First, use NetBeans' GUI builder to design the panel. Be sure to include all options, settings, preferences, etc for the module, as this is what the user will see. The recommended size of an options panel is about 675 x 500.
+
+Second, in the source code of the panel, there are two important methods: \c load() and \c store(). When the options panel is opened via Tools > Options in Autopsy, the \c load() method will be called. Conversely, when the user presses OK after editing the options, the \c store() method will be called.
+
+If one wishes to make any additional panels within the original options panel, or panels which the original opens, Autopsy provides the \ref OptionsPanel interface to help. This interface requires the \c store() and \c load() functions also be provided in the separate panels, allowing for easier child storing and loading.
+
+Any storing or loading of settings or properties should be done in the \c store() and \c load() methods. Continue to \ref mod_dev_properties for more details.
+
+
+
+\section mod_dev_properties Saving Settings and Properties
+
+If a module needs to have options and properties, how should they store them and get themselves setup in the options viewer.
+
+
+
+\section mod_dev_events Registering for events
+
+Module life cycle is managed by ingest manager and module do not need to catch events to keep track of cases or other general system-wide events.
+
+
+
+\section mod_dev_plugin Adding a Module to Autopsy
+
+When the module is created and ready for use, it can be added to Autopsy via the plugins menu.
+
+The plugins menu can be used to add modules (i.e. plugins) to Autopsy in a number of different ways, the simplest of which is through an NBM file.
+
+To generate an NBM file, right click on the module and select Create NBM.
+
+Then, launch Autopsy and choose Plugins under the Tools menu. Open the Downloaded tab and click Add Plugins. Navigate to the NBM file and open it. Next, click Install and follow the wizard. Autopsy will require a restart after installing the module, but afterwards the plugin will be integrated into Autopsy.
+
+The options to uninstall or temporarily disable a plugin are also available under the plugins menu.
+
+*/

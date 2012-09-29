@@ -23,8 +23,9 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -43,7 +44,7 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
     private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
-    private KeywordSearchIngestService service;
+    private KeywordSearchIngestModule module;
     private Ingester ingester;
     private AbstractFile sourceFile;
     private int numChunks = 0;
@@ -53,7 +54,7 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     };
 
     AbstractFileHtmlExtract() {
-        this.service = KeywordSearchIngestService.getDefault();
+        this.module = KeywordSearchIngestModule.getDefault();
         ingester = Server.getIngester();
     }
 
@@ -65,6 +66,16 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
     @Override
     public List<SCRIPT> getScripts() {
         return null;
+    }
+    
+    @Override
+    public Map<String, String> getOptions() {
+        return null;
+    }
+
+    @Override
+    public void setOptions(Map<String, String> options) {
+
     }
 
     @Override
@@ -161,7 +172,7 @@ public class AbstractFileHtmlExtract implements AbstractFileExtract {
 
                 //check if need invoke commit/search between chunks
                 //not to delay commit if timer has gone off
-                service.checkRunCommitSearch();
+                module.checkRunCommitSearch();
             }
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);

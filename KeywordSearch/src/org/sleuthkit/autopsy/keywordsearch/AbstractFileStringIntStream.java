@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -48,28 +48,40 @@ public class AbstractFileStringIntStream extends InputStream {
     private int convertBuffOffset = 0; //offset to start returning data to user on next read()
     private int bytesInConvertBuff = 0; //amount of data currently in the buffer
     private boolean fileEOF = false; //if file has more bytes to read
+    private boolean extractUTF8;
+    private boolean extractUTF16;
     private Charset outCharset;
     private static final Logger logger = Logger.getLogger(AbstractFileStringIntStream.class.getName());
     private StringExtractResult lastExtractResult;
 
     /**
-     * Constructs new stream object that does convertion from file, to extracted
-     * strings, then to byte stream, for specified script auto-detected encoding
+     * Constructs new stream object that does conversion from file, to extracted
+     * strings, then to byte stream, for specified script, auto-detected encoding
      * (UTF8, UTF16LE, UTF16BE), and specified output byte stream encoding
      *
-     * @param content
-     * @param script
-     * @param outCharset
+     * @param content input content to process and turn into a stream to convert into strings
+     * @param scripts a list of scripts to consider
+     * @param extractUTF8 whether to extract utf8 encoding
+     * @param extractUTF16 whether to extract utf16 encoding
+     * @param outCharset encoding to use in the output byte stream
      */
-    public AbstractFileStringIntStream(AbstractFile content, List<SCRIPT> scripts, Charset outCharset) {
+    public AbstractFileStringIntStream(AbstractFile content, List<SCRIPT> scripts, boolean extractUTF8, 
+           boolean extractUTF16, Charset outCharset) {
         this.content = content;
         this.stringExtractor = new StringExtract();
         this.stringExtractor.setEnabledScripts(scripts);
+        this.extractUTF8 = extractUTF8;
+        this.extractUTF16 = extractUTF16;
         this.outCharset = outCharset;
+        this.stringExtractor.setEnableUTF8(extractUTF8);
+        this.stringExtractor.setEnableUTF16(extractUTF16);
     }
 
     @Override
     public int read() throws IOException {
+        if (extractUTF8 == false && extractUTF16 == false) {
+            return -1;
+        }
         final int read = read(oneCharBuf, 0, 1);
         if (read == 1) {
             return oneCharBuf[0];
@@ -87,6 +99,10 @@ public class AbstractFileStringIntStream extends InputStream {
             throw new IndexOutOfBoundsException();
         } else if (len == 0) {
             return 0;
+        }
+        
+        if (extractUTF8 == false && extractUTF16 == false) {
+            return -1;
         }
 
         long fileSize = content.getSize();

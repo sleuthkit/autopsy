@@ -1,0 +1,16 @@
+/**
+\package org.sleuthkit.autopsy.datamodel
+
+Contains the NetBeans Node wrappers that wrap around Sleuth Kit data model objects.
+
+\section datamodel_overview Overview
+Autopsy 3 uses NetBeans Nodes to pass data around.  The Sleuth Kit comes with Java datamodel classes in org.sleuthkit.datamodel and it contains classes for files, directories, file systems, volumes, and other data types that can be found in a disk image. These classes are not NetBeans specific.
+
+This package, org.sleuthkit.autopsy.datamodel, contains classes that are NetBeans-specific and map to classes in the Sleuth Kit datamodel.  For example org.sleuthkit.autopsy.datamodel.DirectoryNode is the Node class for the org.sleuthkit.datamodel.Directory class.
+
+The underlying sleuthkit.datamodel Content objects are passed around Autopsy by being included in a Node's lookup.
+
+\section datamodel_creating Creating Nodes
+You should only have to create the root node in a hierarchy.  To do so, use the RootContentChildren class and pass in the list of TSK datamodel objects that you need to encapsulate.  After that, the children will automatically be created as nodes when they are requested.  ContentChildren deals with this.
+
+ */

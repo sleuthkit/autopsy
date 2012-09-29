@@ -1,10 +1,24 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2012 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,8 +26,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JCheckBox;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -21,12 +36,13 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 /**
  * Advanced configuration panel handling languages config.
  */
-public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
+public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel implements OptionsPanel {
 
     private static KeywordSearchConfigurationPanel3 instance = null;
     private final Logger logger = Logger.getLogger(KeywordSearchConfigurationPanel3.class.getName());
     private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<String, StringExtract.StringExtractUnicodeTable.SCRIPT>();
     private ActionListener updateLanguagesAction;
+    private List<SCRIPT> toUpdate;
 
     /**
      * Creates new form KeywordSearchConfigurationPanel3
@@ -43,19 +59,13 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
         return instance;
     }
 
-    @Override
-    public void paint(Graphics g) {
-        super.paint(g);
-        activateWidgets();
-    }
-
     private void customizeComponents() {
 
 
         updateLanguagesAction = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                List<SCRIPT> toUpdate = new ArrayList<SCRIPT>();
+                toUpdate = new ArrayList<SCRIPT>();
                 final int components = checkPanel.getComponentCount();
                 for (int i = 0; i < components; ++i) {
                     JCheckBox ch = (JCheckBox) checkPanel.getComponent(i);
@@ -64,8 +74,6 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
                         toUpdate.add(s);
                     }
                 }
-                KeywordSearchIngestService.getDefault().setStringExtractScripts(toUpdate);
-
             }
         };
 
@@ -104,22 +112,49 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
     }
 
     private void reloadScriptsCheckBoxes() {
-        final KeywordSearchIngestService service = KeywordSearchIngestService.getDefault();
-        final List<SCRIPT> serviceScripts = service.getStringExtractScripts();
+       
+        boolean utf16 = 
+                Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
+       
+        enableUTF16Checkbox.setSelected(utf16);
+        
+        boolean utf8 = 
+                Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()));
+        enableUTF8Checkbox.setSelected(utf8);
+        
+        final List<SCRIPT> serviceScripts = KeywordSearchSettings.getStringExtractScripts();
         final int components = checkPanel.getComponentCount();
+        
         for (int i = 0; i < components; ++i) {
             JCheckBox ch = (JCheckBox) checkPanel.getComponent(i);
+            
             StringExtract.StringExtractUnicodeTable.SCRIPT script = scripts.get(ch.getText());
             
             ch.setSelected(serviceScripts.contains(script));
         }
+        
     }
 
     private void activateWidgets() {
         reloadScriptsCheckBoxes();
-        boolean enable = !IngestManager.getDefault().isIngestRunning();
+        
+        
+         boolean utf16 = 
+                Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString()));
+       
+        enableUTF16Checkbox.setSelected(utf16);
+        
+        boolean utf8 = 
+                Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString()));
+        enableUTF8Checkbox.setSelected(utf8);
+        final boolean extractEnabled = utf16 || utf8;
+        
+        boolean ingestNotRunning = !IngestManager.getDefault().isIngestRunning()
+        && ! IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault());
         //enable / disable checboxes
-        activateScriptsCheckboxes(enable);
+        activateScriptsCheckboxes(extractEnabled && ingestNotRunning);
+        enableUTF16Checkbox.setEnabled(ingestNotRunning);
+        enableUTF8Checkbox.setEnabled(ingestNotRunning);
     }
 
     /**
@@ -134,21 +169,44 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
         languagesLabel = new javax.swing.JLabel();
         langPanel = new javax.swing.JScrollPane();
         checkPanel = new javax.swing.JPanel();
+        enableUTF8Checkbox = new javax.swing.JCheckBox();
+        enableUTF16Checkbox = new javax.swing.JCheckBox();
+        ingestSettingsLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(languagesLabel, org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel3.class, "KeywordSearchConfigurationPanel3.languagesLabel.text")); // NOI18N
+
+        langPanel.setPreferredSize(new java.awt.Dimension(430, 361));
+
+        checkPanel.setPreferredSize(new java.awt.Dimension(400, 361));
 
         javax.swing.GroupLayout checkPanelLayout = new javax.swing.GroupLayout(checkPanel);
         checkPanel.setLayout(checkPanelLayout);
         checkPanelLayout.setHorizontalGroup(
             checkPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 434, Short.MAX_VALUE)
+            .addGap(0, 428, Short.MAX_VALUE)
         );
         checkPanelLayout.setVerticalGroup(
             checkPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 211, Short.MAX_VALUE)
+            .addGap(0, 395, Short.MAX_VALUE)
         );
 
         langPanel.setViewportView(checkPanel);
+
+        org.openide.awt.Mnemonics.setLocalizedText(enableUTF8Checkbox, org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel3.class, "KeywordSearchConfigurationPanel3.enableUTF8Checkbox.text")); // NOI18N
+        enableUTF8Checkbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                enableUTF8CheckboxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(enableUTF16Checkbox, org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel3.class, "KeywordSearchConfigurationPanel3.enableUTF16Checkbox.text")); // NOI18N
+        enableUTF16Checkbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                enableUTF16CheckboxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel3.class, "KeywordSearchConfigurationPanel3.ingestSettingsLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -157,23 +215,74 @@ public class KeywordSearchConfigurationPanel3 extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(ingestSettingsLabel)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(languagesLabel)
-                        .addContainerGap())
-                    .addComponent(langPanel)))
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(enableUTF16Checkbox)
+                            .addComponent(enableUTF8Checkbox)))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(languagesLabel, javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(langPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(255, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(languagesLabel)
+                .addComponent(ingestSettingsLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(enableUTF16Checkbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(langPanel))
+                .addComponent(enableUTF8Checkbox)
+                .addGap(18, 18, 18)
+                .addComponent(languagesLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(langPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 397, Short.MAX_VALUE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void enableUTF8CheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableUTF8CheckboxActionPerformed
+      
+        boolean selected = this.enableUTF8Checkbox.isSelected();
+       
+        activateScriptsCheckboxes(selected || this.enableUTF16Checkbox.isSelected());
+        
+    }//GEN-LAST:event_enableUTF8CheckboxActionPerformed
+
+    private void enableUTF16CheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enableUTF16CheckboxActionPerformed
+        
+        boolean selected = this.enableUTF16Checkbox.isSelected();
+        
+        activateScriptsCheckboxes(selected || this.enableUTF8Checkbox.isSelected());
+    }//GEN-LAST:event_enableUTF16CheckboxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel checkPanel;
+    private javax.swing.JCheckBox enableUTF16Checkbox;
+    private javax.swing.JCheckBox enableUTF8Checkbox;
+    private javax.swing.JLabel ingestSettingsLabel;
     private javax.swing.JScrollPane langPanel;
     private javax.swing.JLabel languagesLabel;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void store() {
+        KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF8.toString(),
+                Boolean.toString(enableUTF8Checkbox.isSelected()));
+        KeywordSearchSettings.setStringExtractOption(AbstractFileExtract.ExtractOptions.EXTRACT_UTF16.toString(),
+                Boolean.toString(enableUTF16Checkbox.isSelected()));
+        
+        if(toUpdate!=null) {
+           KeywordSearchSettings.setStringExtractScripts(toUpdate);
+        }
+        
+    }
+
+    @Override
+    public void load() {
+        activateWidgets();
+  
+    }
 }

@@ -8,13 +8,13 @@
     <!-- OS X -->
     <target name="copyTskLibs_dylib" depends="testTSKLibs" if="tsk_dylib.present">
         <property environment="env"/>
-        <copy file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.dylib" tofile="${basedir}/DataModel/release/modules/lib/libtsk_jni.jnilib"/>
+        <copy file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.dylib" tofile="${basedir}/Core/release/modules/lib/libtsk_jni.jnilib"/>
     </target>
     
     <!-- Non-OS X -->
     <target name="copyTskLibs_so" depends="testTSKLibs" if="tsk_so.present">
         <property environment="env"/>
-        <copy file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.so" tofile="${basedir}/DataModel/release/modules/lib/libtsk_jni.so"/>
+        <copy file="${env.TSK_HOME}/bindings/java/jni/.libs/libtsk_jni.so" tofile="${basedir}/Core/release/modules/lib/libtsk_jni.so"/>
     </target>
     
     <target name="copyTSKLibsToRelease" depends="copyTskLibs_so,copyTskLibs_dylib">

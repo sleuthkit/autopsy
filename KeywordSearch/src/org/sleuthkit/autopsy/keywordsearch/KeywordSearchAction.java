@@ -31,6 +31,6 @@ public final class KeywordSearchAction extends AbstractAction implements Present
 
     @Override
     public Component getToolbarPresenter() {
-        return new KeywordSearchPanel();
+        return KeywordSearchPanel.getDefault();
     }
 }

@@ -655,21 +655,14 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = main.dox \
-                         design.dox \
+INPUT                  = main.dox workflow.dox \
+                         modContent.dox modDev.dox modIngest.dox modReport.dox \
+                         modResult.dox platformConcepts.dox \
                          regressionTesting.dox \
-                         ../../Case/src \
-                         ../../CoreComponentInterfaces/src \
-                         ../../CoreComponents/src \
-                         ../../DataModel/src \
-                         ../../DirectoryTree/src \
-                         ../../FileSearch/src \
+                         ../../Core/src \
                          ../../HashDatabase/src \
-                         ../../Ingest/src \
                          ../../KeywordSearch/src \
-                         ../../MenuActions/src \
                          ../../RecentActivity/src \
-                         ../../Report/src \
                          ../../Testing/src \
                          ../../thunderbirdparser/src
 

@@ -20,11 +20,9 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskException;
 
@@ -165,7 +163,7 @@ public class AbstractFileStringStream extends InputStream {
             } else {
                 singleConsecZero = false;
             }
-            if (DataConversion.isPrintableAscii(c)) {
+            if (StringExtract.isPrintableAscii(c)) {
                 tempString.append(c);
                 ++tempStringLen;
                 if (tempStringLen >= MIN_PRINTABLE_CHARS) {

@@ -1,7 +1,22 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.awt.Dimension;
@@ -10,7 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -131,6 +146,11 @@ class HashDbAddDatabaseDialog extends javax.swing.JDialog {
 
         useForIngestCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(useForIngestCheckbox, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.useForIngestCheckbox.text")); // NOI18N
+        useForIngestCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                useForIngestCheckboxActionPerformed(evt);
+            }
+        });
 
         sendInboxMessagesCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(sendInboxMessagesCheckbox, org.openide.util.NbBundle.getMessage(HashDbAddDatabaseDialog.class, "HashDbAddDatabaseDialog.sendInboxMessagesCheckbox.text")); // NOI18N
@@ -171,7 +191,7 @@ class HashDbAddDatabaseDialog extends javax.swing.JDialog {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(useForIngestCheckbox)
                             .addComponent(sendInboxMessagesCheckbox))
-                        .addGap(0, 183, Short.MAX_VALUE))))
+                        .addGap(0, 135, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -292,6 +312,10 @@ class HashDbAddDatabaseDialog extends javax.swing.JDialog {
         }
         this.dispose();
     }//GEN-LAST:event_okButtonActionPerformed
+
+    private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useForIngestCheckboxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_useForIngestCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;

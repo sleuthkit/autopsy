@@ -24,20 +24,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.UndoableEditListener;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.Element;
 import javax.swing.text.PlainDocument;
-import javax.swing.text.Position;
-import javax.swing.text.Segment;
-import org.sleuthkit.datamodel.FsContent;
 
 /**
  * Searches for files by md5 hash, based off the hash given in this panel.
@@ -107,6 +99,10 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         searchButton.addActionListener(l);
     }
     
+    void addCancelActionListener(ActionListener l) {
+        cancelButton.addActionListener(l);
+    }
+    
     /**
      * Don't allow any changes if ingest is running
      */
@@ -125,6 +121,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         removeButton.setEnabled(!ingestRunning);
         hashTable.setEnabled(!ingestRunning);
         hashLabel.setEnabled(!ingestRunning);
+        saveBox.setEnabled(!ingestRunning);
     }
 
     /**
@@ -147,6 +144,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         titleLabel = new javax.swing.JLabel();
         errorField = new javax.swing.JLabel();
         saveBox = new javax.swing.JCheckBox();
+        cancelButton = new javax.swing.JButton();
 
         hashTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -197,6 +195,8 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(HashDbSearchPanel.class, "HashDbSearchPanel.cancelButton.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -209,6 +209,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                         .addComponent(hashLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(hashField))
+                    .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(titleLabel)
@@ -220,12 +221,13 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(saveBox)))
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addGroup(layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(errorField)
                         .addGap(18, 18, 18)
-                        .addComponent(searchButton))
-                    .addComponent(jSeparator1))
+                        .addComponent(searchButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(cancelButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -249,7 +251,8 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(searchButton)
-                    .addComponent(errorField))
+                    .addComponent(errorField)
+                    .addComponent(cancelButton))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -260,6 +263,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
+    private javax.swing.JButton cancelButton;
     private javax.swing.JLabel errorField;
     private javax.swing.JTextField hashField;
     private javax.swing.JLabel hashLabel;
@@ -274,9 +278,7 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if(e.getSource().equals(searchButton)) {
-            doSearch();
-        } else if(e.getSource().equals(addButton)) {
+        if(e.getSource().equals(addButton)) {
             add();
         } else if(e.getSource().equals(removeButton)) {
             remove();
@@ -287,32 +289,47 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
      * Search through all tsk_files to find ones with the same hashes as the
      * hashes given.
      */
-    boolean doSearch() {
-        // Make sure all files have an md5 hash
-        if(HashDbSearcher.isReady()) {
-            if(hashTable.getRowCount()!=0) {
+    boolean search() {
+        // Check if any hashed have been entered
+        if(hashTable.getRowCount()!=0) {
+            // Make sure all files have an md5 hash
+            if(HashDbSearcher.allFilesMd5Hashed()) {
+                return doSearch();
+            // and if not, warn the user
+            } else if(HashDbSearcher.countFilesMd5Hashed() > 0) {
                 errorField.setVisible(false);
-                // Get all the rows in the table
-                int numRows = hashTable.getRowCount();
-                ArrayList<String> hashes = new ArrayList<String>();
-                for(int i=0; i<numRows; i++) {
-                    hashes.add((String) hashTable.getValueAt(i, 0));
+                Object selected = JOptionPane.showConfirmDialog(null, "Not all files have MD5 hashes. "
+                        + "Search results will be incomplete.\n"
+                        + "Would you like to search anyway?", "File Search by MD5 Hash", JOptionPane.YES_NO_OPTION);
+                if(selected.equals(JOptionPane.YES_OPTION)) {
+                    return doSearch();
+                } else {
+                    return false;
                 }
-                // Get the map of hashes to FsContent and send it to the manager
-                Map<String, List<FsContent>> map = HashDbSearcher.findFilesBymd5(hashes);
-                HashDbSearchManager man = new HashDbSearchManager(map);
-                man.execute();
-                return true;
             } else {
-                errorField.setText("Error: No hashes have been entered.");
-                errorField.setVisible(true);
+                JOptionPane.showMessageDialog(null, "No files currently have an MD5 hash.",
+                        "File Search by MD5 Hash", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
         } else {
-            errorField.setText("Error: Not all files have been hashed.");
+            errorField.setText("Error: No hashes have been added.");
             errorField.setVisible(true);
             return false;
         }
+    }
+    
+    private boolean doSearch() {
+        errorField.setVisible(false);
+        // Get all the rows in the table
+        int numRows = hashTable.getRowCount();
+        ArrayList<String> hashes = new ArrayList<String>();
+        for(int i=0; i<numRows; i++) {
+            hashes.add((String) hashTable.getValueAt(i, 0));
+        }
+        // Start a new thread and find the hashes
+        HashDbSearchThread hashThread = new HashDbSearchThread(hashes);
+        hashThread.execute();
+        return true;
     }
     
     /**
@@ -324,6 +341,15 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
         String hash = hashField.getText();
         if(!hash.equals("")) {
             if(hash.matches("[a-fA-F0-9]{32}")) {
+                for(int i=0; i<model.getRowCount(); i++) {
+                    if(model.getValueAt(i, 0).equals(hashField.getText())) {
+                        hashField.setText("");
+                        errorField.setText("Error: Hash has already been added.");
+                        errorField.setVisible(true);
+                errorField.setVisible(true);
+                        return;
+                    }
+                }
                 model.addRow(new String[] {hash});
                 hashField.setText(""); // wipe the field
             } else {

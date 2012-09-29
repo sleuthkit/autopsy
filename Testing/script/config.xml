@@ -19,8 +19,9 @@ appended to at that location. It must be given a specific file, not a directory.
 Images can be added on any drive including network drives. If the image path
 is incorrect, or if the image pointed to is an unsupported format, the regression
 script will inform the user in an error message, but carry on without problems.
+All paths given to the script have to be full paths from the root directoy.
 NOTE: Some image formats can only be parsed by Autopsy using a Windows path
-(i.e. X:\this\is\a\windows\path ./this/is/not/a/windows/path)
+(i.e. X:\this\is\a\windows\path /this/is/not/a/windows/path)
 It is up to the user to distinguish between the paths when adding to this file.
 -->
 

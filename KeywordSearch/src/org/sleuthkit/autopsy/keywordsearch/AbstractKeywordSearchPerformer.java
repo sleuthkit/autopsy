@@ -79,8 +79,8 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
             return;
         }
         
-        //check if keyword search service ingest is running (indexing, etc)
-        if (IngestManager.getDefault().isServiceRunning(KeywordSearchIngestService.getDefault())) {
+        //check if keyword search module  ingest is running (indexing, etc)
+        if (IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault())) {
             if (KeywordSearchUtil.displayConfirmDialog("Keyword Search Ingest in Progress", 
                     "<html>Keyword Search Ingest is currently running.<br />"
                     + "Not all files have been indexed and this search might yield incomplete results.<br />"

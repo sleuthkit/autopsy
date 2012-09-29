@@ -1,6 +1,0 @@
-Manifest-Version: 1.0
-OpenIDE-Module: org.sleuthkit.autopsy.datamodel/1
-OpenIDE-Module-Implementation-Version: 2
-OpenIDE-Module-Install: org/sleuthkit/autopsy/datamodel/Installer.class
-OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/datamodel/Bundle.properties
-

@@ -25,6 +25,15 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
+                    <code-name-base>org.netbeans.modules.options.api</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.26.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.netbeans.modules.settings</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -82,65 +91,11 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
-                    <code-name-base>org.sleuthkit.autopsy.casemodule</code-name-base>
+                    <code-name-base>org.sleuthkit.autopsy.core</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <release-version>1</release-version>
-                        <specification-version>1.0</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
-                    <code-name-base>org.sleuthkit.autopsy.corecomponentinterfaces</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <release-version>1</release-version>
-                        <specification-version>1.0</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
-                    <code-name-base>org.sleuthkit.autopsy.corecomponents</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <release-version>1</release-version>
-                        <specification-version>1.0</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
-                    <code-name-base>org.sleuthkit.autopsy.coreutils</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <release-version>0-1</release-version>
-                        <specification-version>0.0</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
-                    <code-name-base>org.sleuthkit.autopsy.datamodel</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <release-version>1</release-version>
-                        <specification-version>1.0</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
-                    <code-name-base>org.sleuthkit.autopsy.directorytree</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <release-version>1</release-version>
-                        <specification-version>1.0</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
-                    <code-name-base>org.sleuthkit.autopsy.ingest</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <release-version>0-1</release-version>
+                        <release-version>3</release-version>
                         <specification-version>1.0</specification-version>
                     </run-dependency>
                 </dependency>
@@ -148,10 +103,6 @@
             <public-packages>
                 <package>org.sleuthkit.autopsy.keywordsearch</package>
             </public-packages>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-io-1.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-io-1.4.jar</binary-origin>
-            </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.4.0-beta-1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/metadata-extractor-2.4.0-beta-1.jar</binary-origin>
@@ -165,6 +116,10 @@
                 <binary-origin>release/modules/ext/poi-3.8-beta4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-io-2.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-io-2.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-logging-1.1.1.jar</binary-origin>
             </class-path-extension>
@@ -173,16 +128,16 @@
                 <binary-origin>release/modules/ext/tagsoup-1.2.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-lang-2.4.jar</binary-origin>
+                <runtime-relative-path>ext/solr-solrj-3.6.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-3.6.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-ooxml-3.8-beta4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-ooxml-3.8-beta4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/tika-parsers-0.10.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-parsers-0.10.jar</binary-origin>
+                <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang-2.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jcl-over-slf4j-1.6.1.jar</runtime-relative-path>
@@ -201,16 +156,40 @@
                 <binary-origin>release/modules/ext/jericho-html-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-3.5.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-3.5.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/slf4j-api-1.6.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/qdox-1.12.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/qdox-1.12.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/org.osgi.compendium-4.0.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/org.osgi.compendium-4.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/asm-all-3.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/asm-all-3.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/org.apache.felix.scr.generator-1.1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/org.apache.felix.scr.generator-1.1.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/tika-parsers-1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-parsers-1.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/tika-core-1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/tika-core-1.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/bcmail-jdk15-1.45.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/bcmail-jdk15-1.45.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-codec-1.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-codec-1.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/wstx-asl-3.2.7.jar</runtime-relative-path>
@@ -225,8 +204,36 @@
                 <binary-origin>release/modules/ext/xmlbeans-2.3.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/httpmime-4.1.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpmime-4.1.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-compress-1.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-compress-1.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/org.osgi.core-4.0.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/org.osgi.core-4.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/org.apache.felix.scr.annotations-1.6.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/org.apache.felix.scr.annotations-1.6.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-logging-api-1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-api-1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-core-0.7.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/apache-mime4j-core-0.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpcore-4.1.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpcore-4.1.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-scratchpad-3.8-beta4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-scratchpad-3.8-beta4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-httpclient-3.1.jar</runtime-relative-path>
@@ -237,24 +244,16 @@
                 <binary-origin>release/modules/ext/apache-mime4j-dom-0.7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-scratchpad-3.8-beta4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-scratchpad-3.8-beta4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/poi-ooxml-schemas-3.8-beta4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-ooxml-schemas-3.8-beta4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/tika-core-0.10.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-core-0.10.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-codec-1.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-codec-1.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/dom4j-1.6.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/log4j-1.2.16.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/log4j-1.2.16.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/rome-0.9.jar</runtime-relative-path>
@@ -265,20 +264,16 @@
                 <binary-origin>release/modules/ext/bcprov-jdk15-1.45.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jempbox-1.6.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jempbox-1.6.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jericho-html-3.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jericho-html-3.2.jar</binary-origin>
+                <runtime-relative-path>ext/httpclient-4.1.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpclient-4.1.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/pdfbox-1.6.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/pdfbox-1.6.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-compress-1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-compress-1.1.jar</binary-origin>
+                <runtime-relative-path>ext/jempbox-1.6.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jempbox-1.6.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/asm-3.1.jar</runtime-relative-path>

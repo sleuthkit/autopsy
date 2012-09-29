@@ -26,23 +26,26 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.ingest.IngestServiceImage;
+import org.sleuthkit.autopsy.ingest.IngestModuleImage;
+import org.sleuthkit.autopsy.report.SQLiteDBConnect;
 import org.sleuthkit.datamodel.*;
 
-abstract public class Extract implements IngestServiceImage{
+abstract public class Extract implements IngestModuleImage{
 
     protected Case currentCase = Case.getCurrentCase(); // get the most updated case
     protected SleuthkitCase tskCase = currentCase.getSleuthkitCase();
     public final Logger logger = Logger.getLogger(this.getClass().getName());
-    protected ArrayList<String> errorMessages = null;
+    protected final ArrayList<String> errorMessages = new ArrayList<String>();
     protected String moduleName = "";
     
+    //hide public constructor to prevent from instantiation by ingest module loader
+    Extract() {
+        
+    }
+    
     List<String> getErrorMessages() {
-        if(errorMessages == null) {
-            errorMessages = new ArrayList<String>();
-        }
         return errorMessages;
     }
 
@@ -120,7 +123,7 @@ abstract public class Extract implements IngestServiceImage{
         List<HashMap<String,Object>> list = new ArrayList<HashMap<String,Object>>();
         String connectionString = "jdbc:sqlite:" + path;
         try {
-            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", connectionString);
+            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString);
             temprs = tempdbconnect.executeQry(query);
             list = this.resultSetToArrayList(temprs);
             tempdbconnect.closeConnection();

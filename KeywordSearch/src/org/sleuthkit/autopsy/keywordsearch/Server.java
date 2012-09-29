@@ -34,7 +34,7 @@ import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
@@ -47,6 +47,7 @@ import org.apache.commons.httpclient.NoHttpResponseException;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.modules.Places;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -180,7 +181,7 @@ class Server {
         InputStreamPrinterThread(InputStream stream, String type) {
             this.stream = stream;
             try {
-                String log = System.getProperty("netbeans.user") + "/var/log/solr.log." + type;
+                final String log = Places.getUserDirectory().getAbsolutePath() + "/var/log/solr.log." + type;
                 File outputFile = new File(log.concat(".0"));
                 File first = new File(log.concat(".1"));
                 File second = new File(log.concat(".2"));
@@ -210,14 +211,16 @@ class Server {
         public void run() {
             InputStreamReader isr = new InputStreamReader(stream);
             BufferedReader br = new BufferedReader(isr);
+            final Version.Type builtType = Version.getBuildType();
             try {
-                OutputStreamWriter osw = new OutputStreamWriter(out);
+                OutputStreamWriter osw = new OutputStreamWriter(out, PlatformUtil.getDefaultPlatformCharset());
                 BufferedWriter bw = new BufferedWriter(osw);
                 String line = null;
                 while (doRun && (line = br.readLine()) != null) {
-                    bw.write(line);
-                    bw.newLine();
-                    if (Version.getBuildType() == Version.Type.DEVELOPMENT) {
+                    if (builtType == Version.Type.DEVELOPMENT) {
+                        bw.write(line);
+                        bw.newLine();
+                    //if (builtType == Version.Type.DEVELOPMENT) {
                         //flush buffers if dev version for debugging
                         bw.flush();
                     }
@@ -395,6 +398,21 @@ class Server {
         }
 
         return currentCore.queryNumIndexedFiles();
+    }
+
+    /**
+     * Execute query that gets only number of all Solr file chunks (not logical
+     * files) indexed without actually returning the content.
+     *
+     * @return int representing number of indexed chunks
+     * @throws SolrServerException
+     */
+    public int queryNumIndexedChunks() throws SolrServerException, NoOpenCoreException {
+        if (currentCore == null) {
+            throw new NoOpenCoreException();
+        }
+
+        return currentCore.queryNumIndexedChunks();
     }
 
     /**
@@ -613,7 +631,8 @@ class Server {
 
         private void commit() throws SolrServerException {
             try {
-                solrCore.commit();
+                //commit and block
+                solrCore.commit(true, true);
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Could not commit index. ", e);
                 throw new SolrServerException("Could not commit index", e);
@@ -656,10 +675,21 @@ class Server {
          * @throws SolrServerException
          */
         private int queryNumIndexedFiles() throws SolrServerException {
+            return queryNumIndexedDocuments() - queryNumIndexedChunks();
+        }
+
+        /**
+         * Execute query that gets only number of all chunks (not logical files,
+         * or all documents) indexed without actually returning the content
+         *
+         * @return int representing number of indexed chunks
+         * @throws SolrServerException
+         */
+        private int queryNumIndexedChunks() throws SolrServerException {
             SolrQuery q = new SolrQuery(Server.Schema.ID + ":*" + Server.ID_CHUNK_SEP + "*");
             q.setRows(0);
             int numChunks = (int) query(q).getResults().getNumFound();
-            return queryNumIndexedDocuments() - numChunks;
+            return numChunks;
         }
 
         /**

@@ -55,10 +55,8 @@
         <fail unless="jreFound" message="JRE_HOME must be set as an environment variable."/>
     </target>
 
-    <target name="getExternals" depends="findTSK,copyTSKLibsToRelease">
-        <property environment="env"/>
-        <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel.jar" tofile="${basedir}/DataModel/release/modules/ext/Tsk_DataModel.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.7.2.jar" tofile="${basedir}/DataModel/release/modules/ext/sqlite-jdbc-3.7.2.jar"/>
+    <target name="getExternals" depends="findTSK">
+        <antcall target="copyTSKLibsToRelease" />
     </target>
     
      <target name="getJunit">
@@ -84,6 +82,7 @@
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
+         
         <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
         <copy todir="${zip-tmp}/${app.name}/jre6">
             <fileset dir="${env.JRE_HOME}"/>
@@ -156,13 +155,13 @@
     </target>
     
     <!-- override build to add branding -->
-    <target name="build" depends="build-brand,suite.build"/>
+    <target name="build" depends="build-brand,suite.build" description="Compiles autopsy and produces a basic branded build that can run on a dev. system" />
  
     <target name="build-brand" depends="-init">
         
         <echo>${app.name} branding</echo>
         
-        <copy file="${basedir}/branding_${app.name}/welcome_logo.png" tofile="${basedir}/Case/src/org/sleuthkit/autopsy/casemodule/welcome_logo.png" overwrite="true"/>
+        <copy file="${basedir}/branding_${app.name}/welcome_logo.png" tofile="${basedir}/Core/src/org/sleuthkit/autopsy/casemodule/welcome_logo.png" overwrite="true"/>
         
         <propertyfile
         file="${branding.dir}/core/core.jar/org/netbeans/core/startup/Bundle.properties" 
@@ -178,7 +177,7 @@
         </propertyfile>
         
         <propertyfile
-        file="${basedir}/CoreUtils/src/org/sleuthkit/autopsy/coreutils/Version.properties"
+        file="${basedir}/Core/src/org/sleuthkit/autopsy/coreutils/Version.properties"
         comment="Updated by build script">
             <entry key="app.name" value="${app.title}" />
             <entry key="app.version" value="${app.version}" />
@@ -198,6 +197,7 @@
         </javah>
     </target>
     
+    
     <target name="doxygen" description="build doxygen docs, requires doxygen in PATH" depends="-init,-hide-excluded-modules">
         <exec executable="doxygen" dir="${basedir}/docs/doxygen">
             <arg value="Doxyfile"/>
@@ -205,11 +205,11 @@
     </target>
      
     
-    <target name="build-installer-dir" depends="build-zip" >
+    <target name="build-installer-dir" depends="build-zip" description="Builds Autopsy with branding and all dependencies" >
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
     </target>
     
-    <target name="build-installer" depends="build-installer-dir">
+    <target name="build-installer" depends="build-installer-dir" description="Builds Autopsy installer.">
         <antcall target="build-installer-${os.family}" />
     </target>
 </project>
