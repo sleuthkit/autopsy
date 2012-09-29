@@ -10,14 +10,15 @@
         </condition>
         <fail unless="ewfFound" message="LIBEWF_HOME must be set as an environment variable."/>
 
-        <copy file="${env.TSK_HOME}/win32/${TSK_BUILD_TYPE}/libtsk_jni.dll" tofile="${basedir}/DataModel/release/modules/lib/libtsk_jni.dll"/>
-        <copy file="${env.LIBEWF_HOME}/msvscpp/Release/libewf.dll" tofile="${basedir}/DataModel/release/modules/lib/libewf.dll"/> 
-        <copy file="${env.LIBEWF_HOME}/msvscpp/Release/zlib.dll" tofile="${basedir}/DataModel/release/modules/lib/zlib.dll"/>
+        <copy file="${env.TSK_HOME}/win32/${TSK_BUILD_TYPE}/libtsk_jni.dll" tofile="${basedir}/Core/release/modules/lib/libtsk_jni.dll"/>
+        <copy file="${env.LIBEWF_HOME}/msvscpp/Release/libewf.dll" tofile="${basedir}/Core/release/modules/lib/libewf.dll"/> 
+        <copy file="${env.LIBEWF_HOME}/msvscpp/Release/zlib.dll" tofile="${basedir}/Core/release/modules/lib/zlib.dll"/>
     </target>
     
     <target name="copyExternalLibsToZip">
         
         <!-- Find CRT version we linked against from libtsk_jni manifest -->
+        <!-- disable auto-detection for CRT100
         <property name="libtsk.manifest.path">${env.TSK_HOME}/win32/tsk_jni/${TSK_BUILD_TYPE}/libtsk_jni.dll.intermediate.manifest</property>
         <loadfile property="libtsk.manifest" srcFile="${libtsk.manifest.path}" />
         <propertyregex property="CRT.version"
@@ -26,6 +27,10 @@
              select="\1"
              casesensitive="false" />      
         <echo>Found CRT.version linked against: ${CRT.version}</echo>
+        -->
+        <!-- <property name="CRT.version">10.0.40219.1</property> -->
+        <property name="CRT.version">10.0.40219.325</property>
+        
         
         <!-- Get C++ Runtime dlls -->
         <property environment="env"/>
@@ -37,10 +42,14 @@
         <property name="CRT.path">${thirdparty.dir}/crt/x86-32/${CRT.version}/crt.zip</property>
         <available file="${CRT.path}"  property="crtFound"/>
         
-        <fail unless="crtFound" message="Detected CRT version ${CRT.version} not found in the thirdparty repo."/>
+        <fail unless="crtFound" message="Detected CRT version ${CRT.version} not found in the thirdparty repo in path: ${CRT.path}"/>
 
         <!-- unzip from thirdparty repo to modules/lib in staged dir -->
-        <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/${app.name}/modules/lib"/>
+        <!-- <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/${app.name}/modules/lib"/> -->
+        <unzip src="${CRT.path}" dest="${zip-tmp}/${app.name}/bin"/>
+        
+        <!-- delete 64 bit exe for now -->
+        <delete file="${zip-tmp}/${app.name}/bin/${app.name}64.exe" />
     </target>
     
     <target name="autoAIPath" >
@@ -117,10 +126,13 @@
         
         <echo message="Setting environment variables..."/>
         <exec executable="${aiPath}">
-            <arg line="/edit ${proj-path} /NewEnvironment -name PATH -value APPDIR\gstreamer\bin -install_operation CreateUpdate -behavior Append"/>
+            <arg line="/edit ${proj-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]gstreamer\bin -install_operation CreateUpdate -behavior Append -system_variable"/>
         </exec>
         <exec executable="${aiPath}">
-            <arg line="/edit ${proj-path} /NewEnvironment -name PATH -value APPDIR\gstreamer\lib\gstreamer-0.10 -install_operation CreateUpdate -behavior Append"/>
+            <arg line="/edit ${proj-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]gstreamer\lib\gstreamer-0.10 -install_operation CreateUpdate -behavior Append -system_variable"/>
+        </exec>
+        <exec executable="${aiPath}">
+            <arg line="/edit ${proj-path} /NewEnvironment -name PATH -value %GSTREAMER_PATH% -install_operation CreateUpdate -behavior Append -system_variable"/>
         </exec>
         <exec executable="${aiPath}">
             <arg line="/build ${proj-path}"/>

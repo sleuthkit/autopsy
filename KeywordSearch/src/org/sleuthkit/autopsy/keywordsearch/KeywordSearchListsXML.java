@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -32,11 +30,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -48,7 +43,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.sleuthkit.autopsy.coreutils.AutopsyPropFile;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -167,13 +162,28 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
                 final String name = listEl.getAttribute(LIST_NAME_ATTR);
                 final String created = listEl.getAttribute(LIST_CREATE_ATTR);
                 final String modified = listEl.getAttribute(LIST_MOD_ATTR);
-                final String useForIngest = listEl.getAttribute(LIST_USE_FOR_INGEST);
-                final String ingestMessages = listEl.getAttribute(LIST_INGEST_MSGS);
+                
+                //set these bools to true by default, if they don't exist in XML
+                Boolean useForIngestBool;
+                Boolean ingestMessagesBool; 
+                
+                if (listEl.hasAttribute(LIST_USE_FOR_INGEST) ) {
+                    useForIngestBool = Boolean.parseBoolean(listEl.getAttribute(LIST_USE_FOR_INGEST));
+                }
+                else {
+                    useForIngestBool = true;
+                }
+
+                if (listEl.hasAttribute(LIST_INGEST_MSGS)) {
+                    ingestMessagesBool = Boolean.parseBoolean(listEl.getAttribute(LIST_INGEST_MSGS));
+                }
+                else {
+                    ingestMessagesBool = true;
+                }
                 
                 Date createdDate = dateFormatter.parse(created);
                 Date modDate = dateFormatter.parse(modified);
-                Boolean useForIngestBool = Boolean.parseBoolean(useForIngest);
-                Boolean ingestMessagesBool = Boolean.parseBoolean(ingestMessages);
+
                 List<Keyword> words = new ArrayList<Keyword>();
                 KeywordSearchList list = new KeywordSearchList(name, createdDate, modDate, useForIngestBool, ingestMessagesBool, words);
 

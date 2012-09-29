@@ -24,7 +24,10 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
-import java.util.logging.Logger;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
@@ -37,14 +40,12 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     
     private static final Logger logger = Logger.getLogger(HashDbSimplePanel.class.getName());
     private HashTableModel knownBadTableModel;
-    private NSRLTableModel nsrlTableModel;
     private HashDb nsrl;
     private static boolean ingestRunning = false;
 
     /** Creates new form HashDbSimplePanel */
     public HashDbSimplePanel() {
         knownBadTableModel = new HashTableModel();
-        nsrlTableModel = new NSRLTableModel();
         initComponents();
         customizeComponents();
     }
@@ -53,28 +54,62 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         ingestRunning = running;
     }
     
+    private void reloadCalc() {
+        final HashDbXML xmlHandle = HashDbXML.getCurrent();
+        
+        final boolean nsrlUsed = xmlHandle.getNSRLSet()!=null && xmlHandle.getNSRLSet().getUseForIngest()== true;
+        final List<HashDb> knowns = xmlHandle.getKnownBadSets();
+        final boolean knownExists = !knowns.isEmpty();
+        boolean knownUsed = false;
+        if (knownExists) {
+            for (HashDb known : knowns) {
+                if (known.getUseForIngest() == true) {
+                    knownUsed = true;
+                    break;
+                }
+            }
+        }
+        
+        if(! nsrlUsed
+                && ! knownUsed ) {
+            calcHashesButton.setEnabled(true);
+            calcHashesButton.setSelected(true);
+            xmlHandle.setCalculate(true);
+        } else {
+            calcHashesButton.setEnabled(false);
+            calcHashesButton.setSelected(false);
+            xmlHandle.setCalculate(false);
+        }
+    }
+    
     private void customizeComponents() {
+        final HashDbXML xmlHandle = HashDbXML.getCurrent();
+        calcHashesButton.addActionListener( new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(calcHashesButton.isSelected()) {
+                    xmlHandle.setCalculate(true);
+                } else {
+                    xmlHandle.setCalculate(false);
+                }
+            }
+            
+        });
+        
         notableHashTable.setModel(knownBadTableModel);
-        jTable1.setModel(nsrlTableModel);
         
         notableHashTable.setTableHeader(null);
-        jTable1.setTableHeader(null);
         notableHashTable.setRowSelectionAllowed(false);
-        jTable1.setRowSelectionAllowed(false);
         //customize column witdhs
         final int width1 = jScrollPane1.getPreferredSize().width;
-        final int width2 = jScrollPane2.getPreferredSize().width;
         TableColumn column1 = null;
-        TableColumn column2 = null;
         for (int i = 0; i < notableHashTable.getColumnCount(); i++) {
             column1 = notableHashTable.getColumnModel().getColumn(i);
-            column2 = jTable1.getColumnModel().getColumn(i);
             if (i == 0) {
-                column1.setPreferredWidth(((int) (width1 * 0.15)));
-                column2.setPreferredWidth(((int) (width2 * 0.15)));
+                column1.setPreferredWidth(((int) (width1 * 0.07)));
             } else {
-                column1.setPreferredWidth(((int) (width1 * 0.84)));
-                column2.setPreferredWidth(((int) (width2 * 0.84)));
+                column1.setPreferredWidth(((int) (width1 * 0.92)));
             }
         }
         
@@ -93,11 +128,11 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         notableHashTable = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        nsrlDbLabel = new javax.swing.JLabel();
+        calcHashesButton = new javax.swing.JCheckBox();
+        nsrlDbLabelVal = new javax.swing.JLabel();
 
-        jScrollPane1.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        jScrollPane1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         notableHashTable.setBackground(new java.awt.Color(240, 240, 240));
         notableHashTable.setShowHorizontalLines(false);
@@ -106,85 +141,73 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         jLabel1.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.jLabel1.text")); // NOI18N
 
-        jLabel2.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.jLabel2.text")); // NOI18N
+        nsrlDbLabel.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.nsrlDbLabel.text")); // NOI18N
 
-        jScrollPane2.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        calcHashesButton.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.calcHashesButton.text")); // NOI18N
 
-        jTable1.setBackground(new java.awt.Color(240, 240, 240));
-        jTable1.setShowHorizontalLines(false);
-        jTable1.setShowVerticalLines(false);
-        jScrollPane2.setViewportView(jTable1);
+        nsrlDbLabelVal.setText(org.openide.util.NbBundle.getMessage(HashDbSimplePanel.class, "HashDbSimplePanel.nsrlDbLabelVal.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel1))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addComponent(nsrlDbLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(nsrlDbLabelVal, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(calcHashesButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(7, 7, 7)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(nsrlDbLabel)
+                    .addComponent(nsrlDbLabelVal))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 98, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 73, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(calcHashesButton)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox calcHashesButton;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTable jTable1;
     private javax.swing.JTable notableHashTable;
+    private javax.swing.JLabel nsrlDbLabel;
+    private javax.swing.JLabel nsrlDbLabelVal;
     // End of variables declaration//GEN-END:variables
 
     private void reloadSets() {
         nsrl = HashDbXML.getCurrent().getNSRLSet();
-        nsrlTableModel.resync();
+
+        if (nsrl == null || nsrl.getUseForIngest() == false) {
+            nsrlDbLabelVal.setText("Disabled");
+        }
+        else {
+            nsrlDbLabelVal.setText("Enabled");
+        }
+        
+        reloadCalc();
+        
         knownBadTableModel.resync();
     }
     
-    private class NSRLTableModel extends AbstractTableModel {
-        
-        private void resync() {
-            fireTableDataChanged();
-        }
-        
-        @Override
-        public int getRowCount() {
-            return 1;
-        }
-
-        @Override
-        public int getColumnCount() {
-            return 2;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            if (columnIndex == 0) {
-                return "";
-            } else {
-                if(nsrl == null) {
-                    return "Not Configured";
-                } else {
-                    return nsrl.getName();
-                }
-            }
-        }
-    }
+   
 
     private class HashTableModel extends AbstractTableModel {
         
@@ -211,7 +234,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
                 if (columnIndex == 0) {
                     return "";
                 } else {
-                    return "Not Configured";
+                    return "Disabled";
                 }
             } else {
                 HashDb db = xmlHandle.getKnownBadSets().get(rowIndex);
@@ -237,6 +260,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
                 } else {
                         JOptionPane.showMessageDialog(HashDbSimplePanel.this, "Databases must be indexed before they can be used for ingest");
                 }
+                reloadSets();
             }
         }
         

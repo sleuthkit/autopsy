@@ -18,14 +18,22 @@
  */
 package org.sleuthkit.autopsy.testing;
 
+import java.awt.AWTException;
+import java.awt.Rectangle;
+import java.awt.Robot;
+import java.awt.Toolkit;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 import javax.swing.JDialog;
 import javax.swing.JTextField;
 import junit.framework.Test;
-import org.netbeans.jellytools.JellyTestCase;
+import junit.framework.TestCase;
 import org.netbeans.jellytools.MainWindowOperator;
 import org.netbeans.jellytools.NbDialogOperator;
 import org.netbeans.jellytools.WizardOperator;
@@ -38,7 +46,6 @@ import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
 import org.netbeans.junit.NbModuleSuite;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstract;
 /**
  * This test expects the following system properties to be set:
  * img_path: The fully qualified path to the image file (if split, the first file)
@@ -52,7 +59,7 @@ import org.sleuthkit.autopsy.ingest.IngestServiceAbstract;
  * To run this test correctly, you should use the script 'regression.py'
  * located in the 'script' directory of the Testing module.
  */
-public class RegressionTest extends JellyTestCase{
+public class RegressionTest extends TestCase{
     
     private static final Logger logger = Logger.getLogger(RegressionTest.class.getName());
     
@@ -78,7 +85,7 @@ public class RegressionTest extends JellyTestCase{
                 "testConfigureIngest2a",
                 "testIngest",
                 "testGenerateReportToolbar",
-                "testGenerateReportButton"       
+                "testGenerateReportButton"
                 );
         return  NbModuleSuite.create(conf);
 
@@ -186,20 +193,20 @@ public class RegressionTest extends JellyTestCase{
     
     public void testConfigureSearch() {
         logger.info("Search Configure");
-        JDialog jd = JDialogOperator.waitJDialog("Keyword List Configuration", false, false);
+        JDialog jd = JDialogOperator.waitJDialog("Advanced Keyword Search Configuration", false, false);
         JDialogOperator jdo = new JDialogOperator(jd);
         String words = System.getProperty("keyword_path");
         JButtonOperator jbo0 = new JButtonOperator(jdo, "Import List", 0);
         jbo0.pushNoBlock();
         JFileChooserOperator jfco0 = new JFileChooserOperator();
         jfco0.chooseFile(words);
-        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Use during ingest", 0);
+        JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Enable for ingest", 0);
         jcbo.doClick();
         JButtonOperator jbo2 = new JButtonOperator(jdo, "OK", 0);
         jbo2.pushNoBlock();
         WizardOperator wo = new WizardOperator("Add Image");
         JCheckBoxOperator jbco0 = new JCheckBoxOperator(wo, "Process Unallocated Space");
-        jbco0.setSelected(Boolean.parseBoolean(System.getProperty("ignore_unalloc"))); //ignore unallocated space or not. Set with Regression.py -u
+        jbco0.setSelected(!Boolean.parseBoolean(System.getProperty("ignore_unalloc"))); //ignore unallocated space or not. Set with Regression.py -u
         wo.btNext().clickMouse();
         wo.btFinish().clickMouse();
     }
@@ -218,7 +225,7 @@ public class RegressionTest extends JellyTestCase{
         }
         new Timeout("pausing", 15000).sleep(); // give it a second (or fifteen) to process
         boolean sleep = true;
-        while (man.areServicesRunning()) {
+        while (man.areModulesRunning()) {
             new Timeout("pausing", 5000).sleep(); // give it a second (or five) to process
         }
         logger.info("Ingest (including enqueue) took " + (System.currentTimeMillis()-start) + "ms");
@@ -227,6 +234,7 @@ public class RegressionTest extends JellyTestCase{
         //   consistently, making it seem like default behavior
         Random rand = new Random();
         new Timeout("pausing", 10000 + (rand.nextInt(15000) + 5000)).sleep();
+        screenshot("Finished Ingest");
         
     }
     
@@ -255,12 +263,29 @@ public class RegressionTest extends JellyTestCase{
         JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Generate Report");
         jbo0.pushNoBlock();
         new Timeout("pausing", 3000).sleep(); // Give it a few seconds to generate
+        screenshot("Finished Report");
         
         JDialog previewDialog = JDialogOperator.waitJDialog("Report Preview", false, false);
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
         JButtonOperator jbo1 = new JButtonOperator(previewDialogOperator, "Close");
         jbo1.pushNoBlock();
         new Timeout("pausing", 3000).sleep(); // Give the program a second to idle to be safe
+        screenshot("Done Testing");
+    }
+    
+    public void screenshot(String name) {
+        logger.info("Taking screenshot.");
+        try {
+            Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+            BufferedImage capture = new Robot().createScreenCapture(screenRect);
+            String outPath = System.getProperty("out_path");
+            ImageIO.write(capture, "png", new File(outPath + "\\" + name + ".png"));
+            new Timeout("pausing", 1000).sleep(); // give it a second to save
+        } catch (IOException ex) {
+            logger.info("IOException taking screenshot.");
+        } catch (AWTException ex) {
+            logger.info("AWTException taking screenshot.");
+        }
     }
    
 }

@@ -1,0 +1,30 @@
+
+<ivy-module version="2.0">
+    <info organisation="org.sleuthkit.autopsy" module="corelibs"/>
+    <configurations >
+        <!-- module dependencies -->
+        <conf name="autopsy_core"/>
+        
+    </configurations>
+    <dependencies>
+        <!-- for ingest -->
+        <dependency conf="autopsy_core->*" org="org.reflections" name="reflections" rev="0.9.8"/>
+        
+        <!-- for viewers -->
+        <dependency conf="autopsy_core->*" org="com.googlecode.gstreamer-java" name="gstreamer-java" rev="1.5"/>
+        
+         <!-- for file search -->
+        <dependency conf="autopsy_core->*" org="org.jbundle.thin.base.screen" name="jcalendarbutton" rev="1.4.6"/>
+        
+        <!-- commmon -->
+        <dependency conf="autopsy_core->*" org="commons-lang" name="commons-lang" rev="2.4"/>
+        <dependency conf="autopsy_core->*" org="commons-logging" name="commons-logging" rev="1.1.1"/>
+        <dependency conf="autopsy_core->*" org="log4j" name="log4j" rev="1.2.17"/>
+        
+        <!-- reporting -->
+      <dependency conf="autopsy_core->*" org="dom4j" name="dom4j" rev="1.6.1"/>
+       <!-- <dependency conf="autopsy_core->*" org="org.jdom" name="jdom" rev="1.1.3"/> -->
+        <dependency conf="autopsy_core->*" org="org.apache.poi" name="poi-excelant" rev="3.8"/>
+        <dependency conf="autopsy_core->*" org="org.apache.poi" name="poi-scratchpad" rev="3.8"/>
+    </dependencies>
+</ivy-module>

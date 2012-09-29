@@ -1,0 +1,64 @@
+// @@@ VERIFY THAT we mention add case wizard in here
+/**
+\package org.sleuthkit.autopsy.casemodule
+
+The org.sleuthkit.autopsy.casemodule Module is responsible for organizing a case. A case contains one or more disk images and is the highest-level unit of an investigation.  
+
+\section casemodule_contents Package Contents
+The important classes in this case are:
+- Case
+
+\section casemodule_overview Overview
+
+All data in a case will be stored in a single database and configuration file.  A case must be open before analysis can occur. You will use a Case object to get access to the data being analyzed.
+
+Case settings are stored in an XML file.  See the XMLCaseManagement class for more details.
+
+Currently, only one case can be opened at a time.  To determine the open case, use the Case.getCurrentCase()  method.  
+
+Do not cache the case handle object obtained from this method (for example, in member variables) unless you are sure your are acting within case context; 
+It is safer to call the method more frequently to ensure the validity of the case handle object as new cases are opened.
+
+Once you have the object for the currently open case, Case.getRootObjects() will return the top-level Sleuth Kit Content modules. You can then get their children to go down the tree of data types.
+
+
+\section casemodule_events Case Events
+To receive an event when cases are opened, closed, or changed, use the Case.addPropertyChangeListener(PropertyChangeListener) method to register your class as a PropertyChangeListener.  This is most commonly required when developing a new  module that needs to get data about the currently opened case.
+
+
+\section casemodule_add_image Add Image Process
+The sleuthkit library performs most the actual work of adding the image to the database and Autopsy provides the user interface, calls methods to set up and control and finalize the process.
+
+Add image process is first invoked by AddImageAction.
+AddImageWizardIterator instantiates and manages the wizard panels.
+
+A background worker thread is spawned in AddImgTask class.  The work is delegated to org.sleuthkit.datamodel.AddImageProcess, which calls into native sleuthkit methods via SleuthkitJNI interface.
+
+The entire process is enclosed within a database transaction and the transaction is not committed until user finalizes the process.
+User can also interrupt the ongoing add image process, which results in a special stop call in sleuthkit.  The stop call sets a special stop flag internally in sleuthkit.  
+
+The flag is checked by the sleutkit code as it is processing the image and,
+if set, it will result in breaking out of any current processing loops and methods, and return from sleuthkit.
+The worker thread in Autopsy will terminate and revert will be called to back out of the current transaction. 
+During add image process, sleuthkit library reads the image and populates the TSK SQLite database with the image meta-data.
+
+The resulting database will have the TSK schema (http://wiki.sleuthkit.org/index.php?title=SQLite_Database_v2_Schema).
+After image has been processed successfully and after the user confirmation, the transaction is committed to the database.
+
+Errors from processing the image in sleuthkit are propagated using org.sleuthkit.datamodel.TskCoreException and org.sleuthkit.datamodel.TskDataException java exceptions.
+The errors are logged and can be reviewed by the user from the wizard.
+org.sleuthkit.datamodel.TskCoreException is handled by the wizard as a critical, unrecoverable error condition with TSK core, resulting in the interruption of the add image process.
+org.sleuthkit.datamodel.TskDataException, pertaining to an error associated with the data itself (such as invalid volume offset), is treated as a warning - the process still continues because there are likely data image that can be still read.
+
+\section casemodule_concurrency Concurrency and locking
+Autopsy is a multi-threaded application; besides threads associated with the GUI, event dispatching and Netbeans RCP framework, 
+the application uses threads to support concurrent user-driven processes.
+For instance, user can add another image to the database while ingest is running on previously added images.
+
+During the add image process, a database lock is acquired using org.sleuthkit.datamodel.SleuthkitCase.dbWriteLock() to ensure exclusive access to the database resource.
+Once the lock is acquired by the add image process, other Autopsy threads trying to access the database as acquire the lock (such as ingest modules) will block for the duration of add image process.
+
+The database lock is implemented with SQLite database in mind, which does not support concurrent writes. The database lock is released with org.sleuthkit.datamodel.SleuthkitCase.dbWriteUnlock() when the add image process has ended. The database lock is used for all database access methods in org.sleuthkit.datamodel.SleuthkitCase.
+
+ */
+

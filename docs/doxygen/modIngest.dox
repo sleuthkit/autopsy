@@ -1,0 +1,151 @@
+/*! \page mod_ingest_page Developing Ingest Modules
+
+
+\section ingestmodule_modules Ingest Module Basics
+
+Ingest modules analyze data from a disk image.  They typically focus on a specific type of data analysis.  The modules are loaded each time that Autopsy starts.  The user can choose to enable each module when they add an image to the case.
+
+There are two types of ingest modules. 
+- Image-level modules are passed in a reference to an image and perform general analysis on it.  These modules may query the database for a small set of files.
+- File-level modules are passed in a reference to each file.  The Ingest Manager chooses which files to pass and when.  These modules are intended to analyze most of the files on the system or that want to examine the file content of all files (i.e. to detect file type based on signature instead of file extension). 
+
+Modules post their results to the blackboard (@@@ NEED REFERENCE FOR THIS -- org.sleuthkit.datamodel) and can query the blackboard to get the results of previous modules.  For example, the hash database lookup module may want to query for a previously calculated hash value. 
+
+The IngestManager class is responsible for launching the ingest modules and passing data to them.   Modules can send messages to the ingest inbox (REFERENCE) so that users can see when data has been found. 
+
+
+\section ingestmodule_making Making Ingest Modules
+
+Refer to org.sleuthkit.autopsy.ingest.example for sample source code. 
+
+\subsection ingestmodule_making_api Module Interface
+
+The first step is to choose the correct module type.  Image-level modules will implement the IngestModuleImage interface and file-level modules will implement the IngestModuleAbstractFile interface. 
+
+There is a static getDefault() method that is not part of the interface, that every module (whether an image or a file module) needs to implement to return the registered static instance of the module.  Refer to example code in example.ExampleAbstractFileIngestModule.getDefault()
+
+File-level modules need to be singleton (only a single instance at a time).  To ensure this, make the constructor private. Ensure the default public file module constructor is overridden with the private one.  Image-level modules require a public constructor.
+
+The interfaces have several standard methods that need to be implemented.  See the interface methods for details.  
+- IngestModuleAbstract.init() is invoked every time an ingest session starts.  A module should support multiple invocations of init() throughout the application life-cycle.
+- IngestModuleAbstract.complete() is invoked when an ingest session completes.  The module should perform any resource (files, handles, caches) cleanup in this method and submit final results and post a final ingest inbox message.
+- IngestModuleAbstract.stop() is invoked on a module when an ingest session is interrupted by the user or by the system.
+The method implementation should be similar to complete() in that the module should perform any cleanup work.  If there is pending data to be processed or pending results to be reported by the module then the results should be rejected and ignored if stop() is invoked and the module should terminate as early as possible.
+- process() method is invoked to analyze the data. The specific method depends on the module type. 
+
+
+Multiple images can be ingested at the same time. The current behavior is that the files from the second image are added to the list of the files from the first image.  The impact of this on module development is that a file-level module could be passed in files from different images in consecutive calls to process().  New instances of image-level modules will be created when the second image is added.   Therefore, image-level modules should assume that the process() method will be called only once after init() is called. 
+
+Every module should support multiple init() - process() - complete(), and init() - process() - stop() invocations.
+The modules should also support multiple init() - complete() and init() - stop() invocations, 
+which can occur if ingest pipeline is started but no work is enqueued for the particular module.
+
+Module developers are encouraged to use Autopsy's org.sleuthkit.autopsy.coreutils.Logger infrastructure to log errors to the Autopsy log.
+
+\subsection ingestmodule_making_process Process Method
+The process method is where the work is done in each type of module.  Some notes:
+- File-level modules will be called on each file in an order determined by the IngestManager.  Each module is free to quickly ignore a file based on name, signature, etc.  If a module wants to know the return value from a previously run module, it should use the IngestServices.getAbstractFileModuleResult() method. 
+- Image-level modules are expected not passed in specific files and are expected to query the database to find the files that they are interested in. 
+
+
+\subsection ingestmodule_making_registration Module Registration
+
+TODO: Add more about the new pipeline xml
+
+Modules are automatically registered when \ref mod_dev_plugin "added as a plugin to Autopsy". Autopsy uses an XML based registration system, similar to the sample below.
+
+\code
+<PIPELINE_CONFIG>
+    <PIPELINE type="FileAnalysis">
+      <MODULE order="1" type="plugin" location="org.sleuthkit.autopsy.hashdatabase.HashDbIngestModule" arguments="" />
+      <MODULE order="2" type="plugin" location="org.sleuthkit.autopsy.exifparser.ExifParserFileIngestModule"/>
+    </PIPELINE>
+
+    <PIPELINE type="ImageAnalysis">
+      <MODULE order="1" type="plugin" location="org.sleuthkit.autopsy.recentactivity.RAImageIngestModule" arguments=""/>      
+    </PIPELINE>
+</PIPELINE_CONFIG>
+\endcode
+
+The two types of ingest modules are implemented in the XML above. The order element determines the ordering of the module in the ingest pipeline.
+
+No developer or user be forced to manually edit the XML registration, but Autopsy does allow manual editing if it's desired.
+
+
+\subsection ingestmodule_making_results Posting Results
+
+<!-- @@@ -->
+NOTE: This needs to be made more in sync with the \ref platform_blackboard and \ref platform_inbox sections.  
+
+Users will see the results from ingest modules in one of two ways:
+- Results are posted to the blackboard and will be displayed in the navigation tree
+- Messages are sent to the Ingest Inbox to notify a user of what has recently been found. 
+
+See the Blackboard (REFERENCE) documentation for posting results to it.  Modules are free to immediately post results when they find them or they can wait until they are ready to post the results or until ingest is done.  
+
+An example of waiting to post results is the keyword search module.  It is resource intensive to commit the keyword index and do a keyword search.  Therefore, when its process() method is invoked, it checks if it is internal timer and result posting frequency setting to check if it is close to it since the last time it did a keyword search.  If it is, then it commits the index and performs the search. 
+
+When they add data to the blackboard, modules should notify listeners of the new data by periodically invoking IngestServices.fireModuleDataEvent() method. This allows other modules (and the main UI) to know when to query the blackboard for the latest data. 
+
+Modules should post messages to the inbox when interesting data is found.  The messages includes the module name, message subject, message details, a unique message id (in the context of the originating module), and a uniqueness attribute.  The uniqueness attribute is used to group similar messages together and to determine the overall importance priority of the message (if the same message is seen repeatedly, it is considered lower priority).
+
+It is important though to not fill up the inbox with messages.  These messages should only be sent if the result has a low false positive rate and will likely be relevant.  For example, the hash lookup module will send messages if known bad (notable) files are found, but not if known good (NSRL) files are found.  The keyword search module will send messages if a specific keyword matches, but will not send messages (by default) if a regular expression match for a URL has matches (because a lot of the URL hits will be false positives and can generate thousands of messages on a typical system). 
+
+Ingest messages have different types: there are info messages, warning messages, error messages and data messages.
+The data messages contain encapsulated blackboard artifacts and attributes. The passed in data is used by the ingest inbox GUI widget to navigate to the artifact view in the directory tree, if requested by the user.
+
+Ingest message API is defined in IngestMessage class.  The class also contains factory methods to create new messages.
+Messages are posted using IngestServices.postMessage() method, which accepts a message object created using one of the factory methods.
+
+Modules should post inbox messages to the user when stop() or complete() is invoked (refer to the examples).
+It is recommended to populate the description field of the complete inbox message to provide feedback to the user 
+summarizing the module ingest run and if any errors were encountered.
+
+
+\subsection ingestmodule_making_configuration Module Configuration
+
+<!-- @@@ -->
+NOTE: Make sure we update this to reflect \ref mod_dev_properties and reduce duplicate comments.
+
+Ingest modules may require user configuration. The framework 
+supports two levels of configuration: run-time and general. Run-time configuration 
+occurs when the user selects which ingest modules to run when an image is added.  This level
+of configuration should allow the user to enable or disable settings.  General configuration is more in-depth and 
+may require an interface that is more powerful than simple check boxes. 
+
+As an example, the keyword search module uses both configuration methods.  The run-time configuration allows the user
+to choose which lists of keywords to search for.  However, if the user wants to edit the lists or create lists, they 
+need to do go the general configuration window. 
+
+Module configuration is module-specific: every module maintains its own configuration state and is responsible for implementing the graphical interface. However, Autopsy does provide \ref mod_dev_configuration "a centralized location to display your settings to the user".
+
+The run-time configuration (also called simple configuration), is achieved by each
+ingest module providing a JPanel.   The IngestModuleAbstract.hasSimpleConfiguration(),
+IngestModuleAbstract.getSimpleConfiguration(), and IngestModuleAbstract.saveSimpleConfiguration()
+methods should be used for run-time configuration. 
+
+The general configuration is also achieved by the module returning a JPanel. A link will be provided to the general configuration from the ingest manager if it exists.
+The IngestModuleAbstract.hasAdvancedConfiguration(),
+IngestModuleAbstract.getAdvancedConfiguration(), and IngestModuleAbstract.saveAdvancedConfiguration()
+methods should be used for general configuration. 
+
+
+
+\section ingestmodule_events Getting Ingest Status and Events
+
+<!-- @@@ -->
+NOTE: Sync this up with \ref mod_dev_events.
+
+Other modules and core Autopsy classes may want to get the status of the ingest manager.  The IngestManager provides access to this data with the sleuthkit.autopsy.ingest.IngestManager.isIngestRunning() method.
+
+
+External modules can also register themselves as ingest module event listeners and receive event notifications (when a module is started, stopped, completed or has new data).  
+Use the IngestManager.addPropertyChangeListener() method to register a module event listener.  
+Events types received are defined in IngestManager.IngestModuleEvent enum.   
+
+At the end of the ingest, IngestManager itself will notify all listeners of IngestModuleEvent.COMPLETED event.
+The event is an indication for listeners to perform the final data refresh by quering the blackboard.
+Module developers are encouraged to generate periodic IngestModuleEvent.DATA 
+ModuleDataEvent events when they post data to the blackboard, 
+but the IngestManager will make a final event to handle scenarios where the module did not notify listeners while it was running. 
+*/

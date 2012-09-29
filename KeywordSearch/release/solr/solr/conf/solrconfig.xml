@@ -448,8 +448,8 @@
          this cache will not be autowarmed.  
       -->
     <documentCache class="solr.LRUCache"
-                   size="16"
-                   initialSize="16"
+                   size="32"
+                   initialSize="32"
                    autowarmCount="0"/>
     
     <!-- Field Value Cache

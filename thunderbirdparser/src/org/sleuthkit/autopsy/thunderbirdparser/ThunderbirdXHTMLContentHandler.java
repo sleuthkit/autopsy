@@ -50,7 +50,7 @@ public class ThunderbirdXHTMLContentHandler extends SafeContentHandler {
     private static final char[] TAB = new char[] { '\t' };
 
     /**
-     * The elements that are in the <head> section.
+     * The elements that are in the &lt;head&gt; section.
      */
     private static final Set<String> HEAD =
         unmodifiableSet("title", "link", "base", "meta");
@@ -63,13 +63,13 @@ public class ThunderbirdXHTMLContentHandler extends SafeContentHandler {
         unmodifiableSet("html", "head", "body", "frameset");
 
     /**
-     * The elements that get prepended with the {@link #TAB} character.
+     * The elements that get prepended with the #TAB character.
      */
     private static final Set<String> INDENT =
         unmodifiableSet("li", "dd", "dt", "td", "th", "frame");
 
     /**
-     * The elements that get appended with the {@link #NL} character.
+     * The elements that get appended with the #NL character.
      */
     public static final Set<String> ENDLINE = unmodifiableSet(
             "p", "h1", "h2", "h3", "h4", "h5", "h6", "div", "ul", "ol", "dl",

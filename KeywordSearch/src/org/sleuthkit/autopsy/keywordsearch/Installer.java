@@ -19,20 +19,28 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Starts up the Solr server when the module is loaded, and stops it when the
  * application is closed.
+ * 
+ * In addition, the default KeywordSearch config files (NSRL, Options, Scripts) 
+ * are generated here, if they config files do not already exist.
  */
 public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
 
+      
         Logger logger = Logger.getLogger(Installer.class.getName());
+
+        //Setup the default KeywordSearch configuration files
+        KeywordSearchSettings.setDefaults();
+        
 
         Case.addPropertyChangeListener(new KeywordSearch.CaseChangeListener());
 
@@ -60,7 +68,8 @@ public class Installer extends ModuleInstall {
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
-
+        
+        
     }
 
     @Override

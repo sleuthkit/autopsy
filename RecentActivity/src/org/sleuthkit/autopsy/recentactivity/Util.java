@@ -23,6 +23,7 @@ package org.sleuthkit.autopsy.recentactivity;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -33,14 +34,16 @@ import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 //import org.apache.commons.lang.NullArgumentException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.autopsy.report.SQLiteDBConnect;
 
 /**
  *
@@ -106,26 +109,44 @@ public class Util {
     }
 
     public static String getBaseDomain(String url) {
-    String host = url;
+        String host = null;
+        //strip protocol
+        String cleanUrl = url.replaceFirst("/.*:\\/\\//", "");
+        
+        //strip after slashes
+        String dirToks[] = cleanUrl.split("/\\//");
+        if (dirToks.length > 0) {
+            host = dirToks[0];
+        }
+        else {
+            host = cleanUrl;
+        }
+        
+        //get the domain part from host (last 2)
+        StringTokenizer tok = new StringTokenizer(host, ".");
+        StringBuilder hostB = new StringBuilder();
+        int toks = tok.countTokens();
+        
+        for (int count = 0; count < toks; ++count) {
+            String part = tok.nextToken();
+            int diff = toks - count;
+            if (diff < 3) {
+                hostB.append(part);
+            }
+            if (diff == 2) {
+                hostB.append(".");
+            }
+        }
 
-    int startIndex = 0;
-    int nextIndex = host.indexOf('.');
-    int lastIndex = host.lastIndexOf('.');
-    while (nextIndex < lastIndex) {
-        startIndex = nextIndex + 1;
-        nextIndex = host.indexOf('.', startIndex);
-    }
-    if (startIndex > 0) {
-        return host.substring(startIndex);
-    } else {
-        return host;
-    }
+    
+        return hostB.toString();
 }
     
     
     public static String extractDomain(String value) {
         if (value == null) {
-            throw new java.lang.NullPointerException("domains to extract");
+            return "";
+                    
         }
         String result = "";
         // String domainPattern = "(\\w+)\\.(AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|AQ|AR|ARPA|AS|ASIA|AT|AU|AW|AX|AZ|BA|BB|BD|BE|BF|BG|BH|BI|BIZ|BJ|BM|BN|BO|BR|BS|BT|BV|BW|BY|BZ|CA|CAT|CC|CD|CF|CG|CH|CI|CK|CL|CM|CN|CO|COM|COOP|CR|CU|CV|CW|CX|CY|CZ|DE|DJ|DK|DM|DO|DZ|EC|EDU|EE|EG|ER|ES|ET|EU|FI|FJ|FK|FM|FO|FR|GA|GB|GD|GE|GF|GG|GH|GI|GL|GM|GN|GOV|GP|GQ|GR|GS|GT|GU|GW|GY|HK|HM|HN|HR|HT|HU|ID|IE|IL|IM|IN|INFO|INT|IO|IQ|IR|IS|IT|JE|JM|JO|JOBS|JP|KE|KG|KH|KI|KM|KN|KP|KR|KW|KY|KZ|LA|LB|LC|LI|LK|LR|LS|LT|LU|LV|LY|MA|MC|MD|ME|MG|MH|MIL|MK|ML|MM|MN|MO|MOBI|MP|MQ|MR|MS|MT|MU|MUSEUM|MV|MW|MX|MY|MZ|NA|NAME|NC|NE|NET|NF|NG|NI|NL|NO|NP|NR|NU|NZ|OM|ORG|PA|PE|PF|PG|PH|PK|PL|PM|PN|PR|PRO|PS|PT|PW|PY|QA|RE|RO|RS|RU|RW|SA|SB|SC|SD|SE|SG|SH|SI|SJ|SK|SL|SM|SN|SO|SR|ST|SU|SV|SX|SY|SZ|TC|TD|TEL|TF|TG|TH|TJ|TK|TL|TM|TN|TO|TP|TR|TRAVEL|TT|TV|TW|TZ|UA|UG|UK|US|UY|UZ|VA|VC|VE|VG|VI|VN|VU|WF|WS|XXX|YE|YT|ZA|ZM|ZW(co\\.[a-z].))";
@@ -134,12 +155,20 @@ public class Util {
         //  while (m.find()) {
         //  result = value.substring(m.start(0),m.end(0));
         //  }
+       
+          
         try {
             URL url = new URL(value);
             result = url.getHost();
-        } catch (Exception e) 
-        {
-             logger.log(Level.WARNING, "Error while trying to convert url to domain. " + value, e);
+        } catch (MalformedURLException ex) {
+            //do not log if not a valid URL, and handle later
+            //Logger.getLogger(Util.class.getName()).log(Level.SEVERE, null, ex);
+        }
+             
+        
+        //was not a valid URL, try a less picky method
+        if (result == null || result.trim().isEmpty()) {
+            return getBaseDomain(value);
         }
 
         return result;
@@ -216,7 +245,7 @@ public class Util {
         boolean found = false;
         ResultSet temprs;
         try {
-            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection);
+            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection);
             temprs = tempdbconnect.executeQry(query);
             while (temprs.next()) {
                 if (temprs.getString("name") == null ? column == null : temprs.getString("name").equals(column)) {
@@ -232,7 +261,7 @@ public class Util {
     public static ResultSet runQuery(String query, String connection) {
         ResultSet results = null;
         try {
-            dbconnect tempdbconnect = new dbconnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection);
+            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection);
             results = tempdbconnect.executeQry(query);
             tempdbconnect.closeConnection();
         } catch (Exception ex) {

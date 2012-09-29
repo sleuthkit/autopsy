@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.SwingWorker;
+import org.netbeans.api.progress.ProgressHandle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -59,6 +61,28 @@ public class HashDbSearcher {
         }
         return map;
     }
+    // Same as above, but with a given ProgressHandle to accumulate and StringWorker to check if cancelled
+    static Map<String, List<FsContent>> findFilesBymd5(List<String> md5Hash, ProgressHandle progress, SwingWorker worker) {
+        Map<String, List<FsContent>> map = new LinkedHashMap<String, List<FsContent>>();
+        if(!worker.isCancelled()) {
+            progress.switchToDeterminate(md5Hash.size());
+            int size = 0;
+            for(String md5 : md5Hash) {
+                if(worker.isCancelled()) {
+                    break;
+                }
+                List<FsContent> files = findFilesByMd5(md5);
+                if(!files.isEmpty()) {
+                    map.put(md5, files);
+                }
+                size++;
+                if(!worker.isCancelled()) {
+                    progress.progress(size);
+                }
+            }
+        }
+        return map;
+    }
     
     /**
      * Given a file, returns a list of all files with the same
@@ -80,9 +104,19 @@ public class HashDbSearcher {
      * if there are no Fs files in tsk_files that have and empty md5.
      * @return true if the search feature is ready.
      */
-    static boolean isReady() {
+    static boolean allFilesMd5Hashed() {
         final Case currentCase = Case.getCurrentCase();
         final SleuthkitCase skCase = currentCase.getSleuthkitCase();
         return skCase.allFilesMd5Hashed();
+    }
+    
+    /**
+     * Counts the number of FsContent in the database that have an MD5
+     * @return the number of files with an MD5 
+     */
+    static int countFilesMd5Hashed() {
+        final Case currentCase = Case.getCurrentCase();
+        final SleuthkitCase skCase = currentCase.getSleuthkitCase();
+        return skCase.countFilesMd5Hashed();
     }
 }

@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
@@ -126,7 +126,7 @@ public class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public KeywordWriteResult writeToBlackBoard(String termHit, AbstractFile newFsHit, String snippet, String listName) {
-        final String MODULE_NAME = KeywordSearchIngestService.MODULE_NAME;
+        final String MODULE_NAME = KeywordSearchIngestModule.MODULE_NAME;
 
         KeywordWriteResult writeResult = null;
         Collection<BlackboardAttribute> attributes = new ArrayList<BlackboardAttribute>();
@@ -140,15 +140,15 @@ public class LuceneQuery implements KeywordSearchQuery {
         }
 
         if (snippet != null) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, "", snippet));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID(), MODULE_NAME, snippet));
         }
         //keyword
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, "", termHit));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID(), MODULE_NAME, termHit));
         //list
         if (listName == null) {
             listName = "";
         }
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, "", listName));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID(), MODULE_NAME, listName));
         //bogus - workaround the dir tree table issue
         //attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
 
@@ -156,7 +156,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         if (keywordQuery != null) {
             BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
             if (selType != null) {
-                attributes.add(new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, "", termHit));
+                attributes.add(new BlackboardAttribute(selType.getTypeID(), MODULE_NAME, termHit));
             }
         }
 

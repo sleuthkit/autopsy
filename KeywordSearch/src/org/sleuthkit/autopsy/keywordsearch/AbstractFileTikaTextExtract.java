@@ -25,14 +25,15 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.sleuthkit.autopsy.ingest.IngestServiceAbstractFile;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.apache.tika.Tika;
@@ -52,14 +53,14 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
  */
 public class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
-    private static final Logger logger = Logger.getLogger(IngestServiceAbstractFile.class.getName());
+    private static final Logger logger = Logger.getLogger(IngestModuleAbstractFile.class.getName());
     private static final Charset OUTPUT_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
     static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
     private static final char[] TEXT_CHUNK_BUF = new char[MAX_EXTR_TEXT_CHARS];
     //private Tika tika;
-    private KeywordSearchIngestService service;
+    private KeywordSearchIngestModule module;
     private static Ingester ingester;
     private AbstractFile sourceFile; //currently processed file
     private int numChunks = 0;
@@ -73,10 +74,9 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         "pst", "xml", "class", "dwg", "eml", "emlx", "mbox", "mht"};
 
     AbstractFileTikaTextExtract() {
-        this.service = KeywordSearchIngestService.getDefault();
+        this.module = KeywordSearchIngestModule.getDefault();
         ingester = Server.getIngester();
-        //tika = new Tika();
-        //tika.setMaxStringLength(MAX_EXTR_TEXT_CHARS); //for getting back string only
+        
     }
 
     @Override
@@ -87,6 +87,16 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
     @Override
     public List<StringExtract.StringExtractUnicodeTable.SCRIPT> getScripts() {
         return null;
+    }
+    
+        @Override
+    public Map<String, String> getOptions() {
+        return null;
+    }
+
+    @Override
+    public void setOptions(Map<String, String> options) {
+
     }
 
     @Override
@@ -112,32 +122,26 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
         try {
             Metadata meta = new Metadata();
             //Tika parse request with timeout
-            final Tika tika = new Tika(); //new tika instance for every file, to workaround tika memory issues
+            Tika tika = new Tika(); //new tika instance for every file, to workaround tika memory issues
             ParseRequestTask parseTask = new ParseRequestTask(tika, stream, meta, sourceFile);
             final Future<?> future = tikaParseExecutor.submit(parseTask);
             try {
                 future.get(Ingester.getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
             } catch (TimeoutException te) {
+                tika = null;
                 final String msg = "Tika parse timeout for content: " + sourceFile.getId() + ", " + sourceFile.getName();
+                KeywordSearch.getTikaLogger().log(Level.WARNING, msg, te);
                 logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
             } catch (Exception ex) {
+                tika = null;
                 final String msg = "Unexpected exception from Tika parse task execution for file: " + sourceFile.getId() + ", " + sourceFile.getName();
-                logger.log(Level.WARNING, msg, ex);
+                KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
+                logger.log(Level.WARNING, msg);
                 throw new IngesterException(msg);
             }
 
             reader = parseTask.getReader();
-
-            /*
-             try {
-             //new tika instance for every file, to workaround tika memory issues
-             Tika tika = new Tika();
-             reader = tika.parse(stream, meta);
-             } catch (IOException ex) {
-             logger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
-             reader = null;
-             }*/
 
             if (reader == null) {
                 //likely due to exception in parse()
@@ -222,13 +226,17 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
 
                 //check if need invoke commit/search between chunks
                 //not to delay commit if timer has gone off
-                service.checkRunCommitSearch();
+                module.checkRunCommitSearch();
             }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+            final String msg = "Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
+            KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
+            logger.log(Level.WARNING, msg);
             success = false;
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+            final String msg = "Unexpected error, can't read content stream from " + sourceFile.getId() + ": " + sourceFile.getName();
+            KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
+            logger.log(Level.WARNING, msg);
             success = false;
         } finally {
             try {
@@ -293,7 +301,13 @@ public class AbstractFileTikaTextExtract implements AbstractFileExtract {
             try {
                 reader = tika.parse(stream, meta);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+                KeywordSearch.getTikaLogger().log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+                tika = null;
+                reader = null;
+            }
+             catch (Exception ex) {
+                KeywordSearch.getTikaLogger().log(Level.WARNING, "Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex);
+                tika = null;
                 reader = null;
             }
         }

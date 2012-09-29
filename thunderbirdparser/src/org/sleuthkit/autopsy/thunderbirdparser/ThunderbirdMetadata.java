@@ -31,7 +31,7 @@ public class ThunderbirdMetadata implements CreativeCommons, DublinCore, Geograp
     private Map<String, ArrayList<String>> metadata = null;
 
     /**
-     * The UTC time zone. Not sure if {@link TimeZone#getTimeZone(String)}
+     * The UTC time zone. Not sure if TimeZone.getTimeZone(String)
      * understands "UTC" in all environments, but it'll fall back to GMT
      * in such cases, which is in practice equivalent to UTC.
      */

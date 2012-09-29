@@ -1,13 +1,18 @@
 #!/usr/bin/python 
-#en_US.UTF-8
-import sys
-import sqlite3
-import re
-import subprocess
-import os.path
-import shutil
-import time
+#en_US.latin-1
+import codecs
 import datetime
+import logging
+import os
+import re
+import shutil
+import socket
+import sqlite3
+import subprocess
+import sys
+from sys import platform as _platform
+import time
+import traceback
 import xml
 from xml.dom.minidom import parse, parseString
 
@@ -111,6 +116,7 @@ class Args:
         return True
 
 
+
 #-----------------------------------------------------#
 # Holds all global variables for each individual test #
 #-----------------------------------------------------#
@@ -145,6 +151,9 @@ class TestAutopsy:
         self.autopsy_version = ""
         self.heap_space = ""
         self.service_times = ""
+        self.ingest_messages = 0
+        self.indexed_files = 0
+        self.indexed_chunks = 0
         
         # Set the timeout to something huge
         # The entire tester should not timeout before this number in ms
@@ -207,7 +216,7 @@ class TestAutopsy:
         self.ant = []
 
 
-        
+
 #---------------------------------------------------------#
 # Holds all database information from querying autopsy.db #
 #  and standard.db. Initialized when the autopsy.db file  #
@@ -253,6 +262,65 @@ class Database:
         for error in self.attribute_comparison:
             list.append(error)
         return ";".join(list)
+        
+    def generate_autopsy_artifacts(self):
+        if not self.autopsy_artifacts:
+            autopsy_db_file = os.path.join("./", case.output_dir, case.image_name,
+                                          "AutopsyTestCase", "autopsy.db")
+            autopsy_con = sqlite3.connect(autopsy_db_file)
+            autopsy_cur = autopsy_con.cursor()
+            autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
+            length = autopsy_cur.fetchone()[0] + 1
+            for type_id in range(1, length):
+                autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
+                self.autopsy_artifacts.append(autopsy_cur.fetchone()[0])
+                
+    def generate_autopsy_attributes(self):
+        if self.autopsy_attributes == 0:
+            autopsy_db_file = os.path.join("./", case.output_dir, case.image_name,
+                                          "AutopsyTestCase", "autopsy.db")
+            autopsy_con = sqlite3.connect(autopsy_db_file)
+            autopsy_cur = autopsy_con.cursor()
+            autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
+            autopsy_attributes = autopsy_cur.fetchone()[0]
+            self.autopsy_attributes = autopsy_attributes
+
+    def generate_autopsy_objects(self):
+        if self.autopsy_objects == 0:
+            autopsy_db_file = os.path.join("./", case.output_dir, case.image_name,
+                                          "AutopsyTestCase", "autopsy.db")
+            autopsy_con = sqlite3.connect(autopsy_db_file)
+            autopsy_cur = autopsy_con.cursor()
+            autopsy_cur.execute("SELECT COUNT(*) FROM tsk_objects")
+            autopsy_objects = autopsy_cur.fetchone()[0]
+            self.autopsy_objects = autopsy_objects
+        
+    def generate_gold_artifacts(self):
+        if not self.gold_artifacts:
+            gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
+            gold_con = sqlite3.connect(gold_db_file)
+            gold_cur = gold_con.cursor()
+            gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifact_types")
+            length = gold_cur.fetchone()[0] + 1
+            for type_id in range(1, length):
+                gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
+                self.gold_artifacts.append(gold_cur.fetchone()[0])
+                
+    def generate_gold_attributes(self):
+        if self.gold_attributes == 0:
+            gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
+            gold_con = sqlite3.connect(gold_db_file)
+            gold_cur = gold_con.cursor()
+            gold_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
+            self.gold_attributes = gold_cur.fetchone()[0]
+
+    def generate_gold_objects(self):
+        if self.gold_objects == 0:
+            gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
+            gold_con = sqlite3.connect(gold_db_file)
+            gold_cur = gold_con.cursor()
+            gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
+            self.gold_objects = gold_cur.fetchone()[0]
 
 
 
@@ -262,32 +330,33 @@ class Database:
 
 # Iterates through an XML configuration file to find all given elements        
 def run_config_test(config_file):
-    #try:
+    try:
         parsed = parse(config_file)
         if parsed.getElementsByTagName("indir"):
-            case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode()
+            case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf-8")
         if parsed.getElementsByTagName("global_csv"):
-            case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode()
+            case.global_csv = parsed.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf-8")
         
         # Generate the top navbar of the HTML for easy access to all images
         values = []
         for element in parsed.getElementsByTagName("image"):
-            value = element.getAttribute("value").encode()
+            value = element.getAttribute("value").encode().decode("utf-8")
             if file_exists(value):
                 values.append(value)
         html_add_images(values)
         
         # Run the test for each file in the configuration
         for element in parsed.getElementsByTagName("image"):
-            value = element.getAttribute("value").encode()
+            value = element.getAttribute("value").encode().decode("utf-8")
             if file_exists(value):
                 run_test(value)
             else:
                 printerror("Warning: Image file listed in the configuration does not exist:")
                 printerror(value + "\n")
-    #except Exception as e:
-        #printerror("Error: There was an error running with the configuration file.")
-        #printerror(str(e) + "\n")
+    except Exception as e:
+        printerror("Error: There was an error running with the configuration file.")
+        printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
 
 # Runs the test on the single given file.
 # The path must be guarenteed to be a correct path.
@@ -305,18 +374,22 @@ def run_test(image_file):
     case.keyword_path = make_path(case.input_dir, "notablekeywords.xml")
     case.nsrl_path = make_path(case.input_dir, "nsrl.txt-md5.idx")
     
+    logging.debug("--------------------")
+    logging.debug(case.image_name)
+    logging.debug("--------------------")
+    
     run_ant()
+    time.sleep(2) # Give everything a second to process
     
     # After the java has ran:
     copy_logs()
     generate_common_log()
     try:
         fill_case_data()
-    except StringNotFoundException as e:
-        e.print_error()
     except Exception as e:
         printerror("Error: Unknown fatal error when filling case data.")
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
     
     # If running in rebuild mode (-r)
     if args.rebuild:
@@ -324,8 +397,8 @@ def run_test(image_file):
     # If NOT keeping Solr index (-k)
     if not args.keep:
         solr_index = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "KeywordSearch")
-        clear_dir(solr_index)
-        print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
+        if clear_dir(solr_index):
+            print_report([], "DELETE SOLR INDEX", "Solr index deleted.")
     elif args.keep:
         print_report([], "KEEP SOLR INDEX", "Solr index has been kept.")
     # If running in verbose mode (-v)
@@ -335,7 +408,7 @@ def run_test(image_file):
         print_report(errors, "VERBOSE", okay)
     # If running in exception mode (-e)
     if args.exception:
-        exceptions = report_with(args.exception_string)
+        exceptions = search_logs(args.exception_string)
         okay = "No warnings or exceptions found containing text '" + args.exception_string + "'."
         print_report(exceptions, "EXCEPTION", okay)
         
@@ -383,7 +456,11 @@ def run_ant():
     printout("Ingesting Image:\n" + case.image_file + "\n")
     printout("CMD: " + " ".join(case.ant))
     printout("Starting test...\n")
-    subprocess.call(case.ant)
+    if SYS is OS.CYGWIN:
+        subprocess.call(case.ant)
+    elif SYS is OS.WIN:
+        theproc = subprocess.Popen(case.ant, shell = True)
+        theproc.communicate()
     
 # Returns the type of image file, based off extension
 class IMGTYPE:
@@ -427,8 +504,8 @@ def rebuild():
     except FileNotFoundException as e:
         errors.append(e.error)
     except Exception as e:
-        printerror("Error: Unknown fatal error when rebuilding the gold database.")
-        errors.append(str(e))
+        errors.append("Error: Unknown fatal error when rebuilding the gold database.")
+        errors.append(str(e) + "\n")
     
     # Rebuild the HTML report
     html_path = make_local_path(case.output_dir, case.image_name,
@@ -440,8 +517,8 @@ def rebuild():
     except FileNotFoundException as e:
         errors.append(e.error)
     except Exception as e:
-        printerror("Error: Unknown fatal error when rebuilding the gold html report.")
-        errors.append(str(e))
+        errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
+        errors.append(str(e) + "\n")
     
     okay = "Sucessfully rebuilt all gold standards."
     print_report(errors, "REBUILDING", okay)
@@ -455,6 +532,24 @@ def compare_to_gold_db():
     gold_db_file = os.path.join("./", case.gold, case.image_name, "standard.db")
     autopsy_db_file = os.path.join("./", case.output_dir, case.image_name,
                                       "AutopsyTestCase", "autopsy.db")
+    # Try to query the databases. Ignore any exceptions, the function will
+    # return an error later on if these do fail
+    database.clear()
+    try:
+        database.generate_gold_objects()
+        database.generate_gold_artifacts()
+        database.generate_gold_attributes()
+    except:
+        pass
+    try:
+        database.generate_autopsy_objects()
+        database.generate_autopsy_artifacts()
+        database.generate_autopsy_attributes()
+    except:
+        pass
+    # This is where we return if a file doesn't exist, because we don't want to
+    # compare faulty databases, but we do however want to try to run all queries
+    # regardless of the other database
     if not file_exists(autopsy_db_file):
         printerror("Error: Database file does not exist at:")
         printerror(autopsy_db_file + "\n")
@@ -471,13 +566,12 @@ def compare_to_gold_db():
     autopsy_cur = autopsy_con.cursor()
     
     exceptions = []
-    database.clear()
     # Testing tsk_objects
-    exceptions.append(compare_tsk_objects(gold_cur, autopsy_cur))
+    exceptions.append(compare_tsk_objects())
     # Testing blackboard_artifacts
-    exceptions.append(compare_bb_artifacts(gold_cur, autopsy_cur))
+    exceptions.append(compare_bb_artifacts())
     # Testing blackboard_attributes
-    exceptions.append(compare_bb_attributes(gold_cur, autopsy_cur))
+    exceptions.append(compare_bb_attributes())
     
     database.artifact_comparison = exceptions[1]
     database.attribute_comparison = exceptions[2]
@@ -516,61 +610,54 @@ def compare_to_gold_html():
     except DirNotFoundException as e:
         e.print_error()
     except Exception as e:
-        printerror("Error: Unknown fatal error comparing databases.")
+        printerror("Error: Unknown fatal error comparing reports.")
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
 
 # Compares the blackboard artifact counts of two databases
 # given the two database cursors
-def compare_bb_artifacts(gold_cur, autopsy_cur):
+def compare_bb_artifacts():
     exceptions = []
-    for type_id in range(1, 13):
-        gold_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
-        gold_artifacts = gold_cur.fetchone()[0]
-        autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_artifacts WHERE artifact_type_id=%d" % type_id)
-        autopsy_artifacts = autopsy_cur.fetchone()[0]
-        # Append the results to the global database
-        database.gold_artifacts.append(gold_artifacts)
-        database.autopsy_artifacts.append(autopsy_artifacts)
-        # Report every discrepancy
-        if gold_artifacts != autopsy_artifacts:
-            error = str("Artifact counts do not match for type id %d. " % type_id)
-            error += str("Gold: %d, Test: %d" % (gold_artifacts, autopsy_artifacts))
-            exceptions.append(error)
-    return exceptions
+    try:
+        for type_id in range(1, 13):
+            if database.gold_artifacts != database.autopsy_artifacts:
+                error = str("Artifact counts do not match for type id %d. " % type_id)
+                error += str("Gold: %d, Test: %d" %
+                            (database.gold_artifacts[type_id],
+                             database.autopsy_artifacts[type_id]))
+                exceptions.append(error)
+                return exceptions
+    except Exception as e:
+        exceptions.append("Error: Unable to compare blackboard_artifacts.\n")
+        return exceptions
 
 # Compares the blackboard atribute counts of two databases
 # given the two database cursors
-def compare_bb_attributes(gold_cur, autopsy_cur):
+def compare_bb_attributes():
     exceptions = []
-    gold_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
-    gold_attributes = gold_cur.fetchone()[0]
-    autopsy_cur.execute("SELECT COUNT(*) FROM blackboard_attributes")
-    autopsy_attributes = autopsy_cur.fetchone()[0]
-    # Give the database the attributes
-    database.gold_attributes = gold_attributes
-    database.autopsy_attributes = autopsy_attributes
-    if gold_attributes != autopsy_attributes:
-        error = "Attribute counts do not match. "
-        error += str("Gold: %d, Test: %d" % (gold_attributes, autopsy_attributes))
-        exceptions.append(error)
-    return exceptions
+    try:
+        if database.gold_attributes != database.autopsy_attributes:
+            error = "Attribute counts do not match. "
+            error += str("Gold: %d, Test: %d" % (database.gold_attributes, database.autopsy_attributes))
+            exceptions.append(error)
+            return exceptions
+    except Exception as e:
+        exceptions.append("Error: Unable to compare blackboard_attributes.\n")
+        return exceptions
 
 # Compares the tsk object counts of two databases
 # given the two database cursors
-def compare_tsk_objects(gold_cur, autopsy_cur):
+def compare_tsk_objects():
     exceptions = []
-    gold_cur.execute("SELECT COUNT(*) FROM tsk_objects")
-    gold_objects = gold_cur.fetchone()[0]
-    autopsy_cur.execute("SELECT COUNT(*) FROM tsk_objects")
-    autopsy_objects = autopsy_cur.fetchone()[0]
-    # Give the database the attributes
-    database.gold_objects = gold_objects
-    database.autopsy_objects = autopsy_objects
-    if gold_objects != autopsy_objects:
-        error = "TSK Object counts do not match. "
-        error += str("Gold: %d, Test: %d" % (gold_objects, autopsy_objects))
-        exceptions.append(error)
-    return exceptions
+    try:
+        if database.gold_objects != database.autopsy_objects:
+            error = "TSK Object counts do not match. "
+            error += str("Gold: %d, Test: %d" % (database.gold_objects, database.autopsy_objects))
+            exceptions.append(error)
+            return exceptions
+    except Exception as e:
+        exceptions.append("Error: Unable to compare tsk_objects.\n")
+        return exceptions
 
 
 
@@ -581,35 +668,46 @@ def compare_tsk_objects(gold_cur, autopsy_cur):
 # Generate the "common log": a log of all exceptions and warnings
 # from each log file generated by Autopsy
 def generate_common_log():
-    logs_path = make_local_path(case.output_dir, case.image_name, "logs")
-    common_log = open(case.common_log, "a")
-    common_log.write("--------------------------------------------------\n")
-    common_log.write(case.image_name + "\n")
-    common_log.write("--------------------------------------------------\n")
-    for file in os.listdir(logs_path):
-        log = open(make_path(logs_path, file), "r")
-        lines = log.readlines()
-        for line in lines:
-            if ("exception" in line) or ("EXCEPTION" in line) or ("Exception" in line):
-                common_log.write("From " + log.name[log.name.rfind("/")+1:] +":\n" +  line + "\n")
-            if ("warning" in line) or ("WARNING" in line) or ("Warning" in line):
-                common_log.write("From " + log.name[log.name.rfind("/")+1:] +":\n" +  line + "\n")
-        log.close()
-    common_log.write("\n\n")
-    common_log.close()
+    try:
+        logs_path = make_local_path(case.output_dir, case.image_name, "logs")
+        common_log = codecs.open(case.common_log, "a", "latin-1")
+        common_log.write("--------------------------------------------------\n")
+        common_log.write(case.image_name + "\n")
+        common_log.write("--------------------------------------------------\n")
+        for file in os.listdir(logs_path):
+            log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+            for line in log:
+                if "exception" in line.lower():
+                    common_log.write("From " + file +":\n" +  line + "\n")
+                if "warning" in line.lower():
+                    common_log.write("From " + file +":\n" +  line + "\n")
+                if "error" in line.lower():
+                    common_log.write("From " + file +":\n" +  line + "\n")
+            log.close()
+        common_log.write("\n\n")
+        common_log.close()
+    except Exception as e:
+        printerror("Error: Unable to generate the common log.")
+        printerror(str(e))
+        logging.critical(traceback.format_exc())
 
 # Fill in the global case's variables that require the log files
 def fill_case_data():
-    # Open autopsy.log.0
-    log_path = make_local_path(case.output_dir, case.image_name, "logs", "autopsy.log.0")
-    log = open(log_path)
+    try:
+        # Open autopsy.log.0
+        log_path = make_local_path(case.output_dir, case.image_name, "logs", "autopsy.log.0")
+        log = open(log_path)
+        
+        # Set the case starting time based off the first line of autopsy.log.0
+        # *** If logging time format ever changes this will break ***
+        case.start_date = log.readline().split(" org.")[0]
     
-    # Set the case starting time based off the first line of autopsy.log.0
-    # *** If logging time format ever changes this will break ***
-    case.start_date = log.readline().split(" java.")[0]
-    
-    # Set the case ending time based off the "create" time (when the file was copied)
-    case.end_date = time.ctime(os.path.getmtime(log_path))
+        # Set the case ending time based off the "create" time (when the file was copied)
+        case.end_date = time.ctime(os.path.getmtime(log_path))
+    except Exception as e:
+        printerror("Error: Unable to open autopsy.log.0.")
+        printerror(str(e) + "\n")
+        logging.warning(traceback.format_exc())
     
     # Set the case total test time
     # Start date must look like: "Jul 16, 2012 12:57:53 PM"
@@ -619,12 +717,28 @@ def fill_case_data():
     end = datetime.datetime.strptime(case.end_date, "%a %b %d %H:%M:%S %Y")
     case.total_test_time = str(end - start)
     
-    # Set Autopsy version, heap space, ingest time, and service times
-    version_line = search_logs("INFO: Application name: Autopsy, version:")[0]
-    case.autopsy_version = get_word_at(version_line, 5).rstrip(",")
-    case.heap_space = search_logs("Heap memory usage:")[0].rstrip().split(": ")[1]
-    ingest_line = search_logs("INFO: Ingest (including enqueue)")[0]
-    case.total_ingest_time = get_word_at(ingest_line, 5).rstrip()
+    try:
+        # Set Autopsy version, heap space, ingest time, and service times
+        version_line = search_logs("INFO: Application name: Autopsy, version:")[0]
+        case.autopsy_version = get_word_at(version_line, 5).rstrip(",")
+        
+        case.heap_space = search_logs("Heap memory usage:")[0].rstrip().split(": ")[1]
+        
+        ingest_line = search_logs("Ingest (including enqueue)")[0]
+        case.total_ingest_time = get_word_at(ingest_line, 5).rstrip()
+        
+        message_line = search_log_set("autopsy", "Ingest messages count:")[0]
+        case.ingest_messages = int(message_line.rstrip().split(": ")[2])
+        
+        files_line = search_log_set("autopsy", "Indexed files count:")[0]
+        case.indexed_files = int(files_line.rstrip().split(": ")[2])
+        
+        chunks_line = search_log_set("autopsy", "Indexed file chunks count:")[0]
+        case.indexed_chunks = int(chunks_line.rstrip().split(": ")[2])
+    except Exception as e:
+        printerror("Error: Unable to find the required information to fill case data.")
+        printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
     try:
         service_lines = search_log("autopsy.log.0", "to process()")
         service_list = []
@@ -644,7 +758,8 @@ def fill_case_data():
         e.print_error()
     except Exception as e:
         printerror("Error: Unknown fatal error when finding service times.")
-        printerror(srt(e) + "\n")
+        printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
     
 # Generate the CSV log file
 def generate_csv(csv_path):
@@ -656,113 +771,139 @@ def generate_csv(csv_path):
             
         # Now add on the fields to a new row
         csv = open(csv_path, "a")
-        # Variables that need to be written
-        image_path = case.image_file
-        name = case.image_name
-        path = case.output_dir
-        autopsy_version = case.autopsy_version
-        heap_space = case.heap_space
-        start_date = case.start_date
-        end_date = case.end_date
-        total_test_time = case.total_test_time
-        total_ingest_time = case.total_ingest_time
-        service_times = case.service_times
-        exceptions_count = str(len(get_exceptions()))
-        tsk_objects_count = str(database.autopsy_objects)
-        artifacts_count = str(database.get_artifacts_count())
-        attributes_count = str(database.autopsy_attributes)
-        gold_db_name = "standard.db"
-        artifact_comparison = database.get_artifact_comparison()
-        attribute_comparison = database.get_attribute_comparison()
-        gold_report_name = "standard.html"
-        report_comparison = str(case.report_passed)
-        ant = case.ant_to_string()
         
-        # Make a list with all the strings in it
-        seq = (image_path, name, path, autopsy_version, heap_space, start_date, end_date, total_test_time,
-               total_ingest_time, service_times, exceptions_count, tsk_objects_count, artifacts_count,
-               attributes_count, gold_db_name, artifact_comparison, attribute_comparison,
-               gold_report_name, report_comparison, ant)
+        # Variables that need to be written
+        vars = []
+        vars.append( case.image_file )
+        vars.append( case.image_name )
+        vars.append( case.output_dir )
+        vars.append( socket.gethostname() )
+        vars.append( case.autopsy_version )
+        vars.append( case.heap_space )
+        vars.append( case.start_date )
+        vars.append( case.end_date )
+        vars.append( case.total_test_time )
+        vars.append( case.total_ingest_time )
+        vars.append( case.service_times )
+        vars.append( str(len(get_exceptions())) )
+        vars.append( str(get_num_memory_errors("autopsy")) )
+        vars.append( str(get_num_memory_errors("tika")) )
+        vars.append( str(get_num_memory_errors("solr")) )
+        vars.append( str(len(search_log_set("autopsy", "TskCoreException"))) )
+        vars.append( str(len(search_log_set("autopsy", "TskDataException"))) )
+        vars.append( str(case.ingest_messages) )
+        vars.append( str(case.indexed_files) )
+        vars.append( str(case.indexed_chunks) )
+        vars.append( str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk"))) )
+        vars.append( str(database.autopsy_objects) )
+        vars.append( str(database.get_artifacts_count()) )
+        vars.append( str(database.autopsy_attributes) )
+        vars.append( make_local_path("gold", case.image_name, "standard.db") )
+        vars.append( database.get_artifact_comparison() )
+        vars.append( database.get_attribute_comparison() )
+        vars.append( make_local_path("gold", case.image_name, "standard.html") )
+        vars.append( str(case.report_passed) )
+        vars.append( case.ant_to_string() )
+        
         # Join it together with a ", "
-        output = "|".join(seq)
+        output = "|".join(vars)
         output += "\n"
         # Write to the log!
         csv.write(output)
         csv.close()
-    except StringNotFoundException as e:
-        e.print_error()
-        printerror("Error: CSV file was not created at:")
-        printerror(csv_path + "\n")
     except Exception as e:
         printerror("Error: Unknown fatal error when creating CSV file at:")
         printerror(csv_path)
         printerror(str(e) + "\n")
+        logging.critical(traceback.format_exc())
 
 # Generates the CSV header (column names)
 def csv_header(csv_path):
     csv = open(csv_path, "w")
-    seq = ("Image Path", "Image Name", "Output Case Directory", "Autopsy Version",
-           "Heap Space Setting", "Test Start Date", "Test End Date", "Total Test Time",
-           "Total Ingest Time", "Service Times", "Exceptions Count", "TSK Objects Count", "Artifacts Count",
-           "Attributes Count", "Gold Database Name", "Artifacts Comparison",
-           "Attributes Comparison", "Gold Report Name", "Report Comparison", "Ant Command Line")
-    output = "|".join(seq)
+    titles = []
+    titles.append("Image Path")
+    titles.append("Image Name")
+    titles.append("Output Case Directory")
+    titles.append("Host Name")
+    titles.append("Autopsy Version")
+    titles.append("Heap Space Setting")
+    titles.append("Test Start Date")
+    titles.append("Test End Date")
+    titles.append("Total Test Time")
+    titles.append("Total Ingest Time")
+    titles.append("Service Times")
+    titles.append("Autopsy Exceptions")
+    titles.append("Autopsy OutOfMemoryErrors/Exceptions")
+    titles.append("Tika OutOfMemoryErrors/Exceptions")
+    titles.append("Solr OutOfMemoryErrors/Exceptions")
+    titles.append("TskCoreExceptions")
+    titles.append("TskDataExceptions")
+    titles.append("Ingest Messages Count")
+    titles.append("Indexed Files Count")
+    titles.append("Indexed File Chunks Count")
+    titles.append("Out Of Disk Space")
+    titles.append("Tsk Objects Count")
+    titles.append("Artifacts Count")
+    titles.append("Attributes Count")
+    titles.append("Gold Database Name")
+    titles.append("Artifacts Comparison")
+    titles.append("Attributes Comparison")
+    titles.append("Gold Report Name")
+    titles.append("Report Comparison")
+    titles.append("Ant Command Line")
+    output = "|".join(titles)
     output += "\n"
     csv.write(output)
     csv.close()
         
-# Returns a list of all the exceptions listed in the common log
+# Returns a list of all the exceptions listed in all the autopsy logs
 def get_exceptions():
-    try:
-        exceptions = []
-        common_log = open(case.common_log, "r")
-        lines = common_log.readlines()
-        for line in lines:
-            if ("exception" in line) or ("EXCEPTION" in line) or ("Exception" in line):
-                exceptions.append(line)
-        common_log.close()
-        return exceptions
-    except:
-        raise FileNotFoundExeption(case.common_log)
+    exceptions = []
+    logs_path = make_local_path(case.output_dir, case.image_name, "logs")
+    results = []
+    for file in os.listdir(logs_path):
+        if "autopsy.log" in file:
+            log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+            ex = re.compile("\SException")
+            er = re.compile("\SError")
+            for line in log:
+                if ex.search(line) or er.search(line):
+                    exceptions.append(line)
+            log.close()
+    return exceptions
     
 # Returns a list of all the warnings listed in the common log
 def get_warnings():
-    try:
-        warnings = []
-        common_log = open(case.common_log, "r")
-        lines = common_log.readlines()
-        for line in lines:
-            if ("warning" in line) or ("WARNING" in line) or ("Warning" in line):
-                warnings.append(line)
-        common_log.close()
-        return warnings
-    except:
-        raise FileNotFoundExeption(case.common_log)
+    warnings = []
+    common_log = codecs.open(case.common_log, "r", "latin-1")
+    for line in common_log:
+        if "warning" in line.lower():
+            warnings.append(line)
+    common_log.close()
+    return warnings
 
 # Returns all the errors found in the common log in a list
 def report_all_errors():
     try:
         return get_warnings() + get_exceptions()
-    except FileNotFoundException as e:
-        e.print_error()
     except Exception as e:
         printerror("Error: Unknown fatal error when reporting all errors.")
         printerror(str(e) + "\n")
+        logging.warning(traceback.format_exc())
 
-# Returns any lines from the common log with the given string in them (case sensitive)
-def report_with(exception):
-    try:
-        exceptions = []
-        common_log = open(case.common_log, "r")
-        lines = common_log.readlines()
-        for line in lines:
-            if exception in line:
-                exceptions.append(line)
-        common_log.close()
-        return exceptions
-    except:
-        printerror("Error: Cannot find the common log at:")
-        printerror(case.common_log + "\n")
+# Searched all the known logs for the given regex
+# The function expects regex = re.compile(...)
+def regex_search_logs(regex):
+    logs_path = make_local_path(case.output_dir, case.image_name, "logs")
+    results = []
+    for file in os.listdir(logs_path):
+        log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+        for line in log:
+            if regex.search(line):
+                results.append(line)
+        log.close()
+    if results:
+        return results
 
 # Search through all the known log files for a specific string.
 # Returns a list of all lines with that string
@@ -770,17 +911,22 @@ def search_logs(string):
     logs_path = make_local_path(case.output_dir, case.image_name, "logs")
     results = []
     for file in os.listdir(logs_path):
-        log = open(make_path(logs_path, file), "r")
-        lines = log.readlines()
-        for line in lines:
+        log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+        for line in log:
             if string in line:
                 results.append(line)
         log.close()
-    if results:
-        return results
-    raise StringNotFoundException(string)
-# Search through all the known log files for a specific string.
-# Returns a list of all lines with that string
+    return results
+    
+# Searches the common log for any instances of a specific string.
+def search_common_log(string):
+    results = []
+    log = codecs.open(case.common_log, "r", "latin-1")
+    for line in log:
+        if string in line:
+            results.append(line)
+    log.close()
+    return results
 
 # Searches the given log for the given string
 # Returns a list of all lines with that string
@@ -788,18 +934,36 @@ def search_log(log, string):
     logs_path = make_local_path(case.output_dir, case.image_name, "logs", log)
     try:
         results = []
-        log = open(logs_path, "r")
-        lines = log.readlines()
-        for line in lines:
+        log = codecs.open(logs_path, "r", "latin-1")
+        for line in log:
             if string in line:
                 results.append(line)
         log.close()
         if results:
             return results
-        raise StringNotFoundException(string)
     except:
         raise FileNotFoundException(logs_path)
+
+# Search through all the the logs of the given type
+# Types include autopsy, tika, and solr
+def search_log_set(type, string):
+    logs_path = make_local_path(case.output_dir, case.image_name, "logs")
+    results = []
+    for file in os.listdir(logs_path):
+        if type in file:
+            log = codecs.open(make_path(logs_path, file), "r", "latin-1")
+            for line in log:
+                if string in line:
+                    results.append(line)
+            log.close()
+    return results
         
+# Returns the number of OutOfMemoryErrors and OutOfMemoryExceptions
+# for a certain type of log
+def get_num_memory_errors(type):
+    return (len(search_log_set(type, "OutOfMemoryError")) + 
+            len(search_log_set(type, "OutOfMemoryException")))
+
 # Print a report for the given errors with the report name as name
 # and if no errors are found, print the okay message
 def print_report(errors, name, okay):
@@ -815,12 +979,12 @@ def print_report(errors, name, okay):
 
 # Used instead of the print command when printing out an error
 def printerror(string):
-    print string
+    print(string)
     case.printerror.append(string)
 
 # Used instead of the print command when printing out anything besides errors
 def printout(string):
-    print string
+    print(string)
     case.printout.append(string)
 
 # Generates the HTML log file
@@ -829,82 +993,118 @@ def generate_html():
     # this test, so we need to make the start of the html log
     if not file_exists(case.html_log):
         write_html_head()
-    html = open(case.html_log, "a")
-    # The image title
-    title = "<h1><a name='" + case.image_name + "'>" + case.image_name + "</a></h1>\
-             <h2 align='center'>\
-             <a href='#" + case.image_name + "-errors'>Errors and Warnings</a> |\
-             <a href='#" + case.image_name + "-info'>Information</a> |\
-             <a href='#" + case.image_name + "-general'>General Output</a>\
-             </h2>"
-    # The script errors found
-    errors = "<div id='errors'>\
-              <h2><a name='" + case.image_name + "-errors'>Errors and Warnings</a></h2>\
-              <hr color='#FF0000'>"
-    # For each error we have logged in the case
-    for error in case.printerror:
-        # Replace < and > to avoid any html display errors
-        errors += "<p>" + error.replace("<", "&lt").replace(">", "&gt") + "</p>"
-        # If there is a \n, we probably want a <br /> in the html
-        if "\n" in error:
-            errors += "<br />"
-    errors += "</div>"
-    # All the testing information
-    info = "<div id='info'>\
-            <h2><a name='" + case.image_name + "-info'>Information</a></h2>\
-            <hr color='#0005FF'>\
-            <table cellspacing='5px'>"
-    # The individual elements
-    info += "<tr><td>Image Path:</td>"
-    info += "<td>" + case.image_file + "</td></tr>"
-    info += "<tr><td>Image Name:</td>"
-    info += "<td>" + case.image_name + "</td></tr>"
-    info += "<tr><td>Case Output Directory:</td>"
-    info += "<td>" + case.output_dir + "</td></tr>"
-    info += "<tr><td>Autopsy Version:</td>"
-    info += "<td>" + case.autopsy_version + "</td></tr>"
-    info += "<tr><td>Heap Space:</td>"
-    info += "<td>" + case.heap_space + "</td></tr>"
-    info += "<tr><td>Test Start Date:</td>"
-    info += "<td>" + case.start_date + "</td></tr>"
-    info += "<tr><td>Test End Date:</td>"
-    info += "<td>" + case.end_date + "</td></tr>"
-    info += "<tr><td>Total Test Time:</td>"
-    info += "<td>" + case.total_test_time + "</td></tr>"
-    info += "<tr><td>Total Ingest Time:</td>"
-    info += "<td>" + case.total_ingest_time + "</td></tr>"
-    info += "<tr><td>Exceptions Count:</td>"
-    info += "<td>" + str(len(get_exceptions())) + "</td></tr>"
-    info += "<tr><td>TSK Objects Count:</td>"
-    info += "<td>" + str(database.autopsy_objects) + "</td></tr>"
-    info += "<tr><td>Artifacts Count:</td>"
-    info += "<td>" + str(database.get_artifacts_count()) + "</td></tr>"
-    info += "<tr><td>Attributes Count:</td>"
-    info += "<td>" + str(database.autopsy_attributes) + "</td></tr>"
-    info += "</table>\
-             </div>"
-    # For all the general print statements in the case
-    output = "<div id='general'>\
-              <h2><a name='" + case.image_name + "-general'>General Output</a></h2>\
-              <hr color='#282828'>"
-    # For each printout in the case's list
-    for out in case.printout:
-        output += "<p>" + out + "</p>"
-        # If there was a \n it probably means we want a <br /> in the html
-        if "\n" in out:
-            output += "<br />"
-    output += "</div>"
-    
-    foot = "</body>\
-            </html>"
-    
-    html.write(title)
-    html.write(errors)
-    html.write(info)
-    html.write(output)
-    # Leaving the closing body and html tags out
-    # for simplicity. It shouldn't kill us.
-    html.close()
+    try:
+        html = open(case.html_log, "a")
+        # The image title
+        title = "<h1><a name='" + case.image_name + "'>" + case.image_name + " \
+                    <span>tested on <strong>" + socket.gethostname() + "</strong></span></a></h1>\
+                 <h2 align='center'>\
+                 <a href='#" + case.image_name + "-errors'>Errors and Warnings</a> |\
+                 <a href='#" + case.image_name + "-info'>Information</a> |\
+                 <a href='#" + case.image_name + "-general'>General Output</a> |\
+                 <a href='#" + case.image_name + "-logs'>Logs</a>\
+                 </h2>"
+                 
+        # The script errors found
+        errors = "<div id='errors'>\
+                  <h2><a name='" + case.image_name + "-errors'>Errors and Warnings</a></h2>\
+                  <hr color='#FF0000'>"
+        # For each error we have logged in the case
+        for error in case.printerror:
+            # Replace < and > to avoid any html display errors
+            errors += "<p>" + error.replace("<", "&lt").replace(">", "&gt") + "</p>"
+            # If there is a \n, we probably want a <br /> in the html
+            if "\n" in error:
+                errors += "<br />"
+        errors += "</div>"
+        
+        # Links to the logs
+        logs = "<div id='logs'>\
+                <h2><a name='" + case.image_name + "-logs'>Logs</a></h2>\
+                <hr color='#00a00f'>"
+        logs_path = make_local_path(case.output_dir, case.image_name, "logs")
+        for file in os.listdir(logs_path):
+            logs += "<p><a href='file:\\" + make_path(logs_path, file) + "' target='_blank'>" + file + "</a></p>"
+        logs += "</div>"
+        
+        # All the testing information
+        info = "<div id='info'>\
+                <h2><a name='" + case.image_name + "-info'>Information</a></h2>\
+                <hr color='#0005FF'>\
+                <table cellspacing='5px'>"
+        # The individual elements
+        info += "<tr><td>Image Path:</td>"
+        info += "<td>" + case.image_file + "</td></tr>"
+        info += "<tr><td>Image Name:</td>"
+        info += "<td>" + case.image_name + "</td></tr>"
+        info += "<tr><td>Case Output Directory:</td>"
+        info += "<td>" + case.output_dir + "</td></tr>"
+        info += "<tr><td>Autopsy Version:</td>"
+        info += "<td>" + case.autopsy_version + "</td></tr>"
+        info += "<tr><td>Heap Space:</td>"
+        info += "<td>" + case.heap_space + "</td></tr>"
+        info += "<tr><td>Test Start Date:</td>"
+        info += "<td>" + case.start_date + "</td></tr>"
+        info += "<tr><td>Test End Date:</td>"
+        info += "<td>" + case.end_date + "</td></tr>"
+        info += "<tr><td>Total Test Time:</td>"
+        info += "<td>" + case.total_test_time + "</td></tr>"
+        info += "<tr><td>Total Ingest Time:</td>"
+        info += "<td>" + case.total_ingest_time + "</td></tr>"
+        info += "<tr><td>Exceptions Count:</td>"
+        info += "<td>" + str(len(get_exceptions())) + "</td></tr>"
+        info += "<tr><td>Autopsy OutOfMemoryExceptions:</td>"
+        info += "<td>" + str(len(search_logs("OutOfMemoryException"))) + "</td></tr>"
+        info += "<tr><td>Autopsy OutOfMemoryErrors:</td>"
+        info += "<td>" + str(len(search_logs("OutOfMemoryError"))) + "</td></tr>"
+        info += "<tr><td>Tika OutOfMemoryErrors/Exceptions:</td>"
+        info += "<td>" + str(get_num_memory_errors("tika")) + "</td></tr>"
+        info += "<tr><td>Solr OutOfMemoryErrors/Exceptions:</td>"
+        info += "<td>" + str(get_num_memory_errors("solr")) + "</td></tr>"
+        info += "<tr><td>TskCoreExceptions:</td>"
+        info += "<td>" + str(len(search_log_set("autopsy", "TskCoreException"))) + "</td></tr>"
+        info += "<tr><td>TskDataExceptions:</td>"
+        info += "<td>" + str(len(search_log_set("autopsy", "TskDataException"))) + "</td></tr>"
+        info += "<tr><td>Ingest Messages Count:</td>"
+        info += "<td>" + str(case.ingest_messages) + "</td></tr>"
+        info += "<tr><td>Indexed Files Count:</td>"
+        info += "<td>" + str(case.indexed_files) + "</td></tr>"
+        info += "<tr><td>Indexed File Chunks Count:</td>"
+        info += "<td>" + str(case.indexed_chunks) + "</td></tr>"
+        info += "<tr><td>Out Of Disk Space:\
+                         <p style='font-size: 11px;'>(will skew other test results)</p></td>"
+        info += "<td>" + str(len(search_log_set("autopsy", "Stopping ingest due to low disk space on disk"))) + "</td></tr>"
+        info += "<tr><td>TSK Objects Count:</td>"
+        info += "<td>" + str(database.autopsy_objects) + "</td></tr>"
+        info += "<tr><td>Artifacts Count:</td>"
+        info += "<td>" + str(database.get_artifacts_count()) + "</td></tr>"
+        info += "<tr><td>Attributes Count:</td>"
+        info += "<td>" + str(database.autopsy_attributes) + "</td></tr>"
+        info += "</table>\
+                 </div>"
+        # For all the general print statements in the case
+        output = "<div id='general'>\
+                  <h2><a name='" + case.image_name + "-general'>General Output</a></h2>\
+                  <hr color='#282828'>"
+        # For each printout in the case's list
+        for out in case.printout:
+            output += "<p>" + out + "</p>"
+            # If there was a \n it probably means we want a <br /> in the html
+            if "\n" in out:
+                output += "<br />"
+        output += "</div>"
+        
+        html.write(title)
+        html.write(errors)
+        html.write(info)
+        html.write(logs)
+        html.write(output)
+        html.close()
+    except Exception as e:
+        printerror("Error: Unknown fatal error when creating HTML log at:")
+        printerror(case.html_log)
+        printerror(str(e) + "\n")    
+        logging.critical(traceback.format_exc())
 
 # Writed the top of the HTML log file
 def write_html_head():
@@ -916,13 +1116,16 @@ def write_html_head():
             <style type='text/css'>\
             body { font-family: 'Courier New'; font-size: 12px; }\
             h1 { background: #444; margin: 0px auto; padding: 0px; color: #FFF; border: 1px solid #000; font-family: Tahoma; text-align: center; }\
+            h1 span { font-size: 12px; font-weight: 100; }\
             h2 { font-family: Tahoma; padding: 0px; margin: 0px; }\
             hr { width: 100%; height: 1px; border: none; margin-top: 10px; margin-bottom: 10px; }\
             #errors { background: #FFCFCF; border: 1px solid #FF0000; color: #FF0000; padding: 10px; margin: 20px; }\
             #info { background: #D2D3FF; border: 1px solid #0005FF; color: #0005FF; padding: 10px; margin: 20px; }\
             #general { background: #CCCCCC; border: 1px solid #282828; color: #282828; padding: 10px; margin: 20px; }\
-            #errors p, #info p, #general p { pading: 0px; margin: 0px; margin-left: 5px; }\
-            #info table td { color: #0005FF; font-size: 12px; min-width: 175px; }\
+            #logs { background: #8cff97; border: 1px solid #00820c; color: #00820c; padding: 10px; margin: 20px; }\
+            #errors p, #info p, #general p, #logs p { pading: 0px; margin: 0px; margin-left: 5px; }\
+            #info table td { color: #0005FF; font-size: 12px; min-width: 225px; }\
+            #logs a { color: #00820c; }\
             </style>\
             <body>"
     html.write(head)
@@ -990,17 +1193,22 @@ def path_fix(path):
 
 # Gets the true current working directory instead of Cygwin's
 def wgetcwd():
-    proc = subprocess.Popen(("cygpath", "-m", os.getcwd()), stdout=subprocess.PIPE)
-    out,err = proc.communicate()
-    return out.rstrip()
+    if SYS is OS.CYGWIN:
+        proc = subprocess.Popen(("cygpath", "-m", os.getcwd()), stdout=subprocess.PIPE)
+        out,err = proc.communicate()
+        return out.rstrip()
+    elif SYS is OS.WIN:
+        return os.getcwd()
 
 # Copy the log files from Autopsy's default directory
 def copy_logs():
     try:
         log_dir = os.path.join("..","build","test","qa-functional","work","userdir0","var","log")
         shutil.copytree(log_dir, make_local_path(case.output_dir, case.image_name, "logs"))
-    except:
-        printerror("Error: Failed tp copy the logs.\n")
+    except Exception as e:
+        printerror("Error: Failed to copy the logs.")
+        printerror(str(e) + "\n")
+        logging.warning(traceback.format_exc())
 
 # Clears all the files from a directory and remakes it
 def clear_dir(dir):
@@ -1008,9 +1216,11 @@ def clear_dir(dir):
         if dir_exists(dir):
             shutil.rmtree(dir)
         os.makedirs(dir)
+        return True;
     except:
         printerror("Error: Cannot clear the given directory:")
         printerror(dir + "\n")
+        return False;
 
 # Copies a given file from "ffrom" to "to"
 def copy_file(ffrom, to):
@@ -1045,11 +1255,12 @@ def compare_report_files(a_path, b_path):
     a_list = split(a, 50)
     b_list = split(b, 50)
     exceptions = []
-    for a_split, b_split in zip(a_list, b_list):
-        if a_split != b_split:
-            exceptions.append("Got:\t\t" + a_split + "\n")
-            exceptions.append("Expected:\t" + b_split + "\n")
-            exceptions.append("~~~~~~~~~~\n")
+    if not len(a_list) == len(b_list):
+        exceptions.append("The reports do not match.")
+        test = "The test HTML report has " + str(len(a_list)) + " segments."
+        gold = "The gold HTML report has " + str(len(b_list)) + " segments."
+        exceptions.append(test)
+        exceptions.append(gold)
     return exceptions
 
 # Split a string into an array of string of the given size
@@ -1079,35 +1290,30 @@ def required_input_file(name):
 
 # Returns the args of the test script
 def usage():
-    usage = "\
-Usage: ./regression.py [-f FILE] [OPTIONS] \n\n\
-Run the RegressionTest.java file, and compare the result with a gold standard \n\n\
-When the -f flag is set, this script only tests the image given by FILE.\n\
-By default, it tests every image in ./input/\n\n\
-An indexed NSRL database is expected at ./input/nsrl.txt-md5.idx,\n\
-and an indexed notable hash database at ./input/notablehashes.txt-md5.idx\n\
-In addition, any keywords to search for must be in ./input/notablekeywords.xml\n\n\
-When the -l flag is set, the script looks for a config.xml file of the given name\n\
-where images are stored. The above input files may be outsources to a different folder\n\
-via the config file. For usage notes please see the example \"config.xml\" in\n\
-the /script folder.\
-Options:\n\n\
-  -r/--rebuild\n\
-Rebuild the gold standards from the test results for each image.\n\n\
-  -i/--ignore\n\
-Ignores the ./input directory when searching for files. Only use in combinatin with a config file.\n\n\
-  -u/--unallocated\n\
-Ignores unallocated space when ingesting. Faster, but yields less accurate results.\n\n\
-  -k/--keep\n\
-Keeps each image's Solr index instead of deleting it.\n\n\
-  -v/--verbose\n\
-Prints all Warnings and Exceptions after each ingest.\n\n\
-  -e/--exception [exception]\n\
-When followed by a string, will print out all exceptions that occured that contain the string. Case sensitive.\n\n\
-  -l/--list [configuration file]\n\
-Runs from a configuration file, which is given as a path to the file after the argument."
-    
-    return usage
+    return """
+Usage:  ./regression.py [-f FILE] [OPTIONS]
+
+        Run RegressionTest.java, and compare the result with a gold standard.
+        By default, the script tests every image in ./input
+        When the -f flag is set, this script only tests a single given image.
+        When the -l flag is set, the script looks for a configuration file,
+        which may outsource to a new input directory and to individual images.
+        
+        Expected files:
+          An NSRL database at:            ./input/nsrl.txt-md5.idx
+          A notable hash database at:     ./input/notablehashes.txt-md5.idx
+          A notible keyword file at:      ./input/notablekeywords.xml
+        
+Options:
+  -r            Rebuild the gold standards for the image(s) tested.
+  -i            Ignores the ./input directory and all files within it.
+  -u            Tells Autopsy not to ingest unallocated space.
+  -k            Keeps each image's Solr index instead of deleting it.
+  -v            Verbose mode; prints all errors to the screen.
+  -e ex         Prints out all errors containing ex.
+  -l cfg        Runs from configuration file cfg.
+    """
+
 
 
 
@@ -1147,22 +1353,7 @@ class DirNotFoundException(Exception):
         error = "Error: Directory could not be found at:\n" + self.dir + "\n"
         return error
 
-# If a string cannot be found in a log file,
-# it will throw this exception
-class StringNotFoundException(Exception):
-    def __init__(self, string):
-        self.string = string
-        self.strerror = "StringNotFoundException: " + string
-        
-    def print_error(self):
-        printerror("Error: String '" + self.string + "' could not be found.\n")
-        
-    def error(self):
-        error = "Error: String '" + self.string + "' could not be found.\n"
-        return error
-
  
-
         
 #----------------------#
 #         Main         #
@@ -1188,6 +1379,8 @@ def main():
         case.common_log = make_local_path(case.output_dir, "AutopsyErrors.txt")
         case.csv = make_local_path(case.output_dir, "CSV.txt")
         case.html_log = make_local_path(case.output_dir, "AutopsyTestCase.html")
+        log_name = case.output_dir + "\\regression.log"
+        logging.basicConfig(filename=log_name, level=logging.DEBUG)
         
         # If user wants to do a single file and a list (contradictory?)
         if args.single and args.list:
@@ -1218,5 +1411,20 @@ def main():
                
         write_html_foot()
 
+class OS:
+  LINUX, MAC, WIN, CYGWIN = range(4)      
 if __name__ == "__main__":
-    main()
+    global SYS
+    if _platform == "linux" or _platform == "linux2":
+        SYS = OS.LINUX
+    elif _platform == "darwin":
+        SYS = OS.MAC
+    elif _platform == "win32":
+        SYS = OS.WIN
+    elif _platform == "cygwin":
+        SYS = OS.CYGWIN
+        
+    if SYS is OS.WIN or SYS is OS.CYGWIN:
+        main()
+    else:
+        print("We only support Windows and Cygwin at this time.")

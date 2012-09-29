@@ -34,7 +34,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
@@ -52,11 +52,22 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
     private KeywordPropertyChangeListener listener;
     private boolean active = false;
     private boolean entered = false;
+    private static KeywordSearchPanel instance;
 
     /** Creates new form KeywordSearchPanel */
-    public KeywordSearchPanel() {
+    private KeywordSearchPanel() {
         initComponents();
         customizeComponents();
+    }
+
+    /**
+     * @return the default instance KeywordSearchPanel
+     */
+    public static KeywordSearchPanel getDefault() {
+        if (instance == null) {
+            instance = new KeywordSearchPanel();
+        }
+        return instance;
     }
 
     private void customizeComponents() {
