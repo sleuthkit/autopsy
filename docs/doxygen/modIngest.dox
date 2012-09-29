@@ -44,7 +44,8 @@ Module developers are encouraged to use Autopsy's org.sleuthkit.autopsy.coreutil
 
 \subsection ingestmodule_making_process Process Method
 The process method is where the work is done in each type of module.  Some notes:
-- File-level modules will be called on each file in an order determined by the IngestManager.  Each module is free to quickly ignore a file based on name, signature, etc.  If a module wants to know the return value from a previously run module, it should use the IngestServices.getAbstractFileModuleResult() method. 
+- File-level modules will be called on each file in an order determined by the IngestManager.  Each module is free to quickly ignore a file based on name, signature, etc.  
+If a module wants to know the return value from a previously run module, it should use the IngestServices.getAbstractFileModuleResult() method. 
 - Image-level modules are expected not passed in specific files and are expected to query the database to find the files that they are interested in. 
 
 
@@ -70,6 +71,22 @@ Modules are automatically registered when \ref mod_dev_plugin "added as a plugin
 The two types of ingest modules are implemented in the XML above. The order element determines the ordering of the module in the ingest pipeline.
 
 No developer or user be forced to manually edit the XML registration, but Autopsy does allow manual editing if it's desired.
+
+
+\subsection ingestmodule_using_services Using Ingest Services
+
+Class org.sleuthkit.autopsy.ingest.IngestModuleServices provides services specifically for the ingest modules.  
+The class has methods for ingest modules to send ingest messages to the inbox, send new data events, check for errors in the file pipeline
+ and also has convenience wrappers to general module services provided by Autopsy: getting loggers, getting and setting module settings, etc.
+
+To use it, a handle to IngestModuleServices singleton object should be retrieved in the module's \c init() method.  For example:
+\code
+IngestModuleServices services = IngestModuleServices.getDefault() 
+\endcode
+
+It is safe to store handle to services in your module private member variable.
+However, DO NOT initialize the services handle statically in the member variable declaration.  
+Use the init() method to do that to ensure proper order of initialization of objects in the platform.
 
 
 \subsection ingestmodule_making_results Posting Results
