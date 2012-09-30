@@ -293,8 +293,8 @@ public abstract class KeywordSearchListsAbstract {
             }
             theLists.put(list.getName(), list);
         }
-        //boolean saved = save();
-        if (true) {
+        boolean saved = save();
+        if (saved) {
             for (KeywordSearchList list : newLists) {
                 changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
             }
@@ -302,7 +302,7 @@ public abstract class KeywordSearchListsAbstract {
                 changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
             }
         }
-        return true;
+        return saved;
     }
 
     /**
