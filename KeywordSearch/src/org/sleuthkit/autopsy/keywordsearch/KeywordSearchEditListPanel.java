@@ -663,7 +663,7 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
             List<KeywordSearchList> toWrite = new ArrayList<KeywordSearchList>();
             toWrite.add(reader.getList(currentKeywordList.getName()));
             final KeywordSearchListsXML exporter = new KeywordSearchListsXML(fileAbs);
-            boolean written = exporter.writeLists(toWrite);
+            boolean written = exporter.saveLists(toWrite);
             if (written) {
                 KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword lists exported",
                         KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
