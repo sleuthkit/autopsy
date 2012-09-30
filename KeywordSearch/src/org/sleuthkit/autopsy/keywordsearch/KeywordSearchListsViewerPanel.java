@@ -63,11 +63,11 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         customizeComponents();
     }
     
-    public static KeywordSearchListsViewerPanel getDefault() {
-        if (instance == null)
-            return new KeywordSearchListsViewerPanel();
-        else
-            return instance;
+    static synchronized KeywordSearchListsViewerPanel getDefault() {
+        if (instance == null) {
+            instance = new KeywordSearchListsViewerPanel();
+        }
+        return instance;
     }
     
     private void customizeComponents() {
@@ -191,6 +191,13 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             listsTableModel.resync();
             ingestIndexLabel.setText("Files Indexed: " + filesIndexed);
         }
+    }
+    
+    /**
+     * Force resync the data view
+     */
+    void resync() {
+        listsTableModel.resync();
     }
 
     /** This method is called from within the constructor to
