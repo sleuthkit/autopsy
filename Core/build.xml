@@ -6,6 +6,15 @@
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.core.</description>
     <import file="nbproject/build-impl.xml"/>
     
+    <target name="build_docs">
+         <!-- additional docs for quickstart -->
+         <echo message="building quick start guide" />
+        <mkdir dir="build/classes/org/sleuthkit/autopsy/casemodule/docs" />
+        <copy overwrite="true" file="${basedir}/../docs/QuickStartGuide/index.html" tofile="build/classes/org/sleuthkit/autopsy/casemodule/docs/QuickStart.html"/>
+        <copy overwrite="true" file="${basedir}/../docs/QuickStartGuide/screenshot.png" tofile="build/classes/org/sleuthkit/autopsy/casemodule/docs/screenshot.png"/>
+         
+    </target>
+
      
     <!-- Verify that the TSK_HOME env variable is set -->
     <target name="findTSK">
@@ -27,6 +36,8 @@
 
         <!-- get additional deps -->
         <antcall target="getTSKJars" />
+        
+        <antcall target="build_docs" />
         
     </target>
     
