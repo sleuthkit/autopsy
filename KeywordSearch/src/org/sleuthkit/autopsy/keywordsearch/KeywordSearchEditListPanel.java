@@ -421,11 +421,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
         saveListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/save16.png"))); // NOI18N
         saveListButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.saveListButton.text")); // NOI18N
-        saveListButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveListButtonActionPerformed(evt);
-            }
-        });
 
         exportButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/export16.png"))); // NOI18N
         exportButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchEditListPanel.class, "KeywordSearchEditListPanel.exportButton.text")); // NOI18N
@@ -559,53 +554,6 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
         initButtons();
     }//GEN-LAST:event_addWordButtonActionPerformed
-
-    private void saveListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveListButtonActionPerformed
-        final String FEATURE_NAME = "Save Keyword List";
-        KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
-
-        List<Keyword> keywords = currentKeywordList.getKeywords();
-        if (keywords.isEmpty()) {
-            KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List is empty and cannot be saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-            return;
-        }
-
-        String listName = (String) JOptionPane.showInputDialog(
-                null,
-                "New keyword list name:",
-                FEATURE_NAME,
-                JOptionPane.PLAIN_MESSAGE,
-                null,
-                null,
-                currentKeywordList != null ? currentKeywordList : "");
-        if (listName == null || listName.trim().equals("")) {
-            return;
-        }
-
-        if (writer.listExists(listName) && writer.getList(listName).isLocked()) {
-            KeywordSearchUtil.displayDialog(FEATURE_NAME, "Cannot overwrite default list", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
-            return;
-        }
-        boolean shouldAdd = false;
-        if (writer.listExists(listName)) {
-            boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, "Keyword List <" + listName + "> already exists, do you want to replace it?",
-                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
-            if (replace) {
-                shouldAdd = true;
-            }
-
-        } else {
-            shouldAdd = true;
-        }
-
-        if (shouldAdd) {
-            writer.addList(listName, keywords);
-        }
-
-        currentKeywordList = writer.getList(listName);
-        KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-
-    }//GEN-LAST:event_saveListButtonActionPerformed
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
         if (KeywordSearchUtil.displayConfirmDialog("Removing a keyword"
@@ -755,6 +703,10 @@ private void useForIngestCheckboxActionPerformed(java.awt.event.ActionEvent evt)
     
     void addDeleteButtonActionPerformed(ActionListener l) {
         deleteListButton.addActionListener(l);
+    }
+    
+    void addSaveButtonActionPerformed(ActionListener l) {
+        saveListButton.addActionListener(l);
     }
 
 
