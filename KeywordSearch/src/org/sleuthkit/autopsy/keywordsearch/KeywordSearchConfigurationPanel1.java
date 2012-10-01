@@ -26,6 +26,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
+import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -70,7 +72,59 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel impleme
                     listsManagementPanel.resync();
                 }
             }
-        });      
+        });
+        
+        editListPanel.addSaveButtonActionPerformed(new ActionListener() {
+           
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final String FEATURE_NAME = "Save Keyword List";
+                KeywordSearchListsXML writer = KeywordSearchListsXML.getCurrent();
+                KeywordSearchList currentKeywordList = editListPanel.getCurrentKeywordList();
+
+                List<Keyword> keywords = currentKeywordList.getKeywords();
+                if (keywords.isEmpty()) {
+                    KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List is empty and cannot be saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                    return;
+                }
+
+                String listName = (String) JOptionPane.showInputDialog(
+                        null,
+                        "New keyword list name:",
+                        FEATURE_NAME,
+                        JOptionPane.PLAIN_MESSAGE,
+                        null,
+                        null,
+                        currentKeywordList != null ? currentKeywordList : "");
+                if (listName == null || listName.trim().equals("")) {
+                    return;
+                }
+
+                if (writer.listExists(listName) && writer.getList(listName).isLocked()) {
+                    KeywordSearchUtil.displayDialog(FEATURE_NAME, "Cannot overwrite default list", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                    return;
+                }
+                boolean shouldAdd = false;
+                if (writer.listExists(listName)) {
+                    boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, "Keyword List <" + listName + "> already exists, do you want to replace it?",
+                            KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                    if (replace) {
+                        shouldAdd = true;
+                    }
+
+                } else {
+                    shouldAdd = true;
+                }
+
+                if (shouldAdd) {
+                    writer.addList(listName, keywords);
+                }
+
+                currentKeywordList = writer.getList(listName);
+                KeywordSearchUtil.displayDialog(FEATURE_NAME, "Keyword List <" + listName + "> saved", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                listsManagementPanel.resync();
+            }
+        });
         
         mainSplitPane.setLeftComponent(listsManagementPanel);
         mainSplitPane.setRightComponent(editListPanel);
