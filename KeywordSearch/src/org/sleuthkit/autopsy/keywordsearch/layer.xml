@@ -3,8 +3,8 @@
 <filesystem>
     
     <!-- ======================================================
-        Actions
-    ======================================================== -->
+         Actions
+         ====================================================== -->
     <folder name="Actions">
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchConfigurationAction.instance"/>
@@ -16,8 +16,8 @@
     </folder>
     
     <!-- ======================================================
-        Services
-    ======================================================== -->
+         Services
+        ======================================================= -->
     <folder name="Services">
         <file name="org-sleuthkit-autopsy-keywordsearch-HighlightedMatchesSource.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.datamodel.HighlightLookup"/>
@@ -27,8 +27,8 @@
     </folder>
     
     <!-- ======================================================
-        Toolbars
-    ======================================================== -->
+         Toolbars
+         ====================================================== -->
     <folder name="Toolbars">
         <folder name="Keyword">
             <attr name="position" intvalue="104"/>
