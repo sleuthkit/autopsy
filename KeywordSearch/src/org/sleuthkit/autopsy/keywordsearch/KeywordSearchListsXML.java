@@ -44,6 +44,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -234,6 +235,12 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
             //error reading file
             logger.log(Level.SEVERE, "Error loading keyword list: can't read file.", e);
 
+        }
+         try{
+            PlatformUtil.xmlIsValid(ret, PlatformUtil.keywordXSD);
+        }
+        catch(SAXException e){
+            logger.log(Level.SEVERE, "Error loading Keyword lists: Could not validate against KeywordSchema.xsd", e);
         }
         return ret;
 

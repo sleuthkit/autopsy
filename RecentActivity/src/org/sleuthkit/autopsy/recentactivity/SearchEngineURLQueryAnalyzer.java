@@ -19,6 +19,7 @@
 
 package org.sleuthkit.autopsy.recentactivity;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -122,7 +123,6 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
         }
                 
     }
-    
     
     private void createEngines(){
         NodeList nlist = xmlinput.getElementsByTagName("SearchEngine");
@@ -330,6 +330,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
+        logger.info("LAUNCHING COOKIES, ALL COOKIES ENGAGE.");
         this.getURLs(image, controller);
         logger.info("Search Engine stats: \n" + getTotals());
     }
@@ -353,25 +354,33 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     
     private void init2(){
         try{
-                String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFile;
-                File f = new File(path);
-                System.out.println("Load successful");
-                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                DocumentBuilder db = dbf.newDocumentBuilder();
-                Document xml = db.parse(f);
-                xmlinput = xml;
-                try{
-                    createEngines();
-                    getSearchEngineNames();
-                }
-                catch(Exception e){
-                    logger.log(Level.WARNING, "Unable to create Search Engines!", e);
-                }
-            }
-            catch(Exception e){
-                logger.log(Level.WARNING, "Was not able to load SEUQAMappings.xml", e);
-            }
+           String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFile;
+           File f = new File(path);
+           System.out.println("Load successful");
+           DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+           DocumentBuilder db = dbf.newDocumentBuilder();
+           Document xml = db.parse(f);
+           xmlinput = xml; 
+
+           if(!PlatformUtil.xmlIsValid(xml, PlatformUtil.searchEngineXSD)){
+              logger.log(Level.WARNING, "Could not parse validate XML file. Terminating SEUQA.");
+           }
+           else{
+               try{
+                   createEngines();
+                   getSearchEngineNames();
+               }
+               catch(Exception e){
+                   logger.log(Level.WARNING, "Unable to create Search Engines!", e);
+               }
+           }
+        }
+        catch(Exception e){
+            logger.log(Level.WARNING, "Was not able to load SEUQAMappings.xml", e);
+        }
     }
+
+    
     
     @Override
     public void complete() {
