@@ -8,10 +8,16 @@
     <body>
         <h2>Hash Database Management Window</h2>
         <p>
-	The Hash Database Management window is where you can set and update your hash database information. Hash databases are used to identify files that are 'known'. 
+	The Hash Database Management window is where you can set and update your hash database information. 
+        Hash databases are used to identify files that are 'known'. 
 	<ul>
-	<li>Known good files are those that can be safely ignored.  This set of files frequently includes standard OS and application files. </li>
-	<li>Known bad (also called notable) files are those that should raise awareness.  This set will vary depending on the type of investigation, but common examples include contraband images and malware.</li>
+	<li>Known good files are those that can be safely ignored.  
+            This set of files frequently includes standard OS and application files.
+            Ignoring such uninteresting to the investigator files, can greatly reduce image analysis time.
+        </li>
+	<li>Known bad (also called notable) files are those that should raise awareness.  
+            This set will vary depending on the type of investigation, but common examples include contraband images 
+            and malware.</li>
 	</ul>
         </p>
 
@@ -30,10 +36,13 @@
 	<p>To use the NSRL, you must concatenate all of the NSRLFile.txt files together. You can use 'cat' on a Unix system or from within Cygwin to do this.</p>
 
 	<h2>Adding Hashsets</h2>
-	<p>Autopsy needs an index of the hashset.  It can make one if you import only the hashset. When you select the database from within this window, it will tell you if the index needs to be created. Autopsy 
-	uses the hash database management system from The Sleuth Kit. You can manually create an index using the 'hfind' command line tool.</p>
+	<p>Autopsy needs an index of the hashset to actualy use a hash database.  
+            It can create the index if you import only the hashset. 
+            When you select the database from within this window, it will tell you if the index needs to be created. Autopsy 
+	uses the hash database management system from The Sleuth Kit. You can manually create an index using the 'hfind' command line tool or use can use Autopsy.</p>
 
-	<p>You can also specify only the index file and not use the full hashset.  This can save space.  To do this, specify the .idx file from the Hash Database Management window. </p>
+	<p>You can also specify only the index file and not use the full hashset - the index file is sufficient to identify known files.  
+            This can save space.  To do this, specify the .idx file from the Hash Database Management window. </p>
 
 	<h2>Using Hashsets</h2>
 	<p>There is an <a href="nbdocs:/org/sleuthkit/autopsy/ingest/docs/ingest-about.html">ingest module</a> that will hash the files and look them up in the hashsets.  It will flag files that were in the notable hashset and those results will be shown in the Results tree of the <a href="nbdocs:/org/sleuthkit/autopsy/directorytree/docs/directorytree-about.html">Data Explorer</a>. 

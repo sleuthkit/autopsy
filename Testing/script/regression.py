@@ -725,7 +725,7 @@ def fill_case_data():
         case.heap_space = search_logs("Heap memory usage:")[0].rstrip().split(": ")[1]
         
         ingest_line = search_logs("Ingest (including enqueue)")[0]
-        case.total_ingest_time = get_word_at(ingest_line, 5).rstrip()
+        case.total_ingest_time = get_word_at(ingest_line, 6).rstrip()
         
         message_line = search_log_set("autopsy", "Ingest messages count:")[0]
         case.ingest_messages = int(message_line.rstrip().split(": ")[2])

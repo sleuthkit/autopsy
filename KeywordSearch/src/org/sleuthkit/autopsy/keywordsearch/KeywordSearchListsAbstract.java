@@ -125,11 +125,11 @@ public abstract class KeywordSearchListsAbstract {
         }
         return ret;
     }
-    
+
     List<KeywordSearchList> getListsL(boolean locked) {
         List<KeywordSearchList> ret = new ArrayList<KeywordSearchList>();
         for (KeywordSearchList list : theLists.values()) {
-            if(list.isLocked().equals(locked)) {
+            if (list.isLocked().equals(locked)) {
                 ret.add(list);
             }
         }
@@ -138,14 +138,16 @@ public abstract class KeywordSearchListsAbstract {
 
     /**
      * Get list names of all loaded keyword list names
+     *
      * @return List of keyword list names
      */
     List<String> getListNames() {
         return new ArrayList<String>(theLists.keySet());
     }
-    
+
     /**
      * Get list names of all locked or unlocked loaded keyword list names
+     *
      * @param locked true if look for locked lists, false otherwise
      * @return List of keyword list names
      */
@@ -153,15 +155,17 @@ public abstract class KeywordSearchListsAbstract {
         ArrayList<String> lists = new ArrayList<String>();
         for (String listName : theLists.keySet()) {
             KeywordSearchList list = theLists.get(listName);
-            if (locked == list.isLocked())
+            if (locked == list.isLocked()) {
                 lists.add(listName);
+            }
         }
-         
+
         return lists;
     }
 
     /**
      * return first list that contains the keyword
+     *
      * @param keyword
      * @return found list or null
      */
@@ -178,6 +182,7 @@ public abstract class KeywordSearchListsAbstract {
 
     /**
      * return first list that contains the keyword
+     *
      * @param keyword
      * @return found list or null
      */
@@ -194,14 +199,16 @@ public abstract class KeywordSearchListsAbstract {
 
     /**
      * get number of lists currently stored
+     *
      * @return number of lists currently stored
      */
     int getNumberLists() {
         return theLists.size();
     }
-    
+
     /**
      * get number of unlocked or locked lists currently stored
+     *
      * @param locked true if look for locked lists, false otherwise
      * @return number of unlocked lists currently stored
      */
@@ -209,14 +216,16 @@ public abstract class KeywordSearchListsAbstract {
         int numLists = 0;
         for (String listName : theLists.keySet()) {
             KeywordSearchList list = theLists.get(listName);
-            if (locked == list.isLocked())
-                ++ numLists;
+            if (locked == list.isLocked()) {
+                ++numLists;
+            }
         }
         return numLists;
     }
 
     /**
      * get list by name or null
+     *
      * @param name id of the list
      * @return keyword list representation
      */
@@ -226,6 +235,7 @@ public abstract class KeywordSearchListsAbstract {
 
     /**
      * check if list with given name id exists
+     *
      * @param name id to check
      * @return true if list already exists or false otherwise
      */
@@ -234,8 +244,9 @@ public abstract class KeywordSearchListsAbstract {
     }
 
     /**
-     * adds the new word list using name id
-     * replacing old one if exists with the same name
+     * adds the new word list using name id replacing old one if exists with the
+     * same name
+     *
      * @param name the name of the new list or list to replace
      * @param newList list of keywords
      * @param useForIngest should this list be used for ingest
@@ -270,15 +281,48 @@ public abstract class KeywordSearchListsAbstract {
     boolean addList(String name, List<Keyword> newList) {
         return addList(name, newList, true, true);
     }
-    
+
     boolean addList(KeywordSearchList list) {
         return addList(list.getName(), list.getKeywords(), list.getUseForIngest(), list.getIngestMessages(), list.isLocked());
     }
 
     /**
-     * write out multiple lists
+     * save multiple lists
+     *
      * @param lists
-     * @return 
+     * @return
+     */
+    boolean saveLists(List<KeywordSearchList> lists) {
+        int oldSize = this.getNumberLists();
+
+        List<KeywordSearchList> overwritten = new ArrayList<KeywordSearchList>();
+        List<KeywordSearchList> newLists = new ArrayList<KeywordSearchList>();
+        for (KeywordSearchList list : lists) {
+            if (this.listExists(list.getName())) {
+                overwritten.add(list);
+            } else {
+                newLists.add(list);
+            }
+            theLists.put(list.getName(), list);
+        }
+        boolean saved = save();
+        if (saved) {
+            for (KeywordSearchList list : newLists) {
+                changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
+            }
+            for (KeywordSearchList over : overwritten) {
+                changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
+            }
+        }
+
+        return saved;
+    }
+
+    /**
+     * write out multiple lists
+     *
+     * @param lists
+     * @return
      */
     boolean writeLists(List<KeywordSearchList> lists) {
         int oldSize = this.getNumberLists();
@@ -294,19 +338,20 @@ public abstract class KeywordSearchListsAbstract {
             theLists.put(list.getName(), list);
         }
         //boolean saved = save();
-        if (true) {
-            for (KeywordSearchList list : newLists) {
-                changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
-            }
-            for (KeywordSearchList over : overwritten) {
-                changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
-            }
+
+        for (KeywordSearchList list : newLists) {
+            changeSupport.firePropertyChange(ListsEvt.LIST_ADDED.toString(), null, list.getName());
         }
+        for (KeywordSearchList over : overwritten) {
+            changeSupport.firePropertyChange(ListsEvt.LIST_UPDATED.toString(), null, over.getName());
+        }
+
         return true;
     }
 
     /**
      * delete list if exists and save new list
+     *
      * @param name of list to delete
      * @return true if deleted
      */
@@ -339,8 +384,7 @@ public abstract class KeywordSearchListsAbstract {
 }
 
 /**
- * a representation of a single keyword list
- * created or loaded
+ * a representation of a single keyword list created or loaded
  */
 class KeywordSearchList {
 
