@@ -3,8 +3,8 @@
 <filesystem>
 
     <!-- ======================================================
-        General
-    ======================================================== -->
+         General
+         ======================================================== -->
     <attr name="Toolbars\File\org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance\iconBase" stringvalue="org/sleuthkit/autopsy/images/close-icon.gif"/>
     <attr name="Menu\File\org-netbeans-modules-print-action-PageSetupAction.shadow_hidden\position" intvalue="300"/>
     <attr name="Menu\File\org-netbeans-modules-print-action-PrintAction.shadow_hidden\position" intvalue="500"/>
@@ -27,8 +27,8 @@
 
 
     <!-- ======================================================
-        Actions
-    ======================================================== -->
+         Actions
+         ======================================================== -->
     <folder name="Actions">
         <folder name="File">
             <file name="org-sleuthkit-autopsy-casemodule-AddImageAction.instance" />
@@ -136,8 +136,8 @@
 
 
     <!-- ======================================================
-        Menu
-    ======================================================== -->
+         Menu
+         ======================================================== -->
     <folder name="Menu">
         <file name="GoTo_hidden"/>
         <file name="Reports_hidden"/>
@@ -263,8 +263,8 @@
 
 
     <!-- ======================================================
-        Services
-    ======================================================== -->
+         Services
+         ======================================================== -->
     <folder name="Services">
         <file name="org-sleuthkit-autopsy-corecomponents-DataContentTopComponent.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.DataContent"/>
@@ -328,8 +328,8 @@
 
 
     <!-- ======================================================
-        Toolbars
-    ======================================================== -->
+         Toolbars
+         ======================================================== -->
     <folder name="Toolbars">
         <file name="UndoRedo_hidden"/>
         <folder name="File">
@@ -370,8 +370,8 @@
 
 
     <!-- ======================================================
-        Shortcuts
-    ======================================================== -->
+         Shortcuts
+         ======================================================== -->
     <folder name="Shortcuts">
         <file name="D-N.shadow">
             <attr name="originalFile" stringvalue="Actions/File/org-sleuthkit-autopsy-casemodule-CaseNewAction.instance"/>
@@ -384,12 +384,8 @@
 
 
     <!-- ======================================================
-        Windows2
-            - Must remain as separate instances of Windows2
-            - Applies the "modes" to the "components", so
-              adding incorrect components and modes causes
-              UI to fail
-    ======================================================== -->
+         Windows2
+         ======================================================== -->
     <folder name="Windows2">
         <folder name="Components">
             <file name="DirectoryTreeTopComponent.settings" url="DirectoryTreeTopComponentSettings.xml" />
