@@ -39,12 +39,12 @@ import javax.swing.AbstractAction;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.commons.httpclient.NoHttpResponseException;
 import org.apache.solr.client.solrj.SolrRequest;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
@@ -133,12 +133,13 @@ class Server {
 
         STOPPED, STARTED
     };
-    private CommonsHttpSolrServer solrServer;
+    private SolrServer solrServer;
     private String instanceDir;
     private File solrFolder;
     private ServerAction serverAction;
     private InputStreamPrinterThread inputRedirectThread;
     private InputStreamPrinterThread errorRedirectThread;
+    private String solrUrl;
 
     /**
      * New instance for the server at the given URL
@@ -146,11 +147,9 @@ class Server {
      * @param url should be something like "http://localhost:8983/solr/"
      */
     Server(String url) {
-        try {
-            this.solrServer = new CommonsHttpSolrServer(url);
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex);
-        }
+        this.solrUrl = url;
+        this.solrServer = new HttpSolrServer(url);
+        
 
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false);
@@ -599,11 +598,9 @@ class Server {
 
         private Core(String name) {
             this.name = name;
-            try {
-                this.solrCore = new CommonsHttpSolrServer(solrServer.getBaseURL() + "/" + name);
-            } catch (MalformedURLException ex) {
-                throw new RuntimeException(ex);
-            }
+      
+            this.solrCore = new HttpSolrServer(solrUrl + "/" + name);
+      
         }
 
         private QueryResponse query(SolrQuery sq) throws SolrServerException {

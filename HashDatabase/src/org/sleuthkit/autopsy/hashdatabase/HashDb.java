@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.List;
 import java.util.logging.Level;
@@ -35,6 +37,10 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class HashDb implements Comparable<HashDb> {
 
+    enum EVENT {INDEXING_DONE };
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    
+    
     public enum DBType{
         NSRL("NSRL"), KNOWN_BAD("Known Bad");
         
@@ -66,6 +72,14 @@ public class HashDb implements Comparable<HashDb> {
         this.showInboxMessages = showInboxMessages;
         this.type = type;
         this.indexing = false;
+    }
+    
+    void addPropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.addPropertyChangeListener(pcl);
+    }
+    
+    void removePropertyChangeListener(PropertyChangeListener pcl) {
+        pcs.removePropertyChangeListener(pcl);
     }
     
     boolean getUseForIngest() {
@@ -279,7 +293,7 @@ public class HashDb implements Comparable<HashDb> {
         protected void done() {
             indexing = false;
             progress.finish();
-            // TODO: Fire property event telling to resync
+            pcs.firePropertyChange(EVENT.INDEXING_DONE.toString(), null, name);
         }
     }
 }

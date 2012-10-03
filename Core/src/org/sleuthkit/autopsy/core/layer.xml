@@ -390,32 +390,19 @@
               adding incorrect components and modes causes
               UI to fail
     ======================================================== -->
-
-    <!-- Ingest Message Box Top Component -->
     <folder name="Windows2">
         <folder name="Components">
-            <file name="IngestMessageTopComponent.settings" url="IngestMessageTopComponentSettings.xml"/>
+            <file name="DirectoryTreeTopComponent.settings" url="DirectoryTreeTopComponentSettings.xml" />
+            <!-- <file name="DataContentTopComponent.settings" url="DataContentTopComponentSettings.xml" /> -->
+            <file name="IngestMessageTopComponent.settings" url="IngestMessageTopComponentSettings.xml" />
         </folder>
         <folder name="Modes">
-            <folder name="floatingLeftBottom">
-            </folder>
-            <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml"/>
-        </folder>
-    </folder>
-
-    <!-- Directory Tree Top Component -->
-    <folder name="Windows2">
-        <folder name="Components">
-            <file name="DirectoryTreeTopComponent.settings" url="DirectoryTreeTopComponentSettings.xml"/>
-        </folder>
-    </folder>
-
-    <!-- RCP windows: Editor and Output -->
-    <folder name="Windows2">
-        <folder name="Components"/>
-        <folder name="Modes">
-            <folder name="editor"/>
-            <folder name="output"/>
+            <folder name="editor" />
+            <folder name="output" />
+            <folder name="outputFloat" />
+            <file name="outputFloat.wsmode" url="outputFloatWsmode.xml" />
+            <folder name="floatingLeftBottom" />
+            <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml" />
         </folder>
     </folder>
     
