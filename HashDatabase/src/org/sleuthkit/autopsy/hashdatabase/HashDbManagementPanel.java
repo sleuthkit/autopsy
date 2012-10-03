@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.awt.Component;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.logging.Level;
 import javax.swing.JButton;
@@ -353,7 +355,19 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
 
     private void indexButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_indexButtonActionPerformed
         int selected = getSelection();
-        HashDb current = HashDbXML.getCurrent().getAllSets().get(selected);
+        final HashDb current = HashDbXML.getCurrent().getAllSets().get(selected);
+        current.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals(HashDb.EVENT.INDEXING_DONE.toString())) {
+                    
+                    setButtonFromIndexStatus(indexButton, hashDbIndexStatusLabel, current.status());
+                    resync();
+                }
+            }
+            
+        });
         try {
             current.createIndex();
         } catch (TskException ex) {
@@ -600,7 +614,6 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         }
     }
     void resync() {
-        // TODO: call this function from property event listener
         int index = getSelection();
         this.hashSetTableModel.resync();
         setSelection(index);
