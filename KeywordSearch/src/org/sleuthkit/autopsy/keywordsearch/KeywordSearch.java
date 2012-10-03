@@ -36,8 +36,11 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWrit
  */
 class KeywordSearch {
 
-    private static final String BASE_URL = "http://localhost:8983/solr/";
+    private static final String BASE_URL = "http://localhost:8983/solr";
     private static final Server SERVER = new Server(BASE_URL);
+    
+    //we want a custom java.util.logging.Logger here for a reason
+    //a separate logger from framework logs
     static final Logger TIKA_LOGGER = Logger.getLogger("Tika");
 
     public enum QueryType {WORD, REGEX};
