@@ -128,7 +128,7 @@
         </folder>
     </folder>
     <folder name="Services">
-<!--        <folder name="JavaHelp">
+        <!--        <folder name="JavaHelp">
             <file name="casemodule-helpset.xml" url="casemodule-helpset.xml">
                 <attr name="position" intvalue="3075"/>
             </file>
@@ -161,17 +161,11 @@
             <file name="org-sleuthkit-autopsy-casemodule-CaseSaveAction.instance_hidden"/>
         </folder>
     </folder>
-    <folder name="Windows2">
-        <folder name="Components"/>
-        <folder name="Modes">
-            <folder name="editor"/>
-            <folder name="output"/>
-        </folder>
-    </folder>
+
     
     
     <!-- CoreComponentInterfaces package -->
-     <attr name="Menu\File\org-netbeans-modules-print-action-PageSetupAction.shadow_hidden\position" intvalue="300"/>
+    <attr name="Menu\File\org-netbeans-modules-print-action-PageSetupAction.shadow_hidden\position" intvalue="300"/>
     <attr name="Menu\File\org-netbeans-modules-print-action-PrintAction.shadow_hidden\position" intvalue="500"/>
     <folder name="OptionsDialog"> 
         <folder name="General.instance_hidden"/>
@@ -184,7 +178,7 @@
         <folder name="RCPPlatform.instance_hidden"/>
     </folder>
     
-<!--<attr name="Menu\File\Separator2.instance_hidden\position" intvalue="100"/>
+    <!--<attr name="Menu\File\Separator2.instance_hidden\position" intvalue="100"/>
     <attr name="Menu\File\Separator3.instance_hidden\position" intvalue="200"/>
     <attr name="Menu\File\Separator4.instance_hidden\position" intvalue="400"/>-->
     
@@ -196,7 +190,7 @@
             <file name="org-netbeans-core-windows-actions-GlobalPropertiesAction.instance_hidden"/>
         </folder>
         <folder name="Toolbars">
-             <folder name="QuickSearch_hidden"/>
+            <folder name="QuickSearch_hidden"/>
         </folder>
     </folder>
     
@@ -208,7 +202,7 @@
             <file name="org-openide-actions-SaveAllAction.shadow_hidden"/>
             <file name="org-openide-actions-SaveAsAction.shadow_hidden"/>
             
-        <!--<file name="Separator2.instance_hidden"/>
+            <!--<file name="Separator2.instance_hidden"/>
             <file name="Separator3.instance_hidden"/>
             <file name="Separator4.instance_hidden"/>-->
         </folder>
@@ -244,7 +238,7 @@
             <file name="org-netbeans-modules-options-OptionsWindowAction.shadow"/>
             <file name="org-openide-actions-ToolsAction.shadow_hidden"/>
             
-        <!--<file name="Separator1.instance_hidden"/>
+            <!--<file name="Separator1.instance_hidden"/>
             <file name="Separator3.instance_hidden"/>-->
         </folder>
     </folder>
@@ -258,7 +252,7 @@
     
     
     <!-- CoreComponents package -->
-     <folder name="Actions">
+    <folder name="Actions">
         <folder name="Help">
             <file name="org-sleuthkit-autopsy-corecomponents-CustomAboutAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.corecomponents.CustomAboutAction"/>
@@ -285,7 +279,7 @@
         </folder>
     </folder>
     <folder name="Services">
-<!--        <folder name="JavaHelp">
+        <!--        <folder name="JavaHelp">
             <file name="corecomponents-helpset.xml" url="corecomponents-helpset.xml">
                 <attr name="position" intvalue="3801"/>
             </file>
@@ -295,20 +289,11 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.corecomponents.DataContentTopComponent.getDefault"/>
         </file>
     </folder>
-    <folder name="Windows2">
-        <folder name="Components">
-        </folder>
-        <folder name="Modes">
-            <folder name="editor">
-                </folder>
-            <folder name="output">
-            </folder>
-        </folder>
-    </folder>
+   
     
     <!-- DirectoryTree package -->
     <folder name="Services">
-<!--        <folder name="JavaHelp">
+        <!--        <folder name="JavaHelp">
             <file name="directorytree-helpset.xml" url="directorytree-helpset.xml">
                 <attr name="position" intvalue="3086"/>
             </file>
@@ -318,27 +303,23 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent.getDefault"/>
             <attr name="position" intvalue="125"/>
         </file>
-         <file name="org-sleuthkit-autopsy-directorytree-DirectoryTreeTopComponent2.instance">
+        <file name="org-sleuthkit-autopsy-directorytree-DirectoryTreeTopComponent2.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent.getDefault"/>
             <attr name="position" intvalue="150"/>
         </file>
     </folder>
-    <folder name="Windows2">
-        <folder name="Components">
-            <file name="DirectoryTreeTopComponent.settings" url="DirectoryTreeTopComponentSettings.xml"/>
-        </folder>
-    </folder>
+
     
     <!-- FileSearch package -->
-     <folder name="Actions">
+    <folder name="Actions">
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.instance">
             </file>
         </folder>    
     </folder>
     <folder name="Services">
-<!--        <folder name="JavaHelp">
+        <!--        <folder name="JavaHelp">
             <file name="filesearch-helpset.xml" url="filesearch-helpset.xml">
                 <attr name="position" intvalue="3662"/>
             </file>
@@ -358,24 +339,15 @@
     </folder>
     
     <!-- Ingest package -->
-     <folder name="Services">
+    <folder name="Services">
         <file name="org-sleuthkit-autopsy-ingest-IngestDialogPanel.instance">
-        <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.casemodule.IngestConfigurator"/>
-        <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.IngestDialogPanel.getDefault"/>
-        <attr name="position" intvalue="50"/> 
+            <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.casemodule.IngestConfigurator"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.ingest.IngestDialogPanel.getDefault"/>
+            <attr name="position" intvalue="50"/> 
         </file>
     </folder>
-    <folder name="Windows2">
-        <folder name="Components">
-            <file name="IngestMessageTopComponent.settings" url="IngestMessageTopComponentSettings.xml"/>
-        </folder>
-        <folder name="Modes">
-            <folder name="floatingLeftBottom">
-            </folder>
-            <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml"/>
-        </folder>
-    </folder>
-     <folder name="Actions">
+   
+    <folder name="Actions">
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.ingest.IngestMessagesAction"/>
@@ -393,7 +365,7 @@
 
 
     <!-- MenuActions package -->
-     <folder name="Actions">
+    <folder name="Actions">
         <folder name="Tools">
             <!--<file name="org-sleuthkit-autopsy-menuactions-FileBrowserAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.menuactions.FileBrowserAction"/>
@@ -429,7 +401,7 @@
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
                 <attr name="position" intvalue="175"/>
             </file>
-       </folder>
+        </folder>
     </folder>
     <folder name="Toolbars">
         <folder name="File">
@@ -441,7 +413,7 @@
     </folder>
     
     <!-- Report package -->
-     <folder name="Menu">
+    <folder name="Menu">
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-report-ReportAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportAction.instance"/>
@@ -482,6 +454,28 @@
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportAction.instance"/>
                 <attr name="position" intvalue="102"/>
             </file>
+        </folder>
+    </folder>
+    
+    
+    <!-- Common -->
+    <folder name="Windows2">
+        <folder name="Components">
+            <file name="DirectoryTreeTopComponent.settings" url="DirectoryTreeTopComponentSettings.xml"/>
+          <!--  <file name="DataContentTopComponent.settings" url="DataContentTopComponentSettings.xml"/> -->
+            <file name="IngestMessageTopComponent.settings" url="IngestMessageTopComponentSettings.xml"/>
+        </folder>
+        <folder name="Modes">
+            <folder name="editor">
+            </folder>
+            <folder name="output">
+            </folder>
+            <folder name="outputFloat">
+            </folder>
+            <file name="outputFloat.wsmode" url="outputFloatWsmode.xml"/>
+            <folder name="floatingLeftBottom">
+            </folder>
+            <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml"/>
         </folder>
     </folder>
    

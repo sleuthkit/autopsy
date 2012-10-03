@@ -470,6 +470,7 @@ public final class IngestModuleLoader {
      *
      * @throws IngestModuleLoaderException
      */
+    @SuppressWarnings("unchecked")
     private void autodiscover() throws IngestModuleLoaderException {
 
         Collection<? extends ModuleInfo> moduleInfos = Lookup.getDefault().lookupAll(ModuleInfo.class);
@@ -747,6 +748,7 @@ public final class IngestModuleLoader {
      *
      * @throws IngestModuleLoaderException
      */
+    @SuppressWarnings("unchecked")
     private void instantiate() throws IngestModuleLoaderException {
 
         //clear current
@@ -827,7 +829,7 @@ public final class IngestModuleLoader {
                                 if (imageModuleInstance != null) {
                                     //set arguments
                                     imageModuleInstance.setArguments(pMod.arguments);
-                                    imagePipeline.add((IngestModuleImage) imageModuleInstance);
+                                    imagePipeline.add(imageModuleInstance);
                                 }
 
                             } catch (NoSuchMethodException ex) {
