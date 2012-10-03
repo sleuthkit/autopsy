@@ -28,8 +28,19 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
+import javax.xml.XMLConstants;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.dom.DOMResult;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.validation.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
 
 /**
  *
@@ -38,6 +49,13 @@ import org.openide.modules.Places;
 public class PlatformUtil {
 
     private static String javaPath = null;
+    public static final String keywordXSD = "KeywordsSchema.xsd";
+    public static final String hashsetXSD = "HashsetsSchema.xsd";
+    public static final String pipelineXSD = "PipelineConfigSchema.xsd";
+    public static final String searchEngineXSD = "SearchEngineSchema.xsd";
+    
+           
+            
 
     /**
      * Get root path where the application is installed
@@ -197,5 +215,42 @@ public class PlatformUtil {
             }
         }
         return true;
+    }
+    
+    /** Utility to evaluate XML files against pre-defined schema files.
+     *  The schema files are extracted automatically when this function is called, the xml being validated is not.
+     *  Be sure the xml file is already extracted otherwise the return will be false.
+     * @param xmlfile The xml file to validate, in DOMSource format
+     * @param type The type of schema to validate against, available from PlatformUtil.{keywordXSD, hashsetXSD, searchEngineXSD, pipelineXSD}
+     */
+    public static boolean xmlIsValid(DOMSource xmlfile, String type) throws SAXException{
+        if(!type.equals(hashsetXSD) && !type.equals(keywordXSD) && !type.equals(searchEngineXSD) && !type.equals(pipelineXSD)){
+             return false;
+        }
+      try{
+        extractResourceToUserConfigDir(PlatformUtil.class, type);
+        File schemaLoc = new File(PlatformUtil.getUserConfigDirectory() + File.separator + type);
+        SchemaFactory schm = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        Schema schema = schm.newSchema(schemaLoc);
+        Validator validator = schema.newValidator();
+        DOMResult result = new DOMResult();
+        validator.validate(xmlfile, result);
+        return true;
+      }
+      catch(IOException e){
+            Logger.getLogger(PlatformUtil.class.getName()).log(Level.WARNING, "Unable to load XML file [" + xmlfile.toString() + "] of type ["+type+"]", e);
+            return false;
+        }
+    }
+    
+     /** Utility to evaluate XML files against pre-defined schema files.
+     *  The schema files are extracted automatically when this function is called, the xml being validated is not.
+     *  Be sure the xml file is already extracted otherwise the return will be false.
+     * @param xmlfile The xml file to validate
+     * @param type The type of schema to validate against, available from PlatformUtil.{keywordXSD, hashsetXSD, searchEngineXSD, pipelineXSD}
+     */
+    public static boolean xmlIsValid(Document doc, String type) throws SAXException{
+           DOMSource dms = new DOMSource(doc);
+           return xmlIsValid(dms, type);
     }
 }

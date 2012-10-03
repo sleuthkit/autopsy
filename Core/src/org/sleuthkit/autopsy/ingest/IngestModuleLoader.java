@@ -928,6 +928,12 @@ public final class IngestModuleLoader {
             logger.log(Level.SEVERE, "Error loading pipeline configuration: can't read file.", e);
 
         }
+        try{
+            PlatformUtil.xmlIsValid(ret, PlatformUtil.pipelineXSD);
+        }
+        catch(SAXException e){
+            logger.log(Level.SEVERE, "Error loading pipeine configuration: Could not validate XML against pipeline_config.xsd", e);
+        }
         return ret;
 
     }

@@ -365,6 +365,12 @@ public class HashDbXML {
             logger.log(Level.SEVERE, "Error loading hash sets: can't read file.", e);
 
         }
+        try{
+            PlatformUtil.xmlIsValid(ret, PlatformUtil.hashsetXSD);
+        }
+        catch(SAXException e){
+            logger.log(Level.SEVERE, "Error loading Keyword lists: Could not validate against Hashset.xsd", e);
+        }
         return ret;
 
     }
