@@ -3,18 +3,17 @@
 <filesystem>
     
     <!-- ======================================================
-        Actions
-    ======================================================== -->
+         Actions
+         ====================================================== -->
     <folder name="Actions">
         <folder name="Tools">
-            <file name="org-sleuthkit-autopsy-hashdatabase-HashDbPanelSearchAction.instance">
-            </file>
+            <file name="org-sleuthkit-autopsy-hashdatabase-HashDbPanelSearchAction.instance" />
         </folder>    
     </folder>
     
     <!-- ======================================================
-        Services
-    ======================================================== -->
+         Services
+         ====================================================== -->
     <folder name="Services">
         <file name="org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.directorytree.HashSearchProvider"/>
@@ -23,8 +22,8 @@
     </folder>
     
     <!-- ======================================================
-        Menu
-    ======================================================== -->
+         Menu
+         ====================================================== -->
     <folder name="Menu">
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-hashdatabase-HashDbSearchAction.shadow">
