@@ -59,15 +59,10 @@ public class NewWindowViewAction extends AbstractAction{
 
         DataContentTopComponent dctc = DataContentTopComponent.createUndocked(name, this.contentNode);
 
-        Mode m = WindowManager.getDefault().findMode("output");
+        Mode m = WindowManager.getDefault().findMode("outputFloat");
         m.dockInto(dctc);
         dctc.open();
-
-        // Undocked it (right now, I do it by pressing the "Alt+Shift+D" to undock.
-        // If there's a better way, change the code below..
-        dctc.requestActive();
-        KeyEvent evt = new KeyEvent(dctc, 401, System.currentTimeMillis(), 585, 68, 'D');
-        WindowManager.getDefault().getMainWindow().dispatchEvent(evt);
+        
     }
 
     
