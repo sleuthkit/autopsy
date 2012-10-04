@@ -26,11 +26,19 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.*;
 import javax.swing.border.Border;
 
@@ -41,6 +49,7 @@ import javax.swing.border.Border;
 public class ReportPanel extends javax.swing.JPanel {
 
     private ReportPanelAction rpa;
+    private static final Logger logger = Logger.getLogger(ReportPanel.class.getName());
 
     /**
      * Creates new form ReportPanel
@@ -212,20 +221,33 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             if (jFileChooser1.getSelectedFile() != null) {
                 String path = jFileChooser1.getSelectedFile().toString();
                 for (Map.Entry<ReportModule, String> entry : reports.entrySet()) {
-                    exportReport(path, entry.getKey().getExtension(), entry.getKey());
+                    exportReport(path, entry);
                 }
             }
         }
     }
 
-    private void exportReport(String path, String ext, ReportModule report) {
-
+    private void exportReport(String path, Map.Entry<ReportModule, String> entry) {
+        ReportModule report = entry.getKey();
+        String ext = report.getExtension();
+        String original = entry.getValue();
         String newpath = ReportUtils.changeExtension(path + "-" + report.getName(), ext);
+        InputStream in = null;
+        OutputStream out = null;
         try {
-            report.save(newpath);
+            in = new FileInputStream(new File(original));
+            out = new FileOutputStream(new File(newpath));
+            ReportUtils.copy(in, out);
             JOptionPane.showMessageDialog(this, "\n" + report.getName() + " report has been successfully saved to: \n" + newpath);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "\n" + report.getName() + " report has failed to save! \n Reason:" + e);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "\n" + report.getName() + " report has failed to save! \n Reason:" + ex);
+        } finally {
+            try {
+                in.close();
+                out.close();
+                out.flush();
+            } catch (IOException ex) {
+            }
         }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

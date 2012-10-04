@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
+    
+    <!-- ======================================================
+         Actions
+         ====================================================== -->
     <folder name="Actions">
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-keywordsearch-KeywordSearchConfigurationAction.instance"/>
@@ -10,14 +14,21 @@
             </file>
         </folder>    
     </folder>
+    
+    <!-- ======================================================
+         Services
+        ======================================================= -->
     <folder name="Services">
         <file name="org-sleuthkit-autopsy-keywordsearch-HighlightedMatchesSource.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.datamodel.HighlightLookup"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.keywordsearch.HighlightedMatchesSource.getDefault"/>
             <attr name="position" intvalue="250"/>
         </file>
-       
     </folder>
+    
+    <!-- ======================================================
+         Toolbars
+         ====================================================== -->
     <folder name="Toolbars">
         <folder name="Keyword">
             <attr name="position" intvalue="104"/>

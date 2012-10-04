@@ -8,7 +8,6 @@
             <tocitem text="About Directory Tree" target="org.sleuthkit.autopsy.directorytree.about"/>
             <tocitem text="Image Details Window" target="org.sleuthkit.autopsy.directorytree.image-details"/>
             <tocitem text="Volume Details Window" target="org.sleuthkit.autopsy.directorytree.volume-details"/>
-            <tocitem text="File System Details Window" target="org.sleuthkit.autopsy.directorytree.filesystem-details"/>
         </tocitem>
         <tocitem text="File Search">
             <tocitem text="About File Search" target="org.sleuthkit.autopsy.filesearch.about"/>

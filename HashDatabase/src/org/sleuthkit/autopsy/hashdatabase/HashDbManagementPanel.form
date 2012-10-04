@@ -73,29 +73,6 @@
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                                          <Component id="indexButton" max="32767" attributes="0"/>
-                                          <Component id="nameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          <Component id="locationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          <Component id="typeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          <Component id="indexLabel" alignment="1" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                          <Component id="hashDbTypeLabel" max="32767" attributes="0"/>
-                                          <Component id="hashDbLocationLabel" max="32767" attributes="0"/>
-                                          <Component id="hashDbIndexStatusLabel" alignment="0" max="32767" attributes="0"/>
-                                          <Component id="hashDbNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
-                                  <Component id="useForIngestCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="showInboxMessagesCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
                               <Component id="informationLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="informationSeparator" max="32767" attributes="0"/>
@@ -106,6 +83,36 @@
                               <Component id="optionsSeparator" min="-2" pref="324" max="-2" attributes="0"/>
                           </Group>
                           <Component id="ingestWarningLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Group type="102" attributes="0">
+                                              <Group type="103" groupAlignment="0" attributes="0">
+                                                  <Component id="nameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="locationLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="typeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                              </Group>
+                                              <EmptySpace min="-2" pref="40" max="-2" attributes="0"/>
+                                          </Group>
+                                          <Group type="102" alignment="1" attributes="0">
+                                              <Component id="indexLabel" min="-2" pref="66" max="-2" attributes="0"/>
+                                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                                          </Group>
+                                      </Group>
+                                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                          <Component id="hashDbTypeLabel" max="32767" attributes="0"/>
+                                          <Component id="hashDbLocationLabel" max="32767" attributes="0"/>
+                                          <Component id="hashDbIndexStatusLabel" alignment="0" max="32767" attributes="0"/>
+                                          <Component id="hashDbNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                  </Group>
+                                  <Component id="useForIngestCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="showInboxMessagesCheckBox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="indexButton" alignment="0" min="-2" pref="75" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
                       </Group>
                   </Group>
               </Group>
@@ -145,8 +152,8 @@
                       </Group>
                       <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="indexLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="hashDbIndexStatusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="indexLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
                       <Component id="indexButton" min="-2" max="-2" attributes="0"/>

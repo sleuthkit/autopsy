@@ -28,6 +28,9 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -42,6 +45,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
+import org.sleuthkit.datamodel.SleuthkitJNI;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -166,8 +171,9 @@ public class HashDbXML {
             created = true;
         }
 
-        //load, if fails to load create new
-        if (!load() && !created) {
+        //load, if fails to load create new; save regardless
+        load();
+        if (!created) {
             //create new if failed to load
             save();
         }
@@ -290,38 +296,60 @@ public class HashDbXML {
             Boolean showInboxMessagesBool = Boolean.parseBoolean(showInboxMessages);
             List<String> paths = new ArrayList<String>();
 
-            //parse all words
+            // Parse all paths
             NodeList pathsNList = setEl.getElementsByTagName(PATH_EL);
             final int numPaths = pathsNList.getLength();
-            if(numPaths==0) {
-                logger.log(Level.WARNING, "No paths have been given for the hash_set at index " + i + ".");
-            }
             for (int j = 0; j < numPaths; ++j) {
                 Element pathEl = (Element) pathsNList.item(j);
                 String number = pathEl.getAttribute(PATH_NUMBER_ATTR);
                 String path = pathEl.getTextContent();
-                paths.add(path);
+                
+                // If either the database or it's index exist
+                File database = new File(path);
+                File index = new File(HashDb.toIndexPath(path));
+                if(database.exists() || index.exists()) {
+                    paths.add(path);
+                } else {
+                    // Ask for new path
+                    int ret = JOptionPane.showConfirmDialog(null, "Database " + name + " could not be found at location\n"
+                            + path + "\n"
+                            + " Would you like to search for the file?", "Missing Database", JOptionPane.YES_NO_OPTION);
+                    if (ret == JOptionPane.YES_OPTION) {
+                        String filePath = searchForFile(name);
+                        if(filePath!=null) {
+                            paths.add(filePath);
+                        }
+                    }
+                }
             }
             
             // Check everything was properly set
             if(name.isEmpty()) {
-                logger.log(Level.WARNING, "Name was not set for hash_set at index " + i + ".");
-            } if(type.isEmpty()) {
-                logger.log(Level.SEVERE, "Type was not set for hash_set at index " + i + ", cannot make instance of HashDb class.");
+                logger.log(Level.WARNING, "Name was not set for hash_set at index {0}.", i);
+            }
+            if(type.isEmpty()) {
+                logger.log(Level.SEVERE, "Type was not set for hash_set at index {0}, cannot make instance of HashDb class.", i);
                 return false; // exit because this causes a fatal error
-            } if(useForIngest.isEmpty()) {
-                logger.log(Level.WARNING, "UseForIngest was not set for hash_set at index " + i + ".");
-            } if(showInboxMessages.isEmpty()) {
-                logger.log(Level.WARNING, "ShowInboxMessages was not set for hash_set at index " + i + ".");
+            }
+            if(useForIngest.isEmpty()) {
+                logger.log(Level.WARNING, "UseForIngest was not set for hash_set at index {0}.", i);
+            }
+            if(showInboxMessages.isEmpty()) {
+                logger.log(Level.WARNING, "ShowInboxMessages was not set for hash_set at index {0}.", i);
             }
             
-            DBType typeDBType = DBType.valueOf(type);
-            HashDb set = new HashDb(name, paths, useForIngestBool, showInboxMessagesBool, typeDBType);
-            
-            if(typeDBType == DBType.KNOWN_BAD) {
-                knownBadSets.add(set);
-            } else if(typeDBType == DBType.NSRL) {
-                this.nsrlSet = set;
+            if(paths.isEmpty()) {
+                logger.log(Level.WARNING, "No paths were set for hash_set at index {0}. Removing the database.", i);
+            } else {
+                // No paths for this entry, the user most likely declined to search for them
+                DBType typeDBType = DBType.valueOf(type);
+                HashDb set = new HashDb(name, paths, useForIngestBool, showInboxMessagesBool, typeDBType);
+                
+                if(typeDBType == DBType.KNOWN_BAD) {
+                    knownBadSets.add(set);
+                } else if(typeDBType == DBType.NSRL) {
+                    this.nsrlSet = set;
+                }
             }
         }
         
@@ -336,6 +364,65 @@ public class HashDbXML {
             calculate = Boolean.parseBoolean(value);
         }
         return true;
+    }
+    
+    /**
+     * Ask the user to browse to a new Hash Database file with the same database
+     * name as the one provided. If the names do not match, the database cannot
+     * be added. If the user cancels the search, return null, meaning the user
+     * would like to remove the entry for the missing database.
+     * 
+     * @param name the name of the database to add
+     * @return the file path to the new database, or null if the user wants to
+     *         delete the old database
+     */
+    private String searchForFile(String name) {
+        // Initialize the file chooser and only allow hash databases to be opened
+        JFileChooser fc = new JFileChooser();
+        fc.setDragEnabled(false);
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        String[] EXTENSION = new String[] { "txt", "idx", "hash", "Hash" };
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                "Hash Database File", EXTENSION);
+        fc.setFileFilter(filter);
+        fc.setMultiSelectionEnabled(false);
+
+        int retval = fc.showOpenDialog(null);
+        // If the user selects an appropriate file
+        if (retval == JFileChooser.APPROVE_OPTION) {
+            File f = fc.getSelectedFile();
+            try {
+                String filePath = f.getCanonicalPath();
+                if (HashDb.isIndexPath(filePath)) {
+                    filePath = HashDb.toDatabasePath(filePath);
+                }
+                String derivedName = SleuthkitJNI.getDatabaseName(filePath);
+                // If the database has the same name as before, return it
+                if(derivedName.equals(name)) {
+                    return filePath;
+                } else {
+                    int tryAgain = JOptionPane.showConfirmDialog(null, "Database file cannot be added because it does not have the same name as the original.\n" +
+                            "Would you like to try a different database?", "Invalid File", JOptionPane.YES_NO_OPTION);
+                    if (tryAgain == JOptionPane.YES_OPTION) {
+                        return searchForFile(name);
+                    } else {
+                        return null;
+                    }
+                }
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Couldn't get selected file path.", ex);
+            } catch (TskCoreException ex) {
+                int tryAgain = JOptionPane.showConfirmDialog(null, "Database file you chose cannot be opened.\n" + "If it was just an index, please try to recreate it from the database.\n" +
+                        "Would you like to choose another database?", "Invalid File", JOptionPane.YES_NO_OPTION);
+                if (tryAgain == JOptionPane.YES_OPTION) {
+                    return searchForFile(name);
+                } else {
+                    return null;
+                }
+            }
+        }
+        // Otherwise the user cancelled, so delete the missing entry
+        return null;
     }
 
     private boolean setsFileExists() {
