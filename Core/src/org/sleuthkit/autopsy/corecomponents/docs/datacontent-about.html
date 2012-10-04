@@ -2,7 +2,7 @@
 <html>
     <head>
         <title>About Content Viewers</title>
-        <link rel="stylesheet" href="nbdocs:/org/netbeans/modules/usersguide/ide.css" type="text/css">
+        <link rel="stylesheet" href="nbdocs:/org/sleuthkit/autopsy/core/docs/ide.css" type="text/css">
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     </head>
     <body>
@@ -16,25 +16,35 @@
             <a href="nbdocs:/org/sleuthkit/autopsy/corecomponents/docs/dataresult-about.html">Result Viewer</a> window.
         </p>
 	
-	<p>The Content Viewer area is part of a plug-in framework.  
+    	<p>
+            The Content Viewer area is part of a plug-in framework.  
             You can install modules that will add more viewer types.  
-            This section describes the viewers that come by default with Autopsy.</p>
+            This section describes the viewers that come by default with Autopsy.
+        </p>
 
-	<p>Here's an example of a "Content Viewer" window:</p>
-            <br>
-            &nbsp;&nbsp;&nbsp;&nbsp; <img src="ContentViewer_example.png" alt="Example of Content Viewer Window" />
-	
-	<h2>Default Viewers</h2>
-        <p>
-            Currently, there are 5 main tabs on "Content Viewer" window:
+    	<p>Here's an example of a "Content Viewer" window:</p>
+        <img src="ContentViewer_example.png" alt="Example of Content Viewer Window" />
+    	
+    	<h2>Default Viewers</h2>
+        <p> Currently, there are 5 main tabs on "Content Viewer" window:</p>
         <ul>
-			<li><a href="nbdocs:/org/sleuthkit/autopsy/corecomponents/docs/result-viewer.html">Result Viewer</a></li>
+            <li><a href="nbdocs:/org/sleuthkit/autopsy/corecomponents/docs/result-viewer.html">Result Viewer</a></li>
             <li><a href="nbdocs:/org/sleuthkit/autopsy/corecomponents/docs/hex-content-viewer.html">Hex Content Viewer</a></li>
             <li><a href="nbdocs:/org/sleuthkit/autopsy/corecomponents/docs/string-content-viewer.html">String Content Viewer</a></li>
             <li><a href="nbdocs:/org/sleuthkit/autopsy/corecomponents/docs/picture-content-viewer.html">Media Viewer</a></li>
-		<li><a href="nbdocs:/org/sleuthkit/autopsy/corecomponents/docs/text-content-viewer.html">Text Viewer</a></li>
-            </ul>
-        </p>
+		    <li><a href="nbdocs:/org/sleuthkit/autopsy/corecomponents/docs/text-content-viewer.html">Text Viewer</a></li>
+        </ul>
     </body>
 </html>
-
+<!--
+    Tip: to create a link which will open in an external web browser, try:
+    <object classid="java:org.netbeans.modules.javahelp.BrowserDisplayer">
+        <param name="content" value="http://www.netbeans.org/">
+        <param name="text" value="<html><u>http://www.netbeans.org/</u></html>">
+        <param name="textFontSize" value="medium">
+        <param name="textColor" value="blue">
+    </object>
+    To create a link to a help set from another module, you need to know the code name base and path, e.g.:
+    <a href="nbdocs://org.netbeans.modules.usersguide/org/netbeans/modules/usersguide/configure/configure_options.html">Using the Options Window</a>
+    (This link will behave sanely if that module is disabled or missing.)
+!-->
