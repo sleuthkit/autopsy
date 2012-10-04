@@ -21,8 +21,10 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.Map;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 
 /**
@@ -54,6 +56,31 @@ public class IngestServices {
         return instance;
     }
     
+    /**
+     * Get access to the current Case handle.
+     * Note: When storing the Case database handle as a member variable, 
+     * this method needs to be called within module init() method 
+     * and the handle member variable needs to be updated,
+     * to ensure the correct Case handle is being used if the Case is changed.
+     * 
+     * @return current Case
+     */
+    public Case getCurrentCase() {
+        return Case.getCurrentCase();
+    }
+    
+     /**
+     * Get access to the current Case database handle for using the blackboard.
+     * Note: When storing the Case database handle as a member variable, 
+     * this method needs to be called within module init() method 
+     * and the handle member variable needs to be updated,
+     * to ensure the correct Case database handle is being used if the Case is changed.
+     * 
+     * @return current Case database 
+     */
+    public SleuthkitCase getCurrentSleuthkitCaseDb() {
+        return Case.getCurrentCase().getSleuthkitCase();
+    }
     
     /**
      * Get a logger to be used by the module to log messages to log files
