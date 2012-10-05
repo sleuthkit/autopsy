@@ -27,6 +27,7 @@ import org.openide.filesystems.FileObject;
  * File and dir utilities
  */
 public class FileUtil {
+
     private static final Logger logger = Logger.getLogger(FileUtil.class.getName());
 
     /**
@@ -49,73 +50,76 @@ public class FileUtil {
         return (dirPath.delete());
 
     }
-    
+
     /**
      * Check if given path is a file or directory, then delete it through
      * recursion with path leading to a file as the base case.
-     * 
-     * @param path  the path to the file or directory to delete
-     * @return  true if the File at path is deleted, false otherwise
+     *
+     * @param path the path to the file or directory to delete
+     * @return true if the File at path is deleted, false otherwise
      */
     public static boolean deleteFileDir(File path) {
-            boolean sucess = true;
-            if(path.isFile()) { // If it's a file
-                if(!path.delete()) {
+        boolean sucess = true;
+        if (path.isFile()) { // If it's a file
+            if (!path.delete()) {
+                sucess = false;
+                logger.log(Level.WARNING, "Failed to delete file {0}", path.getPath());
+            }
+        } else { // If it's a directory
+            if (path.list().length == 0) { // If the dir is empty
+                if (!path.delete()) {
                     sucess = false;
-                    logger.log(Level.WARNING, "Failed to delete file {0}", path.getPath());
+                    logger.log(Level.WARNING, "Failed to delete the empty directory at {0}", path.getPath());
                 }
-            } else { // If it's a directory
-                if(path.list().length==0) { // If the dir is empty
-                    if(!path.delete()) {
+            } else {
+                String files[] = path.list();
+                for (String s : files) {
+                    File sub = new File(path, s);
+                    sucess = deleteFileDir(sub);
+                }
+                if (path.list().length == 0) { // Delete the newly-empty dir
+                    if (!path.delete()) {
                         sucess = false;
                         logger.log(Level.WARNING, "Failed to delete the empty directory at {0}", path.getPath());
                     }
                 } else {
-                    String files[] = path.list();
-                    for(String s:files) {
-                        File sub = new File(path, s);
-                        sucess = deleteFileDir(sub);
-                    }
-                    if(path.list().length==0) { // Delete the newly-empty dir
-                        if(!path.delete()) {
-                            sucess = false;
-                            logger.log(Level.WARNING, "Failed to delete the empty directory at {0}", path.getPath());
-                        }
-                    } else {
-                        sucess = false;
-                        logger.log(Level.WARNING, "Directory {0} did not recursivly delete sucessfully.", path.getPath());
-                    }
+                    sucess = false;
+                    logger.log(Level.WARNING, "Directory {0} did not recursivly delete sucessfully.", path.getPath());
                 }
             }
-            return sucess;
         }
-    
-    
+        return sucess;
+    }
+
     /**
-     * 
-     * source - source file object
-     * destFolder - destination folder
-     * newName - file name (without extension) of destination file
-     * overwrite - if new file already exists, overwrite it (delete it first)
-     * @return path to the created file
+     *
+     * source - source file object destFolder - destination folder newName -
+     * file name (without extension) of destination file overwrite - if new file
+     * already exists, overwrite it (delete it first)
+     *
+     * @return path to the created file, or null if file was not created
      */
-        public static String copyFile (String source, String destFolder, String newName, boolean overwrite) 
-                throws IOException {
-         
+    public static String copyFile(String source, String destFolder, String newName, boolean overwrite)
+            throws IOException {
+
+
+        final String destFileName = destFolder + File.separator + newName;
+        final File destFile = new File(destFileName);
+        if (destFile.exists()) {
             if (overwrite) {
-               final String destFileName = destFolder + File.separator + newName;
-               final File destFile = new File(destFileName);
-               if (destFile.exists()) {
-                   destFile.delete();
-               }
+                destFile.delete();
+            } else {
+                return null;
             }
-            
-            final FileObject sourceFileObj = org.openide.filesystems.FileUtil.createData(new File(source));
-            final FileObject destFolderObj = org.openide.filesystems.FileUtil.createData(new File(destFolder));
-            
-            FileObject created = org.openide.filesystems.FileUtil.copyFile(sourceFileObj, destFolderObj, newName);
-            
-            return created.getPath();
-            
         }
+
+
+        final FileObject sourceFileObj = org.openide.filesystems.FileUtil.createData(new File(source));
+        final FileObject destFolderObj = org.openide.filesystems.FileUtil.createData(new File(destFolder));
+
+        FileObject created = org.openide.filesystems.FileUtil.copyFile(sourceFileObj, destFolderObj, newName);
+
+        return created.getPath();
+
+    }
 }
