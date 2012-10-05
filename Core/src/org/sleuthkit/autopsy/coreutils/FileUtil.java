@@ -96,16 +96,24 @@ public class FileUtil {
      * source - source file object
      * destFolder - destination folder
      * newName - file name (without extension) of destination file
-     * newExt - extension of destination file 
+     * overwrite - if new file already exists, overwrite it (delete it first)
      * @return path to the created file
      */
-        public static String copyFile (String source, String destFolder, String newName, String newExtension) 
+        public static String copyFile (String source, String destFolder, String newName, boolean overwrite) 
                 throws IOException {
+         
+            if (overwrite) {
+               final String destFileName = destFolder + File.separator + newName;
+               final File destFile = new File(destFileName);
+               if (destFile.exists()) {
+                   destFile.delete();
+               }
+            }
             
-            FileObject sourceFileObj = org.openide.filesystems.FileUtil.createData(new File(source));
-            FileObject destFolderObj = org.openide.filesystems.FileUtil.createData(new File(destFolder));
+            final FileObject sourceFileObj = org.openide.filesystems.FileUtil.createData(new File(source));
+            final FileObject destFolderObj = org.openide.filesystems.FileUtil.createData(new File(destFolder));
             
-            FileObject created = org.openide.filesystems.FileUtil.copyFile(sourceFileObj, destFolderObj, newName, newExtension);
+            FileObject created = org.openide.filesystems.FileUtil.copyFile(sourceFileObj, destFolderObj, newName);
             
             return created.getPath();
             
