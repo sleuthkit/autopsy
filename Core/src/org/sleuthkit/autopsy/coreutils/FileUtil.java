@@ -19,8 +19,9 @@
 package org.sleuthkit.autopsy.coreutils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.openide.filesystems.FileObject;
 
 /**
  * File and dir utilities
@@ -87,5 +88,26 @@ public class FileUtil {
                 }
             }
             return sucess;
+        }
+    
+    
+    /**
+     * 
+     * source - source file object
+     * destFolder - destination folder
+     * newName - file name (without extension) of destination file
+     * newExt - extension of destination file 
+     * @return path to the created file
+     */
+        public static String copyFile (String source, String destFolder, String newName, String newExtension) 
+                throws IOException {
+            
+            FileObject sourceFileObj = org.openide.filesystems.FileUtil.createData(new File(source));
+            FileObject destFolderObj = org.openide.filesystems.FileUtil.createData(new File(destFolder));
+            
+            FileObject created = org.openide.filesystems.FileUtil.copyFile(sourceFileObj, destFolderObj, newName, newExtension);
+            
+            return created.getPath();
+            
         }
 }
