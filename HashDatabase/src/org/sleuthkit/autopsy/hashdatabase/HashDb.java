@@ -285,7 +285,6 @@ public class HashDb implements Comparable<HashDb> {
             });
             progress.start();
             progress.switchToIndeterminate();
-            indexing = true;
             SleuthkitJNI.createLookupIndex(databasePaths.get(0));
             return null;
         }

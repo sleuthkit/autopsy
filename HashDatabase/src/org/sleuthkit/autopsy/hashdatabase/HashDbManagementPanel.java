@@ -24,6 +24,8 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -44,6 +46,10 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     private HashSetTableModel hashSetTableModel;
     private static final Logger logger = Logger.getLogger(HashDbManagementPanel.class.getName());
     private static boolean ingestRunning = false;
+    
+    //keep track of dbs being indexed, since HashDb objects are reloaded, 
+    //we cannot rely on their status
+    private final Map<String,Boolean>indexingState = new HashMap<String,Boolean>();
 
     HashDbManagementPanel() {
         this.hashSetTableModel = new HashSetTableModel();
@@ -90,7 +96,15 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             this.hashDbIndexStatusLabel.setText("No database selected");
             this.hashDbTypeLabel.setText("No database selected");
         } else {
-            setButtonFromIndexStatus(this.indexButton, this.hashDbIndexStatusLabel, db.status());
+            //check if dn in indexing state
+            String dbName = db.getName();
+            IndexStatus status = db.status();
+            Boolean state = indexingState.get(dbName);
+            if (state != null && state.equals(Boolean.TRUE) ) {
+                status = IndexStatus.INDEXING;
+            }
+            
+            setButtonFromIndexStatus(this.indexButton, this.hashDbIndexStatusLabel, status);
             String shortenPath = db.getDatabasePaths().get(0);
             this.hashDbLocationLabel.setToolTipText(shortenPath);
             if(shortenPath.length() > 50){
@@ -365,6 +379,8 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals(HashDb.EVENT.INDEXING_DONE.toString())) {
+                    //update tracking of indexing status
+                    indexingState.put((String)evt.getNewValue(), Boolean.FALSE);
                     
                     setButtonFromIndexStatus(indexButton, hashDbIndexStatusLabel, current.status());
                     resync();
@@ -373,8 +389,10 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             
         });
         try {
+            indexingState.put(current.getName(), Boolean.TRUE);
             current.createIndex();
         } catch (TskException ex) {
+            indexingState.put(current.getName(), Boolean.FALSE);
             logger.log(Level.WARNING, "Error creating index", ex);
         }
         setButtonFromIndexStatus(indexButton, this.hashDbIndexStatusLabel, current.status());      
