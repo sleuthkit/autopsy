@@ -114,7 +114,8 @@ class Server {
             public String toString() {
                 return "num_chunks";
             }
-        },};
+        },
+    };
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "-1";
     //max content size we can send to Solr
     public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
@@ -137,7 +138,6 @@ class Server {
     private String instanceDir;
     private File solrFolder;
     private ServerAction serverAction;
-    private InputStreamPrinterThread inputRedirectThread;
     private InputStreamPrinterThread errorRedirectThread;
     private String solrUrl;
 
@@ -149,7 +149,6 @@ class Server {
     Server(String url) {
         this.solrUrl = url;
         this.solrServer = new HttpSolrServer(url);
-        
 
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false);
@@ -180,7 +179,9 @@ class Server {
         InputStreamPrinterThread(InputStream stream, String type) {
             this.stream = stream;
             try {
-                final String log = Places.getUserDirectory().getAbsolutePath() + "/var/log/solr.log." + type;
+                final String log = Places.getUserDirectory().getAbsolutePath()
+                        + File.separator + "var" + File.separator + "log"
+                        + File.separator + "solr.log." + type;
                 File outputFile = new File(log.concat(".0"));
                 File first = new File(log.concat(".1"));
                 File second = new File(log.concat(".2"));
@@ -216,14 +217,14 @@ class Server {
                 BufferedWriter bw = new BufferedWriter(osw);
                 String line = null;
                 while (doRun && (line = br.readLine()) != null) {
+                    bw.write(line);
+                    bw.newLine();
                     if (builtType == Version.Type.DEVELOPMENT) {
-                        bw.write(line);
-                        bw.newLine();
-                    //if (builtType == Version.Type.DEVELOPMENT) {
                         //flush buffers if dev version for debugging
                         bw.flush();
                     }
                 }
+                bw.flush();
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
             }
@@ -239,7 +240,18 @@ class Server {
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
         try {
             final String MAX_SOLR_MEM_MB_PAR = " -Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m";
-            final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar";
+            String loggingProperties = " -Djava.util.logging.config.file="
+                    + instanceDir + File.separator + "conf" + File.separator;
+            
+            if (Version.getBuildType().equals(Version.Type.DEVELOPMENT)) {
+                loggingProperties += "logging-development.properties";
+            }
+            else {
+                loggingProperties += "logging-release.properties";
+            }
+            
+            final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret "
+                    + loggingProperties + " -jar start.jar";
             logger.log(Level.INFO, "Starting Solr using: " + SOLR_START_CMD);
             curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
             try {
@@ -250,10 +262,8 @@ class Server {
                 Exceptions.printStackTrace(ex);
             }
             // Handle output to prevent process from blocking
-            inputRedirectThread = new InputStreamPrinterThread(curSolrProcess.getInputStream(), "input");
-            inputRedirectThread.start();
 
-            errorRedirectThread = new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "error");
+            errorRedirectThread = new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "stderr");
             errorRedirectThread.start();
 
         } catch (IOException ex) {
@@ -284,10 +294,6 @@ class Server {
             throw new RuntimeException(ex);
         } finally {
             //stop Solr stream -> log redirect threads
-            if (inputRedirectThread != null) {
-                inputRedirectThread.stopRun();
-                inputRedirectThread = null;
-            }
             if (errorRedirectThread != null) {
                 errorRedirectThread.stopRun();
                 errorRedirectThread = null;
@@ -598,9 +604,9 @@ class Server {
 
         private Core(String name) {
             this.name = name;
-      
+
             this.solrCore = new HttpSolrServer(solrUrl + "/" + name);
-      
+
         }
 
         private QueryResponse query(SolrQuery sq) throws SolrServerException {
