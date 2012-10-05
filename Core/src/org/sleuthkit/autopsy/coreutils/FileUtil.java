@@ -92,12 +92,15 @@ public class FileUtil {
     }
 
     /**
-     *
-     * source - source file object destFolder - destination folder newName -
-     * file name (without extension) of destination file overwrite - if new file
-     * already exists, overwrite it (delete it first)
+     * Copy a file to a new directory, potentially new file name, and overwrite old one if requested
+     * 
+     * @param source source file path
+     * @param destFolder destination folder path
+     * @param newName file name of the copied file, which can be different from original
+     * @param overwrite if new file, already exists, overwrite it (delete it first)
      *
      * @return path to the created file, or null if file was not created
+     * @throws IOException exception thrown if file copying failed
      */
     public static String copyFile(String source, String destFolder, String newName, boolean overwrite)
             throws IOException {
