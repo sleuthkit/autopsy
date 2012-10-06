@@ -97,16 +97,17 @@ public class FileUtil {
      * @param source source file path
      * @param destFolder destination folder path
      * @param newName file name of the copied file, which can be different from original
+     * @param ext file extension, e.g. ".java"
      * @param overwrite if new file, already exists, overwrite it (delete it first)
      *
      * @return path to the created file, or null if file was not created
      * @throws IOException exception thrown if file copying failed
      */
-    public static String copyFile(String source, String destFolder, String newName, boolean overwrite)
+    public static String copyFile(String source, String destFolder, String newName, String ext, boolean overwrite)
             throws IOException {
 
 
-        final String destFileName = destFolder + File.separator + newName;
+        final String destFileName = destFolder + File.separator + newName + ext;
         final File destFile = new File(destFileName);
         if (destFile.exists()) {
             if (overwrite) {
@@ -120,7 +121,8 @@ public class FileUtil {
         final FileObject sourceFileObj = org.openide.filesystems.FileUtil.createData(new File(source));
         final FileObject destFolderObj = org.openide.filesystems.FileUtil.createData(new File(destFolder));
 
-        FileObject created = org.openide.filesystems.FileUtil.copyFile(sourceFileObj, destFolderObj, newName);
+        // org.openide.filesystems.FileUtil.copyFile requires an extension without the "." e.g. "java"
+        FileObject created = org.openide.filesystems.FileUtil.copyFile(sourceFileObj, destFolderObj, newName, ext.substring(1));
 
         return created.getPath();
 
