@@ -236,7 +236,7 @@ class Server {
      * (probably before the server is ready) and doesn't check whether it was
      * successful.
      */
-    void start() {
+    void start() throws KeywordSearchModuleException {
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
         try {
             final String MAX_SOLR_MEM_MB_PAR = " -Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m";
@@ -267,7 +267,7 @@ class Server {
             errorRedirectThread.start();
 
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new KeywordSearchModuleException("Could not start Solr server", ex);
         }
     }
 
@@ -276,7 +276,7 @@ class Server {
      *
      * Waits for the stop command to finish before returning.
      */
-    synchronized void stop() {
+    synchronized void stop() throws KeywordSearchModuleException {
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
             //try graceful shutdown
@@ -289,9 +289,9 @@ class Server {
             }
 
         } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
+            throw new KeywordSearchModuleException("Could not stop Solr server", ex);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new KeywordSearchModuleException("Could not stop Solr server", ex);
         } finally {
             //stop Solr stream -> log redirect threads
             if (errorRedirectThread != null) {
@@ -308,7 +308,7 @@ class Server {
      * @return false if the request failed with a connection error, otherwise
      * true
      */
-    synchronized boolean isRunning() {
+    synchronized boolean isRunning() throws KeywordSearchModuleException {
 
         try {
             // making a status request here instead of just doing solrServer.ping(), because
@@ -325,10 +325,10 @@ class Server {
             if (cause instanceof ConnectException || cause instanceof SocketException || cause instanceof NoHttpResponseException) {
                 return false;
             } else {
-                throw new RuntimeException("Error checking if server is running", ex);
+                throw new KeywordSearchModuleException("Error checking if server is running", ex);
             }
         } catch (IOException ex) {
-            throw new RuntimeException("Error checking if server is running", ex);
+            throw new KeywordSearchModuleException("Error checking if server is running", ex);
         }
 
         return true;
@@ -338,15 +338,15 @@ class Server {
      */
     private volatile Core currentCore = null;
 
-    synchronized void openCore() {
+    synchronized void openCore() throws KeywordSearchModuleException {
         if (currentCore != null) {
-            throw new RuntimeException("Already an open Core!");
+            throw new KeywordSearchModuleException("Already an open Core! Explicitely close Core first. ");
         }
         currentCore = openCore(Case.getCurrentCase());
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
     }
 
-    synchronized void closeCore() {
+    synchronized void closeCore() throws KeywordSearchModuleException {
         if (currentCore == null) {
             return;
         }
@@ -364,7 +364,7 @@ class Server {
      * @param c
      * @return
      */
-    synchronized Core openCore(Case c) {
+    synchronized Core openCore(Case c) throws KeywordSearchModuleException {
         String sep = File.separator;
         String dataDir = c.getCaseDirectory() + sep + "keywordsearch" + sep + "data";
         return this.openCore(DEFAULT_CORE_NAME, new File(dataDir));
@@ -572,7 +572,7 @@ class Server {
      * @param dataDir directory to load/store the core data from/to
      * @return new core
      */
-    private Core openCore(String coreName, File dataDir) {
+    private Core openCore(String coreName, File dataDir) throws KeywordSearchModuleException {
         try {
             if (!dataDir.exists()) {
                 dataDir.mkdirs();
@@ -588,9 +588,9 @@ class Server {
             return new Core(coreName);
 
         } catch (SolrServerException ex) {
-            throw new RuntimeException(ex);
+            throw new KeywordSearchModuleException("Could not open Core", ex);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new KeywordSearchModuleException("Could not open Core", ex);
         }
     }
 
@@ -659,13 +659,13 @@ class Server {
             }
         }
 
-        synchronized void close() {
+        synchronized void close() throws KeywordSearchModuleException {
             try {
                 CoreAdminRequest.unloadCore(this.name, solrServer);
             } catch (SolrServerException ex) {
-                throw new RuntimeException(ex);
+                throw new KeywordSearchModuleException("Cannot close Core", ex);
             } catch (IOException ex) {
-                throw new RuntimeException(ex);
+                throw new KeywordSearchModuleException("Cannot close Core", ex);
             }
         }
 
