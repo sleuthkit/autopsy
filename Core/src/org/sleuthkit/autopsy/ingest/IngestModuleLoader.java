@@ -907,34 +907,6 @@ public final class IngestModuleLoader {
 
     }
 
-    private Document loadDoc() {
-        DocumentBuilderFactory builderFactory =
-                DocumentBuilderFactory.newInstance();
-
-        Document ret = null;
-
-
-        try {
-            DocumentBuilder builder = builderFactory.newDocumentBuilder();
-            ret = builder.parse(
-                    new FileInputStream(absFilePath));
-        } catch (ParserConfigurationException e) {
-            logger.log(Level.SEVERE, "Error loading pipeline configuration: can't initialize parser.", e);
-
-        } catch (SAXException e) {
-            logger.log(Level.SEVERE, "Error loading pipeline configuration: can't parse XML.", e);
-
-        } catch (IOException e) {
-            //error reading file
-            logger.log(Level.SEVERE, "Error loading pipeline configuration: can't read file.", e);
-
-        }
-        if(!PlatformUtil.xmlIsValid(ret, IngestModuleLoader.class, XSDFILE)){
-            logger.log(Level.WARNING, "Error loading pipeine configuration: Could not validate XML against ["+  XSDFILE +"], pipeline may not be accurate.");
-        }
-        return ret;
-
-    }
 
     /**
      * Load XML into raw pipeline representation
@@ -942,7 +914,7 @@ public final class IngestModuleLoader {
      * @throws IngestModuleLoaderException
      */
     private void loadRawPipeline() throws IngestModuleLoaderException {
-        final Document doc = loadDoc();
+        final Document doc = PlatformUtil.loadDoc(IngestModuleLoader.class, absFilePath, XSDFILE);
         if (doc == null) {
             throw new IngestModuleLoaderException("Could not load pipeline config XML: " + this.absFilePath);
         }

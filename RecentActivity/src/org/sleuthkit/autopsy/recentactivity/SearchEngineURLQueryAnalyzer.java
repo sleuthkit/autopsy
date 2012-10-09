@@ -341,17 +341,14 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     public void init(IngestModuleInit initContext) {
         try{
         services = IngestServices.getDefault();   
-        if(PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE)){
-            init2();
-            }
-        else{
-            logger.warning("Unable to find " + XMLFILE);
-           }
+        PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE);
+        init2();
         }
         catch(IOException e){
             logger.log(Level.WARNING, "Unable to find " + XMLFILE , e);
         }
     }
+
     
     private void init2() {
         try {
