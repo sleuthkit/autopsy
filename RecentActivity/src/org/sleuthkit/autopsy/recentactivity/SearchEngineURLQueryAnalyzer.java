@@ -67,7 +67,8 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     public final static String MODULE_VERSION = "1.0";
     private String args;
     
-    public static final String XMLFile = "SEUQAMappings.xml";
+    public static final String XMLFILE = "SEUQAMappings.xml";
+    private static final String XSDFILE = "SearchEngineSchema.xsd";
 
     
     private static String[] searchEngineNames;
@@ -340,43 +341,38 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     public void init(IngestModuleInit initContext) {
         try{
         services = IngestServices.getDefault();   
-        if(PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFile)){
+        if(PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE)){
             init2();
             }
         else{
-            logger.warning("Unable to find " + XMLFile);
+            logger.warning("Unable to find " + XMLFILE);
            }
         }
-        
         catch(IOException e){
-            logger.log(Level.WARNING, "Unable to find " + XMLFile , e);
+            logger.log(Level.WARNING, "Unable to find " + XMLFILE , e);
         }
     }
     
-    private void init2(){
-        try{
-           String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFile;
-           File f = new File(path);
-           System.out.println("Load successful");
-           DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-           DocumentBuilder db = dbf.newDocumentBuilder();
-           Document xml = db.parse(f);
-           xmlinput = xml; 
+    private void init2() {
+        try {
+            String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFILE;
+            File f = new File(path);
+            System.out.println("Load successful");
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document xml = db.parse(f);
+            xmlinput = xml;
 
-           if(!PlatformUtil.xmlIsValid(xml, SearchEngineURLQueryAnalyzer.class, PlatformUtil.searchEngineXSD)){
-              logger.log(Level.WARNING, "Error loading Search Engines: could not validate against " + PlatformUtil.searchEngineXSD);
-           }
-           else{
-               try{
-                   createEngines();
-                   getSearchEngineNames();
-               }
-               catch(Exception e){
-                   logger.log(Level.WARNING, "Unable to create Search Engines!", e);
-               }
-           }
-        }
-        catch(Exception e){
+            if (!PlatformUtil.xmlIsValid(xml, SearchEngineURLQueryAnalyzer.class, XSDFILE)) {
+                logger.log(Level.WARNING, "Error loading Search Engines: could not validate against [" + XSDFILE + "], results may not be accurate.");
+            }
+            try {
+                createEngines();
+                getSearchEngineNames();
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Unable to create Search Engines!", e);
+            }
+        } catch (Exception e) {
             logger.log(Level.WARNING, "Was not able to load SEUQAMappings.xml", e);
         }
     }

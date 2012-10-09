@@ -224,9 +224,6 @@ public class PlatformUtil {
      * @param type The type of schema to validate against, available from PlatformUtil.{keywordXSD, hashsetXSD, searchEngineXSD, pipelineXSD}
      */
     public static boolean xmlIsValid(DOMSource xmlfile, Class clazz, String type) {
-        if(!type.equals(hashsetXSD) && !type.equals(keywordXSD) && !type.equals(searchEngineXSD) && !type.equals(pipelineXSD)){
-             return false;
-        }
       try{
         extractResourceToUserConfigDir(clazz, type);
         File schemaLoc = new File(PlatformUtil.getUserConfigDirectory() + File.separator + type);

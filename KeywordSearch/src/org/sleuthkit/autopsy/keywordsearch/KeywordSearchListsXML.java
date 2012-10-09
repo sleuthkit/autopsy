@@ -69,6 +69,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
     private static final String KEYWORD_SELECTOR_ATTR = "selector";
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private static final String ENCODING = "UTF-8";
+    private static final String XSDFILE = "KeywordsSchema.xsd";
     private static final Logger logger = Logger.getLogger(KeywordSearchListsXML.class.getName());
     private DateFormat dateFormatter;
 
@@ -236,9 +237,8 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
             logger.log(Level.SEVERE, "Error loading keyword list: can't read file.", e);
 
         }
-        if(! PlatformUtil.xmlIsValid(ret, KeywordSearchListsXML.class, PlatformUtil.keywordXSD)){
-            logger.log(Level.SEVERE, "Error loading keyword lists: could not validate against " + PlatformUtil.keywordXSD);
-            return null;
+        if(! PlatformUtil.xmlIsValid(ret, KeywordSearchListsXML.class, XSDFILE)){
+            logger.log(Level.SEVERE, "Error loading keyword lists: could not validate against [" + XSDFILE + "], results may not be accurate");
         }
         
         return ret;

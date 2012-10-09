@@ -57,6 +57,7 @@ public class HashDbXML {
     private static final String PATH_EL = "hash_set_path";
     private static final String PATH_NUMBER_ATTR = "number";
     private static final String CUR_HASHSETS_FILE_NAME = "hashsets.xml";
+    private static final String XSDFILE = "HashsetsSchema.xsd";
     private static final String ENCODING = "UTF-8";
     private static final String CUR_HASHSET_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_HASHSETS_FILE_NAME;
     private static final String SET_CALC = "hash_calculate";
@@ -365,9 +366,8 @@ public class HashDbXML {
             logger.log(Level.SEVERE, "Error loading hash sets: can't read file.", e);
 
         }
-        if(! PlatformUtil.xmlIsValid(ret, HashDbXML.class, PlatformUtil.hashsetXSD)){
-            logger.log(Level.SEVERE, "Error loading hash sets: could not validate against " + PlatformUtil.hashsetXSD);
-            return null;
+        if(! PlatformUtil.xmlIsValid(ret, HashDbXML.class, XSDFILE)){
+            logger.log(Level.SEVERE, "Error loading hash sets: could not validate against [" + XSDFILE + "], reults may not be accurate");
         }
         
         return ret;
