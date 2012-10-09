@@ -33,6 +33,7 @@ import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.validation.*;
@@ -236,12 +237,12 @@ public class PlatformUtil {
         return true;
         }
         catch(SAXException e){
-            Logger.getLogger(PlatformUtil.class.getName()).log(Level.WARNING, "Unable to validate XML file.", e);
+            Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to validate XML file.", e);
             return false;
         }
       }
       catch(IOException e){
-            Logger.getLogger(PlatformUtil.class.getName()).log(Level.WARNING, "Unable to load XML file [" + xmlfile.toString() + "] of type ["+type+"]", e);
+           Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to load XML file [" + xmlfile.toString() + "] of type ["+type+"]", e);
             return false;
         }
     }
@@ -255,5 +256,32 @@ public class PlatformUtil {
     public static boolean xmlIsValid(Document doc, Class clazz, String type){
            DOMSource dms = new DOMSource(doc);
            return xmlIsValid(dms, clazz, type);
+    }
+    
+    public static Document loadDoc(Class clazz, String xmlPath, String xsdPath) {
+        DocumentBuilderFactory builderFactory =
+                DocumentBuilderFactory.newInstance();
+        Document ret = null;
+
+        try {
+            DocumentBuilder builder = builderFactory.newDocumentBuilder();
+            ret = builder.parse(
+                    new FileInputStream(xmlPath));
+        } catch (ParserConfigurationException e) {
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading xml file: can't initialize parser.", e);
+
+        } catch (SAXException e) {
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading xml file: can't parse XML.", e);
+
+        } catch (IOException e) {
+            //error reading file
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading xml file: can't read file.", e);
+
+        }
+        if (!PlatformUtil.xmlIsValid(ret, clazz, xsdPath)) {
+            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading xml file: could not validate against [" + xsdPath + "], results may not be accurate");
+        }
+
+        return ret;
     }
 }

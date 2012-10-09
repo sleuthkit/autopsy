@@ -146,7 +146,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
      */
     @Override
     public boolean load() {
-        final Document doc = loadDoc();
+        final Document doc = PlatformUtil.loadDoc(KeywordSearchListsXML.class, filePath, XSDFILE);
         if (doc == null) {
             return false;
         }
@@ -215,35 +215,6 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
         return true;
     }
 
-    private Document loadDoc() {
-        DocumentBuilderFactory builderFactory =
-                DocumentBuilderFactory.newInstance();
-
-        Document ret = null;
-
-
-        try {
-            DocumentBuilder builder = builderFactory.newDocumentBuilder();
-            ret = builder.parse(
-                    new FileInputStream(filePath));
-        } catch (ParserConfigurationException e) {
-            logger.log(Level.SEVERE, "Error loading keyword list: can't initialize parser.", e);
-
-        } catch (SAXException e) {
-            logger.log(Level.SEVERE, "Error loading keyword list: can't parse XML.", e);
-
-        } catch (IOException e) {
-            //error reading file
-            logger.log(Level.SEVERE, "Error loading keyword list: can't read file.", e);
-
-        }
-        if(! PlatformUtil.xmlIsValid(ret, KeywordSearchListsXML.class, XSDFILE)){
-            logger.log(Level.SEVERE, "Error loading keyword lists: could not validate against [" + XSDFILE + "], results may not be accurate");
-        }
-        
-        return ret;
-
-    }
 
     private boolean saveDoc(final Document doc) {
         TransformerFactory xf = TransformerFactory.newInstance();
