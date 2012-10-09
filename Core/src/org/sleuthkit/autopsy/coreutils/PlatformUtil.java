@@ -223,19 +223,25 @@ public class PlatformUtil {
      * @param xmlfile The xml file to validate, in DOMSource format
      * @param type The type of schema to validate against, available from PlatformUtil.{keywordXSD, hashsetXSD, searchEngineXSD, pipelineXSD}
      */
-    public static boolean xmlIsValid(DOMSource xmlfile, String type) throws SAXException{
+    public static boolean xmlIsValid(DOMSource xmlfile, Class clazz, String type) {
         if(!type.equals(hashsetXSD) && !type.equals(keywordXSD) && !type.equals(searchEngineXSD) && !type.equals(pipelineXSD)){
              return false;
         }
       try{
-        extractResourceToUserConfigDir(PlatformUtil.class, type);
+        extractResourceToUserConfigDir(clazz, type);
         File schemaLoc = new File(PlatformUtil.getUserConfigDirectory() + File.separator + type);
         SchemaFactory schm = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        try{
         Schema schema = schm.newSchema(schemaLoc);
         Validator validator = schema.newValidator();
         DOMResult result = new DOMResult();
         validator.validate(xmlfile, result);
         return true;
+        }
+        catch(SAXException e){
+            Logger.getLogger(PlatformUtil.class.getName()).log(Level.WARNING, "Unable to validate XML file.", e);
+            return false;
+        }
       }
       catch(IOException e){
             Logger.getLogger(PlatformUtil.class.getName()).log(Level.WARNING, "Unable to load XML file [" + xmlfile.toString() + "] of type ["+type+"]", e);
@@ -249,8 +255,8 @@ public class PlatformUtil {
      * @param xmlfile The xml file to validate
      * @param type The type of schema to validate against, available from PlatformUtil.{keywordXSD, hashsetXSD, searchEngineXSD, pipelineXSD}
      */
-    public static boolean xmlIsValid(Document doc, String type) throws SAXException{
+    public static boolean xmlIsValid(Document doc, Class clazz, String type){
            DOMSource dms = new DOMSource(doc);
-           return xmlIsValid(dms, type);
+           return xmlIsValid(dms, clazz, type);
     }
 }

@@ -236,12 +236,11 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
             logger.log(Level.SEVERE, "Error loading keyword list: can't read file.", e);
 
         }
-         try{
-            PlatformUtil.xmlIsValid(ret, PlatformUtil.keywordXSD);
+        if(! PlatformUtil.xmlIsValid(ret, KeywordSearchListsXML.class, PlatformUtil.keywordXSD)){
+            logger.log(Level.SEVERE, "Error loading keyword lists: could not validate against " + PlatformUtil.keywordXSD);
+            return null;
         }
-        catch(SAXException e){
-            logger.log(Level.SEVERE, "Error loading Keyword lists: Could not validate against KeywordSchema.xsd", e);
-        }
+        
         return ret;
 
     }

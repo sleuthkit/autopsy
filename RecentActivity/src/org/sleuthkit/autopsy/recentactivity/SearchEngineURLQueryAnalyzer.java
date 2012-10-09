@@ -35,6 +35,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -70,9 +71,9 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     
     private static String[] searchEngineNames;
-    private static SearchEngine[] engines;
+    private static SearchEngineURLQueryAnalyzer.SearchEngine[] engines;
     private static Document xmlinput;
-    private static final SearchEngine NullEngine = new SearchEngine("NONE", "NONE", new HashMap<String,String>());
+    private static final SearchEngineURLQueryAnalyzer.SearchEngine NullEngine = new SearchEngineURLQueryAnalyzer.SearchEngine("NONE", "NONE", new HashMap<String,String>());
 
     
     //hide public constructor to prevent from instantiation by ingest module loader
@@ -126,7 +127,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     
     private void createEngines(){
         NodeList nlist = xmlinput.getElementsByTagName("SearchEngine");
-        SearchEngine[] listEngines = new SearchEngine[nlist.getLength()];
+        SearchEngineURLQueryAnalyzer.SearchEngine[] listEngines = new SearchEngineURLQueryAnalyzer.SearchEngine[nlist.getLength()];
         for(int i = 0;i < nlist.getLength(); i++){
             try{
                 NamedNodeMap nnm = nlist.item(i).getAttributes();
@@ -142,7 +143,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                    }
                 }
                 
-                SearchEngine Se = new SearchEngine(EngineName, EnginedomainSubstring, splits);
+                SearchEngineURLQueryAnalyzer.SearchEngine Se = new SearchEngineURLQueryAnalyzer.SearchEngine(EngineName, EnginedomainSubstring, splits);
                 System.out.println("Search Engine: " + Se.toString());
                 listEngines[i] = Se;
             }
@@ -162,7 +163,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
      *
      */
     
-    private static SearchEngine getSearchEngine(String domain){     
+    private static SearchEngineURLQueryAnalyzer.SearchEngine getSearchEngine(String domain){     
         if (engines == null) {
             return SearchEngineURLQueryAnalyzer.NullEngine;
         }
@@ -196,7 +197,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
  private String extractSearchEngineQuery(String url){
       String x = "NoQuery";
-      SearchEngine eng = getSearchEngine(url);
+      SearchEngineURLQueryAnalyzer.SearchEngine eng = getSearchEngine(url);
         for(Map.Entry<String,String> kvp : eng.getSplits()){
             if(url.contains(kvp.getKey())){
                 x = split2(url, kvp.getValue());
@@ -257,7 +258,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                 long last_accessed = -1;
                 //from tsk_files
                 FsContent fs = this.extractFiles(image, "select * from tsk_files where `obj_id` = '" + artifact.getObjectID() + "'").get(0); //associated file
-                SearchEngine se = NullEngine;
+                SearchEngineURLQueryAnalyzer.SearchEngine se = NullEngine;
                 //from blackboard_attributes
                 Collection<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("Where `artifact_id` = " + artifact.getArtifactID());
                 getAttributes:
@@ -322,7 +323,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
         if (engines == null) {
             return total;
         }
-        for (SearchEngine se : engines) {
+        for (SearchEngineURLQueryAnalyzer.SearchEngine se : engines) {
            total+= se.getEngineName() + " : "+ se.getTotal() + "\n";
         }
         return total;
@@ -362,8 +363,8 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
            Document xml = db.parse(f);
            xmlinput = xml; 
 
-           if(!PlatformUtil.xmlIsValid(xml, PlatformUtil.searchEngineXSD)){
-              logger.log(Level.WARNING, "Could not parse validate XML file. Terminating SEUQA.");
+           if(!PlatformUtil.xmlIsValid(xml, SearchEngineURLQueryAnalyzer.class, PlatformUtil.searchEngineXSD)){
+              logger.log(Level.WARNING, "Error loading Search Engines: could not validate against " + PlatformUtil.searchEngineXSD);
            }
            else{
                try{
@@ -423,8 +424,8 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     }
 
     @Override
-    public ModuleType getType() {
-        return ModuleType.Image;
+    public IngestModuleAbstract.ModuleType getType() {
+        return IngestModuleAbstract.ModuleType.Image;
     }
 
     @Override
