@@ -21,60 +21,67 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Starts up the Solr server when the module is loaded, and stops it when the
  * application is closed.
- * 
- * In addition, the default KeywordSearch config files (NSRL, Options, Scripts) 
+ *
+ * In addition, the default KeywordSearch config files (NSRL, Options, Scripts)
  * are generated here, if they config files do not already exist.
  */
 public class Installer extends ModuleInstall {
 
+    private static final Logger logger = Logger.getLogger(Installer.class.getName());
+
     @Override
     public void restored() {
 
-      
-        Logger logger = Logger.getLogger(Installer.class.getName());
-
         //Setup the default KeywordSearch configuration files
         KeywordSearchSettings.setDefaults();
-        
 
         Case.addPropertyChangeListener(new KeywordSearch.CaseChangeListener());
 
         Server server = KeywordSearch.getServer();
 
-        if (server.isRunning()) {
-
-            logger.log(Level.WARNING, "Already a Solr server running, maybe leftover from a previous run. Trying to shut it down...");
-
-            // Send the stop message in case there's a solr server lingering from
-            // a previous run of Autopsy that didn't exit cleanly
-            server.stop();
-
+        try {
             if (server.isRunning()) {
-                throw new IllegalStateException("There's already a server running on our port that can't be shutdown.");
-            } else {
-                logger.log(Level.INFO, "Old Solr server shutdown successfully.");
-            }
-        }
 
-        server.start();
+                logger.log(Level.WARNING, "Already a Solr server running, maybe leftover from a previous run. Trying to shut it down...");
+
+                // Send the stop message in case there's a solr server lingering from
+                // a previous run of Autopsy that didn't exit cleanly
+                server.stop();
+
+                if (server.isRunning()) {
+                    throw new IllegalStateException("There's already a server running on our port that can't be shutdown.");
+                } else {
+                    logger.log(Level.INFO, "Old Solr server shutdown successfully.");
+                }
+            }
+
+            server.start();
+        } catch (KeywordSearchModuleException e) {
+            logger.log(Level.WARNING, "Could not start Solr server while loading the module.");
+        }
         try {
             Thread.sleep(1000); // give it a sec
             //TODO: idle loop while waiting for it to start
         } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
+            logger.log(Level.WARNING, "Timer interrupted.");
         }
-        
-        
+
+
     }
 
     @Override
     public boolean closing() {
-        KeywordSearch.getServer().stop();
+        try {
+            KeywordSearch.getServer().stop();
+        } catch (KeywordSearchModuleException ex) {
+            logger.log(Level.INFO, "Could not stop server while unloading the module");
+        }
         return true;
     }
 }

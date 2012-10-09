@@ -39,6 +39,7 @@ import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.ContentStream;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -254,11 +255,26 @@ public class Ingester {
      * attempt to restart Solr and recover from its internal error
      */
     private void hardSolrRestart() {
-        solrServer.closeCore();
-        solrServer.stop();
-
-        solrServer.start();
-        solrServer.openCore();
+        try {
+            solrServer.closeCore();
+        } catch (KeywordSearchModuleException ex) {
+            logger.log(Level.WARNING, "Cannot close core while restating", ex);
+        }
+        try {
+            solrServer.stop();
+        } catch (KeywordSearchModuleException ex) {
+            logger.log(Level.WARNING, "Cannot stop while restating", ex);
+        }
+        try {
+            solrServer.start();
+        } catch (KeywordSearchModuleException ex) {
+            logger.log(Level.WARNING, "Cannot start while restating", ex);
+        }
+        try {
+            solrServer.openCore();
+        } catch (KeywordSearchModuleException ex) {
+            logger.log(Level.WARNING, "Cannot open core while restating", ex);
+        }
     }
 
     /**
