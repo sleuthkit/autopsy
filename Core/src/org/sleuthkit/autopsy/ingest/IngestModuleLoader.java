@@ -107,6 +107,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 public final class IngestModuleLoader {
 
     private static final String PIPELINE_CONFIG_XML = "pipeline_config.xml";
+    private static final String XSDFILE = "PipelineConfigSchema.xsd";
     private String absFilePath;
     private static IngestModuleLoader instance;
     //raw XML pipeline representation for validation
@@ -928,9 +929,8 @@ public final class IngestModuleLoader {
             logger.log(Level.SEVERE, "Error loading pipeline configuration: can't read file.", e);
 
         }
-        if(!PlatformUtil.xmlIsValid(ret, IngestModuleLoader.class, PlatformUtil.pipelineXSD)){
-            logger.log(Level.SEVERE, "Error loading pipeine configuration: Could not validate XML against "+ PlatformUtil.pipelineXSD);
-            return null;
+        if(!PlatformUtil.xmlIsValid(ret, IngestModuleLoader.class, XSDFILE)){
+            logger.log(Level.WARNING, "Error loading pipeine configuration: Could not validate XML against ["+  XSDFILE +"], pipeline may not be accurate.");
         }
         return ret;
 
