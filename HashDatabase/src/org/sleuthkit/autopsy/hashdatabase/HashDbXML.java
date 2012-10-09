@@ -162,6 +162,9 @@ public class HashDbXML {
     public void reload() {
         boolean created = false;
 
+        //TODO clearing the list causes a bug: we lose track of the state
+        //whether db is being indexed, we should somehow preserve the state when loading new HashDb objects
+        
         knownBadSets.clear();
         nsrlSet = null;
         

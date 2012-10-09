@@ -32,8 +32,9 @@ import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- *
- * @author dfickling
+ * Hash database representation of NSRL and Known Bad hash databases
+ * with indexing capability
+ * 
  */
 public class HashDb implements Comparable<HashDb> {
 
