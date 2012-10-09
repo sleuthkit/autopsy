@@ -4,7 +4,7 @@
 <!-- definition of simple elements -->
 <xs:element name="Name" type="xs:string"/>
 
-<xs:element name="Number" nillable="true"/>
+<xs:element name="Number" type="xs:integer" nillable="true"/>
 
 <xs:element name="Examiner" type="xs:string" nillable="true"/>
 
