@@ -1,18 +1,23 @@
-3.0.0 (October 1, 2012)
+3.0.0 (October 10, 2012)
 New features:
-- Added ingest module loader, module auto-discovery and using pipeline_config.xml to manage modules.
 - Integrated plugin installer. 
 - Using Sleuthkit 4.0.
-- New options menu to globally access module's options.
+- New options menu to globally access module options.
+- Added custom ingest module loader and ingest module auto-discovery
 
 Improvements:
 - Updated ingest framework APIs.
-- Merged the main modules into Autopsy-Core module and core external libs into Autopsy-CoreLibs.
+- Merged the main modules into Autopsy-Core and Autopsy-CoreLibs.
 - Improved logging infrastructure.
 - Improved configuration infrastructure.
+- Keyword search: upgraded Lucene from 34 to 36.
 - Build system improvements.
 - Updated documentation.
 
+Bugfixes:
+- UI selection fix in Content and Result viewer
+- UI fixes in Hash Database and Keyword Search options.
+- Excel report export produced corrupt files sometimes.
 
 3.0.0b5 (September 12, 2012)
 New features:
