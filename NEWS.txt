@@ -18,6 +18,7 @@ Bugfixes:
 - UI selection fix in Content and Result viewer
 - UI fixes in Hash Database and Keyword Search options.
 - Excel report export produced corrupt files sometimes.
+- Fix for Keyword Search sometimes not property initializing when application starts.
 
 3.0.0b5 (September 12, 2012)
 New features:
