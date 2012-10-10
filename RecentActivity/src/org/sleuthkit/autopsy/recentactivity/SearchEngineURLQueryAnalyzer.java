@@ -19,6 +19,7 @@
 
 package org.sleuthkit.autopsy.recentactivity;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -33,7 +34,9 @@ import javax.swing.JPanel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
+import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -65,13 +68,14 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     public final static String MODULE_VERSION = "1.0";
     private String args;
     
-    public static final String XMLFile = "SEUQAMappings.xml";
+    public static final String XMLFILE = "SEUQAMappings.xml";
+    private static final String XSDFILE = "SearchEngineSchema.xsd";
 
     
     private static String[] searchEngineNames;
-    private static SearchEngine[] engines;
+    private static SearchEngineURLQueryAnalyzer.SearchEngine[] engines;
     private static Document xmlinput;
-    private static final SearchEngine NullEngine = new SearchEngine("NONE", "NONE", new HashMap<String,String>());
+    private static final SearchEngineURLQueryAnalyzer.SearchEngine NullEngine = new SearchEngineURLQueryAnalyzer.SearchEngine("NONE", "NONE", new HashMap<String,String>());
 
     
     //hide public constructor to prevent from instantiation by ingest module loader
@@ -123,10 +127,9 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                 
     }
     
-    
     private void createEngines(){
         NodeList nlist = xmlinput.getElementsByTagName("SearchEngine");
-        SearchEngine[] listEngines = new SearchEngine[nlist.getLength()];
+        SearchEngineURLQueryAnalyzer.SearchEngine[] listEngines = new SearchEngineURLQueryAnalyzer.SearchEngine[nlist.getLength()];
         for(int i = 0;i < nlist.getLength(); i++){
             try{
                 NamedNodeMap nnm = nlist.item(i).getAttributes();
@@ -142,7 +145,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                    }
                 }
                 
-                SearchEngine Se = new SearchEngine(EngineName, EnginedomainSubstring, splits);
+                SearchEngineURLQueryAnalyzer.SearchEngine Se = new SearchEngineURLQueryAnalyzer.SearchEngine(EngineName, EnginedomainSubstring, splits);
                 System.out.println("Search Engine: " + Se.toString());
                 listEngines[i] = Se;
             }
@@ -162,7 +165,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
      *
      */
     
-    private static SearchEngine getSearchEngine(String domain){     
+    private static SearchEngineURLQueryAnalyzer.SearchEngine getSearchEngine(String domain){     
         if (engines == null) {
             return SearchEngineURLQueryAnalyzer.NullEngine;
         }
@@ -196,7 +199,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
  private String extractSearchEngineQuery(String url){
       String x = "NoQuery";
-      SearchEngine eng = getSearchEngine(url);
+      SearchEngineURLQueryAnalyzer.SearchEngine eng = getSearchEngine(url);
         for(Map.Entry<String,String> kvp : eng.getSplits()){
             if(url.contains(kvp.getKey())){
                 x = split2(url, kvp.getValue());
@@ -257,7 +260,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                 long last_accessed = -1;
                 //from tsk_files
                 FsContent fs = this.extractFiles(image, "select * from tsk_files where `obj_id` = '" + artifact.getObjectID() + "'").get(0); //associated file
-                SearchEngine se = NullEngine;
+                SearchEngineURLQueryAnalyzer.SearchEngine se = NullEngine;
                 //from blackboard_attributes
                 Collection<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("Where `artifact_id` = " + artifact.getArtifactID());
                 getAttributes:
@@ -322,7 +325,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
         if (engines == null) {
             return total;
         }
-        for (SearchEngine se : engines) {
+        for (SearchEngineURLQueryAnalyzer.SearchEngine se : engines) {
            total+= se.getEngineName() + " : "+ se.getTotal() + "\n";
         }
         return total;
@@ -330,6 +333,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
+        logger.info("LAUNCHING COOKIES, ALL COOKIES ENGAGE.");
         this.getURLs(image, controller);
         logger.info("Search Engine stats: \n" + getTotals());
     }
@@ -338,40 +342,40 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     public void init(IngestModuleInit initContext) {
         try{
         services = IngestServices.getDefault();   
-        if(PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFile)){
-            init2();
-            }
-        else{
-            logger.warning("Unable to find " + XMLFile);
-           }
+        PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE);
+        init2();
         }
-        
         catch(IOException e){
-            logger.log(Level.WARNING, "Unable to find " + XMLFile , e);
+            logger.log(Level.WARNING, "Unable to find " + XMLFILE , e);
         }
     }
+
     
-    private void init2(){
-        try{
-                String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFile;
-                File f = new File(path);
-                System.out.println("Load successful");
-                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                DocumentBuilder db = dbf.newDocumentBuilder();
-                Document xml = db.parse(f);
-                xmlinput = xml;
-                try{
-                    createEngines();
-                    getSearchEngineNames();
-                }
-                catch(Exception e){
-                    logger.log(Level.WARNING, "Unable to create Search Engines!", e);
-                }
+    private void init2() {
+        try {
+            String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFILE;
+            File f = new File(path);
+            System.out.println("Load successful");
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document xml = db.parse(f);
+            xmlinput = xml;
+
+            if (!XMLUtil.xmlIsValid(xml, SearchEngineURLQueryAnalyzer.class, XSDFILE)) {
+                logger.log(Level.WARNING, "Error loading Search Engines: could not validate against [" + XSDFILE + "], results may not be accurate.");
             }
-            catch(Exception e){
-                logger.log(Level.WARNING, "Was not able to load SEUQAMappings.xml", e);
+            try {
+                createEngines();
+                getSearchEngineNames();
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Unable to create Search Engines!", e);
             }
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Was not able to load SEUQAMappings.xml", e);
+        }
     }
+
+    
     
     @Override
     public void complete() {
@@ -414,8 +418,8 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     }
 
     @Override
-    public ModuleType getType() {
-        return ModuleType.Image;
+    public IngestModuleAbstract.ModuleType getType() {
+        return IngestModuleAbstract.ModuleType.Image;
     }
 
     @Override
