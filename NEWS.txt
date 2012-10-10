@@ -1,7 +1,7 @@
 3.0.0 (October 10, 2012)
 New features:
+- Using Sleuthkit 4.0.0
 - Integrated plugin installer. 
-- Using Sleuthkit 4.0.
 - New options menu to globally access module options.
 - Added custom ingest module loader and ingest module auto-discovery
 
