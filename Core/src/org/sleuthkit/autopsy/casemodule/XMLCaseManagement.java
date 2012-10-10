@@ -23,17 +23,15 @@ import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.TimeZone;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.xml.parsers.*;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.*;
 import javax.xml.transform.stream.*;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.*;
 
 /**
@@ -622,7 +620,7 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
               doc.getDocumentElement().normalize();
             doc.getDocumentElement().normalize();
             
-            if(!PlatformUtil.xmlIsValid(doc, XMLCaseManagement.class, XSDFILE)){
+            if(!XMLUtil.xmlIsValid(doc, XMLCaseManagement.class, XSDFILE)){
                 Logger.getLogger(XMLCaseManagement.class.getName()).log(Level.WARNING, "Could not validate against [" + XSDFILE + "], results may not accurate");
             }
 

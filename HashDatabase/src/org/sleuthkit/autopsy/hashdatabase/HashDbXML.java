@@ -19,33 +19,19 @@
 package org.sleuthkit.autopsy.hashdatabase;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Result;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.hashdatabase.HashDb.DBType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 public class HashDbXML {
     private static final String ROOT_EL = "hash_sets";
@@ -255,7 +241,7 @@ public class HashDbXML {
             setCalc.setAttribute(SET_VALUE, calcValue);
             rootEl.appendChild(setCalc);
 
-            success = saveDoc(doc);
+            success = XMLUtil.saveDoc(HashDbXML.class, xmlFile, ENCODING, doc);
         } catch (ParserConfigurationException e) {
             logger.log(Level.SEVERE, "Error saving hash sets: can't initialize parser.", e);
         }
@@ -266,7 +252,7 @@ public class HashDbXML {
      * load and parse XML, then dispose
      */
     public boolean load() {
-        final Document doc = PlatformUtil.loadDoc(HashDbXML.class, xmlFile, XSDFILE);
+        final Document doc = XMLUtil.loadDoc(HashDbXML.class, xmlFile, XSDFILE);
         if (doc == null) {
             return false;
         }
@@ -342,41 +328,6 @@ public class HashDbXML {
     private boolean setsFileExists() {
         File f = new File(xmlFile);
         return f.exists() && f.canRead() && f.canWrite();
-    }
-
-
-
-    private boolean saveDoc(final Document doc) {
-        TransformerFactory xf = TransformerFactory.newInstance();
-        xf.setAttribute("indent-number", new Integer(1));
-        boolean success = false;
-        try {
-            Transformer xformer = xf.newTransformer();
-            xformer.setOutputProperty(OutputKeys.METHOD, "xml");
-            xformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            xformer.setOutputProperty(OutputKeys.ENCODING, ENCODING);
-            xformer.setOutputProperty(OutputKeys.STANDALONE, "yes");
-            xformer.setOutputProperty(OutputKeys.VERSION, "1.0");
-            File file = new File(xmlFile);
-            FileOutputStream stream = new FileOutputStream(file);
-            Result out = new StreamResult(new OutputStreamWriter(stream, ENCODING));
-            xformer.transform(new DOMSource(doc), out);
-            stream.flush();
-            stream.close();
-            success = true;
-
-        } catch (UnsupportedEncodingException e) {
-            logger.log(Level.SEVERE, "Should not happen", e);
-        } catch (TransformerConfigurationException e) {
-            logger.log(Level.SEVERE, "Error writing hash sets XML", e);
-        } catch (TransformerException e) {
-            logger.log(Level.SEVERE, "Error writing hash sets XML", e);
-        } catch (FileNotFoundException e) {
-            logger.log(Level.SEVERE, "Error writing hash sets XML: cannot write to file: " + xmlFile, e);
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error writing hash sets XML: cannot write to file: " + xmlFile, e);
-        }
-        return success;
     }
     
     

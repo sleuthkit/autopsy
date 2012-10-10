@@ -57,6 +57,7 @@ public class Case {
 
     private static final String autopsyVer = Version.getVersion(); // current version of autopsy. Change it when the version is changed
     private static final String appName = Version.getName() + " " + autopsyVer;
+    private static final String XSDFILE = "CaseSchema.xsd";
     /**
      * Property name that indicates the name of the current case has changed.
      * Fired with the case is renamed, and when the current case is
@@ -195,7 +196,7 @@ public class Case {
         XMLCaseManagement xmlcm = new XMLCaseManagement();
         xmlcm.create(caseDir, caseName, examiner, caseNumber); // create a new XML config file
         xmlcm.writeFile();
-
+        
         String dbPath = caseDir + File.separator + "autopsy.db";
         SleuthkitCase db = SleuthkitCase.newCase(dbPath);
 
