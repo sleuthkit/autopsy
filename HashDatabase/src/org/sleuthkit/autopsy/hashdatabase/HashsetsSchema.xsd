@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- 
+This file describes the schema definition for its twin files, which are loaded at runtime as notable hash files.
+-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
     <!-- definition of simple types -->
