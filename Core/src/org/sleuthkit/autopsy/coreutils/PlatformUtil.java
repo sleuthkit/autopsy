@@ -21,26 +21,13 @@ package org.sleuthkit.autopsy.coreutils;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.logging.Level;
-import javax.xml.XMLConstants;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.dom.DOMResult;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.validation.*;
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 
 /**
@@ -50,10 +37,7 @@ import org.xml.sax.SAXException;
 public class PlatformUtil {
 
     private static String javaPath = null;
-    public static final String keywordXSD = "KeywordsSchema.xsd";
-    public static final String hashsetXSD = "HashsetsSchema.xsd";
-    public static final String pipelineXSD = "PipelineConfigSchema.xsd";
-    public static final String searchEngineXSD = "SearchEngineSchema.xsd";
+
     
            
             
@@ -218,70 +202,5 @@ public class PlatformUtil {
         return true;
     }
     
-    /** Utility to evaluate XML files against pre-defined schema files.
-     *  The schema files are extracted automatically when this function is called, the xml being validated is not.
-     *  Be sure the xml file is already extracted otherwise the return will be false.
-     * @param xmlfile The xml file to validate, in DOMSource format
-     * @param type The type of schema to validate against, available from PlatformUtil.{keywordXSD, hashsetXSD, searchEngineXSD, pipelineXSD}
-     */
-    public static boolean xmlIsValid(DOMSource xmlfile, Class clazz, String type) {
-      try{
-        extractResourceToUserConfigDir(clazz, type);
-        File schemaLoc = new File(PlatformUtil.getUserConfigDirectory() + File.separator + type);
-        SchemaFactory schm = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-        try{
-        Schema schema = schm.newSchema(schemaLoc);
-        Validator validator = schema.newValidator();
-        DOMResult result = new DOMResult();
-        validator.validate(xmlfile, result);
-        return true;
-        }
-        catch(SAXException e){
-            Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to validate XML file.", e);
-            return false;
-        }
-      }
-      catch(IOException e){
-           Logger.getLogger(clazz.getName()).log(Level.WARNING, "Unable to load XML file [" + xmlfile.toString() + "] of type ["+type+"]", e);
-            return false;
-        }
-    }
-    
-     /** Utility to evaluate XML files against pre-defined schema files.
-     *  The schema files are extracted automatically when this function is called, the xml being validated is not.
-     *  Be sure the xml file is already extracted otherwise the return will be false.
-     * @param xmlfile The xml file to validate
-     * @param type The type of schema to validate against, available from PlatformUtil.{keywordXSD, hashsetXSD, searchEngineXSD, pipelineXSD}
-     */
-    public static boolean xmlIsValid(Document doc, Class clazz, String type){
-           DOMSource dms = new DOMSource(doc);
-           return xmlIsValid(dms, clazz, type);
-    }
-    
-    public static Document loadDoc(Class clazz, String xmlPath, String xsdPath) {
-        DocumentBuilderFactory builderFactory =
-                DocumentBuilderFactory.newInstance();
-        Document ret = null;
-
-        try {
-            DocumentBuilder builder = builderFactory.newDocumentBuilder();
-            ret = builder.parse(
-                    new FileInputStream(xmlPath));
-        } catch (ParserConfigurationException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading xml file: can't initialize parser.", e);
-
-        } catch (SAXException e) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading xml file: can't parse XML.", e);
-
-        } catch (IOException e) {
-            //error reading file
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading xml file: can't read file.", e);
-
-        }
-        if (!PlatformUtil.xmlIsValid(ret, clazz, xsdPath)) {
-            Logger.getLogger(clazz.getName()).log(Level.SEVERE, "Error loading xml file: could not validate against [" + xsdPath + "], results may not be accurate");
-        }
-
-        return ret;
-    }
+  
 }

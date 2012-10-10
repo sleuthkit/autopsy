@@ -34,6 +34,7 @@ import javax.swing.JPanel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstract;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
@@ -360,7 +361,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
             Document xml = db.parse(f);
             xmlinput = xml;
 
-            if (!PlatformUtil.xmlIsValid(xml, SearchEngineURLQueryAnalyzer.class, XSDFILE)) {
+            if (!XMLUtil.xmlIsValid(xml, SearchEngineURLQueryAnalyzer.class, XSDFILE)) {
                 logger.log(Level.WARNING, "Error loading Search Engines: could not validate against [" + XSDFILE + "], results may not be accurate.");
             }
             try {
