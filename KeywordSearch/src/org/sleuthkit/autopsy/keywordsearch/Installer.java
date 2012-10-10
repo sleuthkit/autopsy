@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Exceptions;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
@@ -43,7 +44,7 @@ public class Installer extends ModuleInstall {
 
         Case.addPropertyChangeListener(new KeywordSearch.CaseChangeListener());
 
-        Server server = KeywordSearch.getServer();
+        final Server server = KeywordSearch.getServer();
 
         try {
             if (server.isRunning()) {
@@ -65,11 +66,45 @@ public class Installer extends ModuleInstall {
         } catch (KeywordSearchModuleException e) {
             logger.log(Level.WARNING, "Could not start Solr server while loading the module.");
         }
+
+        //retry if needed
+        int retries = 5;
+        while (retries-- > 0) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                logger.log(Level.WARNING, "Timer interrupted.");
+            }
+
+            try {
+                if (!server.isRunning()) {
+                    logger.log(Level.WARNING, "Server still not running, retries remaining: " + retries);
+                    server.start();
+                } else {
+                    break;
+                }
+            } catch (KeywordSearchModuleException ex) {
+                logger.log(Level.WARNING, "Was unable to start the keyword search server");
+                //retry if has retries
+            }
+
+        } //end of retry while loop
+
+
+        //check if still not running
         try {
-            Thread.sleep(1000); // give it a sec
-            //TODO: idle loop while waiting for it to start
+            Thread.sleep(1000);
         } catch (InterruptedException ex) {
             logger.log(Level.WARNING, "Timer interrupted.");
+        }
+        try {
+            if (!server.isRunning()) {
+                logger.log(Level.SEVERE, "Was unable to start the keyword search server!");
+                reportInitError();
+            }
+        } catch (KeywordSearchModuleException ex) {
+            logger.log(Level.SEVERE, "Was unable to start the keyword search server!");
+            reportInitError();
         }
 
 
@@ -83,5 +118,18 @@ public class Installer extends ModuleInstall {
             logger.log(Level.INFO, "Could not stop server while unloading the module");
         }
         return true;
+    }
+    
+     private void reportInitError() {
+         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
+
+            @Override
+            public void run() {
+                final String msg = "<html>Error initializing Keyword Search module.<br />"
+                        + "File indexing and search will not be functional.<br />"
+                        + "Please try to restart your computer and the application.</html>";
+                KeywordSearchUtil.displayDialog("Error initializing Keyword Search module", msg, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+            }
+        });
     }
 }

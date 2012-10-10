@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWrit
 class KeywordSearch {
 
     private static final String BASE_URL = "http://localhost:8983/solr";
-    private static final Server SERVER = new Server(BASE_URL);
+    private static Server server;
     
     //we want a custom java.util.logging.Logger here for a reason
     //a separate logger from framework logs
@@ -50,8 +50,11 @@ class KeywordSearch {
     static PropertyChangeSupport changeSupport = new PropertyChangeSupport(KeywordSearch.class);
     
     
-    static Server getServer() {
-        return SERVER;
+    static synchronized Server getServer() {
+        if (server == null) {
+            server = new Server(BASE_URL);
+        }
+        return server;
     }
     
     static {
@@ -99,7 +102,7 @@ class KeywordSearch {
                 if (newValue != null) {
                     // new case is open
                     try {
-                        SERVER.openCore();
+                        server.openCore();
                     }
                     catch (Exception e) {
                         logger.log(Level.WARNING, "Could not open core.");
@@ -109,7 +112,7 @@ class KeywordSearch {
                     try {
                         ResultWriter.stopAllWriters();
                         Thread.sleep(2000);
-                        SERVER.closeCore();
+                        server.closeCore();
                     }
                     catch (Exception e) {
                         logger.log(Level.WARNING, "Could not close core.");

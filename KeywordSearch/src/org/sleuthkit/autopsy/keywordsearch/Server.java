@@ -30,7 +30,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.ConnectException;
-import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
@@ -45,6 +44,7 @@ import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.commons.httpclient.NoHttpResponseException;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.response.SolrPingResponse;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
@@ -114,8 +114,7 @@ class Server {
             public String toString() {
                 return "num_chunks";
             }
-        },
-    };
+        },};
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "-1";
     //max content size we can send to Solr
     public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
@@ -155,6 +154,7 @@ class Server {
         instanceDir = solrFolder.getAbsolutePath() + File.separator + "solr";
 
         javaPath = PlatformUtil.getJavaPath();
+        logger.log(Level.INFO, "Created Server instance");
     }
 
     @Override
@@ -240,34 +240,45 @@ class Server {
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
         try {
             final String MAX_SOLR_MEM_MB_PAR = " -Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m";
-            String loggingProperties = " -Djava.util.logging.config.file="
-                    + instanceDir + File.separator + "conf" + File.separator;
             
+            String loggingPropertiesOpt = " -Djava.util.logging.config.file=";
+            String loggingPropertiesFilePath = instanceDir + File.separator + "conf" + File.separator;
+
             if (Version.getBuildType().equals(Version.Type.DEVELOPMENT)) {
-                loggingProperties += "logging-development.properties";
+                loggingPropertiesFilePath += "logging-development.properties";
+            } else {
+                loggingPropertiesFilePath += "logging-release.properties";
             }
-            else {
-                loggingProperties += "logging-release.properties";
-            }
+            loggingPropertiesFilePath = PlatformUtil.getOSFilePath(loggingPropertiesFilePath);
+            final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
             
+            
+
             final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret "
                     + loggingProperties + " -jar start.jar";
             logger.log(Level.INFO, "Starting Solr using: " + SOLR_START_CMD);
+
             curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
+
             try {
-                //block, give time to fully stary the process
+                //block, give time to fully start the process
                 //so if it's restarted solr operations can be resumed seamlessly
                 Thread.sleep(3000);
             } catch (InterruptedException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Timer interrupted");
             }
             // Handle output to prevent process from blocking
 
             errorRedirectThread = new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "stderr");
             errorRedirectThread.start();
 
+
+        } catch (SecurityException ex) {
+            logger.log(Level.WARNING, "Could not start Solr process!", ex);
+            throw new KeywordSearchModuleException("Could not start Solr server process", ex);
         } catch (IOException ex) {
-            throw new KeywordSearchModuleException("Could not start Solr server", ex);
+            logger.log(Level.WARNING, "Could not start Solr server process!", ex);
+            throw new KeywordSearchModuleException("Could not start Solr server process", ex);
         }
     }
 
@@ -301,6 +312,8 @@ class Server {
         }
     }
 
+
+
     /**
      * Tests if there's a Solr server running by sending it a core-status
      * request.
@@ -309,12 +322,12 @@ class Server {
      * true
      */
     synchronized boolean isRunning() throws KeywordSearchModuleException {
-
         try {
             // making a status request here instead of just doing solrServer.ping(), because
             // that doesn't work when there are no cores
 
             CoreAdminRequest.getStatus(null, solrServer);
+            logger.log(Level.INFO, "Solr is running");
         } catch (SolrServerException ex) {
 
             Throwable cause = ex.getRootCause();
@@ -323,12 +336,13 @@ class Server {
             // probably caused by starting a connection as the server finishes
             // shutting down)
             if (cause instanceof ConnectException || cause instanceof SocketException || cause instanceof NoHttpResponseException) {
+                logger.log(Level.INFO, "Solr is not running, cause: " + cause.getMessage());
                 return false;
             } else {
-                throw new KeywordSearchModuleException("Error checking if server is running", ex);
+                throw new KeywordSearchModuleException("Error checking if Solr server is running", ex);
             }
         } catch (IOException ex) {
-            throw new KeywordSearchModuleException("Error checking if server is running", ex);
+            throw new KeywordSearchModuleException("Error checking if Solr server is running", ex);
         }
 
         return true;
@@ -342,6 +356,7 @@ class Server {
         if (currentCore != null) {
             throw new KeywordSearchModuleException("Already an open Core! Explicitely close Core first. ");
         }
+
         currentCore = openCore(Case.getCurrentCase());
         serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
     }
@@ -364,7 +379,7 @@ class Server {
      * @param c
      * @return
      */
-    synchronized Core openCore(Case c) throws KeywordSearchModuleException {
+    private synchronized Core openCore(Case c) throws KeywordSearchModuleException {
         String sep = File.separator;
         String dataDir = c.getCaseDirectory() + sep + "keywordsearch" + sep + "data";
         return this.openCore(DEFAULT_CORE_NAME, new File(dataDir));
@@ -578,6 +593,12 @@ class Server {
                 dataDir.mkdirs();
             }
 
+            //handle a possible scenario when server process might not be fully started
+            if (!this.isRunning()) {
+                logger.log(Level.WARNING, "Core open requested, but server not yet running");
+                throw new KeywordSearchModuleException("Core open requested, but server not yet running");
+            }
+
             CoreAdminRequest.Create createCore = new CoreAdminRequest.Create();
             createCore.setDataDir(dataDir.getAbsolutePath());
             createCore.setInstanceDir(instanceDir);
@@ -585,7 +606,9 @@ class Server {
 
             this.solrServer.request(createCore);
 
-            return new Core(coreName);
+            final Core newCore = new Core(coreName);
+            
+            return newCore;
 
         } catch (SolrServerException ex) {
             throw new KeywordSearchModuleException("Could not open Core", ex);

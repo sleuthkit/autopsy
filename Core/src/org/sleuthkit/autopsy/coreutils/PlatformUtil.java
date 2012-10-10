@@ -38,6 +38,9 @@ import org.openide.modules.Places;
 public class PlatformUtil {
 
     private static String javaPath = null;
+    public static final String OS_NAME_UNKNOWN = "unknown";
+    public static final String OS_VERSION_UNKNOWN = "unknown";
+    public static final String OS_ARCH_UNKNOWN = "unknown";
 
     /**
      * Get root path where the application is installed
@@ -104,6 +107,8 @@ public class PlatformUtil {
         if (jrePath != null && jrePath.exists() && jrePath.isDirectory()) {
             System.out.println("Embedded jre6 directory found in: " + jrePath.getAbsolutePath());
             javaPath = jrePath.getAbsolutePath() + File.separator + "bin" + File.separator + "java";
+            javaPath = getOSFilePath(javaPath);
+
         } else {
             //else use system installed java in PATH env variable
             javaPath = "java";
@@ -125,9 +130,10 @@ public class PlatformUtil {
     public static File getUserDirectory() {
         return Places.getUserDirectory();
     }
-    
+
     /**
      * Get user config directory path
+     *
      * @return Get user config directory path string
      */
     public static String getUserConfigDirectory() {
@@ -136,6 +142,7 @@ public class PlatformUtil {
 
     /**
      * Get log directory path
+     *
      * @return Get log directory path string
      */
     public static String getLogDirectory() {
@@ -156,8 +163,8 @@ public class PlatformUtil {
     }
 
     /**
-     * Utility to extract a resource file to a user configuration directory, if it does not
-     * exist - useful for setting up default configurations.
+     * Utility to extract a resource file to a user configuration directory, if
+     * it does not exist - useful for setting up default configurations.
      *
      * @param resourceClass class in the same package as the resourceFile to
      * extract
@@ -197,5 +204,55 @@ public class PlatformUtil {
             }
         }
         return true;
+    }
+
+    /**
+     * Get operating system name, or OS_NAME_UNKNOWN
+     *
+     * @return OS name string
+     */
+    public static String getOSName() {
+        return System.getProperty("os.name", OS_NAME_UNKNOWN);
+    }
+
+    /**
+     * Get operating system version, or OS_VERSION_UNKNOWN
+     *
+     * @return OS version string
+     */
+    public static String getOSVersion() {
+        return System.getProperty("os.version", OS_VERSION_UNKNOWN);
+    }
+
+    /**
+     * Get OS arch details, or OS_ARCH_UNKNOWN
+     *
+     * @return OS arch string
+     */
+    public static String getOSArch() {
+        return System.getProperty("os.arch", OS_ARCH_UNKNOWN);
+    }
+
+    /**
+     * Check if running on Windows OS
+     *
+     * @return true if running on Windows OS
+     */
+    public static boolean isWindowsOS() {
+        return PlatformUtil.getOSName().toLowerCase().contains("windows");
+    }
+
+    /**
+     * Convert file path (quote) for OS specific
+     *
+     * @param origFilePath
+     * @return converted file path
+     */
+    public static String getOSFilePath(String origFilePath) {
+        if (isWindowsOS()) {
+            return "\"" + origFilePath + "\"";
+        } else {
+            return origFilePath;
+        }
     }
 }
