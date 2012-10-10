@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <!-- definition of simple types -->
+    <xs:attribute name="name" type="xs:string"/>
+    <xs:attribute name="show_inbox_messages" type="xs:boolean"/>
+    <xs:attribute name="type" type="xs:string"/>
+    <xs:attribute name="use_for_ingest" type="xs:boolean"/>
+    <xs:attribute name="number" type="xs:nonNegativeInteger"/>
+    <xs:attribute name="value" type="xs:boolean"/>
+
+
+    <!-- definition of complex types -->
+    <xs:element name="hash_set_path">
+        <xs:complexType mixed="true">
+            <xs:sequence/>
+                <xs:attribute ref="number" default="0" use="optional"/>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="hash_set">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="hash_set_path"/>
+            </xs:sequence>
+              <xs:attribute ref="name" use="required"/>
+              <xs:attribute ref="show_inbox_messages" default="true" use="optional"/>
+              <xs:attribute ref="type" use="required"/>
+              <xs:attribute ref="use_for_ingest" default="false" use="optional"/>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="hash_calculate">
+        <xs:complexType>
+            <xs:sequence/>
+            <xs:attribute ref="value" default="false" use="optional"/>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="hash_sets">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="hash_set" minOccurs="0" maxOccurs="unbounded"/>
+                <xs:element ref="hash_calculate" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

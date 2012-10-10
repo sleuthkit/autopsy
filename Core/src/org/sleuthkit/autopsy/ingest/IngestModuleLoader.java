@@ -21,12 +21,8 @@ package org.sleuthkit.autopsy.ingest;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -51,15 +47,6 @@ import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Result;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import org.openide.filesystems.FileSystem;
 import org.openide.modules.ModuleInfo;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
@@ -71,14 +58,13 @@ import org.reflections.scanners.SubTypesScanner;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-import org.openide.filesystems.Repository;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Class responsible for discovery and loading ingest modules specified in
@@ -107,10 +93,11 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 public final class IngestModuleLoader {
 
     private static final String PIPELINE_CONFIG_XML = "pipeline_config.xml";
+    private static final String XSDFILE = "PipelineConfigSchema.xsd";
     private String absFilePath;
     private static IngestModuleLoader instance;
     //raw XML pipeline representation for validation
-    private final List<XmlPipelineRaw> pipelinesXML;
+    private final List<IngestModuleLoader.XmlPipelineRaw> pipelinesXML;
     //validated pipelines with instantiated modules
     private final List<IngestModuleAbstractFile> filePipeline;
     private final List<IngestModuleImage> imagePipeline;
@@ -132,7 +119,7 @@ public final class IngestModuleLoader {
     };
 
     private IngestModuleLoader() {
-        pipelinesXML = new ArrayList<XmlPipelineRaw>();
+        pipelinesXML = new ArrayList<IngestModuleLoader.XmlPipelineRaw>();
         filePipeline = new ArrayList<IngestModuleAbstractFile>();
         imagePipeline = new ArrayList<IngestModuleImage>();
         dateFormatter = new SimpleDateFormat(DATE_FORMAT);
@@ -193,16 +180,16 @@ public final class IngestModuleLoader {
      * @throws IngestModuleLoaderException
      */
     private void validate() throws IngestModuleLoaderException {
-        for (XmlPipelineRaw pRaw : pipelinesXML) {
+        for (IngestModuleLoader.XmlPipelineRaw pRaw : pipelinesXML) {
             boolean pipelineErrors = false;
 
             //check pipelineType
             String pipelineType = pRaw.type;
 
-            XmlPipelineRaw.PIPELINE_TYPE pType = null;
+            IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE pType = null;
 
             try {
-                pType = XmlPipelineRaw.getPipelineType(pipelineType);
+                pType = IngestModuleLoader.XmlPipelineRaw.getPipelineType(pipelineType);
             } catch (IllegalArgumentException e) {
                 pipelineErrors = true;
                 logger.log(Level.SEVERE, "Unknown pipeline type: " + pipelineType);
@@ -211,7 +198,7 @@ public final class IngestModuleLoader {
             //ordering store
             Map<Integer, Integer> orderings = new HashMap<Integer, Integer>();
 
-            for (XmlModuleRaw pMod : pRaw.modules) {
+            for (IngestModuleLoader.XmlModuleRaw pMod : pRaw.modules) {
                 boolean moduleErrors = false;
 
                 //record ordering for validation
@@ -224,7 +211,7 @@ public final class IngestModuleLoader {
 
                 //check pipelineType
                 String modType = pMod.type;
-                if (!modType.equals(XmlModuleRaw.MODULE_TYPE.PLUGIN.toString())) {
+                if (!modType.equals(IngestModuleLoader.XmlModuleRaw.MODULE_TYPE.PLUGIN.toString())) {
                     moduleErrors = true;
                     logger.log(Level.SEVERE, "Unknown module type: " + modType);
                 }
@@ -267,7 +254,7 @@ public final class IngestModuleLoader {
                     }
 
                     //if file module: check if has public static getDefault()
-                    if (pType == XmlPipelineRaw.PIPELINE_TYPE.FILE_ANALYSIS) {
+                    if (pType == IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.FILE_ANALYSIS) {
                         try {
                             Method getDefaultMethod = moduleClass.getMethod("getDefault");
                             int modifiers = getDefaultMethod.getModifiers();
@@ -285,7 +272,7 @@ public final class IngestModuleLoader {
                             Exceptions.printStackTrace(ex);
                         }
                     } //if image module: check if has public constructor with no args
-                    else if (pType == XmlPipelineRaw.PIPELINE_TYPE.IMAGE_ANALYSIS) {
+                    else if (pType == IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.IMAGE_ANALYSIS) {
                         try {
                             Constructor<?> constr = moduleClass.getConstructor();
                             int modifiers = constr.getModifiers();
@@ -519,12 +506,12 @@ public final class IngestModuleLoader {
                     boolean exists = false;
                     Class<IngestModuleAbstractFile> foundClass = (Class<IngestModuleAbstractFile>) it.next();
 
-                    for (XmlPipelineRaw rawP : pipelinesXML) {
-                        if (!rawP.type.equals(XmlPipelineRaw.PIPELINE_TYPE.FILE_ANALYSIS.toString())) {
+                    for (IngestModuleLoader.XmlPipelineRaw rawP : pipelinesXML) {
+                        if (!rawP.type.equals(IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.FILE_ANALYSIS.toString())) {
                             continue; //skip
                         }
 
-                        for (XmlModuleRaw rawM : rawP.modules) {
+                        for (IngestModuleLoader.XmlModuleRaw rawM : rawP.modules) {
                             //logger.log(Level.INFO, "CLASS NAME : " + foundClass.getName());
                             if (foundClass.getName().equals(rawM.location)) {
                                 exists = true;
@@ -539,7 +526,7 @@ public final class IngestModuleLoader {
                     if (exists == false) {
                         logger.log(Level.INFO, "Discovered a new file module to load: " + foundClass.getName());
                         //ADD MODULE
-                        addModuleToRawPipeline(foundClass, XmlPipelineRaw.PIPELINE_TYPE.FILE_ANALYSIS);
+                        addModuleToRawPipeline(foundClass, IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.FILE_ANALYSIS);
                         modulesChanged = true;
                     }
 
@@ -550,13 +537,13 @@ public final class IngestModuleLoader {
                     boolean exists = false;
                     Class<IngestModuleImage> foundClass = (Class<IngestModuleImage>) it.next();
 
-                    for (XmlPipelineRaw rawP : pipelinesXML) {
-                        if (!rawP.type.equals(XmlPipelineRaw.PIPELINE_TYPE.IMAGE_ANALYSIS.toString())) {
+                    for (IngestModuleLoader.XmlPipelineRaw rawP : pipelinesXML) {
+                        if (!rawP.type.equals(IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.IMAGE_ANALYSIS.toString())) {
                             continue; //skip
                         }
 
 
-                        for (XmlModuleRaw rawM : rawP.modules) {
+                        for (IngestModuleLoader.XmlModuleRaw rawM : rawP.modules) {
                             //logger.log(Level.INFO, "CLASS NAME : " + foundClass.getName());
                             if (foundClass.getName().equals(rawM.location)) {
                                 exists = true;
@@ -571,7 +558,7 @@ public final class IngestModuleLoader {
                     if (exists == false) {
                         logger.log(Level.INFO, "Discovered a new image module to load: " + foundClass.getName());
                         //ADD MODULE 
-                        addModuleToRawPipeline(foundClass, XmlPipelineRaw.PIPELINE_TYPE.IMAGE_ANALYSIS);
+                        addModuleToRawPipeline(foundClass, IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.IMAGE_ANALYSIS);
                         modulesChanged = true;
                     }
 
@@ -579,7 +566,7 @@ public final class IngestModuleLoader {
 
                 if (modulesChanged) {
                     save();
-                    pcs.firePropertyChange(Event.ModulesReloaded.toString(), 0, 1);
+                    pcs.firePropertyChange(IngestModuleLoader.Event.ModulesReloaded.toString(), 0, 1);
                 }
 
                 /*
@@ -604,7 +591,7 @@ public final class IngestModuleLoader {
      * class path
      * @param newOrder new order to set
      */
-    void setModuleOrder(XmlPipelineRaw.PIPELINE_TYPE pipeLineType, String moduleLocation, int newOrder) throws IngestModuleLoaderException {
+    void setModuleOrder(IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE pipeLineType, String moduleLocation, int newOrder) throws IngestModuleLoaderException {
         throw new IngestModuleLoaderException("Not yet implemented");
     }
 
@@ -615,22 +602,22 @@ public final class IngestModuleLoader {
      * @param moduleClass
      * @param pipelineType
      */
-    private void addModuleToRawPipeline(Class<?> moduleClass, XmlPipelineRaw.PIPELINE_TYPE pipelineType) throws IngestModuleLoaderException {
+    private void addModuleToRawPipeline(Class<?> moduleClass, IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE pipelineType) throws IngestModuleLoaderException {
         String moduleLocation = moduleClass.getName();
 
-        XmlModuleRaw modRaw = new XmlModuleRaw();
+        IngestModuleLoader.XmlModuleRaw modRaw = new IngestModuleLoader.XmlModuleRaw();
         modRaw.arguments = ""; //default, no arguments
         modRaw.location = moduleLocation;
         modRaw.order = Integer.MAX_VALUE - (numModDiscovered++); //add to end
-        modRaw.type = XmlModuleRaw.MODULE_TYPE.PLUGIN.toString();
+        modRaw.type = IngestModuleLoader.XmlModuleRaw.MODULE_TYPE.PLUGIN.toString();
         modRaw.valid = false; //to be validated
 
         //save the current numModDiscovered
         ModuleSettings.setConfigSetting(IngestManager.MODULE_PROPERTIES, CUR_MODULES_DISCOVERED_SETTING, Integer.toString(numModDiscovered));
 
         //find the pipeline of that type
-        XmlPipelineRaw pipeline = null;
-        for (XmlPipelineRaw rawP : this.pipelinesXML) {
+        IngestModuleLoader.XmlPipelineRaw pipeline = null;
+        for (IngestModuleLoader.XmlPipelineRaw rawP : this.pipelinesXML) {
             if (rawP.type.equals(pipelineType.toString())) {
                 pipeline = rawP;
                 break;
@@ -681,65 +668,32 @@ public final class IngestModuleLoader {
             Comment comment = doc.createComment("Saved by: " + getClass().getName()
                     + " on: " + dateFormatter.format(System.currentTimeMillis()));
             doc.appendChild(comment);
-            Element rootEl = doc.createElement(XmlPipelineRaw.XML_PIPELINE_ROOT);
+            Element rootEl = doc.createElement(IngestModuleLoader.XmlPipelineRaw.XML_PIPELINE_ROOT);
             doc.appendChild(rootEl);
 
-            for (XmlPipelineRaw rawP : this.pipelinesXML) {
-                Element pipelineEl = doc.createElement(XmlPipelineRaw.XML_PIPELINE_EL);
-                pipelineEl.setAttribute(XmlPipelineRaw.XML_PIPELINE_TYPE_ATTR, rawP.type);
+            for (IngestModuleLoader.XmlPipelineRaw rawP : this.pipelinesXML) {
+                Element pipelineEl = doc.createElement(IngestModuleLoader.XmlPipelineRaw.XML_PIPELINE_EL);
+                pipelineEl.setAttribute(IngestModuleLoader.XmlPipelineRaw.XML_PIPELINE_TYPE_ATTR, rawP.type);
                 rootEl.appendChild(pipelineEl);
 
-                for (XmlModuleRaw rawM : rawP.modules) {
-                    Element moduleEl = doc.createElement(XmlModuleRaw.XML_MODULE_EL);
+                for (IngestModuleLoader.XmlModuleRaw rawM : rawP.modules) {
+                    Element moduleEl = doc.createElement(IngestModuleLoader.XmlModuleRaw.XML_MODULE_EL);
 
-                    moduleEl.setAttribute(XmlModuleRaw.XML_MODULE_LOC_ATTR, rawM.location);
-                    moduleEl.setAttribute(XmlModuleRaw.XML_MODULE_TYPE_ATTR, rawM.type);
-                    moduleEl.setAttribute(XmlModuleRaw.XML_MODULE_ORDER_ATTR, Integer.toString(rawM.order));
-                    moduleEl.setAttribute(XmlModuleRaw.XML_MODULE_TYPE_ATTR, rawM.type);
+                    moduleEl.setAttribute(IngestModuleLoader.XmlModuleRaw.XML_MODULE_LOC_ATTR, rawM.location);
+                    moduleEl.setAttribute(IngestModuleLoader.XmlModuleRaw.XML_MODULE_TYPE_ATTR, rawM.type);
+                    moduleEl.setAttribute(IngestModuleLoader.XmlModuleRaw.XML_MODULE_ORDER_ATTR, Integer.toString(rawM.order));
+                    moduleEl.setAttribute(IngestModuleLoader.XmlModuleRaw.XML_MODULE_TYPE_ATTR, rawM.type);
 
                     pipelineEl.appendChild(moduleEl);
                 }
             }
 
-            saveDoc(doc);
+            XMLUtil.saveDoc(IngestModuleLoader.class, absFilePath, ENCODING, doc);
             logger.log(Level.INFO, "Pipeline configuration saved to: " + this.absFilePath);
         } catch (ParserConfigurationException e) {
             logger.log(Level.SEVERE, "Error saving pipeline config XML: can't initialize parser.", e);
         }
 
-    }
-
-    private boolean saveDoc(final Document doc) {
-        TransformerFactory xf = TransformerFactory.newInstance();
-        xf.setAttribute("indent-number", new Integer(1));
-        boolean success = false;
-        try {
-            Transformer xformer = xf.newTransformer();
-            xformer.setOutputProperty(OutputKeys.METHOD, "xml");
-            xformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            xformer.setOutputProperty(OutputKeys.ENCODING, ENCODING);
-            xformer.setOutputProperty(OutputKeys.STANDALONE, "yes");
-            xformer.setOutputProperty(OutputKeys.VERSION, "1.0");
-            File file = new File(this.absFilePath);
-            FileOutputStream stream = new FileOutputStream(file);
-            Result out = new StreamResult(new OutputStreamWriter(stream, ENCODING));
-            xformer.transform(new DOMSource(doc), out);
-            stream.flush();
-            stream.close();
-            success = true;
-
-        } catch (UnsupportedEncodingException e) {
-            logger.log(Level.SEVERE, "Should not happen", e);
-        } catch (TransformerConfigurationException e) {
-            logger.log(Level.SEVERE, "Error writing pipeline config XML", e);
-        } catch (TransformerException e) {
-            logger.log(Level.SEVERE, "Error writing pipeline config XML", e);
-        } catch (FileNotFoundException e) {
-            logger.log(Level.SEVERE, "Error writing pipeline config XML: cannot write to file: " + this.absFilePath, e);
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error writing pipeline config XML: cannot write to file: " + this.absFilePath, e);
-        }
-        return success;
     }
 
     /**
@@ -762,24 +716,24 @@ public final class IngestModuleLoader {
 
         validate();
 
-        for (XmlPipelineRaw pRaw : pipelinesXML) {
+        for (IngestModuleLoader.XmlPipelineRaw pRaw : pipelinesXML) {
             if (pRaw.valid == false) {
                 //skip invalid pipelines
                 continue;
             }
 
             //sort modules by order parameter, in case XML order is different
-            Collections.sort(pRaw.modules, new Comparator<XmlModuleRaw>() {
+            Collections.sort(pRaw.modules, new Comparator<IngestModuleLoader.XmlModuleRaw>() {
                 @Override
-                public int compare(XmlModuleRaw o1, XmlModuleRaw o2) {
+                public int compare(IngestModuleLoader.XmlModuleRaw o1, IngestModuleLoader.XmlModuleRaw o2) {
                     return Integer.valueOf(o1.order).compareTo(Integer.valueOf(o2.order));
                 }
             });
 
             //check pipelineType, add  to right pipeline collection
-            XmlPipelineRaw.PIPELINE_TYPE pType = XmlPipelineRaw.getPipelineType(pRaw.type);
+            IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE pType = IngestModuleLoader.XmlPipelineRaw.getPipelineType(pRaw.type);
 
-            for (XmlModuleRaw pMod : pRaw.modules) {
+            for (IngestModuleLoader.XmlModuleRaw pMod : pRaw.modules) {
                 try {
                     if (pMod.valid == false) {
                         //skip invalid modules
@@ -906,31 +860,6 @@ public final class IngestModuleLoader {
 
     }
 
-    private Document loadDoc() {
-        DocumentBuilderFactory builderFactory =
-                DocumentBuilderFactory.newInstance();
-
-        Document ret = null;
-
-
-        try {
-            DocumentBuilder builder = builderFactory.newDocumentBuilder();
-            ret = builder.parse(
-                    new FileInputStream(absFilePath));
-        } catch (ParserConfigurationException e) {
-            logger.log(Level.SEVERE, "Error loading pipeline configuration: can't initialize parser.", e);
-
-        } catch (SAXException e) {
-            logger.log(Level.SEVERE, "Error loading pipeline configuration: can't parse XML.", e);
-
-        } catch (IOException e) {
-            //error reading file
-            logger.log(Level.SEVERE, "Error loading pipeline configuration: can't read file.", e);
-
-        }
-        return ret;
-
-    }
 
     /**
      * Load XML into raw pipeline representation
@@ -938,7 +867,7 @@ public final class IngestModuleLoader {
      * @throws IngestModuleLoaderException
      */
     private void loadRawPipeline() throws IngestModuleLoaderException {
-        final Document doc = loadDoc();
+        final Document doc = XMLUtil.loadDoc(IngestModuleLoader.class, absFilePath, XSDFILE);
         if (doc == null) {
             throw new IngestModuleLoaderException("Could not load pipeline config XML: " + this.absFilePath);
         }
@@ -948,7 +877,7 @@ public final class IngestModuleLoader {
             logger.log(Level.SEVERE, msg);
             throw new IngestModuleLoaderException(msg);
         }
-        NodeList pipelineNodes = root.getElementsByTagName(XmlPipelineRaw.XML_PIPELINE_EL);
+        NodeList pipelineNodes = root.getElementsByTagName(IngestModuleLoader.XmlPipelineRaw.XML_PIPELINE_EL);
         int numPipelines = pipelineNodes.getLength();
         if (numPipelines == 0) {
             throw new IngestModuleLoaderException("No pipelines found in the pipeline configuration: " + absFilePath);
@@ -956,15 +885,15 @@ public final class IngestModuleLoader {
         for (int pipelineNum = 0; pipelineNum < numPipelines; ++pipelineNum) {
             //process pipelines
             Element pipelineEl = (Element) pipelineNodes.item(pipelineNum);
-            final String pipelineType = pipelineEl.getAttribute(XmlPipelineRaw.XML_PIPELINE_TYPE_ATTR);
+            final String pipelineType = pipelineEl.getAttribute(IngestModuleLoader.XmlPipelineRaw.XML_PIPELINE_TYPE_ATTR);
             logger.log(Level.INFO, "Found pipeline type: " + pipelineType);
 
-            XmlPipelineRaw pipelineRaw = new XmlPipelineRaw();
+            IngestModuleLoader.XmlPipelineRaw pipelineRaw = new IngestModuleLoader.XmlPipelineRaw();
             pipelineRaw.type = pipelineType;
             this.pipelinesXML.add(pipelineRaw);
 
             //process modules
-            NodeList modulesNodes = pipelineEl.getElementsByTagName(XmlModuleRaw.XML_MODULE_EL);
+            NodeList modulesNodes = pipelineEl.getElementsByTagName(IngestModuleLoader.XmlModuleRaw.XML_MODULE_EL);
             int numModules = modulesNodes.getLength();
             if (numModules == 0) {
                 logger.log(Level.WARNING, "Pipeline: " + pipelineType + " has no modules defined.");
@@ -972,11 +901,11 @@ public final class IngestModuleLoader {
             for (int moduleNum = 0; moduleNum < numModules; ++moduleNum) {
                 //process modules
                 Element moduleEl = (Element) modulesNodes.item(moduleNum);
-                final String moduleType = moduleEl.getAttribute(XmlModuleRaw.XML_MODULE_TYPE_ATTR);
-                final String moduleOrder = moduleEl.getAttribute(XmlModuleRaw.XML_MODULE_ORDER_ATTR);
-                final String moduleLoc = moduleEl.getAttribute(XmlModuleRaw.XML_MODULE_LOC_ATTR);
-                final String moduleArgs = moduleEl.getAttribute(XmlModuleRaw.XML_MODULE_ARGS_ATTR);
-                XmlModuleRaw module = new XmlModuleRaw();
+                final String moduleType = moduleEl.getAttribute(IngestModuleLoader.XmlModuleRaw.XML_MODULE_TYPE_ATTR);
+                final String moduleOrder = moduleEl.getAttribute(IngestModuleLoader.XmlModuleRaw.XML_MODULE_ORDER_ATTR);
+                final String moduleLoc = moduleEl.getAttribute(IngestModuleLoader.XmlModuleRaw.XML_MODULE_LOC_ATTR);
+                final String moduleArgs = moduleEl.getAttribute(IngestModuleLoader.XmlModuleRaw.XML_MODULE_ARGS_ATTR);
+                IngestModuleLoader.XmlModuleRaw module = new IngestModuleLoader.XmlModuleRaw();
                 module.arguments = moduleArgs;
                 module.location = moduleLoc;
                 try {
@@ -1073,8 +1002,8 @@ public final class IngestModuleLoader {
          * @param s string equals to one of the types toString() representation
          * @return matching type
          */
-        static PIPELINE_TYPE getPipelineType(String s) throws IllegalArgumentException {
-            PIPELINE_TYPE[] types = PIPELINE_TYPE.values();
+        static IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE getPipelineType(String s) throws IllegalArgumentException {
+            IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE[] types = IngestModuleLoader.XmlPipelineRaw.PIPELINE_TYPE.values();
             for (int i = 0; i < types.length; ++i) {
                 if (types[i].toString().equals(s)) {
                     return types[i];
@@ -1086,7 +1015,7 @@ public final class IngestModuleLoader {
         private static final String XML_PIPELINE_EL = "PIPELINE";
         private static final String XML_PIPELINE_TYPE_ATTR = "type";
         String type;
-        List<XmlModuleRaw> modules = new ArrayList<XmlModuleRaw>();
+        List<IngestModuleLoader.XmlModuleRaw> modules = new ArrayList<IngestModuleLoader.XmlModuleRaw>();
         boolean valid = false; // if passed validation
     }
 

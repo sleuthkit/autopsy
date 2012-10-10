@@ -21,15 +21,14 @@ package org.sleuthkit.autopsy.coreutils;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
+
 
 /**
  *
@@ -41,6 +40,10 @@ public class PlatformUtil {
     public static final String OS_NAME_UNKNOWN = "unknown";
     public static final String OS_VERSION_UNKNOWN = "unknown";
     public static final String OS_ARCH_UNKNOWN = "unknown";
+
+    
+           
+            
 
     /**
      * Get root path where the application is installed

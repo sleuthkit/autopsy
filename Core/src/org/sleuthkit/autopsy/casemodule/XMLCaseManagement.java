@@ -23,16 +23,15 @@ import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.TimeZone;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.xml.parsers.*;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.*;
 import javax.xml.transform.stream.*;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.*;
 
 /**
@@ -46,6 +45,7 @@ import org.w3c.dom.*;
  * @author jantonius
  */
 public class XMLCaseManagement implements CaseConfigFileInterface{
+    final static String XSDFILE = "CaseSchema.xsd";
     final static String TOP_ROOT_NAME = "AutopsyCase";
     final static String CASE_ROOT_NAME = "Case";
 
@@ -617,7 +617,12 @@ public class XMLCaseManagement implements CaseConfigFileInterface{
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
             doc = db.parse(file);
+              doc.getDocumentElement().normalize();
             doc.getDocumentElement().normalize();
+            
+            if(!XMLUtil.xmlIsValid(doc, XMLCaseManagement.class, XSDFILE)){
+                Logger.getLogger(XMLCaseManagement.class.getName()).log(Level.WARNING, "Could not validate against [" + XSDFILE + "], results may not accurate");
+            }
 
             Element rootEl = doc.getDocumentElement();
             String rootName = rootEl.getNodeName();
