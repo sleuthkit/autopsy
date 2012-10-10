@@ -31,15 +31,15 @@
          ====================================================== -->
     <folder name="Actions">
         <folder name="File">
-            <file name="org-sleuthkit-autopsy-casemodule-AddImageAction.instance" />
-            <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance" />
+            <file name="org-sleuthkit-autopsy-casemodule-AddImageAction.instance"/>
+            <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseNewAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseNewAction"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_CaseNewAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
-            <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance" />
+            <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseOpenAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseOpenAction"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_OpenAction"/>
@@ -52,7 +52,7 @@
                 <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
-            <file name="org-sleuthkit-autopsy-casemodule-RecentCases.instance" />
+            <file name="org-sleuthkit-autopsy-casemodule-RecentCases.instance"/>
             <!--<file name="org-sleuthkit-autopsy-casemodule-NewCaseAct.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.NewCaseAct"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_NewCaseAct"/>
@@ -73,7 +73,7 @@
             </file>-->
         </folder>
         <folder name="Tools">
-            <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.instance" />
+            <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.instance"/>
             <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.ingest.IngestMessagesAction"/>
             </file>
@@ -117,7 +117,7 @@
             </file>-->
         </folder>
         <folder name="View">
-            <file name="org-netbeans-core-windows-actions-ToolbarsListAction.instance" />
+            <file name="org-netbeans-core-windows-actions-ToolbarsListAction.instance"/>
         </folder>
         <folder name="Help">
             <file name="org-netbeans-core-actions-AboutAction.instance_hidden"/>
@@ -331,6 +331,8 @@
          Toolbars
          ====================================================== -->
     <folder name="Toolbars">
+        <file name="Clipboard_hidden"/>
+        <file name="Memory_hidden"/>
         <file name="UndoRedo_hidden"/>
         <folder name="File">
             <file name="org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance">
@@ -388,17 +390,17 @@
          ====================================================== -->
     <folder name="Windows2">
         <folder name="Components">
-            <file name="DirectoryTreeTopComponent.settings" url="DirectoryTreeTopComponentSettings.xml" />
+            <file name="DirectoryTreeTopComponent.settings" url="DirectoryTreeTopComponentSettings.xml"/>
             <!-- <file name="DataContentTopComponent.settings" url="DataContentTopComponentSettings.xml" /> -->
-            <file name="IngestMessageTopComponent.settings" url="IngestMessageTopComponentSettings.xml" />
+            <file name="IngestMessageTopComponent.settings" url="IngestMessageTopComponentSettings.xml"/>
         </folder>
         <folder name="Modes">
-            <folder name="editor" />
-            <folder name="output" />
-            <folder name="outputFloat" />
-            <file name="outputFloat.wsmode" url="outputFloatWsmode.xml" />
-            <folder name="floatingLeftBottom" />
-            <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml" />
+            <folder name="editor"/>
+            <folder name="output"/>
+            <folder name="outputFloat"/>
+            <file name="outputFloat.wsmode" url="outputFloatWsmode.xml"/>
+            <folder name="floatingLeftBottom"/>
+            <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml"/>
         </folder>
     </folder>
     
