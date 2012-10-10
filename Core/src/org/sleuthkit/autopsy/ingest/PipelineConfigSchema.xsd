@@ -1,9 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--    
+        This file describes the schema definition for it's twin file, pipeline_config.xml
+        
+        For more information, please see http://sleuthkit.org/sleuthkit/docs/framework-docs/pipeline_config_page.html
+-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
 <!-- definition of simple elements -->
 <xs:attribute name="order" type="xs:positiveInteger"/>
-<xs:attribute name="type" type="xs:string"/>
+
+<xs:attribute name="type">
+    <xs:simpleType>
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="plugin"/>
+            <xs:enumeration value="executable"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:attribute>
+
 <xs:attribute name="arguments" type="xs:string"/>
 <xs:attribute name="location" type="xs:string"/>
 
