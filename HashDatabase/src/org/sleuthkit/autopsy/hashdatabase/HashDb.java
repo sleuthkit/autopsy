@@ -277,12 +277,16 @@ public class HashDb implements Comparable<HashDb> {
 
         @Override
         protected Object doInBackground() throws Exception {
-            progress = ProgressHandleFactory.createHandle("Indexing " + name, new Cancellable() {
+            progress = ProgressHandleFactory.createHandle("Indexing " + name);
+
+        /** We need proper cancel support in TSK to make the task cancellable
+         new Cancellable() {
                 @Override
                 public boolean cancel() {
                     return CreateIndex.this.cancel(true);
                 }
             });
+            */
             progress.start();
             progress.switchToIndeterminate();
             SleuthkitJNI.createLookupIndex(databasePaths.get(0));
