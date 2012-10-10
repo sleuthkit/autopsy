@@ -41,6 +41,8 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.*;
 import javax.swing.border.Border;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 
 /**
  *
@@ -219,35 +221,25 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
         int option = jFileChooser1.showSaveDialog(this);
         if (option == JFileChooser.APPROVE_OPTION) {
             if (jFileChooser1.getSelectedFile() != null) {
-                String path = jFileChooser1.getSelectedFile().toString();
+                File file = jFileChooser1.getSelectedFile();
+                String path = file.getParent();
+                String name = file.getName();
                 for (Map.Entry<ReportModule, String> entry : reports.entrySet()) {
-                    exportReport(path, entry);
+                    exportReport(path, name, entry);
                 }
             }
         }
     }
 
-    private void exportReport(String path, Map.Entry<ReportModule, String> entry) {
+    private void exportReport(String path, String name, Map.Entry<ReportModule, String> entry) {
         ReportModule report = entry.getKey();
         String ext = report.getExtension();
         String original = entry.getValue();
-        String newpath = ReportUtils.changeExtension(path + "-" + report.getName(), ext);
-        InputStream in = null;
-        OutputStream out = null;
         try {
-            in = new FileInputStream(new File(original));
-            out = new FileOutputStream(new File(newpath));
-            ReportUtils.copy(in, out);
+            String newpath = FileUtil.copyFile(original, path, name + "-" + report.getName(), ext, true);
             JOptionPane.showMessageDialog(this, "\n" + report.getName() + " report has been successfully saved to: \n" + newpath);
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "\n" + report.getName() + " report has failed to save! \n Reason:" + ex);
-        } finally {
-            try {
-                in.close();
-                out.close();
-                out.flush();
-            } catch (IOException ex) {
-            }
+            JOptionPane.showMessageDialog(this, "\n" + report.getName() + " report has failed to save! \n Reason: " + ex);
         }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

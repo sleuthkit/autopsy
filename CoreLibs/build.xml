@@ -15,13 +15,18 @@
     <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
 
     <target name="download-ivy" unless="offline">
+        <available file="${ivy.jar.file}" property="ivy.available"/>
+        <antcall target="-download-ivy" />
+    </target>
+    
+    <target name="-download-ivy" unless="ivy.available">
         <mkdir dir="${ivy.jar.dir}"/>
         <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" 
          dest="${ivy.jar.file}" usetimestamp="true"/>
     </target>
 
     <!-- init-ivy will bootstrap Ivy if the user doesn't have it already -->
-    <target name="init-ivy" depends="download-ivy">
+    <target name="init-ivy" depends="download-ivy" unless="ivy.lib.path">
         <path id="ivy.lib.path">
             <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
         </path>
