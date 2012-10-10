@@ -45,7 +45,8 @@ import javax.xml.validation.Validator;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-/** XML Utilities
+/** 
+ * XML Utilities
  * 
  * This class provides basic utilities for working with XML files, such as
  *  -Validating XML files against a given schema
@@ -55,7 +56,8 @@ import org.xml.sax.SAXException;
  */
 
 public class XMLUtil {
-     /** Utility to validate XML files against pre-defined schema files.
+    /**
+     * Utility to validate XML files against pre-defined schema files.
      * 
      *  The schema files are extracted automatically when this function is called, the XML being validated is not.
      *  Be sure the XML file is already extracted otherwise it will return false.
@@ -88,7 +90,8 @@ public class XMLUtil {
         }
     }
     
-     /** Evaluates XML files against an XSD.
+    /**
+     * Evaluates XML files against an XSD.
      * 
      *  The schema files are extracted automatically when this function is called, the XML being validated is not.
      *  Be sure the XML file is already extracted otherwise it will return false.
@@ -105,7 +108,8 @@ public class XMLUtil {
     
     
     
-    /** Loads XML files from disk
+    /** 
+     * Loads XML files from disk
      * 
      * @param clazz the class this method is invoked from
      * @param xmlPath the full path to the file to load
@@ -139,7 +143,8 @@ public class XMLUtil {
         return ret;
     }
     
-    /** Saves XML files to disk
+    /** 
+     * Saves XML files to disk
      * 
      * @param clazz the class this method is invoked from
      * @param xmlPath the full path to save the XML to
