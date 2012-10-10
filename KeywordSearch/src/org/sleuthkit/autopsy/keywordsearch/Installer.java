@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 public class Installer extends ModuleInstall {
 
     private static final Logger logger = Logger.getLogger(Installer.class.getName());
+    private final static int SERVER_START_RETRIES = 5;
 
     @Override
     public void restored() {
@@ -68,7 +69,7 @@ public class Installer extends ModuleInstall {
         }
 
         //retry if needed
-        int retries = 5;
+        int retries = SERVER_START_RETRIES;
         while (retries-- > 0) {
             try {
                 Thread.sleep(1000);

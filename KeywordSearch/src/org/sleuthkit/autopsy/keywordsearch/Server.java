@@ -327,7 +327,7 @@ class Server {
             // that doesn't work when there are no cores
 
             CoreAdminRequest.getStatus(null, solrServer);
-            logger.log(Level.INFO, "Solr is running");
+            logger.log(Level.INFO, "Solr server is running");
         } catch (SolrServerException ex) {
 
             Throwable cause = ex.getRootCause();
@@ -336,7 +336,7 @@ class Server {
             // probably caused by starting a connection as the server finishes
             // shutting down)
             if (cause instanceof ConnectException || cause instanceof SocketException || cause instanceof NoHttpResponseException) {
-                logger.log(Level.INFO, "Solr is not running, cause: " + cause.getMessage());
+                logger.log(Level.INFO, "Solr server is not running, cause: " + cause.getMessage());
                 return false;
             } else {
                 throw new KeywordSearchModuleException("Error checking if Solr server is running", ex);
