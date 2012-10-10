@@ -38,6 +38,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
@@ -338,11 +339,20 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         caseHandle = Case.getCurrentCase().getSleuthkitCase();
 
         ingester = Server.getIngester();
-
-        //use the settings files to set values
         
-    
-
+        final Server server = KeywordSearch.getServer();
+        try {
+            if (! server.isRunning()) {
+                String msg = "Keyword search server was not properly initialized, cannot run keyword search ingest. ";
+                logger.log(Level.SEVERE, msg);
+                String details = msg + "Please try restarting the OS and the application";
+                services.postMessage(IngestMessage.createErrorMessage(++messageID, instance, msg, details));
+                return;
+                
+            }
+        } catch (KeywordSearchModuleException ex) {
+            logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
+        }
 
 
         //initialize extractors
