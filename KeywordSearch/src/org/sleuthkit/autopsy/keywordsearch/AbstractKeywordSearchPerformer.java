@@ -21,18 +21,21 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
+import java.util.logging.Level;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchQueryManager.Presentation;
 
 /**
- *
- * @author dfickling
+ * Common functionality among keyword search performers / widgets
  */
-abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel implements KeywordSearchPerformerInterface{
+abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel implements KeywordSearchPerformerInterface {
 
-    int filesIndexed;
-    
+    protected int filesIndexed;
+    private static final Logger logger = Logger.getLogger(AbstractKeywordSearchPerformer.class.getName());
+
     AbstractKeywordSearchPerformer() {
         initListeners();
     }
@@ -40,7 +43,6 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
     private void initListeners() {
         KeywordSearch.changeSupport.addPropertyChangeListener(KeywordSearch.NUM_FILES_CHANGE_EVT,
                 new PropertyChangeListener() {
-
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
                         String changed = evt.getPropertyName();
@@ -50,11 +52,17 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
                         if (changed.equals(KeywordSearch.NUM_FILES_CHANGE_EVT)) {
                             int newFilesIndexed = ((Integer) newValue).intValue();
                             filesIndexed = newFilesIndexed;
+                            postFilesIndexedChange();
                         }
                     }
                 });
     }
 
+    /**
+     * Hook to run after indexed files number changed
+     */
+    protected abstract void postFilesIndexedChange();
+    
     @Override
     public abstract boolean isMultiwordQuery();
 
@@ -63,7 +71,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
 
     @Override
     public abstract String getQueryText();
-    
+
     @Override
     public abstract List<Keyword> getQueryList();
 
@@ -78,17 +86,17 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
             KeywordSearchUtil.displayDialog("Keyword Search Error", "No files are indexed, please index an image before searching", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             return;
         }
-        
+
         //check if keyword search module  ingest is running (indexing, etc)
         if (IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault())) {
-            if (KeywordSearchUtil.displayConfirmDialog("Keyword Search Ingest in Progress", 
+            if (KeywordSearchUtil.displayConfirmDialog("Keyword Search Ingest in Progress",
                     "<html>Keyword Search Ingest is currently running.<br />"
                     + "Not all files have been indexed and this search might yield incomplete results.<br />"
-                    + "Do you want to proceed with this search anyway?</html>"
-                    , KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false)
+                    + "Do you want to proceed with this search anyway?</html>", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN) == false) {
                 return;
+            }
         }
-        
+
         KeywordSearchQueryManager man = null;
         if (isMultiwordQuery()) {
             final List<Keyword> keywords = getQueryList();
@@ -107,7 +115,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
             final String queryText = getQueryText();
             if (queryText == null || queryText.trim().equals("")) {
                 KeywordSearchUtil.displayDialog("Keyword Search Error", "Please enter a keyword to search for", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
-                return; 
+                return;
             }
             man = new KeywordSearchQueryManager(getQueryText(), queryType, Presentation.COLLAPSE);
         }
@@ -118,5 +126,4 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
             KeywordSearchUtil.displayDialog("Keyword Search Error", "Invalid query syntax.", KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
         }
     }
-    
 }
