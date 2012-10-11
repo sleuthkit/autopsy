@@ -188,7 +188,8 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             ingestRunning = true;
             searchAddButton.setText("Add to Ingest");
             listsTableModel.resync();
-            ingestIndexLabel.setText("Ingest is ongoing. Results will appear as the index is populated.");
+            ingestIndexLabel.setText("Files Indexed: " + filesIndexed
+                    + " (ingest is ongoing)");
         } else {
             ingestRunning = false;
             searchAddButton.setText("Search");
