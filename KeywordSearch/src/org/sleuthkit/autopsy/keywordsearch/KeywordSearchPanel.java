@@ -43,8 +43,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
- *
- * @author dfickling
+ * Keyword search toolbar which allows to search for single terms or phrases
  */
 public class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
 
@@ -70,6 +69,13 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         return instance;
     }
 
+    @Override
+    protected void postFilesIndexedChange() {
+        //nothing to update
+    }
+
+    
+    
     private void customizeComponents() {
 
         listener = new KeywordPropertyChangeListener();
