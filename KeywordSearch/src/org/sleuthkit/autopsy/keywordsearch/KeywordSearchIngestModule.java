@@ -245,8 +245,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         postIndexSummary();
 
         //run one last search as there are probably some new files committed
-        if (keywords != null && !keywords.isEmpty() && processedFiles == true) {
-            finalSearcher = new Searcher(keywords, true); //final searcher run
+        if (keywordLists != null && !keywordLists.isEmpty() && processedFiles == true) {
+            finalSearcher = new Searcher(keywordLists, true); //final searcher run
             finalSearcher.execute();
         } else {
             finalSearcherDone = true;
@@ -383,7 +383,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         initKeywords();
 
         if (keywords.isEmpty() || keywordLists.isEmpty()) {
-            services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, "No keywords in keyword list.", "Only indexing will be done and and keyword search will be skipped (it can be executed later again as ingest or using toolbar search feature)."));
+             services.postMessage(IngestMessage.createWarningMessage(++messageID, instance, "No keywords in keyword list.", "Only indexing will be done and and keyword search will be skipped (you can still add keyword lists using the Keyword Lists - Add to Ingest)."));
         }
 
         processedFiles = false;
@@ -538,26 +538,49 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
     }
 
     /**
-     * Initialize the keyword search lists from the XML loader
+     * Initialize the keyword search lists and associated keywords from the XML loader
+     * Use the lists to ingest that are set in the permanent XML configuration
      */
     private void initKeywords() {
+        addKeywordLists(null);
+    }
+    
+    /**
+     * If ingest is ongoing, this will add 
+     * additional keyword search lists to the ongoing ingest
+     * The lists to add may be temporary and not necessary set to be 
+     * added to ingest permanently in the XML configuration.
+     * The lists will be reset back to original (permanent configuration state)
+     * on the next ingest.
+     * @param listsToAdd lists to add temporarily to the ongoing ingest
+     */
+    void addKeywordLists(List<String>listsToAdd) {
         KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
 
         keywords.clear();
         keywordLists.clear();
         keywordToList.clear();
 
+        StringBuilder sb = new StringBuilder();
+        
         for (KeywordSearchList list : loader.getListsL()) {
-            String listName = list.getName();
-            if (list.getUseForIngest()) {
+            final String listName = list.getName();
+            if (list.getUseForIngest() == true
+                    || (listsToAdd != null && listsToAdd.contains(listName)) ) {        
                 keywordLists.add(listName);
+                sb.append(listName).append(" ");
             }
             for (Keyword keyword : list.getKeywords()) {
-                keywords.add(keyword);
-                keywordToList.put(keyword.getQuery(), list);
+                if (!keywords.contains(keyword)) {
+                    keywords.add(keyword);
+                    keywordToList.put(keyword.getQuery(), list);
+                }
             }
 
         }
+        
+        logger.log(Level.INFO, "Set new effective keyword lists: " + sb.toString());
+        
     }
 
     List<String> getKeywordLists() {
@@ -579,8 +602,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             //in worst case, we will run search next time after commit timer goes off, or at the end of ingest
             if (searcherDone && runSearcher) {
                 //start search if previous not running
-                if (keywords != null && !keywords.isEmpty()) {
-                    currentSearcher = new Searcher(keywords);
+                if (keywordLists != null && !keywordLists.isEmpty()) {
+                    currentSearcher = new Searcher(keywordLists);
                     currentSearcher.execute();//searcher will stop timer and restart timer when done
                 }
             }
@@ -767,19 +790,28 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
      * data events. Searches entire index, and keeps track of only new results
      * to report and save. Runs as a background thread.
      */
-    private class Searcher extends SwingWorker<Object, Void> {
+    private final class Searcher extends SwingWorker<Object, Void> {
 
-        private List<Keyword> keywords;
+        /**
+         * Searcher has private copies/snapshots of the lists and keywords
+         */
+        private List<Keyword> keywords; //keywords to search
+        private List<String> keywordLists; // lists currently being searched
+        private Map<String, KeywordSearchList> keywordToList; //keyword to list name mapping
+    
         private ProgressHandle progress;
         private final Logger logger = Logger.getLogger(Searcher.class.getName());
         private boolean finalRun = false;
 
-        Searcher(List<Keyword> keywords) {
-            this.keywords = keywords;
+        Searcher(List<String> keywordLists) {
+            this.keywordLists = new ArrayList<String>(keywordLists);
+            this.keywords = new ArrayList<Keyword>();
+            this.keywordToList = new HashMap<String, KeywordSearchList>();
+            //keywords are populated as searcher runs
         }
 
-        Searcher(List<Keyword> keywords, boolean finalRun) {
-            this(keywords);
+        Searcher(List<String> keywordLists, boolean finalRun) {
+            this(keywordLists);
             this.finalRun = finalRun;
         }
 
@@ -1004,19 +1036,19 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         }
 
         /**
-         * Retrieve the updated keyword search lists from the XML loader
+         * Sync-up the updated keywords from the currently used lists in the XML
          */
         private void updateKeywords() {
             KeywordSearchListsXML loader = KeywordSearchListsXML.getCurrent();
 
-            keywords.clear();
-            keywordToList.clear();
+            this.keywords.clear();
+            this.keywordToList.clear();
 
-            for (String name : keywordLists) {
+            for (String name : this.keywordLists) {
                 KeywordSearchList list = loader.getList(name);
                 for (Keyword k : list.getKeywords()) {
-                    keywords.add(k);
-                    keywordToList.put(k.getQuery(), list);
+                    this.keywords.add(k);
+                    this.keywordToList.put(k.getQuery(), list);
                 }
             }
 
@@ -1046,9 +1078,6 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                 //this is the final searcher
                 logger.log(Level.INFO, "The final searcher in this ingest done.");
                 finalSearcherDone = true;
-                keywords.clear();
-                keywordLists.clear();
-                keywordToList.clear();
                 //reset current resuls earlier to potentially garbage collect sooner
                 currentResults = new HashMap<Keyword, List<Long>>();
 

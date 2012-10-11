@@ -29,6 +29,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JCheckBox;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -52,7 +53,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
     private KeywordSearchListsXML loader;
     private KeywordListsTableModel listsTableModel;
     private KeywordsTableModel keywordsTableModel;
-    private ActionListener searchListener;
+    private ActionListener searchAddListener;
     private boolean ingestRunning;
 
     /** Creates new form KeywordSearchListsViewerPanel */
@@ -129,14 +130,9 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
                 }
             }
         });
-        searchListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                searchAction(e);
-            }
-        };
-        
-        if(IngestManager.getDefault().isModuleRunning(KeywordSearchIngestModule.getDefault())) {
+       
+        final KeywordSearchIngestModule module = KeywordSearchIngestModule.getDefault();
+        if(IngestManager.getDefault().isModuleRunning(module)) {
             initIngest(true);
         }
         else {
@@ -164,6 +160,21 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             }
             
         });
+        
+         searchAddListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (ingestRunning) {
+                    module.addKeywordLists(listsTableModel.getSelectedLists());
+                    logger.log(Level.INFO, "Submitted enqueued lists to ingest");
+                }
+                else {
+                    searchAction(e);
+                }
+            }
+        };
+        
+        searchAddButton.addActionListener(searchAddListener);
     }
     
     /** 
@@ -173,12 +184,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
      * case 1: ingest not running
      */
     private void initIngest(boolean running) {
-        ActionListener[] current = searchAddButton.getActionListeners();
-        for (int i = 0; i < current.length; i++) {
-            if (current[i].equals(searchListener)) {
-                searchAddButton.removeActionListener(current[i]);
-            }
-        }
         if (running) {
             ingestRunning = true;
             searchAddButton.setText("Add to Ingest");
@@ -187,7 +192,6 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         } else {
             ingestRunning = false;
             searchAddButton.setText("Search");
-            searchAddButton.addActionListener(searchListener);
             listsTableModel.resync();
             ingestIndexLabel.setText("Files Indexed: " + filesIndexed);
         }
@@ -437,8 +441,9 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         List<String> getSelectedLists() {
             List<String> ret = new ArrayList<String>();
             for(ListTableEntry e : listData) {
-                if(e.selected)
+                if(e.selected) {
                     ret.add(e.name);
+                }
             }
             return ret;
         }
@@ -602,9 +607,11 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
             this.setVerticalAlignment(JCheckBox.CENTER);
 
             String name = (String) table.getModel().getValueAt(row, 1);
-            List<String> locked = KeywordSearchIngestModule.getDefault().getKeywordLists();
-            setEnabled(!locked.contains(name) || !ingestRunning);
-            Boolean selected = (Boolean) table.getModel().getValueAt(row, 0);
+            List<String> currentIngest = KeywordSearchIngestModule.getDefault().getKeywordLists();
+            boolean currentIngestUsed = currentIngest.contains(name);
+            setEnabled(! currentIngestUsed || !ingestRunning); 
+
+            boolean selected = (Boolean) table.getModel().getValueAt(row, 0);
             setSelected(selected);
 
             if (isSelected) {
