@@ -33,7 +33,7 @@ This file describes the schema definition for its twin files, which are loaded a
 
     <xs:element name="keyword">
         <xs:complexType mixed="true">
-            <xs:attribute ref="literal" default="false" use="optional"/>
+            <xs:attribute ref="literal" default="true" use="optional"/>
         </xs:complexType>
     </xs:element>
 
@@ -43,10 +43,10 @@ This file describes the schema definition for its twin files, which are loaded a
                 <xs:element ref="keyword" maxOccurs="unbounded"/>
             </xs:sequence>
                 <xs:attribute ref="created" use="required"/>
-                <xs:attribute ref="ingest_messages" use="optional"/>
+                <xs:attribute ref="ingest_messages" default="true" use="optional"/>
                 <xs:attribute ref="modified" use="optional"/>
                 <xs:attribute ref="name" use="required"/>
-                <xs:attribute ref="use_for_ingest" default="false" use="optional"/>
+                <xs:attribute ref="use_for_ingest" default="true" use="optional"/>
         </xs:complexType>
     </xs:element>
 
