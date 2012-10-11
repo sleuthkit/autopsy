@@ -56,8 +56,11 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
     
     private void reloadCalc() {
         final HashDbXML xmlHandle = HashDbXML.getCurrent();
-        
-        final boolean nsrlUsed = xmlHandle.getNSRLSet()!=null && xmlHandle.getNSRLSet().getUseForIngest()== true;
+        final HashDb nsrlDb = xmlHandle.getNSRLSet();
+        final boolean nsrlUsed = 
+                nsrlDb != null 
+                && nsrlDb.getUseForIngest()== true
+                && nsrlDb.indexExists();
         final List<HashDb> knowns = xmlHandle.getKnownBadSets();
         final boolean knownExists = !knowns.isEmpty();
         boolean knownUsed = false;
@@ -197,6 +200,9 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
 
         if (nsrl == null || nsrl.getUseForIngest() == false) {
             nsrlDbLabelVal.setText("Disabled");
+        }
+        else if (nsrl.indexExists() == false) {
+            nsrlDbLabelVal.setText("Disabled (No index)");
         }
         else {
             nsrlDbLabelVal.setText("Enabled");
