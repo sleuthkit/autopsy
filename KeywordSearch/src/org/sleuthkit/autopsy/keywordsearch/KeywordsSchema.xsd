@@ -40,7 +40,7 @@ This file describes the schema definition for its twin files, which are loaded a
     <xs:element name="keyword_list">
         <xs:complexType>
             <xs:sequence>
-                <xs:element ref="keyword" maxOccurs="unbounded"/>
+                <xs:element ref="keyword" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
                 <xs:attribute ref="created" use="required"/>
                 <xs:attribute ref="ingest_messages" default="true" use="optional"/>
