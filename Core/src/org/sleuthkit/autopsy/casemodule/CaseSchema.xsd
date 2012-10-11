@@ -8,12 +8,11 @@
 <!-- definition of simple elements -->
 <xs:element name="Name" type="xs:string"/>
 
-<xs:element name="Number" type="xs:integer" nillable="true"/>
+<xs:element name="Number" type="Integer" nillable="true"/>
 
-<xs:element name="Examiner" type="xs:string" nillable="true"/>
+<xs:element name="Examiner" type="String" nillable="true"/>
 
 <xs:attribute name="Relative" type="xs:boolean"/>
-
 
 <xs:element name="CreatedDate" >
     <xs:simpleType>
@@ -39,7 +38,20 @@
 
 <xs:element name="SchemaVersion" type="xs:decimal"/>
 
+<!-- Wrappers over the built in values to allow empty string elements, eg <number/> -->
+<xs:simpleType name="Integer">
+    <xs:union memberTypes="xs:integer empty"/>
+</xs:simpleType>
 
+<xs:simpleType name="String">
+    <xs:union memberTypes="xs:string empty"/>
+</xs:simpleType>
+
+<xs:simpleType name="empty">
+  <xs:restriction base="xs:string">
+    <xs:enumeration value="" />
+  </xs:restriction>
+</xs:simpleType>
 
 
 
@@ -74,8 +86,8 @@
     <xs:complexType>
         <xs:sequence>
             <xs:element ref="Name"/>
-            <xs:element ref="Number"/>
-            <xs:element ref="Examiner"/>
+            <xs:element ref="Number" />
+            <xs:element ref="Examiner" />
             <xs:element ref="ExportFolder"/>
             <xs:element ref="LogFolder"/>
             <xs:element ref="TempFolder"/>
