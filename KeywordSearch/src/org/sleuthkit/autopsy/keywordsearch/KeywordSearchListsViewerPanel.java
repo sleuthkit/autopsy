@@ -187,12 +187,16 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         if (running) {
             ingestRunning = true;
             searchAddButton.setText("Add to Ingest");
+            searchAddButton.setToolTipText("<html>You can select additional keyword lists"
+                    + "<br />and enqueue them to the ongoing ingest."
+                    + "<br />The selected lists will be searched next time the file index is rebuilt.</html>");
             listsTableModel.resync();
             ingestIndexLabel.setText("Files Indexed: " + filesIndexed
                     + " (ingest is ongoing)");
         } else {
             ingestRunning = false;
             searchAddButton.setText("Search");
+            searchAddButton.setToolTipText("Search indexed files for keywords in selected lists");
             listsTableModel.resync();
             ingestIndexLabel.setText("Files Indexed: " + filesIndexed);
         }
@@ -243,6 +247,7 @@ class KeywordSearchListsViewerPanel extends AbstractKeywordSearchPerformer {
         jSplitPane1.setRightComponent(rightPane);
 
         manageListsButton.setText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.manageListsButton.text")); // NOI18N
+        manageListsButton.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchListsViewerPanel.class, "KeywordSearchListsViewerPanel.manageListsButton.toolTipText")); // NOI18N
         manageListsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 manageListsButtonActionPerformed(evt);
