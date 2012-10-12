@@ -128,6 +128,7 @@ class Server {
     private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
     private static Ingester ingester = null;
+    private static final String KEY = "jjk#09s";
 
     public enum CORE_EVT_STATES {
 
@@ -254,7 +255,7 @@ class Server {
             
             
 
-            final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret "
+            final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR + " -DSTOP.PORT=8079 -DSTOP.KEY=" + KEY + " "
                     + loggingProperties + " -jar start.jar";
             logger.log(Level.INFO, "Starting Solr using: " + SOLR_START_CMD);
 
@@ -291,7 +292,7 @@ class Server {
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
             //try graceful shutdown
-            Process stop = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=8079 -DSTOP.KEY=mysecret -jar start.jar --stop", null, solrFolder);
+            Process stop = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=8079 -DSTOP.KEY " + KEY + " -jar start.jar --stop", null, solrFolder);
             stop.waitFor();
             //if still running, forcefully stop it
             if (curSolrProcess != null) {
