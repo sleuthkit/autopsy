@@ -165,7 +165,7 @@ public class ReportPanelAction {
                 final ReportPanel panel = new ReportPanel(this);
 
 
-                panel.setjButton1ActionListener(new ActionListener() {
+                panel.setCloseButtonActionListener(new ActionListener() {
 
                     @Override
                     public void actionPerformed(ActionEvent e) {
