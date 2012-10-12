@@ -222,6 +222,7 @@ public final class IngestModuleLoader {
                     //netbeans uses custom class loader, otherwise can't load classes from other modules
 
                     final Class<?> moduleClass = Class.forName(location, false, classLoader);
+                    
                     final Type[] intfs = moduleClass.getGenericInterfaces();
 
                     if (intfs.length != 0 && pType != null) {
@@ -292,6 +293,10 @@ public final class IngestModuleLoader {
                 } catch (ClassNotFoundException ex) {
                     moduleErrors = true;
                     logger.log(Level.WARNING, "Module class: " + location + " not found, module will not be active.");
+
+                } catch (LinkageError le) {
+                    moduleErrors = true;
+                    logger.log(Level.WARNING, "Module class: " + location + " has unresolved symbols, module will not be active.", le);
                 }
 
 
@@ -474,7 +479,7 @@ public final class IngestModuleLoader {
                     continue;
                 }
 
-                logger.log(Level.INFO, "Module enabled: " + moduleInfo.getDisplayName() + " " + basePackageName 
+                logger.log(Level.INFO, "Module enabled: " + moduleInfo.getDisplayName() + " " + basePackageName
                         + " Build version: " + moduleInfo.getBuildVersion()
                         + " Spec version: " + moduleInfo.getSpecificationVersion()
                         + " Impl version: " + moduleInfo.getImplementationVersion());
@@ -860,7 +865,6 @@ public final class IngestModuleLoader {
 
     }
 
-
     /**
      * Load XML into raw pipeline representation
      *
@@ -933,7 +937,8 @@ public final class IngestModuleLoader {
      */
     public synchronized void init() throws IngestModuleLoaderException {
         absFilePath = PlatformUtil.getUserConfigDirectory() + File.separator + PIPELINE_CONFIG_XML;
-        classLoader = Lookup.getDefault().lookup(ClassLoader.class);
+        ClassLoader parentClassLoader = Lookup.getDefault().lookup(ClassLoader.class);
+        classLoader = new CustomClassLoader(parentClassLoader);
 
         try {
             boolean extracted = PlatformUtil.extractResourceToUserConfigDir(IngestModuleLoader.class, PIPELINE_CONFIG_XML);
@@ -1069,4 +1074,26 @@ interface IngestModuleMapping {
      * @return ingest module interface meta type
      */
     public Class getIngestModuleInterface();
+}
+
+/**
+ * Custom class loader that attempts to force class resolution / linkage validation at loading
+ */
+class CustomClassLoader extends ClassLoader {
+    private static final Logger logger = Logger.getLogger(CustomClassLoader.class.getName());
+
+    CustomClassLoader(ClassLoader parent) {
+        super(parent);
+    }
+
+
+    @Override
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
+        logger.log(Level.INFO, "Custom loading class: " + name);
+        
+        Class<?> cl = super.loadClass(name, true);
+                
+        return cl;
+    }
+    
 }
