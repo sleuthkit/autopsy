@@ -24,30 +24,25 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.*;
-import javax.swing.border.Border;
-import org.openide.util.Exceptions;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
-/**
- *
- * @author Alex
- */
 public class ReportPanel extends javax.swing.JPanel {
 
     private ReportPanelAction rpa;
@@ -56,12 +51,9 @@ public class ReportPanel extends javax.swing.JPanel {
     /**
      * Creates new form ReportPanel
      */
-    public ReportPanel(ReportPanelAction reportpanelaction) {
+    public ReportPanel(ReportPanelAction reportPanelAction) {
         initComponents();
-        this.setLayout(new GridLayout(0, 1));
-        Border border = BorderFactory.createTitledBorder("Report Summary");
-        this.setBorder(border);
-        rpa = reportpanelaction;
+        rpa = reportPanelAction;
     }
 
     /**
@@ -73,105 +65,88 @@ public class ReportPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jFileChooser1 = new javax.swing.JFileChooser();
-        jOptionPane1 = new javax.swing.JOptionPane();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        saveReport = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
+        reportScrollPane = new javax.swing.JScrollPane();
+        reportSummaryPanel = new javax.swing.JPanel();
+        closeButton = new javax.swing.JButton();
+        exportButton = new javax.swing.JButton();
+        statusLabel = new javax.swing.JLabel();
 
-        setMinimumSize(new java.awt.Dimension(540, 252));
+        reportScrollPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.reportScrollPane.border.title"))); // NOI18N
 
-        jPanel1.setMinimumSize(new java.awt.Dimension(650, 250));
-        jPanel1.setName(""); // NOI18N
-        jPanel1.setPreferredSize(new java.awt.Dimension(650, 250));
+        javax.swing.GroupLayout reportSummaryPanelLayout = new javax.swing.GroupLayout(reportSummaryPanel);
+        reportSummaryPanel.setLayout(reportSummaryPanelLayout);
+        reportSummaryPanelLayout.setHorizontalGroup(
+            reportSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 675, Short.MAX_VALUE)
+        );
+        reportSummaryPanelLayout.setVerticalGroup(
+            reportSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 214, Short.MAX_VALUE)
+        );
 
-        jLabel1.setText(org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.jLabel1.text")); // NOI18N
-        jLabel1.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        jLabel1.setVerticalTextPosition(javax.swing.SwingConstants.TOP);
+        reportScrollPane.setViewportView(reportSummaryPanel);
 
-        saveReport.setText(org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.saveReport.text")); // NOI18N
-        saveReport.setActionCommand(org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.saveReport.actionCommand")); // NOI18N
-        saveReport.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.closeButton.text_1")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(exportButton, org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.exportButton.text")); // NOI18N
+        exportButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveReportActionPerformed(evt);
+                exportButtonActionPerformed(evt);
             }
         });
 
-        jButton1.setText(org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.jButton1.text")); // NOI18N
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jButton1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 501, Short.MAX_VALUE)
-                        .addComponent(saveReport))
-                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 673, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap(184, Short.MAX_VALUE)
-                .addComponent(jLabel1)
-                .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(saveReport)
-                    .addComponent(jButton1))
-                .addContainerGap())
-        );
+        org.openide.awt.Mnemonics.setLocalizedText(statusLabel, org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.statusLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 693, Short.MAX_VALUE)
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(reportScrollPane)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 493, Short.MAX_VALUE)
+                        .addComponent(exportButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(closeButton))
+                    .addComponent(statusLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(60, Short.MAX_VALUE)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(reportScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(statusLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(closeButton)
+                    .addComponent(exportButton))
                 .addContainerGap())
         );
-
-        getAccessibleContext().setAccessibleName("");
-        getAccessibleContext().setAccessibleParent(this);
     }// </editor-fold>//GEN-END:initComponents
 
-private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveReportActionPerformed
-    HashMap<ReportModule, String> reports = rpa.getReports();
-    saveReportAction(reports);
+    private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
+        HashMap<ReportModule, String> reports = rpa.getReports();
+        exportReportAction(reports);
+    }//GEN-LAST:event_exportButtonActionPerformed
 
-}//GEN-LAST:event_saveReportActionPerformed
-    /**
-     * Sets the listener for the OK button
-     *
-     * @param e The action listener
-     */
-    public void setjButton1ActionListener(ActionListener e) {
-        jButton1.addActionListener(e);
+    public void setCloseButtonActionListener(ActionListener e) {
+        closeButton.addActionListener(e);
     }
-
+    
     public void setFinishedReportText() {
-
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date = new Date();
-        String reportText = "<html>These reports were generated on " + dateFormat.format(date) + ". <br><br>";
-        jLabel1.setText(reportText);
-        final JPanel tpanel = new JPanel(new GridBagLayout());
-        tpanel.setMinimumSize(new Dimension(540,240));
+        String reportText = "These reports were generated on " + dateFormat.format(new Date()) + ".";
+        statusLabel.setText(reportText);
+        
+        final JPanel tempPanel = new JPanel(new GridBagLayout());
+        //tempPanel.setMinimumSize(new Dimension(540,240));
         SwingUtilities.invokeLater(new Runnable() {
 
             GridBagConstraints c = new GridBagConstraints();
-           // c.
 
             @Override
             public void run() {
@@ -180,48 +155,60 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
                 for (Map.Entry<ReportModule, String> entry : reports.entrySet()) {
                     c.fill = GridBagConstraints.HORIZONTAL;
                     c.weightx = 1;
-                    c.gridwidth = 2;
+                    c.gridwidth = 1;
                     c.gridx = 0;
                     c.gridy = cc;
-                    String tempText = "<html>" + entry.getKey().getName() + " report <br> - " + entry.getValue() + "";
-                    JLabel lb = new JLabel();
-                    lb.setText(tempText);
-                    tpanel.add(lb, c);
-                    tpanel.revalidate();
-                    tpanel.repaint();
+                    c.insets = new Insets(0, 0, 0, 0); // remove padding
+                    String info = entry.getKey().getName() + " report";
+                    JLabel infoLabel = new JLabel(info);
+                    tempPanel.add(infoLabel, c);
                     
-                    JButton jb = new JButton();
-                    jb.setText("View Report");
-                    c.fill = GridBagConstraints.NONE;
+                    c.fill = GridBagConstraints.BASELINE_TRAILING;
                     c.weightx = 0.0;
                     c.gridwidth = 1;
-                    c.gridx = 2;
+                    c.gridheight = 1;
+                    c.gridx = 1;
                     c.gridy = cc;
-                   final ReportModule rep = entry.getKey();
-                   final String path = entry.getValue();
-                    jb.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                rep.getPreview(path);
-            }
+                    JButton viewButton = new JButton("View Report");
+                    final ReportModule rep = entry.getKey();
+                    final String path = entry.getValue();
+                    viewButton.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            rep.getPreview(path);
+                        }
                     });
-                     tpanel.add(jb, c);
-                    tpanel.revalidate();
-                    tpanel.repaint();
+                    tempPanel.add(viewButton, c);
+                    
+                    c.fill = GridBagConstraints.HORIZONTAL;
+                    c.weightx = 1;
+                    c.gridwidth = 3;
+                    c.gridheight = 1;
+                    c.gridx = 0;
+                    c.gridy = ++cc;
+                    c.insets = new Insets(0, 0, 15, 0); // row padding
+                    JLabel pathLabel = new JLabel(path);
+                    tempPanel.add(pathLabel, c);
+                    
+                    tempPanel.revalidate();
+                    tempPanel.repaint();
                     cc++;
                 }
             }
         });
-        this.add(tpanel, 0);
+        reportSummaryPanel.setLayout(new GridLayout(0, 1));
+        reportSummaryPanel.add(tempPanel, 0);
+        //reportScrollPane.revalidate();
+        //reportScrollPane.repaint();
+        
     }
-
-    private void saveReportAction(HashMap<ReportModule, String> reports) {
-
-        int option = jFileChooser1.showSaveDialog(this);
+    
+    private void exportReportAction(HashMap<ReportModule, String> reports) {
+        JFileChooser exportChooser = new JFileChooser();
+        int option = exportChooser.showSaveDialog(this);
         if (option == JFileChooser.APPROVE_OPTION) {
-            if (jFileChooser1.getSelectedFile() != null) {
-                File file = jFileChooser1.getSelectedFile();
+            if (exportChooser.getSelectedFile() != null) {
+                File file = exportChooser.getSelectedFile();
                 String path = file.getParent();
                 String name = file.getName();
                 for (Map.Entry<ReportModule, String> entry : reports.entrySet()) {
@@ -242,12 +229,12 @@ private void saveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FI
             JOptionPane.showMessageDialog(this, "\n" + report.getName() + " report has failed to save! \n Reason: " + ex);
         }
     }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JFileChooser jFileChooser1;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JOptionPane jOptionPane1;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JButton saveReport;
+    private javax.swing.JButton closeButton;
+    private javax.swing.JButton exportButton;
+    private javax.swing.JScrollPane reportScrollPane;
+    private javax.swing.JPanel reportSummaryPanel;
+    private javax.swing.JLabel statusLabel;
     // End of variables declaration//GEN-END:variables
 }
