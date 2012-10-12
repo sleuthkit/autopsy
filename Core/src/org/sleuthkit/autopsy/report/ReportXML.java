@@ -70,6 +70,8 @@ public class ReportXML implements ReportModule {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase skCase = currentCase.getSleuthkitCase();
             String caseName = currentCase.getName();
+            String examiner = currentCase.getExaminer();
+            String number = currentCase.getNumber();
             Integer imagecount = currentCase.getImageIDs().length;
             Integer filesystemcount = currentCase.getRootObjectsCount();
             Integer totalfiles = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG);
@@ -94,6 +96,14 @@ public class ReportXML implements ReportModule {
             Element name = ret.createElement("Name");                                                    
                     name.setTextContent(caseName);
                     summary.appendChild(name);
+                    
+            Element texaminer =  ret.createElement("Examiner");
+                    texaminer.setTextContent(examiner);
+                    summary.appendChild(texaminer);
+                    
+            Element tnumber = ret.createElement("Number");
+                    tnumber.setTextContent(number);
+                    summary.appendChild(tnumber);
                     
             Element timages = ret.createElement("Total-Images");                                              
                     timages.setTextContent(imagecount.toString());

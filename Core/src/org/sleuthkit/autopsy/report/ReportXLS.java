@@ -133,6 +133,8 @@ public class ReportXLS implements ReportModule {
             Case currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase skCase = currentCase.getSleuthkitCase();
             String caseName = currentCase.getName();
+            String examiner = currentCase.getExaminer();
+            String number = currentCase.getNumber();
             Integer imagecount = currentCase.getImageIDs().length;
             Integer filesystemcount = currentCase.getRootObjectsCount();
             Integer totalfiles = skCase.countFsContentType(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG);
@@ -186,25 +188,39 @@ public class ReportXLS implements ReportModule {
             //   sheetGen.getRow(0).createCell(1).setCellValue("Value");
             //  sheetGen.getRow(0).createCell(2).setCellValue("Date/Time");
             sheetSummary.setDefaultColumnStyle(1, defaultstyle);
+            
             sheetSummary.createRow(0).setRowStyle(style);
             sheetSummary.getRow(0).createCell(0).setCellValue("Summary Information");
             sheetSummary.getRow(0).createCell(1).setCellValue(caseName);
+            
             //add some basic information
-            sheetSummary.createRow(1).setRowStyle(defaultstyle);
-            sheetSummary.getRow(1).createCell(0).setCellValue("# of Images");
-            sheetSummary.getRow(1).createCell(1).setCellValue(imagecount);
+            sheetSummary.createRow(1);
+            sheetSummary.getRow(1).createCell(0).setCellValue("Examiner");
+            sheetSummary.getRow(1).createCell(1).setCellValue(examiner);
+            
             sheetSummary.createRow(2);
-            sheetSummary.getRow(2).createCell(0).setCellValue("Filesystems found");
-            sheetSummary.getRow(2).createCell(1).setCellValue(imagecount);
+            sheetSummary.getRow(2).createCell(0).setCellValue("Number");
+            sheetSummary.getRow(2).createCell(1).setCellValue(number);
+ 
             sheetSummary.createRow(3);
-            sheetSummary.getRow(3).createCell(0).setCellValue("# of Files");
-            sheetSummary.getRow(3).createCell(1).setCellValue(totalfiles);
+            sheetSummary.getRow(3).createCell(0).setCellValue("# of Images");
+            sheetSummary.getRow(3).createCell(1).setCellValue(imagecount);
+            
             sheetSummary.createRow(4);
-            sheetSummary.getRow(4).createCell(0).setCellValue("# of Directories");
-            sheetSummary.getRow(4).createCell(1).setCellValue(totaldirs);
+            sheetSummary.getRow(4).createCell(0).setCellValue("Filesystems found");
+            sheetSummary.getRow(4).createCell(1).setCellValue(filesystemcount);
+            
             sheetSummary.createRow(5);
-            sheetSummary.getRow(5).createCell(0).setCellValue("Date/Time");
-            sheetSummary.getRow(5).createCell(1).setCellValue(datetime);
+            sheetSummary.getRow(5).createCell(0).setCellValue("# of Files");
+            sheetSummary.getRow(5).createCell(1).setCellValue(totalfiles);
+            
+            sheetSummary.createRow(6);
+            sheetSummary.getRow(6).createCell(0).setCellValue("# of Directories");
+            sheetSummary.getRow(6).createCell(1).setCellValue(totaldirs);
+            
+            sheetSummary.createRow(7);
+            sheetSummary.getRow(7).createCell(0).setCellValue("Date/Time");
+            sheetSummary.getRow(7).createCell(1).setCellValue(datetime);
 
 
             sheetHash.setDefaultColumnStyle(1, defaultstyle);
