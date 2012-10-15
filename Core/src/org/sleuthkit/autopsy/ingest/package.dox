@@ -11,6 +11,7 @@ Refer to \ref mod_ingest_page for details on developing ingest modules.
 
 The following are important classes in this package:
 - IngestManager
+- IngestServices
 - IngestMessageTopComponent
 
 */
