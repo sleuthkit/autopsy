@@ -34,7 +34,6 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -366,7 +365,8 @@ public class ReportXLS implements ReportModule {
                         value = tempatt.getValueString();
                     }
 
-                    attributes.put(type, StringEscapeUtils.escapeCsv(value));
+//                    attributes.put(type, StringEscapeUtils.escapeCsv(value));
+                    attributes.put(type, value);
                     cc++;
                 }
 
