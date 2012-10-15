@@ -100,16 +100,13 @@ Some notes:
 - File-level modules will be called on each file in an order determined by the org.sleuthkit.autopsy.ingest.IngestManager.  
 Each module is free to quickly ignore a file based on name, signature, etc.  
 
-If a module wants to know the return value from a previously run module on this file, 
+- If a module wants to know the return value from a previously run module on this file, 
 it should use the org.sleuthkit.autopsy.ingest.IngestServices.getAbstractFileModuleResult() method.
  
 - Image-level modules are expected not passed in specific files and are expected to query the database 
 to find the files that they are interested in.   They can use the org.sleuthkit.datamodel.SleuthkitCase object handle (initialized in the init() method) to query the database.
 
-Multiple images can be ingested at the same time. 
-The current behavior is that the files from the second image are added to the list of the files from the first image.  
-The impact of this on module development is that a file-level module could be passed in files 
-from different images in consecutive calls to process().  
+- File-level module could be passed in files from different images in consecutive calls to process().  
 
 
 \subsubsection ingestmodule_making_process_controller Image Ingest Controller (Image-level modules only)
@@ -162,7 +159,7 @@ public void process(Image image, IngestImageWorkerController controller) {
 
 File-level modules are singletons and are long-lived and image-level modules are short lived.
 The same file-level module instance can be invoked again by the org.sleuthkit.autopsy.ingest.IngestManager when more work is enqueued or 
-when ingest is restarted.  The same file-level ingest module instance can also be invoked for different Cases.
+when ingest is restarted.  The same file-level ingest module instance can also be invoked for different Cases or files from different images in the Case.
 
 Every file-level module should support multiple init() - process() - complete(), and init() - process() - stop() invocations.
 
@@ -194,11 +191,10 @@ public static synchronized MyIngestModule getDefault() {
 }
 \endcode
 
-Note: 
 
 File-level modules need to be singleton.  To ensure this, make the constructor private. 
 
-Image-level modules require a public constructor - this is validated when a module is being loaded.
+Image-level modules require a public constructor.
 
 
 \subsection ingestmodule_making_registration Module Registration
