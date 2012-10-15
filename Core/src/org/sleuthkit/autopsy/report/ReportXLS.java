@@ -366,7 +366,7 @@ public class ReportXLS implements ReportModule {
                         value = tempatt.getValueString();
                     }
 
-                    attributes.put(type, StringEscapeUtils.escapeXml(value));
+                    attributes.put(type, StringEscapeUtils.escapeCsv(value));
                     cc++;
                 }
 
