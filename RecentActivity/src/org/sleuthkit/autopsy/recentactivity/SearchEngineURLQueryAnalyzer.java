@@ -333,7 +333,6 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
-        logger.info("LAUNCHING COOKIES, ALL COOKIES ENGAGE.");
         this.getURLs(image, controller);
         logger.info("Search Engine stats: \n" + getTotals());
     }
