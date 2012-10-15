@@ -44,6 +44,10 @@ import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Keyword search toolbar which allows to search for single terms or phrases
+ * 
+ * The toolbar uses a different font from the rest of the application, Monospaced 14, 
+ * due to the necessity to find a font that displays both Arabic and Asian fonts at an acceptable size. 
+ * The default, Tahoma 14, could not perform this task at the desired size, and neither could numerous other fonts. 
  */
 public class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
 
@@ -211,7 +215,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         searchBoxPanel.setBorder(new javax.swing.border.LineBorder(java.awt.Color.lightGray, 1, true));
         searchBoxPanel.setPreferredSize(new java.awt.Dimension(255, 18));
 
-        searchBox.setFont(new java.awt.Font("Tahoma", 0, 14));
+        searchBox.setFont(new java.awt.Font("Monospaced", 0, 14)); // NOI18N
         searchBox.setForeground(java.awt.Color.lightGray);
         searchBox.setText(org.openide.util.NbBundle.getMessage(KeywordSearchPanel.class, "KeywordSearchPanel.searchBox.text")); // NOI18N
         searchBox.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 3, 4, 1));
@@ -267,9 +271,9 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         );
         searchBoxPanelLayout.setVerticalGroup(
             searchBoxPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(searchBox, javax.swing.GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
-            .addComponent(settingsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
-            .addComponent(searchButton, javax.swing.GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
+            .addComponent(searchBox)
+            .addComponent(settingsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(searchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         listsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/watchbutton-icon.png"))); // NOI18N
@@ -302,9 +306,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 0, 0)
-                .addComponent(listsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(listsButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(searchBoxPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
