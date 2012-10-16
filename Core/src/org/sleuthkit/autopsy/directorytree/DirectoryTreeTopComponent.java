@@ -621,7 +621,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             Node originNode = origin.getNode();
 
                             int count = originNode.getChildren().getNodesCount(true);
-                            if (count == 2000 || count == 15000 || count == 10000) {
+                            if (false) {
                                 DirectoryTreeTopComponent.this.setCursor(null);
                                 /*int choice = JOptionPane.showConfirmDialog(caller, "Note: The selected location contains " + count + " items.\n" +
                                  "It may take some time to display them.\n\n" +
