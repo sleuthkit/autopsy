@@ -39,6 +39,9 @@ import org.sleuthkit.datamodel.LayoutFile;
 */
 abstract class AbstractContentChildren extends Keys<Object> {
 
+    private final CreateSleuthkitNodeVisitor createSleuthkitNodeVisitor = new CreateSleuthkitNodeVisitor();
+    private final CreateAutopsyNodeVisitor createAutopsyNodeVisitor = new CreateAutopsyNodeVisitor();
+            
     /**
      * Uses lazy Content.Keys 
      */
@@ -48,10 +51,12 @@ abstract class AbstractContentChildren extends Keys<Object> {
 
     @Override
     protected Node[] createNodes(Object key) {
-        if(key instanceof SleuthkitVisitableItem)
-            return new Node[]{((SleuthkitVisitableItem) key).accept(new CreateSleuthkitNodeVisitor())};
-        else
-            return new Node[]{((AutopsyVisitableItem) key).accept(new CreateAutopsyNodeVisitor())};
+        if(key instanceof SleuthkitVisitableItem) {
+            return new Node[]{((SleuthkitVisitableItem) key).accept(createSleuthkitNodeVisitor)};
+        }
+        else {
+            return new Node[]{((AutopsyVisitableItem) key).accept(createAutopsyNodeVisitor)};
+        }
     }
     
     @Override
