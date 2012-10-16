@@ -1,4 +1,14 @@
-3.0.0 (October 10, 2012)
+---------------- VERSION Current (development) --------------
+
+New features:
+
+Improvements:
+Netbeans RCP upgrade from 7.2 to 7.2.1
+
+Bugfixes:
+
+
+---------------- VERSION 3.0.0 --------------
 New features:
 - Using Sleuthkit 4.0.0
 - Integrated plugin installer. 
