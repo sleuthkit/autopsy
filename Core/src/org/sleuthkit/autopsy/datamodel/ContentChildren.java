@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.LayoutFile;
  */
 class ContentChildren extends AbstractContentChildren {
     
-    private static final int MAX_CHILD_COUNT = 10000;
+    //private static final int MAX_CHILD_COUNT = 1000000;
 
     private Content parent;
 
@@ -50,11 +50,14 @@ class ContentChildren extends AbstractContentChildren {
 //            }
 //        }
         
-        setKeys(children.subList(0, Math.min(children.size(), MAX_CHILD_COUNT)));
+        //limit number children
+        //setKeys(children.subList(0, Math.min(children.size(), MAX_CHILD_COUNT)));
+        setKeys(children);
     }
 
     @Override
     protected void removeNotify() {
         setKeys(Collections.emptySet());
     }
+    
 }
