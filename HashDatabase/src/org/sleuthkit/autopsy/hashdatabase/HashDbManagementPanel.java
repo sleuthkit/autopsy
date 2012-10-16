@@ -19,12 +19,15 @@
 
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JButton;
@@ -490,9 +493,110 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         hashSetTableModel.resync();         // resync the table
     }
 
-    @Override
+      @Override
     public void store() {
-        HashDbXML.getCurrent().save();
+        //Checking for for any unindexed databases
+        List<HashDb> unindexed = new ArrayList<HashDb>();
+        String total = "";
+        for(int i = 0; i < hashSetTableModel.getRowCount(); i++){
+            if(! hashSetTableModel.indexExists(i)){
+                String s = (String) hashSetTableModel.getValueAt(i, hashSetTableModel.getColumnCount());
+                unindexed.add(hashSetTableModel.getDBAt(i));
+                total+= s + "\n";
+            }
+        }
+        if(unindexed.isEmpty() ){
+           HashDbXML.getCurrent().save();
+        }
+        //If unindexed ones are found, show a popup box that will either index them, or remove them.
+        else if (unindexed.size() == 1){
+            showInvalidIndex(false, unindexed, total);
+        }
+        else{
+            showInvalidIndex(true, unindexed, total);
+        }
+        
+    }
+    
+
+    
+    //Indexes a list of HashDbs from the dialog panel that do not have a companion -md5.idx file.
+    // Occurs when user clicks "Yes" to the dialog popup box
+    private void indexThese(List<HashDb> toIndex){
+        for(final HashDb hdb : toIndex){
+             hdb.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals(HashDb.EVENT.INDEXING_DONE.toString())) {
+                    //update tracking of indexing status
+                    indexingState.put((String)evt.getNewValue(), Boolean.FALSE);
+                    setButtonFromIndexStatus(indexButton, hashDbIndexStatusLabel, hdb.status());
+                    resync();
+                }
+            }
+            
+        });
+        try {
+            indexingState.put(hdb.getName(), Boolean.TRUE);
+            hdb.createIndex();
+        } catch (TskException ex) {
+            indexingState.put(hdb.getName(), Boolean.FALSE);
+            logger.log(Level.WARNING, "Error creating index", ex);
+        }
+        setButtonFromIndexStatus(indexButton, this.hashDbIndexStatusLabel, hdb.status());      
+            
+        }
+    }
+    
+    
+    //Removes a list of HashDbs from the dialog panel that do not have a companion -md5.idx file. 
+    // Occurs when user clicks "No" to the dialog popup box.
+    private void removeThese(List<HashDb> toRemove) {
+        HashDbXML xmlHandle = HashDbXML.getCurrent();
+        for (HashDb hdb : toRemove) {
+            for (int i = 0; i < hashSetTableModel.getRowCount(); i++) {
+                if (hashSetTableModel.getDBAt(i).equals(hdb)) {
+                    if (xmlHandle.getNSRLSet() != null) {
+                        if (i == 0) {
+                            HashDbXML.getCurrent().removeNSRLSet();
+                        } else {
+                            HashDbXML.getCurrent().removeKnownBadSetAt(i - 1);
+                        }
+                    } else {
+                        HashDbXML.getCurrent().removeKnownBadSetAt(i);
+                    }
+                    hashSetTableModel.resync();
+                }
+            }
+        }
+    }
+    
+    //Displays the popup box that tells user that some of his databases are unindexed, along with solutions.
+    private void showInvalidIndex(boolean plural, List<HashDb> unindexed, String total){
+        String firstMessage = "";
+        String secondMessage = "";
+        String thirdMessage = "Unindexed databases successfuly removed from Hash List";
+       
+        if(plural){
+            firstMessage = "The following databases are not indexed, would you like to index them now? \n " + total;
+            secondMessage = "Indeces successfully created.";
+        }
+        else{
+            firstMessage = "The following database is not indexed, would you like to index it now? \n" + total;
+            secondMessage = "Index successfully created.";
+        }
+        int res = JOptionPane.showConfirmDialog(this, firstMessage, "Unindexed databases", JOptionPane.YES_NO_OPTION);
+        if(res == JOptionPane.YES_OPTION){
+            indexThese(unindexed);  
+            JOptionPane.showMessageDialog(this, secondMessage);
+            HashDbXML.getCurrent().save();
+        }
+        if(res == JOptionPane.NO_OPTION){
+            JOptionPane.showMessageDialog(this, "All unindexed databases will be removed the list");
+            removeThese(unindexed);
+            JOptionPane.showMessageDialog(this, thirdMessage);
+            HashDbXML.getCurrent().save();
+        }
     }
 
     boolean valid() {
@@ -538,15 +642,25 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     
     public class HashSetTable extends JTable {
         @Override
-        public Component prepareRenderer(TableCellRenderer renderer,
-            int row, int column) {
+        public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+            System.out.println("RUNNING");
             Component c = super.prepareRenderer(renderer, row, column);
             JComponent jc = (JComponent) c;
-            jc.setToolTipText((String) getValueAt(row, column));
+            String valueText = (String) getValueAt(row, column);
+            jc.setToolTipText(valueText);
+            
+            //Letting the user know which DBs need to be indexed
+            if(hashSetTableModel.indexExists(row)){
+                c.setForeground(Color.black);
+            }
+            else{
+                c.setForeground(Color.red);
+            }
             return c;
         }
     }
     
+  
     private class HashSetTableModel extends AbstractTableModel {
 
         private HashDbXML xmlHandle = HashDbXML.getCurrent();
@@ -568,17 +682,28 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            if (xmlHandle.getNSRLSet() != null) {
+            return rowIndex == 0 ? getDBAt(rowIndex).getName() + " (NSRL)" : getDBAt(rowIndex).getName();
+        }
+        
+        //Internal function for determining whether a companion -md5.idx file exists
+        private boolean indexExists(int rowIndex){
+            return getDBAt(rowIndex).indexExists();
+        }
+        
+        
+        //Internal function for getting the DB at a certain index. Used as-is, as well as by dispatch from getValueAt() and indexExists()
+        private HashDb getDBAt(int rowIndex){
+              if (xmlHandle.getNSRLSet() != null) {
                 if(rowIndex == 0) {
-                    return xmlHandle.getNSRLSet().getName() + " (NSRL)";
+                    return xmlHandle.getNSRLSet();
                 } else {
-                    return xmlHandle.getKnownBadSets().get(rowIndex-1).getName();
+                    return xmlHandle.getKnownBadSets().get(rowIndex-1);
                 }
             } else {
-                return xmlHandle.getKnownBadSets().get(rowIndex).getName();
+                return xmlHandle.getKnownBadSets().get(rowIndex);
             }
         }
-
+        
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
             return false;
@@ -604,22 +729,27 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         switch (status) {
             case INDEX_OUTDATED:
                 theButton.setText("Re-index");
+                theLabel.setForeground(Color.black);
                 theButton.setEnabled(true);
                 break;
             case INDEX_CURRENT:
                 theButton.setText("Re-index");
+                theLabel.setForeground(Color.black);
                 theButton.setEnabled(true);
                 break;
             case NO_INDEX:
                 theButton.setText("Index");
+                theLabel.setForeground(Color.red);
                 theButton.setEnabled(true);
                 break;
             case INDEXING:
                 theButton.setText("Indexing");
+                theLabel.setForeground(Color.black);
                 theButton.setEnabled(false);
                 break;
             default:
                 theButton.setText("Index");
+                theLabel.setForeground(Color.black);
                 theButton.setEnabled(false);
         }
         if (ingestRunning) {
@@ -641,4 +771,5 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         this.hashSetTableModel.resync();
         setSelection(index);
     }
+   
 }
