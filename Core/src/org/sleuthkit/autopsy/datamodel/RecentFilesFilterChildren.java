@@ -47,7 +47,7 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
     RecentFilesFilter filter;
     Calendar prevDay;
     private final static Logger logger = Logger.getLogger(RecentFilesFilterChildren.class.getName());
-    private final static int MAX_OBJECTS = 2000;
+    //private final static int MAX_OBJECTS = 1000000;
 
     RecentFilesFilterChildren(RecentFilesFilter filter, SleuthkitCase skCase, Calendar lastDay) {
         this.skCase = skCase;
@@ -72,7 +72,7 @@ public class RecentFilesFilterChildren extends ChildFactory<Content>{
         query += "(ctime between " + lowerLimit + " and " + upperLimit + ") or ";
         //query += "(atime between " + lowerLimit + " and " + upperLimit + ") or ";
         query += "(mtime between " + lowerLimit + " and " + upperLimit + "))";
-        query += " limit " + MAX_OBJECTS;
+        //query += " limit " + MAX_OBJECTS;
         return query;
     }
     

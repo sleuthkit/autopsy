@@ -46,7 +46,7 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
     SleuthkitCase skCase;
     SearchFilters.SearchFilterInterface filter;
     Logger logger = Logger.getLogger(FileSearchFilterChildren.class.getName());
-    private final static int MAX_OBJECTS = 2000;
+    //private final static int MAX_OBJECTS = 2000;
 
     public FileSearchFilterChildren(SearchFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
         this.filter = filter;
@@ -65,7 +65,7 @@ class FileSearchFilterChildren extends ChildFactory<Content> {
             query += " or name like '%" + s + "'";
         }
         query += ')';
-        query += " limit " + MAX_OBJECTS;
+        //query += " limit " + MAX_OBJECTS;
         return query;
     }
     

@@ -26,6 +26,7 @@ import org.sleuthkit.datamodel.LayoutFile;
 
 /**
  * Class for Children of all ContentNodes. Handles creating child ContentNodes.
+ * TODO consider a ContentChildren child factory
  */
 class ContentChildren extends AbstractContentChildren {
     
