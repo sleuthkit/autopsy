@@ -496,6 +496,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @return the explorer manager
      */
+    @Override
     public ExplorerManager getExplorerManager() {
         return this.em;
     }
