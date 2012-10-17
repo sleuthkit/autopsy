@@ -292,7 +292,7 @@ class Server {
         try {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
             //try graceful shutdown
-            Process stop = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=8079 -DSTOP.KEY " + KEY + " -jar start.jar --stop", null, solrFolder);
+            Process stop = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=8079 -DSTOP.KEY=" + KEY + " -jar start.jar --stop", null, solrFolder);
             stop.waitFor();
             //if still running, forcefully stop it
             if (curSolrProcess != null) {
