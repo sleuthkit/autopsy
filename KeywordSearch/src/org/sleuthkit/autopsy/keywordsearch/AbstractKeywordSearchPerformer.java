@@ -41,7 +41,7 @@ abstract class AbstractKeywordSearchPerformer extends javax.swing.JPanel impleme
     }
 
     private void initListeners() {
-        KeywordSearch.changeSupport.addPropertyChangeListener(KeywordSearch.NUM_FILES_CHANGE_EVT,
+        KeywordSearch.addNumIndexedFilesChangeListener(
                 new PropertyChangeListener() {
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {

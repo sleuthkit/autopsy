@@ -32,31 +32,37 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWriter;
 
 /**
- * Static class to track singletons for KeywordSearch module
+ * Wrapper over KeywordSearch Solr server singleton.
+ * The class also provides some global types and property change support on the server events.
  */
 class KeywordSearch {
 
     private static final String BASE_URL = "http://localhost:8983/solr";
     private static Server server;
-    
     //we want a custom java.util.logging.Logger here for a reason
     //a separate logger from framework logs
     static final Logger TIKA_LOGGER = Logger.getLogger("Tika");
 
-    public enum QueryType {WORD, REGEX};
-    
+    public enum QueryType {
+
+        WORD, REGEX
+    };
     public static final String NUM_FILES_CHANGE_EVT = "NUM_FILES_CHANGE_EVT";
-    
-    static PropertyChangeSupport changeSupport = new PropertyChangeSupport(KeywordSearch.class);
-    
-    
-    static synchronized Server getServer() {
+    private static PropertyChangeSupport changeSupport = new PropertyChangeSupport(KeywordSearch.class);
+
+    /**
+     * Get an instance of KeywordSearch server to execute queries on Content,
+     * getting extracted text, performing searches, etc.
+     *
+     * @return singleton instance of KeywordSearch server
+     */
+    public static synchronized Server getServer() {
         if (server == null) {
             server = new Server(BASE_URL);
         }
         return server;
     }
-    
+
     static {
         try {
             final int MAX_TIKA_LOG_FILES = 3;
@@ -78,9 +84,22 @@ class KeywordSearch {
     private KeywordSearch() {
         throw new AssertionError();
     }
-    
+
     static Logger getTikaLogger() {
         return TIKA_LOGGER;
+    }
+    
+
+    public static void addNumIndexedFilesChangeListener(PropertyChangeListener l) {
+        changeSupport.addPropertyChangeListener(NUM_FILES_CHANGE_EVT, l);
+    }
+    
+    public static void removeNumIndexedFilesChangeListener(PropertyChangeListener l) {
+        changeSupport.removePropertyChangeListener(l);
+    }
+    
+    static void fireNumIndexedFilesChange(Integer oldNum, Integer newNum) {
+        changeSupport.firePropertyChange(NUM_FILES_CHANGE_EVT, oldNum, newNum);
     }
 
     /**
@@ -103,8 +122,7 @@ class KeywordSearch {
                     // new case is open
                     try {
                         server.openCore();
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         logger.log(Level.WARNING, "Could not open core.");
                     }
                 } else if (oldValue != null) {
@@ -113,8 +131,7 @@ class KeywordSearch {
                         ResultWriter.stopAllWriters();
                         Thread.sleep(2000);
                         server.closeCore();
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         logger.log(Level.WARNING, "Could not close core.");
                     }
                 }
