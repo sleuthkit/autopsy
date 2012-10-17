@@ -52,6 +52,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     private ExtractedContentPanel panel;
     private Node currentNode = null;
     private MarkupSource currentSource = null;
+    private final IsDirVisitor isDirVisitor = new IsDirVisitor();
     
     //keep last content cached
     private String curContent;
@@ -368,7 +369,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         final Server solrServer = KeywordSearch.getServer();
 
-        boolean isDir = content.accept(new IsDirVisitor());
+        boolean isDir = content.accept(isDirVisitor);
         if (isDir) {
             return false;
         }
