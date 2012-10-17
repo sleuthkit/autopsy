@@ -858,10 +858,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                     final KeywordSearchList list = keywordToList.get(queryStr);
                     final String listName = list.getName();
 
-                    //DEBUG
-                    //logger.log(Level.INFO, "Searching: " + queryStr);
-
-                    progress.progress(queryStr, numSearched);
+                    progress.progress(listName + "[" + queryStr + "]", numSearched);
 
                     KeywordSearchQuery del = null;
 
