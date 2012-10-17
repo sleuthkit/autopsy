@@ -258,8 +258,8 @@ class Server {
             final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR + " -DSTOP.PORT=8079 -DSTOP.KEY=" + KEY + " "
                     + loggingProperties + " -jar start.jar";
             logger.log(Level.INFO, "Starting Solr using: " + SOLR_START_CMD);
-
             curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
+            logger.log(Level.INFO, "Finished starting Solr");
 
             try {
                 //block, give time to fully start the process
@@ -293,7 +293,10 @@ class Server {
             logger.log(Level.INFO, "Stopping Solr server from: " + solrFolder.getAbsolutePath());
             //try graceful shutdown
             Process stop = Runtime.getRuntime().exec(javaPath + " -DSTOP.PORT=8079 -DSTOP.KEY=" + KEY + " -jar start.jar --stop", null, solrFolder);
+            logger.log(Level.INFO, "Waiting for stopping Solr server");
             stop.waitFor();
+            logger.log(Level.INFO, "Finished stopping Solr server");
+            
             //if still running, forcefully stop it
             if (curSolrProcess != null) {
                 curSolrProcess.destroy();
