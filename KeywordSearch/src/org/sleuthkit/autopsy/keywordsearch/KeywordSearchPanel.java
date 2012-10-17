@@ -402,7 +402,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
                     case STARTED:
                         try {
                             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
-                            KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
+                            KeywordSearch.fireNumIndexedFilesChange(null, new Integer(numIndexedFiles));
                             //setFilesIndexed(numIndexedFiles);
                         } 
                         catch (NoOpenCoreException ex) {

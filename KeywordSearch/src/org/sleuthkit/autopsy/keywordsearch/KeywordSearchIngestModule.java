@@ -529,7 +529,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         //signal a potential change in number of indexed files
         try {
             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
-            KeywordSearch.changeSupport.firePropertyChange(KeywordSearch.NUM_FILES_CHANGE_EVT, null, new Integer(numIndexedFiles));
+            KeywordSearch.fireNumIndexedFilesChange(null, new Integer(numIndexedFiles));
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex);
         } catch (SolrServerException se) {

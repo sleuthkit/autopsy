@@ -249,7 +249,7 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
             logger.log(Level.WARNING, "Could not get number of indexed files/chunks");
         }
 
-        KeywordSearch.changeSupport.addPropertyChangeListener(KeywordSearch.NUM_FILES_CHANGE_EVT,
+        KeywordSearch.addNumIndexedFilesChangeListener(
                 new PropertyChangeListener() {
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
