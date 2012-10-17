@@ -224,12 +224,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
         //logger.log(Level.INFO, "complete()");
         commitTimer.stop();
 
-        //handle case if previous search running
-        //cancel it, will re-run after final commit
-        //note: cancellation of Searcher worker is graceful (between keywords)        
-        if (currentSearcher != null) {
-            currentSearcher.cancel(false);
-        }
+        //NOTE, we let the 1 before last searcher complete fully, and enqueue the last one
 
         //cancel searcher timer, ensure unwanted searcher does not start 
         //before we start the final one
@@ -907,6 +902,12 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                         Collection<BlackboardArtifact> newArtifacts = new ArrayList<BlackboardArtifact>();
 
                         for (final Keyword hitTerm : newResults.keySet()) {
+                            //checking for cancellation between results
+                            if (this.isCancelled()) {
+                                logger.log(Level.INFO, "Cancel detected, bailing before new hit processed for query: " + keywordQuery.getQuery());
+                                return null;
+                            }    
+                            
                             List<ContentHit> contentHitsAll = newResults.get(hitTerm);
                             Map<AbstractFile, Integer> contentHitsFlattened = ContentHit.flattenResults(contentHitsAll);
                             for (final AbstractFile hitFile : contentHitsFlattened.keySet()) {
