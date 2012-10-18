@@ -398,13 +398,13 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             }
             
         });
-        try {
             indexingState.put(current.getName(), Boolean.TRUE);
-            current.createIndex();
-        } catch (TskException ex) {
+            ModalNoButtons singleMNB = new ModalNoButtons(new Frame(), current);
+            singleMNB.setLocationRelativeTo(null);
+            singleMNB.setVisible(true);
+            singleMNB.setModal(true);
+            JOptionPane.showMessageDialog(this, "Successfuly created index");
             indexingState.put(current.getName(), Boolean.FALSE);
-            logger.log(Level.WARNING, "Error creating index", ex);
-        }
         setButtonFromIndexStatus(indexButton, this.hashDbIndexStatusLabel, current.status());      
     }//GEN-LAST:event_indexButtonActionPerformed
 
@@ -562,7 +562,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         }
         int res = JOptionPane.showConfirmDialog(this, firstMessage, "Unindexed databases", JOptionPane.YES_NO_OPTION);
         if(res == JOptionPane.YES_OPTION){
-            ModalNoButtons indexingDialog = new ModalNoButtons(new Frame(), true, unindexed);
+            ModalNoButtons indexingDialog = new ModalNoButtons(new Frame(),unindexed);
             indexingDialog.setLocationRelativeTo(null);
             indexingDialog.setVisible(true);
             indexingDialog.setModal(true);
