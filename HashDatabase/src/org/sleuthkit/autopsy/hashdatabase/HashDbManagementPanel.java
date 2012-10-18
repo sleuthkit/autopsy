@@ -21,21 +21,26 @@ package org.sleuthkit.autopsy.hashdatabase;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -50,6 +55,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     private static final Logger logger = Logger.getLogger(HashDbManagementPanel.class.getName());
     private static boolean ingestRunning = false;
     
+    
     //keep track of dbs being indexed, since HashDb objects are reloaded, 
     //we cannot rely on their status
     private final Map<String,Boolean>indexingState = new HashMap<String,Boolean>();
@@ -58,6 +64,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         this.hashSetTableModel = new HashSetTableModel();
         initComponents();
         customizeComponents();
+        
     }
     
     private void customizeComponents() {
@@ -505,47 +512,15 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
                 total+= s + "\n";
             }
         }
-        if(unindexed.isEmpty() ){
-           HashDbXML.getCurrent().save();
-        }
         //If unindexed ones are found, show a popup box that will either index them, or remove them.
-        else if (unindexed.size() == 1){
+        if (unindexed.size() == 1){
             showInvalidIndex(false, unindexed, total);
         }
-        else{
+        else if (unindexed.size() > 1){
             showInvalidIndex(true, unindexed, total);
         }
+        HashDbXML.getCurrent().save();
         
-    }
-    
-
-    
-    //Indexes a list of HashDbs from the dialog panel that do not have a companion -md5.idx file.
-    // Occurs when user clicks "Yes" to the dialog popup box
-    private void indexThese(List<HashDb> toIndex){
-        for(final HashDb hdb : toIndex){
-             hdb.addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(HashDb.EVENT.INDEXING_DONE.toString())) {
-                    //update tracking of indexing status
-                    indexingState.put((String)evt.getNewValue(), Boolean.FALSE);
-                    setButtonFromIndexStatus(indexButton, hashDbIndexStatusLabel, hdb.status());
-                    resync();
-                }
-            }
-            
-        });
-        try {
-            indexingState.put(hdb.getName(), Boolean.TRUE);
-            hdb.createIndex();
-        } catch (TskException ex) {
-            indexingState.put(hdb.getName(), Boolean.FALSE);
-            logger.log(Level.WARNING, "Error creating index", ex);
-        }
-        setButtonFromIndexStatus(indexButton, this.hashDbIndexStatusLabel, hdb.status());      
-            
-        }
     }
     
     
@@ -587,15 +562,17 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         }
         int res = JOptionPane.showConfirmDialog(this, firstMessage, "Unindexed databases", JOptionPane.YES_NO_OPTION);
         if(res == JOptionPane.YES_OPTION){
-            indexThese(unindexed);  
-            JOptionPane.showMessageDialog(this, secondMessage);
-            HashDbXML.getCurrent().save();
+            ModalNoButtons indexingDialog = new ModalNoButtons(new Frame(), true, unindexed);
+            indexingDialog.setLocationRelativeTo(null);
+            indexingDialog.setVisible(true);
+            indexingDialog.setModal(true);
+           JOptionPane.showMessageDialog(this, secondMessage);
+           hashSetTableModel.resync();
         }
         if(res == JOptionPane.NO_OPTION){
             JOptionPane.showMessageDialog(this, "All unindexed databases will be removed the list");
             removeThese(unindexed);
             JOptionPane.showMessageDialog(this, thirdMessage);
-            HashDbXML.getCurrent().save();
         }
     }
 
@@ -643,7 +620,6 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     public class HashSetTable extends JTable {
         @Override
         public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
-            System.out.println("RUNNING");
             Component c = super.prepareRenderer(renderer, row, column);
             JComponent jc = (JComponent) c;
             String valueText = (String) getValueAt(row, column);
