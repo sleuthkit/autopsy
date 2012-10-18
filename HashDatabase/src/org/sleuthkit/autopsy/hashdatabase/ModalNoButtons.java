@@ -52,64 +52,57 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        INDEXING_LABEL = new javax.swing.JLabel();
         INDEXING_PROGBAR = new javax.swing.JProgressBar();
         GO_GET_COFFEE_LABEL = new javax.swing.JLabel();
-        CURRENTDB_LABEL = new javax.swing.JLabel();
         CURRENTLYON_LABEL = new javax.swing.JLabel();
+        CURRENTDB_LABEL = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setMaximumSize(new java.awt.Dimension(519, 100));
+        setMinimumSize(new java.awt.Dimension(519, 100));
         setModal(true);
+        setPreferredSize(new java.awt.Dimension(519, 100));
         setResizable(false);
-
-        INDEXING_LABEL.setFont(new java.awt.Font("Tahoma", 0, 24)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(INDEXING_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.INDEXING_LABEL.text")); // NOI18N
 
         GO_GET_COFFEE_LABEL.setDisplayedMnemonic('H');
         org.openide.awt.Mnemonics.setLocalizedText(GO_GET_COFFEE_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.GO_GET_COFFEE_LABEL.text")); // NOI18N
 
-        CURRENTDB_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(CURRENTDB_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CURRENTDB_LABEL.text")); // NOI18N
-
         CURRENTLYON_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(CURRENTLYON_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CURRENTLYON_LABEL.text")); // NOI18N
+
+        CURRENTDB_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(CURRENTDB_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CURRENTDB_LABEL.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 28, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(INDEXING_PROGBAR, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(GO_GET_COFFEE_LABEL, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(GO_GET_COFFEE_LABEL)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(70, 70, 70)
-                                .addComponent(INDEXING_LABEL, javax.swing.GroupLayout.PREFERRED_SIZE, 197, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(24, 24, 24)
-                                .addComponent(INDEXING_PROGBAR, javax.swing.GroupLayout.PREFERRED_SIZE, 264, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(23, 23, 23))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(CURRENTLYON_LABEL)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(CURRENTDB_LABEL, javax.swing.GroupLayout.PREFERRED_SIZE, 181, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addComponent(CURRENTLYON_LABEL)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(CURRENTDB_LABEL)))
+                        .addGap(0, 161, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(INDEXING_LABEL)
+                .addComponent(GO_GET_COFFEE_LABEL)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(CURRENTLYON_LABEL)
-                    .addComponent(CURRENTDB_LABEL, javax.swing.GroupLayout.PREFERRED_SIZE, 17, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(CURRENTDB_LABEL))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(GO_GET_COFFEE_LABEL)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(INDEXING_PROGBAR, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(16, 16, 16))
+                .addComponent(INDEXING_PROGBAR, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(70, 70, 70))
         );
 
         pack();
@@ -122,12 +115,11 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
 
     void indexThese(List<HashDb> unindexedd) {
         length = unindexedd.size();
-        this.INDEXING_LABEL.setText("Indexing " + currentcount + " of " + length);
         this.INDEXING_PROGBAR.setIndeterminate(true);
         for (HashDb db : unindexedd) {
-            this.CURRENTDB_LABEL.setText(currentDb);
-            db.addPropertyChangeListener(this);
             currentDb = db.getName();
+            this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
+            db.addPropertyChangeListener(this);
             try {
                 db.createIndex();
             } catch (TskException e) {
@@ -139,7 +131,6 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
     private javax.swing.JLabel CURRENTDB_LABEL;
     private javax.swing.JLabel CURRENTLYON_LABEL;
     private javax.swing.JLabel GO_GET_COFFEE_LABEL;
-    private javax.swing.JLabel INDEXING_LABEL;
     private javax.swing.JProgressBar INDEXING_PROGBAR;
     // End of variables declaration//GEN-END:variables
 
@@ -152,7 +143,8 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
                 this.setVisible(false);
             } else {
                 currentcount++;
-                this.INDEXING_LABEL.setText("Indexing " + currentcount + " of " + length);
+                this.CURRENTLYON_LABEL.setText("Currently indexing " + currentcount + " of " + length);
+                
             }
         }
     }
