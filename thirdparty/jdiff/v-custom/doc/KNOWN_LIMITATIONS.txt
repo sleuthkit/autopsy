@@ -1,0 +1,20 @@
+
+				JDiff 1.1.1
+
+Known limitations, features and bugs which aren't likely to get fixed
+soon are listed here. There is another list of smaller gripes in src/TODO.
+If you need one of these items to be fixed, submit a patch to the
+patches page at javadiff.sourceforge.net, or contact Matt Doar at 
+mdoar@pobox.com.
+
+The number which follows each entry is the SourceForge bug identifier.
+
+1) HTML comments are also included in the diff between
+documentation. (510309).
+2) JDiff doesn't expand @docroot doc tags in Javadoc1.4
+3) JDiff does not support locales other than English (530063).
+4) Handling of @link tags in the first sentence of comments is not as 
+general as it should be. See convertAtLinks() comments.
+5) strictfp and strict modifiers are not checked for between
+APIs (547422).
+6) Changes in parameter names are not tracked.

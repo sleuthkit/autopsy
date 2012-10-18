@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="iso-8859-1" standalone="no"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+<xsd:annotation>
+  <xsd:documentation>
+  Schema for JDiff comments.
+  </xsd:documentation>
+</xsd:annotation>
+
+<xsd:element name="comments" type="commentsType"/>
+
+<xsd:complexType name="commentsType">
+  <xsd:sequence>
+    <xsd:element name="comment" type="commentType" minOccurs='0' maxOccurs='unbounded'/>
+  </xsd:sequence>
+  <xsd:attribute name="name" type="xsd:string"/>
+  <xsd:attribute name="jdversion" type="xsd:string"/>
+</xsd:complexType>
+
+<xsd:complexType name="commentType">
+  <xsd:sequence>
+    <xsd:element name="identifier" type="identifierType" minOccurs='1' maxOccurs='unbounded'/>
+    <xsd:element name="text" type="xsd:string" minOccurs='1' maxOccurs='1'/>
+  </xsd:sequence>
+</xsd:complexType>
+
+<xsd:complexType name="identifierType">
+  <xsd:attribute name="id" type="xsd:string"/>
+</xsd:complexType>
+
+</xsd:schema>
