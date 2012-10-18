@@ -19,10 +19,11 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.LayoutFile;
 
 /**
  * Class for Children of all ContentNodes. Handles creating child ContentNodes.
@@ -30,17 +31,27 @@ import org.sleuthkit.datamodel.LayoutFile;
  */
 class ContentChildren extends AbstractContentChildren {
     
+    private static final Logger logger = Logger.getLogger(ContentChildren.class.getName());
     //private static final int MAX_CHILD_COUNT = 1000000;
 
     private Content parent;
 
     ContentChildren(Content parent) {
+        super(); //initialize lazy behavior
         this.parent = parent;
     }
 
     @Override
     protected void addNotify() {
+        //TODO check global settings
+        //if above limit, query and return subrange
+        
+        //StopWatch s2 = new StopWatch();
+        //s2.start();
+        //logger.log(Level.INFO, "GETTING CHILDREN CONTENT for parent: " + parent.getName());
         List<Content> children = ContentHierarchyVisitor.getChildren(parent);
+        //s2.stop();
+        //logger.log(Level.INFO, "GOT CHILDREN CONTENTS:" + children.size() + ", took: " + s2.getElapsedTime());
         
         // To not display LayoutFiles
 //        Iterator<Content> it = children.iterator();
@@ -53,6 +64,7 @@ class ContentChildren extends AbstractContentChildren {
         
         //limit number children
         //setKeys(children.subList(0, Math.min(children.size(), MAX_CHILD_COUNT)));
+
         setKeys(children);
     }
 
