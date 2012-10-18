@@ -53,7 +53,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         super(Children.LEAF, getLookups(artifact));
 
         this.artifact = artifact;
-        this.associated = getAssociatedContent(artifact);
+        //this.associated = getAssociatedContent(artifact);
+        this.associated = this.getLookup().lookup(Content.class);
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName(associated.getName());
         this.setIconBaseWithExtension(iconPath);
@@ -67,7 +68,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         super(Children.LEAF, getLookups(artifact));
 
         this.artifact = artifact;
-        this.associated = getAssociatedContent(artifact);
+        //this.associated = getAssociatedContent(artifact);
+        this.associated = this.getLookup().lookup(Content.class);
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName(associated.getName());
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/" + getIcon(BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID())));
