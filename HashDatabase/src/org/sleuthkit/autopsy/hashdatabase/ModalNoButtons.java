@@ -29,6 +29,7 @@ import org.sleuthkit.datamodel.TskException;
 class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListener {
 
     List<HashDb> unindexed;
+    HashDb toIndex;
     int length = 0;
     int currentcount = 1;
     String currentDb = "";
@@ -36,9 +37,18 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
     /**
      * Creates new form ModalNoButtons
      */
-    public ModalNoButtons(java.awt.Frame parent, boolean modal, List<HashDb> unindexed) {
-        super(parent, "Indexing databases", modal);
+    public ModalNoButtons(java.awt.Frame parent, List<HashDb> unindexed) {
+        super(parent, "Indexing databases", true);
         this.unindexed = unindexed;
+        this.toIndex = null;
+        initComponents();
+        initCustom();
+    }
+    
+    public ModalNoButtons(java.awt.Frame parent, HashDb unindexed){
+        super(parent, "Indexing database", true);
+        this.unindexed = null;
+        this.toIndex = unindexed;
         initComponents();
         initCustom();
     }
@@ -110,9 +120,27 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
 
     private void initCustom() {
         this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-        indexThese(this.unindexed);
+        if(this.unindexed != null){
+            indexThese(this.unindexed);
+        }
+        else{
+            indexThis();
+        }
     }
 
+    void indexThis(){
+        this.INDEXING_PROGBAR.setIndeterminate(true);
+        currentDb = this.toIndex.getName();
+        this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
+        this.CURRENTLYON_LABEL.setText("Currently indexing 1 database");
+        this.toIndex.addPropertyChangeListener(this);
+        try{
+            this.toIndex.createIndex();
+        }
+        catch(TskException e){
+            Logger.getLogger(ModalNoButtons.class.getName()).log(Level.WARNING, "Error making TSK index", e);
+        }
+    }
     void indexThese(List<HashDb> unindexedd) {
         length = unindexedd.size();
         this.INDEXING_PROGBAR.setIndeterminate(true);
@@ -137,7 +165,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals(HashDb.EVENT.INDEXING_DONE.name())) {
-            if (currentcount == length) {
+            if (currentcount >= length) {
                 this.INDEXING_PROGBAR.setValue(100);
                 this.setModal(false);
                 this.setVisible(false);
