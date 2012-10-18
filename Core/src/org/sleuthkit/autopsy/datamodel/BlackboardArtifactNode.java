@@ -98,9 +98,10 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     NO_DESCR,
                     entry.getValue()));
         }
-
-        if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
-                || artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+        
+        final int artifactTypeID = artifact.getArtifactTypeID();
+        if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
+                || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             ss.put(new NodeProperty("File Path",
                     "File Path",
                     NO_DESCR,
@@ -120,7 +121,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     private void fillPropertyMap(Map<String, Object> map, BlackboardArtifact artifact) {
         try {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
+                final int attributeTypeID= attribute.getAttributeTypeID();
+                if (attributeTypeID == ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID()) {
                     continue;
                 } else {
                     switch (attribute.getValueType()) {
@@ -131,8 +133,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                             map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueInt());
                             break;
                         case LONG:
-                            if (attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                                    || attribute.getAttributeTypeID() == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
+                            if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
+                                    || attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
                                 map.put(attribute.getAttributeTypeDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
                             } else {
                                 map.put(attribute.getAttributeTypeDisplayName(), attribute.getValueLong());
