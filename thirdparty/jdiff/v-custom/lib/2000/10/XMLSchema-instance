@@ -1,0 +1,31 @@
+<?xml version='1.0'?>
+<!DOCTYPE xs:schema SYSTEM "XMLSchema.dtd" [
+<!ENTITY % p 'xs:'>
+<!ENTITY % s ':xs'>
+<!ATTLIST xs:documentation xmlns CDATA #IMPLIED>
+]>
+<xs:schema targetNamespace="http://www.w3.org/2000/10/XMLSchema-instance"
+           xmlns:xs="http://www.w3.org/2000/10/XMLSchema">
+  <xs:annotation>
+   <xs:documentation xmlns="">
+    <h1>XML Schema instance namespace</h1>
+    <p>See <a href="http://www.w3.org/TR/xmlschema-1/">The XML Schema draft recommendation</a> for an introduction</p>
+
+
+    <hr />
+    <address><a href="mailto:ht@tux.w3.org">Henry S. Thompson</a></address>
+    $Date: 2001/11/16 06:19:40 $<br />
+    $Id: XMLSchema-instance,v 1.1 2001/11/16 06:19:40 mdoar Exp $
+  </xs:documentation>
+ </xs:annotation>
+ <xs:attribute name="type">
+  <xs:annotation>
+   <xs:documentation>No definitions are provided here, as
+                     this schema is never used as such</xs:documentation>
+  </xs:annotation>
+ </xs:attribute>
+
+ <xs:attribute name="null"/>
+ <xs:attribute name="schemaLocation"/>
+ <xs:attribute name="noNamespaceSchemaLocation"/>
+</xs:schema>
