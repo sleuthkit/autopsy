@@ -19,10 +19,15 @@
 
 package org.sleuthkit.autopsy.hashdatabase;
 
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskException;
 
@@ -66,12 +71,13 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         GO_GET_COFFEE_LABEL = new javax.swing.JLabel();
         CURRENTLYON_LABEL = new javax.swing.JLabel();
         CURRENTDB_LABEL = new javax.swing.JLabel();
+        CANCEL_BUTTON = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setMaximumSize(new java.awt.Dimension(519, 100));
-        setMinimumSize(new java.awt.Dimension(519, 100));
+        setMaximumSize(new java.awt.Dimension(519, 130));
+        setMinimumSize(new java.awt.Dimension(519, 130));
         setModal(true);
-        setPreferredSize(new java.awt.Dimension(519, 100));
+        setPreferredSize(new java.awt.Dimension(519, 130));
         setResizable(false);
 
         GO_GET_COFFEE_LABEL.setDisplayedMnemonic('H');
@@ -82,6 +88,13 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
 
         CURRENTDB_LABEL.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(CURRENTDB_LABEL, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CURRENTDB_LABEL.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(CANCEL_BUTTON, org.openide.util.NbBundle.getMessage(ModalNoButtons.class, "ModalNoButtons.CANCEL_BUTTON.text")); // NOI18N
+        CANCEL_BUTTON.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                CANCEL_BUTTONMouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -98,7 +111,10 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
                                 .addComponent(CURRENTLYON_LABEL)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(CURRENTDB_LABEL)))
-                        .addGap(0, 161, Short.MAX_VALUE)))
+                        .addGap(0, 161, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(CANCEL_BUTTON, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -112,11 +128,29 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
                     .addComponent(CURRENTDB_LABEL))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(INDEXING_PROGBAR, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(70, 70, 70))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(CANCEL_BUTTON)
+                .addGap(36, 36, 36))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void CANCEL_BUTTONMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_CANCEL_BUTTONMouseClicked
+        // TODO add your handling code here:
+        String message = "You are about to exit out of indexing your hash databases. \n"
+                + "The generated index will be left unusable. If you choose to continue,\n "
+                + "please delete the corresponding -md5.idx file in the hash folder.\n"
+                + "                                    Continue?";
+
+        int res = JOptionPane.showConfirmDialog(this, message, "Unfinished Indexing", JOptionPane.YES_NO_OPTION);
+        if(res == JOptionPane.YES_OPTION){
+            this.setVisible(false);
+            this.setModal(false);
+            this.dispose();
+          }
+        
+    }//GEN-LAST:event_CANCEL_BUTTONMouseClicked
 
     private void initCustom() {
         this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -126,12 +160,15 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         else{
             indexThis();
         }
+    
+
     }
 
     void indexThis(){
         this.INDEXING_PROGBAR.setIndeterminate(true);
         currentDb = this.toIndex.getName();
         this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
+        
         this.CURRENTLYON_LABEL.setText("Currently indexing 1 database");
         this.toIndex.addPropertyChangeListener(this);
         try{
@@ -156,6 +193,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton CANCEL_BUTTON;
     private javax.swing.JLabel CURRENTDB_LABEL;
     private javax.swing.JLabel CURRENTLYON_LABEL;
     private javax.swing.JLabel GO_GET_COFFEE_LABEL;
@@ -169,6 +207,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
                 this.INDEXING_PROGBAR.setValue(100);
                 this.setModal(false);
                 this.setVisible(false);
+                this.dispose();
             } else {
                 currentcount++;
                 this.CURRENTLYON_LABEL.setText("Currently indexing " + currentcount + " of " + length);
