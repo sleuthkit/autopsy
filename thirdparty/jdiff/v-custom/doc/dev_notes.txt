@@ -1,0 +1,42 @@
+Handy commands for SourceForge:
+
+export CVS_RSH=ssh 
+cvs -z3 -d:ext:mdoar@javadiff.cvs.sourceforge.net:/cvsroot/javadiff co -P jdiff
+
+ssh -l mdoar javadiff.sourceforge.net 
+scp jdkchanges.zip mdoar@javadiff.sourceforge.net:/home/groups/j/ja/javadiff/htdocs/ 
+scp jdkchanges.zip mdoar@jdiff.sourceforge.net:/home/groups/j/jd/jdiff/htdocs/ 
+
+scp index.html mdoar@javadiff.sourceforge.net:/home/users/m/md/mdoar/jdiff/htdocs
+
+crontab when logged in as mdoar in /home/users/m/md/mdoar:
+0 1 * * * /home/users/m/md/mdoar/nightly.sh > /dev/null
+
+/home/users/m/md/mdoar/nightly.sh contains:
+cd tarballs
+cvs -Q -d:pserver:anonymous@cvs1:/cvsroot/javadiff export -Dtomorrow jdiff
+if [ -d jdiff ]
+then
+echo "Tarball created on: " > jdiff/CREATED_ON
+echo `date` >> jdiff/CREATED_ON
+tar czf /home/groups/j/ja/javadiff/htdocs/jdiff/jdiff_latest.tar.gz jdiff
+rm -rf jdiff
+fi
+
+These are the CVS repository backups, only changed when something has changed:
+http://cvs.sourceforge.net/cvstarballs/javadiff-cvsroot.tar.bz2
+
+ftp upload.sourceforge.net
+anonymous
+cd incoming
+put jdiff-1.1.0.zip
+put jdiff-1.1.0-src.zip
+
+cvs tag JDIFF_1_1_0 .
+Creating a src package:
+
+mv jdiff jdiff-1.1.0-src
+find jdiff-1.1.0-src | zip source -@
+mv source.zip jdiff-1.1.0-src.zip
+
+(Probably neater to do it in Ant and exclude CVS directories)

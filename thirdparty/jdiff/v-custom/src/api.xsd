@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="iso-8859-1" standalone="no"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+<xsd:annotation>
+  <xsd:documentation>
+  Schema for JDiff API representation.
+  </xsd:documentation>
+</xsd:annotation>
+
+<xsd:element name="api" type="apiType"/>
+
+<xsd:complexType name="apiType">
+  <xsd:sequence>
+    <xsd:element name="package" type="packageType" minOccurs='1' maxOccurs='unbounded'/>
+  </xsd:sequence>
+  <xsd:attribute name="name" type="xsd:string"/>
+  <xsd:attribute name="jdversion" type="xsd:string"/>
+</xsd:complexType>
+
+<xsd:complexType name="packageType">
+  <xsd:sequence>
+    <xsd:choice maxOccurs='unbounded'>
+      <xsd:element name="class" type="classType"/>
+      <xsd:element name="interface" type="classType"/>
+    </xsd:choice>
+    <xsd:element name="doc" type="xsd:string" minOccurs='0' maxOccurs='1'/>
+  </xsd:sequence>
+  <xsd:attribute name="name" type="xsd:string"/>
+</xsd:complexType>
+
+<xsd:complexType name="classType">
+  <xsd:sequence>
+    <xsd:element name="implements" type="interfaceTypeName" minOccurs='0' maxOccurs='unbounded'/>
+    <xsd:element name="constructor" type="constructorType" minOccurs='0' maxOccurs='unbounded'/>
+    <xsd:element name="method" type="methodType" minOccurs='0' maxOccurs='unbounded'/>
+    <xsd:element name="field" type="fieldType" minOccurs='0' maxOccurs='unbounded'/>
+    <xsd:element name="doc" type="xsd:string" minOccurs='0' maxOccurs='1'/>
+  </xsd:sequence>
+  <xsd:attribute name="name" type="xsd:string"/>
+  <xsd:attribute name="extends" type="xsd:string" use='optional'/>
+  <xsd:attribute name="abstract" type="xsd:boolean"/>
+  <xsd:attribute name="src" type="xsd:string" use='optional'/>
+  <xsd:attribute name="static" type="xsd:boolean"/>
+  <xsd:attribute name="final" type="xsd:boolean"/>
+  <xsd:attribute name="deprecated" type="xsd:string"/>
+  <xsd:attribute name="visibility" type="xsd:string"/>
+</xsd:complexType>
+
+<xsd:complexType name="interfaceTypeName">
+  <xsd:attribute name="name" type="xsd:string"/>
+</xsd:complexType>
+
+<xsd:complexType name="constructorType">
+  <xsd:sequence>
+    <xsd:element name="exception" type="exceptionType" minOccurs='0' maxOccurs='unbounded'/>
+    <xsd:element name="doc" type="xsd:string" minOccurs='0' maxOccurs='1'/>
+  </xsd:sequence>
+  <xsd:attribute name="name" type="xsd:string"/>
+  <xsd:attribute name="type" type="xsd:string" use='optional'/>
+  <xsd:attribute name="src" type="xsd:string" use='optional'/>
+  <xsd:attribute name="static" type="xsd:boolean"/>
+  <xsd:attribute name="final" type="xsd:boolean"/>
+  <xsd:attribute name="deprecated" type="xsd:string"/>
+  <xsd:attribute name="visibility" type="xsd:string"/>
+</xsd:complexType>
+
+<xsd:complexType name="paramsType">
+  <xsd:attribute name="name" type="xsd:string"/>
+  <xsd:attribute name="type" type="xsd:string"/>
+</xsd:complexType>
+
+<xsd:complexType name="exceptionType">
+  <xsd:attribute name="name" type="xsd:string"/>
+  <xsd:attribute name="type" type="xsd:string"/>
+</xsd:complexType>
+
+<xsd:complexType name="methodType">
+  <xsd:sequence>
+    <xsd:element name="param" type="paramsType" minOccurs='0' maxOccurs='unbounded'/>
+    <xsd:element name="exception" type="exceptionType" minOccurs='0' maxOccurs='unbounded'/>
+    <xsd:element name="doc" type="xsd:string" minOccurs='0' maxOccurs='1'/>
+  </xsd:sequence>
+  <xsd:attribute name="name" type="xsd:string"/>
+  <xsd:attribute name="return" type="xsd:string" use='optional'/>
+  <xsd:attribute name="abstract" type="xsd:boolean"/>
+  <xsd:attribute name="native" type="xsd:boolean"/>
+  <xsd:attribute name="synchronized" type="xsd:boolean"/>
+  <xsd:attribute name="src" type="xsd:string" use='optional'/>
+  <xsd:attribute name="static" type="xsd:boolean"/>
+  <xsd:attribute name="final" type="xsd:boolean"/>
+  <xsd:attribute name="deprecated" type="xsd:string"/>
+  <xsd:attribute name="visibility" type="xsd:string"/>
+</xsd:complexType>
+
+<xsd:complexType name="fieldType">
+  <xsd:sequence>
+    <xsd:element name="doc" type="xsd:string" minOccurs='0' maxOccurs='1'/>
+  </xsd:sequence>
+  <xsd:attribute name="name" type="xsd:string"/>
+  <xsd:attribute name="type" type="xsd:string"/>
+  <xsd:attribute name="transient" type="xsd:boolean"/>
+  <xsd:attribute name="volatile" type="xsd:boolean"/>
+  <xsd:attribute name="value" type="xsd:string" use='optional'/>
+  <xsd:attribute name="src" type="xsd:string" use='optional'/>
+  <xsd:attribute name="static" type="xsd:boolean"/>
+  <xsd:attribute name="final" type="xsd:boolean"/>
+  <xsd:attribute name="deprecated" type="xsd:string"/>
+  <xsd:attribute name="visibility" type="xsd:string"/>
+</xsd:complexType>
+
+</xsd:schema>
