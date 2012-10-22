@@ -235,19 +235,27 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                 Element tempnode = (Element) children.item(i);
                 String context = tempnode.getNodeName();
                 
-                Element timenode = (Element) tempnode.getElementsByTagName("time").item(0);
-                String etime = timenode.getTextContent();
+                NodeList timenodes = tempnode.getElementsByTagName("time");
                 Long time = null;
-                try {
-                    Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
-                    time = epochtime.longValue();
-                    String Tempdate = time.toString();
-                    time = Long.valueOf(Tempdate) / 1000;
-                } catch (ParseException e) {
-                    logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> failed for: " + etime);
+                if(timenodes.getLength() > 0) {
+                    Element timenode = (Element) timenodes.item(0);
+                    String etime = timenode.getTextContent();
+                    try {
+                        Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
+                        time = epochtime.longValue();
+                        String Tempdate = time.toString();
+                        time = Long.valueOf(Tempdate) / 1000;
+                    } catch (ParseException e) {
+                        logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> failed for: " + etime);
+                    }
                 }
                 
-                Element artroot = (Element) tempnode.getElementsByTagName("artifacts").item(0);
+                NodeList artroots = tempnode.getElementsByTagName("artifacts");
+                if(artroots.getLength() == 0) {
+                    // If there isn't an artifact node, skip this entry
+                    continue;
+                }
+                Element artroot = (Element) artroots.item(0);
                 NodeList myartlist = artroot.getChildNodes();
                 String winver = "";
                 String installdate = "";
@@ -303,7 +311,9 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
 //                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
 //                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, value));
 //                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, ftime));
-                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
+                                 if(time != null) {
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
+                                 }
                                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", value));
                                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", ftime));
                             BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
@@ -343,7 +353,9 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
 //                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
 //                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
 //                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, artnode.getName()));
-                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
+                                 if(time != null) {
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
+                                 }
                                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
                                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));
                                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", artnode.getNodeName()));
