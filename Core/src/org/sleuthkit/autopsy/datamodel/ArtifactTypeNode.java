@@ -34,8 +34,8 @@ import org.sleuthkit.datamodel.TskException;
  */
 public class ArtifactTypeNode extends DisplayableItemNode {
 
-    BlackboardArtifact.ARTIFACT_TYPE type;
-    int childCount = 0;
+    private BlackboardArtifact.ARTIFACT_TYPE type;
+    private long childCount = 0;
 
     ArtifactTypeNode(BlackboardArtifact.ARTIFACT_TYPE type, SleuthkitCase skCase) {
         super(Children.create(new ArtifactTypeChildren(type, skCase), true), Lookups.singleton(type.getDisplayName()));
@@ -44,7 +44,7 @@ public class ArtifactTypeNode extends DisplayableItemNode {
         //    a performance increase might be had by adding a 
         //    "getBlackboardArtifactCount()" method to skCase
         try {
-            this.childCount = skCase.getBlackboardArtifacts(type.getTypeID()).size();
+            this.childCount = skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
         } catch (TskException ex) {
             Logger.getLogger(ArtifactTypeNode.class.getName())
                     .log(Level.WARNING, "Error getting child count", ex);
