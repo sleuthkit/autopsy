@@ -27,6 +27,7 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -47,6 +48,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.TskException;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
@@ -131,7 +133,6 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
         NodeList nlist = xmlinput.getElementsByTagName("SearchEngine");
         SearchEngineURLQueryAnalyzer.SearchEngine[] listEngines = new SearchEngineURLQueryAnalyzer.SearchEngine[nlist.getLength()];
         for(int i = 0;i < nlist.getLength(); i++){
-            try{
                 NamedNodeMap nnm = nlist.item(i).getAttributes();
                 
                 String EngineName = nnm.getNamedItem("engine").getNodeValue();
@@ -149,10 +150,6 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                 System.out.println("Search Engine: " + Se.toString());
                 listEngines[i] = Se;
             }
-            catch(Exception e){
-               logger.log(Level.WARNING, "Unable to create search engines!", e);
-            }
-        }
         engines = listEngines;
     }
     
@@ -215,31 +212,29 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
         }
     }
 
- 
-
     /**
      * Splits URLs based on a delimeter (key). .contains() and .split()
      *
      * @param url The URL to be split
-     * @param kvp the delimeter key value pair used to split the URL into its search, extracted from the url type.
-     * query.
+     * @param value the delimeter value used to split the URL into its
+     * search token, extracted from the xml.
      * @return The extracted search query
- *
+     *
      */
     private String split2(String url, String value) {
         String basereturn = "NoQuery";
         String v = value;
         //Want to determine if string contains a string based on splitkey, but we want to split the string on splitKeyConverted due to regex
-        if(value.contains("\\?")){
+        if (value.contains("\\?")) {
             v = value.replace("\\?", "?");
         }
-            String[] sp = url.split(v);
-            if (sp.length >= 2) {
-                if (sp[sp.length - 1].contains("&")) {
-                    basereturn = sp[sp.length - 1].split("&")[0];
-                } else {
-                    basereturn = sp[sp.length - 1];
-                }       
+        String[] sp = url.split(v);
+        if (sp.length >= 2) {
+            if (sp[sp.length - 1].contains("&")) {
+                basereturn = sp[sp.length - 1].split("&")[0];
+            } else {
+                basereturn = sp[sp.length - 1];
+            }
         }
         return basereturn;
     }
@@ -259,7 +254,11 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                 String browser = "";
                 long last_accessed = -1;
                 //from tsk_files
-                FsContent fs = this.extractFiles(image, "select * from tsk_files where `obj_id` = '" + artifact.getObjectID() + "'").get(0); //associated file
+                List<FsContent> fslst = this.extractFiles(image, "select * from tsk_files where `obj_id` = '" + artifact.getObjectID() + "'");
+                if (fslst.isEmpty() || fslst == null) {
+                    continue; //File was corrupted or invalid, skipping
+                }
+                FsContent fs = fslst.get(0); //associated file
                 SearchEngineURLQueryAnalyzer.SearchEngine se = NullEngine;
                 //from blackboard_attributes
                 Collection<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("Where `artifact_id` = " + artifact.getArtifactID());
@@ -272,7 +271,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                         final String urlString = attribute.getValueString();
                         se = getSearchEngine(urlString);
                         if (!se.equals(NullEngine)) {
-                            query = extractSearchEngineQuery(attribute.getValueString());   
+                            query = extractSearchEngineQuery(attribute.getValueString());
                             if (query.equals("NoQuery") || query.equals("")) {   //False positive match, artifact was not a query.
                                 break getAttributes;
                             }
@@ -281,18 +280,16 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                         }
                     } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()) {
                         browser = attribute.getValueString();
-                    }
-                    else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()) {
+                    } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()) {
                         searchEngineDomain = attribute.getValueString();
-                    }
-                    else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
+                    } else if (attribute.getAttributeTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
                         last_accessed = attribute.getValueLong();
                     }
                 }
 
                 if (!se.equals(NullEngine) && !query.equals("NoQuery") && !query.equals("")) {
                     try {
-                        
+
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), MODULE_NAME, searchEngineDomain));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), MODULE_NAME, query));
@@ -307,10 +304,8 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                     }
                     services.fireModuleDataEvent(new ModuleDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
                 }
-
-
             }
-        } catch (Exception e) {
+        } catch (TskException e) {
             logger.log(Level.WARNING, "Encountered error retrieving artifacts: ", e);
         } finally {
             if (controller.isCancelled()) {
