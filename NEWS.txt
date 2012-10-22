@@ -1,11 +1,14 @@
 ---------------- VERSION Current (development) --------------
 
 New features:
+- Build scripts enhancements to include module version tracking.
 
 Improvements:
-Netbeans RCP upgrade from 7.2 to 7.2.1
+- Netbeans RCP upgrade from 7.2 to 7.2.1
+- Enable user to select any file when opening image.
 
 Bugfixes:
+- UI fix for keyword search box.
 
 
 ---------------- VERSION 3.0.0 --------------
