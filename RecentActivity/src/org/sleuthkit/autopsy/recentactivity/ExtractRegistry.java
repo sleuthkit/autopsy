@@ -20,27 +20,32 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import java.io.File;
 import java.io.*;
+import java.io.File;
 import java.sql.ResultSet;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.*;
+import org.sleuthkit.datamodel.FileSystem;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 /**
  * Extracting windows registry data using regripper
@@ -207,10 +212,10 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
         try {
             File regfile = new File(regRecord);
             FileInputStream fstream = new FileInputStream(regfile);
-            InputStreamReader fstreamReader = new InputStreamReader(fstream, "UTF-8");
-            BufferedReader input = new BufferedReader(fstreamReader);
+            //InputStreamReader fstreamReader = new InputStreamReader(fstream, "UTF-8");
+            //BufferedReader input = new BufferedReader(fstreamReader);
             //logger.log(Level.INFO, "using encoding " + fstreamReader.getEncoding());
-            String regString = new Scanner(input).useDelimiter("\\Z").next();
+            String regString = new Scanner(fstream, "UTF-8").useDelimiter("\\Z").next();
             regfile.delete();
             String startdoc = "<?xml version=\"1.0\"?><document>";
             String result = regString.replaceAll("----------------------------------------", "");
@@ -220,19 +225,18 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
             result = result.replaceAll("&", "&amp;");
             String enddoc = "</document>";
             String stringdoc = startdoc + result + enddoc;
-            SAXBuilder sb = new SAXBuilder();
-            Document document = sb.build(new StringReader(stringdoc));
-            Element root = document.getRootElement();
-            List<Element> types = root.getChildren();
-            Iterator<Element> iterator = types.iterator();
-            while (iterator.hasNext()) {
-                String etime = "";
-                String context = "";
-                Element tempnode = iterator.next();
-                // Element tempnode = types.get(i);
-                context = tempnode.getName();
-                Element timenode = tempnode.getChild("time");
-                etime = timenode.getTextTrim();
+            
+            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();   
+            Document doc = builder.parse(new InputSource(new StringReader(stringdoc)));
+            Element oroot = doc.getDocumentElement();
+            NodeList children = oroot.getChildNodes();
+            int len = children.getLength();
+            for(int i=0; i<len; i++) {
+                Element tempnode = (Element) children.item(i);
+                String context = tempnode.getNodeName();
+                
+                Element timenode = (Element) tempnode.getElementsByTagName("time").item(0);
+                String etime = timenode.getTextContent();
                 Long time = null;
                 try {
                     Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
@@ -242,19 +246,20 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                 } catch (ParseException e) {
                     logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> failed for: " + etime);
                 }
-                Element artroot = tempnode.getChild("artifacts");
-                List<Element> artlist = artroot.getChildren();
+                
+                Element artroot = (Element) tempnode.getElementsByTagName("artifacts").item(0);
+                NodeList myartlist = artroot.getChildNodes();
                 String winver = "";
                 String installdate = "";
-                if (artlist.isEmpty()) {
-                } else {
-                    Iterator<Element> aiterator = artlist.iterator();
-                    while (aiterator.hasNext()) {
-                        Element artnode = aiterator.next();
-                        String name = artnode.getAttributeValue("name");
-                        String value = artnode.getTextTrim();
+                for(int j=0; j<myartlist.getLength(); j++) {
+                    Node artchild = myartlist.item(j);
+                    // If it has attributes, then it is an Element (based off API)
+                    if(artchild.hasAttributes()) {
+                        Element artnode = (Element) artchild;
+                        String name = artnode.getAttribute("name");
+                        String value = artnode.getTextContent().trim();
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-
+                        
                         if ("recentdocs".equals(context)) {
                             //               BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                             //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
@@ -278,7 +283,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                                 //TODO Revisit usage of deprecated constructor as per TSK-583
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, utime));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity",  utime));
-                            String dev = artnode.getAttributeValue("dev");
+                            String dev = artnode.getAttribute("dev");
                                 //TODO Revisit usage of deprecated constructor as per TSK-583
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", context, dev));
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", context, value));
@@ -341,7 +346,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
                                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
                                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));
-                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", artnode.getName()));
+                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", artnode.getNodeName()));
                             bbart.addAttributes(bbattributes);
 
                         } else {
@@ -349,6 +354,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
 //                            bbart.addAttributes(bbattributes);
                         }
                     }
+                    
                 }
             }
         } catch (Exception ex) {
