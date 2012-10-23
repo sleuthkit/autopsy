@@ -34,6 +34,7 @@ import java.util.logging.Level;
 import javax.swing.JPanel;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
@@ -52,6 +53,7 @@ import org.sleuthkit.datamodel.TskException;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  * This module attempts to extract web queries from major search engines by
@@ -288,8 +290,6 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                 }
 
                 if (!se.equals(NullEngine) && !query.equals("NoQuery") && !query.equals("")) {
-                    try {
-
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), MODULE_NAME, searchEngineDomain));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT.getTypeID(), MODULE_NAME, query));
@@ -298,11 +298,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, fs, bbattributes);
                         se.increment();
                         ++totalQueries;
-                    } catch (Exception e) {
-                        logger.log(Level.WARNING, "Error during add artifact.", e);
-                        this.addErrorMessage(this.getName() + ": Error while adding artifact");
-                    }
-                    services.fireModuleDataEvent(new ModuleDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
+                        services.fireModuleDataEvent(new ModuleDataEvent("RecentActivity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY));
                 }
             }
         } catch (TskException e) {
@@ -358,14 +354,16 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
             if (!XMLUtil.xmlIsValid(xml, SearchEngineURLQueryAnalyzer.class, XSDFILE)) {
                 logger.log(Level.WARNING, "Error loading Search Engines: could not validate against [" + XSDFILE + "], results may not be accurate.");
             }
-            try {
-                createEngines();
-                getSearchEngineNames();
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Unable to create Search Engines!", e);
-            }
-        } catch (Exception e) {
+           createEngines();
+           getSearchEngineNames();
+        } catch (IOException e) {
             logger.log(Level.WARNING, "Was not able to load SEUQAMappings.xml", e);
+        }
+        catch(ParserConfigurationException pce){
+            logger.log(Level.WARNING, "Unable to build XML parser", pce);
+        }
+        catch(SAXException sxe){
+            logger.log(Level.WARNING, "Unable to parse XML file", sxe);
         }
     }
 
