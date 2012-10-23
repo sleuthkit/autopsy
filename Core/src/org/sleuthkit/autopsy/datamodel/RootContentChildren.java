@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * Children implementation for the root node of a ContentNode tree. Accepts a
  * list of root Content objects for the tree.
  */
-public class RootContentChildren<Object> extends AbstractContentChildren<Object> {
+public class RootContentChildren extends AbstractContentChildren<Object> {
     private Collection<? extends Object> contentKeys;
     
     /**
