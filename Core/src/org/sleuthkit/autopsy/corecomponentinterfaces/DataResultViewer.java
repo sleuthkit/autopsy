@@ -72,4 +72,12 @@ public interface DataResultViewer {
      * Select the given node array
      */
     public void setSelectedNodes(Node[] selected);
+    
+    /**
+     * Checks whether the currently selected node
+     * is supported by this viewer
+     * @param selectedNode the selected node
+     * @return True if supported, else false
+     */
+    public boolean isSupported(Node selectedNode);
 }

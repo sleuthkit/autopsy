@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.awt.Component;
 import java.awt.Cursor;
 import java.beans.PropertyChangeListener;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
@@ -96,6 +97,10 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         
         void setSelectedNodes(Node[] selected) {
             this.wrapped.setSelectedNodes(selected);
+        }
+        
+        boolean isSupported(Node selectedNode) {
+            return this.wrapped.isSupported(selectedNode);
         }
     }
 
@@ -268,6 +273,19 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         this.matchLabel.setVisible(true);
         
         resetTabs(selectedNode);
+        
+        //update/disable tabs based on if supported for this node
+        int drvC = 0;
+        for (UpdateWrapper drv : viewers) {
+ 
+            if (drv.isSupported(selectedNode)) {
+                dataResultTabbedPanel.setEnabledAt(drvC, true);
+            }
+            else  {
+                dataResultTabbedPanel.setEnabledAt(drvC, false);
+            }
+            ++drvC;
+        }
 
         // set the display on the current active tab
         int currentActiveTab = this.dataResultTabbedPanel.getSelectedIndex();
