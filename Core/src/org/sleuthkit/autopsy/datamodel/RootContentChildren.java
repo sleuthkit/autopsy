@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  * Children implementation for the root node of a ContentNode tree. Accepts a
  * list of root Content objects for the tree.
  */
-public class RootContentChildren extends AbstractContentChildren {
+public class RootContentChildren<Object> extends AbstractContentChildren<Object> {
     private Collection<? extends Object> contentKeys;
     
     /**
@@ -50,6 +50,8 @@ public class RootContentChildren extends AbstractContentChildren {
     }
     
     //TODO use visitor
+    //TODO this will be removed, Children should be listening for interesting 
+    //events from datamodel and calling refresh / refreshKey() themselves
     public void refreshKeys(BlackboardArtifact.ARTIFACT_TYPE... types) {
         for (Object o : contentKeys) {
             for (BlackboardArtifact.ARTIFACT_TYPE type : types) {
