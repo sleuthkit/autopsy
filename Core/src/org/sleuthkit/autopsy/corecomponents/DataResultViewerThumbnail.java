@@ -94,6 +94,16 @@ public class DataResultViewerThumbnail extends AbstractDataResultViewer {
         return result;
     }
 
+    @Override
+    public boolean isSupported(Node selectedNode) {
+        Children ch = selectedNode.getChildren();
+        for (Node n : ch.getNodes()) {  
+            if (ThumbnailViewChildren.isSupported(n)) {
+                return true;
+            }
+        }
+        return false;
+    }
     
      /**
      * Expand node

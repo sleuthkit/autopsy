@@ -212,6 +212,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     @Override
+    public boolean isSupported(Node selectedNode) {
+        return true;
+    }
+    
+    
+
+    @Override
     public void setNode(Node selectedNode) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
