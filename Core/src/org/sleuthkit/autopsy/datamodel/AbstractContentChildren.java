@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.LayoutFile;
  * Abstract subclass for ContentChildren and RootContentChildren implementations
  * that handles creating Nodes from Content objects.
 */
-abstract class AbstractContentChildren extends Keys<Object> {
+abstract class AbstractContentChildren<T> extends Keys<T> {
 
     private final CreateSleuthkitNodeVisitor createSleuthkitNodeVisitor = new CreateSleuthkitNodeVisitor();
     private final CreateAutopsyNodeVisitor createAutopsyNodeVisitor = new CreateAutopsyNodeVisitor();
@@ -50,7 +50,7 @@ abstract class AbstractContentChildren extends Keys<Object> {
     }
 
     @Override
-    protected Node[] createNodes(Object key) {
+    protected Node[] createNodes(T key) {
         if(key instanceof SleuthkitVisitableItem) {
             return new Node[]{((SleuthkitVisitableItem) key).accept(createSleuthkitNodeVisitor)};
         }
