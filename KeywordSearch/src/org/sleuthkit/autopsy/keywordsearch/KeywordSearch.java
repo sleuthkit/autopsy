@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWrit
  * Wrapper over KeywordSearch Solr server singleton.
  * The class also provides some global types and property change support on the server events.
  */
-class KeywordSearch {
+public class KeywordSearch {
 
     private static final String BASE_URL = "http://localhost:8983/solr";
     private static Server server;

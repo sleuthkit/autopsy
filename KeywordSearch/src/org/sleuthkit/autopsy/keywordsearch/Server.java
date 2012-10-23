@@ -57,7 +57,7 @@ import org.sleuthkit.datamodel.Content;
 /**
  * Handles for keeping track of a Solr server and its cores
  */
-class Server {
+public class Server {
 
     public static enum Schema {
 
