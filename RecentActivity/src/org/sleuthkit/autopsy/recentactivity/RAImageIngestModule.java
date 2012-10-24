@@ -44,10 +44,10 @@ public final class RAImageIngestModule implements IngestModuleImage {
     private static int messageId = 0;
     private ArrayList<String> errors = new ArrayList<String>();
     private StringBuilder subCompleted = new StringBuilder();
-    private ExtractRegistry eree = null;
-    private Firefox ffre = null;
-    private Chrome chre = null;
-    private ExtractIE eere = null;
+    private ExtractRegistry registry = null;
+    private Firefox firefox = null;
+    private Chrome chrome = null;
+    private ExtractIE ie = null;
     private SearchEngineURLQueryAnalyzer usq = null;
     
     final public static String MODULE_VERSION = "1.0";
@@ -71,10 +71,10 @@ public final class RAImageIngestModule implements IngestModuleImage {
     public void process(Image image, IngestImageWorkerController controller) {
         //logger.log(Level.INFO, "process() " + this.toString());
         List<Extract> modules = new ArrayList<Extract>();
-        modules.add(eree);
-        modules.add(ffre);
-        modules.add(chre);
-        modules.add(eere);
+        modules.add(registry);
+        modules.add(firefox);
+        modules.add(chrome);
+        modules.add(ie);
         modules.add(usq);
         services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
         controller.switchToDeterminate(modules.size());
@@ -141,17 +141,17 @@ public final class RAImageIngestModule implements IngestModuleImage {
         logger.log(Level.INFO, "init() " + this.toString());
         services = IngestServices.getDefault();
         
-        eere = new ExtractIE();
-        eere.init(initContext);
+        ie = new ExtractIE();
+        ie.init(initContext);
         
-        chre = new Chrome();
-        chre.init(initContext);
+        chrome = new Chrome();
+        chrome.init(initContext);
         
-        eree = new ExtractRegistry();
-        eree.init(initContext);
+        registry = new ExtractRegistry();
+        registry.init(initContext);
         
-        ffre = new Firefox();
-        ffre.init(initContext);
+        firefox = new Firefox();
+        firefox.init(initContext);
         
         usq = new SearchEngineURLQueryAnalyzer();
         usq.init(initContext);
@@ -162,9 +162,9 @@ public final class RAImageIngestModule implements IngestModuleImage {
         logger.log(Level.INFO, "RAImageIngetModule::stop()");
         //Order Matters
         //ExtractRegistry stop        
-        this.eree.stop();
+        this.registry.stop();
         //ExtractIE stop
-        this.eere.stop();
+        this.ie.stop();
         logger.log(Level.INFO, "Recent Activity processes properly shutdown.");
     }
 
