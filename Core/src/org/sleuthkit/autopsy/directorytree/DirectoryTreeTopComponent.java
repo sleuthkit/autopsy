@@ -621,21 +621,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             }
                             Node originNode = origin.getNode();
 
-                            int count = originNode.getChildren().getNodesCount(true);
-                            if (false) {
-                                DirectoryTreeTopComponent.this.setCursor(null);
-                                /*int choice = JOptionPane.showConfirmDialog(caller, "Note: The selected location contains " + count + " items.\n" +
-                                 "It may take some time to display them.\n\n" +
-                                 "Also note that there is a limitation in " + Case.getAppName() + " that will make certain functions very slow,\n" +
-                                 "thumbnail view in particular (which should be fixed in a future version).\n" +
-                                 "Do you want to continue loading these objects?");
-                                 if(choice != JOptionPane.OK_OPTION) {
-                                 return;*/
-                                JOptionPane.showMessageDialog(caller, "Note: The selected location contains more than " + count + " items.\n"
-                                        + "The number of results displayed may have been limited to preserve stability.\n"
-                                        + "This is a limitation of " + Case.getAppName() + " that will be fixed in a future version");
-                                DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                            }
                             DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                             //set node, wrap in filter node first to filter out children
                             Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
