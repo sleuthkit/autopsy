@@ -409,7 +409,7 @@ public class KeywordSearchPanel extends AbstractKeywordSearchPerformer {
                         catch (NoOpenCoreException ex) {
                             logger.log(Level.SEVERE, "Error executing Solr query, " + ex);
                         }
-                        catch (SolrServerException se) {
+                        catch (KeywordSearchModuleException se) {
                             logger.log(Level.SEVERE, "Error executing Solr query, " + se.getMessage());
                         }
                         break;
