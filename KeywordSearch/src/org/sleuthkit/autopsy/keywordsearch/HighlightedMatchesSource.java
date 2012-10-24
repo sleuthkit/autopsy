@@ -101,7 +101,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         }
         try {
             this.numberPages = solrServer.queryNumFileChunks(content.getId());
-        } catch (SolrServerException ex) {
+        } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Could not get number pages for content: " + content.getId());
             return;
         } catch (NoOpenCoreException ex) {
@@ -362,7 +362,7 @@ class HighlightedMatchesSource implements MarkupSource, HighlightLookup {
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Couldn't query markup for page: " + currentPage, ex);
             return "";
-        } catch (SolrServerException ex) {
+        } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Could not query markup for page: " + currentPage, ex);
             return "";
         }
