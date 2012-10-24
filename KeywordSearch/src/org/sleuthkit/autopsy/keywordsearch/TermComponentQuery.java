@@ -137,7 +137,7 @@ public class TermComponentQuery implements KeywordSearchQuery {
             TermsResponse tr = solrServer.queryTerms(q);
             termsCol = tr.getTerms(TERMS_SEARCH_FIELD);
             return termsCol;
-        } catch (SolrServerException ex) {
+        } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error executing the regex terms query: " + termsQuery, ex);
             return null;  //no need to create result view, just display error dialog
         }
