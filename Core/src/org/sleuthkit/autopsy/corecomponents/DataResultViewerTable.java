@@ -53,6 +53,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private transient ExplorerManager em = new ExplorerManager();
     private String firstColumnLabel = "Name";
+    private Set<Property> propertiesAcc = new LinkedHashSet<Property>();
+    private static final  Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
 
     /** Creates new form DataResultViewerTable */
     public DataResultViewerTable() {
@@ -188,7 +190,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
        
     }
     
-    Set<Property> propertiesAcc = new LinkedHashSet<Property>();
+    
     /**
      * Gets regular Bean property set properties from all children and, recursively, subchildren of Node.
      * Note: won't work out the box for lazy load - you need to set all children props for the parent by hand
@@ -196,8 +198,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param rows max number of rows to retrieve properties for (can be used for memory optimization)
      */
     private void getAllChildPropertyHeadersRec(Node parent, int rows) {
-        for(int i = 0; i < Math.min(rows, parent.getChildren().getNodesCount()); i++){
-            Node child = parent.getChildren().getNodeAt(i);
+        Children children = parent.getChildren();
+        int total = Math.min(rows, children.getNodesCount());
+        for(int i = 0; i < total; i++){
+            Node child = children.getNodeAt(i);
             for (PropertySet ps : child.getPropertySets()) {
                     //if (ps.getName().equals(Sheet.PROPERTIES)) {
                         //return ps.getProperties();
@@ -243,11 +247,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 //}
 
                 em.setRootContext(root);
+                
 
                 OutlineView ov = ((OutlineView) this.tableScrollPanel);
 
                 propertiesAcc.clear();
-                Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
+               
                 this.getAllChildPropertyHeadersRec(selectedNode, 100);
                 List<Node.Property> props = new ArrayList<Node.Property>(propertiesAcc);
                 if(props.size() > 0) {
