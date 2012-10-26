@@ -399,7 +399,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             
         });
             indexingState.put(current.getName(), Boolean.TRUE);
-            ModalNoButtons singleMNB = new ModalNoButtons(new Frame(), current);
+            ModalNoButtons singleMNB = new ModalNoButtons(this, new Frame(), current);
             singleMNB.setLocationRelativeTo(null);
             singleMNB.setVisible(true);
             singleMNB.setModal(true);
@@ -526,7 +526,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     
     //Removes a list of HashDbs from the dialog panel that do not have a companion -md5.idx file. 
     // Occurs when user clicks "No" to the dialog popup box.
-    private void removeThese(List<HashDb> toRemove) {
+    void removeThese(List<HashDb> toRemove) {
         HashDbXML xmlHandle = HashDbXML.getCurrent();
         for (HashDb hdb : toRemove) {
             for (int i = 0; i < hashSetTableModel.getRowCount(); i++) {
@@ -549,30 +549,26 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     //Displays the popup box that tells user that some of his databases are unindexed, along with solutions.
     private void showInvalidIndex(boolean plural, List<HashDb> unindexed, String total){
         String firstMessage = "";
-        String secondMessage = "";
-        String thirdMessage = "Unindexed databases successfuly removed from Hash List";
+
        
         if(plural){
             firstMessage = "The following databases are not indexed, would you like to index them now? \n " + total;
-            secondMessage = "Indeces successfully created.";
         }
         else{
             firstMessage = "The following database is not indexed, would you like to index it now? \n" + total;
-            secondMessage = "Index successfully created.";
         }
         int res = JOptionPane.showConfirmDialog(this, firstMessage, "Unindexed databases", JOptionPane.YES_NO_OPTION);
         if(res == JOptionPane.YES_OPTION){
-            ModalNoButtons indexingDialog = new ModalNoButtons(new Frame(),unindexed);
+            ModalNoButtons indexingDialog = new ModalNoButtons(this, new Frame(),unindexed);
             indexingDialog.setLocationRelativeTo(null);
             indexingDialog.setVisible(true);
             indexingDialog.setModal(true);
-           JOptionPane.showMessageDialog(this, secondMessage);
+           //JOptionPane.showMessageDialog(this, secondMessage);
            hashSetTableModel.resync();
         }
         if(res == JOptionPane.NO_OPTION){
             JOptionPane.showMessageDialog(this, "All unindexed databases will be removed the list");
             removeThese(unindexed);
-            JOptionPane.showMessageDialog(this, thirdMessage);
         }
     }
 
