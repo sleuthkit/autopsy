@@ -242,7 +242,7 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
         try {
             filesIndexedValue.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedFiles()));
             chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
-        } catch (SolrServerException ex) {
+        } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Could not get number of indexed files/chunks");
 
         } catch (NoOpenCoreException ex) {
@@ -261,7 +261,7 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
                             filesIndexedValue.setText(Integer.toString(newFilesIndexed));
                             try {
                                 chunksValLabel.setText(Integer.toString(KeywordSearch.getServer().queryNumIndexedChunks()));
-                            } catch (SolrServerException ex) {
+                            } catch (KeywordSearchModuleException ex) {
                                 logger.log(Level.WARNING, "Could not get number of indexed chunks");
 
                             } catch (NoOpenCoreException ex) {

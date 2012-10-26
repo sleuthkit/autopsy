@@ -257,7 +257,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             logger.log(Level.INFO, "Indexed file chunks count: " + numIndexedChunks);
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", ex);
-        } catch (SolrServerException se) {
+        } catch (KeywordSearchModuleException se) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", se);
         }
         
@@ -527,7 +527,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             KeywordSearch.fireNumIndexedFilesChange(null, new Integer(numIndexedFiles));
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex);
-        } catch (SolrServerException se) {
+        } catch (KeywordSearchModuleException se) {
             logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", se);
         }
     }

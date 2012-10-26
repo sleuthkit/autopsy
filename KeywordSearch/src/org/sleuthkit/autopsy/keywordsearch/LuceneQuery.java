@@ -260,7 +260,7 @@ public class LuceneQuery implements KeywordSearchQuery {
             } catch (NoOpenCoreException ex) {
                 logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
                 throw ex;
-            } catch (SolrServerException ex) {
+            } catch (KeywordSearchModuleException ex) {
                 logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
             }
 
@@ -355,7 +355,7 @@ public class LuceneQuery implements KeywordSearchQuery {
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
             throw ex;
-        } catch (SolrServerException ex) {
+        } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex);
             return "";
         }
