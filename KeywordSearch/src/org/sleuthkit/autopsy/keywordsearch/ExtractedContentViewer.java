@@ -208,7 +208,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                             hasChunks = true;
                         }
                         inited = true;
-                    } catch (SolrServerException ex) {
+                    } catch (KeywordSearchModuleException ex) {
                         logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
 
                     } catch (NoOpenCoreException ex) {
@@ -381,7 +381,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         } catch (NoOpenCoreException ex) {
             logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex);
             return false;
-        } catch (SolrServerException ex) {
+        } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Couldn't determine whether content is supported.", ex);
             return false;
         }

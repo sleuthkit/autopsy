@@ -414,14 +414,20 @@ public class Server {
      * number of actual files.
      *
      * @return int representing number of indexed files
-     * @throws SolrServerException
+     * @throws KeywordSearchModuleException
+     * @throws NoOpenCoreExceptionn
      */
-    public int queryNumIndexedFiles() throws SolrServerException, NoOpenCoreException {
+    public int queryNumIndexedFiles() throws KeywordSearchModuleException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
-
-        return currentCore.queryNumIndexedFiles();
+        try {
+            return currentCore.queryNumIndexedFiles();
+        } catch (SolrServerException ex) {
+            throw new KeywordSearchModuleException("Error querying number of indexed files, ", ex);
+        }
+        
+        
     }
 
     /**
@@ -429,14 +435,18 @@ public class Server {
      * files) indexed without actually returning the content.
      *
      * @return int representing number of indexed chunks
-     * @throws SolrServerException
+     * @throws KeywordSearchModuleException
+     * @throws NoOpenCoreException
      */
-    public int queryNumIndexedChunks() throws SolrServerException, NoOpenCoreException {
+    public int queryNumIndexedChunks() throws KeywordSearchModuleException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
-
-        return currentCore.queryNumIndexedChunks();
+        try {
+            return currentCore.queryNumIndexedChunks();
+        } catch (SolrServerException ex) {
+            throw new KeywordSearchModuleException("Error querying number of indexed chunks, ", ex);
+        }
     }
 
     /**
@@ -444,14 +454,18 @@ public class Server {
      * and chunks) without actually returning the documents
      *
      * @return int representing number of indexed files (files and chunks)
-     * @throws SolrServerException
+     * @throws KeywordSearchModuleException
+     * @throws NoOpenCoreException
      */
-    public int queryNumIndexedDocuments() throws SolrServerException, NoOpenCoreException {
+    public int queryNumIndexedDocuments() throws KeywordSearchModuleException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
-
-        return currentCore.queryNumIndexedDocuments();
+        try {
+            return currentCore.queryNumIndexedDocuments();
+        } catch (SolrServerException ex) {
+            throw new KeywordSearchModuleException("Error querying number of indexed documents, ", ex);
+        }
     }
 
     /**
@@ -459,14 +473,18 @@ public class Server {
      *
      * @param contentID
      * @return true if it is indexed
-     * @throws SolrServerException, NoOpenCoreException
+     * @throws KeywordSearchModuleException
+     * @throws NoOpenCoreException
      */
-    public boolean queryIsIndexed(long contentID) throws SolrServerException, NoOpenCoreException {
+    public boolean queryIsIndexed(long contentID) throws KeywordSearchModuleException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
-
-        return currentCore.queryIsIndexed(contentID);
+        try {
+            return currentCore.queryIsIndexed(contentID);
+        } catch (SolrServerException ex) {
+            throw new KeywordSearchModuleException("Error checkign if content is indexed, ", ex);
+        }
     }
 
     /**
@@ -475,14 +493,18 @@ public class Server {
      * @param fileID file id of the original file broken into chunks and indexed
      * @return int representing number of indexed file chunks, 0 if there is no
      * chunks
-     * @throws SolrServerException
+     * @throws KeywordSearchModuleException
+     * @throws NoOpenCoreException
      */
-    public int queryNumFileChunks(long fileID) throws SolrServerException, NoOpenCoreException {
+    public int queryNumFileChunks(long fileID) throws KeywordSearchModuleException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
-
-        return currentCore.queryNumFileChunks(fileID);
+        try {
+            return currentCore.queryNumFileChunks(fileID);
+        } catch (SolrServerException ex) {
+            throw new KeywordSearchModuleException("Error getting number of file chunks, ", ex);
+        }
     }
 
     /**
@@ -490,14 +512,18 @@ public class Server {
      *
      * @param sq query
      * @return query response
-     * @throws SolrServerException
+     * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
      */
-    public QueryResponse query(SolrQuery sq) throws SolrServerException, NoOpenCoreException {
+    public QueryResponse query(SolrQuery sq) throws KeywordSearchModuleException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
-        return currentCore.query(sq);
+        try {
+            return currentCore.query(sq);
+        } catch (SolrServerException ex) {
+            throw new KeywordSearchModuleException("Error running query: " + sq.getQuery(), ex);
+        }
     }
 
     /**
@@ -506,14 +532,18 @@ public class Server {
      * @param sq the query
      * @param method http method to use
      * @return query response
-     * @throws SolrServerException
+     * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
      */
-    public QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws SolrServerException, NoOpenCoreException {
+    public QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws KeywordSearchModuleException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
-        return currentCore.query(sq, method);
+        try {
+            return currentCore.query(sq, method);
+        } catch (SolrServerException ex) {
+            throw new KeywordSearchModuleException("Error running query: " + sq.getQuery(), ex);
+        }
     }
 
     /**
@@ -521,25 +551,28 @@ public class Server {
      *
      * @param sq the query
      * @return terms response
-     * @throws SolrServerException
+     * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
      */
-    public TermsResponse queryTerms(SolrQuery sq) throws SolrServerException, NoOpenCoreException {
+    public TermsResponse queryTerms(SolrQuery sq) throws KeywordSearchModuleException, NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
-        return currentCore.queryTerms(sq);
+        try {
+            return currentCore.queryTerms(sq);
+        } catch (SolrServerException ex) {
+            throw new KeywordSearchModuleException("Error running terms query: " + sq.getQuery(), ex);
+        }
     }
 
     /**
      * Execute Solr query to get content text
      *
      * @param content to get the text for
-     * @return content text string
-     * @throws SolrServerException
+     * @return content text string or null on error
      * @throws NoOpenCoreException
      */
-    public String getSolrContent(final Content content) throws SolrServerException, NoOpenCoreException {
+    public String getSolrContent(final Content content) throws NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
@@ -552,11 +585,10 @@ public class Server {
      * @param content to get the text for
      * @param chunkID chunk number to query (starting at 1), or 0 if there is no
      * chunks for that content
-     * @return content text string
-     * @throws SolrServerException
+     * @return content text string or null if error quering
      * @throws NoOpenCoreException
      */
-    public String getSolrContent(final Content content, int chunkID) throws SolrServerException, NoOpenCoreException {
+    public String getSolrContent(final Content content, int chunkID) throws NoOpenCoreException {
         if (currentCore == null) {
             throw new NoOpenCoreException();
         }
