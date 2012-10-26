@@ -19,16 +19,14 @@
 
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.event.ActionEvent;
+import java.awt.Dimension;
+import java.awt.Event;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumn;
+import javax.swing.table.AbstractTableModel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Panel show from the splash dialog that shows recent cases and allows them
@@ -38,7 +36,9 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
 
     static String[] caseName;
     static String[] casePaths;
+    private static Logger logger = Logger.getLogger(OpenRecentCasePanel.class.getName());
     private static OpenRecentCasePanel instance;
+    private RecentCasesTableModel model;
     
     private OpenRecentCasePanel() {
         initComponents();
@@ -48,76 +48,15 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
      * Retrieves all the recent cases and adds them to the table.
      */
     private void generateRecentCases() {
-
         caseName = RecentCases.getInstance().getRecentCaseNames();
         casePaths = RecentCases.getInstance().getRecentCasePaths();
-        int totalRecentCases = RecentCases.getInstance().getTotalRecentCases();
-
-        // create the headers and add all the rows
-        String[] headers = {"Case Name", "Path", "Open"};
-        String[][] rows = new String[totalRecentCases][];
-        final int lastColumn = headers.length - 1;
-
-        for(int i = 0; i < totalRecentCases; i++){
-            String path = casePaths[i];
-            String shortenPath = path;
-            if(path.length() > 50){
-                shortenPath = shortenPath.substring(0, 10 + shortenPath.substring(10).indexOf(File.separator) + 1) + "..." +
-                        shortenPath.substring((shortenPath.length() - 20) + shortenPath.substring(shortenPath.length() - 20).indexOf(File.separator));
-            }
-            String[] thisRow = {caseName[i], shortenPath, path};
-            rows[i] = thisRow;
-            //model.insertRow(i, row);
-        }
-
-        // create the table inside with the imgPaths information
-        DefaultTableModel model = new DefaultTableModel(rows, headers)
-        {
-            @Override
-            // make the cells in the FileContentTable "read only"
-            public boolean isCellEditable(int row, int column){
-                return column == lastColumn; // make the last column (Remove button), only the editable
-            }
-        };
+        model = new RecentCasesTableModel();
+        imagesTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
         imagesTable.setModel(model);
 
-        // set the size of the remove column
-        TableColumn removeCol = imagesTable.getColumnModel().getColumn(lastColumn);
-        removeCol.setPreferredWidth(75);
-        removeCol.setMaxWidth(75);
-        removeCol.setMinWidth(75);
-        removeCol.setResizable(false);
-
-        // create the delete action to remove the image from the current case
-        Action open = new AbstractAction()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                // get the image path
-                JTable table = (JTable)e.getSource();
-                int modelRow = Integer.valueOf(e.getActionCommand());
-                String removeColumn = table.getValueAt(modelRow, lastColumn).toString();
-
-                // try to close Startup and openRecentCase window if they exist
-                try{
-                    StartupWindow.getInstance().close();
-                    CueBannerPanel.closeOpenRecentCasesWindow();
-                }
-                catch(Exception ex){
-                    Logger.getLogger(OpenRecentCasePanel.class.getName()).log(Level.WARNING, "Error: couldn't open case.", ex);
-                }
-
-                // Open the recent cases
-                try {
-                    Case.open(removeColumn); // open the case
-                } catch (Exception ex) {
-                    Logger.getLogger(OpenRecentCasePanel.class.getName()).log(Level.WARNING, "Error: couldn't open case.", ex);
-                }
-            }
-        };
-
-        ButtonColumn buttonColumn = new ButtonColumn(imagesTable, open, lastColumn, "Open");
+        int width = tableScrollPane.getPreferredSize().width;
+        imagesTable.getColumnModel().getColumn(0).setPreferredWidth((int) (.30 * width));
+        imagesTable.getColumnModel().getColumn(1).setPreferredWidth((int) (.70 * width));
     }
     
     static OpenRecentCasePanel getInstance() {
@@ -139,15 +78,18 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
 
         jLabel1 = new javax.swing.JLabel();
         cancelButton = new javax.swing.JButton();
-        imagesTableScrollPane = new javax.swing.JScrollPane();
+        openButton = new javax.swing.JButton();
+        tableScrollPane = new javax.swing.JScrollPane();
         imagesTable = new javax.swing.JTable();
 
         jLabel1.setText(org.openide.util.NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.jLabel1.text")); // NOI18N
 
         cancelButton.setText(org.openide.util.NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.cancelButton.text")); // NOI18N
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
+
+        openButton.setText(org.openide.util.NbBundle.getMessage(OpenRecentCasePanel.class, "OpenRecentCasePanel.openButton.text")); // NOI18N
+        openButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelButtonActionPerformed(evt);
+                openButtonActionPerformed(evt);
             }
         });
 
@@ -156,22 +98,20 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
 
             },
             new String [] {
-                "Case Name", "Path", "Open"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, true
-            };
 
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
             }
-        });
+        ));
+        imagesTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         imagesTable.setShowHorizontalLines(false);
         imagesTable.setShowVerticalLines(false);
         imagesTable.getTableHeader().setReorderingAllowed(false);
         imagesTable.setUpdateSelectionOnSort(false);
-        imagesTableScrollPane.setViewportView(imagesTable);
+        imagesTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                imagesTableMouseClicked(evt);
+            }
+        });
+        tableScrollPane.setViewportView(imagesTable);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -180,15 +120,17 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(jLabel1)
-                            .addGap(292, 292, 292))
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(imagesTableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 470, Short.MAX_VALUE)
-                            .addContainerGap()))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(cancelButton)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(292, 414, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(tableScrollPane)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addComponent(openButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(cancelButton)))
                         .addContainerGap())))
         );
         layout.setVerticalGroup(
@@ -197,22 +139,54 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(imagesTableScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cancelButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 168, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cancelButton)
+                    .addComponent(openButton))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-    }//GEN-LAST:event_cancelButtonActionPerformed
+    private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
+        openCase();
+    }//GEN-LAST:event_openButtonActionPerformed
 
+    private void imagesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_imagesTableMouseClicked
+        // If it's a doubleclick
+        if (evt.getClickCount() == 2) {
+          openCase();
+        }
+    }//GEN-LAST:event_imagesTableMouseClicked
+
+    // Open the selected case
+    private void openCase() {
+        String path = model.getPathAt(imagesTable.getSelectedRow());
+        if(!path.equals("")) {
+            // Close the startup menu
+            try{
+                StartupWindow.getInstance().close();
+                CueBannerPanel.closeOpenRecentCasesWindow();
+            }
+            catch(Exception ex){
+                logger.log(Level.WARNING, "Error: couldn't open case.", ex);
+            }
+            // Open the recent cases
+            try {
+                Case.open(path); // open the case
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Error: couldn't open case.", ex);
+            }
+        }
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JTable imagesTable;
     private javax.swing.JScrollPane imagesTableScrollPane;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JButton openButton;
+    private javax.swing.JScrollPane tableScrollPane;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -222,5 +196,87 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
      */
     public void setCloseButtonActionListener(ActionListener e){
         this.cancelButton.addActionListener(e);
+    }
+    
+    /**
+     * Table model to keep track of recent cases.
+     */
+    private class RecentCasesTableModel extends AbstractTableModel {
+
+        @Override
+        public int getRowCount() {
+            int count = 0;
+            for(String s: caseName) {
+                if(!s.equals("")) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return 2;
+        }
+        
+        @Override
+        public String getColumnName(int column) {
+            String colName = null;
+
+            switch (column) {
+                case 0:
+                    colName = "Case Name";
+                    break;
+                case 1:
+                    colName = "Path";
+                    break;
+                default:
+                    ;
+
+            }
+            return colName;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            Object ret = null;
+            switch (columnIndex) {
+                case 0:
+                    ret = caseName[rowIndex];
+                    break;
+                case 1:
+                    ret = shortenPath(casePaths[rowIndex]);
+                    break;
+                default:
+                    logger.log(Level.SEVERE, "Invalid table column index: " + columnIndex);
+                    break;
+            }
+            return ret;
+        }
+
+        @Override
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return false;
+        }
+
+        @Override
+        public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        }
+        
+        private String shortenPath(String path) {
+            if(path.length() > 50){
+                path = path.substring(0, 10 + path.substring(10).indexOf(File.separator) + 1) + "..." +
+                        path.substring((path.length() - 20) + path.substring(path.length() - 20).indexOf(File.separator));
+            }
+            return path;
+        }
+        
+        String getPathAt(int rowIndex) {
+            if(rowIndex == -1) {
+                return "";
+            }
+            return casePaths[rowIndex];
+        }
+        
     }
 }
