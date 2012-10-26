@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JTable;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
@@ -55,6 +56,7 @@ public class KeywordSearchIngestSimplePanel extends javax.swing.JPanel {
         listsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         //customize column witdhs
         final int width = listsScrollPane.getPreferredSize().width;
+        listsTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
         TableColumn column = null;
         for (int i = 0; i < listsTable.getColumnCount(); i++) {
             column = listsTable.getColumnModel().getColumn(i);
