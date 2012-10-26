@@ -88,15 +88,16 @@ class KeywordSearchEditListPanel extends javax.swing.JPanel implements ListSelec
 
         //customize column witdhs
         final int width = jScrollPane1.getPreferredSize().width;
+        keywordTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
         TableColumn column = null;
         for (int i = 0; i < keywordTable.getColumnCount(); i++) {
             column = keywordTable.getColumnModel().getColumn(i);
             if (i == 0) {
-                column.setPreferredWidth(((int) (width * 0.84)));
-            } //else {
-                //column.setPreferredWidth(((int) (width * 0.14)));
+                column.setPreferredWidth(((int) (width * 0.90)));
+            } else {
+                column.setPreferredWidth(((int) (width * 0.10)));
                 //column.setCellRenderer(new CheckBoxRenderer());
-            //}
+            }
         }
         keywordTable.setCellSelectionEnabled(false);
         keywordTable.setRowSelectionAllowed(true);
