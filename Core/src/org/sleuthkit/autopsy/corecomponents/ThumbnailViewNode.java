@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
+import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -39,8 +40,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- *
- * @author jantonius
+ * Node that wraps around original node and adds the bitmap icon representing the picture
  */
 class ThumbnailViewNode extends FilterNode {
 
