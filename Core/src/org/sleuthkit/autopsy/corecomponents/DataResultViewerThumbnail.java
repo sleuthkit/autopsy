@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Graphics;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -41,6 +42,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 public class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private transient ExplorerManager em = new ExplorerManager();
+    private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
 
     /** Creates new form DataResultViewerThumbnail */
     public DataResultViewerThumbnail() {
@@ -49,8 +51,21 @@ public class DataResultViewerThumbnail extends AbstractDataResultViewer {
         // only allow one item to be selected at a time
         ((IconView) thumbnailScrollPanel).setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        this.em.addPropertyChangeListener(this);
+       
+        
     }
+
+
+    @Override
+    public void paint(Graphics g) {
+        super.paint(g);
+        //logger.log(Level.INFO, "PAINT()");
+    }
+    
+    
+    
+    
+    
 
     /** This method is called from within the constructor to
      * initialize the form.

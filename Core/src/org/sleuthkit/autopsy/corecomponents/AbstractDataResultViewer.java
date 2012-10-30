@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerManager.Provider;
@@ -28,13 +29,22 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Holds commonalities between all DataResultViewers
  */
 public abstract class AbstractDataResultViewer extends JPanel implements
         DataResultViewer, Provider, PropertyChangeListener {
+    
+    private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
 
+    protected transient ExplorerManager em = new ExplorerManager();
+    
+    public AbstractDataResultViewer() {
+         this.em.addPropertyChangeListener(this);
+    }
+    
     /**
      * Propagates changes in the current select node from the DataResultViewer
      * to the DataContentTopComponent
@@ -72,6 +82,15 @@ public abstract class AbstractDataResultViewer extends JPanel implements
                 this.setCursor(null);
             }
         }
+        
+        /*
+        else if (changed.equals(ExplorerManager.PROP_NODE_CHANGE) ) {
+        }
+        else if (changed.equals(ExplorerManager.PROP_EXPLORED_CONTEXT)) {
+        }
+        else if (changed.equals(ExplorerManager.PROP_ROOT_CONTEXT)) {
+        }
+        */
     }
 
     /**
