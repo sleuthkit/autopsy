@@ -54,6 +54,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     private Node parent;
     private final HashMap<Integer, List<Node>> pages = new HashMap<Integer, List<Node>>();
     private int totalImages = 0;
+    private int totalPages = 0;
     private static final Logger logger = Logger.getLogger(ThumbnailViewChildren.class.getName());
 
     /**
@@ -76,6 +77,15 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
         setupKeys();
     }
+    
+    int getTotalPages() {
+        return totalPages;
+    }
+    
+    int getTotalImages() {
+        return totalImages;
+    }
+    
 
     private void setupKeys() {
         //divide the supported content into buckets
@@ -97,7 +107,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             return;
         }
 
-        int totalPages = 0;
+        totalPages = 0;
         if (totalImages < IMAGES_PER_PAGE) {
             totalPages = 1;
         } else {
