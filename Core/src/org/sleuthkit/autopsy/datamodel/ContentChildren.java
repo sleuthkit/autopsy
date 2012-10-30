@@ -18,11 +18,10 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -73,7 +72,7 @@ class ContentChildren extends AbstractContentChildren {
     @Override
     protected void removeNotify() {
         super.removeNotify();
-        setKeys(Collections.emptySet());
+        setKeys(Collections.EMPTY_SET);
     }
     
 }
