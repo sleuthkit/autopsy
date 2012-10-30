@@ -24,9 +24,11 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyVetoException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingWorker;
+import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.IconView;
 import org.openide.nodes.AbstractNode;
@@ -36,24 +38,22 @@ import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
 /**
  * Thumbnail view of images in data result with paging support.
- * 
- * Paging is added to reduce memory footprint and load only up to (currently) 1000 images at a time.
- * This works whether or not the underlying content nodes are being lazy loaded or not.
- * 
+ *
+ * Paging is added to reduce memory footprint and load only up to (currently)
+ * 1000 images at a time. This works whether or not the underlying content nodes
+ * are being lazy loaded or not.
+ *
  */
 @ServiceProvider(service = DataResultViewer.class)
 public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
     //flag to keep track if images are being loaded
-    private volatile boolean inProgress = false;
-    private PropertyChangeListener inProgressListener;
     private int curPage;
     private int totalPages;
     private final PageUpdater pageUpdater = new PageUpdater();
@@ -69,45 +69,9 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         // only allow one item to be selected at a time
         ((IconView) thumbnailScrollPanel).setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-
-        //additional property change listener to that of parent class to handle in-progress changes
-        inProgressListener = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(ExplorerManager.PROP_EXPLORED_CONTEXT)) {
-                    inProgress = true;
-                    EventQueue.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                        }
-                    });
-
-                }
-            }
-        };
-        em.addPropertyChangeListener(inProgressListener);
-
         curPage = -1;
         totalPages = 0;
 
-    }
-
-    @Override
-    public void paint(Graphics g) {
-        //reset cursor previously set when node context changed
-        //Note: found no better event to do this, so rely on paint() for now
-        if (inProgress == true) {
-            inProgress = false;
-            EventQueue.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    setCursor(null);
-                }
-            });
-        }
-
-        super.paint(g);
     }
 
     /**
@@ -176,12 +140,12 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 .addContainerGap()
                 .addComponent(pageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(curPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addComponent(curPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(ofLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(totalPagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(41, 41, 41)
+                .addComponent(totalPagesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(61, 61, 61)
                 .addComponent(pagesLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -213,9 +177,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     }//GEN-LAST:event_pagePrevButtonActionPerformed
 
     private void pageNextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pageNextButtonActionPerformed
-       nextPage();
+        nextPage();
     }//GEN-LAST:event_pageNextButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel curPageLabel;
     private javax.swing.JLabel ofLabel;
@@ -247,7 +210,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     @Override
     public void setNode(Node givenNode) {
         // change the cursor to "waiting cursor" for this operation
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             if (givenNode != null) {
                 ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode);
@@ -280,8 +243,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     @Override
     public void clearComponent() {
-        em.removePropertyChangeListener(inProgressListener);
-
         this.thumbnailScrollPanel.removeAll();
         this.thumbnailScrollPanel = null;
 
@@ -290,33 +251,56 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     }
 
     private void nextPage() {
-        if (curPage < totalPages -1) {
+        if (curPage < totalPages) {
             curPage++;
-            
-            updateControls();
-            
-            inProgress = true;
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            
-            Node root = em.getRootContext();
-            Node pageNode = root.getChildren().getNodeAt(curPage-1);
-            em.setExploredContext(pageNode);
+
+            switchPage();
         }
     }
 
     private void previousPage() {
         if (curPage > 1) {
             curPage--;
-            
-            updateControls();
-            
-            inProgress = true;
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            
-            Node root = em.getRootContext();
-            Node pageNode = root.getChildren().getNodeAt(curPage-1);
-            em.setExploredContext(pageNode);
+
+            switchPage();
         }
+    }
+
+    private void switchPage() {
+
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            }
+        });
+
+        //Note the nodes factories are likely creating nodes in EDT anyway, but worker still helps 
+        new SwingWorker<Object,Void>() {
+            private ProgressHandle progress;
+
+            @Override
+            protected Object doInBackground() throws Exception {
+                pagePrevButton.setEnabled(false);
+                pageNextButton.setEnabled(false);
+                progress = ProgressHandleFactory.createHandle("Generating Thumbnails...");
+                progress.start();
+                progress.switchToIndeterminate();
+                Node root = em.getRootContext();
+                Node pageNode = root.getChildren().getNodeAt(curPage - 1);
+                em.setExploredContext(pageNode);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                progress.finish();
+                setCursor(null);
+                updateControls();
+
+            }
+        }.execute();
+
     }
 
     private void updateControls() {
@@ -330,8 +314,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             totalPagesLabel.setText(Integer.toString(totalPages));
 
 
-            pageNextButton.setEnabled( !(curPage == totalPages - 1));
-            pagePrevButton.setEnabled( !(curPage == 1));
+            pageNextButton.setEnabled(!(curPage == totalPages));
+            pagePrevButton.setEnabled(!(curPage == 1));
 
         }
 
