@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
@@ -181,42 +182,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             setDisplayName(from + "-" + to);
 
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
-            
-            /**
-            this.addNodeListener(new NodeListener() {
-
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    logger.log(Level.INFO, "evt: " + evt.getPropertyName() + " " + evt.getOldValue() + " " + evt.getNewValue());
-                }
-
-                
-                @Override
-                public void childrenRemoved(NodeMemberEvent nme) {
-logger.log(Level.INFO, "CHILDREN REMOVED");
-                }
-
-                
-                @Override
-                public void childrenReordered(NodeReorderEvent nre) {
-      
-                }
-
-                @Override
-                public void nodeDestroyed(NodeEvent ne) {
-       logger.log(Level.INFO, "NODE DESTROYED");
-                }
-
-                
-                @Override
-                public void childrenAdded(NodeMemberEvent nme) {
-
-            logger.log(Level.INFO, "CHILDREN ADDED, delta; " + nme.getDeltaIndices().length);
-            
-                }
-                
-            });
-            */
 
         }
         
@@ -247,6 +212,8 @@ logger.log(Level.INFO, "CHILDREN REMOVED");
         @Override
         protected void removeNotify() {
             super.removeNotify();
+            
+            setKeys(new ArrayList<Node>());
         }
         
         

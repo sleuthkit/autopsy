@@ -18,11 +18,10 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -43,6 +42,8 @@ class ContentChildren extends AbstractContentChildren {
 
     @Override
     protected void addNotify() {
+        super.addNotify();
+        
         //TODO check global settings
         //if above limit, query and return subrange
         
@@ -70,7 +71,8 @@ class ContentChildren extends AbstractContentChildren {
 
     @Override
     protected void removeNotify() {
-        setKeys(Collections.emptySet());
+        super.removeNotify();
+        setKeys(Collections.EMPTY_SET);
     }
     
 }

@@ -50,8 +50,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
  */
 @ServiceProvider(service = DataResultViewer.class)
 public class DataResultViewerTable extends AbstractDataResultViewer {
-
-    private transient ExplorerManager em = new ExplorerManager();
     private String firstColumnLabel = "Name";
     private Set<Property> propertiesAcc = new LinkedHashSet<Property>();
     private static final  Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
@@ -67,8 +65,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         // don't show the root node
         ov.getOutline().setRootVisible(false);
-
-        this.em.addPropertyChangeListener(this);
     }
     
     /**
