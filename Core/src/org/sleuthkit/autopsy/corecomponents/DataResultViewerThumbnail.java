@@ -19,13 +19,11 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyVetoException;
-import java.io.IOException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.ListSelectionModel;
@@ -42,9 +40,10 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
  */
 @ServiceProvider(service = DataResultViewer.class)
 public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
+
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
     //flag to keep track if images are being loaded
-    private boolean inProgress = false;
+    private volatile boolean inProgress = false;
     private PropertyChangeListener inProgressListener;
 
     /**
@@ -64,9 +63,14 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals(ExplorerManager.PROP_EXPLORED_CONTEXT)) {
-                    logger.log(Level.INFO, "PROP_EXPLORED_CONTEXT");
                     inProgress = true;
-                    setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    EventQueue.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                        }
+                    });
+
                 }
             }
         };
@@ -76,14 +80,19 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     @Override
     public void paint(Graphics g) {
-        super.paint(g);
-
         //reset cursor previously set when node context changed
         //Note: found no better event to do this, so rely on paint() for now
         if (inProgress == true) {
             inProgress = false;
-            setCursor(null);
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    setCursor(null);
+                }
+            });
         }
+
+        super.paint(g);
     }
 
     /**
@@ -169,5 +178,4 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         //this destroyes em
         super.clearComponent();
     }
-
 }
