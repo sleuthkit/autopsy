@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.awt.Component;
 import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyVetoException;
+import java.io.IOException;
 import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.openide.explorer.ExplorerManager;
@@ -35,67 +38,114 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Holds commonalities between all DataResultViewers
  */
 public abstract class AbstractDataResultViewer extends JPanel implements
-        DataResultViewer, Provider, PropertyChangeListener {
-    
+        DataResultViewer, Provider {
+
     private static final Logger logger = Logger.getLogger(AbstractDataResultViewer.class.getName());
-
     protected transient ExplorerManager em = new ExplorerManager();
-    
+    private PropertyChangeListener nodeSelListener;
+
     public AbstractDataResultViewer() {
-         this.em.addPropertyChangeListener(this);
-    }
-    
-    /**
-     * Propagates changes in the current select node from the DataResultViewer
-     * to the DataContentTopComponent
-     *
-     * @param evt
-     */
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        String changed = evt.getPropertyName();
 
-        // change that should affect view
-        if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                //|| changed.equals(ExplorerManager.PROP_NODE_CHANGE)
-                //|| changed.equals(ExplorerManager.PROP_EXPLORED_CONTEXT)
-                //|| changed.equals(ExplorerManager.PROP_ROOT_CONTEXT)) {
+        //property listener to send nodes to content viewer    
+        nodeSelListener = new PropertyChangeListener() {
+            /**
+             * Propagates changes in the current select node from the
+             * DataResultViewer to the DataContentTopComponent
+             *
+             * @param evt
+             */
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                String changed = evt.getPropertyName();
 
-            // change the cursor to "waiting cursor" for this operation
-            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            try {
-                Node selectedNode = this.getSelectedNode();
+                // change that should affect view
+                if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                    //|| changed.equals(ExplorerManager.PROP_NODE_CHANGE)
+                    //|| changed.equals(ExplorerManager.PROP_EXPLORED_CONTEXT)
+                    //|| changed.equals(ExplorerManager.PROP_ROOT_CONTEXT)) {
 
-                // DataContent is designed to return only the default viewer
-                DataContent dataContent = Lookup.getDefault().lookup(DataContent.class);
+                    // change the cursor to "waiting cursor" for this operation
+                    setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    try {
+                        Node selectedNode = getSelectedNode();
 
-                if (selectedNode != null) {
-                    // there's a new/changed node to display
-                    Node newSelectedNode = selectedNode; // get the selected Node on the table
-                    // push the node to default "DataContent"
-                    dataContent.setNode(newSelectedNode);
-                } else {
-                    // clear the node viewer
-                    dataContent.setNode(null);
+                        // DataContent is designed to return only the default viewer
+                        DataContent dataContent = Lookup.getDefault().lookup(DataContent.class);
+
+                        if (selectedNode != null) {
+                            // there's a new/changed node to display
+                            Node newSelectedNode = selectedNode; // get the selected Node on the table
+                            // push the node to default "DataContent"
+                            dataContent.setNode(newSelectedNode);
+                        } else {
+                            // clear the node viewer
+                            dataContent.setNode(null);
+                        }
+                    } finally {
+                        setCursor(null);
+                    }
                 }
-            } finally {
-                this.setCursor(null);
+
+                /*
+                 else if (changed.equals(ExplorerManager.PROP_NODE_CHANGE) ) {
+                 }
+                 else if (changed.equals(ExplorerManager.PROP_EXPLORED_CONTEXT)) {
+                 }
+                 else if (changed.equals(ExplorerManager.PROP_ROOT_CONTEXT)) {
+                 }
+                 */
             }
-        }
-        
-        /*
-        else if (changed.equals(ExplorerManager.PROP_NODE_CHANGE) ) {
-        }
-        else if (changed.equals(ExplorerManager.PROP_EXPLORED_CONTEXT)) {
-        }
-        else if (changed.equals(ExplorerManager.PROP_ROOT_CONTEXT)) {
-        }
-        */
+        };
+
+        em.addPropertyChangeListener(nodeSelListener);
     }
 
-    /**
-     * Gets the current node selected node
-     * @return
-     */
-    public abstract Node getSelectedNode();
+    @Override
+    public void clearComponent() {
+        em.removePropertyChangeListener(nodeSelListener);
+
+        try {
+            this.em.getRootContext().destroy();
+            em = null;
+        } catch (IOException ex) {
+            // TODO: What's the proper thing to do here? Should it log? Not throw runtime exception?
+            throw new RuntimeException("Error: can't clear the component of the Thumbnail Result Viewer.", ex);
+        }
+    }
+
+    public Node getSelectedNode() {
+        Node result = null;
+        Node[] selectedNodes = this.getExplorerManager().getSelectedNodes();
+        if (selectedNodes.length > 0) {
+            result = selectedNodes[0];
+        }
+        return result;
+    }
+
+    @Override
+    public void expandNode(Node n) {
+    }
+
+    @Override
+    public void resetComponent() {
+    }
+
+    @Override
+    public Component getComponent() {
+        return this;
+    }
+
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return this.em;
+    }
+
+    @Override
+    public void setSelectedNodes(Node[] selected) {
+        try {
+            this.em.setSelectedNodes(selected);
+        } catch (PropertyVetoException ex) {
+            logger.log(Level.WARNING, "Couldn't set selected nodes.", ex);
+        }
+    }
 }
