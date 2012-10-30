@@ -99,6 +99,9 @@ public class DataResultViewerThumbnail extends AbstractDataResultViewer {
         if (selectedNode == null) {
             return false;
         }
+        //TODO quering children will need to change after lazy loading of original nodes works.
+        //we will need to query children of the datamodel object instead, 
+        //or force children creation, breaking the lazy loading.
         Children ch = selectedNode.getChildren();
         for (Node n : ch.getNodes()) {  
             if (ThumbnailViewChildren.isSupported(n)) {
