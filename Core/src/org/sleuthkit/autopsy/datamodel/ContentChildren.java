@@ -43,6 +43,8 @@ class ContentChildren extends AbstractContentChildren {
 
     @Override
     protected void addNotify() {
+        super.addNotify();
+        
         //TODO check global settings
         //if above limit, query and return subrange
         
@@ -70,6 +72,7 @@ class ContentChildren extends AbstractContentChildren {
 
     @Override
     protected void removeNotify() {
+        super.removeNotify();
         setKeys(Collections.emptySet());
     }
     

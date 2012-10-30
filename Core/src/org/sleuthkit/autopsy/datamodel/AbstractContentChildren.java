@@ -58,12 +58,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
             return new Node[]{((AutopsyVisitableItem) key).accept(createAutopsyNodeVisitor)};
         }
     }
-    
-    @Override
-    abstract protected void addNotify();
-    
-    @Override
-    abstract protected void removeNotify();
+
    
     
     /**
