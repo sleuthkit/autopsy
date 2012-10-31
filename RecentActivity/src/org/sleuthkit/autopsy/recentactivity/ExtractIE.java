@@ -549,6 +549,9 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 logger.log(Level.WARNING, "Unable to delete file and cleanup: " + filePath, e);
             }
         }
+        
+        pascoResults.clear();
+        
         logger.info("IE extract has completed.");
     }
 
