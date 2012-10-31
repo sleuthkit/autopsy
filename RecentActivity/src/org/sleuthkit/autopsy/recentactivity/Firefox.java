@@ -305,7 +305,7 @@ public class Firefox extends Extract implements IngestModuleImage {
 
     @Override
     public void complete() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        logger.info("Firefox Extract has completed.");
     }
 
     @Override

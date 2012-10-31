@@ -136,24 +136,24 @@ public final class RAImageIngestModule implements IngestModuleImage {
         services = IngestServices.getDefault();
         
         Extract registry = new ExtractRegistry();
+        Extract iexplore = new ExtractIE();
+        Extract chrome = new Chrome();
+        Extract firefox = new Firefox();
+        Extract SEUQA = new SearchEngineURLQueryAnalyzer();
         registry.init(initContext);
         modules.add(registry);
-        
-        Extract iexplore = new ExtractIE();
-        iexplore.init(initContext);
         modules.add(iexplore);
-        
-        Extract chrome = new Chrome();
-        chrome.init(initContext);
         modules.add(chrome);
-        
-        Extract firefox = new Firefox();
-        firefox.init(initContext);
         modules.add(firefox);
-       
-        Extract SEUQA = new SearchEngineURLQueryAnalyzer();
-        SEUQA.init(initContext);
         modules.add(SEUQA);
+        for(Extract module : modules){
+          try{
+           module.init(initContext);
+        }
+          catch(Exception ex){
+             logger.log(Level.WARNING, "Exception during init() of " + module.getName(), ex);
+          }
+        }
     }
 
     @Override

@@ -369,7 +369,7 @@ public class Chrome extends Extract implements IngestModuleImage {
 
     @Override
     public void complete() {
-        throw new UnsupportedOperationException("Not supported yet.");
+       logger.info("Chrome Extract has completed");
     }
 
     @Override
