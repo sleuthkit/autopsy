@@ -181,6 +181,11 @@ public class DataResultFilterNode extends FilterNode {
         public List<Action> visit(LayoutFileNode lf) {
             List<Action> actions = new ArrayList<Action>();
            
+            actions.add(new NewWindowViewAction("View in New Window", lf));
+            actions.add(new ExternalViewerAction("Open in External Viewer", lf));
+            actions.add(null); // creates a menu separator
+            actions.add(new ExtractAction("Extract File", lf));
+            actions.add(null); // creates a menu separator
             actions.add(new FileBookmarkAction("Bookmark File", lf));
             return actions;
         }

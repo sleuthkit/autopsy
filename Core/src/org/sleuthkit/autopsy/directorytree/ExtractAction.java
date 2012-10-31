@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
@@ -47,34 +48,39 @@ import org.sleuthkit.datamodel.FsContent;
 public final class ExtractAction extends AbstractAction {
 
     private static final InitializeContentVisitor initializeCV = new InitializeContentVisitor();
-    private FsContent fsContent;
+    private AbstractFile file;
     private Logger logger = Logger.getLogger(ExtractAction.class.getName());
 
     public ExtractAction(String title, Node contentNode) {
         super(title);
         Content tempContent = contentNode.getLookup().lookup(Content.class);
 
-        this.fsContent = tempContent.accept(initializeCV);
-        this.setEnabled(fsContent != null);
+        this.file = tempContent.accept(initializeCV);
+        this.setEnabled(file != null);
     }
 
     /**
      * Returns the FsContent if it is supported, otherwise null
      */
-    private static class InitializeContentVisitor extends ContentVisitor.Default<FsContent> {
+    private static class InitializeContentVisitor extends ContentVisitor.Default<AbstractFile> {
 
         @Override
-        public FsContent visit(org.sleuthkit.datamodel.File f) {
+        public AbstractFile visit(org.sleuthkit.datamodel.File f) {
             return f;
+        }
+        
+        @Override
+        public AbstractFile visit(org.sleuthkit.datamodel.LayoutFile lf) {
+            return lf;
         }
 
         @Override
-        public FsContent visit(Directory dir) {
+        public AbstractFile visit(Directory dir) {
             return ContentUtils.isDotDirectory(dir) ? null : dir;
         }
 
         @Override
-        protected FsContent defaultVisit(Content cntnt) {
+        protected AbstractFile defaultVisit(Content cntnt) {
             return null;
         }
     }
@@ -89,7 +95,7 @@ public final class ExtractAction extends AbstractAction {
         // Get file and check that it's okay to overwrite existing file
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File(Case.getCurrentCase().getCaseDirectory()));
-        fc.setSelectedFile(new File(this.fsContent.getName()));
+        fc.setSelectedFile(new File(this.file.getName()));
         int returnValue = fc.showSaveDialog((Component) e.getSource());
 
         if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -116,7 +122,7 @@ public final class ExtractAction extends AbstractAction {
         
             try {
                 ExtractFileThread extract = new ExtractFileThread();    
-                extract.init(this.fsContent, e, destination);
+                extract.init(this.file, e, destination);
                 extract.execute();
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Unable to start background thread.", ex);
@@ -127,11 +133,11 @@ public final class ExtractAction extends AbstractAction {
     private class ExtractFileThread extends SwingWorker<Object,Void> {
         private Logger logger = Logger.getLogger(ExtractFileThread.class.getName());
         private ProgressHandle progress;
-        private FsContent fsContent;
-        ActionEvent e;
-        File destination;
+        private AbstractFile fsContent;
+        private ActionEvent e;
+        private File destination;
         
-        private void init(FsContent fsContent, ActionEvent e, File destination) {
+        private void init(AbstractFile fsContent, ActionEvent e, File destination) {
             this.fsContent = fsContent;
             this.e = e;
             this.destination = destination;
@@ -157,8 +163,8 @@ public final class ExtractAction extends AbstractAction {
             progress.switchToIndeterminate();
             if(fsContent.isFile()) {
                 // Max file size of 200GB
-                long filesize = fsContent.getSize();
-                int unit = (int) (filesize / 100);
+                //long filesize = fsContent.getSize();
+                //int unit = (int) (filesize / 100);
                 progress.switchToDeterminate(100);
             } else if(fsContent.isDir()) {
                 // If dir base progress off number of children

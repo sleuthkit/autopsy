@@ -29,12 +29,12 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
@@ -333,6 +333,18 @@ public final class ContentUtils {
             }
             return null;
         }
+        
+         @Override
+        public Void visit(LayoutFile f) {
+            try {
+                ContentUtils.writeToFile(f, dest, progress, worker, source);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE,
+                        "Trouble extracting unallocated content file to " + dest.getAbsolutePath(),
+                        ex);
+            }
+            return null;
+        }
 
         @Override
         public Void visit(Directory dir) {
@@ -389,7 +401,7 @@ public final class ContentUtils {
              * Get destination file by adding File/Directory name to the path of
              * parent
              */
-            private java.io.File getFsContentDest(FsContent fsc) {
+            private java.io.File getFsContentDest(AbstractFile fsc) {
                 String path = dest.getAbsolutePath() + java.io.File.separator
                         + fsc.getName();
                 return new java.io.File(path);
@@ -398,6 +410,11 @@ public final class ContentUtils {
             @Override
             public java.io.File visit(File f) {
                 return getFsContentDest(f);
+            }
+            
+            @Override
+            public java.io.File visit(LayoutFile lf) {
+                return getFsContentDest(lf);
             }
 
             @Override
