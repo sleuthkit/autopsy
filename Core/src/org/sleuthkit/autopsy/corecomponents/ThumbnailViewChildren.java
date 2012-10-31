@@ -54,6 +54,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     private Node parent;
     private final HashMap<Integer, List<Node>> pages = new HashMap<Integer, List<Node>>();
     private int totalImages = 0;
+    private int totalPages = 0;
     private static final Logger logger = Logger.getLogger(ThumbnailViewChildren.class.getName());
 
     /**
@@ -76,6 +77,15 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
         setupKeys();
     }
+    
+    int getTotalPages() {
+        return totalPages;
+    }
+    
+    int getTotalImages() {
+        return totalImages;
+    }
+    
 
     private void setupKeys() {
         //divide the supported content into buckets
@@ -97,9 +107,14 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             return;
         }
 
-        int totalPages = totalImages / IMAGES_PER_PAGE;
-        if (totalPages % totalImages != 0) {
-            ++totalPages;
+        totalPages = 0;
+        if (totalImages < IMAGES_PER_PAGE) {
+            totalPages = 1;
+        } else {
+            totalPages = totalImages / IMAGES_PER_PAGE;
+            if (totalPages % totalImages != 0) {
+                ++totalPages;
+            }
         }
 
         int prevImages = 0;
@@ -109,10 +124,10 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             pages.put(page, pageContent);
             prevImages += toAdd;
         }
-        
-        Integer [] pageNums = new Integer[totalPages];
-        for (int i = 0; i< totalPages; ++i) {
-            pageNums[i] = i+1;
+
+        Integer[] pageNums = new Integer[totalPages];
+        for (int i = 0; i < totalPages; ++i) {
+            pageNums[i] = i + 1;
         }
         setKeys(pageNums);
 
@@ -169,28 +184,26 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     }
 
     /**
-     * Node representing page node, a parent of image nodes, with a name showing children range
+     * Node representing page node, a parent of image nodes, with a name showing
+     * children range
      */
     private class ThumbnailPageNode extends AbstractNode {
 
         ThumbnailPageNode(Integer pageNum) {
             super(new ThumbnailPageNodeChildren(pages.get(pageNum)), Lookups.singleton(pageNum));
             setName(Integer.toString(pageNum));
-            int from = 1 + ((pageNum-1) * IMAGES_PER_PAGE);
-            int showImages = Math.min(IMAGES_PER_PAGE, totalImages - (from-1));
+            int from = 1 + ((pageNum - 1) * IMAGES_PER_PAGE);
+            int showImages = Math.min(IMAGES_PER_PAGE, totalImages - (from - 1));
             int to = from + showImages - 1;
             setDisplayName(from + "-" + to);
 
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png");
 
         }
-        
-        
-    
     }
-    
+
     //TODO insert node at beginning pressing which goes back to page view
-    private class ThumbnailPageNodeChildren extends Children.Keys<Node> { 
+    private class ThumbnailPageNodeChildren extends Children.Keys<Node> {
 
         //wrapped original nodes
         private List<Node> contentImages = null;
@@ -201,23 +214,19 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             this.contentImages = contentImages;
         }
 
-     
         @Override
         protected void addNotify() {
             super.addNotify();
-            
+
             setKeys(contentImages);
         }
 
         @Override
         protected void removeNotify() {
             super.removeNotify();
-            
+
             setKeys(new ArrayList<Node>());
         }
-        
-        
-
 
         @Override
         protected Node[] createNodes(Node wrapped) {
@@ -228,8 +237,5 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                 return new Node[]{};
             }
         }
-
-        
     }
-    
 }
