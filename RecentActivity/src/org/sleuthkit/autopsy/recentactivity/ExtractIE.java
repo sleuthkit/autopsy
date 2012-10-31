@@ -69,9 +69,7 @@ import org.sleuthkit.datamodel.*;
 public class ExtractIE extends Extract implements IngestModuleImage {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-  
     private IngestServices services;
-    
     private String indexDatQueryStr = "select * from tsk_files where name LIKE '%index.dat%'";
     private String favoriteQuery = "select * from `tsk_files` where parent_path LIKE '%/Favorites%' and name LIKE '%.url'";
     private String cookiesQuery = "select * from `tsk_files` where parent_path LIKE '%/Cookies%' and name LIKE '%.txt'";
@@ -91,16 +89,14 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     private KeyValue IE_PASCO_LUT = new KeyValue(BrowserType.IE.name(), BrowserType.IE.getType());
     public LinkedHashMap<String, Object> IE_OBJ;
     boolean pascoFound = false;
-    
     final public static String MODULE_VERSION = "1.0";
-    
     private String args;
 
     //hide public constructor to prevent from instantiation by ingest module loader
     ExtractIE() {
         moduleName = "Internet Explorer";
     }
-    
+
     @Override
     public String getVersion() {
         return MODULE_VERSION;
@@ -115,8 +111,6 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     public void setArguments(String args) {
         this.args = args;
     }
-	
-	
 
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
@@ -161,16 +155,16 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             try {
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                    //TODO revisit usage of deprecated constructor as per TSK-583
-                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", datetime));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", datetime));
+                //TODO revisit usage of deprecated constructor as per TSK-583
+                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", datetime));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", datetime));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", DecodeUtil.decodeURL(url)));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, Favorite, bbattributes);
-                
+
                 services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
@@ -206,18 +200,18 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
             String domain = Util.extractDomain(url);
-            
+
             try {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", DecodeUtil.decodeURL(url)));
-                    //TODO Revisit usage of deprecated Constructor as of TSK-583
-                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", datetime));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
+                //TODO Revisit usage of deprecated Constructor as of TSK-583
+                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", datetime));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));
-                    //TODO Revisit usage of deprecated Constructor as of TSK-583
-                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", (name != null) ? name : ""));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", (name != null) ? name : ""));
+                //TODO Revisit usage of deprecated Constructor as of TSK-583
+                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", (name != null) ? name : ""));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", (name != null) ? name : ""));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, Cookie, bbattributes);
@@ -227,7 +221,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             }
 
         }
-        
+
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
     }
 
@@ -250,9 +244,9 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", path));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", Util.getFileName(path)));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(path)));
-                    //TODO Revisit usage of deprecated constructor as per TSK-583
-                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Date Created", datetime));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity",  datetime));
+                //TODO Revisit usage of deprecated constructor as per TSK-583
+                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Date Created", datetime));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
                 this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, Recent, bbattributes);
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
@@ -260,7 +254,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             }
 
         }
-        
+
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
 
     }
@@ -419,7 +413,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 try {
                     for (File file : pascoFiles) {
                         String fileName = file.getName();
-                        if(!filenames.contains(fileName)) {
+                        if (!filenames.contains(fileName)) {
                             logger.log(Level.INFO, "Found a temp Pasco result file not in the list: {0}", fileName);
                             continue;
                         }
@@ -542,17 +536,30 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     @Override
     public void complete() {
         // Delete all the results when complete
-        for(String file : pascoResults) {
-            new File(PASCO_RESULTS_PATH + File.separator + file).delete();
+        for (String file : pascoResults) {
+            String filePath = PASCO_RESULTS_PATH + File.separator + file;
+            try {
+                File f = new File(filePath);
+                if (f.exists() && f.canWrite()) {
+                    f.delete();
+                } else {
+                    logger.log(Level.WARNING, "Unable to delete file and cleanup: " + filePath);
+                }
+            } catch (SecurityException e) {
+                logger.log(Level.WARNING, "Unable to delete file and cleanup: " + filePath, e);
+            }
         }
+        logger.info("IE extract has completed.");
     }
 
     @Override
     public void stop() {
-        if(JavaSystemCaller.Exec.getProcess() != null)
-        {
+        if (JavaSystemCaller.Exec.getProcess() != null) {
             JavaSystemCaller.Exec.stop();
         }
+
+        //call regular cleanup from complete() method
+        complete();
     }
 
     @Override

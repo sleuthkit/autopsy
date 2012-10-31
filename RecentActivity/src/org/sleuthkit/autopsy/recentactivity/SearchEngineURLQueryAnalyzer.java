@@ -47,6 +47,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskException;
@@ -100,23 +101,23 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
             _count = 0;
         }
         
-        public void increment(){
+        void increment(){
            ++_count;
         }
         
-        public String getEngineName(){
+        String getEngineName(){
             return _engineName;
         }
         
-        public String getDomainSubstring(){
+        String getDomainSubstring(){
             return _domainSubstring;
         }
         
-        public int getTotal(){
+        int getTotal(){
             return _count;
         }
         
-        public Set<Map.Entry<String,String>> getSplits(){
+        Set<Map.Entry<String,String>> getSplits(){
             return this._splits.entrySet();
         }
         
@@ -258,7 +259,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                 //from tsk_files
                 List<FsContent> fslst = this.extractFiles(image, "select * from tsk_files where `obj_id` = '" + artifact.getObjectID() + "'");
                 if (fslst.isEmpty() || fslst == null) {
-                    continue; //File was corrupted or invalid, skipping
+                    continue; //File was from a different image, and does not exist in current examination. Skipping to a new list of artifacts.
                 }
                 FsContent fs = fslst.get(0); //associated file
                 SearchEngineURLQueryAnalyzer.SearchEngine se = NullEngine;
@@ -302,7 +303,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                 }
             }
         } catch (TskException e) {
-            logger.log(Level.WARNING, "Encountered error retrieving artifacts: ", e);
+            logger.log(Level.WARNING, "Encountered error retrieving artifacts", e);
         } finally {
             if (controller.isCancelled()) {
                 logger.info("Operation terminated by user.");
@@ -371,13 +372,13 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     
     @Override
     public void complete() {
-        logger.info("running complete()");
+        logger.info("Search Engine URL Query Analyzer has completed.");
     }
     
 
     @Override
     public void stop() {
-        logger.info("running stop()");
+        logger.info("Attempted to stop Search Engine URL Query Analyzer, but operation is not supported; skipping...");
     }
 
     @Override

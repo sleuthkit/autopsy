@@ -44,15 +44,8 @@ public final class RAImageIngestModule implements IngestModuleImage {
     private static int messageId = 0;
     private ArrayList<String> errors = new ArrayList<String>();
     private StringBuilder subCompleted = new StringBuilder();
-    List<Extract> modules = new ArrayList<Extract>();
-    private ExtractRegistry eree = null;
-    private Firefox ffre = null;
-    private Chrome chre = null;
-    private ExtractIE eere = null;
-    private SearchEngineURLQueryAnalyzer usq = null;
-    
+    private ArrayList<Extract> modules;
     final public static String MODULE_VERSION = "1.0";
-    
     private String args;
 
     //public constructor is required
@@ -70,25 +63,22 @@ public final class RAImageIngestModule implements IngestModuleImage {
 
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
-        //logger.log(Level.INFO, "process() " + this.toString());
-        modules.add(eree);
-        modules.add(ffre);
-        modules.add(chre);
-        modules.add(eere);
-        modules.add(usq);
         services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
         controller.switchToDeterminate(modules.size());
         controller.progress(0);
-        
-        for(int i = 0; i < modules.size(); i++) {
+        for (int i = 0; i < modules.size(); i++) {
             Extract module = modules.get(i);
+            if (controller.isCancelled()) {
+                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before " + module.getName());
+                break;
+            }
             try {
                 module.process(image, controller);
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Exception occurred in " + module.getName(), ex);
                 subCompleted.append(module.getName()).append(" failed - see log for details <br>");
             }
-            controller.progress(i+1);
+            controller.progress(i + 1);
             errors.addAll(module.getErrorMessages());
         }
     }
@@ -98,19 +88,17 @@ public final class RAImageIngestModule implements IngestModuleImage {
         logger.log(Level.INFO, "complete() " + this.toString());
         StringBuilder errorMessage = new StringBuilder();
         String errorsFound = "";
-        
-        for(int i=0; i < modules.size(); i++) {
+
+        for (int i = 0; i < modules.size(); i++) {
             Extract module = modules.get(i);
             try {
                 module.complete();
                 subCompleted.append(module.getName()).append(" complete <br>");
-            } catch (UnsupportedOperationException ex) {
-                // Ignore this one
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Exception occurred when completing " + module.getName(), ex);
             }
         }
-        
+
         errorMessage.append(subCompleted);
         int i = 0;
         if (!errors.isEmpty()) {
@@ -120,15 +108,13 @@ public final class RAImageIngestModule implements IngestModuleImage {
                 final IngestMessage error = IngestMessage.createMessage(++messageId, MessageType.INFO, this, msg + "<br>");
                 services.postMessage(error);
             }
-            
+
             if (i == 1) {
                 errorsFound = i + " error found";
-            }
-            else {
+            } else {
                 errorsFound = i + " errors found";
             }
-        }else
-        {
+        } else {
             errorMessage.append("<br> No errors encountered.");
             errorsFound = "No errors reported";
         }
@@ -150,33 +136,41 @@ public final class RAImageIngestModule implements IngestModuleImage {
 
     @Override
     public void init(IngestModuleInit initContext) {
+        modules = new ArrayList<Extract>();
         logger.log(Level.INFO, "init() " + this.toString());
         services = IngestServices.getDefault();
-        
-        eere = new ExtractIE();
-        eere.init(initContext);
-        
-        chre = new Chrome();
-        chre.init(initContext);
-        
-        eree = new ExtractRegistry();
-        eree.init(initContext);
-        
-        ffre = new Firefox();
-        ffre.init(initContext);
-        
-        usq = new SearchEngineURLQueryAnalyzer();
-        usq.init(initContext);
+
+        final Extract registry = new ExtractRegistry();
+        final Extract iexplore = new ExtractIE();
+        final Extract chrome = new Chrome();
+        final Extract firefox = new Firefox();
+        final Extract SEUQA = new SearchEngineURLQueryAnalyzer();
+
+        modules.add(registry);
+        modules.add(iexplore);
+        modules.add(chrome);
+        modules.add(firefox);
+        modules.add(SEUQA);
+
+        for (Extract module : modules) {
+            try {
+                module.init(initContext);
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Exception during init() of " + module.getName(), ex);
+            }
+        }
     }
 
     @Override
     public void stop() {
         logger.log(Level.INFO, "RAImageIngetModule::stop()");
-        //Order Matters
-        //ExtractRegistry stop        
-        this.eree.stop();
-        //ExtractIE stop
-        this.eere.stop();
+        for (Extract module : modules) {
+            try {
+                module.stop();
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Exception during stop() of " + module.getName(), ex);
+            }
+        }
         logger.log(Level.INFO, "Recent Activity processes properly shutdown.");
     }
 
@@ -184,7 +178,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
     public ModuleType getType() {
         return ModuleType.Image;
     }
-    
+
     @Override
     public String getVersion() {
         return MODULE_VERSION;
@@ -199,7 +193,6 @@ public final class RAImageIngestModule implements IngestModuleImage {
     public void setArguments(String args) {
         this.args = args;
     }
-	
 
     @Override
     public boolean hasSimpleConfiguration() {
