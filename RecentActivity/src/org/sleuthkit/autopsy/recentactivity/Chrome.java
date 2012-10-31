@@ -374,7 +374,7 @@ public class Chrome extends Extract implements IngestModuleImage {
 
     @Override
     public void stop() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        logger.info("Attmped to stop chrome extract, but operation is not supported; skipping...");
     }
 
     @Override

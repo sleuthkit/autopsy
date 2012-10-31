@@ -378,7 +378,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
 
     @Override
     public void stop() {
-        logger.info("Stopping Search Engine");
+        logger.info("Attempted to stop Search Engine URL Quera Analyzer, but operation is not supported; skipping...");
     }
 
     @Override
