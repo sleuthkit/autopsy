@@ -19,14 +19,11 @@
 
 package org.sleuthkit.autopsy.hashdatabase;
 
-import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskException;
@@ -35,6 +32,7 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
 
     List<HashDb> unindexed;
     HashDb toIndex;
+    HashDbManagementPanel hdbmp;
     int length = 0;
     int currentcount = 1;
     String currentDb = "";
@@ -42,18 +40,20 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
     /**
      * Creates new form ModalNoButtons
      */
-    public ModalNoButtons(java.awt.Frame parent, List<HashDb> unindexed) {
+    public ModalNoButtons(HashDbManagementPanel hdbmp, java.awt.Frame parent, List<HashDb> unindexed) {
         super(parent, "Indexing databases", true);
         this.unindexed = unindexed;
         this.toIndex = null;
+        this.hdbmp = hdbmp;
         initComponents();
         initCustom();
     }
     
-    public ModalNoButtons(java.awt.Frame parent, HashDb unindexed){
+    public ModalNoButtons(HashDbManagementPanel hdbmp, java.awt.Frame parent, HashDb unindexed){
         super(parent, "Indexing database", true);
         this.unindexed = null;
         this.toIndex = unindexed;
+        this.hdbmp = hdbmp;
         initComponents();
         initCustom();
     }
@@ -141,10 +141,18 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         String message = "You are about to exit out of indexing your hash databases. \n"
                 + "The generated index will be left unusable. If you choose to continue,\n "
                 + "please delete the corresponding -md5.idx file in the hash folder.\n"
-                + "                                    Continue?";
+                + "                                                Exit indexing?";
 
         int res = JOptionPane.showConfirmDialog(this, message, "Unfinished Indexing", JOptionPane.YES_NO_OPTION);
         if(res == JOptionPane.YES_OPTION){
+            List<HashDb> remove = new ArrayList<HashDb>();
+            if(this.toIndex == null){
+                remove = this.unindexed;
+            }
+            else{
+                remove.add(this.toIndex);
+            }
+            this.hdbmp.removeThese(remove);
             this.setVisible(false);
             this.setModal(false);
             this.dispose();
@@ -164,18 +172,19 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
 
     }
 
-    void indexThis(){
+    void indexThis() {
         this.INDEXING_PROGBAR.setIndeterminate(true);
         currentDb = this.toIndex.getName();
         this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
-        
+        this.length = 1;
         this.CURRENTLYON_LABEL.setText("Currently indexing 1 database");
-        this.toIndex.addPropertyChangeListener(this);
-        try{
-            this.toIndex.createIndex();
-        }
-        catch(TskException e){
-            Logger.getLogger(ModalNoButtons.class.getName()).log(Level.WARNING, "Error making TSK index", e);
+        if (!this.toIndex.isIndexing()) {
+            this.toIndex.addPropertyChangeListener(this);
+            try {
+                this.toIndex.createIndex();
+            } catch (TskException e) {
+                Logger.getLogger(ModalNoButtons.class.getName()).log(Level.WARNING, "Error making TSK index", e);
+            }
         }
     }
     void indexThese(List<HashDb> unindexedd) {
@@ -184,11 +193,14 @@ class ModalNoButtons extends javax.swing.JDialog implements PropertyChangeListen
         for (HashDb db : unindexedd) {
             currentDb = db.getName();
             this.CURRENTDB_LABEL.setText("(" + currentDb + ")");
-            db.addPropertyChangeListener(this);
-            try {
-                db.createIndex();
-            } catch (TskException e) {
-                Logger.getLogger(ModalNoButtons.class.getName()).log(Level.WARNING, "Error making TSK index", e);
+            this.CURRENTLYON_LABEL.setText("Currently indexing 1 of " + unindexed.size());
+            if (!db.isIndexing()) {
+                db.addPropertyChangeListener(this);
+                try {
+                    db.createIndex();
+                } catch (TskException e) {
+                    Logger.getLogger(ModalNoButtons.class.getName()).log(Level.WARNING, "Error making TSK index", e);
+                }
             }
         }
     }
