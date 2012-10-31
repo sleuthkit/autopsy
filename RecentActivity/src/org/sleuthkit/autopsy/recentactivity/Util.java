@@ -103,7 +103,7 @@ public class Util {
                 rt = false;
             }
         } catch (SQLException ex) {
-            //logger.log(Level.WARNING, "Error while trying to contact SQLite db.", ex);
+            logger.log(Level.WARNING, "Error while trying to contact SQLite db.", ex);
         }
         return rt;
     }
@@ -234,8 +234,8 @@ public class Util {
             if (results.size() > 0) {
                 return results.get(0).getId();
             }
-        } catch (Exception ex) {
-            //    logger.log(Level.WARNING, "Error retrieving content from DB", ex);
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "Error retrieving content from DB", ex);
         }
         return -1;
     }
