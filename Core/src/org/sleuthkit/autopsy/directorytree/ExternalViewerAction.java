@@ -38,12 +38,12 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 public class ExternalViewerAction extends AbstractAction {
 
     private final static Logger logger = Logger.getLogger(ExternalViewerAction.class.getName());
-    private org.sleuthkit.datamodel.File fileObject;
+    private org.sleuthkit.datamodel.AbstractFile fileObject;
     final static String[] EXECUTABLE_EXT = {".exe", ".dll", ".com", ".bat", ".msi", ".reg", ".scr"};
 
     public ExternalViewerAction(String title, Node fileNode) {
         super(title);
-        this.fileObject = fileNode.getLookup().lookup(org.sleuthkit.datamodel.File.class);
+        this.fileObject = fileNode.getLookup().lookup(org.sleuthkit.datamodel.AbstractFile.class);
 
         long size = fileObject.getSize();
         String fileName = fileObject.getName();
