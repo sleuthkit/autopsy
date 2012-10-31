@@ -71,6 +71,10 @@ public final class RAImageIngestModule implements IngestModuleImage {
         controller.progress(0);
         for(int i = 0; i < modules.size(); i++) {
             Extract module = modules.get(i);
+            if(controller.isCancelled()){
+                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before " + module.getName());
+                break;
+            }
             try {
                 module.process(image, controller);
                 subCompleted.append(module.getName()).append(" complete <br>");
