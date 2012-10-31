@@ -276,7 +276,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         });
 
         //Note the nodes factories are likely creating nodes in EDT anyway, but worker still helps 
-        new SwingWorker<Object,Void>() {
+        new SwingWorker<Object, Void>() {
             private ProgressHandle progress;
 
             @Override
@@ -348,10 +348,18 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
 
             //force load the curPage node
-            Node pageNode = root.getChildren().getNodeAt(curPage - 1);
+            final Node pageNode = root.getChildren().getNodeAt(curPage - 1);
 
             //em.setSelectedNodes(new Node[]{pageNode});
-            em.setExploredContext(pageNode);
+            if (pageNode != null) {
+                EventQueue.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        em.setExploredContext(pageNode);
+                    }
+                });
+            }
+
         }
 
         @Override
