@@ -44,12 +44,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
     private static int messageId = 0;
     private ArrayList<String> errors = new ArrayList<String>();
     private StringBuilder subCompleted = new StringBuilder();
-    private ExtractRegistry registry = null;
-    private Firefox firefox = null;
-    private Chrome chrome = null;
-    private ExtractIE ie = null;
-    private SearchEngineURLQueryAnalyzer usq = null;
-    
+    private ArrayList<Extract> modules = new ArrayList<Extract>();
     final public static String MODULE_VERSION = "1.0";
     
     private String args;
@@ -69,17 +64,11 @@ public final class RAImageIngestModule implements IngestModuleImage {
 
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
-        //logger.log(Level.INFO, "process() " + this.toString());
-        List<Extract> modules = new ArrayList<Extract>();
-        modules.add(registry);
-        modules.add(firefox);
-        modules.add(chrome);
-        modules.add(ie);
-        modules.add(usq);
+        
+
         services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Started " + image.getName()));
         controller.switchToDeterminate(modules.size());
         controller.progress(0);
-        
         for(int i = 0; i < modules.size(); i++) {
             Extract module = modules.get(i);
             try {
@@ -138,33 +127,37 @@ public final class RAImageIngestModule implements IngestModuleImage {
 
     @Override
     public void init(IngestModuleInit initContext) {
+        modules = new ArrayList<Extract>();
         logger.log(Level.INFO, "init() " + this.toString());
         services = IngestServices.getDefault();
         
-        ie = new ExtractIE();
-        ie.init(initContext);
-        
-        chrome = new Chrome();
-        chrome.init(initContext);
-        
-        registry = new ExtractRegistry();
+        Extract registry = new ExtractRegistry();
         registry.init(initContext);
+        modules.add(registry);
         
-        firefox = new Firefox();
+        Extract iexplore = new ExtractIE();
+        iexplore.init(initContext);
+        modules.add(iexplore);
+        
+        Extract chrome = new Chrome();
+        chrome.init(initContext);
+        modules.add(chrome);
+        
+        Extract firefox = new Firefox();
         firefox.init(initContext);
-        
-        usq = new SearchEngineURLQueryAnalyzer();
-        usq.init(initContext);
+        modules.add(firefox);
+       
+        Extract SEUQA = new SearchEngineURLQueryAnalyzer();
+        SEUQA.init(initContext);
+        modules.add(SEUQA);
     }
 
     @Override
     public void stop() {
         logger.log(Level.INFO, "RAImageIngetModule::stop()");
-        //Order Matters
-        //ExtractRegistry stop        
-        this.registry.stop();
-        //ExtractIE stop
-        this.ie.stop();
+        for(Extract module : modules){
+            module.stop();
+        }
         logger.log(Level.INFO, "Recent Activity processes properly shutdown.");
     }
 
