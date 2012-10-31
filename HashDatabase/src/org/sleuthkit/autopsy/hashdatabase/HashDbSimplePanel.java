@@ -29,6 +29,7 @@ import java.awt.event.ActionListener;
 import java.util.List;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 
@@ -106,6 +107,7 @@ public class HashDbSimplePanel extends javax.swing.JPanel {
         notableHashTable.setRowSelectionAllowed(false);
         //customize column witdhs
         final int width1 = jScrollPane1.getPreferredSize().width;
+        notableHashTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
         TableColumn column1 = null;
         for (int i = 0; i < notableHashTable.getColumnCount(); i++) {
             column1 = notableHashTable.getColumnModel().getColumn(i);

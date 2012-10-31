@@ -84,6 +84,8 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     private String JAVA_PATH;
     //Results List to be referenced/used outside the class
     public ArrayList<HashMap<String, Object>> PASCO_RESULTS_LIST = new ArrayList<HashMap<String, Object>>();
+    // List of Pasco result files for this image
+    private List<String> pascoResults;
     //Look Up Table  that holds Pasco2 results
     private HashMap<String, Object> PASCO_RESULTS_LUT;
     private KeyValue IE_PASCO_LUT = new KeyValue(BrowserType.IE.name(), BrowserType.IE.getType());
@@ -122,7 +124,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
         this.getBookmark(image, controller);
         this.getCookie(image, controller);
         this.getRecentDocuments(image, controller);
-        this.parsePascoResults();
+        this.parsePascoResults(pascoResults);
     }
 
     //Favorites section
@@ -273,6 +275,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
         final String caseDir = Case.getCurrentCase().getCaseDirectory();
         PASCO_RESULTS_PATH = Case.getCurrentCase().getTempDirectory() + File.separator + "results";
         JAVA_PATH = PlatformUtil.getJavaPath();
+        pascoResults = new ArrayList<String>();
 
         logger.log(Level.INFO, "Pasco results path: " + PASCO_RESULTS_PATH);
 
@@ -345,7 +348,9 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                     logger.log(Level.WARNING, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
                 }
 
-                boolean bPascProcSuccess = executePasco(temps, (int) fsc.getId());
+                String filename = "pasco2Result." + fsc.getId() + ".txt";
+                boolean bPascProcSuccess = executePasco(temps, filename);
+                pascoResults.add(filename);
 
                 //At this point pasco2 proccessed the index files.
                 //Now fetch the results, parse them and the delete the files.
@@ -367,7 +372,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     //Simple wrapper to JavaSystemCaller.Exec() to execute pasco2 jar
     // TODO: Hardcoded command args/path needs to be removed. Maybe set some constants and set env variables for classpath
     // I'm not happy with this code. Can't stand making a system call, is not an acceptable solution but is a hack for now.
-    private boolean executePasco(String indexFilePath, int fileIndex) {
+    private boolean executePasco(String indexFilePath, String filename) {
         if (pascoFound == false) {
             return false;
         }
@@ -381,7 +386,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             command.append(" isi.pasco2.Main");
             command.append(" -T history");
             command.append(" \"").append(indexFilePath).append("\"");
-            command.append(" > \"").append(PASCO_RESULTS_PATH).append("\\pasco2Result.").append(Integer.toString(fileIndex)).append(".txt\"");
+            command.append(" > \"").append(PASCO_RESULTS_PATH).append("\\" + filename + "\"");
             // command.add(" > " + "\"" + PASCO_RESULTS_PATH + File.separator + Long.toString(bbId) + "\"");
             String cmd = command.toString();
             JavaSystemCaller.Exec.execute("\"" + JAVA_PATH + " " + cmd + "\"");
@@ -394,7 +399,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
         return success;
     }
 
-    private void parsePascoResults() {
+    private void parsePascoResults(List<String> filenames) {
         if (pascoFound == false) {
             return;
         }
@@ -414,6 +419,10 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 try {
                     for (File file : pascoFiles) {
                         String fileName = file.getName();
+                        if(!filenames.contains(fileName)) {
+                            logger.log(Level.INFO, "Found a temp Pasco result file not in the list: {0}", fileName);
+                            continue;
+                        }
                         long artObjId = Long.parseLong(fileName.substring(fileName.indexOf(".") + 1, fileName.lastIndexOf(".")));
                         //bbartname = bbartname.substring(0, 4);
 
@@ -532,7 +541,10 @@ public class ExtractIE extends Extract implements IngestModuleImage {
 
     @Override
     public void complete() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        // Delete all the results when complete
+        for(String file : pascoResults) {
+            new File(PASCO_RESULTS_PATH + File.separator + file).delete();
+        }
     }
 
     @Override
