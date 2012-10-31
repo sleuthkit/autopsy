@@ -56,6 +56,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     //flag to keep track if images are being loaded
     private int curPage;
     private int totalPages;
+    private int curPageImages;
     private final PageUpdater pageUpdater = new PageUpdater();
 
     /**
@@ -71,6 +72,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
         curPage = -1;
         totalPages = 0;
+        curPageImages = 0;
 
     }
 
@@ -91,6 +93,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         pagesLabel = new javax.swing.JLabel();
         pagePrevButton = new javax.swing.JButton();
         pageNextButton = new javax.swing.JButton();
+        imagesLabel = new javax.swing.JLabel();
+        imagesRangeLabel = new javax.swing.JLabel();
 
         thumbnailScrollPanel.setPreferredSize(null);
 
@@ -108,8 +112,6 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         pagePrevButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pagePrevButton.text")); // NOI18N
         pagePrevButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
         pagePrevButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
-        pagePrevButton.setMaximumSize(new java.awt.Dimension(27, 31));
-        pagePrevButton.setMinimumSize(new java.awt.Dimension(27, 31));
         pagePrevButton.setPreferredSize(new java.awt.Dimension(55, 23));
         pagePrevButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
         pagePrevButton.addActionListener(new java.awt.event.ActionListener() {
@@ -131,11 +133,15 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             }
         });
 
+        imagesLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.imagesLabel.text")); // NOI18N
+
+        imagesRangeLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.imagesRangeLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(thumbnailScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 675, Short.MAX_VALUE)
+            .addComponent(thumbnailScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(pageLabel)
@@ -151,7 +157,11 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
                 .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addGap(33, 33, 33)
+                .addComponent(imagesLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(145, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -164,9 +174,10 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                         .addComponent(totalPagesLabel)
                         .addComponent(pagesLabel)
                         .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)))
+                    .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(imagesLabel)
+                        .addComponent(imagesRangeLabel)))
                 .addComponent(thumbnailScrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 325, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
@@ -181,6 +192,8 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     }//GEN-LAST:event_pageNextButtonActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel curPageLabel;
+    private javax.swing.JLabel imagesLabel;
+    private javax.swing.JLabel imagesRangeLabel;
     private javax.swing.JLabel ofLabel;
     private javax.swing.JLabel pageLabel;
     private javax.swing.JButton pageNextButton;
@@ -246,6 +259,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         super.resetComponent();
         this.totalPages = 0;
         this.curPage = -1;
+        curPageImages = 0;
         updateControls();
 
     }
@@ -298,6 +312,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 Node root = em.getRootContext();
                 Node pageNode = root.getChildren().getNodeAt(curPage - 1);
                 em.setExploredContext(pageNode);
+                curPageImages = pageNode.getChildren().getNodesCount();
                 return null;
             }
 
@@ -318,9 +333,13 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             pageNextButton.setEnabled(false);
             curPageLabel.setText("");
             totalPagesLabel.setText("");
+            imagesRangeLabel.setText("");
         } else {
             curPageLabel.setText(Integer.toString(curPage));
             totalPagesLabel.setText(Integer.toString(totalPages));
+            final int imagesFrom = (curPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE + 1;
+            final int imagesTo = curPageImages + (curPage - 1) * ThumbnailViewChildren.IMAGES_PER_PAGE;
+            imagesRangeLabel.setText(imagesFrom + "-" + imagesTo);
 
 
             pageNextButton.setEnabled(!(curPage == totalPages));
@@ -359,16 +378,42 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 curPage = 1;
             }
 
-            updateControls();
-
-
             //force load the curPage node
             final Node pageNode = root.getChildren().getNodeAt(curPage - 1);
 
             //em.setSelectedNodes(new Node[]{pageNode});
             if (pageNode != null) {
+                pageNode.addNodeListener(new NodeListener() {
+                    @Override
+                    public void childrenAdded(NodeMemberEvent nme) {
+                        curPageImages = pageNode.getChildren().getNodesCount();
+                        updateControls();
+                    }
+
+                    @Override
+                    public void childrenRemoved(NodeMemberEvent nme) {
+                        curPageImages = 0;
+                        updateControls();
+                    }
+
+                    @Override
+                    public void childrenReordered(NodeReorderEvent nre) {
+                    }
+
+                    @Override
+                    public void nodeDestroyed(NodeEvent ne) {
+                    }
+
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                    }
+                });
+
                 em.setExploredContext(pageNode);
             }
+
+
+            updateControls();
 
         }
 
