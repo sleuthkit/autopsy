@@ -200,12 +200,20 @@ class ViewContextAction extends AbstractAction {
         
         @Override
         public List<Content> visit(LayoutFile lc) {
-            return lc.getParent().accept(this);
+            ret.add(lc);
+            ret.addAll(lc.getParent().accept(this));
+              
+            
+            return ret;
+
         }
         
         @Override
         public List<Content> visit(LayoutDirectory ld) {
-            return ld.getParent().accept(this);
+             ret.add(ld);
+             ret.addAll(ld.getParent().accept(this));
+          
+            return ret;
         }
     }
 }
