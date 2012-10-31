@@ -399,7 +399,6 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
             singleMNB.setLocationRelativeTo(null);
             singleMNB.setVisible(true);
             singleMNB.setModal(true);                                                   //End Modal reference
-            JOptionPane.showMessageDialog(this, "Successfuly created index");
             indexingState.put(current.getName(), Boolean.FALSE);
         setButtonFromIndexStatus(indexButton, this.hashDbIndexStatusLabel, current.status());      
     }//GEN-LAST:event_indexButtonActionPerformed
@@ -507,7 +506,6 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         List<HashDb> unindexed = new ArrayList<HashDb>();
         for(int i = 0; i < hashSetTableModel.getRowCount(); i++){
             if(! hashSetTableModel.indexExists(i)){
-                String s = (String) hashSetTableModel.getValueAt(i, hashSetTableModel.getColumnCount());
                 unindexed.add(hashSetTableModel.getDBAt(i));
             }
         }
