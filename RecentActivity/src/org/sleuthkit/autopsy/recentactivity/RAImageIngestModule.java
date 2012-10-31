@@ -44,6 +44,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
     private static int messageId = 0;
     private ArrayList<String> errors = new ArrayList<String>();
     private StringBuilder subCompleted = new StringBuilder();
+    List<Extract> modules = new ArrayList<Extract>();
     private ExtractRegistry eree = null;
     private Firefox ffre = null;
     private Chrome chre = null;
@@ -70,7 +71,6 @@ public final class RAImageIngestModule implements IngestModuleImage {
     @Override
     public void process(Image image, IngestImageWorkerController controller) {
         //logger.log(Level.INFO, "process() " + this.toString());
-        List<Extract> modules = new ArrayList<Extract>();
         modules.add(eree);
         modules.add(ffre);
         modules.add(chre);
@@ -84,7 +84,6 @@ public final class RAImageIngestModule implements IngestModuleImage {
             Extract module = modules.get(i);
             try {
                 module.process(image, controller);
-                subCompleted.append(module.getName()).append(" complete <br>");
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Exception occurred in " + module.getName(), ex);
                 subCompleted.append(module.getName()).append(" failed - see log for details <br>");
@@ -99,6 +98,19 @@ public final class RAImageIngestModule implements IngestModuleImage {
         logger.log(Level.INFO, "complete() " + this.toString());
         StringBuilder errorMessage = new StringBuilder();
         String errorsFound = "";
+        
+        for(int i=0; i < modules.size(); i++) {
+            Extract module = modules.get(i);
+            try {
+                module.complete();
+                subCompleted.append(module.getName()).append(" complete <br>");
+            } catch (UnsupportedOperationException ex) {
+                // Ignore this one
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "Exception occurred when completing " + module.getName(), ex);
+            }
+        }
+        
         errorMessage.append(subCompleted);
         int i = 0;
         if (!errors.isEmpty()) {
