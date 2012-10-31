@@ -310,7 +310,7 @@ public class Firefox extends Extract implements IngestModuleImage {
 
     @Override
     public void stop() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        logger.info("Attmped to stop Firefox extract, but operation is not supported; skipping...");
     }
 
     @Override
