@@ -10,6 +10,7 @@ Improvements:
 - Build scripts enhancements to include module version tracking.
 - Netbeans RCP upgrade from 7.2 to 7.2.1
 - Enable user to select any file when opening image.
+- Add Extract action to Unalloc content files (per file).
 
 Bugfixes:
 - UI fix for keyword search box when case is changed.
