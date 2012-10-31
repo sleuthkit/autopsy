@@ -340,7 +340,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         public void childrenAdded(NodeMemberEvent nme) {
             totalPages = root.getChildren().getNodesCount();
 
-            if (curPage == -1) {
+            if (curPage == -1 || curPage > totalPages) {
                 curPage = 1;
             }
 
@@ -352,12 +352,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
             //em.setSelectedNodes(new Node[]{pageNode});
             if (pageNode != null) {
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        em.setExploredContext(pageNode);
-                    }
-                });
+                em.setExploredContext(pageNode);
             }
 
         }
