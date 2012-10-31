@@ -57,7 +57,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
     static final Logger logger = Logger.getLogger(ReportAction.class.getName());
     private JPanel panel;
     public static ArrayList<JCheckBox> reportList = new ArrayList<JCheckBox>();
-    public static String preview;
+    public static ArrayList<String> preview;
     public static ReportConfiguration config;
 
     public ReportAction() {
@@ -116,11 +116,11 @@ public final class ReportAction extends CallableSystemAction implements Presente
             Object source = e.getItem();
             JCheckBox comp = (JCheckBox) source;
             String name = comp.getName();
-            JRadioButton buttan = null;
+            JCheckBox buttan = null;
             Component[] comps = comp.getParent().getComponents();
             for (Component c : comps) {
-                if (c.getName().equals(name + "p")) {
-                    buttan = (JRadioButton) c;
+                if (c.getName().equals(name + "oac")) {
+                    buttan = (JCheckBox) c;
                 }
             }
             if (e.getStateChange() == ItemEvent.DESELECTED) {
@@ -160,19 +160,22 @@ public final class ReportAction extends CallableSystemAction implements Presente
         @Override
         public void itemStateChanged(ItemEvent e) {
             Object source = e.getItem();
-            JRadioButton comp = (JRadioButton) source;
+            JCheckBox comp = (JCheckBox) source;
             String name = comp.getName();
-            JRadioButton buttan = new JRadioButton();
+            JCheckBox buttan = new JCheckBox();
             Component[] comps = comp.getParent().getComponents();
             for (Component c : comps) {
                 if (c.getName().equals(name)) {
-                    buttan = (JRadioButton) c;
+                    buttan = (JCheckBox) c;
                 }
             }
+            String temp = buttan.getName();
+            temp = temp.substring(0, temp.length() - 1);
             if (e.getStateChange() == ItemEvent.SELECTED) {
-                String temp = buttan.getName();
-                temp = temp.substring(0, temp.length() - 1);
-                preview = temp;
+                preview.add(temp);
+            }
+            if(e.getStateChange() == ItemEvent.DESELECTED && preview.contains(temp)){
+                preview.remove(temp);
             }
         }
     };
@@ -197,10 +200,11 @@ public final class ReportAction extends CallableSystemAction implements Presente
             final reportListener listener = new reportListener();
             final configListener clistener = new configListener();
             final previewListener plistener = new previewListener();
-            preview = "";
+            preview = new ArrayList<String>();
             reportList.clear();
             config = new ReportConfiguration();
-            final JPanel filterpanel = new JPanel(new GridLayout(0, 2, 5, 5));
+            int rows = Lookup.getDefault().lookupAll(ReportModule.class).size(); //One row for each report module
+            final JPanel filterpanel = new JPanel(new GridLayout(rows, 2, 5, 5));
             final JPanel artpanel = new JPanel(new GridLayout(0, 3, 0, 0));
             SwingUtilities.invokeLater(new Runnable() {
 
@@ -213,7 +217,11 @@ public final class ReportAction extends CallableSystemAction implements Presente
                     filterpanel.setAlignmentY(Component.TOP_ALIGNMENT);
                     filterpanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                     filterpanel.setSize(300, 200);
-                    ButtonGroup previewGroup = new ButtonGroup();
+                    //filterpanel.add(new JLabel("Report Format"), 0);
+                    //filterpanel.add(new JLabel("Open After Creation"), 1);
+                    //filterpanel.add(new JLabel("hello"));
+                    int currentPos = 0;
+  
                     for (ReportModule m : Lookup.getDefault().lookupAll(ReportModule.class)) {
                         String name = m.getName();
                         String desc = m.getReportTypeDescription();
@@ -224,14 +232,13 @@ public final class ReportAction extends CallableSystemAction implements Presente
                         ch.setToolTipText(desc);
                         ch.setSelected(true);
 
-                        JRadioButton cb = new JRadioButton("Preview");
-                        previewGroup.add(cb);
-                        cb.setName(m.getClass().getName() + "p");
+                        JCheckBox cb = new JCheckBox("Open After Creation");
+                        cb.setName(m.getClass().getName() + "oac");
                         cb.addItemListener(plistener);
-                        filterpanel.add(cb, 0);
+                        filterpanel.add(cb, currentPos);
                         ch.addItemListener(listener);
                         reportList.add(ch);
-                        filterpanel.add(ch, 0);
+                        filterpanel.add(ch, currentPos);
                     }
                     Border artborder = BorderFactory.createTitledBorder("Report Data");
                     artpanel.setBorder(artborder);
