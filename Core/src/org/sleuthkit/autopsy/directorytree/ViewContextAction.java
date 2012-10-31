@@ -60,10 +60,7 @@ class ViewContextAction extends AbstractAction {
     public ViewContextAction(String title, BlackboardArtifactNode node) {
         super(title);
         this.content = node.getLookup().lookup(Content.class);
-        // Disable this action if the file is a layout file (we don't show those in the tree)
-        if(node.getLookup().lookup(LayoutFile.class) != null) {
-            this.setEnabled(false);
-        }
+      
     }
     
     public ViewContextAction(String title, AbstractFsContentNode node) {
