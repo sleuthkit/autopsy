@@ -40,6 +40,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -70,6 +71,7 @@ public class ReportPanel extends javax.swing.JPanel {
         closeButton = new javax.swing.JButton();
         exportButton = new javax.swing.JButton();
         statusLabel = new javax.swing.JLabel();
+        LABEL_LOC = new javax.swing.JLabel();
 
         reportScrollPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.reportScrollPane.border.title"))); // NOI18N
 
@@ -97,6 +99,8 @@ public class ReportPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(statusLabel, org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.statusLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(LABEL_LOC, org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.LABEL_LOC.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -106,7 +110,8 @@ public class ReportPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(reportScrollPane)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 493, Short.MAX_VALUE)
+                        .addComponent(LABEL_LOC)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(exportButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(closeButton))
@@ -117,13 +122,15 @@ public class ReportPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(reportScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE)
+                .addComponent(reportScrollPane)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(statusLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(closeButton)
-                    .addComponent(exportButton))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(closeButton)
+                        .addComponent(exportButton))
+                    .addComponent(LABEL_LOC))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -140,7 +147,9 @@ public class ReportPanel extends javax.swing.JPanel {
     public void setFinishedReportText() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         String reportText = "These reports were generated on " + dateFormat.format(new Date()) + ".";
+        String loc = "Reports extracted to: " + Case.getCurrentCase().getCaseDirectory() + File.separator + "Reports";
         statusLabel.setText(reportText);
+        LABEL_LOC.setText(loc);
         
         final JPanel tempPanel = new JPanel(new GridBagLayout());
         //tempPanel.setMinimumSize(new Dimension(540,240));
@@ -188,7 +197,7 @@ public class ReportPanel extends javax.swing.JPanel {
                     c.gridy = ++cc;
                     c.insets = new Insets(0, 0, 15, 0); // row padding
                     JLabel pathLabel = new JLabel(path);
-                    tempPanel.add(pathLabel, c);
+                    //tempPanel.add(pathLabel, c);
                     
                     tempPanel.revalidate();
                     tempPanel.repaint();
@@ -231,6 +240,7 @@ public class ReportPanel extends javax.swing.JPanel {
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel LABEL_LOC;
     private javax.swing.JButton closeButton;
     private javax.swing.JButton exportButton;
     private javax.swing.JScrollPane reportScrollPane;
