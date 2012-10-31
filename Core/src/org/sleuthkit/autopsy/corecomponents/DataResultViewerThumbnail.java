@@ -242,6 +242,15 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     }
 
     @Override
+    public void resetComponent() {
+        super.resetComponent();
+        this.totalPages = 0;
+        this.curPage = -1;
+        updateControls();
+
+    }
+
+    @Override
     public void clearComponent() {
         this.thumbnailScrollPanel.removeAll();
         this.thumbnailScrollPanel = null;
@@ -339,6 +348,12 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         @Override
         public void childrenAdded(NodeMemberEvent nme) {
             totalPages = root.getChildren().getNodesCount();
+
+            if (totalPages == 0) {
+                curPage = -1;
+                updateControls();
+                return;
+            }
 
             if (curPage == -1 || curPage > totalPages) {
                 curPage = 1;
