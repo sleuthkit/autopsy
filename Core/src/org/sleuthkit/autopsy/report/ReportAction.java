@@ -199,7 +199,6 @@ public final class ReportAction extends CallableSystemAction implements Presente
             });
             final reportListener listener = new reportListener();
             final configListener clistener = new configListener();
-            final previewListener plistener = new previewListener();
             preview = new ArrayList<String>();
             reportList.clear();
             config = new ReportConfiguration();
@@ -217,10 +216,6 @@ public final class ReportAction extends CallableSystemAction implements Presente
                     filterpanel.setAlignmentY(Component.TOP_ALIGNMENT);
                     filterpanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                     filterpanel.setSize(300, 200);
-                    //filterpanel.add(new JLabel("Report Format"), 0);
-                    //filterpanel.add(new JLabel("Open After Creation"), 1);
-                    //filterpanel.add(new JLabel("hello"));
-                    int currentPos = 0;
   
                     for (ReportModule m : Lookup.getDefault().lookupAll(ReportModule.class)) {
                         String name = m.getName();
@@ -231,14 +226,9 @@ public final class ReportAction extends CallableSystemAction implements Presente
                         ch.setName(m.getClass().getName());
                         ch.setToolTipText(desc);
                         ch.setSelected(true);
-
-                        JCheckBox cb = new JCheckBox("Open After Creation");
-                        cb.setName(m.getClass().getName() + "oac");
-                        cb.addItemListener(plistener);
-                        filterpanel.add(cb, currentPos);
                         ch.addItemListener(listener);
                         reportList.add(ch);
-                        filterpanel.add(ch, currentPos);
+                        filterpanel.add(ch, 0);
                     }
                     Border artborder = BorderFactory.createTitledBorder("Report Data");
                     artpanel.setBorder(artborder);
