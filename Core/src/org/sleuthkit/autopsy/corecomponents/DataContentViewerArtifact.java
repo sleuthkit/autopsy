@@ -304,10 +304,10 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         }
         if(content != null) {
             try {
-                int size = content.getAllArtifacts().size();
+                long size = content.getAllArtifactsCount();
                 return size > 0;
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Couldn't get All Blackboard Artifacts", ex);
+                logger.log(Level.WARNING, "Couldn't get All Blackboard Artifacts Count", ex);
             }
         }
         return false;
