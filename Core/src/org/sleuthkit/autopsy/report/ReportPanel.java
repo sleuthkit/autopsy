@@ -20,6 +20,7 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -34,6 +35,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -72,6 +74,7 @@ public class ReportPanel extends javax.swing.JPanel {
         exportButton = new javax.swing.JButton();
         statusLabel = new javax.swing.JLabel();
         LABEL_LOC = new javax.swing.JLabel();
+        ButtonOpenFolder = new javax.swing.JButton();
 
         reportScrollPane.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.reportScrollPane.border.title"))); // NOI18N
 
@@ -101,6 +104,13 @@ public class ReportPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(LABEL_LOC, org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.LABEL_LOC.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(ButtonOpenFolder, org.openide.util.NbBundle.getMessage(ReportPanel.class, "ReportPanel.ButtonOpenFolder.text_1")); // NOI18N
+        ButtonOpenFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ButtonOpenFolderActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -114,6 +124,8 @@ public class ReportPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(exportButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(ButtonOpenFolder)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(closeButton))
                     .addComponent(statusLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -122,16 +134,16 @@ public class ReportPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(reportScrollPane)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(reportScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addComponent(statusLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(closeButton)
-                        .addComponent(exportButton))
-                    .addComponent(LABEL_LOC))
-                .addContainerGap())
+                .addGap(11, 11, 11)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(LABEL_LOC)
+                    .addComponent(closeButton)
+                    .addComponent(exportButton)
+                    .addComponent(ButtonOpenFolder))
+                .addGap(8, 8, 8))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -140,10 +152,22 @@ public class ReportPanel extends javax.swing.JPanel {
         exportReportAction(reports);
     }//GEN-LAST:event_exportButtonActionPerformed
 
+    private void ButtonOpenFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonOpenFolderActionPerformed
+        String path = Case.getCurrentCase().getCaseDirectory() + File.separator + "Reports";
+        File dir = new File(path);
+        if (Desktop.isDesktopSupported()) {
+            try {
+                Desktop.getDesktop().open(dir);
+            } catch (IOException ioe) {
+                logger.log(Level.WARNING, "Could not open folder [" + path + "]", ioe);
+            }
+        }
+    }//GEN-LAST:event_ButtonOpenFolderActionPerformed
+
     public void setCloseButtonActionListener(ActionListener e) {
         closeButton.addActionListener(e);
     }
-    
+
     public void setFinishedReportText() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         String reportText = "These reports were generated on " + dateFormat.format(new Date()) + ".";
@@ -196,9 +220,6 @@ public class ReportPanel extends javax.swing.JPanel {
                     c.gridx = 0;
                     c.gridy = ++cc;
                     c.insets = new Insets(0, 0, 15, 0); // row padding
-                    JLabel pathLabel = new JLabel(path);
-                    //tempPanel.add(pathLabel, c);
-                    
                     tempPanel.revalidate();
                     tempPanel.repaint();
                     cc++;
@@ -240,6 +261,7 @@ public class ReportPanel extends javax.swing.JPanel {
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton ButtonOpenFolder;
     private javax.swing.JLabel LABEL_LOC;
     private javax.swing.JButton closeButton;
     private javax.swing.JButton exportButton;

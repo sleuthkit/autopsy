@@ -93,14 +93,7 @@ public class ReportPanelAction {
                             Object invoke = generatereport.invoke(reportObject, reportconfig);
                             rr.progBarSet(cc);
                             String path = invoke.toString();
-                            Class[] argTypes2 = new Class[]{String.class};
-                            Method getpreview = reportclass.getMethod("getPreview", argTypes2);
                             reports.put((ReportModule) reportObject, path);
-                            for (String prev : preview) {
-                                if (s == null ? preview == null : s.equals(prev)) {
-                                    getpreview.invoke(reportObject, path);
-                                }
-                            }
 
                         } catch (Exception e) {
                             Logger.getLogger(ReportFilterAction.class.getName()).log(Level.WARNING, "Error generating " + s + "! Reason: ", e);
