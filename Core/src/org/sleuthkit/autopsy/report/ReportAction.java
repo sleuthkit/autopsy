@@ -109,28 +109,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
 
     }
 
-    private class reportListener implements ItemListener {
 
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-            Object source = e.getItem();
-            JCheckBox comp = (JCheckBox) source;
-            String name = comp.getName();
-            JCheckBox buttan = null;
-            Component[] comps = comp.getParent().getComponents();
-            for (Component c : comps) {
-                if (c.getName().equals(name + "oac")) {
-                    buttan = (JCheckBox) c;
-                }
-            }
-            if (e.getStateChange() == ItemEvent.DESELECTED) {
-                buttan.setEnabled(false);
-            }
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                buttan.setEnabled(true);
-            }
-        }
-    };
 
     private class configListener implements ItemListener {
 
@@ -197,7 +176,6 @@ public final class ReportAction extends CallableSystemAction implements Presente
                     popUpWindow.dispose();
                 }
             });
-            final reportListener listener = new reportListener();
             final configListener clistener = new configListener();
             preview = new ArrayList<String>();
             reportList.clear();
@@ -226,7 +204,6 @@ public final class ReportAction extends CallableSystemAction implements Presente
                         ch.setName(m.getClass().getName());
                         ch.setToolTipText(desc);
                         ch.setSelected(true);
-                        ch.addItemListener(listener);
                         reportList.add(ch);
                         filterpanel.add(ch, 0);
                     }
