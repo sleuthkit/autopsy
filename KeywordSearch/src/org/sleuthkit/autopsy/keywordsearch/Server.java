@@ -144,7 +144,7 @@ public class Server {
     /**
      * New instance for the server at the given URL
      *
-     * @param url should be something like "http://localhost:8983/solr/"
+     * @param url should be something like "http://localhost:9293/solr/"
      */
     Server(String url) {
         this.solrUrl = url;
