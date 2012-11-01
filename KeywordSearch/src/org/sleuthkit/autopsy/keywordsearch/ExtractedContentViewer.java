@@ -41,11 +41,11 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
 
 /**
- * Displays marked-up (HTML) content for a Node. The sources are all the 
- * MarkupSource items in the selected Node's lookup, plus the content that
- * Solr extracted (if there is any).
+ * Displays marked-up (HTML) content for a Node. The sources are all the
+ * MarkupSource items in the selected Node's lookup, plus the content that Solr
+ * extracted (if there is any).
  */
-@ServiceProvider(service = DataContentViewer.class, position=4)
+@ServiceProvider(service = DataContentViewer.class, position = 4)
 public class ExtractedContentViewer implements DataContentViewer {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
@@ -53,7 +53,6 @@ public class ExtractedContentViewer implements DataContentViewer {
     private Node currentNode = null;
     private MarkupSource currentSource = null;
     private final IsDirVisitor isDirVisitor = new IsDirVisitor();
-    
     //keep last content cached
     private String curContent;
     private long curContentId;
@@ -77,161 +76,166 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         // sources are custom markup from the node (if available) and default
         // markup is fetched from solr
-        List<MarkupSource> sources = new ArrayList<MarkupSource>();
+        final List<MarkupSource> sources = new ArrayList<MarkupSource>();
 
         //add additional registered sources for this node
         sources.addAll(selectedNode.getLookup().lookupAll(MarkupSource.class));
 
-        if (solrHasContent(selectedNode)) {
-            Content content = selectedNode.getLookup().lookup(Content.class);
-            if (content == null) {
-                return;
+        if (!solrHasContent(selectedNode)) {
+            //currentNode = null;
+            //resetComponent();
+                  // first source will be the default displayed
+        setPanel(sources);
+            return;
+        }
+        Content content = selectedNode.getLookup().lookup(Content.class);
+        if (content == null) {
+            return;
+        }
+
+        //add to page tracking if not there yet
+        final long contentID = content.getId();
+
+        final MarkupSource newSource = new MarkupSource() {
+            private boolean inited = false;
+            private int numPages = 0;
+            private int currentPage = 0;
+            private boolean hasChunks = false;
+
+            @Override
+            public int getCurrentPage() {
+                return this.currentPage;
             }
 
-            //add to page tracking if not there yet
-            final long contentID = content.getId();
+            @Override
+            public boolean hasNextPage() {
+                return currentPage < numPages;
+            }
 
-            MarkupSource newSource = new MarkupSource() {
+            @Override
+            public boolean hasPreviousPage() {
+                return currentPage > 1;
+            }
 
-                private boolean inited = false;
-                private int numPages = 0;
-                private int currentPage = 0;
-                private boolean hasChunks = false;
-
-                @Override
-                public int getCurrentPage() {
-                    return this.currentPage;
+            @Override
+            public int nextPage() {
+                if (!hasNextPage()) {
+                    throw new IllegalStateException("No next page.");
                 }
+                ++currentPage;
+                return currentPage;
+            }
 
-                @Override
-                public boolean hasNextPage() {
-                    return currentPage < numPages;
+            @Override
+            public int previousPage() {
+                if (!hasPreviousPage()) {
+                    throw new IllegalStateException("No previous page.");
                 }
+                --currentPage;
+                return currentPage;
+            }
 
-                @Override
-                public boolean hasPreviousPage() {
-                    return currentPage > 1;
-                }
+            @Override
+            public boolean hasNextItem() {
+                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+            }
 
-                @Override
-                public int nextPage() {
-                    if (!hasNextPage()) {
-                        throw new IllegalStateException("No next page.");
-                    }
-                    ++currentPage;
-                    return currentPage;
-                }
+            @Override
+            public boolean hasPreviousItem() {
+                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+            }
 
-                @Override
-                public int previousPage() {
-                    if (!hasPreviousPage()) {
-                        throw new IllegalStateException("No previous page.");
-                    }
-                    --currentPage;
-                    return currentPage;
-                }
+            @Override
+            public int nextItem() {
+                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+            }
 
-                @Override
-                public boolean hasNextItem() {
-                    throw new UnsupportedOperationException("Not supported, not a searchable source.");
-                }
+            @Override
+            public int previousItem() {
+                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+            }
 
-                @Override
-                public boolean hasPreviousItem() {
-                    throw new UnsupportedOperationException("Not supported, not a searchable source.");
-                }
+            @Override
+            public int currentItem() {
+                throw new UnsupportedOperationException("Not supported, not a searchable source.");
+            }
 
-                @Override
-                public int nextItem() {
-                    throw new UnsupportedOperationException("Not supported, not a searchable source.");
-                }
-
-                @Override
-                public int previousItem() {
-                    throw new UnsupportedOperationException("Not supported, not a searchable source.");
-                }
-
-                @Override
-                public int currentItem() {
-                    throw new UnsupportedOperationException("Not supported, not a searchable source.");
-                }
-
-                @Override
-                public String getMarkup() {
-                    try {
-                        return getSolrContent(selectedNode, currentPage, hasChunks);
-                    } catch (SolrServerException ex) {
-                        logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
-                        return "";
-                    }
-                }
-
-                @Override
-                public String toString() {
-                    return "Extracted Content";
-                }
-
-                @Override
-                public boolean isSearchable() {
-                    return false;
-                }
-
-                @Override
-                public String getAnchorPrefix() {
+            @Override
+            public String getMarkup() {
+                try {
+                    return getSolrContent(selectedNode, currentPage, hasChunks);
+                } catch (SolrServerException ex) {
+                    logger.log(Level.WARNING, "Couldn't get extracted content.", ex);
                     return "";
                 }
-
-                @Override
-                public int getNumberHits() {
-                    return 0;
-                }
-
-                @Override
-                public LinkedHashMap<Integer, Integer> getHitsPages() {
-                    return null;
-                }
-
-                @Override
-                public int getNumberPages() {
-                    if (inited) {
-                        return this.numPages;
-                    }
-
-                    final Server solrServer = KeywordSearch.getServer();
-
-                    try {
-                        numPages = solrServer.queryNumFileChunks(contentID);
-                        if (numPages == 0) {
-                            numPages = 1;
-                            hasChunks = false;
-                        } else {
-                            hasChunks = true;
-                        }
-                        inited = true;
-                    } catch (KeywordSearchModuleException ex) {
-                        logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
-
-                    } catch (NoOpenCoreException ex) {
-                        logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
-                    }
-                    return numPages;
-                }
-            };
-
-            currentSource = newSource;
-            sources.add(newSource);
-
-
-            //init pages
-            final int totalPages = currentSource.getNumberPages();
-            int currentPage = currentSource.getCurrentPage();
-            if (currentPage == 0 && currentSource.hasNextPage()) {
-                currentSource.nextPage();
             }
 
+            @Override
+            public String toString() {
+                return "Extracted Content";
+            }
 
-            updatePageControls();
+            @Override
+            public boolean isSearchable() {
+                return false;
+            }
+
+            @Override
+            public String getAnchorPrefix() {
+                return "";
+            }
+
+            @Override
+            public int getNumberHits() {
+                return 0;
+            }
+
+            @Override
+            public LinkedHashMap<Integer, Integer> getHitsPages() {
+                return null;
+            }
+
+            @Override
+            public int getNumberPages() {
+                if (inited) {
+                    return this.numPages;
+                }
+
+                final Server solrServer = KeywordSearch.getServer();
+
+                try {
+                    numPages = solrServer.queryNumFileChunks(contentID);
+                    if (numPages == 0) {
+                        numPages = 1;
+                        hasChunks = false;
+                    } else {
+                        hasChunks = true;
+                    }
+                    inited = true;
+                } catch (KeywordSearchModuleException ex) {
+                    logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
+
+                } catch (NoOpenCoreException ex) {
+                    logger.log(Level.WARNING, "Could not get number of chunks: ", ex);
+                }
+                return numPages;
+            }
+        };
+
+        currentSource = newSource;
+        sources.add(newSource);
+
+
+        //init pages
+        final int totalPages = currentSource.getNumberPages();
+        int currentPage = currentSource.getCurrentPage();
+        if (currentPage == 0 && currentSource.hasNextPage()) {
+            currentSource.nextPage();
         }
+
+
+        updatePageControls();
+
 
 
         // first source will be the default displayed
@@ -248,7 +252,6 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         // using invokeLater to wait for ComboBox selection to complete
         EventQueue.invokeLater(new Runnable() {
-
             @Override
             public void run() {
                 panel.scrollToAnchor(source.getAnchorPrefix() + Integer.toString(source.currentItem()));
@@ -306,10 +309,10 @@ public class ExtractedContentViewer implements DataContentViewer {
     public int isPreferred(Node node,
             boolean isSupported) {
         BlackboardArtifact art = node.getLookup().lookup(BlackboardArtifact.class);
-        if(isSupported) {
-            if(art == null) {
+        if (isSupported) {
+            if (art == null) {
                 return 4;
-            } else if(art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+            } else if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 return 6;
             } else {
                 return 4;
@@ -322,7 +325,8 @@ public class ExtractedContentViewer implements DataContentViewer {
     /**
      * Set the MarkupSources for the panel to display (safe to call even if the
      * panel hasn't been created yet)
-     * @param sources 
+     *
+     * @param sources
      */
     private void setPanel(List<MarkupSource> sources) {
         if (panel != null) {
@@ -355,6 +359,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     /**
      * Check if Solr has extracted content for a given node
+     *
      * @param node
      * @return true if Solr has content, else false
      */
@@ -364,8 +369,9 @@ public class ExtractedContentViewer implements DataContentViewer {
             return false;
         }
 
-        if (content.getSize() == 0)
+        if (content.getSize() == 0) {
             return false;
+        }
 
         final Server solrServer = KeywordSearch.getServer();
 
@@ -389,10 +395,12 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     /**
      * Get extracted content for a node from Solr
+     *
      * @param node a node that has extracted content in Solr (check with
      * solrHasContent(ContentNode))
-     * @param currentPage currently used page 
-     * @param hasChunks true if the content behind the node has multiple chunks. This means we need to address the content pages specially.
+     * @param currentPage currently used page
+     * @param hasChunks true if the content behind the node has multiple chunks.
+     * This means we need to address the content pages specially.
      * @return the extracted content
      * @throws SolrServerException if something goes wrong
      */
