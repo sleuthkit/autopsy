@@ -484,9 +484,90 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Swingworker to get makrup source content String from Solr in background thread
-     * and then set the panel text in the EDT
-     * Helps not to block the UI while content from Solr is retrieved.
+     * Update page and search controls for selected source
+     *
+     * @param source the selected source
+     */
+    void updateControls(MarkupSource source) {
+        updatePageControls(source);
+        updateSearchControls(source);
+    }
+
+    /**
+     * update page controls given the selected source
+     *
+     * @param source selected source
+     */
+    void updatePageControls(MarkupSource source) {
+        if (source == null) {
+            enableNextPageControl(false);
+            enablePrevPageControl(false);
+            updateCurrentPageDisplay(0);
+            updateTotalPageslDisplay(0);
+            return;
+        }
+
+        updateCurrentPageDisplay(source.getCurrentPage());
+        int totalPages = source.getNumberPages();
+        updateTotalPageslDisplay(totalPages);
+
+
+        if (totalPages == 1) {
+            enableNextPageControl(false);
+            enablePrevPageControl(false);
+        } else {
+            if (source.hasNextPage()) {
+                enableNextPageControl(true);
+            } else {
+                enableNextPageControl(false);
+            }
+
+            if (source.hasPreviousPage()) {
+                enablePrevPageControl(true);
+            } else {
+                enablePrevPageControl(false);
+            }
+        }
+
+
+    }
+
+    /**
+     * update search controls given the selected source
+     *
+     * @param source selected source
+     */
+    void updateSearchControls(MarkupSource source) {
+        //setup search controls
+        if (source != null && source.isSearchable()) {
+
+            updateCurrentMatchDisplay(source.currentItem());
+            updateTotaMatcheslDisplay(source.getNumberHits());
+
+            if (source.hasNextItem() || source.hasNextPage()) {
+                enableNextMatchControl(true);
+            } else {
+                enableNextMatchControl(false);
+            }
+
+            if (source.hasPreviousItem() || source.hasPreviousPage()) {
+                enablePrevMatchControl(true);
+            } else {
+                enablePrevMatchControl(false);
+            }
+
+        } else {
+            enableNextMatchControl(false);
+            enablePrevMatchControl(false);
+            updateCurrentMatchDisplay(0);
+            updateTotaMatcheslDisplay(0);
+        }
+    }
+
+    /**
+     * Swingworker to get makrup source content String from Solr in background
+     * thread and then set the panel text in the EDT Helps not to block the UI
+     * while content from Solr is retrieved.
      */
     private final class SetMarkup extends SwingWorker<Object, Void> {
 
@@ -519,6 +600,10 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             } else {
                 setPanelText("");
             }
+
+            updateControls(source);
+
+
         }
     }
 }

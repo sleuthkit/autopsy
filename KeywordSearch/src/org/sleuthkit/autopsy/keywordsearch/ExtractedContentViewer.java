@@ -84,8 +84,8 @@ public class ExtractedContentViewer implements DataContentViewer {
         if (!solrHasContent(selectedNode)) {
             //currentNode = null;
             //resetComponent();
-                  // first source will be the default displayed
-        setPanel(sources);
+            // first source will be the default displayed
+            setPanel(sources);
             return;
         }
         Content content = selectedNode.getLookup().lookup(Content.class);
@@ -222,21 +222,20 @@ public class ExtractedContentViewer implements DataContentViewer {
             }
         };
 
+        //initialize the  source
+        newSource.getNumberPages();
+        
         currentSource = newSource;
         sources.add(newSource);
-
+      
 
         //init pages
-        final int totalPages = currentSource.getNumberPages();
         int currentPage = currentSource.getCurrentPage();
         if (currentPage == 0 && currentSource.hasNextPage()) {
             currentSource.nextPage();
         }
 
-
         updatePageControls();
-
-
 
         // first source will be the default displayed
         setPanel(sources);
@@ -275,7 +274,7 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     @Override
-    public Component getComponent() {
+    public synchronized Component getComponent() {
         if (panel == null) {
             panel = new ExtractedContentPanel();
             panel.addPrevMatchControlListener(new PrevFindActionListener());
@@ -520,9 +519,6 @@ public class ExtractedContentViewer implements DataContentViewer {
                 return;
             }
 
-            final int totalPages = currentSource.getNumberPages();
-            final int currentPage = currentSource.getCurrentPage();
-
             updatePageControls();
             updateSearchControls();
 
@@ -530,60 +526,11 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     private void updateSearchControls() {
-        //setup search controls
-        if (currentSource != null && currentSource.isSearchable()) {
-
-            panel.updateCurrentMatchDisplay(currentSource.currentItem());
-            panel.updateTotaMatcheslDisplay(currentSource.getNumberHits());
-
-            if (currentSource.hasNextItem() || currentSource.hasNextPage()) {
-                panel.enableNextMatchControl(true);
-            } else {
-                panel.enableNextMatchControl(false);
-            }
-
-            if (currentSource.hasPreviousItem() || currentSource.hasPreviousPage()) {
-                panel.enablePrevMatchControl(true);
-            } else {
-                panel.enablePrevMatchControl(false);
-            }
-
-        } else {
-            panel.enableNextMatchControl(false);
-            panel.enablePrevMatchControl(false);
-            panel.updateCurrentMatchDisplay(0);
-            panel.updateTotaMatcheslDisplay(0);
-        }
+        panel.updateSearchControls(currentSource);
     }
 
     private void updatePageControls() {
-        if (currentSource == null) {
-            return;
-        }
-
-        final int currentPage = currentSource.getCurrentPage();
-        final int totalPages = currentSource.getNumberPages();
-        panel.updateTotalPageslDisplay(totalPages);
-        panel.updateCurrentPageDisplay(currentPage);
-
-
-        if (totalPages == 1) {
-            panel.enableNextPageControl(false);
-            panel.enablePrevPageControl(false);
-        } else {
-            if (currentSource.hasNextPage()) {
-                panel.enableNextPageControl(true);
-            } else {
-                panel.enableNextPageControl(false);
-            }
-
-            if (currentSource.hasPreviousPage()) {
-                panel.enablePrevPageControl(true);
-            } else {
-                panel.enablePrevPageControl(false);
-            }
-        }
-
+        panel.updateControls(currentSource);
     }
 
     private void nextPage() {
