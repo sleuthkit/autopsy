@@ -131,6 +131,7 @@ public class Server {
     private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
     private static Ingester ingester = null;
+    private static final String PROPERTIES_NAME = "SolrServer";
     private static final String KEY = "jjk#09s";
     private static final int DEFAULT_SOLR_SERVER_PORT = 23232;
     private static int currentSolrServerPort = 0;
@@ -152,12 +153,12 @@ public class Server {
      * @param url should be something like "http://localhost:8489/solr/"
      */
     Server(){
-         if(ModuleSettings.settingExists(KeywordSearch.class.getCanonicalName(), "CURRENT_SOLR_SERVER_PORT")){
-            currentSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(KeywordSearch.class.getName(), "CURRENT_SOLR_SERVER_PORT"));
+         if(ModuleSettings.settingExists(PROPERTIES_NAME, "currentSolrServerPort")){
+            currentSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_NAME, "currentSolrServerPort"));
         }
         else{
             currentSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
-            ModuleSettings.setConfigSetting(KeywordSearch.class.getCanonicalName(), "CURRENT_SOLR_SERVER_PORT", String.valueOf(currentSolrServerPort));
+            ModuleSettings.setConfigSetting(PROPERTIES_NAME, "currentSolrServerPort", String.valueOf(currentSolrServerPort));
         }
         
         this.solrUrl = "http://localhost:" + currentSolrServerPort + "/solr/";
@@ -307,7 +308,7 @@ public class Server {
      *
      * @param port the port to check for availability
      */
-    public static boolean available(int port) {
+    static boolean available(int port) {
         ServerSocket ss = null;
         try {
             ss = new ServerSocket(port);
@@ -325,6 +326,16 @@ public class Server {
         }
         return false;
     }
+    
+    /**
+     * Changes the current solr port.
+     * Only call this after available.
+     * @param port Port to change to
+     */
+   void changeSolrPort(int port){
+      currentSolrServerPort = port;
+      ModuleSettings.setConfigSetting(PROPERTIES_NAME, "currentSolrServerPort", String.valueOf(port));
+   } 
 
     /**
      * Tries to stop a Solr instance.
