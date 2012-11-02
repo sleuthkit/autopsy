@@ -24,6 +24,7 @@ import org.openide.modules.ModuleInstall;
 import org.openide.util.Exceptions;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.keywordsearch.Server.SolrServerNoPortException;
 
 /**
  * Starts up the Solr server when the module is loaded, and stops it when the
@@ -62,8 +63,11 @@ public class Installer extends ModuleInstall {
                     logger.log(Level.INFO, "Old Solr server shutdown successfully.");
                 }
             }
-
+           try{
             server.start();
+           } catch(SolrServerNoPortException npe){
+               logger.log(Level.WARNING, "Solr server could not bind to expected port. Please refer to jetty.xml and change the port", npe);
+            }
         } catch (KeywordSearchModuleException e) {
             logger.log(Level.WARNING, "Could not start Solr server while loading the module.");
         }
@@ -80,7 +84,11 @@ public class Installer extends ModuleInstall {
             try {
                 if (!server.isRunning()) {
                     logger.log(Level.WARNING, "Server still not running, retries remaining: " + retries);
-                    server.start();
+                    try {
+                        server.start();
+                    } catch (SolrServerNoPortException npe) {
+                        logger.log(Level.WARNING, "Solr server could not bind to expected port. Please refer to jetty.xml and change the port");
+                    }
                 } else {
                     break;
                 }
