@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,7 +38,6 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.ResultWrit
  */
 public class KeywordSearch {
 
-    private static final String BASE_URL = "http://localhost:9293/solr";
     private static Server server;
     //we want a custom java.util.logging.Logger here for a reason
     //a separate logger from framework logs
@@ -58,7 +58,7 @@ public class KeywordSearch {
      */
     public static synchronized Server getServer() {
         if (server == null) {
-            server = new Server(BASE_URL);
+            server = new Server();
         }
         return server;
     }
