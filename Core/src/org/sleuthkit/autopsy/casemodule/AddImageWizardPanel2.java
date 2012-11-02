@@ -228,6 +228,8 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         private boolean interrupted = false;
         private boolean hasCritError = false;
         private String errorString = null;
+        
+        private long start;
 
         protected AddImgTask() {
             this.progressBar = getComponent().getCrDbProgressBar();
@@ -242,6 +244,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
          */
         @Override
         protected Integer doInBackground() {
+            start = System.currentTimeMillis();
             this.setProgress(0);
 
 
@@ -310,6 +313,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 //that were thrown in the background task
                 //if process was stopped, stop should have been complete (otherwise, unsafe to revert() )
                 get();
+                logger.log(Level.INFO, "Adding image took " + (System.currentTimeMillis() - start) + " ms.");
             } catch (InterruptedException e) {
             } catch (ExecutionException e) {
             } finally {
