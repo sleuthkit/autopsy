@@ -23,7 +23,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -38,7 +37,6 @@ import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstract.*;
 import org.sleuthkit.autopsy.ingest.IngestModuleAbstractFile;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -51,8 +49,10 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestModuleInit;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
@@ -63,6 +63,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
     private static ThunderbirdMboxFileIngestModule instance = null;
     private IngestServices services;
     private static int messageId = 0;
+    private Case currentCase;
     private static final String MODULE_NAME = "Thunderbird Parser";
     private final String hashDBModuleName = "Hash Lookup";
     
@@ -92,59 +93,58 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
         } else if (hashDBResult == IngestModuleAbstractFile.ProcessResult.ERROR) {
             return ProcessResult.ERROR;  //file has read error, stop processing it
         }
+        
+        if (abstractFile.isVirtual() ) {
+            return ProcessResult.OK;
+        }
+        
+        final FsContent fsContent = (FsContent) abstractFile;
 
         try {
             byte[] t = new byte[64];
-            if(abstractFile.getSize() > 64) {
-                int byteRead = abstractFile.read(t, 0, 64);
+            if(fsContent.getSize() > 64) {
+                int byteRead = fsContent.read(t, 0, 64);
                 isMbox = mbox.isValidMimeTypeMbox(t);
             }
         } catch (TskException ex) {
-            Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
+            logger.log(Level.WARNING, null, ex);
         }
 
 
         if (isMbox) {
-            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + abstractFile.getName()));
-            String mboxName = abstractFile.getName();
+            services.postMessage(IngestMessage.createMessage(++messageId, MessageType.INFO, this, "Processing " + fsContent.getName()));
+            String mboxName = fsContent.getName();
             String msfName = mboxName + ".msf";
-            Long mboxId = abstractFile.getId();
-            String mboxPath = "";
+            //Long mboxId = fsContent.getId();
+            String mboxPath = fsContent.getParentPath();
             Long msfId = 0L;
-            Case currentCase = Case.getCurrentCase(); // get the most updated case
+            currentCase = Case.getCurrentCase(); // get the most updated case
             SleuthkitCase tskCase = currentCase.getSleuthkitCase();
             try {
-                ResultSet rs = tskCase.runQuery("select parent_path from tsk_files where obj_id = '" + mboxId.toString() + "'");
-                mboxPath = rs.getString("parent_path");
-                Statement s = rs.getStatement();
-                rs.close();
-                if (s != null) {
-                    s.close();
+                ResultSet resultset = tskCase.runQuery("SELECT obj_id FROM tsk_files WHERE parent_path = '" + mboxPath + "' and name = '" + msfName + "'");
+                if (! resultset.next()) {
+                    logger.log(Level.WARNING, "Could not find msf file in mbox dir: " + mboxPath + " file: " + msfName);
+                    tskCase.closeRunQuery(resultset);
+                    return ProcessResult.OK;
                 }
-                rs.close();
-                rs.getStatement().close();
-
-                ResultSet resultset = tskCase.runQuery("select obj_id from tsk_files where parent_path = '" + mboxPath + "' and name = '" + msfName + "'");
-                msfId = resultset.getLong("obj_id");
-                Statement st = resultset.getStatement();
-                resultset.close();
-                if (st != null) {
-                    st.close();
+                else {
+                    msfId = resultset.getLong(1);
+                    tskCase.closeRunQuery(resultset);
                 }
-                resultset.close();
-                resultset.getStatement().close();
 
             } catch (SQLException ex) {
-                logger.log(Level.WARNING, "Error while trying to get parent path for:" + this.getClass().getName(), ex);
+                logger.log(Level.WARNING, "Could not find msf file in mbox dir: " + mboxPath + " file: " + msfName);
             }
 
             try {
                 Content msfContent = tskCase.getContentById(msfId);
-                ContentUtils.writeToFile(msfContent, new File(currentCase.getTempDirectory() + File.separator + msfName));
+                if (msfContent != null) {
+                    ContentUtils.writeToFile(msfContent, new File(currentCase.getTempDirectory() + File.separator + msfName));
+                }
             } catch (IOException ex) {
-                Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName()).log(Level.WARNING, null, ex);
+                logger.log(Level.WARNING, "Unable to obtain msf file for mbox parsing:" + msfName, ex);
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Unable to obtain msf file for mbox parsing:" + this.getClass().getName(), ex);
+                logger.log(Level.WARNING, "Unable to obtain msf file for mbox parsing:" + msfName, ex);
             }
             int index = 0;
             String replace = "";
@@ -280,6 +280,7 @@ public class ThunderbirdMboxFileIngestModule implements IngestModuleAbstractFile
         logger.log(Level.INFO, "init()");
         services = IngestServices.getDefault();
 
+        currentCase = Case.getCurrentCase();
         //module specific initialization here
     }
 
