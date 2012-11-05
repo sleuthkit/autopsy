@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.Frame;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Exceptions;
@@ -47,6 +49,7 @@ public class Installer extends ModuleInstall {
         Case.addPropertyChangeListener(new KeywordSearch.CaseChangeListener());
 
         final Server server = KeywordSearch.getServer();
+        int retries = SERVER_START_RETRIES;
 
         try {
             if (server.isRunning()) {
@@ -63,17 +66,35 @@ public class Installer extends ModuleInstall {
                     logger.log(Level.INFO, "Old Solr server shutdown successfully.");
                 }
             }
-           try{
-            server.start();
-           } catch(SolrServerNoPortException npe){
-               logger.log(Level.WARNING, "Solr server could not bind to expected port. Please refer to jetty.xml and change the port", npe);
+           
+            try {
+                //Try to bind to the port 4 times at 3 second intervals. Attempts to stop a solr instance each time it fails.
+                for (int i = 0; i <= 3; i++) {
+                    if (Server.available(server.currentSolrServerPort)) {
+                        server.start();
+                        break;
+                    } else if (i == 3) {
+                        JOptionPane.showMessageDialog(new Frame(), "Default solr port is not available.");
+                        retries = 0;
+                        break;
+                    } else {
+                        try {
+                            server.stop();
+                            Thread.sleep(3000);
+                        } catch (InterruptedException iex) {
+                            logger.log(Level.WARNING, "Timer interrupted");
+                        }
+                    }
+                }
+            } catch (SolrServerNoPortException npe) {
+                logger.log(Level.WARNING, "Solr server could not bind to expected port. Please refer to SolrServer.properties in the Autopsy user directory and change the port number", npe);
             }
         } catch (KeywordSearchModuleException e) {
             logger.log(Level.WARNING, "Could not start Solr server while loading the module.");
         }
 
         //retry if needed
-        int retries = SERVER_START_RETRIES;
+       
         while (retries-- > 0) {
             try {
                 Thread.sleep(1000);
@@ -128,10 +149,9 @@ public class Installer extends ModuleInstall {
         }
         return true;
     }
-    
-     private void reportInitError() {
-         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
 
+    private void reportInitError() {
+        WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
                 final String msg = "<html>Error initializing Keyword Search module.<br />"
