@@ -204,28 +204,31 @@
         </exec>
     </target>
     
-    <target name="release-script">
-        <echo>** build type: ${build.type}</echo>
-        <echo>** update_versions = ${update_versions}</echo>
-        <if>
+    <target name="check-release">
+        <condition property="is-release">
             <and>
                 <equals arg1="${build.type}" arg2="RELEASE"/>
+                <isset property="update_versions"/>
                 <equals arg1="${update_versions}" arg2="true"/>
             </and>
-            <then>
-                <exec dir="${basedir}" executable="python" failonerror="true" resultproperty="App.state">
-                    <arg line="update_versions.py -a" />
-                </exec>
-            </then>
-            <else>
-                <exec dir="${basedir}" executable="python" failonerror="true" resultproperty="App.state">
-                    <arg value="update_versions.py" />
-                </exec>
-            </else>
-        </if>
+        </condition>
     </target>
+    
+    <target name="versioning-script-if-release" if="is-release">
+        <exec dir="${basedir}" executable="python" failonerror="true">
+            <arg line="update_versions.py -a" />
+        </exec>
+    </target>
+    
+    <target name="versioning-script-if-not-release" unless="is-release">
+        <exec dir="${basedir}" executable="python" failonerror="true">
+            <arg value="update_versions.py" />
+        </exec>
+    </target>
+    
+    <target name="versioning-script" depends="check-release, versioning-script-if-release, versioning-script-if-not-release"/>
      
-    <target name="build-installer-dir" depends="getProps, release-script, build-zip" description="Builds Autopsy with branding and all dependencies" >
+    <target name="build-installer-dir" depends="getProps, versioning-script, build-zip" description="Builds Autopsy with branding and all dependencies" >
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
     </target>
     
