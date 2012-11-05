@@ -36,6 +36,7 @@ import java.nio.charset.Charset;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
+import javax.swing.JOptionPane;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -134,7 +135,7 @@ public class Server {
     private static final String PROPERTIES_NAME = "SolrServer";
     private static final String KEY = "jjk#09s";
     private static final int DEFAULT_SOLR_SERVER_PORT = 23232;
-    private static int currentSolrServerPort = 0;
+    static int currentSolrServerPort = 0;
 
     public enum CORE_EVT_STATES {
 
@@ -154,7 +155,13 @@ public class Server {
      */
     Server(){
          if(ModuleSettings.settingExists(PROPERTIES_NAME, "currentSolrServerPort")){
+           try{
             currentSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_NAME, "currentSolrServerPort"));
+           }
+           catch(NumberFormatException e){
+               logger.log(Level.WARNING, "Could not decode solr port, value was not a valid port number", e);
+               JOptionPane.showMessageDialog(new java.awt.Frame(), "Solr port value in SolrServer.properties was not a valid port number. Please go back and ensure that it is a positive integer below 65535.");
+           }
         }
         else{
             currentSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
