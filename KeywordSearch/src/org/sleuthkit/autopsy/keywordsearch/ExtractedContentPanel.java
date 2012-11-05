@@ -353,6 +353,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     private void setPanelText(String text) {
+        if (text == null ) {
+            text = "";
+        }
         extractedTextPane.setText(text);
         extractedTextPane.setCaretPosition(0);
     }
@@ -593,7 +596,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         @Override
         protected void done() {
-            super.done();
+            //super.done();
             progress.finish();
             if (markup != null) {
                 setPanelText(markup);
