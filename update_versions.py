@@ -1,3 +1,29 @@
+# ============================================================
+#                    update_versions.py
+# ============================================================
+# 
+# When run from the Autopsy build script, this script will:
+#  - Clone Autopsy and checkout to the previous release tag
+#    as found in the NEWS.txt file
+#  - Auto-discover all modules and packages
+#  - Run jdiff, comparing the current and previous modules
+#  - Use jdiff's output to determine if each module
+#     a) has no changes
+#     b) has backwards compatible changes
+#     c) has backwards incompatible changes
+#  - Based off it's compatibility, updates each module's
+#     a) Major version
+#     b) Specification version
+#     c) Implementation version
+#  - Updates the dependencies on each module depending on the 
+#    updated version numbers
+# 
+# Optionally, when run from the command line, one can provide the
+# desired tag to compare the current version to, the directory for
+# the current version of Autopsy, and whether to automatically
+# update the version numbers and dependencies.
+# ------------------------------------------------------------
+
 import os
 import shutil
 import subprocess
@@ -112,24 +138,25 @@ class Spec:
 #   return code 1   = error in jdiff
 #   return code 100 = no changes
 #   return code 101 = compatible changes
-#   return code 102 = un-compatible changes
+#   return code 102 = incompatible changes
 def compare_xml(module, apiname_tag, apiname_cur):
     global docdir
     make_dir(docdir)
-    null_file = fix_path("lib/Null.java")
-    oldapi = fix_path("xml/" + apiname_tag + "-" + module.name)
-    newapi = fix_path("xml/" + apiname_cur + "-" + module.name)
+    null_file = fix_path(os.path.abspath("./thirdparty/jdiff/v-custom/lib/Null.java"))
+    jdiff = fix_path(os.path.abspath("./thirdparty/jdiff/v-custom/jdiff.jar"))
+    oldapi = fix_path("jdiff-xml/" + apiname_tag + "-" + module.name)
+    newapi = fix_path("jdiff-xml/" + apiname_cur + "-" + module.name)
     docs = fix_path(docdir + "/" + module.name)
-    comments = fix_path(docs + "/user_comments_for_xml")
-    tag_comments = fix_path(comments + "/" + apiname_tag + "-" + module.name + "_to_xml")
+    comments = fix_path(docs + "/user_comments_for_jdiff-xml")
+    tag_comments = fix_path(comments + "/" + apiname_tag + "-" + module.name + "_to_jdiff-xml")
     make_dir(docs)
     make_dir(comments)
     make_dir(tag_comments)
-    make_dir("logs")
-    log = open("logs/COMPARE-" + module.name + ".log", "w")
+    make_dir("jdiff-logs")
+    log = open("jdiff-logs/COMPARE-" + module.name + ".log", "w")
     cmd =   ["javadoc",
             "-doclet", "jdiff.JDiff",
-            "-docletpath", "jdiff.jar",
+            "-docletpath", jdiff,
             "-d", docs,
             "-oldapi", oldapi,
             "-newapi", newapi,
@@ -162,14 +189,15 @@ def gen_xml(path, modules, name):
             src = os.path.join(path, module.name, "test", "qa-functional", "src")
         else:
             src = os.path.join(path, module.name, "src")
-        xerces = os.path.abspath("./lib/xerces.jar")
-        xml_out = fix_path(os.path.abspath("./xml/" + name + "-" + module.name))
-        make_dir("xml")
-        make_dir("logs")
-        log = open("logs/GEN_XML-" + name + "-" + module.name + ".log", "w")
+        # xerces = os.path.abspath("./lib/xerces.jar")
+        xml_out = fix_path(os.path.abspath("./jdiff-xml/" + name + "-" + module.name))
+        jdiff = fix_path(os.path.abspath("./thirdparty/jdiff/v-custom/jdiff.jar"))
+        make_dir("jdiff-xml")
+        make_dir("jdiff-logs")
+        log = open("jdiff-logs/GEN_XML-" + name + "-" + module.name + ".log", "w")
         cmd =   ["javadoc",
                 "-doclet", "jdiff.JDiff",
-                "-docletpath", "jdiff.jar", # ;" + xerces, <-- previous problems required this
+                "-docletpath", jdiff,       # ;" + xerces, <-- previous problems required this
                 "-apiname", xml_out,        # leaving it in just in case it's needed once again
                 "-sourcepath", fix_path(src)]
         cmd = cmd + get_packages(src)
@@ -536,49 +564,59 @@ def replace(file, pattern, subst):
 
 # Given a list of modules print the version numbers that need changing
 def print_version_updates(modules):
+    f = open("gen_version.txt", "a")
     for module in modules:
         versions = module.versions
         if module.ret == 101:
-            print(module.name + ":")
-            print("  Current Specification version:\t" + str(versions[0]))
-            print("  Updated Specification version:\t" + str(versions[0].increment()))
-            print("")
-            print("  Current Implementation version:\t" + str(versions[1]))
-            print("  Updated Implementation version:\t" + str(versions[1] + 1))
-            print("")
+            output = (module.name + ":\n")
+            output += ("  Current Specification version:\t" + str(versions[0]) + "\n")
+            output += ("  Updated Specification version:\t" + str(versions[0].increment()) + "\n")
+            output += ("\n")
+            output += ("  Current Implementation version:\t" + str(versions[1]) + "\n")
+            output += ("  Updated Implementation version:\t" + str(versions[1] + 1) + "\n")
+            output += ("\n")
+            print(output)
+            f.write(output)
         elif module.ret == 102:
-            print(module.name + ":")
-            print("  Current Specification version:\t" + str(versions[0]))
-            print("  Updated Specification version:\t" + str(versions[0].overflow()))
-            print("")
-            print("  Current Implementation version:\t" + str(versions[1]))
-            print("  Updated Implementation version:\t" + str(versions[1] + 1))
-            print("")
-            print("  Current Release version:\t\t" + str(versions[2]))
-            print("  Updated Release version:\t\t" + str(versions[2] + 1))
-            print("")
-        elif module.ret ==1:
-            print(module.name + ":")
-            print("  *Unable to detect necessary changes")
-            print("  Current Specification version:\t" + str(versions[0]))
-            print("  Current Implementation version:\t" + str(versions[1]))
-            print("  Current Release version:\t\t" + str(versions[2]))
-            print("")
+            output = (module.name + ":\n")
+            output += ("  Current Specification version:\t" + str(versions[0]) + "\n")
+            output += ("  Updated Specification version:\t" + str(versions[0].overflow()) + "\n")
+            output += ("\n")
+            output += ("  Current Implementation version:\t" + str(versions[1]) + "\n")
+            output += ("  Updated Implementation version:\t" + str(versions[1] + 1) + "\n")
+            output += ("\n")
+            output += ("  Current Release version:\t\t" + str(versions[2]) + "\n")
+            output += ("  Updated Release version:\t\t" + str(versions[2] + 1) + "\n")
+            output += ("\n")
+            print(output)
+            f.write(output)
+        elif module.ret == 1:
+            output = (module.name + ":\n")
+            output += ("  *Unable to detect necessary changes\n")
+            output += ("  Current Specification version:\t" + str(versions[0]) + "\n")
+            output += ("  Current Implementation version:\t" + str(versions[1]) + "\n")
+            output += ("  Current Release version:\t\t" + str(versions[2]) + "\n")
+            output += ("\n")
+            print(output)
+            f.write(output)
         elif module.ret is None:
-            print("Added " + module.name + ":")
+            output = ("Added " + module.name + ":\n")
             if module.spec() != "1.0" and module.spec() != "0.0":
-                print("  Current Specification version:\t" + str(module.spec()))
-                print("  Updated Specification version:\t1.0")
-                print("")
+                output += ("  Current Specification version:\t" + str(module.spec()) + "\n")
+                output += ("  Updated Specification version:\t1.0\n")
+                output += ("\n")
             if module.impl() != 1:
-                print("  Current Implementation version:\t" + str(module.impl()))
-                print("  Updated Implementation version:\t1")
-                print("")
+                output += ("  Current Implementation version:\t" + str(module.impl()) + "\n")
+                output += ("  Updated Implementation version:\t1\n")
+                output += ("\n")
             if module.release() != 1 and module.release() != 0:
-                print("  Current Release version:\t\t" + str(module.release()))
-                print("  Updated Release version:\t\t1")
-                print("")
+                output += ("  Current Release version:\t\t" + str(module.release()) + "\n")
+                output += ("  Updated Release version:\t\t1\n")
+                output += ("\n")
+            print(output)
+            f.write(output)
         sys.stdout.flush()
+    f.close()
 
 # Changes cygwin paths to Windows
 def fix_path(path):
@@ -642,7 +680,7 @@ def del_dir(dir):
 def do_git(tag, tag_dir):
     try:
         printt("Cloning Autopsy (this could take a while)...")
-        subprocess.call(["git", "clone", "https://github.com/sleuthkit/autopsy.git"],
+        subprocess.call(["git", "clone", "https://github.com/sleuthkit/autopsy.git", tag_dir],
                         stdout=subprocess.PIPE)
         printt("Checking out tag " + tag + "...")
         subprocess.call(["git", "checkout", tag],
@@ -687,13 +725,13 @@ def printinfo():
     global dry
     printt("Release script information:")
     if source is None:
-        source = fix_path(os.path.abspath('../../..'))
+        source = fix_path(os.path.abspath("."))
     print("Using source directory:\n  " + source)
     if tag is None:
         tag = get_tag(source)
     print("Checking out to tag:\n  " + tag)
     if docdir is None:
-        docdir = fix_path(os.path.abspath("./javadocs"))
+        docdir = fix_path(os.path.abspath("./jdiff-javadocs"))
     print("Generating jdiff JavaDocs in:\n  " + docdir)
     if dry is True:
         print("Dry run: will not auto-update version numbers")
@@ -717,7 +755,9 @@ def usage():
    -d --dir      The output directory for the jdiff JavaDocs. If no
                  directory is given, the default is /javadocs/{module}.
 
-   -a --auto      Automatically update version numbers (not dry).
+   -s --source   The directory containing Autopsy's source code.
+
+   -a --auto     Automatically update version numbers (not dry).
 
    -h --help     Prints this usage.
  """
@@ -734,7 +774,7 @@ def main():
     ret = args()
     if ret:
         print(usage())
-        return
+        return 0
     printinfo()
 
     # -----------------------------------------------
@@ -742,10 +782,10 @@ def main():
     # 2) Get the modules in the clone and the source
     # 3) Generate the xml comparison
     # -----------------------------------------------
-    del_dir("autopsy")
-    tag_dir = os.path.abspath("./autopsy")
+    del_dir("autopsy-update_versions")
+    tag_dir = os.path.abspath("./autopsy-update_versions")
     if not do_git(tag, tag_dir):
-        return
+        return 1
     sys.stdout.flush()
 
     tag_modules = find_modules(tag_dir)
@@ -806,12 +846,12 @@ def main():
         update_dependencies(the_modules, source)
 
     printt("Deleting jdiff XML...")
-    xml_dir = os.path.abspath("./xml")
+    xml_dir = os.path.abspath("./jdiff-xml")
     print("XML successfully deleted" if del_dir(xml_dir) else "Failed to delete XML")
 
     print("\n--- Script completed successfully ---")
-    return 1
+    return 0
 
 # Start off the script
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
