@@ -144,14 +144,22 @@ def compare_xml(module, apiname_tag, apiname_cur):
     make_dir(docdir)
     null_file = fix_path(os.path.abspath("./thirdparty/jdiff/v-custom/lib/Null.java"))
     jdiff = fix_path(os.path.abspath("./thirdparty/jdiff/v-custom/jdiff.jar"))
-    oldapi = fix_path("jdiff-xml/" + apiname_tag + "-" + module.name)
-    newapi = fix_path("jdiff-xml/" + apiname_cur + "-" + module.name)
+    oldapi = fix_path("build/jdiff-xml/" + apiname_tag + "-" + module.name)
+    newapi = fix_path("build/jdiff-xml/" + apiname_cur + "-" + module.name)
     docs = fix_path(docdir + "/" + module.name)
-    comments = fix_path(docs + "/user_comments_for_jdiff-xml")
-    tag_comments = fix_path(comments + "/" + apiname_tag + "-" + module.name + "_to_jdiff-xml")
+    # Comments are strange. They look for a file with additional user comments in a 
+    # directory like docs/user_comments_for_xyz. The problem being that xyz is the
+    # path to the new/old api. So xyz turns into multiple directories for us.
+    # i.e. user_comments_for_build/jdiff-xml/[tag name]-[module name]_to_build/jdiff-xml
+    comments = fix_path(docs + "/user_comments_for_build")
+    jdiff_com = fix_path(comments + "/jdiff-xml")
+    tag_comments = fix_path(jdiff_com + "/" + apiname_tag + "-" + module.name + "_to_build")
+    jdiff_tag_com = fix_path(tag_comments + "/jdiff-xml")
     make_dir(docs)
     make_dir(comments)
+    make_dir(jdiff_com)
     make_dir(tag_comments)
+    make_dir(jdiff_tag_com)
     make_dir("jdiff-logs")
     log = open("jdiff-logs/COMPARE-" + module.name + ".log", "w")
     cmd =   ["javadoc",
@@ -190,9 +198,9 @@ def gen_xml(path, modules, name):
         else:
             src = os.path.join(path, module.name, "src")
         # xerces = os.path.abspath("./lib/xerces.jar")
-        xml_out = fix_path(os.path.abspath("./jdiff-xml/" + name + "-" + module.name))
+        xml_out = fix_path(os.path.abspath("./build/jdiff-xml/" + name + "-" + module.name))
         jdiff = fix_path(os.path.abspath("./thirdparty/jdiff/v-custom/jdiff.jar"))
-        make_dir("jdiff-xml")
+        make_dir("build/jdiff-xml")
         make_dir("jdiff-logs")
         log = open("jdiff-logs/GEN_XML-" + name + "-" + module.name + ".log", "w")
         cmd =   ["javadoc",
@@ -782,8 +790,8 @@ def main():
     # 2) Get the modules in the clone and the source
     # 3) Generate the xml comparison
     # -----------------------------------------------
-    del_dir("autopsy-update_versions")
-    tag_dir = os.path.abspath("./autopsy-update_versions")
+    del_dir("./build/autopsy-update_versions")
+    tag_dir = os.path.abspath("./build/autopsy-update_versions")
     if not do_git(tag, tag_dir):
         return 1
     sys.stdout.flush()
@@ -846,7 +854,7 @@ def main():
         update_dependencies(the_modules, source)
 
     printt("Deleting jdiff XML...")
-    xml_dir = os.path.abspath("./jdiff-xml")
+    xml_dir = os.path.abspath("./build/jdiff-xml")
     print("XML successfully deleted" if del_dir(xml_dir) else "Failed to delete XML")
 
     print("\n--- Script completed successfully ---")
