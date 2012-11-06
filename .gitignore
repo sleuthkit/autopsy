@@ -26,8 +26,9 @@ genfiles.properties
 *~
 /netbeans-plat
 /docs/doxygen/doxygen_docs
-/thirdparty/jdiff/v-custom/javadocs/*
-/thirdparty/jdiff/v-custom/xml/*
-/thirdparty/jdiff/v-custom/autopsy/*
-/thirdparty/jdiff/v-custom/logs/*
+/jdiff-javadocs/*
+/jdiff-xml/*
+/jdiff-logs/*
+/autopsy-update_versions/*
+/gen_version.txt
 
