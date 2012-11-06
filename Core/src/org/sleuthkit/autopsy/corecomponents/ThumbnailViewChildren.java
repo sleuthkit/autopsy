@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -159,22 +160,22 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     private static class IsSupportedContentVisitor extends ContentVisitor.Default<Boolean> {
 
+        private static final List<String> SUPP_EXTENSIONS 
+                = Arrays.asList(".jpeg", ".jpg", ".gif", ".png");
+        
         @Override
         public Boolean visit(File f) {
-            String lowerName = f.getName().toLowerCase();
-            // Note: only supports JPG, GIF, and PNG for now
-            // TODO: replace giant OR with check if in list
+            final String fName = f.getName();
+            final int dotIdx = fName.lastIndexOf('.');
+            if (dotIdx == -1) {
+                return false;
+            }
+            
+            final String ext = fName.substring(dotIdx).toLowerCase();
+            
+            // Note: thumbnail generator only supports JPG, GIF, and PNG for now
             return f.getSize() > 0
-                    && (lowerName.endsWith(".jpg")
-                    || lowerName.endsWith(".jpeg")
-                    || //node.getName().toLowerCase().endsWith(".jpe") ||
-                    //node.getName().toLowerCase().endsWith(".jfif") ||
-                    lowerName.endsWith(".gif")
-                    || //node.getName().toLowerCase().endsWith(".bmp") ||
-                    //node.getName().toLowerCase().endsWith(".tif") ||
-                    //node.getName().toLowerCase().endsWith(".tiff") ||
-                    //node.getName().toLowerCase().endsWith(".tga") ||
-                    lowerName.endsWith(".png"));
+                    && SUPP_EXTENSIONS.contains(ext);
         }
 
         @Override
