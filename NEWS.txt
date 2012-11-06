@@ -13,7 +13,9 @@ Improvements:
 - Add Extract action to Unalloc content files (per file).
 
 Bugfixes:
+- Fixed reading content from multiple file attributes (NTFS, HFS).
 - UI fix for keyword search box when case is changed.
+- Thunderbird parser module fixes.
 
 
 ---------------- VERSION 3.0.0 --------------
