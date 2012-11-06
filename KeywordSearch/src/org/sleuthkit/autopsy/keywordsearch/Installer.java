@@ -59,7 +59,6 @@ public class Installer extends ModuleInstall {
                 // Send the stop message in case there's a solr server lingering from
                 // a previous run of Autopsy that didn't exit cleanly
                 server.stop();
-
                 if (server.isRunning()) {
                     throw new IllegalStateException("There's already a server running on our port that can't be shutdown.");
                 } else {
@@ -68,7 +67,7 @@ public class Installer extends ModuleInstall {
             }
            
             try {
-                //Try to bind to the port 4 times at 3 second intervals. Attempts to stop a solr instance each time it fails.
+                //Try to bind to the port 4 times at 1 second intervals. 
                 for (int i = 0; i <= 3; i++) {
                     if (Server.available(server.currentSolrServerPort)) {
                         server.start();
@@ -79,8 +78,7 @@ public class Installer extends ModuleInstall {
                         break;
                     } else {
                         try {
-                            server.stop();
-                            Thread.sleep(3000);
+                            Thread.sleep(1000);
                         } catch (InterruptedException iex) {
                             logger.log(Level.WARNING, "Timer interrupted");
                         }
