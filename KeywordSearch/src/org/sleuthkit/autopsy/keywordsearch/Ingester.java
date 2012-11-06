@@ -41,6 +41,7 @@ import org.apache.solr.common.SolrException.ErrorCode;
 import org.apache.solr.common.util.ContentStream;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.keywordsearch.Server.SolrServerNoPortException;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -269,7 +270,10 @@ public class Ingester {
             solrServer.start();
         } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Cannot start while restating", ex);
+        } catch(SolrServerNoPortException ex){
+            logger.log(Level.WARNING, "Cannot start server with this port", ex);
         }
+        
         try {
             solrServer.openCore();
         } catch (KeywordSearchModuleException ex) {

@@ -33,10 +33,7 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-/**
- *
- * @author Alex
- */
+
 public class ReportPanelAction {
 
     private static final String ACTION_NAME = "Report Preview";
@@ -46,7 +43,7 @@ public class ReportPanelAction {
     public ReportPanelAction() {
     }
 
-    public void reportGenerate(final ReportConfiguration reportconfig, final ArrayList<String> classList, final String preview, final ReportFilter rr) {
+    public void reportGenerate(final ReportConfiguration reportconfig, final ArrayList<String> classList, final ArrayList<String> preview, final ReportFilter rr) {
         try {
             //Clear any old reports in the string
             viewReport.setLength(0);
@@ -91,57 +88,17 @@ public class ReportPanelAction {
                             final Class reportclass = Class.forName(s);
                             rr.setUpdateLabel("Running " + reportclass.getSimpleName() + " report...");
                             Object reportObject = reportclass.newInstance();
-                            Class[] argTypes = new Class[] { ReportConfiguration.class};
-                            Method generatereport = reportclass.getDeclaredMethod("generateReport",argTypes);
-                            Object invoke = generatereport.invoke(reportObject,reportconfig);
+                            Class[] argTypes = new Class[]{ReportConfiguration.class};
+                            Method generatereport = reportclass.getDeclaredMethod("generateReport", argTypes);
+                            Object invoke = generatereport.invoke(reportObject, reportconfig);
                             rr.progBarSet(cc);
                             String path = invoke.toString();
-                            Class[] argTypes2 = new Class[] { String.class};
-                            Method getpreview = reportclass.getMethod("getPreview",argTypes2);
-                            reports.put((ReportModule)reportObject,path);
-                            
-                            if(s == null ? preview == null : s.equals(preview))
-                            {
-                                getpreview.invoke(reportObject,path);
-                            }
-                            
+                            reports.put((ReportModule) reportObject, path);
+
                         } catch (Exception e) {
-                           Logger.getLogger(ReportFilterAction.class.getName()).log(Level.WARNING, "Error generating " + s + "! Reason: ", e);
+                            Logger.getLogger(ReportFilterAction.class.getName()).log(Level.WARNING, "Error generating " + s + "! Reason: ", e);
                         }
                     }
-
-//                    StopWatch a = new StopWatch();
-//                    a.start();
-//                    ReportHTML htmlReport = new ReportHTML();
-//                    try {
-//                        String htmlpath = htmlReport.generateReport(reportconfig, rr);
-//                    } catch (ReportModuleException e) {
-//                        Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the htmlReport", e);
-//                    }
-//                    a.stop();
-//                    System.out.println("html in milliseconds: " + a.getElapsedTime());
-//
-//                    StopWatch s = new StopWatch();
-//                    s.start();
-//                    ReportXLS xlsReport = new ReportXLS();
-//                    try {
-//                        xlsReport.generateReport(reportconfig, rr);
-//                    } catch (ReportModuleException e) {
-//                        Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the XLS Report", e);
-//                    }
-//                    s.stop();
-//                    System.out.println("xls in milliseconds: " + s.getElapsedTime());
-//
-//                    StopWatch S = new StopWatch();
-//                    S.start();
-//                    ReportXML xmlReport = new ReportXML();
-//                    try {
-//                        xmlReport.generateReport(reportconfig, rr);
-//                    } catch (ReportModuleException e) {
-//                        Logger.getLogger(ReportHTML.class.getName()).log(Level.WARNING, "Exception occurred in generating the XML Report", e);
-//                    }
-//                    S.stop();
-//                    System.out.println("xml in milliseconds: " + S.getElapsedTime());
                 }
             });
 

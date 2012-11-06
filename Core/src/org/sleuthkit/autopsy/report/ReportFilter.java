@@ -158,7 +158,7 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     progBar.setStringPainted(true);
     progBar.setValue(0);
     ReportConfiguration newConfig = ReportAction.config;
-    String preview = ReportAction.preview;
+    ArrayList<String> preview = ReportAction.preview;
     ArrayList<JCheckBox> reportList = ReportAction.reportList;
     ArrayList<String> classList = new ArrayList<String>();
     for (JCheckBox box : reportList) {
@@ -171,7 +171,7 @@ private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     getReports(newConfig, classList, preview);
 }//GEN-LAST:event_jButton1ActionPerformed
 
-    public void getReports(final ReportConfiguration reportConfig, final ArrayList<String> classList, final String preview) {
+    public void getReports(final ReportConfiguration reportConfig, final ArrayList<String> classList, final ArrayList<String> preview) {
         new SwingWorker<Void, Void>() {
 
             @Override
