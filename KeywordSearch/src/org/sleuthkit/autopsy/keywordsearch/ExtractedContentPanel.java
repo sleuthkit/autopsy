@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -86,8 +87,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             public void itemStateChanged(ItemEvent e) {
                 if (e.getStateChange() == ItemEvent.SELECTED) {
                     MarkupSource source = (MarkupSource) e.getItem();
-                    //setPanelText(source.getMarkup());
-                    new SetMarkup(source).execute();
+                    setMarkup(source);
                 }
             }
         });
@@ -309,8 +309,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
     void refreshCurrentMarkup() {
         MarkupSource ms = (MarkupSource) sourceComboBox.getSelectedItem();
-        //setPanelText(ms.getMarkup());
-        new SetMarkup(ms).execute();
+        setMarkup(ms);
     }
 
     /**
@@ -567,6 +566,16 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         }
     }
 
+    
+    /**
+     * Gets and sets new markup.  Updates GUI in GUI thread and gets markup in background thread.
+     * To be invoked from GUI thread only.
+     */
+    private void setMarkup(MarkupSource source) {
+        setPanelText("<span style='font-style:italic'>Loading text... Please wait</span>");
+        new SetMarkup(source).execute();
+    }
+    
     /**
      * Swingworker to get makrup source content String from Solr in background
      * thread and then set the panel text in the EDT Helps not to block the UI
@@ -588,8 +597,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             progress.setDisplayName("Loading text");
             progress.start();
             progress.switchToIndeterminate();
-
-            setPanelText("<span style='font-style:italic'>Loading text... Please wait</span>");
+            
             markup = source.getMarkup();
             return null;
         }
@@ -603,9 +611,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             } else {
                 setPanelText("");
             }
-
             updateControls(source);
-
 
         }
     }
