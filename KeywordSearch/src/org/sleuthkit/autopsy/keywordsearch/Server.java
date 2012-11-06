@@ -188,7 +188,7 @@ public class Server {
         }
         /* end properties setup region */
         
-        this.solrUrl = "http://localhost:" + currentSolrServerPort + "/solr/";
+        this.solrUrl = "http://localhost:" + currentSolrServerPort + "/solr";
         this.solrServer = new HttpSolrServer(solrUrl);
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false);
