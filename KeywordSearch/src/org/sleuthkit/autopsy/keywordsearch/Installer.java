@@ -53,17 +53,31 @@ public class Installer extends ModuleInstall {
             logger.log(Level.INFO, "Checking is server is running");
             if (server.isRunning()) {
                 //TODO this could hang if other type of server is running 
-                logger.log(Level.WARNING, "Already a server running on " + server.getCurrentSolrServerPort() 
+                logger.log(Level.WARNING, "Already a server running on " + server.getCurrentSolrServerPort()
                         + " port, maybe leftover from a previous run. Trying to shut it down.");
                 server.stop();
                 logger.log(Level.INFO, "Re-checking is server is running");
                 if (server.isRunning()) {
-                    throw new IllegalStateException("There's already a server running on " + server.getCurrentSolrServerPort() + " port that can't be shutdown.");
+                    int serverPort = server.getCurrentSolrServerPort();
+                    int serverStopPort = server.getCurrentSolrStopPort();
+                    logger.log(Level.SEVERE, "There's already a server running on "
+                            + serverPort + " port that can't be shutdown.");
+                    if (!Server.available(serverPort)) {
+                        reportPortError(serverPort);
+                    } else if (!Server.available(serverStopPort)) {
+                        reportStopPortError(serverStopPort);
+                    } else {
+                        //some other reason
+                        reportInitError();
+                    }
+                    
+                    //in this case give up
+
                 } else {
                     logger.log(Level.INFO, "Old Solr server shutdown successfully.");
                 }
             }
-           
+
             try {
                 //Ensure no other process is still bound to that port, even if we think solr is not running
                 //Try to bind to the port 4 times at 1 second intervals. 
@@ -95,7 +109,7 @@ public class Installer extends ModuleInstall {
         }
 
         //retry if needed
-       //TODO this loop may be now redundant
+        //TODO this loop may be now redundant
         while (retries-- > 0) {
             try {
                 Thread.sleep(1000);
@@ -132,19 +146,17 @@ public class Installer extends ModuleInstall {
             logger.log(Level.WARNING, "Timer interrupted.");
         }
         try {
-            logger.log(Level.INFO, "Last check if server is running. "); 
+            logger.log(Level.INFO, "Last check if server is running. ");
             if (!server.isRunning()) {
                 logger.log(Level.SEVERE, "Server is still not running. ");
                 //check if port is taken or some other reason
                 int serverPort = server.getCurrentSolrServerPort();
                 int serverStopPort = server.getCurrentSolrStopPort();
-                if (! Server.available(serverPort)) {
+                if (!Server.available(serverPort)) {
                     reportPortError(serverPort);
-                }
-                else if (! Server.available(serverStopPort)) {
-                    reportStopPortError(serverPort);
-                }
-                else {
+                } else if (!Server.available(serverStopPort)) {
+                    reportStopPortError(serverStopPort);
+                } else {
                     //some other reason
                     reportInitError();
                 }
@@ -172,25 +184,25 @@ public class Installer extends ModuleInstall {
             @Override
             public void run() {
                 final String msg = "<html>Indexing server port " + curFailPort + " is not available. "
-                        + " Consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in " 
-                        + Server.PROPERTIES_FILE  + " property file in the application user folder.</html>";
+                        + " Consider changing " + Server.PROPERTIES_CURRENT_SERVER_PORT + " in "
+                        + Server.PROPERTIES_FILE + " property file in the application user folder.</html>";
                 KeywordSearchUtil.displayDialog("Error initializing Keyword Search module", msg, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             }
         });
     }
-    
-     private void reportStopPortError(final int curFailPort) {
+
+    private void reportStopPortError(final int curFailPort) {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
                 final String msg = "<html>Indexing server stop port " + curFailPort + " is not available. "
-                        + " Consider changing " + Server.PROPERTIES_CURRENT_STOP_PORT + " in " 
-                        + Server.PROPERTIES_FILE  + " property file in the application user folder.</html>";
+                        + " Consider changing " + Server.PROPERTIES_CURRENT_STOP_PORT + " in "
+                        + Server.PROPERTIES_FILE + " property file in the application user folder.</html>";
                 KeywordSearchUtil.displayDialog("Error initializing Keyword Search module", msg, KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
             }
         });
     }
-    
+
     private void reportInitError() {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
