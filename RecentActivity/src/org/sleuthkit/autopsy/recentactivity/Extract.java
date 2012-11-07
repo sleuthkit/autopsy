@@ -107,7 +107,6 @@ abstract public class Extract implements IngestModuleImage{
             bbart.addAttributes(bbattributes);
         } catch (TskException ex) {
             logger.log(Level.SEVERE, "Error while trying to add an artifact: " + ex);
-            this.addErrorMessage(this.getName() + ": Error while trying to add artifact to case for file:" + content.getName());
         }
     }
 

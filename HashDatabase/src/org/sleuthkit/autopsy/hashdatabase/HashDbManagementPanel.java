@@ -658,7 +658,11 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            return rowIndex == 0 ? getDBAt(rowIndex).getName() + " (NSRL)" : getDBAt(rowIndex).getName();
+            if(xmlHandle.getNSRLSet() == null) {
+                return getDBAt(rowIndex).getName();
+            } else {
+                return rowIndex == 0 ? getDBAt(rowIndex).getName() + " (NSRL)" : getDBAt(rowIndex).getName();
+            }
         }
         
         //Internal function for determining whether a companion -md5.idx file exists
@@ -669,7 +673,7 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
         
         //Internal function for getting the DB at a certain index. Used as-is, as well as by dispatch from getValueAt() and indexExists()
         private HashDb getDBAt(int rowIndex){
-              if (xmlHandle.getNSRLSet() != null) {
+            if (xmlHandle.getNSRLSet() != null) {
                 if(rowIndex == 0) {
                     return xmlHandle.getNSRLSet();
                 } else {

@@ -21,6 +21,8 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -98,10 +100,11 @@ public class Firefox extends Extract implements IngestModuleImage {
         if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                int errors = 0;
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error writing the sqlite db for firefox web history artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -124,10 +127,13 @@ public class Firefox extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "FireFox"));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, FFSqlitedb.get(j), bbattributes);
-                    } catch (Exception ex) {
-                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
-                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    } catch (UnsupportedEncodingException ex) {
+                        logger.log(Level.SEVERE, "Error decoding Firefox web history URL in " + temps, ex);
+                        errors++;
                     }
+                }
+                if(errors > 0) {
+                    this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Firefox web history artifacts.");
                 }
                 j++;
                 dbFile.delete();
@@ -146,10 +152,11 @@ public class Firefox extends Extract implements IngestModuleImage {
         if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                int errors = 0;
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error writing the sqlite db for firefox bookmark artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -168,10 +175,13 @@ public class Firefox extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "FireFox"));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, FFSqlitedb.get(j), bbattributes);
-                    } catch (Exception ex) {
-                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
-                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    } catch (UnsupportedEncodingException ex) {
+                        logger.log(Level.SEVERE, "Error decoding Firefox bookmark URL in " + temps, ex);
+                        errors++;
                     }
+                }
+                if(errors > 0) {
+                    this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Firefox web history artifacts.");
                 }
                 j++;
                 dbFile.delete();
@@ -191,10 +201,11 @@ public class Firefox extends Extract implements IngestModuleImage {
         if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                int errors = 0;
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error writing the sqlite db for firefox cookie artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -217,15 +228,15 @@ public class Firefox extends Extract implements IngestModuleImage {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", ((result.get("host").toString() != null) ? result.get("host").toString() : "")));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("host").toString() != null) ? DecodeUtil.decodeURL(result.get("host").toString()) : "")));
-                            //TODO Revisit usage of deprecated constructor as per TSK-583
-                            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", ((result.get("name").toString() != null) ? result.get("name").toString() : "")));
-                            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("lastAccessed").toString()))));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity",  ((result.get("name").toString() != null) ? result.get("name").toString() : "")));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", (Long.valueOf(result.get("lastAccessed").toString()))));
+                        //TODO Revisit usage of deprecated constructor as per TSK-583
+                        //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", ((result.get("name").toString() != null) ? result.get("name").toString() : "")));
+                        //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("lastAccessed").toString()))));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity",  ((result.get("name").toString() != null) ? result.get("name").toString() : "")));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", (Long.valueOf(result.get("lastAccessed").toString()))));
                         if (checkColumn == true) {
-                                //TODO Revisit usage of deprecated constructor as per TSK-583
-                                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Created", (Long.valueOf(result.get("creationTime").toString()))));
-                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", (Long.valueOf(result.get("creationTime").toString()))));
+                            //TODO Revisit usage of deprecated constructor as per TSK-583
+                            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Created", (Long.valueOf(result.get("creationTime").toString()))));
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", (Long.valueOf(result.get("creationTime").toString()))));
                         }
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "FireFox"));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", ((result.get("host").toString() != null) ? result.get("host").toString() : "")));
@@ -234,10 +245,13 @@ public class Firefox extends Extract implements IngestModuleImage {
                         domain = domain.replaceFirst("^\\.+(?!$)", "");
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, FFSqlitedb.get(j), bbattributes);
-                    } catch (Exception ex) {
-                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
-                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    } catch (UnsupportedEncodingException ex) {
+                        logger.log(Level.SEVERE, "Error decoding Firefox cookie URL in " + temps, ex);
+                        errors++;
                     }
+                }
+                if(errors > 0) {
+                    this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Firefox web history artifacts.");
                 }
                 j++;
                 dbFile.delete();
@@ -257,10 +271,11 @@ public class Firefox extends Extract implements IngestModuleImage {
         if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                int errors = 0;
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error writing the sqlite db for firefox download artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -277,18 +292,21 @@ public class Firefox extends Extract implements IngestModuleImage {
                         String urldecodedtarget = URLDecoder.decode(result.get("source").toString().replaceAll("file:///", ""), "UTF-8");
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", ((result.get("source").toString() != null) ? result.get("source").toString() : "")));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("source").toString() != null) ? DecodeUtil.decodeURL(result.get("source").toString()) : "")));
-                            //TODO Revisit usage of deprecated constructor as per TSK-583
-                            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("startTime").toString()))));
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity",  (Long.valueOf(result.get("startTime").toString()))));
+                        //TODO Revisit usage of deprecated constructor as per TSK-583
+                        //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("startTime").toString()))));
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity",  (Long.valueOf(result.get("startTime").toString()))));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(urldecodedtarget)));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", urldecodedtarget));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "FireFox"));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("source").toString() != null) ? result.get("source").toString() : ""))));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, FFSqlitedb.get(j), bbattributes);
-                    } catch (Exception ex) {
-                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
-                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    } catch (UnsupportedEncodingException ex) {
+                        logger.log(Level.SEVERE, "Error decoding Firefox download URL in " + temps, ex);
+                        errors++;
                     }
+                }
+                if(errors > 0) {
+                    this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Firefox web history artifacts.");
                 }
                 j++;
                 dbFile.delete();

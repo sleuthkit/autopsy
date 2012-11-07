@@ -136,23 +136,23 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
         NodeList nlist = xmlinput.getElementsByTagName("SearchEngine");
         SearchEngineURLQueryAnalyzer.SearchEngine[] listEngines = new SearchEngineURLQueryAnalyzer.SearchEngine[nlist.getLength()];
         for(int i = 0;i < nlist.getLength(); i++){
-                NamedNodeMap nnm = nlist.item(i).getAttributes();
-                
-                String EngineName = nnm.getNamedItem("engine").getNodeValue();
-                String EnginedomainSubstring = nnm.getNamedItem("domainSubstring").getNodeValue();
-                Map<String,String> splits = new HashMap<String,String>();
-                
-                NodeList listSplits = xmlinput.getElementsByTagName("splitToken");
-                for(int k = 0; k<listSplits.getLength();k++){
-                   if(listSplits.item(k).getParentNode().getAttributes().getNamedItem("engine").getNodeValue().equals(EngineName)){
-                       splits.put(listSplits.item(k).getAttributes().getNamedItem("plainToken").getNodeValue(), listSplits.item(k).getAttributes().getNamedItem("regexToken").getNodeValue());
-                   }
-                }
-                
-                SearchEngineURLQueryAnalyzer.SearchEngine Se = new SearchEngineURLQueryAnalyzer.SearchEngine(EngineName, EnginedomainSubstring, splits);
-                System.out.println("Search Engine: " + Se.toString());
-                listEngines[i] = Se;
+            NamedNodeMap nnm = nlist.item(i).getAttributes();
+
+            String EngineName = nnm.getNamedItem("engine").getNodeValue();
+            String EnginedomainSubstring = nnm.getNamedItem("domainSubstring").getNodeValue();
+            Map<String,String> splits = new HashMap<String,String>();
+
+            NodeList listSplits = xmlinput.getElementsByTagName("splitToken");
+            for(int k = 0; k<listSplits.getLength();k++){
+               if(listSplits.item(k).getParentNode().getAttributes().getNamedItem("engine").getNodeValue().equals(EngineName)){
+                   splits.put(listSplits.item(k).getAttributes().getNamedItem("plainToken").getNodeValue(), listSplits.item(k).getAttributes().getNamedItem("regexToken").getNodeValue());
+               }
             }
+
+            SearchEngineURLQueryAnalyzer.SearchEngine Se = new SearchEngineURLQueryAnalyzer.SearchEngine(EngineName, EnginedomainSubstring, splits);
+            System.out.println("Search Engine: " + Se.toString());
+            listEngines[i] = Se;
+        }
         engines = listEngines;
     }
     
@@ -169,12 +169,12 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
         if (engines == null) {
             return SearchEngineURLQueryAnalyzer.NullEngine;
         }
-            for(int i = 0; i < engines.length; i++){
-                    if(domain.contains(engines[i].getDomainSubstring())){
-                        return engines[i];
-                    }
-                }
-            return SearchEngineURLQueryAnalyzer.NullEngine;
+        for(int i = 0; i < engines.length; i++){
+            if(domain.contains(engines[i].getDomainSubstring())){
+                return engines[i];
+            }
+        }
+        return SearchEngineURLQueryAnalyzer.NullEngine;
     }
     
    
@@ -197,9 +197,9 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
      */
        
 
- private String extractSearchEngineQuery(String url){
-      String x = "NoQuery";
-      SearchEngineURLQueryAnalyzer.SearchEngine eng = getSearchEngine(url);
+    private String extractSearchEngineQuery(String url){
+        String x = "NoQuery";
+        SearchEngineURLQueryAnalyzer.SearchEngine eng = getSearchEngine(url);
         for(Map.Entry<String,String> kvp : eng.getSplits()){
             if(url.contains(kvp.getKey())){
                 x = split2(url, kvp.getValue());
@@ -303,7 +303,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                 }
             }
         } catch (TskException e) {
-            logger.log(Level.SEVERE, "Encountered error retrieving artifacts", e);
+            logger.log(Level.SEVERE, "Encountered error retrieving artifacts for search engine queries", e);
         } finally {
             if (controller.isCancelled()) {
                 logger.info("Operation terminated by user.");
@@ -332,9 +332,9 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
     @Override
     public void init(IngestModuleInit initContext) {
         try{
-        services = IngestServices.getDefault();   
-        PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE);
-        init2();
+            services = IngestServices.getDefault();   
+            PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE);
+            init2();
         }
         catch(IOException e){
             logger.log(Level.SEVERE, "Unable to find " + XMLFILE , e);
@@ -353,7 +353,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
             xmlinput = xml;
 
             if (!XMLUtil.xmlIsValid(xml, SearchEngineURLQueryAnalyzer.class, XSDFILE)) {
-                logger.log(Level.SEVERE, "Error loading Search Engines: could not validate against [" + XSDFILE + "], results may not be accurate.");
+                logger.log(Level.WARNING, "Error loading Search Engines: could not validate against [" + XSDFILE + "], results may not be accurate.");
             }
            createEngines();
            getSearchEngineNames();
