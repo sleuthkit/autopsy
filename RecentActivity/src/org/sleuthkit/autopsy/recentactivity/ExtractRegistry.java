@@ -23,12 +23,14 @@ package org.sleuthkit.autopsy.recentactivity;
 import java.io.*;
 import java.io.File;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -46,6 +48,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 /**
  * Extracting windows registry data using regripper
@@ -102,67 +105,61 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
     }
 
     private void getregistryfiles(Image image, IngestImageWorkerController controller) {
-        try {
-            Case currentCase = Case.getCurrentCase(); // get the most updated case
-            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-            Collection<FileSystem> imageFS = tempDb.getFileSystems(image);
-            List<String> fsIds = new LinkedList<String>();
-            for (FileSystem img : imageFS) {
-                Long tempID = img.getId();
-                fsIds.add(tempID.toString());
-            }
-
-            String allFS = new String();
-            for (int i = 0; i < fsIds.size(); i++) {
-                if (i == 0) {
-                    allFS += " AND (0";
-                }
-                allFS += " OR fs_obj_id = '" + fsIds.get(i) + "'";
-                if (i == fsIds.size() - 1) {
-                    allFS += ")";
-                }
-            }
-            List<FsContent> Regfiles = new ArrayList<FsContent>();
-            try {
-                ResultSet rs = tempDb.runQuery("select * from tsk_files where lower(name) = 'ntuser.dat' OR lower(parent_path) LIKE '%/system32/config%' and (name LIKE 'system' OR name LIKE 'software' OR name = 'SECURITY' OR name = 'SAM' OR name = 'default')" + allFS);
-                Regfiles = tempDb.resultSetToFsContents(rs);
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.{0}", ex);
-            }
-
-            int j = 0;
-
-            while (j < Regfiles.size()) {
-                boolean Success;
-                Content orgFS = Regfiles.get(j);
-                long orgId = orgFS.getId();
-                String temps = currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName().toString();
-                try {
-                    ContentUtils.writeToFile(Regfiles.get(j), new File(currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName()));
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.{0}", ex);
-                }
-                File regFile = new File(temps);
-                logger.log(Level.INFO, moduleName + "- Now getting registry information from " + temps);
-                String txtPath = executeRegRip(temps, j);
-                if (txtPath.length() > 0) {
-                    Success = parseReg(txtPath, orgId);
-                } else {
-                    Success = false;
-                }
-                //At this point pasco2 proccessed the index files.
-                //Now fetch the results, parse them and the delete the files.
-                if (Success) {
-                    //Delete dat file since it was succcessful
-                    regFile.delete();
-                }
-                j++;
-
-            }
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Error while trying to get Registry files", ex);
+        Case currentCase = Case.getCurrentCase(); // get the most updated case
+        SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+        Collection<FileSystem> imageFS = tempDb.getFileSystems(image);
+        List<String> fsIds = new LinkedList<String>();
+        for (FileSystem img : imageFS) {
+            Long tempID = img.getId();
+            fsIds.add(tempID.toString());
         }
 
+        String allFS = new String();
+        for (int i = 0; i < fsIds.size(); i++) {
+            if (i == 0) {
+                allFS += " AND (0";
+            }
+            allFS += " OR fs_obj_id = '" + fsIds.get(i) + "'";
+            if (i == fsIds.size() - 1) {
+                allFS += ")";
+            }
+        }
+        List<FsContent> Regfiles = new ArrayList<FsContent>();
+        try {
+            ResultSet rs = tempDb.runQuery("select * from tsk_files where lower(name) = 'ntuser.dat' OR lower(parent_path) LIKE '%/system32/config%' and (name LIKE 'system' OR name LIKE 'software' OR name = 'SECURITY' OR name = 'SAM' OR name = 'default')" + allFS);
+            Regfiles = tempDb.resultSetToFsContents(rs);
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Error querying the database for registry files: {0}", ex);
+        }
+
+        int j = 0;
+
+        while (j < Regfiles.size()) {
+            boolean Success;
+            Content orgFS = Regfiles.get(j);
+            long orgId = orgFS.getId();
+            String temps = currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName().toString();
+            try {
+                ContentUtils.writeToFile(Regfiles.get(j), new File(currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName()));
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Error writing the temp registry file. {0}", ex);
+            }
+            File regFile = new File(temps);
+            logger.log(Level.INFO, moduleName + "- Now getting registry information from " + temps);
+            String txtPath = executeRegRip(temps, j);
+            if (txtPath.length() > 0) {
+                Success = parseReg(txtPath, orgId);
+            } else {
+                Success = false;
+            }
+            //At this point pasco2 proccessed the index files.
+            //Now fetch the results, parse them and the delete the files.
+            if (Success) {
+                //Delete dat file since it was succcessful
+                regFile.delete();
+            }
+            j++;
+        }
     }
 
     // TODO: Hardcoded command args/path needs to be removed. Maybe set some constants and set env variables for classpath
@@ -171,9 +168,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
         String txtPath = regFilePath + Integer.toString(fileIndex) + ".txt";
         String type = "";
 
-
         try {
-
             if (regFilePath.toLowerCase().contains("system")) {
                 type = "autopsysystem";
             }
@@ -192,26 +187,25 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
             if (regFilePath.toLowerCase().contains("security")) {
                 type = "1security";
             }
-
             String command = "\"" + RR_PATH + "\" -r \"" + regFilePath + "\" -f " + type + " > \"" + txtPath + "\" 2> NUL";
             JavaSystemCaller.Exec.execute("\"" + command + "\"");
 
-
-        } catch (Exception e) {
-
-            logger.log(Level.SEVERE, "ExtractRegistry::executeRegRip() -> ", e);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to RegRipper and process parse some registry files.", ex);
+        } catch (InterruptedException ex) {
+            logger.log(Level.SEVERE, "RegRipper has been interrupted, failed to parse registry.", ex);
         }
-
+        
         return txtPath;
     }
 
     private boolean parseReg(String regRecord, long orgId) {
-        Case currentCase = Case.getCurrentCase(); // get the most updated case
-        SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-
+        FileInputStream fstream = null;
         try {
+            Case currentCase = Case.getCurrentCase(); // get the most updated case
+            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             File regfile = new File(regRecord);
-            FileInputStream fstream = new FileInputStream(regfile);
+            fstream = new FileInputStream(regfile);
             //InputStreamReader fstreamReader = new InputStreamReader(fstream, "UTF-8");
             //BufferedReader input = new BufferedReader(fstreamReader);
             //logger.log(Level.INFO, "using encoding " + fstreamReader.getEncoding());
@@ -225,8 +219,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
             result = result.replaceAll("&", "&amp;");
             String enddoc = "</document>";
             String stringdoc = startdoc + result + enddoc;
-            
-            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();   
+            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             Document doc = builder.parse(new InputSource(new StringReader(stringdoc)));
             Element oroot = doc.getDocumentElement();
             NodeList children = oroot.getChildNodes();
@@ -234,7 +227,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
             for(int i=0; i<len; i++) {
                 Element tempnode = (Element) children.item(i);
                 String context = tempnode.getNodeName();
-                
+
                 NodeList timenodes = tempnode.getElementsByTagName("time");
                 Long time = null;
                 if(timenodes.getLength() > 0) {
@@ -245,11 +238,11 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                         time = epochtime.longValue();
                         String Tempdate = time.toString();
                         time = Long.valueOf(Tempdate) / 1000;
-                    } catch (ParseException e) {
-                        logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> failed for: " + etime);
+                    } catch (ParseException ex) {
+                        logger.log(Level.WARNING, "Failed to parse epoch time when parsing the registry.");
                     }
                 }
-                
+
                 NodeList artroots = tempnode.getElementsByTagName("artifacts");
                 if(artroots.getLength() == 0) {
                     // If there isn't an artifact node, skip this entry
@@ -267,7 +260,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                         String name = artnode.getAttribute("name");
                         String value = artnode.getTextContent().trim();
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                        
+
                         if ("recentdocs".equals(context)) {
                             //               BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                             //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
@@ -275,29 +268,26 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                             //               bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
                             //               bbart.addAttributes(bbattributes);
                         } else if ("usb".equals(context)) {
-
-                            Long utime = null;
                             try {
-
+                                Long utime = null;
                                 utime = Long.parseLong(name);
                                 String Tempdate = utime.toString();
                                 utime = Long.valueOf(Tempdate);
-                                utime = utime;
-                            } catch (Exception e) {
-                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e);
-                            }
 
-                            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
+                                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
                                 //TODO Revisit usage of deprecated constructor as per TSK-583
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, utime));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity",  utime));
-                            String dev = artnode.getAttribute("dev");
+                                String dev = artnode.getAttribute("dev");
                                 //TODO Revisit usage of deprecated constructor as per TSK-583
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", context, dev));
                                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", context, value));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), "RecentActivity", dev));
                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), "RecentActivity", value));
-                            bbart.addAttributes(bbattributes);
+                                bbart.addAttributes(bbattributes);
+                            } catch (TskCoreException ex) {
+                                logger.log(Level.SEVERE, "Error adding device attached artifact to blackboard.");
+                            }
                         } else if ("uninstall".equals(context)) {
                             Long ftime = null;
                             try {
@@ -305,19 +295,25 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                                 ftime = epochtime.longValue();
                                 ftime = ftime / 1000;
                             } catch (ParseException e) {
-                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e);
+                                logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact.");
                             }
-                                //TODO Revisit usage of deprecated constructor as per TSK-583
-//                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
-//                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, value));
-//                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, ftime));
-                                 if(time != null) {
-                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
-                                 }
-                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", value));
-                                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", ftime));
-                            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
-                            bbart.addAttributes(bbattributes);
+                            
+                            //TODO Revisit usage of deprecated constructor as per TSK-583
+                            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
+                            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, value));
+                            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, ftime));
+                                
+                            try {
+                                if(time != null) {
+                                   bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
+                                }
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", value));
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", ftime));
+                                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
+                                bbart.addAttributes(bbattributes);
+                            } catch (TskCoreException ex) {
+                                logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard.");
+                            }
                         } else if ("WinVersion".equals(context)) {
 
                             if (name.contains("ProductName")) {
@@ -337,43 +333,61 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                                 } catch (ParseException e) {
                                     logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e);
                                 }
+                                try {
                                     //TODO Revisit usage of deprecated constructor as per TSK-583
-//                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, winver));
-//                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, installtime));
-                                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", winver));
-                                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", installtime));
-                                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
-                                bbart.addAttributes(bbattributes);
+                                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, winver));
+                                    //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", context, installtime));
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", winver));
+                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", installtime));
+                                    BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_INSTALLED_PROG);
+                                    bbart.addAttributes(bbattributes);
+                                } catch(TskCoreException ex) {
+                                    logger.log(Level.SEVERE, "Error adding installed program artifact to blackboard.");
+                                }
                             }
                         } else if ("office".equals(context)) {
-
-                            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                            try {
+                                BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                                 //TODO Revisit usage of deprecated constructor as per TSK-583
-//                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
-//                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
-//                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
-//                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, artnode.getName()));
+                                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
+                                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", context, name));
+                                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", context, value));
+                                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, artnode.getName()));
                                  if(time != null) {
                                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", time));
                                  }
                                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
                                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));
                                  bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", artnode.getNodeName()));
-                            bbart.addAttributes(bbattributes);
+                                bbart.addAttributes(bbattributes);
+                            } catch(TskCoreException ex) {
+                                logger.log(Level.SEVERE, "Error adding recent object artifact to blackboard.");
+                            }
 
                         } else {
-//                            BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
-//                            bbart.addAttributes(bbattributes);
+                            //BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(sysid);
+                            //bbart.addAttributes(bbattributes);
                         }
                     }
-                    
+
                 }
             }
-        } catch (Exception ex) {
-
-            logger.log(Level.SEVERE, "Error while trying to read into a registry file." + ex);
+            return true;
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.SEVERE, "Error finding the registry file.");
+        } catch (SAXException ex) {
+            logger.log(Level.SEVERE, "Error parsing the registry XML: {0}", ex);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error building the document parser: {0}", ex);
+        } catch (ParserConfigurationException ex) {
+            logger.log(Level.SEVERE, "Error configuring the registry parser: {0}", ex);
+        } finally {
+            try {
+                fstream.close();
+            } catch (IOException ex) {
+            }
         }
-        return true;
+        return false;
     }
 
     @Override
