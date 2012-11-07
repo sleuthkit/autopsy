@@ -61,7 +61,6 @@ import org.sleuthkit.datamodel.Content;
  * Handles for keeping track of a Solr server and its cores
  */
 public class Server {
-    
 
     public static enum Schema {
 
@@ -118,7 +117,8 @@ public class Server {
             public String toString() {
                 return "num_chunks";
             }
-        },};
+        },
+    };
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "-1";
     //max content size we can send to Solr
     public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
@@ -132,15 +132,14 @@ public class Server {
     private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
     private static Ingester ingester = null;
-    private static final String PROPERTIES_FILE = "SolrServer";
-    private static final String PROPERTIES_CURRENT_SERVER_PORT = "Current Solr Server Port";
-    private static final String PROPERTIES_CURRENT_STOP_PORT = "Current Solr Stop Port";
+    static final String PROPERTIES_FILE = KeywordSearchSettings.MODULE_NAME;
+    static final String PROPERTIES_CURRENT_SERVER_PORT = "IndexingServerPort";
+    static final String PROPERTIES_CURRENT_STOP_PORT = "IndexingServerStopPort";
     private static final String KEY = "jjk#09s";
-    private static final int DEFAULT_SOLR_SERVER_PORT = 23232;
-    private static final int DEFAULT_SOLR_STOP_PORT = 34343;
-    static int currentSolrServerPort = 0;
-    static int currentSolrStopPort = 0;
-
+    static final int DEFAULT_SOLR_SERVER_PORT = 23232;
+    static final int DEFAULT_SOLR_STOP_PORT = 34343;
+    private int currentSolrServerPort = 0;
+    private int currentSolrStopPort = 0;
 
     public enum CORE_EVT_STATES {
 
@@ -158,36 +157,9 @@ public class Server {
      *
      * @param url should be something like "http://localhost:23232/solr/"
      */
-    Server(){
-        /* begin properties set up region for  reading/writing properties files for default port information */
-         if(ModuleSettings.settingExists(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT)){
-           try{
-            currentSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
-           }
-           catch(NumberFormatException nfe){
-               logger.log(Level.WARNING, "Could not decode solr server port, value was not a valid port number", nfe);
-               JOptionPane.showMessageDialog(new java.awt.Frame(), "Solr port value in " + PROPERTIES_FILE +".properties was not a valid port number. Please go back and ensure that it is a positive integer below 65535.");
-           }
-        }
-        else{
-            currentSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
-            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT, String.valueOf(currentSolrServerPort));
-        }
-        if(ModuleSettings.settingExists(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT)){
-            try{
-                currentSolrStopPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT));
-            }
-            catch(NumberFormatException nfe){
-                logger.log(Level.WARNING, "Could not deoce solr stop port, value was not a valid port number", nfe);
-                JOptionPane.showMessageDialog(new java.awt.Frame(), "Solr stop port value in " + PROPERTIES_FILE +".properties was not a valid port number. Please go back and ensure that is a positive integer below 65535");
-            }
-        }
-        else{
-            currentSolrStopPort = DEFAULT_SOLR_STOP_PORT;
-            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT, String.valueOf(currentSolrStopPort));
-        }
-        /* end properties setup region */
-        
+    Server() {
+        initSettings();
+
         this.solrUrl = "http://localhost:" + currentSolrServerPort + "/solr";
         this.solrServer = new HttpSolrServer(solrUrl);
         serverAction = new ServerAction();
@@ -198,6 +170,32 @@ public class Server {
         logger.log(Level.INFO, "Created Server instance");
     }
 
+    private void initSettings() {
+        if (ModuleSettings.settingExists(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT)) {
+            try {
+                currentSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
+            } catch (NumberFormatException nfe) {
+                logger.log(Level.WARNING, "Could not decode indexing server port, value was not a valid port number, using the default. ", nfe);
+                currentSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
+            }
+        } else {
+            currentSolrServerPort = DEFAULT_SOLR_SERVER_PORT;
+            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT, String.valueOf(currentSolrServerPort));
+        }
+
+        if (ModuleSettings.settingExists(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT)) {
+            try {
+                currentSolrStopPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT));
+            } catch (NumberFormatException nfe) {
+                logger.log(Level.WARNING, "Could not decode indexing server stop port, value was not a valid port number, using default", nfe);
+                currentSolrStopPort = DEFAULT_SOLR_STOP_PORT;
+            }
+        } else {
+            currentSolrStopPort = DEFAULT_SOLR_STOP_PORT;
+            ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT, String.valueOf(currentSolrStopPort));
+        }
+    }
+
     @Override
     public void finalize() throws java.lang.Throwable {
         stop();
@@ -206,6 +204,14 @@ public class Server {
 
     public void addServerActionListener(PropertyChangeListener l) {
         serverAction.addPropertyChangeListener(l);
+    }
+
+    int getCurrentSolrServerPort() {
+        return currentSolrServerPort;
+    }
+
+    int getCurrentSolrStopPort() {
+        return currentSolrStopPort;
     }
 
     /**
@@ -277,57 +283,56 @@ public class Server {
      * (probably before the server is ready) and doesn't check whether it was
      * successful.
      */
-    void start() throws KeywordSearchModuleException, SolrServerNoPortException{
+    void start() throws KeywordSearchModuleException, SolrServerNoPortException {
         logger.log(Level.INFO, "Starting Solr server from: " + solrFolder.getAbsolutePath());
-       if(available(currentSolrServerPort)){
-           logger.log(Level.INFO, "Port [" + currentSolrServerPort + "] available, starting Solr");
-        try {
-            final String MAX_SOLR_MEM_MB_PAR = " -Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m";
-            
-            String loggingPropertiesOpt = " -Djava.util.logging.config.file=";
-            String loggingPropertiesFilePath = instanceDir + File.separator + "conf" + File.separator;
-
-            if (Version.getBuildType().equals(Version.Type.DEVELOPMENT)) {
-                loggingPropertiesFilePath += "logging-development.properties";
-            } else {
-                loggingPropertiesFilePath += "logging-release.properties";
-            }
-            loggingPropertiesFilePath = PlatformUtil.getOSFilePath(loggingPropertiesFilePath);
-            final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
-            
-            
-
-            final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR + " -DSTOP.PORT=" + currentSolrStopPort + " -Djetty.port=" + currentSolrServerPort + " -DSTOP.KEY=" + KEY + " "
-                    + loggingProperties + " -jar start.jar";
-            logger.log(Level.INFO, "Starting Solr using: " + SOLR_START_CMD);
-            curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
-            logger.log(Level.INFO, "Finished starting Solr");
-
+        if (available(currentSolrServerPort)) {
+            logger.log(Level.INFO, "Port [" + currentSolrServerPort + "] available, starting Solr");
             try {
-                //block, give time to fully start the process
-                //so if it's restarted solr operations can be resumed seamlessly
-                Thread.sleep(3000);
-            } catch (InterruptedException ex) {
-                logger.log(Level.WARNING, "Timer interrupted");
+                final String MAX_SOLR_MEM_MB_PAR = " -Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m";
+
+                String loggingPropertiesOpt = " -Djava.util.logging.config.file=";
+                String loggingPropertiesFilePath = instanceDir + File.separator + "conf" + File.separator;
+
+                if (Version.getBuildType().equals(Version.Type.DEVELOPMENT)) {
+                    loggingPropertiesFilePath += "logging-development.properties";
+                } else {
+                    loggingPropertiesFilePath += "logging-release.properties";
+                }
+                loggingPropertiesFilePath = PlatformUtil.getOSFilePath(loggingPropertiesFilePath);
+                final String loggingProperties = loggingPropertiesOpt + loggingPropertiesFilePath;
+
+
+
+                final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR + " -DSTOP.PORT=" + currentSolrStopPort + " -Djetty.port=" + currentSolrServerPort + " -DSTOP.KEY=" + KEY + " "
+                        + loggingProperties + " -jar start.jar";
+                logger.log(Level.INFO, "Starting Solr using: " + SOLR_START_CMD);
+                curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
+                logger.log(Level.INFO, "Finished starting Solr");
+
+                try {
+                    //block, give time to fully start the process
+                    //so if it's restarted solr operations can be resumed seamlessly
+                    Thread.sleep(3000);
+                } catch (InterruptedException ex) {
+                    logger.log(Level.WARNING, "Timer interrupted");
+                }
+                // Handle output to prevent process from blocking
+
+                errorRedirectThread = new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "stderr");
+                errorRedirectThread.start();
+
+
+            } catch (SecurityException ex) {
+                logger.log(Level.WARNING, "Could not start Solr process!", ex);
+                throw new KeywordSearchModuleException("Could not start Solr server process", ex);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Could not start Solr server process!", ex);
+                throw new KeywordSearchModuleException("Could not start Solr server process", ex);
             }
-            // Handle output to prevent process from blocking
-
-            errorRedirectThread = new InputStreamPrinterThread(curSolrProcess.getErrorStream(), "stderr");
-            errorRedirectThread.start();
-
-
-        } catch (SecurityException ex) {
-            logger.log(Level.WARNING, "Could not start Solr process!", ex);
-            throw new KeywordSearchModuleException("Could not start Solr server process", ex);
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, "Could not start Solr server process!", ex);
-            throw new KeywordSearchModuleException("Could not start Solr server process", ex);
+        } else {
+            logger.log(Level.WARNING, "Could not start Solr server process, port [" + currentSolrServerPort + "] not available!");
+            throw new SolrServerNoPortException(currentSolrServerPort);
         }
-       }
-       else{
-           logger.log(Level.WARNING, "Could not start Solr server process, port [" + currentSolrServerPort + "] not available!");
-           throw new SolrServerNoPortException("Port [" + currentSolrServerPort + "] not available");
-       }
     }
 
     /**
@@ -335,17 +340,17 @@ public class Server {
      *
      * @param port the port to check for availability
      */
-  static boolean available(int port) {
+    static boolean available(int port) {
         ServerSocket ss = null;
         try {
-           
+
             ss = new ServerSocket(port, 0, java.net.Inet4Address.getByName("localhost"));
-            if(ss.isBound()){
+            if (ss.isBound()) {
                 ss.setReuseAddress(true);
                 ss.close();
                 return true;
             }
-            
+
         } catch (IOException e) {
         } finally {
             if (ss != null) {
@@ -358,26 +363,26 @@ public class Server {
         }
         return false;
     }
-    
+
     /**
-     * Changes the current solr server port.
-     * Only call this after available.
+     * Changes the current solr server port. Only call this after available.
+     *
      * @param port Port to change to
      */
-   void changeSolrServerPort(int port){
-      currentSolrServerPort = port;
-      ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT, String.valueOf(port));
-   } 
-   
-   /**
-    * Changes the current solr stop port.
-    * Only call this after available.
-    * @param port Port to change to
-    */
-   void changeSolrStopPort(int port){
-       currentSolrStopPort = port;
-       ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT, String.valueOf(port));
-   }
+    void changeSolrServerPort(int port) {
+        currentSolrServerPort = port;
+        ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT, String.valueOf(port));
+    }
+
+    /**
+     * Changes the current solr stop port. Only call this after available.
+     *
+     * @param port Port to change to
+     */
+    void changeSolrStopPort(int port) {
+        currentSolrStopPort = port;
+        ModuleSettings.setConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_STOP_PORT, String.valueOf(port));
+    }
 
     /**
      * Tries to stop a Solr instance.
@@ -392,7 +397,7 @@ public class Server {
             logger.log(Level.INFO, "Waiting for stopping Solr server");
             stop.waitFor();
             logger.log(Level.INFO, "Finished stopping Solr server");
-            
+
             //if still running, forcefully stop it
             if (curSolrProcess != null) {
                 curSolrProcess.destroy();
@@ -412,8 +417,6 @@ public class Server {
         }
     }
 
-
-
     /**
      * Tests if there's a Solr server running by sending it a core-status
      * request.
@@ -426,6 +429,9 @@ public class Server {
             // making a status request here instead of just doing solrServer.ping(), because
             // that doesn't work when there are no cores
 
+            //TODO check if port avail and return false if it is
+            
+            //TODO handle timeout in cases when some other type of server on that port
             CoreAdminRequest.getStatus(null, solrServer);
             logger.log(Level.INFO, "Solr server is running");
         } catch (SolrServerException ex) {
@@ -522,8 +528,8 @@ public class Server {
         } catch (SolrServerException ex) {
             throw new KeywordSearchModuleException("Error querying number of indexed files, ", ex);
         }
-        
-        
+
+
     }
 
     /**
@@ -711,9 +717,6 @@ public class Server {
     public static String getChunkIdString(long parentID, int childID) {
         return Long.toString(parentID) + Server.ID_CHUNK_SEP + Integer.toString(childID);
     }
-    
-
-    
 
     /**
      * Open a new core
@@ -742,7 +745,7 @@ public class Server {
             this.solrServer.request(createCore);
 
             final Core newCore = new Core(coreName);
-            
+
             return newCore;
 
         } catch (SolrServerException ex) {
@@ -907,13 +910,26 @@ public class Server {
             logger.log(Level.INFO, e.paramString().trim());
         }
     }
-    class SolrServerNoPortException extends SocketException  {
-    SolrServerNoPortException(){
-        
-    }
-    SolrServerNoPortException(String msg){
-        super(msg);
-    }
-}
-}
 
+    /**
+     * Exception thrown if solr port not available
+     */
+    class SolrServerNoPortException extends SocketException {
+
+        /**
+         * the port number that is not available
+         */
+        private int port;
+        
+        SolrServerNoPortException(int port) {
+            super("Indexing server could not bind to port " + port 
+                    + ", port is not available, consider change the default " 
+                    + Server.PROPERTIES_CURRENT_SERVER_PORT + " port.");
+            this.port = port;
+        }
+        
+        int getPortNumber() {
+            return port;
+        }
+    }
+}
