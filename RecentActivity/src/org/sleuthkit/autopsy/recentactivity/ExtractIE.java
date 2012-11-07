@@ -136,7 +136,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             try {
                 final int bytesRead = fav.read(t, 0, fav.getSize());
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while trying to retrieve content from the TSK .", ex);
+                logger.log(Level.SEVERE, "Error while trying to retrieve content from the TSK .", ex);
             }
             String bookmarkString = new String(t);
             String re1 = ".*?";	// Non-greedy match on filler
@@ -167,7 +167,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
 
                 services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
+                logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.{0}", ex);
                 this.addErrorMessage(this.getName() + ": Error analyzing file:" + Favorite.getName());
             }
 
@@ -189,7 +189,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             try {
                 final int bytesRead = fav.read(t, 0, fav.getSize());
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while trying to retrieve content from the TSK .", ex);
+                logger.log(Level.SEVERE, "Error while trying to retrieve content from the TSK .", ex);
             }
             String cookieString = new String(t);
             String[] values = cookieString.split("\n");
@@ -216,7 +216,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
                 this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, Cookie, bbattributes);
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
+                logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.{0}", ex);
                 this.addErrorMessage(this.getName() + ": Error analyzing file:" + Cookie.getName());
             }
 
@@ -249,7 +249,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
                 this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, Recent, bbattributes);
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
+                logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.{0}", ex);
                 this.addErrorMessage(this.getName() + ": Error analyzing file:" + Recent.getName());
             }
 
@@ -275,7 +275,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
 
         final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false);
         if (pascoRoot == null) {
-            logger.log(Level.WARNING, "Pasco2 not found");
+            logger.log(Level.SEVERE, "Pasco2 not found");
             pascoFound = false;
             return;
         } else {
@@ -317,7 +317,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 rs.close();
                 rs.getStatement().close();
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
+                logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.{0}", ex);
             }
             String temps;
             String indexFileName;
@@ -339,7 +339,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 try {
                     ContentUtils.writeToFile(fsc, datFile);
                 } catch (IOException e) {
-                    logger.log(Level.WARNING, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
+                    logger.log(Level.SEVERE, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
                 }
 
                 String filename = "pasco2Result." + fsc.getId() + ".txt";
@@ -355,7 +355,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 }
             }
         } catch (Exception ioex) {
-            logger.log(Level.WARNING, "Error while trying to write index.dat files.", ioex);
+            logger.log(Level.SEVERE, "Error while trying to write index.dat files.", ioex);
         }
 
         //bookmarks
@@ -387,7 +387,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
 
         } catch (Exception e) {
             success = false;
-            logger.log(Level.WARNING, "ExtractIE::executePasco() -> ", e);
+            logger.log(Level.SEVERE, "ExtractIE::executePasco() -> ", e);
         }
 
         return success;
@@ -474,7 +474,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                                                 ftime = epochtime.longValue();
                                                 ftime = ftime / 1000;
                                             } catch (ParseException e) {
-                                                logger.log(Level.WARNING, "ExtractIE::parsePascosResults() -> ", e);
+                                                logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", e);
                                             }
                                         }
 
@@ -496,7 +496,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "RecentActivity", user));
                                             bbart.addAttributes(bbattributes);
                                         } catch (Exception ex) {
-                                            logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
+                                            logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.{0}", ex);
                                             this.addErrorMessage(this.getName() + ": Error analyzing file:" + tempDb.getAbstractFileById(artObjId).getName());
                                         }
 
@@ -509,7 +509,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
 
                                         PASCO_RESULTS_LIST.add(PASCO_RESULTS_LUT);
                                     } catch (Exception ex) {
-                                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
+                                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.{0}", ex);
                                     }
                                 }
 
@@ -519,7 +519,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                         boolean bDelete = file.delete();
                     }
                 } catch (IOException ioex) {
-                    logger.log(Level.WARNING, "ExtractIE::parsePascosResults() -> ", ioex);
+                    logger.log(Level.SEVERE, "ExtractIE::parsePascosResults() -> ", ioex);
                 }
 
             }
@@ -543,10 +543,10 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 if (f.exists() && f.canWrite()) {
                     f.delete();
                 } else {
-                    logger.log(Level.WARNING, "Unable to delete file and cleanup: " + filePath);
+                    logger.log(Level.SEVERE, "Unable to delete file and cleanup: " + filePath);
                 }
             } catch (SecurityException e) {
-                logger.log(Level.WARNING, "Unable to delete file and cleanup: " + filePath, e);
+                logger.log(Level.SEVERE, "Unable to delete file and cleanup: " + filePath, e);
             }
         }
         

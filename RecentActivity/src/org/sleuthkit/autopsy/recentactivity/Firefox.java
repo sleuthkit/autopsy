@@ -101,7 +101,7 @@ public class Firefox extends Extract implements IngestModuleImage {
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -125,7 +125,7 @@ public class Firefox extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, FFSqlitedb.get(j), bbattributes);
                     } catch (Exception ex) {
-                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
+                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
                         this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
                 }
@@ -149,7 +149,7 @@ public class Firefox extends Extract implements IngestModuleImage {
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -169,7 +169,7 @@ public class Firefox extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, FFSqlitedb.get(j), bbattributes);
                     } catch (Exception ex) {
-                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
+                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
                         this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
                 }
@@ -194,7 +194,7 @@ public class Firefox extends Extract implements IngestModuleImage {
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -235,7 +235,7 @@ public class Firefox extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, FFSqlitedb.get(j), bbattributes);
                     } catch (Exception ex) {
-                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
+                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
                         this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
                 }
@@ -260,7 +260,7 @@ public class Firefox extends Extract implements IngestModuleImage {
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -286,7 +286,7 @@ public class Firefox extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("source").toString() != null) ? result.get("source").toString() : ""))));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, FFSqlitedb.get(j), bbattributes);
                     } catch (Exception ex) {
-                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
+                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
                         this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
                 }

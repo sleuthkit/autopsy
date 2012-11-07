@@ -106,7 +106,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -130,7 +130,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, FFSqlitedb.get(j), bbattributes);
                     } catch (Exception ex) {
-                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
+                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
                         this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
                 }
@@ -154,7 +154,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                  logger.log(Level.INFO, moduleName + "- Now getting Bookmarks from " + temps);
@@ -190,12 +190,12 @@ public class Chrome extends Extract implements IngestModuleImage {
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
                             bbart.addAttributes(bbattributes);
                         } catch (Exception ex) {
-                            logger.log(Level.WARNING, "Error while trying to insert BB artifact{0}", ex);
+                            logger.log(Level.SEVERE, "Error while trying to insert BB artifact{0}", ex);
                             this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                         }
                     }
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to read into the Bookmarks for Chrome." + ex);
+                    logger.log(Level.SEVERE, "Error while trying to read into the Bookmarks for Chrome." + ex);
                 }
                 j++;
                 dbFile.delete();
@@ -218,7 +218,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -246,7 +246,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, FFSqlitedb.get(j), bbattributes);
                     } catch (Exception ex) {
-                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
+                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
                         this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
                 }
@@ -271,7 +271,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -300,7 +300,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, FFSqlitedb.get(j), bbattributes);
                     } catch (Exception ex) {
-                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
+                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
                         this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
                 }
@@ -325,7 +325,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to write out a sqlite db.{0}", ex);
+                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -350,7 +350,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", result.get("signon_realm").toString()));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, FFSqlitedb.get(j), bbattributes);
                     } catch (Exception ex) {
-                        logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + temps, ex);
+                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
                         this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                     }
                 }
