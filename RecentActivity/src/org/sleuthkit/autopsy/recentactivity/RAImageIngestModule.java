@@ -96,6 +96,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
                 subCompleted.append(module.getName()).append(" complete <br>");
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred when completing " + module.getName(), ex);
+                subCompleted.append(module.getName()).append(" failed to complete - see log for details <br>");
             }
         }
 
@@ -171,7 +172,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
                 logger.log(Level.SEVERE, "Exception during stop() of " + module.getName(), ex);
             }
         }
-        logger.log(Level.INFO, "Recent Activity processes properly shutdown.");
+        logger.log(Level.INFO, "Recent Activity processes has been shutdown.");
     }
 
     @Override

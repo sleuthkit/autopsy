@@ -31,7 +31,10 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import org.sleuthkit.autopsy.coreutils.DecodeUtil;
 import org.sleuthkit.autopsy.ingest.IngestImageWorkerController;
 import org.sleuthkit.autopsy.ingest.IngestModuleImage;
@@ -42,6 +45,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Chrome recent activity extraction
@@ -101,12 +105,12 @@ public class Chrome extends Extract implements IngestModuleImage {
         int j = 0;
         if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
-                
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                int errors = 0;
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome web history artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -129,10 +133,13 @@ public class Chrome extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : ""))));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, FFSqlitedb.get(j), bbattributes);
-                    } catch (Exception ex) {
-                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
-                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    } catch (UnsupportedEncodingException ex) {
+                        logger.log(Level.SEVERE, "Error decoding Chome history URL in " + temps, ex);
+                        errors++;
                     }
+                }
+                if(errors > 0) {
+                    this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Chrome web history artifacts.");
                 }
                 j++;
                 dbFile.delete();
@@ -151,10 +158,11 @@ public class Chrome extends Extract implements IngestModuleImage {
         if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                int errors = 0;
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome bookmark artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                  logger.log(Level.INFO, moduleName + "- Now getting Bookmarks from " + temps);
@@ -164,7 +172,6 @@ public class Chrome extends Extract implements IngestModuleImage {
                     break;
                 }
                 try {
-
                     final JsonParser parser = new JsonParser();
                     JsonElement jsonElement = parser.parse(new FileReader(temps));
                     JsonObject jElement = jsonElement.getAsJsonObject();
@@ -189,12 +196,18 @@ public class Chrome extends Extract implements IngestModuleImage {
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
                             bbart.addAttributes(bbattributes);
-                        } catch (Exception ex) {
-                            logger.log(Level.SEVERE, "Error while trying to insert BB artifact{0}", ex);
-                            this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                        } catch (UnsupportedEncodingException ex) {
+                            logger.log(Level.SEVERE, "Error decoding Chome bookmark URL in " + temps, ex);
+                            errors++;
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, "Error while trying to insert Chrom bookmark artifact{0}", ex);
+                            errors++;
                         }
                     }
-                } catch (Exception ex) {
+                    if(errors > 0) {
+                        this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Chrome bookmark artifacts.");
+                    }
+                } catch (FileNotFoundException ex) {
                     logger.log(Level.SEVERE, "Error while trying to read into the Bookmarks for Chrome." + ex);
                 }
                 j++;
@@ -215,10 +228,11 @@ public class Chrome extends Extract implements IngestModuleImage {
         if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                int errors = 0;
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome cookie artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -245,10 +259,13 @@ public class Chrome extends Extract implements IngestModuleImage {
                         domain = domain.replaceFirst("^\\.+(?!$)", "");
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, FFSqlitedb.get(j), bbattributes);
-                    } catch (Exception ex) {
-                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
-                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    } catch (UnsupportedEncodingException ex) {
+                            logger.log(Level.SEVERE, "Error decoding Chome cookie URL in " + temps, ex);
+                        errors++;
                     }
+                }
+                if(errors > 0) { 
+                    this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Chrome cookie artifacts.");
                 }
                 j++;
                 dbFile.delete();
@@ -268,10 +285,11 @@ public class Chrome extends Extract implements IngestModuleImage {
         if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                int errors = 0;
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome download artifacts.{0}", ex);
                     this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
@@ -299,10 +317,13 @@ public class Chrome extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", domain));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "Recent Activity", "Chrome"));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, FFSqlitedb.get(j), bbattributes);
-                    } catch (Exception ex) {
-                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
-                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    } catch (UnsupportedEncodingException ex) {
+                        logger.log(Level.SEVERE, "Error decoding Chome download URL in " + temps, ex);
+                        errors++;
                     }
+                }
+                if(errors > 0) {
+                    this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Chrome download artifacts.");
                 }
                 j++;
                 dbFile.delete();
@@ -322,10 +343,12 @@ public class Chrome extends Extract implements IngestModuleImage {
         if (FFSqlitedb != null && !FFSqlitedb.isEmpty()) {
             while (j < FFSqlitedb.size()) {
                 String temps = currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db";
+                int errors = 0;
                 try {
                     ContentUtils.writeToFile(FFSqlitedb.get(j), new File(currentCase.getTempDirectory() + File.separator + FFSqlitedb.get(j).getName().toString() + j + ".db"));
-                } catch (Exception ex) {
-                    logger.log(Level.SEVERE, "Error while trying to write out a sqlite db.{0}", ex);
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error writing temp sqlite db for Chrome login artifacts.{0}", ex);
+                    this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
                 }
                 File dbFile = new File(temps);
                 if (controller.isCancelled()) {
@@ -349,10 +372,13 @@ public class Chrome extends Extract implements IngestModuleImage {
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "Recent Activity", ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : "")));
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "Recent Activity", result.get("signon_realm").toString()));
                         this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, FFSqlitedb.get(j), bbattributes);
-                    } catch (Exception ex) {
-                        logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + temps, ex);
-                        this.addErrorMessage(this.getName() + ": Error while trying to analyze file:" + FFSqlitedb.get(j).getName());
+                    } catch (UnsupportedEncodingException ex) {
+                        logger.log(Level.SEVERE, "Error decoding Chome download URL in " + temps, ex);
+                        errors++;
                     }
+                }
+                if(errors > 0) {
+                    this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Chrome login artifacts.");
                 }
                 j++;
                 dbFile.delete();
