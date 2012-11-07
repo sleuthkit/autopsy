@@ -133,8 +133,7 @@ public final class JavaSystemCaller {
 
             proc = rt.exec(aShell.getShellCommand() + " " + command);
             try {
-                //block, give time to fully stary the process
-                //so if it's restarted solr operations can be resumed seamlessly
+                //give time to fully start the process
                 Thread.sleep(3000);
             } catch (InterruptedException ex) {
             }
@@ -154,7 +153,7 @@ public final class JavaSystemCaller {
             logger.log(Level.INFO, "ExitValue: " + exitVal);
 
             output = outputGobbler.getOutput();
-                
+
             return output;
         }
 
@@ -172,21 +171,12 @@ public final class JavaSystemCaller {
              */ }
 
         public static synchronized void stop() {
-            try {
-                logger.log(Level.INFO, "Stopping Execution of: " + command);
-                //try to graceful shutdown
-                Process stop = Runtime.getRuntime().exec(aShell.getShellCommand() + " " + command);
-                stop.waitFor();
-                //if still running, forcefully stop it
-                if (proc != null) {
-                    proc.destroy();
-                    proc = null;
-                }
 
-            } catch (InterruptedException intex) {
-                logger.log(Level.WARNING, intex.getMessage());
-            } catch (IOException ioex) {
-                logger.log(Level.WARNING, ioex.getMessage());
+            logger.log(Level.INFO, "Stopping Execution of: " + command);
+
+            if (proc != null) {
+                proc.destroy();
+                proc = null;
             }
         }
 
