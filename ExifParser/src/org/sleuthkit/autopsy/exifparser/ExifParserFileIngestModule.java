@@ -22,6 +22,7 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.imaging.jpeg.JpegProcessingException;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
@@ -113,7 +114,7 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
                 
                 if(date != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), MODULE_NAME, date.toString()));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), MODULE_NAME, date.getTime()));
                 }
             }
             
