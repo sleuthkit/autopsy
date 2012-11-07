@@ -87,9 +87,9 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
             doc.appendChild(rootEl);
 
             for (String listName : theLists.keySet()) {
-                if(listName.equals("IP Addresses") || listName.equals("Email Addresses") ||
-                        listName.equals("Phone Numbers") || listName.equals("URLs"))
+                if (builtInLists.contains(listName)) {
                     continue;
+                }
                 KeywordSearchList list = theLists.get(listName);
                 String created = dateFormatter.format(list.getDateCreated());
                 String modified = dateFormatter.format(list.getDateModified());
