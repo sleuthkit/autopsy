@@ -792,6 +792,12 @@ public class IngestManager {
         
          private final TreeMap<AbstractFile, List<IngestModuleAbstractFile>> abstractFileUnits 
                 = new TreeMap<AbstractFile, List<IngestModuleAbstractFile>>(sorter);
+         
+         private final int FAT_NTFS_FLAGS = 
+                        TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue()
+                        | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue()
+                        | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue()
+                        | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
 
         void enqueue(AbstractFile aFile, IngestModuleAbstractFile module) {
             if (shouldEnqueue(aFile) == false) {
@@ -830,6 +836,13 @@ public class IngestManager {
                 
                 //skip files in root dir, starting with $, containing : (not default attributes)
                 //with meta address < 32, i.e. some special large NTFS and FAT files
+                final TskData.TSK_FS_TYPE_ENUM fsType = f.getFileSystem().getFs_type();
+
+                if ( (fsType.getValue() & FAT_NTFS_FLAGS) == 0) {
+                    //not fat or ntfs, accept all files
+                    return true;
+                }
+                
                 boolean isInRootDir = false;
                 try {
                     isInRootDir = f.getParentDirectory().isRoot();
@@ -845,6 +858,9 @@ public class IngestManager {
                             && name.contains(":")) {
                         return false;
                     }
+                }
+                else {
+                    return true;
                 }
                 
             }
