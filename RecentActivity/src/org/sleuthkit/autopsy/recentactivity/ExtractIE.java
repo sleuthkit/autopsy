@@ -94,6 +94,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     boolean pascoFound = false;
     final public static String MODULE_VERSION = "1.0";
     private String args;
+    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     //hide public constructor to prevent from instantiation by ingest module loader
     ExtractIE() {
@@ -464,7 +465,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                                     }
                                     if (!actime.isEmpty()) {
                                         try {
-                                            Long epochtime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(actime).getTime();
+                                            Long epochtime = dateFormatter.parse(actime).getTime();
                                             ftime = epochtime.longValue();
                                             ftime = ftime / 1000;
                                         } catch (ParseException e) {

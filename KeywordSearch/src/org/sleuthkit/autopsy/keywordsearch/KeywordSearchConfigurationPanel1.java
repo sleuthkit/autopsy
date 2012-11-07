@@ -95,7 +95,7 @@ public class KeywordSearchConfigurationPanel1 extends javax.swing.JPanel impleme
                         JOptionPane.PLAIN_MESSAGE,
                         null,
                         null,
-                        currentKeywordList != null ? currentKeywordList : "");
+                        currentKeywordList != null ? currentKeywordList.getName() : "");
                 if (listName == null || listName.trim().equals("")) {
                     return;
                 }
