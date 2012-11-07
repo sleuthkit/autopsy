@@ -29,8 +29,6 @@ import org.sleuthkit.datamodel.FsContent;
  * Nodes (same properties).
  */ 
 public abstract class AbstractFsContentNode<T extends FsContent> extends AbstractAbstractFileNode<T> {
-
-    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss (z)");
     
     // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
 
