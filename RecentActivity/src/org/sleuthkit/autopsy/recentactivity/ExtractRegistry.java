@@ -64,7 +64,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
     ExtractRegistry() {
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false);
         if (rrRoot == null) {
-            logger.log(Level.WARNING, "RegRipper not found");
+            logger.log(Level.SEVERE, "RegRipper not found");
             rrFound = false;
             return;
         } else {
@@ -127,7 +127,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                 ResultSet rs = tempDb.runQuery("select * from tsk_files where lower(name) = 'ntuser.dat' OR lower(parent_path) LIKE '%/system32/config%' and (name LIKE 'system' OR name LIKE 'software' OR name = 'SECURITY' OR name = 'SAM' OR name = 'default')" + allFS);
                 Regfiles = tempDb.resultSetToFsContents(rs);
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
+                logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.{0}", ex);
             }
 
             int j = 0;
@@ -140,7 +140,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                 try {
                     ContentUtils.writeToFile(Regfiles.get(j), new File(currentCase.getTempDirectory() + "\\" + Regfiles.get(j).getName()));
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Error while trying to read into a sqlite db.{0}", ex);
+                    logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.{0}", ex);
                 }
                 File regFile = new File(temps);
                 logger.log(Level.INFO, moduleName + "- Now getting registry information from " + temps);
@@ -160,7 +160,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
 
             }
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error while trying to get Registry files", ex);
+            logger.log(Level.SEVERE, "Error while trying to get Registry files", ex);
         }
 
     }
@@ -199,7 +199,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
 
         } catch (Exception e) {
 
-            logger.log(Level.WARNING, "ExtractRegistry::executeRegRip() -> ", e);
+            logger.log(Level.SEVERE, "ExtractRegistry::executeRegRip() -> ", e);
         }
 
         return txtPath;
@@ -246,7 +246,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                         String Tempdate = time.toString();
                         time = Long.valueOf(Tempdate) / 1000;
                     } catch (ParseException e) {
-                        logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> failed for: " + etime);
+                        logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> failed for: " + etime);
                     }
                 }
                 
@@ -284,7 +284,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                                 utime = Long.valueOf(Tempdate);
                                 utime = utime;
                             } catch (Exception e) {
-                                logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> ", e);
+                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e);
                             }
 
                             BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_DEVICE_ATTACHED);
@@ -305,7 +305,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                                 ftime = epochtime.longValue();
                                 ftime = ftime / 1000;
                             } catch (ParseException e) {
-                                logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> ", e);
+                                logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e);
                             }
                                 //TODO Revisit usage of deprecated constructor as per TSK-583
 //                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", context, time));
@@ -335,7 +335,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
                                     String Tempdate = installtime.toString();
                                     installtime = Long.valueOf(Tempdate) / 1000;
                                 } catch (ParseException e) {
-                                    logger.log(Level.WARNING, "RegRipper::Conversion on DateTime -> ", e);
+                                    logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e);
                                 }
                                     //TODO Revisit usage of deprecated constructor as per TSK-583
 //                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", context, winver));
@@ -371,7 +371,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
             }
         } catch (Exception ex) {
 
-            logger.log(Level.WARNING, "Error while trying to read into a registry file." + ex);
+            logger.log(Level.SEVERE, "Error while trying to read into a registry file." + ex);
         }
         return true;
     }

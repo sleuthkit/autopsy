@@ -303,7 +303,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
                 }
             }
         } catch (TskException e) {
-            logger.log(Level.WARNING, "Encountered error retrieving artifacts", e);
+            logger.log(Level.SEVERE, "Encountered error retrieving artifacts", e);
         } finally {
             if (controller.isCancelled()) {
                 logger.info("Operation terminated by user.");
@@ -337,7 +337,7 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
         init2();
         }
         catch(IOException e){
-            logger.log(Level.WARNING, "Unable to find " + XMLFILE , e);
+            logger.log(Level.SEVERE, "Unable to find " + XMLFILE , e);
         }
     }
 
@@ -353,18 +353,18 @@ public class SearchEngineURLQueryAnalyzer extends Extract implements IngestModul
             xmlinput = xml;
 
             if (!XMLUtil.xmlIsValid(xml, SearchEngineURLQueryAnalyzer.class, XSDFILE)) {
-                logger.log(Level.WARNING, "Error loading Search Engines: could not validate against [" + XSDFILE + "], results may not be accurate.");
+                logger.log(Level.SEVERE, "Error loading Search Engines: could not validate against [" + XSDFILE + "], results may not be accurate.");
             }
            createEngines();
            getSearchEngineNames();
         } catch (IOException e) {
-            logger.log(Level.WARNING, "Was not able to load SEUQAMappings.xml", e);
+            logger.log(Level.SEVERE, "Was not able to load SEUQAMappings.xml", e);
         }
         catch(ParserConfigurationException pce){
-            logger.log(Level.WARNING, "Unable to build XML parser", pce);
+            logger.log(Level.SEVERE, "Unable to build XML parser", pce);
         }
         catch(SAXException sxe){
-            logger.log(Level.WARNING, "Unable to parse XML file", sxe);
+            logger.log(Level.SEVERE, "Unable to parse XML file", sxe);
         }
     }
 
