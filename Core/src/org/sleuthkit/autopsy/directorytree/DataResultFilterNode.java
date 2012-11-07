@@ -60,6 +60,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -232,6 +233,7 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new ViewContextAction("View Source File in Directory", ban));
             }
             File f = ban.getLookup().lookup(File.class);
+            LayoutFile lf = null;
             if (f != null) {
                 actions.add(null); // creates a menu separator
                 actions.add(new NewWindowViewAction("View in New Window", new FileNode(f)));
@@ -239,11 +241,23 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(null); // creates a menu separator
                 actions.add(new ExtractAction("Extract File", new FileNode(f)));
                 actions.add(new HashSearchAction("Search for files with the same MD5 hash", new FileNode(f)));
+                actions.add(null); // creates a menu separator
+                actions.add(new FileBookmarkAction("Bookmark File", f));
             }
-            if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+            else if ( ( lf = ban.getLookup().lookup(LayoutFile.class)) != null) {
+                actions.add(null); // creates a menu separator
+                actions.add(new NewWindowViewAction("View in New Window", new LayoutFileNode(lf)));
+                actions.add(new ExternalViewerAction("Open in External Viewer", new LayoutFileNode(lf)));
+                actions.add(null); // creates a menu separator
+                actions.add(new ExtractAction("Extract File", new LayoutFileNode(lf)));
+                actions.add(null); // creates a menu separator
+                actions.add(new FileBookmarkAction("Bookmark File", lf));
+            }
+            //if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 //actions.add(null); // creates a menu separator
                 //actions.add(new ResultDeleteAction("Delete Result", ba));
-            }
+            //}
+  
             return actions;
         }
 

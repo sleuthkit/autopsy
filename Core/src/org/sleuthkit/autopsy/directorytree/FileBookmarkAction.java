@@ -56,6 +56,13 @@ public class FileBookmarkAction extends AbstractAction {
         bookmarkFile = content.accept(initializer);
         this.setEnabled(bookmarkFile != null);
     }
+    
+    FileBookmarkAction(String title, Content content) {
+        super(title);
+
+        bookmarkFile = content.accept(initializer);
+        this.setEnabled(bookmarkFile != null);
+    }
 
     /**
      * Returns the FsContent if it is supported, otherwise null
