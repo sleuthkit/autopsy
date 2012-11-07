@@ -30,6 +30,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -112,9 +113,8 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
             ExifSubIFDDirectory exifDir = metadata.getDirectory(ExifSubIFDDirectory.class);
             if(exifDir != null) {
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
-                
                 if(date != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), MODULE_NAME, date.getTime()));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), MODULE_NAME, date.getTime()/1000));
                 }
             }
             
