@@ -303,7 +303,9 @@ public class Server {
 
 
 
-                final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR + " -DSTOP.PORT=" + currentSolrStopPort + " -Djetty.port=" + currentSolrServerPort + " -DSTOP.KEY=" + KEY + " "
+                final String SOLR_START_CMD = javaPath + MAX_SOLR_MEM_MB_PAR 
+                        + " -DSTOP.PORT=" + currentSolrStopPort + " -Djetty.port=" + currentSolrServerPort 
+                        + " -DSTOP.KEY=" + KEY + " "
                         + loggingProperties + " -jar start.jar";
                 logger.log(Level.INFO, "Starting Solr using: " + SOLR_START_CMD);
                 curSolrProcess = Runtime.getRuntime().exec(SOLR_START_CMD, null, solrFolder);
