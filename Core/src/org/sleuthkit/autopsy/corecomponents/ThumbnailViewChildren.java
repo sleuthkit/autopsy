@@ -51,7 +51,7 @@ import org.sleuthkit.datamodel.File;
 class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     private static final IsSupportedContentVisitor isSupportedVisitor = new IsSupportedContentVisitor();
-    static final int IMAGES_PER_PAGE = 1000;
+    static final int IMAGES_PER_PAGE = 200;
     private Node parent;
     private final HashMap<Integer, List<Node>> pages = new HashMap<Integer, List<Node>>();
     private int totalImages = 0;
