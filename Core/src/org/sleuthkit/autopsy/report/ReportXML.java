@@ -28,17 +28,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.Element;
-import org.w3c.dom.Document;
-import org.w3c.dom.Comment;
+import javax.xml.parsers.ParserConfigurationException;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
+import org.w3c.dom.Comment;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * Generates an XML report for all the Blackboard Artifacts found in the current case.
@@ -49,6 +50,8 @@ public class ReportXML implements ReportModule {
     private ReportConfiguration reportconfig;
     private String xmlPath;
     private static ReportXML instance = null;
+    private static final Logger logger = Logger.getLogger(ReportXML.class.getName());
+        
 
     public ReportXML() {
     }
@@ -154,7 +157,7 @@ public class ReportXML implements ReportModule {
                     artifact.setAttribute("Name", cont.getName());
                     artifact.setAttribute("Size", filesize.toString());
                 } catch (Exception e) {
-                    Logger.getLogger(ReportXML.class.getName()).log(Level.WARNING, "Visitor content exception occurred:", e);
+                    logger.log(Level.WARNING, "Visitor content exception occurred:", e);
                 }
                 // Get all the attributes for this guy
                 for (BlackboardAttribute tempatt : entry.getValue()) {
@@ -167,11 +170,15 @@ public class ReportXML implements ReportModule {
                     //INVALID_XML_CHARS.matcher(tempvalue).replaceAll("");
                     Element value = ret.createElement("Value");
                               value.setTextContent(tempvalue);
-                    attribute.appendChild(value);        
                     Element context = ret.createElement("Context");
                             context.setTextContent(tempatt.getContext());
+                    Element path = ret.createElement("Path");
+                            String pathStr = skCase.getAbstractFileById(entry.getKey().getObjectID()).getUniquePath();
+                            path.setTextContent(pathStr);
+                    attribute.appendChild(value); 
                     attribute.appendChild(context);
                     artifact.appendChild(attribute);
+                    artifact.appendChild(path);
                     cc++;
                 }
 
@@ -252,8 +259,11 @@ public class ReportXML implements ReportModule {
             xmlPath = currentCase.getCaseDirectory() + File.separator + "Reports" + File.separator + caseName + "-" + datenotime + ".xml";
             this.save(xmlPath);
 
-        } catch (Exception e) {
-            Logger.getLogger(ReportXML.class.getName()).log(Level.WARNING, "Exception occurred", e);
+        } catch (TskCoreException tce) {
+            logger.log(Level.WARNING, "Exception occurred", tce);
+        }
+        catch(ParserConfigurationException pce){
+            logger.log(Level.WARNING, "Could not create XML parser", pce);
         }
 
         return xmlPath;
