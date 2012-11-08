@@ -22,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.logging.Level;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -62,5 +63,23 @@ public class EscapeUtil {
             //should not happen
             return "";
         }
+    }
+    
+    /**
+     * Escape html 
+     * @param toEscape text (with html tags) to escape
+     * @return html-escaped string
+     */
+    public static String escapeHtml(String toEscape) {
+        return StringEscapeUtils.escapeHtml(toEscape);
+    }
+    
+    /**
+     * Unescape html
+     * @param toUnescape text (potentially escaped html) to unescape
+     * @return html unescaped string
+     */
+    public static String unEscapeHtml(String toUnescape) {
+        return StringEscapeUtils.unescapeHtml(toUnescape);
     }
 }
