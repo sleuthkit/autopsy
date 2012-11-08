@@ -59,6 +59,7 @@ import org.sleuthkit.autopsy.datamodel.SearchFiltersNode;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskException;
@@ -234,6 +235,7 @@ public class DataResultFilterNode extends FilterNode {
             }
             File f = ban.getLookup().lookup(File.class);
             LayoutFile lf = null;
+            Directory d = null;
             if (f != null) {
                 actions.add(null); // creates a menu separator
                 actions.add(new NewWindowViewAction("View in New Window", new FileNode(f)));
@@ -241,8 +243,25 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(null); // creates a menu separator
                 actions.add(new ExtractAction("Extract File", new FileNode(f)));
                 actions.add(new HashSearchAction("Search for files with the same MD5 hash", new FileNode(f)));
+                
+                //add file bookmark if itself is not a file bookmark
+                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
+                    actions.add(null); // creates a menu separator
+                    actions.add(new FileBookmarkAction("Bookmark File", f));
+                }
+            }
+             if (( d = ban.getLookup().lookup(Directory.class)) != null) {
                 actions.add(null); // creates a menu separator
-                actions.add(new FileBookmarkAction("Bookmark File", f));
+                actions.add(new NewWindowViewAction("View in New Window", new DirectoryNode(d)));
+                actions.add(new ExternalViewerAction("Open in External Viewer", new DirectoryNode(d)));
+                actions.add(null); // creates a menu separator
+                actions.add(new ExtractAction("Extract Directory", new DirectoryNode(d)));
+                
+                //add file bookmark if itself is not a file bookmark
+                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
+                    actions.add(null); // creates a menu separator
+                    actions.add(new FileBookmarkAction("Bookmark Directory", d));
+                }
             }
             else if ( ( lf = ban.getLookup().lookup(LayoutFile.class)) != null) {
                 actions.add(null); // creates a menu separator
@@ -250,8 +269,12 @@ public class DataResultFilterNode extends FilterNode {
                 actions.add(new ExternalViewerAction("Open in External Viewer", new LayoutFileNode(lf)));
                 actions.add(null); // creates a menu separator
                 actions.add(new ExtractAction("Extract File", new LayoutFileNode(lf)));
-                actions.add(null); // creates a menu separator
-                actions.add(new FileBookmarkAction("Bookmark File", lf));
+                
+                //add file bookmark if itself is not a file bookmark
+                if (artifactTypeID != BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()) {
+                    actions.add(null); // creates a menu separator
+                    actions.add(new FileBookmarkAction("Bookmark File", lf));
+                }
             }
             //if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 //actions.add(null); // creates a menu separator
