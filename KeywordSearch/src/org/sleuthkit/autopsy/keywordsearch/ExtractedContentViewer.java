@@ -33,7 +33,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.datamodel.HighlightLookup;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -424,7 +424,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         //not cached
         try {
-            curContent = StringEscapeUtils.escapeHtml(solrServer.getSolrContent(contentObj, chunkId)).trim();
+            curContent = EscapeUtil.escapeHtml(solrServer.getSolrContent(contentObj, chunkId)).trim();
             StringBuilder sb = new StringBuilder(curContent.length() + 20);
             sb.append("<pre>").append(curContent).append("</pre>");
             curContent = sb.toString();
