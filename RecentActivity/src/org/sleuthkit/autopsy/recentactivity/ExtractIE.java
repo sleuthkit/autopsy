@@ -157,25 +157,21 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
             String domain = Util.extractDomain(url);
-            try {
 
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                //TODO revisit usage of deprecated constructor as per TSK-583
-                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", datetime));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", datetime));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, Favorite, bbattributes);
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+            //TODO revisit usage of deprecated constructor as per TSK-583
+            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", datetime));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", datetime));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
+            this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, Favorite, bbattributes);
 
-                services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
-            } catch (UnsupportedEncodingException ex) {
-                logger.log(Level.SEVERE, "Error decoding Internet Explorer favorite URL for " + Favorite.getName(), ex);
-            }
+            services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
         }
-        if(errors > 0) {
+        if (errors > 0) {
             this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Internet Explorer favorites.");
         }
     }
@@ -207,25 +203,21 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             datetime = Long.valueOf(Tempdate);
             String domain = Util.extractDomain(url);
 
-            try {
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
-                //TODO Revisit usage of deprecated Constructor as of TSK-583
-                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", datetime));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));
-                //TODO Revisit usage of deprecated Constructor as of TSK-583
-                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", (name != null) ? name : ""));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", (name != null) ? name : ""));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, Cookie, bbattributes);
-            } catch (UnsupportedEncodingException ex) {
-                logger.log(Level.SEVERE, "Error decoding the Internet Explorer cookie URL for " + Cookie.getName(), ex);
-            }
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "RecentActivity", url));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(url)));
+            //TODO Revisit usage of deprecated Constructor as of TSK-583
+            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Last Visited", datetime));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", value));
+            //TODO Revisit usage of deprecated Constructor as of TSK-583
+            //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", "Title", (name != null) ? name : ""));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", (name != null) ? name : ""));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
+            this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, Cookie, bbattributes);
         }
-        if(errors > 0) { 
+        if (errors > 0) {
             this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Internet Explorer cookies.");
         }
 
@@ -246,7 +238,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             JLNK lnk = new JLnkParser(new ReadContentInputStream(fav), (int) fav.getSize()).parse();
             String path = lnk.getBestPath();
             Long datetime = Recent.getCrtime();
-            
+
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", path));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", Util.getFileName(path)));
@@ -490,8 +482,6 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
                                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USERNAME.getTypeID(), "RecentActivity", user));
                                         bbart.addAttributes(bbattributes);
-                                    } catch (UnsupportedEncodingException ex) {
-                                        logger.log(Level.SEVERE, "Error decoding URL in Pasco results.", ex);
                                     } catch (TskCoreException ex) {
                                         logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex);
                                     }
