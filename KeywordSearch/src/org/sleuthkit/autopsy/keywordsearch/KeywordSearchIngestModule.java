@@ -33,14 +33,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.solr.client.solrj.SolrServerException;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -958,7 +955,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                                 //hit
                                 detailsSb.append("<tr>");
                                 detailsSb.append("<th>Keyword hit</th>");
-                                detailsSb.append("<td>").append(StringEscapeUtils.escapeHtml(attr.getValueString())).append("</td>");
+                                detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
                                 detailsSb.append("</tr>");
 
                                 //preview
@@ -966,7 +963,7 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
                                 if (attr != null) {
                                     detailsSb.append("<tr>");
                                     detailsSb.append("<th>Preview</th>");
-                                    detailsSb.append("<td>").append(StringEscapeUtils.escapeHtml(attr.getValueString())).append("</td>");
+                                    detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>");
                                     detailsSb.append("</tr>");
 
                                 }
