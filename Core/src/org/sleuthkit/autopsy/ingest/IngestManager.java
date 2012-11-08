@@ -304,14 +304,15 @@ public class IngestManager {
                 //checked all workers
                 if (alreadyRunning == false) {
                     logger.log(Level.INFO, "Starting new image Ingester <" + qu.getKey() + ", " + quModule.getName() + ">");
-                    IngestImageThread newImageWorker = new IngestImageThread(this, qu.getKey(), quModule);
+                      //image modules are now initialized per instance
+                    
+                    IngestModuleInit moduleInit = new IngestModuleInit();
+                    moduleInit.setModuleArgs(quModule.getArguments());
+                    final IngestImageThread newImageWorker = new IngestImageThread(this, qu.getKey(), quModule, moduleInit);
 
                     imageIngesters.add(newImageWorker);
 
-                    //image modules are now initialized per instance
-                    IngestModuleInit moduleInit = new IngestModuleInit();
-                    moduleInit.setModuleArgs(quModule.getArguments());
-                    quModule.init(moduleInit);
+                    //wrap the module in a worker, that will run init, process and complete on the module
                     newImageWorker.execute();
                     IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), quModule.getName());
                 }
@@ -343,7 +344,12 @@ public class IngestManager {
             for (IngestModuleAbstractFile s : abstractFileModules) {
                 IngestModuleInit moduleInit = new IngestModuleInit();
                 moduleInit.setModuleArgs(s.getArguments());
-                s.init(moduleInit);
+                try {
+                    s.init(moduleInit);
+                }
+                catch (Exception e) {
+                    logger.log(Level.SEVERE, "File ingest module failed init(): " + s.getName());
+                }
             }
             abstractFileIngester.execute();
         }
