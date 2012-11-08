@@ -21,22 +21,21 @@
 package org.sleuthkit.autopsy.report;
 
 import java.awt.Desktop;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.*;
 
 /**
@@ -48,6 +47,7 @@ public class ReportXLS implements ReportModule {
     private static String xlsPath = "";
     private ReportConfiguration config;
     private static ReportXLS instance = null;
+    private static final Logger logger = Logger.getLogger(ReportXLS.class.getName());
 
     public ReportXLS() {
         //Empty the workbook first
@@ -243,8 +243,9 @@ public class ReportXLS implements ReportModule {
             sheetKeyword.createRow(0).setRowStyle(style);
             sheetKeyword.getRow(0).createCell(0).setCellValue("Keyword");
             sheetKeyword.getRow(0).createCell(1).setCellValue("File Name");
-            sheetKeyword.getRow(0).createCell(2).setCellValue("Preview");
-            sheetKeyword.getRow(0).createCell(3).setCellValue("Keyword List");
+            sheetKeyword.getRow(0).createCell(2).setCellValue("Path");
+            sheetKeyword.getRow(0).createCell(3).setCellValue("Preview");
+            sheetKeyword.getRow(0).createCell(4).setCellValue("Keyword List");
 
             sheetRecent.setDefaultColumnStyle(1, defaultstyle);
             sheetRecent.createRow(0).setRowStyle(style);
@@ -431,8 +432,9 @@ public class ReportXLS implements ReportModule {
                     Row temp = sheetKeyword.createRow(countedKeyword);
                     temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()));
                     temp.createCell(1).setCellValue(filename);
-                    temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID()));
-                    temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
+                    temp.createCell(2).setCellValue(file.getUniquePath());
+                    temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID()));
+                    temp.createCell(4).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                     countedHash++;
@@ -491,8 +493,8 @@ public class ReportXLS implements ReportModule {
             xlsPath = currentCase.getCaseDirectory() + File.separator + "Reports" + File.separator + caseName + "-" + datenotime + ".xlsx";
             this.save(xlsPath);
 
-        } catch (Exception E) {
-            String test = E.toString();
+        } catch (TskCoreException tce) {
+            logger.log(Level.WARNING, "Could not create XLS report", tce);
         }
 
         return xlsPath;
@@ -505,7 +507,7 @@ public class ReportXLS implements ReportModule {
             wb.write(fos);
             fos.close();
         } catch (IOException e) {
-            Logger.getLogger(ReportXLS.class.getName()).log(Level.WARNING, "Could not write out XLS report!", e);
+            logger.log(Level.WARNING, "Could not write out XLS report!", e);
         }
 
     }
@@ -545,7 +547,7 @@ public class ReportXLS implements ReportModule {
         try {
             Desktop.getDesktop().open(file);
         } catch (IOException e) {
-            Logger.getLogger(ReportXLS.class.getName()).log(Level.WARNING, "Could not open XLS report! ", e);
+            logger.log(Level.WARNING, "Could not open XLS report! ", e);
         }
     }
 }
