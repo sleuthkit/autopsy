@@ -105,6 +105,11 @@ public class ReportHTML implements ReportModule {
         return instance;
     }
 
+    /**
+     * Generate all the data needed for the report.
+     * 
+     * @return path to the index.html file to be opened
+     */
     @Override
     public String generateReport(ReportConfiguration reportConfig) throws ReportModuleException {
         // Reporting variables
@@ -203,6 +208,10 @@ public class ReportHTML implements ReportModule {
         return htmlFolder + "index.html";
     }
     
+    /**
+     * Write the index.css stylesheet.
+     * @param folder path to output folder
+     */
     private void writeCss(String folder) {
         Writer out = null;
         try {
@@ -254,6 +263,10 @@ public class ReportHTML implements ReportModule {
         return header;
     }
     
+    /**
+     * Write the index.css stylesheet.
+     * @param folder path to output folder
+     */
     private void writeIndex(String folder) {
         Writer out = null;
         try {
@@ -289,6 +302,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Write the navigation menu nav.html file.
+     * @param folder path to output folder
+     */
     private void writeNav(String folder) {
         Writer out = null;
         try {
@@ -363,6 +380,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Write the case summary summary.html file.
+     * @param folder path to output folder
+     */
     private void writeSummary(String folder) {
         Writer out = null;
         try {
@@ -421,6 +442,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Given a list of blackboard attributes, return a map of those
+     * attributes to their attribute_type_id.
+     */
     private TreeMap<Integer, String> getAttributes(List<BlackboardAttribute> attList) {
         TreeMap<Integer, String> attributes = new TreeMap<Integer, String>();
         try {
@@ -456,6 +481,9 @@ public class ReportHTML implements ReportModule {
         return attributes;
     }
     
+    /**
+     * Given an obj_id, return the AbstractFile with this id.
+     */
     private AbstractFile getFile(long objId) {
         AbstractFile file = null;
         try {
@@ -466,6 +494,10 @@ public class ReportHTML implements ReportModule {
         return file;
     }
     
+    /**
+     * Write the bookmarks.html file.
+     * @param folder path to output folder
+     */
     private void writeBookmark(String folder) {
         Writer out = null;
         try {
@@ -521,6 +553,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Write the cookies.html file.
+     * @param folder path to output folder
+     */
     private void writeCookie(String folder) {
         Writer out = null;
         try {
@@ -570,6 +606,10 @@ public class ReportHTML implements ReportModule {
         
     }
     
+    /**
+     * Write the history.html file.
+     * @param folder path to output folder
+     */
     private void writeHistory(String folder) {
         Writer out = null;
         try {
@@ -618,6 +658,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Write the downloads.html file.
+     * @param folder path to output folder
+     */
     private void writeDownload(String folder) {
         Writer out = null;
         try {
@@ -665,6 +709,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Write the recent.html file.
+     * @param folder path to output folder
+     */
     private void writeRecent(String folder) {
         Writer out = null;
         try {
@@ -710,6 +758,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Write the trackpoint.html file.
+     * @param folder path to output folder
+     */
     private void writeTrackpoint(String folder) {
         Writer out = null;
         try {
@@ -756,6 +808,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Write the installed.html file.
+     * @param folder path to output folder
+     */
     private void writeInstalled(String folder) {
         Writer out = null;
         try {
@@ -801,6 +857,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Write the keywords.html file.
+     * @param folder path to output folder
+     */
     private void writeKeyword(String folder) {
         Writer out = null;
         try {
@@ -831,6 +891,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Write the device.html file.
+     * @param folder path to output folder
+     */
     private void writeDevice(String folder) {
         Writer out = null;
         try {
@@ -877,6 +941,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Write the search.html file.
+     * @param folder path to output folder
+     */
     private void writeSearch(String folder) {
         Writer out = null;
         try {
@@ -924,6 +992,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Write the exif.html file.
+     * @param folder path to output folder
+     */
     private void writeExif(String folder) {
         Writer out = null;
         try {
@@ -974,6 +1046,10 @@ public class ReportHTML implements ReportModule {
         }
     }
     
+    /**
+     * Write the filebookmarks.html file.
+     * @param folder path to output folder
+     */
     private void writeFileBookmarks(String folder) {
         Writer out = null;
         try {
@@ -1025,6 +1101,10 @@ public class ReportHTML implements ReportModule {
         return name;
     }
 
+    /**
+     * Save this generated report in the given folder path.
+     * @param path to report folder
+     */
     @Override
     public void save(String path) {
         writeCss(path);
