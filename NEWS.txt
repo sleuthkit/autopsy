@@ -5,6 +5,7 @@ New features:
 
 Improvements:
 - Significant performance improvements when adding images.
+- Improved stability when running ingest on multiple images.
 - Removed limit on number of results displayed.
 - Thumbnail viewer - added paging and removed limit of images.
 - Slight improvements in UI performance for large number of results.
