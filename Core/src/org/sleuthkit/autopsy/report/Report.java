@@ -21,21 +21,24 @@
 package org.sleuthkit.autopsy.report;
 
 import java.io.File;
+import java.io.IOException;
+import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import java.sql.*;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.sleuthkit.datamodel.TskCoreException;
 
 public class Report {
+    private static final Logger logger =  Logger.getLogger(Report.class.getName());
 
     private void Report() {
     }
@@ -97,10 +100,13 @@ public class Report {
             tempdbconnect.closeConnection();
 
             File f1 = new File(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
-            boolean success = f1.delete();
              table.append("</tbody></table><br /><br />");
-        } catch (Exception e) {
-            Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);
+        } catch (SQLException sqle) {
+           logger.log(Level.WARNING, "Error ocurred while connecting to database", sqle);
+        } catch(IOException ioe){
+            logger.log(Level.WARNING, "Error ocurred while writing temporary database", ioe);
+        } catch(Exception e){
+            logger.log(Level.WARNING, "Unknown exception occurred", e);
         }
 
         return table.toString();
@@ -150,10 +156,13 @@ public class Report {
             tempdbconnect.closeConnection();
             
             File f1 = new File(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
-            boolean success = f1.delete();
              table.append("</tbody></table><br /><br />");
-        } catch (Exception e) {
-            Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);
+        } catch (SQLException sqle) {
+           logger.log(Level.WARNING, "Error ocurred while connecting to database", sqle);
+        } catch(IOException ioe){
+            logger.log(Level.WARNING, "Error ocurred while writing temporary database", ioe);
+        }catch(Exception e){
+            logger.log(Level.WARNING, "Unknown exception occurred", e);
         }
 
         return table.toString();
@@ -230,9 +239,13 @@ public class Report {
             File f1 = new File(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
             boolean success = f1.delete();
              table.append("</tbody></table><br /><br />");
-
-        } catch (Exception e) {
-            Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);
+             
+        } catch (SQLException sqle) {
+           logger.log(Level.WARNING, "Error ocurred while connecting to database", sqle);
+        } catch(IOException ioe){
+            logger.log(Level.WARNING, "Error ocurred while writing temporary database", ioe);
+        }catch(Exception e){
+            logger.log(Level.WARNING, "Unknown exception occurred", e);
         }
 
         return table.toString();
@@ -261,8 +274,8 @@ public class Report {
                     }
                 }
             }
-        } catch (Exception e) {
-            Logger.getLogger(Report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        } catch (TskCoreException tce) {
+           logger.log(Level.WARNING, "Error ocurred while connecting to database", tce);
         }
 
         return reportMap;
