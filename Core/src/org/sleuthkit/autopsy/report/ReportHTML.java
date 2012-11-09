@@ -328,7 +328,7 @@ public class ReportHTML implements ReportModule {
                 nav.append("<li><a href=\"history.html\" target=\"content\">Web History (").append(countHistory).append(")</a></li>\n");
             }
             if(countDownloads > 0) {
-                nav.append("<li><a href=\"downloads.html\" target=\"content\">Downloads (").append(countDownloads).append(")</a></li>\n");
+                nav.append("<li><a href=\"downloads.html\" target=\"content\">Web Downloads (").append(countDownloads).append(")</a></li>\n");
             }
             if(countRecent > 0) {
                 nav.append("<li><a href=\"recent.html\" target=\"content\">Recent Documents (").append(countRecent).append(")</a></li>\n");
@@ -448,13 +448,9 @@ public class ReportHTML implements ReportModule {
      */
     private TreeMap<Integer, String> getAttributes(List<BlackboardAttribute> attList) {
         TreeMap<Integer, String> attributes = new TreeMap<Integer, String>();
-        try {
-            int size = skCase.getBlackboardAttributeTypes().size();
-            for (int n = 0; n <= size; n++) {
-                attributes.put(n, "");
-            }
-        } catch(TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to fill in blank attributes with spaces, they will be shown as null.");
+        int size = BlackboardAttribute.ATTRIBUTE_TYPE.values().length;
+        for (int n = 0; n <= size; n++) {
+            attributes.put(n, "");
         }
         for (BlackboardAttribute tempatt : attList) {
             if (ReportFilter.cancel == true) {
@@ -668,7 +664,7 @@ public class ReportHTML implements ReportModule {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "downloads.html"), "UTF-8"));
             out.write(generateHead("Web Download Artifacts (" + countDownloads + ")"));
             String title = "<h3>Web Downloads (" + countDownloads + ")</h3>\n";
-            String tableHeader = getTableHead("File", "Source", "Time", "Program", "Path");
+            String tableHeader = getTableHead("URL", "Source", "Time", "Program", "Path");
             out.write(title);
             out.write(tableHeader);
             
@@ -719,7 +715,7 @@ public class ReportHTML implements ReportModule {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "recent.html"), "UTF-8"));
             out.write(generateHead("Recent Document Artifacts (" + countRecent + ")"));
             String title = "<h3>Recent Documents (" + countRecent + ")</h3>\n";
-            String tableHeader = getTableHead("Name", "Path", "Related Shortcut");
+            String tableHeader = getTableHead("Name", "Related Shortcut", "Path");
             out.write(title);
             out.write(tableHeader);
             
@@ -732,8 +728,8 @@ public class ReportHTML implements ReportModule {
                 StringBuilder row = new StringBuilder();
                 row.append("<tr>\n");
                 row.append("<td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</strong></td>\n");
-                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
                 row.append("<td>").append(file != null ? file.getName() : "").append("</td>\n");
+                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
             }

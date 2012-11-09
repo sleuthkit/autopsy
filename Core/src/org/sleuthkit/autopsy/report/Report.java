@@ -38,6 +38,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.openide.util.Exceptions;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 public class Report {
@@ -67,12 +68,12 @@ public class Report {
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_list;");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_name;");
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report;");
-            String temp1 = "CREATE TABLE report_keyword AS SELECT value_text as keyword,blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ";";
+            String temp1 = "CREATE TABLE report_keyword AS SELECT value_text as keyword, blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ";";
             String temp2 = "CREATE TABLE report_preview AS SELECT value_text as preview, blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ";";
             String temp3 = "CREATE TABLE report_exp AS SELECT value_text as exp, blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID() + ";";
             String temp4 = "CREATE TABLE report_list AS SELECT value_text as list, blackboard_attributes.attribute_type_id, blackboard_attributes.artifact_id FROM blackboard_attributes WHERE attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ";";
-            String temp5 = "CREATE TABLE report_name AS SELECT name, report_keyword.artifact_id from tsk_files,blackboard_artifacts, report_keyword WHERE blackboard_artifacts.artifact_id = report_keyword.artifact_id AND blackboard_artifacts.obj_id = tsk_files.obj_id;";
-            String temp6 = "CREATE TABLE report AS SELECT keyword,preview,exp,list,name from report_keyword "
+            String temp5 = "CREATE TABLE report_name AS SELECT name, report_keyword.artifact_id, tsk_files.obj_id as obj_id from tsk_files, blackboard_artifacts, report_keyword WHERE blackboard_artifacts.artifact_id = report_keyword.artifact_id AND blackboard_artifacts.obj_id = tsk_files.obj_id;";
+            String temp6 = "CREATE TABLE report AS SELECT keyword, preview, exp, list, name, obj_id from report_keyword "
                     + "LEFT JOIN report_preview ON report_keyword.artifact_id=report_preview.artifact_id "
                     + "LEFT JOIN report_exp ON report_keyword.artifact_id=report_exp.artifact_id "
                     + "LEFT JOIN report_list ON report_keyword.artifact_id=report_list.artifact_id "
@@ -83,20 +84,27 @@ public class Report {
             tempdbconnect.executeStmt(temp4);
             tempdbconnect.executeStmt(temp5);
             tempdbconnect.executeStmt(temp6);
-            ResultSet uniqueresults = tempdbconnect.executeQry("SELECT keyword, exp, preview, list, name FROM report ORDER BY keyword ASC");
+            ResultSet uniqueresults = tempdbconnect.executeQry("SELECT keyword, exp, preview, list, name, obj_id FROM report ORDER BY keyword ASC");
             String keyword = "";
             while (uniqueresults.next()) {
+                Long objId = uniqueresults.getLong("obj_id");
+                AbstractFile file = null;
+                try {
+                    file = tempDb.getAbstractFileById(objId);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Could not get AbstractFile from TSK ", ex);
+                }
                 StringBuilder table = new StringBuilder();
                 if (uniqueresults.getString("keyword") == null ? keyword == null : uniqueresults.getString("keyword").equals(keyword)) {
                 } else {
                     table.append("</tbody></table><br /><br />\n");
                     keyword = uniqueresults.getString("keyword");
                     table.append("<strong>").append(keyword).append("</strong>\n");
-                    table.append("<table><thead><tr><th>").append("File Name").append("</th><th>Preview</th><th>Keyword List</th></tr><tbody>\n");
+                    table.append("<table><thead><tr><th>").append("File Name").append("</th><th>Preview</th><th>Keyword List</th><th>Path</th></tr><tbody>\n");
                 }
                 table.append("<tr><td>").append(uniqueresults.getString("name")).append("</td>\n");
                 String previewreplace = StringEscapeUtils.escapeHtml(uniqueresults.getString("preview"));
-                table.append("<td>").append(previewreplace.replaceAll("<!", "")).append("</td>").append("<td>").append(uniqueresults.getString("list")).append("<br />(").append(uniqueresults.getString("exp") == null ? keyword : uniqueresults.getString("exp")).append(")").append("</td>").append("</tr>\n");
+                table.append("<td>").append(previewreplace.replaceAll("<!", "")).append("</td>").append("<td>").append(uniqueresults.getString("list")).append("<br />(").append(uniqueresults.getString("exp") == null ? keyword : uniqueresults.getString("exp")).append(")").append("</td>").append("<td>").append(file != null ? file.getUniquePath() : "").append("</td>").append("</tr>\n");
                 out.write(table.toString());
             }
             tempdbconnect.executeStmt("DROP TABLE IF EXISTS report_keyword;");
