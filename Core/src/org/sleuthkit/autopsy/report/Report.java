@@ -38,8 +38,10 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.openide.util.Exceptions;
+import org.sleuthkit.datamodel.TskCoreException;
 
 public class Report {
+    private static final Logger logger =  Logger.getLogger(Report.class.getName());
 
     private void Report() {
     }
@@ -110,12 +112,12 @@ public class Report {
             out.write("</tbody></table><br /><br />");
         } catch (IOException ex) {
             success = false;
-            Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Unable to write to keyword.html file.", ex);
+            logger.log(Level.SEVERE, "Unable to write to keyword.html file.", ex);
         } catch (SQLException ex) {
             success = false;
-            Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Unable to query databased for keyword hits.", ex);
+            logger.log(Level.SEVERE, "Unable to query databased for keyword hits.", ex);
         } catch (Exception ex) {
-            Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Failed to connect to database: {0}", ex);
+            logger.log(Level.SEVERE, "Failed to connect to database: {0}", ex);
         }
 
         return success;
@@ -165,10 +167,13 @@ public class Report {
             tempdbconnect.closeConnection();
             
             File f1 = new File(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
-            boolean success = f1.delete();
              table.append("</tbody></table><br /><br />");
-        } catch (Exception e) {
-            Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);
+        } catch (SQLException sqle) {
+           logger.log(Level.SEVERE, "Error ocurred while connecting to database", sqle);
+        } catch(IOException ioe){
+            logger.log(Level.SEVERE, "Error ocurred while writing temporary database", ioe);
+        }catch(Exception e){
+            logger.log(Level.SEVERE, "Unknown exception occurred", e);
         }
 
         return table.toString();
@@ -245,9 +250,13 @@ public class Report {
             File f1 = new File(currentCase.getTempDirectory() + File.separator + "autopsy-copy.db");
             boolean success = f1.delete();
              table.append("</tbody></table><br /><br />");
-
-        } catch (Exception e) {
-            Logger.getLogger(Report.class.getName()).log(Level.WARNING, "Exception occurred", e);
+             
+        } catch (SQLException sqle) {
+           logger.log(Level.SEVERE, "Error ocurred while connecting to database", sqle);
+        } catch(IOException ioe){
+            logger.log(Level.SEVERE, "Error ocurred while writing temporary database", ioe);
+        }catch(Exception e){
+            logger.log(Level.SEVERE, "Unknown exception occurred", e);
         }
 
         return table.toString();
@@ -276,8 +285,8 @@ public class Report {
                     }
                 }
             }
-        } catch (Exception e) {
-            Logger.getLogger(Report.class.getName()).log(Level.INFO, "Exception occurred", e);
+        } catch (TskCoreException tce) {
+           logger.log(Level.SEVERE, "Error ocurred while connecting to database", tce);
         }
 
         return reportMap;
