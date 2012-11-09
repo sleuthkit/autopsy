@@ -86,10 +86,14 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
         progress.switchToIndeterminate();
 
         imageIngestModuleLock.lock();
-        logger.log(Level.INFO, "Starting module: " + module.getName());
-        progress.setDisplayName(displayName);
-
         try {
+            if (this.isCancelled()) {
+                logger.log(Level.INFO, "Cancelled while pending, module: " + module.getName());
+                return Void.TYPE.newInstance();
+            }
+            logger.log(Level.INFO, "Starting module: " + module.getName());
+            progress.setDisplayName(displayName);
+
             logger.log(Level.INFO, "Initializing module: " + module.getName());
             try {
                 module.init(init);
@@ -118,13 +122,6 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
                 logger.log(Level.INFO, "Done processing of module: " + module.getName()
                         + " took " + timer.getElapsedTimeSecs() + " secs. to process()");
 
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        progress.finish();
-                    }
-                });
-
 
                 //cleanup queues (worker and image/module)
                 manager.removeImageIngestWorker(this);
@@ -152,6 +149,12 @@ public class IngestImageThread extends SwingWorker<Void, Void> {
         } finally {
             //release the lock so next module can run
             imageIngestModuleLock.unlock();
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    progress.finish();
+                }
+            });
             logger.log(Level.INFO, "Done running module: " + module.getName());
         }
     }
