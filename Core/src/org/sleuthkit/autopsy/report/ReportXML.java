@@ -140,6 +140,7 @@ public class ReportXML implements ReportModule {
             Element nodeEmail = ret.createElement("Email-Messages");                                
             Element nodeWebSearch = ret.createElement("Web-Search-Queries");                        
             Element nodeExif = ret.createElement("Exif-Metadata"); 
+            Element nodeTagFile = ret.createElement("File-Tags");
             
             //remove bytes
             Pattern INVALID_XML_CHARS = Pattern.compile("[^\\u0009\\u000A\\u000D\\u0020-\\uD7FF\\uE000-\\uFFFD\uD800\uDC00-\uDBFF\uDFFF]");
@@ -183,18 +184,12 @@ public class ReportXML implements ReportModule {
                 }
 
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
-                    //while (entry.getValue().iterator().hasNext())
-                    // {
-                    //  }
                     nodeGen.appendChild(artifact);
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()) {
-
-
                     nodeWebBookmark.appendChild(artifact);
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
-
                     nodeWebCookie.appendChild(artifact);
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
@@ -231,6 +226,9 @@ public class ReportXML implements ReportModule {
                 if(entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()){
                     nodeExif.appendChild(artifact);
                 }
+                if(entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()){
+                    nodeTagFile.appendChild(artifact);
+                }
                 
 
                 //end of master loop
@@ -251,6 +249,7 @@ public class ReportXML implements ReportModule {
             root.appendChild(nodeEmail);
             root.appendChild(nodeWebSearch);
             root.appendChild(nodeExif);
+            root.appendChild(nodeTagFile);
 
             ret.appendChild(root);
             xmldoc = ret;
