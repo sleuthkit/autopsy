@@ -12,11 +12,13 @@ Improvements:
 - Add Extract action to Unalloc content files (per file).
 - Build scripts enhancements to include module version tracking.
 - Netbeans RCP upgrade from 7.2 to 7.2.1
+- Better HTML report navigation.
 
 Bugfixes:
 - Fixed reading content from multiple file attributes (NTFS, HFS).
 - UI fix for keyword search box when case is changed.
 - Thunderbird parser module fixes.
+- Reporting fixes: fixed missing artifacts (keyword search), better scalability.
 
 
 ---------------- VERSION 3.0.0 --------------
