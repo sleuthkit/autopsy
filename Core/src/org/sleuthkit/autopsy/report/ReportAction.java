@@ -153,6 +153,7 @@ public final class ReportAction extends CallableSystemAction implements Presente
                     filterpanel.setAlignmentY(Component.TOP_ALIGNMENT);
                     filterpanel.setAlignmentX(Component.LEFT_ALIGNMENT);
                     filterpanel.setSize(300, 200);
+                    int placement = 1;
 
                     for (ReportModule m : Lookup.getDefault().lookupAll(ReportModule.class)) {
                         String name = m.getName();
@@ -162,9 +163,17 @@ public final class ReportAction extends CallableSystemAction implements Presente
                         ch.setText(name);
                         ch.setName(m.getClass().getName());
                         ch.setToolTipText(desc);
-                        ch.setSelected(true);
-                        reportList.add(ch);
-                        filterpanel.add(ch, 0);
+                        ch.setSelected(false);
+                        if(m.getName().equals(ReportHTML.getDefault().getName())){
+                            ch.setSelected(true);
+                            reportList.add(0, ch);
+                        }
+                        else{
+                             reportList.add(placement++, ch);
+                        }
+                    }
+                    for(int i = reportList.size()-1; i > -1; i--){
+                        filterpanel.add(reportList.get(i), 0);
                     }
                     Border artborder = BorderFactory.createTitledBorder("Report Data");
                     artpanel.setBorder(artborder);
