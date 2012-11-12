@@ -42,12 +42,12 @@ public abstract class KeywordSearchListsAbstract {
     private static String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;
     protected static final Logger logger = Logger.getLogger(KeywordSearchListsAbstract.class.getName());
     PropertyChangeSupport changeSupport;
-    protected List<String> builtInLists;
+    protected List<String> lockedLists;
 
     public KeywordSearchListsAbstract(String filePath) {
         this.filePath = filePath;
         theLists = new LinkedHashMap<String, KeywordSearchList>();
-        builtInLists = new ArrayList<String>();
+        lockedLists = new ArrayList<String>();
         changeSupport = new PropertyChangeSupport(this);
     }
 
@@ -73,6 +73,9 @@ public abstract class KeywordSearchListsAbstract {
     }
 
     private void prepopulateLists() {
+        if (! theLists.isEmpty()) {
+            return;
+        }
         //phone number
         List<Keyword> phones = new ArrayList<Keyword>();
         phones.add(new Keyword("[(]{0,1}\\d\\d\\d[)]{0,1}[\\.-]\\d\\d\\d[\\.-]\\d\\d\\d\\d", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER));
@@ -91,10 +94,23 @@ public abstract class KeywordSearchListsAbstract {
         //urls.add(new Keyword("ssh://", false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL));
 
         //disable messages for harcoded/locked lists
-        addList("Phone Numbers", phones, false, false, true);
-        addList("IP Addresses", ips, false, false, true);
-        addList("Email Addresses", emails, true, false, true);
-        addList("URLs", urls, false, false, true);
+        String name;
+        
+        name = "Phone Numbers";
+        lockedLists.add(name);
+        addList(name, phones, false, false, true);
+        
+        name = "IP Addresses";
+        lockedLists.add(name);
+        addList(name, ips, false, false, true);
+        
+        name = "Email Addresses";
+        lockedLists.add(name);
+        addList(name, emails, true, false, true);
+        
+        name = "URLs";
+        lockedLists.add(name);
+        addList(name, urls, false, false, true);
     }
 
     /**
@@ -103,8 +119,22 @@ public abstract class KeywordSearchListsAbstract {
     public void reload() {
         boolean created = false;
 
-        theLists.clear();
+        //theLists.clear();
+        //populate only the first time
         prepopulateLists();
+        
+        //reset all the lists other than locked lists (we don't save them to XML)
+        //we want to preserve state of locked lists
+        List<String> toClear = new ArrayList<String>();
+        for (String list : theLists.keySet()) {
+            if (theLists.get(list).isLocked() == false) {
+                toClear.add(list);
+            }
+        }
+        for (String clearList : toClear) {
+            theLists.remove(clearList);
+        } 
+        
         if (!this.listFileExists()) {
             //create new if it doesn't exist
             save();
@@ -258,9 +288,7 @@ public abstract class KeywordSearchListsAbstract {
         boolean replaced = false;
         KeywordSearchList curList = getList(name);
         final Date now = new Date();
-        if (locked) {
-            builtInLists.add(name);
-        }
+
         if (curList == null) {
             theLists.put(name, new KeywordSearchList(name, now, now, useForIngest, ingestMessages, newList, locked));
 //            if (!locked) {
@@ -280,11 +308,14 @@ public abstract class KeywordSearchListsAbstract {
     }
 
     boolean addList(String name, List<Keyword> newList, boolean useForIngest, boolean ingestMessages) {
-        return addList(name, newList, useForIngest, ingestMessages, false);
+        //make sure that the list is readded as a locked/built in list 
+        boolean isLocked = this.lockedLists.contains(name);
+        return addList(name, newList, useForIngest, ingestMessages, isLocked);
     }
 
     boolean addList(String name, List<Keyword> newList) {
-        return addList(name, newList, true, true);
+        boolean isLocked = this.lockedLists.contains(name);
+        return addList(name, newList, true, isLocked);
     }
 
     boolean addList(KeywordSearchList list) {
