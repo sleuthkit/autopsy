@@ -38,6 +38,26 @@ import javax.swing.JPanel;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
+import org.openide.util.Exceptions;
+import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
+import org.openide.util.actions.CallableSystemAction;
+import javax.swing.Action;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
+import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
+import org.openide.util.actions.CallableSystemAction;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import javax.swing.Action;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -49,6 +69,8 @@ import org.openide.util.actions.CallableSystemAction;
 public final class CaseDeleteAction extends CallableSystemAction {
 
     private JPanel caller; // for error handling
+    
+    private static final Logger logger = Logger.getLogger(CaseDeleteAction.class.getName());
 
     /**
      * The constructor for this class
@@ -72,7 +94,7 @@ public final class CaseDeleteAction extends CallableSystemAction {
         String caseName = currentCase.getName();
         if(!caseFolder.exists()){
             // throw an error
-            Logger logger = Logger.getLogger(CaseDeleteAction.class.getName());
+            
             logger.log(Level.WARNING, "Couldn't delete case.", new Exception("The case directory doesn't exist."));
         }
         else{
@@ -83,7 +105,14 @@ public final class CaseDeleteAction extends CallableSystemAction {
 
             Object res = DialogDisplayer.getDefault().notify(d);
             if(res != null && res == DialogDescriptor.YES_OPTION){
-                boolean success = Case.getCurrentCase().deleteCase(caseFolder); // delete the current case
+                boolean success = false;
+                
+                try {
+                    Case.getCurrentCase().deleteCase(caseFolder); // delete the current case
+                    success = true;
+                } catch (CaseActionException ex) {
+                    logger.log(Level.WARNING, "Could not delete the case folder: " + caseFolder);
+                }
 
                 // show notification whether the case has been deleted or it failed to delete...
                 if(!success){
