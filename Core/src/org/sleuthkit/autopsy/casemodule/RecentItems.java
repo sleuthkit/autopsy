@@ -55,14 +55,16 @@ class RecentItems implements ActionListener {
         // check if the file exists
         if(caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())){
             // throw an error here
-            JOptionPane.showMessageDialog(caller, "Error: Case doesn't exist.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(caller, "Error: Case " + caseName + " doesn't exist.", "Error", JOptionPane.ERROR_MESSAGE);
             RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
+            
+            StartupWindow.getInstance().open();
         }
         else {
             try {
                 Case.open(casePath); // open the case
-            } catch (Exception ex) {
-                Logger.getLogger(RecentItems.class.getName()).log(Level.WARNING, "Error: Couldn't open recent case.", ex);
+            } catch (CaseActionException ex) {
+                Logger.getLogger(RecentItems.class.getName()).log(Level.WARNING, "Error: Couldn't open recent case at " + casePath, ex);
             }
         }
     }
