@@ -175,7 +175,7 @@ class AddImageWizardPanel1 implements WizardDescriptor.Panel<WizardDescriptor>, 
         try{
         String lastImageDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_LASTIMAGE);
        
-        component.getImagePathTextField().setText(lastImageDirectory);
+        component.setImagePath(lastImageDirectory);
         
         // Load hash database settings, enable or disable the checkbox
         this.NSRLPath = null;

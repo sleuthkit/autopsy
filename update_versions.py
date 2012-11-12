@@ -176,11 +176,11 @@ def compare_xml(module, apiname_tag, apiname_cur):
     code = jdiff.returncode
     print("Compared XML for " + module.name)
     if code == 100:
-        print("  No changes")
+        print("  No API changes")
     elif code == 101:
-        print("  Changes are backwards compatible")
+        print("  API Changes are backwards compatible")
     elif code == 102:
-        print("  Changes are not backwards compatible")
+        print("  API Changes are not backwards compatible")
     else:
         print("  *Error in XML, most likely an empty module")
     sys.stdout.flush()
@@ -530,6 +530,10 @@ def update_versions(modules, source):
             set_implementation(manifest, versions[1])
             set_release(manifest, versions[2])
             module.set_versions(versions)
+        elif module.ret == 100:
+            versions = [versions[0], versions[1] + 1, versions[2]]
+            set_implementation(manifest, versions[1])
+            module.set_versions(versions)
         elif module.ret == None:
             versions = [Spec("1.0"), 1, 1]
             set_specification(project, manifest, versions[0])
@@ -604,6 +608,13 @@ def print_version_updates(modules):
             output += ("  Current Specification version:\t" + str(versions[0]) + "\n")
             output += ("  Current Implementation version:\t" + str(versions[1]) + "\n")
             output += ("  Current Release version:\t\t" + str(versions[2]) + "\n")
+            output += ("\n")
+            print(output)
+            f.write(output)
+        elif module.ret == 100:
+            output = (module.name + ":\n")
+            output += ("  Current Implementation version:\t" + str(versions[1]) + "\n")
+            output += ("  Updated Implementation version:\t" + str(versions[1] + 1) + "\n")
             output += ("\n")
             print(output)
             f.write(output)
