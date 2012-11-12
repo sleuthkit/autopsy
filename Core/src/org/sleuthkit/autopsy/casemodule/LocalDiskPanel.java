@@ -58,9 +58,15 @@ public class LocalDiskPanel extends ImageTypePanel {
      * Update the JComboBox with the list of disks.
      */
     private void updateDisks() {
+        errorLabel.setText("");
         disks = new ArrayList<LocalDisk>();
-        disks.addAll(PlatformUtil.getPhysicalDrives());
-        disks.addAll(PlatformUtil.getPartitions());
+        List<LocalDisk> physical = PlatformUtil.getPhysicalDrives();
+        List<LocalDisk> local = PlatformUtil.getPartitions();
+        if(physical.isEmpty()) {
+            errorLabel.setText("Warning: You do not have the proper permissions to access your computer's physical drives.");
+        }
+        disks.addAll(physical);
+        disks.addAll(local);
         model = new LocalDiskModel();
         diskComboBox.setModel(model);
         diskComboBox.setSelectedIndex(0);
@@ -77,11 +83,15 @@ public class LocalDiskPanel extends ImageTypePanel {
 
         diskLabel = new javax.swing.JLabel();
         diskComboBox = new javax.swing.JComboBox();
+        errorLabel = new javax.swing.JLabel();
 
-        setMinimumSize(new java.awt.Dimension(0, 43));
-        setPreferredSize(new java.awt.Dimension(485, 43));
+        setMinimumSize(new java.awt.Dimension(0, 60));
+        setPreferredSize(new java.awt.Dimension(485, 60));
 
         org.openide.awt.Mnemonics.setLocalizedText(diskLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.diskLabel.text")); // NOI18N
+
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.errorLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -90,7 +100,8 @@ public class LocalDiskPanel extends ImageTypePanel {
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(diskLabel)
-                    .addComponent(diskComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(diskComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(errorLabel))
                 .addGap(0, 140, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -98,12 +109,15 @@ public class LocalDiskPanel extends ImageTypePanel {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(diskLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(diskComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(diskComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(errorLabel))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox diskComboBox;
     private javax.swing.JLabel diskLabel;
+    private javax.swing.JLabel errorLabel;
     // End of variables declaration//GEN-END:variables
 
     /**
