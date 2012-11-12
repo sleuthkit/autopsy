@@ -85,7 +85,7 @@
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="containerPanel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="40" max="32767" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
               <Component id="nextLabel" min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -200,7 +200,7 @@
         <Container class="javax.swing.JPanel" name="typePanel">
           <Properties>
             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="[0, 45]"/>
+              <Dimension value="[0, 60]"/>
             </Property>
           </Properties>
 

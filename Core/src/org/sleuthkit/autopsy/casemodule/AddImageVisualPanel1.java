@@ -232,7 +232,7 @@ final class AddImageVisualPanel1 extends JPanel {
 
         timeZoneComboBox.setMaximumRowCount(30);
 
-        typePanel.setMinimumSize(new java.awt.Dimension(0, 45));
+        typePanel.setMinimumSize(new java.awt.Dimension(0, 60));
 
         javax.swing.GroupLayout typePanelLayout = new javax.swing.GroupLayout(typePanel);
         typePanel.setLayout(typePanelLayout);
@@ -338,7 +338,7 @@ final class AddImageVisualPanel1 extends JPanel {
                     .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(containerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
