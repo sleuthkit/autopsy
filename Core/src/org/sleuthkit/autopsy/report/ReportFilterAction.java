@@ -1,6 +1,8 @@
 /*
  * Autopsy Forensic Browser
  *
+ * Copyright 2012 Basis Technology Corp.
+ * 
  * Copyright 2011 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
