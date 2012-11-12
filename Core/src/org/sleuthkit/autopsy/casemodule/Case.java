@@ -19,9 +19,16 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -33,15 +40,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.logging.Level;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
+import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationCleanDialog;
+import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -266,28 +277,18 @@ public class Case {
     private static void checkImagesExist(SleuthkitCase db) {
         Map<Long, String> imgPaths = getImagePaths(db);
         for (Map.Entry<Long, String> entry : imgPaths.entrySet()) {
-            JFileChooser fc = new JFileChooser();
-            FileFilter filter;
             long obj_id = entry.getKey();
             String path = entry.getValue();
-            boolean fileExists = pathExists(path);
+            boolean fileExists = (pathExists(path) ||
+                    driveExists(path));
             if (!fileExists) {
-                filter = AddImageVisualPanel1.allFilter;
-                fc.setMultiSelectionEnabled(false);
-                fc.setFileFilter(filter);
                 int ret = JOptionPane.showConfirmDialog(null, appName + " has detected that one of the images associated with \n"
                         + "this case are missing. Would you like to search for them now?\n"
                         + "Previously, the image was located at:\n" + path
                         + "\nPlease note that you will still be able to browse directories and generate reports\n"
                         + "if you choose No, but you will not be able to view file content or run the ingest process.", "Missing Image", JOptionPane.YES_NO_OPTION);
                 if (ret == JOptionPane.YES_OPTION) {
-                    fc.showOpenDialog(null);
-                    String newPath = fc.getSelectedFile().getPath();
-                    try {
-                        db.setImagePaths(obj_id, Arrays.asList(new String[]{newPath}));
-                    } catch (TskException ex) {
-                        Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error setting image paths", ex);
-                    }
+                    MissingImageDialog.makeDialog(obj_id, db);
                 } else {
                     Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Selected image files don't match old files!");
                 }
@@ -617,6 +618,43 @@ public class Case {
     static boolean isPhysicalDrive(String path) {
         return path.toLowerCase().startsWith(pdisk) ||
                 path.toLowerCase().startsWith(dev);
+    }
+    
+    /**
+     * Does the given string refer to a local drive / partition?
+     */
+    static boolean isPartition(String path) {
+        return path.toLowerCase().startsWith("\\\\.\\") &&
+                path.toLowerCase().endsWith(":");
+    }
+    
+    /**
+     * Does the given drive path exist?
+     * 
+     * @param path to drive
+     * @return true if the drive exists, false otherwise
+     */
+    static boolean driveExists(String path) {
+        // Test the drive by reading the first byte and checking if it's -1
+        BufferedInputStream br = null;
+        try {
+            File tmp = new File(path);
+            br = new BufferedInputStream(new FileInputStream(tmp));
+            int b = br.read();
+            if(b!=-1) {
+                return true;
+            }
+            return false;
+        } catch(Exception ex) {
+            return false;
+        } finally {
+            try {
+                if(br != null) {
+                    br.close();
+                }
+            } catch (IOException ex) {
+            }
+        }
     }
 
     /**
