@@ -87,7 +87,7 @@ public class KeywordSearchListsXML extends KeywordSearchListsAbstract{
             doc.appendChild(rootEl);
 
             for (String listName : theLists.keySet()) {
-                if (builtInLists.contains(listName)) {
+                if (theLists.get(listName).isLocked() == true) {
                     continue;
                 }
                 KeywordSearchList list = theLists.get(listName);
