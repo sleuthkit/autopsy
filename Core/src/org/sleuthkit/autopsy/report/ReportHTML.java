@@ -522,7 +522,7 @@ public class ReportHTML implements ReportModule {
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>\n");
-                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
+                row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 // Write the row to file, so we don't get too cluttered
                 out.write(row.toString());
@@ -576,7 +576,7 @@ public class ReportHTML implements ReportModule {
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>\n");
-                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
+                row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
             }
@@ -629,7 +629,7 @@ public class ReportHTML implements ReportModule {
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>\n");
-                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
+                row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
             }
@@ -680,7 +680,7 @@ public class ReportHTML implements ReportModule {
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</td>\n");
-                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
+                row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
             }
@@ -728,8 +728,8 @@ public class ReportHTML implements ReportModule {
                 StringBuilder row = new StringBuilder();
                 row.append("<tr>\n");
                 row.append("<td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID())).append("</strong></td>\n");
-                row.append("<td>").append(file != null ? file.getName() : "").append("</td>\n");
-                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
+                row.append("<td>").append(file !=null ? file.getName() : "").append("</td>\n");
+                row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
             }
@@ -777,9 +777,9 @@ public class ReportHTML implements ReportModule {
                 StringBuilder row = new StringBuilder();
                 row.append("<tr>\n");
                 row.append("<td>").append(objId.toString()).append("</td>\n");
-                row.append("<td><strong>").append(file.getName().toString()).append("</strong></td>\n");
+                row.append("<td><strong>").append(file != null ? file.getName().toString() : "").append("</strong></td>\n");
                 row.append("<td>").append(fileSize.toString()).append("</td>\n");
-                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
+                row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
             }
@@ -828,7 +828,7 @@ public class ReportHTML implements ReportModule {
                 row.append("<tr>\n");
                 row.append("<td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID())).append("</strong></td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>\n");
-                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
+                row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
             }
@@ -912,7 +912,7 @@ public class ReportHTML implements ReportModule {
                 row.append("<td><strong>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID())).append("</strong></td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID())).append("</td>\n");
-                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
+                row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
             }
@@ -963,7 +963,7 @@ public class ReportHTML implements ReportModule {
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID())).append("</td>\n");
-                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
+                row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
             }
@@ -1017,7 +1017,7 @@ public class ReportHTML implements ReportModule {
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID())).append("</td>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID())).append("</td>\n");
-                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
+                row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
             }
@@ -1065,8 +1065,8 @@ public class ReportHTML implements ReportModule {
                 StringBuilder row = new StringBuilder();
                 row.append("<tr>\n");
                 row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID())).append("</td>\n");
-                row.append("<td>").append(file.getName()).append("</td>\n");
-                row.append("<td>").append(file.getUniquePath()).append("</td>\n");
+                row.append("<td>").append(file != null ? file.getName() : "").append("</td>\n");
+                row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
                 out.write(row.toString());
             }
