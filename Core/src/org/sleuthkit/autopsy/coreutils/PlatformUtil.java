@@ -20,14 +20,24 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.filechooser.FileSystemView;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.casemodule.LocalDisk;
+import org.sleuthkit.datamodel.SleuthkitJNI;
 
 
 /**
@@ -257,5 +267,81 @@ public class PlatformUtil {
         } else {
             return origFilePath;
         }
+    }
+    
+    /**
+     * Get a list of all physical drives attached to the client's machine.
+     * Error threshold of 4 non-existent physical drives before giving up.
+     * 
+     * @return list of physical drives
+     */
+    public static List<LocalDisk> getPhysicalDrives() {
+        List<LocalDisk> drives = new ArrayList<LocalDisk>();
+        // Windows drives
+        if(PlatformUtil.isWindowsOS()) {
+            int n = 0;
+            int breakCount = 0;
+            BufferedInputStream br = null;
+            while(true) {
+                try {
+                    File tmp = new File("\\\\.\\PhysicalDrive" + n);
+                    br = new BufferedInputStream(new FileInputStream(tmp));
+                    int b = br.read();
+                    if(b!=-1) {
+                        String path = "\\\\.\\PhysicalDrive" + n;
+                        drives.add(new LocalDisk("Storage Device " + n, path, SleuthkitJNI.findDeviceSize(path)));
+                        n++;
+                    }
+                } catch(Exception ex) {
+                    if(breakCount > 4) { // Give up after 4 non-existent drives
+                        break;
+                    }
+                    breakCount++;
+                    n++;
+                } finally {
+                    try {
+                        if(br != null) {
+                            br.close();
+                        }
+                    } catch (IOException ex) {
+                    }
+                }
+            }
+        // Linux drives
+        } else {
+            File dev = new File("/dev/");
+            File[] files = dev.listFiles();
+            for(File f: files) {
+                String name = f.getName();
+                if((name.contains("hd") || name.contains("sd")) && f.canRead()) {
+                    drives.add(new LocalDisk("/dev/" + name, "/dev/" + name, f.getTotalSpace()));
+                }
+            }
+            
+        }
+        return drives;
+    }
+    
+    /**
+     * Get a list all all the local drives and partitions on the client's machine.
+     * 
+     * @return list of local drives and partitions
+     */
+    public static List<LocalDisk> getPartitions() {
+        List<LocalDisk> drives = new ArrayList<LocalDisk>();
+        FileSystemView fsv = FileSystemView.getFileSystemView();
+        if(PlatformUtil.isWindowsOS()) {
+            File[] f = File.listRoots();
+            for (int i = 0; i < f.length; i++) {
+                String name = fsv.getSystemDisplayName(f[i]);
+                // Check if it is a drive, readable, and not mapped to the network
+                if(f[i].canRead() && !name.contains("\\\\") && (fsv.isDrive(f[i]) || fsv.isFloppyDrive(f[i]))) {
+                    String path = f[i].getPath();
+                    String diskPath = "\\\\.\\" + path.substring(0, path.length()-1);
+                    drives.add(new LocalDisk(fsv.getSystemDisplayName(f[i]), diskPath, f[i].getTotalSpace()));
+                }
+            }
+        }
+        return drives;
     }
 }

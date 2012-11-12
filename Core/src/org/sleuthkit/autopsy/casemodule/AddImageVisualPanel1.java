@@ -18,28 +18,28 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.io.File;
+import java.awt.BorderLayout;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
-import javax.swing.JFileChooser;
+import javax.swing.ComboBoxModel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.event.ListDataListener;
 
 /**
  * The "Add Image" wizard panel 1. This class is used to design the "form" of
  * the panel 1 for "Add Image" wizard panel.
  *
- * @author jantonius
  */
-final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
-
-    private JFileChooser fc = new JFileChooser();
+final class AddImageVisualPanel1 extends JPanel {
+    
+    enum EVENT {UPDATE_UI, FOCUS_NEXT};
     static final List<String> rawExt = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa"});
     static final String rawDesc = "Raw Images (*.img, *.dd, *.001, *.aa)";
     static GeneralFilter rawFilter = new GeneralFilter(rawExt, rawDesc);
@@ -54,6 +54,9 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
     static final String allDesc = "All Supported Types";
     static GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
     private AddImageWizardPanel1 wizPanel;
+    private ImageTypeModel model;
+    
+    ImageTypePanel currentPanel;
 
     /**
      * Creates new form AddImageVisualPanel1
@@ -62,16 +65,43 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
     AddImageVisualPanel1(AddImageWizardPanel1 wizPanel) {
         initComponents();
         this.wizPanel = wizPanel;
-        fc.setDragEnabled(false);
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setMultiSelectionEnabled(false);
-        fc.addChoosableFileFilter(allFilter);
-        fc.addChoosableFileFilter(rawFilter);
-        fc.addChoosableFileFilter(encaseFilter);
-        fc.setFileFilter(allFilter);
-        imgPathTextField.getDocument().addDocumentListener(this);
-        imgPathTextField.setText("");
         createTimeZoneList();
+        customInit();
+    }
+    
+    private void customInit() {
+        model = new ImageTypeModel();
+        typeComboBox.setModel(model);
+        typeComboBox.setSelectedIndex(0);
+        typePanel.setLayout(new BorderLayout());
+        updateCurrentPanel(ImageFilePanel.getDefault());
+    }
+    
+    /**
+     * Changes the current panel to the given panel.
+     * @param panel instance of ImageTypePanel to change to
+     */
+    private void updateCurrentPanel(ImageTypePanel panel) {
+        currentPanel = panel;
+        typePanel.removeAll();
+        typePanel.add((JPanel) currentPanel, BorderLayout.CENTER);
+        typePanel.validate();
+        typePanel.repaint();
+        currentPanel.addPropertyChangeListener(new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if(evt.getPropertyName().equals(AddImageVisualPanel1.EVENT.UPDATE_UI.toString())) {
+                    updateUI(null);
+                }
+                if(evt.getPropertyName().equals(AddImageVisualPanel1.EVENT.FOCUS_NEXT.toString())) {
+                    wizPanel.moveFocusToNext();
+                }
+            }
+            
+        });
+        currentPanel.setFocus();
+        updateUI(null);
     }
 
     /**
@@ -91,11 +121,15 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
      * @return imagePath  the image path
      */
     public String getImagePath() {
-        return imgPathTextField.getText();
+        return currentPanel.getImagePath();
     }
-
-    public JTextField getImagePathTextField() {
-        return this.imgPathTextField;
+    
+    /**
+     * Sets the image path of the current panel.
+     * @param s the image path to set
+     */
+    public void setImagePath(String s) {
+        currentPanel.setImagePath(s);
     }
     
     /**
@@ -166,165 +200,160 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
     private void initComponents() {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
-        imgPathLabel = new javax.swing.JLabel();
-        imgPathTextField = new javax.swing.JTextField();
-        imgPathBrowserButton = new javax.swing.JButton();
-        this.imgPathBrowserButton.setDefaultCapable(true);
-        this.imgPathBrowserButton.requestFocus();
-        imgInfoLabel = new javax.swing.JLabel();
-        timeZoneComboBox = new javax.swing.JComboBox();
-        timeZoneLabel = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
+        nextLabel = new javax.swing.JLabel();
+        typeTabel = new javax.swing.JLabel();
+        typeComboBox = new javax.swing.JComboBox();
+        containerPanel = new javax.swing.JPanel();
         noFatOrphansCheckbox = new javax.swing.JCheckBox();
-        optionsLabel1 = new javax.swing.JLabel();
+        timeZoneLabel = new javax.swing.JLabel();
+        descLabel = new javax.swing.JLabel();
+        timeZoneComboBox = new javax.swing.JComboBox();
+        typePanel = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        jSeparator1 = new javax.swing.JSeparator();
+        jLabel3 = new javax.swing.JLabel();
+        jSeparator2 = new javax.swing.JSeparator();
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.jLabel2.text")); // NOI18N
 
         setPreferredSize(new java.awt.Dimension(588, 328));
 
-        org.openide.awt.Mnemonics.setLocalizedText(imgPathLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.imgPathLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(nextLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.nextLabel.text")); // NOI18N
 
-        imgPathTextField.setText(org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.imgPathTextField.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(imgPathBrowserButton, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.imgPathBrowserButton.text")); // NOI18N
-        imgPathBrowserButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                imgPathBrowserButtonActionPerformed(evt);
-            }
-        });
-
-        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(imgInfoLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.imgInfoLabel.text")); // NOI18N
-
-        timeZoneComboBox.setMaximumRowCount(30);
-
-        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.timeZoneLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(typeTabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.typeTabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.noFatOrphansCheckbox.text")); // NOI18N
         noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.noFatOrphansCheckbox.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(optionsLabel1, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.optionsLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.timeZoneLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.descLabel.text")); // NOI18N
+
+        timeZoneComboBox.setMaximumRowCount(30);
+
+        typePanel.setMinimumSize(new java.awt.Dimension(0, 60));
+
+        javax.swing.GroupLayout typePanelLayout = new javax.swing.GroupLayout(typePanel);
+        typePanel.setLayout(typePanelLayout);
+        typePanelLayout.setHorizontalGroup(
+            typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        typePanelLayout.setVerticalGroup(
+            typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 144, Short.MAX_VALUE)
+        );
+
+        javax.swing.GroupLayout containerPanelLayout = new javax.swing.GroupLayout(containerPanel);
+        containerPanel.setLayout(containerPanelLayout);
+        containerPanelLayout.setHorizontalGroup(
+            containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(containerPanelLayout.createSequentialGroup()
+                .addGap(20, 20, 20)
+                .addGroup(containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(typePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(containerPanelLayout.createSequentialGroup()
+                        .addGroup(containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(timeZoneLabel)
+                            .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(noFatOrphansCheckbox)
+                            .addGroup(containerPanelLayout.createSequentialGroup()
+                                .addGap(21, 21, 21)
+                                .addComponent(descLabel)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        containerPanelLayout.setVerticalGroup(
+            containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(containerPanelLayout.createSequentialGroup()
+                .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(timeZoneLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(11, 11, 11)
+                .addComponent(noFatOrphansCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(descLabel))
+        );
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.jLabel1.text")); // NOI18N
+
+        jSeparator1.setForeground(new java.awt.Color(102, 102, 102));
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.jLabel3.text")); // NOI18N
+
+        jSeparator2.setForeground(new java.awt.Color(102, 102, 102));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(containerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(imgInfoLabel)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                            .addComponent(timeZoneLabel)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 253, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                            .addComponent(imgPathLabel)
-                            .addGap(18, 18, 18)
-                            .addComponent(imgPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 389, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(imgPathBrowserButton)))
-                    .addComponent(optionsLabel1)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(noFatOrphansCheckbox)))
-                .addContainerGap(39, Short.MAX_VALUE))
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jSeparator2))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jSeparator1))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(10, 10, 10)
+                                .addComponent(typeTabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 292, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 54, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(imgInfoLabel)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(imgPathLabel)
-                    .addComponent(imgPathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(imgPathBrowserButton))
-                .addGap(26, 26, 26)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(timeZoneLabel)
-                    .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(optionsLabel1)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel1)
+                    .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(noFatOrphansCheckbox)
-                .addGap(18, 18, Short.MAX_VALUE)
-                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(20, 20, 20))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(typeTabel)
+                    .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel3)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(8, 8, 8)
+                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(containerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * When the "Browse" button is pressed, open the file chooser window to
-     * select the images.
-     *
-     * @param evt  the action event
-     */
-    private void imgPathBrowserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_imgPathBrowserButtonActionPerformed
-        
-        String oldText = imgPathTextField.getText();
-        // set the current directory of the FileChooser if the ImagePath Field is valid
-        File currentDir = new File(oldText);
-        if (currentDir.exists()) {
-            fc.setCurrentDirectory(currentDir);
-        }
-
-        int retval = fc.showOpenDialog(this);
-        if (retval == JFileChooser.APPROVE_OPTION) {
-            String path = fc.getSelectedFile().getPath();
-            imgPathTextField.setText(path);
-        }
-
-
-        this.wizPanel.moveFocusToNext();
-}//GEN-LAST:event_imgPathBrowserButtonActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
-    private javax.swing.JLabel imgInfoLabel;
-    private javax.swing.JButton imgPathBrowserButton;
-    private javax.swing.JLabel imgPathLabel;
-    private static javax.swing.JTextField imgPathTextField;
+    private javax.swing.JPanel containerPanel;
+    private javax.swing.JLabel descLabel;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JLabel nextLabel;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
-    private javax.swing.JLabel optionsLabel1;
     private javax.swing.JComboBox timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
+    private javax.swing.JComboBox typeComboBox;
+    private javax.swing.JPanel typePanel;
+    private javax.swing.JLabel typeTabel;
     // End of variables declaration//GEN-END:variables
-
-    /**
-     * Gives notification that there was an insert into the document.  The
-     * range given by the DocumentEvent bounds the freshly inserted region.
-     *
-     * @param e the document event
-     */
-    @Override
-    public void insertUpdate(DocumentEvent e) {
-        updateUI(e);
-    }
-
-    /**
-     * Gives notification that a portion of the document has been
-     * removed.  The range is given in terms of what the view last
-     * saw (that is, before updating sticky positions).
-     *
-     * @param e the document event
-     */
-    @Override
-    public void removeUpdate(DocumentEvent e) {
-        updateUI(e);
-    }
-
-    /**
-     * Gives notification that an attribute or set of attributes changed.
-     *
-     * @param e the document event
-     */
-    @Override
-    public void changedUpdate(DocumentEvent e) {
-        updateUI(e);
-    }
 
     /**
      * The "listener" that updates the UI of this panel based on the changes of
@@ -335,15 +364,44 @@ final class AddImageVisualPanel1 extends JPanel implements DocumentListener {
      * @param e  the document event
      */
     public void updateUI(DocumentEvent e) {
-        String imgPath = imgPathTextField.getText();
-        boolean isExist = Case.pathExists(imgPath);
-        // File imgFile = new File(imgPath);
+        this.wizPanel.enableNextButton(currentPanel.enableNext());
+    }
+    
+    /**
+     * ComboBoxModel to control typeComboBox and supply ImageTypePanels.
+     */
+    private class ImageTypeModel implements ComboBoxModel {
+        ImageTypePanel selected;
+        ImageTypePanel[] types = ImageTypePanel.getPanels();
 
-        // check if the given path is to an image file
-        // boolean isImagePath = allFilter.accept(imgFile);
-        // check if the given path is to a physical drive
-        boolean isPhysicalDrive = Case.isPhysicalDrive(imgPath);
+        @Override
+        public void setSelectedItem(Object anItem) {
+            selected = (ImageTypePanel) anItem;
+            updateCurrentPanel(selected);
+        }
 
-        this.wizPanel.enableNextButton(isExist || isPhysicalDrive);
+        @Override
+        public Object getSelectedItem() {
+            return selected;
+        }
+
+        @Override
+        public int getSize() {
+            return types.length;
+        }
+
+        @Override
+        public Object getElementAt(int index) {
+            return types[index];
+        }
+
+        @Override
+        public void addListDataListener(ListDataListener l) {
+        }
+
+        @Override
+        public void removeListDataListener(ListDataListener l) {
+        }
+        
     }
 }
