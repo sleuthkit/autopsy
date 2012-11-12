@@ -187,18 +187,18 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                 CueBannerPanel.closeOpenRecentCasesWindow();
             }
             catch(Exception ex){
-                logger.log(Level.WARNING, "Error: couldn't open case.", ex);
+                logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex);
             }
             // Open the recent cases
             try {
                 if(caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())){
-                    JOptionPane.showMessageDialog(null, "Error: Case doesn't exist.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Error: Case " + caseName + " doesn't exist.", "Error", JOptionPane.ERROR_MESSAGE);
                     RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
                 } else {
                     Case.open(casePath); // open the case
                 }
-            } catch (Exception ex) {
-                logger.log(Level.WARNING, "Error: couldn't open case.", ex);
+            } catch (CaseActionException ex) {
+                logger.log(Level.WARNING, "Error: couldn't open case: " + caseName, ex);
             }
         }
     }
