@@ -63,7 +63,7 @@ public class LocalDiskPanel extends ImageTypePanel {
         List<LocalDisk> physical = PlatformUtil.getPhysicalDrives();
         List<LocalDisk> local = PlatformUtil.getPartitions();
         if(physical.isEmpty()) {
-            errorLabel.setText("Warning: You do not have the proper permissions to access your computer's physical drives.");
+            errorLabel.setText("Physical drives are not listed. On some systems it requires admin permissions (or \"Run as administrator\").");
         }
         disks.addAll(physical);
         disks.addAll(local);
