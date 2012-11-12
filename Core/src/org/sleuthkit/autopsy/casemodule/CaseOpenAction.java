@@ -88,8 +88,10 @@ public final class CaseOpenAction implements ActionListener {
                 }
                 try {
                     Case.open(path); // open the case
-                } catch (Exception ex) {
-                    Logger.getLogger(CaseOpenAction.class.getName()).log(Level.SEVERE, "Error opening case.", ex);
+                } catch (CaseActionException ex) {
+                    JOptionPane.showMessageDialog(null, "Error: could not open the case in folder " + path 
+                            , "Error", JOptionPane.ERROR_MESSAGE);
+                    logger.log(Level.WARNING, "Error opening case in folder " + path, ex);
                 }
             }
         }
