@@ -21,22 +21,21 @@
 package org.sleuthkit.autopsy.report;
 
 import java.awt.Desktop;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.*;
 
 /**
@@ -48,6 +47,7 @@ public class ReportXLS implements ReportModule {
     private static String xlsPath = "";
     private ReportConfiguration config;
     private static ReportXLS instance = null;
+    private static final Logger logger = Logger.getLogger(ReportXLS.class.getName());
 
     public ReportXLS() {
         //Empty the workbook first
@@ -81,6 +81,7 @@ public class ReportXLS implements ReportModule {
         int countEmail = 0;
         int countWebSearch = 0;
         int countExif = 0;
+        int countTagFile = 0;
         for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
             if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO.getTypeID()) {
                 countGen++;
@@ -126,6 +127,9 @@ public class ReportXLS implements ReportModule {
             if(entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()){
                 countExif++;
             }
+            if(entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()){
+                countTagFile++;
+            }
         }
 
         try {
@@ -162,7 +166,7 @@ public class ReportXLS implements ReportModule {
             Sheet sheetEmail = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getDisplayName());
             Sheet sheetWebSearch = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getDisplayName());
             Sheet sheetExif = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getDisplayName());
-
+            Sheet sheetTagFile = wbtemp.createSheet(BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getDisplayName());
             //Bold/underline cell style for the top header rows
             CellStyle style = wbtemp.createCellStyle();
             style.setBorderBottom((short) 2);
@@ -227,17 +231,20 @@ public class ReportXLS implements ReportModule {
             sheetHash.getRow(0).createCell(0).setCellValue("Name");
             sheetHash.getRow(0).createCell(1).setCellValue("Size");
             sheetHash.getRow(0).createCell(2).setCellValue("Hashset Name");
+            sheetHash.getRow(0).createCell(3).setCellValue("Path");
 
             sheetDevice.setDefaultColumnStyle(1, defaultstyle);
             sheetDevice.createRow(0).setRowStyle(style);
             sheetDevice.getRow(0).createCell(0).setCellValue("Name");
             sheetDevice.getRow(0).createCell(1).setCellValue("Serial #");
             sheetDevice.getRow(0).createCell(2).setCellValue("Time");
+            sheetDevice.getRow(0).createCell(3).setCellValue("Path");
 
             sheetInstalled.setDefaultColumnStyle(1, defaultstyle);
             sheetInstalled.createRow(0).setRowStyle(style);
             sheetInstalled.getRow(0).createCell(0).setCellValue("Program Name");
             sheetInstalled.getRow(0).createCell(1).setCellValue("Install Date/Time");
+            sheetInstalled.getRow(0).createCell(2).setCellValue("Path");
 
             sheetKeyword.setDefaultColumnStyle(1, defaultstyle);
             sheetKeyword.createRow(0).setRowStyle(style);
@@ -245,12 +252,14 @@ public class ReportXLS implements ReportModule {
             sheetKeyword.getRow(0).createCell(1).setCellValue("File Name");
             sheetKeyword.getRow(0).createCell(2).setCellValue("Preview");
             sheetKeyword.getRow(0).createCell(3).setCellValue("Keyword List");
+            sheetKeyword.getRow(0).createCell(4).setCellValue("Path");
 
             sheetRecent.setDefaultColumnStyle(1, defaultstyle);
             sheetRecent.createRow(0).setRowStyle(style);
             sheetRecent.getRow(0).createCell(0).setCellValue("Name");
             sheetRecent.getRow(0).createCell(1).setCellValue("Path");
             sheetRecent.getRow(0).createCell(2).setCellValue("Related Shortcut");
+            sheetRecent.getRow(0).createCell(4).setCellValue("Path");
 
             sheetCookie.setDefaultColumnStyle(1, defaultstyle);
             sheetCookie.createRow(0).setRowStyle(style);
@@ -259,12 +268,14 @@ public class ReportXLS implements ReportModule {
             sheetCookie.getRow(0).createCell(2).setCellValue("Name");
             sheetCookie.getRow(0).createCell(3).setCellValue("Value");
             sheetCookie.getRow(0).createCell(4).setCellValue("Program");
+            sheetCookie.getRow(0).createCell(5).setCellValue("Path");
 
             sheetBookmark.setDefaultColumnStyle(1, defaultstyle);
             sheetBookmark.createRow(0).setRowStyle(style);
             sheetBookmark.getRow(0).createCell(0).setCellValue("URL");
             sheetBookmark.getRow(0).createCell(1).setCellValue("Title");
             sheetBookmark.getRow(0).createCell(2).setCellValue("Program");
+            sheetBookmark.getRow(0).createCell(4).setCellValue("Path");
 
             sheetDownload.setDefaultColumnStyle(1, defaultstyle);
             sheetDownload.createRow(0).setRowStyle(style);
@@ -272,6 +283,7 @@ public class ReportXLS implements ReportModule {
             sheetDownload.getRow(0).createCell(1).setCellValue("Source");
             sheetDownload.getRow(0).createCell(2).setCellValue("Time");
             sheetDownload.getRow(0).createCell(3).setCellValue("Program");
+            sheetDownload.getRow(0).createCell(4).setCellValue("Path");
 
             sheetHistory.setDefaultColumnStyle(1, defaultstyle);
             sheetHistory.createRow(0).setRowStyle(style);
@@ -280,6 +292,7 @@ public class ReportXLS implements ReportModule {
             sheetHistory.getRow(0).createCell(2).setCellValue("Referrer");
             sheetHistory.getRow(0).createCell(3).setCellValue("Title");
             sheetHistory.getRow(0).createCell(4).setCellValue("Program");
+            sheetHistory.getRow(0).createCell(5).setCellValue("Path");
 
             sheetEmail.setDefaultColumnStyle(1, defaultstyle);
             sheetEmail.createRow(0).setRowStyle(style);
@@ -298,6 +311,7 @@ public class ReportXLS implements ReportModule {
             sheetWebSearch.getRow(0).createCell(1).setCellValue("Domain");
             sheetWebSearch.getRow(0).createCell(2).setCellValue("Text");
             sheetWebSearch.getRow(0).createCell(3).setCellValue("Last Accesed");
+            sheetWebSearch.getRow(0).createCell(4).setCellValue("Path");
             
             sheetExif.setDefaultColumnStyle(1, defaultstyle);
             sheetExif.createRow(0).setRowStyle(style);
@@ -308,6 +322,13 @@ public class ReportXLS implements ReportModule {
             sheetExif.getRow(0).createCell(4).setCellValue("Latitude");
             sheetExif.getRow(0).createCell(5).setCellValue("Longitude");
             sheetExif.getRow(0).createCell(6).setCellValue("Altitude");
+            sheetExif.getRow(0).createCell(7).setCellValue("Path");
+            
+            sheetTagFile.setDefaultColumnStyle(1, defaultstyle);
+            sheetTagFile.createRow(0).setRowStyle(style);
+            sheetTagFile.getRow(0).createCell(0).setCellValue("Description");
+            sheetTagFile.getRow(0).createCell(1).setCellValue("File Name");
+            sheetTagFile.getRow(0).createCell(2).setCellValue("Path");
 
             for (int i = 0; i < wbtemp.getNumberOfSheets(); i++) {
                 Sheet tempsheet = wbtemp.getSheetAt(i);
@@ -335,6 +356,7 @@ public class ReportXLS implements ReportModule {
             int countedEmail = 0;
             int countedWebSearch = 0;
             int countedExif = 0;
+            int countedTagFile = 0;
 
             //start populating the sheets in the workbook
             for (Entry<BlackboardArtifact, List<BlackboardAttribute>> entry : report.entrySet()) {
@@ -382,6 +404,7 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                     temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    temp.createCell(3).setCellValue(file.getUniquePath());
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()) {
                     countedCookie++;
@@ -391,6 +414,7 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                     temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE.getTypeID()));
                     temp.createCell(4).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    temp.createCell(5).setCellValue(file.getUniquePath());
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
                     countedHistory++;
@@ -400,6 +424,7 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER.getTypeID()));
                     temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getTypeID()));
                     temp.createCell(4).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    temp.createCell(5).setCellValue(file.getUniquePath());
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()) {
                     countedDownload++;
@@ -408,6 +433,7 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()));
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
                     temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    temp.createCell(4).setCellValue(file.getUniquePath());
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID()) {
                     countedRecentObjects++;
@@ -416,6 +442,7 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
                     temp.createCell(2).setCellValue(file.getName());
                     temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
+                    temp.createCell(4).setCellValue(file.getUniquePath());
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TRACKPOINT.getTypeID()) {
                     // sheetTrackpoint.addContent(artifact);
@@ -425,6 +452,7 @@ public class ReportXLS implements ReportModule {
                     Row temp = sheetInstalled.createRow(countedInstalled);
                     temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()));
                     temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    temp.createCell(2).setCellValue(file.getUniquePath());
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                     countedKeyword++;
@@ -433,6 +461,7 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(1).setCellValue(filename);
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID()));
                     temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
+                    temp.createCell(4).setCellValue(file.getUniquePath());
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                     countedHash++;
@@ -440,6 +469,7 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(0).setCellValue(file.getName().toString());
                     temp.createCell(1).setCellValue(filesize.toString());
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
+                    temp.createCell(3).setCellValue(file.getUniquePath());
                 }
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                     countedDevice++;
@@ -447,6 +477,7 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
                     temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID()));
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
+                    temp.createCell(3).setCellValue(file.getUniquePath());
                 }
                 
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
@@ -460,6 +491,7 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(5).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()));
                     temp.createCell(6).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()));
                     temp.createCell(7).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()));
+                    temp.createCell(8).setCellValue(file.getUniquePath());
                 }
                 
                 if (entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY.getTypeID()) {
@@ -469,19 +501,26 @@ public class ReportXLS implements ReportModule {
                     temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()));
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()));
                     temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()));
+                    temp.createCell(4).setCellValue(file.getUniquePath());
                 }
                 if(entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()){
                     countedExif++;
                     Row temp = sheetExif.createRow(countedExif);
-                    temp.createCell(0).setCellValue(currentCase.getSleuthkitCase().getContentById(entry.getKey().getObjectID()).getName());
+                    temp.createCell(0).setCellValue(file.getName());
                     temp.createCell(1).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()));
                     temp.createCell(2).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID()));
                     temp.createCell(3).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID()));
                     temp.createCell(4).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID()));
                     temp.createCell(5).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID()));
                     temp.createCell(6).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID()));
-                    
-                    
+                    temp.createCell(7).setCellValue(file.getUniquePath());
+                }
+                if(entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()){
+                    countedTagFile++;
+                    Row temp = sheetTagFile.createRow(countedTagFile);
+                    temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
+                    temp.createCell(1).setCellValue(file.getName());
+                    temp.createCell(2).setCellValue(file.getUniquePath());
                 }
             }
 
@@ -491,8 +530,8 @@ public class ReportXLS implements ReportModule {
             xlsPath = currentCase.getCaseDirectory() + File.separator + "Reports" + File.separator + caseName + "-" + datenotime + ".xlsx";
             this.save(xlsPath);
 
-        } catch (Exception E) {
-            String test = E.toString();
+        } catch (TskCoreException tce) {
+            logger.log(Level.WARNING, "Could not create XLS report", tce);
         }
 
         return xlsPath;
@@ -505,7 +544,7 @@ public class ReportXLS implements ReportModule {
             wb.write(fos);
             fos.close();
         } catch (IOException e) {
-            Logger.getLogger(ReportXLS.class.getName()).log(Level.WARNING, "Could not write out XLS report!", e);
+            logger.log(Level.WARNING, "Could not write out XLS report!", e);
         }
 
     }
@@ -545,7 +584,7 @@ public class ReportXLS implements ReportModule {
         try {
             Desktop.getDesktop().open(file);
         } catch (IOException e) {
-            Logger.getLogger(ReportXLS.class.getName()).log(Level.WARNING, "Could not open XLS report! ", e);
+            logger.log(Level.WARNING, "Could not open XLS report! ", e);
         }
     }
 }

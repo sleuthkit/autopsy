@@ -103,7 +103,7 @@ public class Util {
                 rt = false;
             }
         } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Error while trying to contact SQLite db.", ex);
+            logger.log(Level.WARNING, "Error checking if image exists, unable to contact sqlite database.", ex);
         }
         return rt;
     }
@@ -235,7 +235,7 @@ public class Util {
                 return results.get(0).getId();
             }
         } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Error retrieving content from DB", ex);
+            logger.log(Level.WARNING, "Error finding ID, unable to contact sqlite database", ex);
         }
         return -1;
     }
@@ -265,7 +265,7 @@ public class Util {
             results = tempdbconnect.executeQry(query);
             tempdbconnect.closeConnection();
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex);
+            logger.log(Level.WARNING, "Error while trying to run sql query: " + query + " : " + connection, ex);
         }
         return results;
     }

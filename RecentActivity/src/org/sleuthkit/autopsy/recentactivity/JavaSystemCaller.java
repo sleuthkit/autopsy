@@ -122,43 +122,38 @@ public final class JavaSystemCaller {
          * empty)
          * @return final output (stdout only)
          */
-        public static String execute(final String aCommand, final String... someParameters) {
+        public static String execute(final String aCommand, final String... someParameters) throws IOException, InterruptedException {
             String output = "";
+            JavaSystemCaller.ExecEnvironmentFactory anExecEnvFactory = getExecEnvironmentFactory(aCommand, someParameters);
+            aShell = anExecEnvFactory.createShell();
+            command = anExecEnvFactory.createCommandLine();
+
+            final Runtime rt = Runtime.getRuntime();
+            logger.log(Level.INFO, "Executing " + aShell.getShellCommand() + " " + command);
+
+            proc = rt.exec(aShell.getShellCommand() + " " + command);
             try {
-                JavaSystemCaller.ExecEnvironmentFactory anExecEnvFactory = getExecEnvironmentFactory(aCommand, someParameters);
-                aShell = anExecEnvFactory.createShell();
-                command = anExecEnvFactory.createCommandLine();
-
-                final Runtime rt = Runtime.getRuntime();
-                logger.log(Level.INFO, "Executing " + aShell.getShellCommand() + " " + command);
-
-                proc = rt.exec(aShell.getShellCommand() + " " + command);
-                try {
-                    //block, give time to fully stary the process
-                    //so if it's restarted solr operations can be resumed seamlessly
-                    Thread.sleep(3000);
-                } catch (InterruptedException ex) {
-                }
-
-                // any error message?
-                final JavaSystemCaller.StreamGobbler errorGobbler = new JavaSystemCaller.StreamGobbler(proc.getErrorStream(), "ERROR");
-
-                // any output?
-                final JavaSystemCaller.StreamGobbler outputGobbler = new JavaSystemCaller.StreamGobbler(proc.getInputStream(), "OUTPUT");
-
-                // kick them off
-                errorGobbler.start();
-                outputGobbler.start();
-
-                // any error???
-                final int exitVal = proc.waitFor();
-                logger.log(Level.INFO, "ExitValue: " + exitVal);
-
-                output = outputGobbler.getOutput();
-
-            } catch (final Throwable t) {
-                logger.log(Level.WARNING, "Error executing command: " + aCommand + " " + someParameters, t);
+                //give time to fully start the process
+                Thread.sleep(3000);
+            } catch (InterruptedException ex) {
             }
+
+            // any error message?
+            final JavaSystemCaller.StreamGobbler errorGobbler = new JavaSystemCaller.StreamGobbler(proc.getErrorStream(), "ERROR");
+
+            // any output?
+            final JavaSystemCaller.StreamGobbler outputGobbler = new JavaSystemCaller.StreamGobbler(proc.getInputStream(), "OUTPUT");
+
+            // kick them off
+            errorGobbler.start();
+            outputGobbler.start();
+
+            // any error???
+            final int exitVal = proc.waitFor();
+            logger.log(Level.INFO, "ExitValue: " + exitVal);
+
+            output = outputGobbler.getOutput();
+
             return output;
         }
 
@@ -176,21 +171,12 @@ public final class JavaSystemCaller {
              */ }
 
         public static synchronized void stop() {
-            try {
-                logger.log(Level.INFO, "Stopping Execution of: " + command);
-                //try to graceful shutdown
-                Process stop = Runtime.getRuntime().exec(aShell.getShellCommand() + " " + command);
-                stop.waitFor();
-                //if still running, forcefully stop it
-                if (proc != null) {
-                    proc.destroy();
-                    proc = null;
-                }
 
-            } catch (InterruptedException intex) {
-                logger.log(Level.WARNING, intex.getMessage());
-            } catch (IOException ioex) {
-                logger.log(Level.WARNING, ioex.getMessage());
+            logger.log(Level.INFO, "Stopping Execution of: " + command);
+
+            if (proc != null) {
+                proc.destroy();
+                proc = null;
             }
         }
 

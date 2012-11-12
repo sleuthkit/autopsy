@@ -22,6 +22,7 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.imaging.jpeg.JpegProcessingException;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.drew.metadata.exif.GpsDirectory;
@@ -29,6 +30,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -111,9 +113,8 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
             ExifSubIFDDirectory exifDir = metadata.getDirectory(ExifSubIFDDirectory.class);
             if(exifDir != null) {
                 Date date = exifDir.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
-                
                 if(date != null) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), MODULE_NAME, date.toString()));
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), MODULE_NAME, date.getTime()/1000));
                 }
             }
             
@@ -130,11 +131,11 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
                 String altitude = gpsDir.getString(GpsDirectory.TAG_GPS_ALTITUDE);
             
  
-                if(latitude!= null && latRef!=null) {
+                if(latitude!= null && latRef!=null && !latitude.isEmpty() && !latRef.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE.getTypeID(), MODULE_NAME, latitude + " " +  latRef));
-                } if(longitude!=null && longRef!=null) {
+                } if(longitude!=null && longRef!=null && !longitude.isEmpty() && !longRef.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_LONGITUDE.getTypeID(), MODULE_NAME, longitude + " " + longRef));
-                } if(altitude!=null) {
+                } if(altitude!=null && !altitude.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_GEO_ALTITUDE.getTypeID(), MODULE_NAME, altitude));
                 }
             }
@@ -146,9 +147,9 @@ public final class ExifParserFileIngestModule implements IngestModuleAbstractFil
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
                 
-                if(model!=null) {
+                if(model!=null && !model.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL.getTypeID(), MODULE_NAME, model));
-                } if(make!=null) {
+                } if(make!=null && !make.isEmpty()) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE.getTypeID(), MODULE_NAME, make));
                 }
             }

@@ -22,6 +22,7 @@ package org.sleuthkit.autopsy.casemodule;
 import java.awt.Dimension;
 import java.awt.Event;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.logging.Level;
 import javax.swing.JTable;
@@ -57,6 +58,10 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         int width = tableScrollPane.getPreferredSize().width;
         imagesTable.getColumnModel().getColumn(0).setPreferredWidth((int) (.30 * width));
         imagesTable.getColumnModel().getColumn(1).setPreferredWidth((int) (.70 * width));
+        // If there are any images, let's select the first one
+        if(imagesTable.getRowCount() > 0) {
+            imagesTable.setRowSelectionInterval(0, 0);
+        }
     }
     
     static OpenRecentCasePanel getInstance() {
@@ -111,6 +116,11 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                 imagesTableMouseClicked(evt);
             }
         });
+        imagesTable.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                imagesTableKeyPressed(evt);
+            }
+        });
         tableScrollPane.setViewportView(imagesTable);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -159,6 +169,12 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_imagesTableMouseClicked
 
+    private void imagesTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_imagesTableKeyPressed
+        if(evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            openCase();
+        }
+    }//GEN-LAST:event_imagesTableKeyPressed
+
     // Open the selected case
     private void openCase() {
         String path = model.getPathAt(imagesTable.getSelectedRow());
@@ -183,7 +199,6 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JTable imagesTable;
-    private javax.swing.JScrollPane imagesTableScrollPane;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JButton openButton;
     private javax.swing.JScrollPane tableScrollPane;

@@ -42,10 +42,12 @@ public abstract class KeywordSearchListsAbstract {
     private static String CUR_LISTS_FILE = PlatformUtil.getUserConfigDirectory() + File.separator + CUR_LISTS_FILE_NAME;
     protected static final Logger logger = Logger.getLogger(KeywordSearchListsAbstract.class.getName());
     PropertyChangeSupport changeSupport;
+    protected List<String> builtInLists;
 
     public KeywordSearchListsAbstract(String filePath) {
         this.filePath = filePath;
         theLists = new LinkedHashMap<String, KeywordSearchList>();
+        builtInLists = new ArrayList<String>();
         changeSupport = new PropertyChangeSupport(this);
     }
 
@@ -92,7 +94,7 @@ public abstract class KeywordSearchListsAbstract {
         addList("Phone Numbers", phones, false, false, true);
         addList("IP Addresses", ips, false, false, true);
         addList("Email Addresses", emails, true, false, true);
-        addList("URLs", urls, true, false, true);
+        addList("URLs", urls, false, false, true);
     }
 
     /**
@@ -256,6 +258,9 @@ public abstract class KeywordSearchListsAbstract {
         boolean replaced = false;
         KeywordSearchList curList = getList(name);
         final Date now = new Date();
+        if (locked) {
+            builtInLists.add(name);
+        }
         if (curList == null) {
             theLists.put(name, new KeywordSearchList(name, now, now, useForIngest, ingestMessages, newList, locked));
 //            if (!locked) {

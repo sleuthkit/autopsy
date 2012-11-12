@@ -75,7 +75,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
             try {
                 module.process(image, controller);
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Exception occurred in " + module.getName(), ex);
+                logger.log(Level.SEVERE, "Exception occurred in " + module.getName(), ex);
                 subCompleted.append(module.getName()).append(" failed - see log for details <br>");
             }
             controller.progress(i + 1);
@@ -95,7 +95,8 @@ public final class RAImageIngestModule implements IngestModuleImage {
                 module.complete();
                 subCompleted.append(module.getName()).append(" complete <br>");
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Exception occurred when completing " + module.getName(), ex);
+                logger.log(Level.SEVERE, "Exception occurred when completing " + module.getName(), ex);
+                subCompleted.append(module.getName()).append(" failed to complete - see log for details <br>");
             }
         }
 
@@ -156,7 +157,7 @@ public final class RAImageIngestModule implements IngestModuleImage {
             try {
                 module.init(initContext);
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Exception during init() of " + module.getName(), ex);
+                logger.log(Level.SEVERE, "Exception during init() of " + module.getName(), ex);
             }
         }
     }
@@ -168,10 +169,10 @@ public final class RAImageIngestModule implements IngestModuleImage {
             try {
                 module.stop();
             } catch (Exception ex) {
-                logger.log(Level.WARNING, "Exception during stop() of " + module.getName(), ex);
+                logger.log(Level.SEVERE, "Exception during stop() of " + module.getName(), ex);
             }
         }
-        logger.log(Level.INFO, "Recent Activity processes properly shutdown.");
+        logger.log(Level.INFO, "Recent Activity processes has been shutdown.");
     }
 
     @Override
