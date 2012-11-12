@@ -198,8 +198,8 @@ public class Case {
      * @param caseNumber the case number
      * @param examiner the examiner for this case
      */
-    static void create(String caseDir, String caseName, String caseNumber, String examiner) throws Exception {
-        Logger.getLogger(Case.class.getName()).log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName});
+    static void create(String caseDir, String caseName, String caseNumber, String examiner) throws CaseActionException {
+        logger.log(Level.INFO, "Creating new case.\ncaseDir: {0}\ncaseName: {1}", new Object[]{caseDir, caseName});
 
         String configFilePath = caseDir + File.separator + caseName + ".aut";
 
@@ -208,7 +208,13 @@ public class Case {
         xmlcm.writeFile();
         
         String dbPath = caseDir + File.separator + "autopsy.db";
-        SleuthkitCase db = SleuthkitCase.newCase(dbPath);
+        SleuthkitCase db = null;
+        try {
+            db = SleuthkitCase.newCase(dbPath);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error creating a case: " + caseName + " in dir " + caseDir, ex);
+            throw new CaseActionException("Error creating a case: " + caseName + " in dir " + caseDir, ex);
+        }
 
         Case newCase = new Case(caseName, caseNumber, examiner, configFilePath, xmlcm, db);
 
@@ -219,10 +225,10 @@ public class Case {
      * Opens the existing case (open the XML config file)
      *
      * @param configFilePath  the path of the configuration file that's opened
-     * @throws Exception
+     * @throws CaseActionException
      */
-    static void open(String configFilePath) throws Exception {
-        Logger.getLogger(Case.class.getName()).log(Level.INFO, "Opening case.\nconfigFilePath: {0}", configFilePath);
+    static void open(String configFilePath) throws CaseActionException {
+        logger.log(Level.INFO, "Opening case.\nconfigFilePath: {0}", configFilePath);
 
         try {
             XMLCaseManagement xmlcm = new XMLCaseManagement();
@@ -235,7 +241,7 @@ public class Case {
             String examiner = xmlcm.getCaseExaminer();
             // if the caseName is "", case / config file can't be opened
             if (caseName.equals("")) {
-                throw new Exception("Case name is blank.");
+                throw new CaseActionException("Case name is blank.");
             }
 
             String caseDir = xmlcm.getCaseDirectory();
@@ -249,10 +255,11 @@ public class Case {
             changeCase(openedCase);
 
         } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Error opening the case: ", ex);
             // close the previous case if there's any
             CaseCloseAction closeCase = SystemAction.get(CaseCloseAction.class);
             closeCase.actionPerformed(null);
-            throw ex;
+            throw new CaseActionException("Error opening the case", ex);
         }
     }
     
@@ -266,7 +273,7 @@ public class Case {
                 }
             }
         } catch (TskException ex) {
-            Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Error getting image paths", ex);
+            logger.log(Level.WARNING, "Error getting image paths", ex);
         }
         return imgPaths;
     }
@@ -290,7 +297,7 @@ public class Case {
                 if (ret == JOptionPane.YES_OPTION) {
                     MissingImageDialog.makeDialog(obj_id, db);
                 } else {
-                    Logger.getLogger(Case.class.getName()).log(Level.WARNING, "Selected image files don't match old files!");
+                    logger.log(Level.WARNING, "Selected image files don't match old files!");
                 }
 
             }
@@ -304,8 +311,8 @@ public class Case {
      * @param imgId  the ID of the image that being added
      * @param timeZone  the timeZone of the image where it's added
      */
-    Image addImage(String imgPath, long imgId, String timeZone) throws Exception {
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Adding image to Case.  imgPath: {0}  ID: {1} TimeZone: {2}", new Object[]{imgPath, imgId, timeZone});
+    Image addImage(String imgPath, long imgId, String timeZone) throws CaseActionException {
+        logger.log(Level.INFO, "Adding image to Case.  imgPath: {0}  ID: {1} TimeZone: {2}", new Object[]{imgPath, imgId, timeZone});
 
         try {
             Image newImage = db.getImageById(imgId);
@@ -313,8 +320,7 @@ public class Case {
             doAddImage();
             return newImage;
         } catch (Exception ex) {
-            // throw an error here
-            throw ex;
+            throw new CaseActionException("Error adding image to the case", ex);
         }
     }
 
@@ -330,22 +336,24 @@ public class Case {
     /**
      * Closes this case. This methods close the xml and clear all the fields.
      */
-    void closeCase() throws Exception {
+    void closeCase() throws CaseActionException {
         changeCase(null);
 
         try {
             this.xmlcm.close(); // close the xmlcm
             this.db.close();
         } catch (Exception e) {
-            throw new Exception("Error while trying to close the current case.", e);
+            throw new CaseActionException("Error while trying to close the current case.", e);
         }
     }
 
     /**
      * Delete this case. This methods delete all folders and files of this case.
+     * @param caseDir case dir to delete
+     * @throws CaseActionException exception throw if case could not be deleted
      */
-    boolean deleteCase(File caseDir) {
-        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "Deleting case.\ncaseDir: {0}", caseDir);
+    void deleteCase(File caseDir) throws CaseActionException {
+        logger.log(Level.INFO, "Deleting case.\ncaseDir: {0}", caseDir);
 
         try {
 
@@ -354,13 +362,12 @@ public class Case {
 
             RecentCases.getInstance().removeRecentCase(this.name, this.configFilePath); // remove it from the recent case
             Case.changeCase(null);
-            return result;
+            if (result == false) {
+                throw new CaseActionException("Error deleting the case dir: " + caseDir);
+            }
         } catch (Exception ex) {
-            // TODO: change to using exceptions instead of return value.
-            // throw an error here
-            Logger logger = Logger.getLogger(Case.class.getName());
-            logger.log(Level.SEVERE, "Error deleting the current case.", ex);
-            return false;
+            logger.log(Level.SEVERE, "Error deleting the current case dir: " + caseDir, ex);
+            throw new CaseActionException("Error deleting the case dir: " + caseDir, ex);
         }
     }
 
@@ -372,7 +379,7 @@ public class Case {
      * @param newCaseName  the new case name
      * @param newPath  the new path
      */
-    void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws Exception {
+    void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
             xmlcm.setCaseName(newCaseName); // set the case
             name = newCaseName; // change the local value
@@ -382,7 +389,7 @@ public class Case {
             doCaseNameChange(newCaseName);
 
         } catch (Exception e) {
-            throw new Exception("Error while trying to update the case name.", e);
+            throw new CaseActionException("Error while trying to update the case name.", e);
         }
     }
 
@@ -392,14 +399,14 @@ public class Case {
      * @param oldExaminer   the old examiner
      * @param newExaminer   the new examiner
      */
-    void updateExaminer(String oldExaminer, String newExaminer) throws Exception {
+    void updateExaminer(String oldExaminer, String newExaminer) throws CaseActionException {
         try {
             xmlcm.setCaseExaminer(newExaminer); // set the examiner
             examiner = newExaminer;
 
             pcs.firePropertyChange(CASE_EXAMINER, oldExaminer, newExaminer);
         } catch (Exception e) {
-            throw new Exception("Error while trying to update the examiner.", e);
+            throw new CaseActionException("Error while trying to update the examiner.", e);
         }
     }
 
@@ -409,14 +416,14 @@ public class Case {
      * @param oldCaseNumber the old case number
      * @param newCaseNumber the new case number
      */
-    void updateCaseNumber(String oldCaseNumber, String newCaseNumber) throws Exception {
+    void updateCaseNumber(String oldCaseNumber, String newCaseNumber) throws CaseActionException {
         try {
             xmlcm.setCaseNumber(newCaseNumber); // set the case number
             number = newCaseNumber;
 
             pcs.firePropertyChange(CASE_NUMBER, oldCaseNumber, newCaseNumber);
         } catch (Exception e) {
-            throw new Exception("Error while trying to update the case number.", e);
+            throw new CaseActionException("Error while trying to update the case number.", e);
         }
     }
 
@@ -587,7 +594,7 @@ public class Case {
             try {
                 timezones.add(TimeZone.getTimeZone(c.getImage().getTimeZone()));
             } catch (TskException ex) {
-                Logger.getLogger(Case.class.getName()).log(Level.INFO, "Error getting time zones", ex);
+                logger.log(Level.INFO, "Error getting time zones", ex);
             }
         }
         return timezones;
@@ -695,13 +702,26 @@ public class Case {
      * to create the case directory
      * @param caseDir   the case directory path
      * @param caseName  the case name
-     * @return boolean  whether the case directory is successfully created or not
+     * @throws CaseActionException throw if could not create the case dir
      */
-    static boolean createCaseDirectory(String caseDir, String caseName) {
+    static void createCaseDirectory(String caseDir, String caseName) throws CaseActionException {
         boolean result = false;
 
+        File caseDirF = new File(caseDir);
+        if (caseDirF.exists()) {
+            if (caseDirF.isFile()) {
+                throw new CaseActionException ("Cannot create case dir, already exists and is not a directory: " + caseDir);
+            }
+            else if (! caseDirF.canRead() || ! caseDirF.canWrite()) {
+                throw new CaseActionException ("Cannot create case dir, already exists and cannot read/write: " + caseDir);
+            }
+        }
+        
         try {
-            result = (new File(caseDir)).mkdirs(); // create root case Directory
+            result = (caseDirF).mkdirs(); // create root case Directory
+            if (result == false) {
+                throw new CaseActionException ("Cannot create case dir: " + caseDir);
+            }
 
             // create the folders inside the case directory
             result = result && (new File(caseDir + File.separator + XMLCaseManagement.EXPORT_FOLDER_RELPATH)).mkdir()
@@ -709,10 +729,11 @@ public class Case {
                     && (new File(caseDir + File.separator + XMLCaseManagement.TEMP_FOLDER_RELPATH)).mkdir()
                     && (new File(caseDir + File.separator + XMLCaseManagement.CACHE_FOLDER_RELPATH)).mkdir();
 
-            return result;
+            if (result == false) {
+                throw new CaseActionException("Could not create case directory: " + caseDir + " for case: " + caseName);
+            }
         } catch (Exception e) {
-            // TODO: change to use execptions instead of return values for error handling
-            return false;
+            throw new CaseActionException("Could not create case directory: " + caseDir + " for case: " + caseName, e);
         }
     }
 
@@ -838,3 +859,4 @@ public class Case {
         }
     }
 }
+

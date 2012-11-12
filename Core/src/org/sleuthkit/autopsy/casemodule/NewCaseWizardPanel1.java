@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
@@ -32,13 +31,14 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
- * The "New Case" wizard panel with a component on it. This class represents 
- * data of wizard step. It defers creation and initialization of UI component
- * of wizard panel into getComponent() method.
+ * The "New Case" wizard panel with a component on it. This class represents
+ * data of wizard step. It defers creation and initialization of UI component of
+ * wizard panel into getComponent() method.
  */
 class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
 
@@ -58,7 +58,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
      * but never displayed, or not all panels are displayed, it is better to
      * create only those which really need to be visible.
      *
-     * @return component  the UI component of this wizard panel
+     * @return component the UI component of this wizard panel
      */
     @Override
     public NewCaseVisualPanel1 getComponent() {
@@ -71,8 +71,8 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     /**
      * Help for this panel. When the panel is active, this is used as the help
      * for the wizard dialog.
-     * 
-     * @return HelpCtx.DEFAULT_HELP  the help for this panel
+     *
+     * @return HelpCtx.DEFAULT_HELP the help for this panel
      */
     @Override
     public HelpCtx getHelp() {
@@ -86,7 +86,8 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
      * Tests whether the panel is finished. If the panel is valid, the "Finish"
      * button will be enabled.
      *
-     * @return boolean  true if all the fields are correctly filled, false otherwise
+     * @return boolean true if all the fields are correctly filled, false
+     * otherwise
      */
     @Override
     public boolean isValid() {
@@ -103,7 +104,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     /**
      * Adds a listener to changes of the panel's validity.
      *
-     * @param l  the change listener to add
+     * @param l the change listener to add
      */
     @Override
     public final void addChangeListener(ChangeListener l) {
@@ -115,7 +116,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     /**
      * Removes a listener to changes of the panel's validity.
      *
-     * @param l  the change listener to move
+     * @param l the change listener to move
      */
     @Override
     public final void removeChangeListener(ChangeListener l) {
@@ -125,8 +126,8 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     }
 
     /**
-     * This method is auto-generated. It seems that this method is used to listen
-     * to any change in this wizard panel.
+     * This method is auto-generated. It seems that this method is used to
+     * listen to any change in this wizard panel.
      */
     protected final void fireChangeEvent() {
         Iterator<ChangeListener> it;
@@ -143,7 +144,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
      * Sets the isFinish variable in this class. isFinish variable is used to
      * determine whether the Finish button should be disabled or not.
      *
-     * @param isFinish  the given parameter (boolean)
+     * @param isFinish the given parameter (boolean)
      */
     public void setIsFinish(Boolean isFinish) {
         this.isFinish = isFinish;
@@ -159,34 +160,33 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
      * or already-modified settings, if the user used the previous and/or next
      * buttons. This method can be called multiple times on one instance of
      * WizardDescriptor.Panel.
-     * 
-     * @param settings  the setting to be read from
+     *
+     * @param settings the setting to be read from
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
         NewCaseVisualPanel1 component = getComponent();
-        try{
-        String lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE);
-        component.getCaseParentDirTextField().setText(lastBaseDirectory);
-        createdDirectory = (String) settings.getProperty("createdDirectory");
-        if(createdDirectory != null && !createdDirectory.equals("")) {
-            logger.log(Level.INFO, "Deleting a case dir in readSettings(): " + createdDirectory);
-            Case.deleteCaseDirectory(new File(createdDirectory));
-        }
-        }
-        catch(Exception e){
-            
+        try {
+            String lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE);
+            component.getCaseParentDirTextField().setText(lastBaseDirectory);
+            createdDirectory = (String) settings.getProperty("createdDirectory");
+            if (createdDirectory != null && !createdDirectory.equals("")) {
+                logger.log(Level.INFO, "Deleting a case dir in readSettings(): " + createdDirectory);
+                Case.deleteCaseDirectory(new File(createdDirectory));
+            }
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Could not read wizard settings in NewCaseWizardPanel1, ", e);
         }
     }
 
     /**
-     * Provides the wizard panel with the opportunity to update the settings 
-     * with its current customized state. Rather than updating its settings
-     * with every change in the GUI, it should collect them, and then only save
-     * them when requested to by this method. This method can be called multiple
+     * Provides the wizard panel with the opportunity to update the settings
+     * with its current customized state. Rather than updating its settings with
+     * every change in the GUI, it should collect them, and then only save them
+     * when requested to by this method. This method can be called multiple
      * times on one instance of WizardDescriptor.Panel.
      *
-     * @param settings  the setting to be stored to
+     * @param settings the setting to be stored to
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
@@ -230,21 +230,21 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                             try {
                                 createDirectory(caseDirPath, caseName);
                             } catch (Exception ex) {
-                                String errorMsg = "Error: Couldn't create directory.";
-                                Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, errorMsg, ex);
+                                String errorMsg = "Error: Couldn't create case parent directory " + caseParentDir;
+                                logger.log(Level.WARNING, errorMsg, ex);
                                 validationError(errorMsg);
                             }
                         }
                         if (res2 != null && res2 == DialogDescriptor.NO_OPTION) {
                             // if user say no
-                            validationError("Prevented from creating base directory.");
+                            validationError("Prevented from creating base directory " + caseDirPath );
                         }
                     } else {
                         try {
                             createDirectory(caseDirPath, caseName);
                         } catch (Exception ex) {
                             String errorMsg = "Error: Couldn't create directory.";
-                            Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, errorMsg, ex);
+                            logger.log(Level.WARNING, errorMsg, ex);
                             validationError(errorMsg);
                         }
                     }
@@ -257,17 +257,22 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
         }
     }
 
-
     private void validationError(String errorMsg) throws WizardValidationException {
         throw new WizardValidationException(this.getComponent(), errorMsg, null);
     }
 
-        /*
+    /*
      * create the directory and create a new case
      */
-    private void createDirectory(final String caseDirPath, final String caseName) throws Exception {
+    private void createDirectory(final String caseDirPath, final String caseName) throws WizardValidationException {
         // try to create the directory with the case name in the choosen parent directory
-        boolean success = Case.createCaseDirectory(caseDirPath, caseName);
+        boolean success = false;
+        try {
+            Case.createCaseDirectory(caseDirPath, caseName);
+            success = true;
+        } catch (CaseActionException ex) {
+            logger.log(Level.SEVERE, "Could not createDirectory for the case, ", ex);
+        }
 
         // check if the directory is successfully created
         if (!success) {
@@ -278,7 +283,9 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
             }
 
             String errorMsg = "ERROR: Could not create the case directory. \nPlease enter a valid Case Name and Directory.";
+            
             validationError(errorMsg);
+            
         } // the new case directory is successfully created
         else {
             createdDirectory = caseDirPath;
@@ -286,7 +293,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
             try {
                 StartupWindow.getInstance().close();
             } catch (Exception ex) {
-                Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Startup window didn't close as expected.", ex);
+                logger.log(Level.WARNING, "Startup window didn't close as expected.", ex);
 
             }
 
