@@ -5,6 +5,7 @@ New features:
 
 Improvements:
 - Significant performance improvements when adding images.
+- Improved stability when running ingest on multiple images.
 - Removed limit on number of results displayed.
 - Thumbnail viewer - added paging and removed limit of images.
 - Slight improvements in UI performance for large number of results.
@@ -12,11 +13,13 @@ Improvements:
 - Add Extract action to Unalloc content files (per file).
 - Build scripts enhancements to include module version tracking.
 - Netbeans RCP upgrade from 7.2 to 7.2.1
+- Better HTML report navigation.
 
 Bugfixes:
 - Fixed reading content from multiple file attributes (NTFS, HFS).
 - UI fix for keyword search box when case is changed.
 - Thunderbird parser module fixes.
+- Reporting fixes: fixed missing artifacts (keyword search), better scalability.
 
 
 ---------------- VERSION 3.0.0 --------------

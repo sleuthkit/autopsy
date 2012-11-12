@@ -72,7 +72,7 @@ class KnownStatusSearchFilter extends AbstractFileSearchFilter<KnownStatusSearch
      * @return un-padded SQL boolean expression
      */
     private String predicateHelper(FileKnown knownStatus) {
-        return "known is " + knownStatus.toLong();
+        return "known is " + knownStatus.getFileKnownValue();
     }
 
     @Override

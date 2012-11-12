@@ -87,7 +87,7 @@ abstract public class Extract implements IngestModuleImage{
             rs.close();
             rs.getStatement().close();
         } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Error while trying to extract files for:" + this.getClass().getName(), ex);
+            logger.log(Level.SEVERE, "Error while trying to extract files for:" + this.getClass().getName(), ex);
             this.addErrorMessage(this.getName() + ": Error while trying to extract files to analyze.");
         }
         return FFSqlitedb;
@@ -106,8 +106,7 @@ abstract public class Extract implements IngestModuleImage{
             BlackboardArtifact bbart = content.newArtifact(type);
             bbart.addAttributes(bbattributes);
         } catch (TskException ex) {
-            logger.log(Level.WARNING, "Error while trying to add an artifact: " + ex);
-            this.addErrorMessage(this.getName() + ": Error while trying to add artifact to case for file:" + content.getName());
+            logger.log(Level.SEVERE, "Error while trying to add an artifact: " + ex);
         }
     }
 
@@ -128,7 +127,7 @@ abstract public class Extract implements IngestModuleImage{
             list = this.resultSetToArrayList(temprs);
             tempdbconnect.closeConnection();
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error while trying to read into a sqlite db." + connectionString, ex);
+            logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + connectionString, ex);
             return new ArrayList<HashMap<String,Object>>();
         }
         return list;

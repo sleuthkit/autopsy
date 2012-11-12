@@ -68,6 +68,8 @@ public abstract class AbstractDataResultViewer extends JPanel implements
                     setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                     try {
                         Node selectedNode = getSelectedNode();
+                        
+                        nodeSelected(selectedNode);
 
                         // DataContent is designed to return only the default viewer
                         DataContent dataContent = Lookup.getDefault().lookup(DataContent.class);
@@ -129,6 +131,13 @@ public abstract class AbstractDataResultViewer extends JPanel implements
     @Override
     public void resetComponent() {
     }
+    
+    /**
+     * Called when a new node has been selected in the result viewer
+     * Can update the viewer, etc.
+     * @param selectedNode the new node currently selected
+     */
+    public abstract void nodeSelected(Node selectedNode);
 
     @Override
     public Component getComponent() {

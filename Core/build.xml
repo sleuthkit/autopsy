@@ -48,7 +48,7 @@
     <target name="getTSKJars" depends="findTSK">
         <property environment="env"/>
         <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel.jar" tofile="${basedir}/release/modules/ext/Tsk_DataModel.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.7.2.jar" tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.7.2.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.7.8-SNAPSHOT.jar" tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.7.8-SNAPSHOT.jar"/>
     </target>
 
   

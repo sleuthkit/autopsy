@@ -42,11 +42,14 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -215,7 +218,8 @@ public class IngestManager {
     }
 
     /**
-     * Multiple image version of execute, enqueues multiple images and
+     * Multiple image version of execute() method.
+     * Enqueues multiple images and
      * associated modules at once
      *
      * @param modules modules to execute on every image
@@ -300,14 +304,15 @@ public class IngestManager {
                 //checked all workers
                 if (alreadyRunning == false) {
                     logger.log(Level.INFO, "Starting new image Ingester <" + qu.getKey() + ", " + quModule.getName() + ">");
-                    IngestImageThread newImageWorker = new IngestImageThread(this, qu.getKey(), quModule);
+                      //image modules are now initialized per instance
+                    
+                    IngestModuleInit moduleInit = new IngestModuleInit();
+                    moduleInit.setModuleArgs(quModule.getArguments());
+                    final IngestImageThread newImageWorker = new IngestImageThread(this, qu.getKey(), quModule, moduleInit);
 
                     imageIngesters.add(newImageWorker);
 
-                    //image modules are now initialized per instance
-                    IngestModuleInit moduleInit = new IngestModuleInit();
-                    moduleInit.setModuleArgs(quModule.getArguments());
-                    quModule.init(moduleInit);
+                    //wrap the module in a worker, that will run init, process and complete on the module
                     newImageWorker.execute();
                     IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), quModule.getName());
                 }
@@ -339,7 +344,12 @@ public class IngestManager {
             for (IngestModuleAbstractFile s : abstractFileModules) {
                 IngestModuleInit moduleInit = new IngestModuleInit();
                 moduleInit.setModuleArgs(s.getArguments());
-                s.init(moduleInit);
+                try {
+                    s.init(moduleInit);
+                }
+                catch (Exception e) {
+                    logger.log(Level.SEVERE, "File ingest module failed init(): " + s.getName());
+                }
             }
             abstractFileIngester.execute();
         }
@@ -772,8 +782,7 @@ public class IngestManager {
      * AbstractFilePriotity
      */
     private class AbstractFileQueue {
-
-        final Comparator<AbstractFile> sorter = new Comparator<AbstractFile>() {
+        private final Comparator<AbstractFile> sorter = new Comparator<AbstractFile>() {
             @Override
             public int compare(AbstractFile q1, AbstractFile q2) {
                 AbstractFilePriotity.Priority p1 = AbstractFilePriotity.getPriority(q1);
@@ -786,38 +795,96 @@ public class IngestManager {
 
             }
         };
-        final TreeMap<AbstractFile, List<IngestModuleAbstractFile>> AbstractFileUnits = new TreeMap<AbstractFile, List<IngestModuleAbstractFile>>(sorter);
+        
+         private final TreeMap<AbstractFile, List<IngestModuleAbstractFile>> abstractFileUnits 
+                = new TreeMap<AbstractFile, List<IngestModuleAbstractFile>>(sorter);
+         
+         private final int FAT_NTFS_FLAGS = 
+                        TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue()
+                        | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue()
+                        | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue()
+                        | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
 
-        void enqueue(AbstractFile AbstractFile, IngestModuleAbstractFile module) {
+        void enqueue(AbstractFile aFile, IngestModuleAbstractFile module) {
+            if (shouldEnqueue(aFile) == false) {
+                return;
+            }
             //AbstractFileUnits.put(AbstractFile, Collections.singletonList(module));
-            List<IngestModuleAbstractFile> modules = AbstractFileUnits.get(AbstractFile);
+            List<IngestModuleAbstractFile> modules = abstractFileUnits.get(aFile);
             if (modules == null) {
                 modules = new ArrayList<IngestModuleAbstractFile>();
-                AbstractFileUnits.put(AbstractFile, modules);
+                abstractFileUnits.put(aFile, modules);
             }
             modules.add(module);
         }
 
-        void enqueue(AbstractFile AbstractFile, List<IngestModuleAbstractFile> modules) {
+        void enqueue(AbstractFile aFile, List<IngestModuleAbstractFile> modules) {
+            if (shouldEnqueue(aFile) == false) {
+                return;
+            }
 
-            List<IngestModuleAbstractFile> oldModules = AbstractFileUnits.get(AbstractFile);
+            List<IngestModuleAbstractFile> oldModules = abstractFileUnits.get(aFile);
             if (oldModules == null) {
                 oldModules = new ArrayList<IngestModuleAbstractFile>();
-                AbstractFileUnits.put(AbstractFile, oldModules);
+                abstractFileUnits.put(aFile, oldModules);
             }
             oldModules.addAll(modules);
         }
+        
+        /**
+         * Check if the file meets criteria to be enqueued, or is a special file that we should skip
+         * @param aFile file to check if should be qneueued of skipped 
+         * @return true if should be enqueued, false otherwise
+         */
+        private boolean shouldEnqueue(AbstractFile aFile) {
+            if (aFile.isVirtual() == false && aFile.isFile() == true) {
+                final File f = (File) aFile;
+                
+                //skip files in root dir, starting with $, containing : (not default attributes)
+                //with meta address < 32, i.e. some special large NTFS and FAT files
+                final TskData.TSK_FS_TYPE_ENUM fsType = f.getFileSystem().getFs_type();
+
+                if ( (fsType.getValue() & FAT_NTFS_FLAGS) == 0) {
+                    //not fat or ntfs, accept all files
+                    return true;
+                }
+                
+                boolean isInRootDir = false;
+                try {
+                    isInRootDir = f.getParentDirectory().isRoot();
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Could not check if should enqueue the file: " + f.getName(), ex );
+                }
+                
+                if (isInRootDir && f.getMeta_addr() < 32) {
+                    String name = f.getName();
+                    
+                    if (name.length() > 0 
+                            && name.charAt(0) == '$'
+                            && name.contains(":")) {
+                        return false;
+                    }
+                }
+                else {
+                    return true;
+                }
+                
+            }
+            
+            
+            return true;
+        }
 
         boolean hasNext() {
-            return !AbstractFileUnits.isEmpty();
+            return !abstractFileUnits.isEmpty();
         }
 
         int getCount() {
-            return AbstractFileUnits.size();
+            return abstractFileUnits.size();
         }
 
         void empty() {
-            AbstractFileUnits.clear();
+            abstractFileUnits.clear();
         }
 
         /**
@@ -831,7 +898,7 @@ public class IngestManager {
             }
 
             //logger.log(Level.INFO, "DEQUE: " + remove.content.getParentPath() + " SIZE: " + toString());
-            return (AbstractFileUnits.pollFirstEntry());
+            return (abstractFileUnits.pollFirstEntry());
         }
 
         /**
@@ -841,7 +908,7 @@ public class IngestManager {
          * @return true if the module is enqueued to do work
          */
         boolean hasModuleEnqueued(IngestModuleAbstractFile module) {
-            for (List<IngestModuleAbstractFile> list : AbstractFileUnits.values()) {
+            for (List<IngestModuleAbstractFile> list : abstractFileUnits.values()) {
                 if (list.contains(module)) {
                     return true;
                 }
@@ -851,7 +918,7 @@ public class IngestManager {
 
         @Override
         public synchronized String toString() {
-            return "AbstractFileQueue, size: " + Integer.toString(AbstractFileUnits.size());
+            return "AbstractFileQueue, size: " + Integer.toString(abstractFileUnits.size());
         }
 
         public String printQueue() {
