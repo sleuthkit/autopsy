@@ -25,6 +25,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.logging.Level;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -35,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 class OpenRecentCasePanel extends javax.swing.JPanel {
 
-    static String[] caseName;
+    static String[] caseNames;
     static String[] casePaths;
     private static Logger logger = Logger.getLogger(OpenRecentCasePanel.class.getName());
     private static OpenRecentCasePanel instance;
@@ -49,7 +50,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
      * Retrieves all the recent cases and adds them to the table.
      */
     private void generateRecentCases() {
-        caseName = RecentCases.getInstance().getRecentCaseNames();
+        caseNames = RecentCases.getInstance().getRecentCaseNames();
         casePaths = RecentCases.getInstance().getRecentCasePaths();
         model = new RecentCasesTableModel();
         imagesTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
@@ -177,8 +178,9 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
 
     // Open the selected case
     private void openCase() {
-        String path = model.getPathAt(imagesTable.getSelectedRow());
-        if(!path.equals("")) {
+        String casePath = casePaths[imagesTable.getSelectedRow()];
+        String caseName = caseNames[imagesTable.getSelectedRow()];
+        if(!casePath.equals("")) {
             // Close the startup menu
             try{
                 StartupWindow.getInstance().close();
@@ -189,7 +191,12 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             }
             // Open the recent cases
             try {
-                Case.open(path); // open the case
+                if(caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())){
+                    JOptionPane.showMessageDialog(null, "Error: Case doesn't exist.", "Error", JOptionPane.ERROR_MESSAGE);
+                    RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
+                } else {
+                    Case.open(casePath); // open the case
+                }
             } catch (Exception ex) {
                 logger.log(Level.WARNING, "Error: couldn't open case.", ex);
             }
@@ -221,7 +228,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         @Override
         public int getRowCount() {
             int count = 0;
-            for(String s: caseName) {
+            for(String s: caseNames) {
                 if(!s.equals("")) {
                     count++;
                 }
@@ -257,7 +264,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             Object ret = null;
             switch (columnIndex) {
                 case 0:
-                    ret = caseName[rowIndex];
+                    ret = caseNames[rowIndex];
                     break;
                 case 1:
                     ret = shortenPath(casePaths[rowIndex]);
@@ -284,13 +291,6 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                         path.substring((path.length() - 20) + path.substring(path.length() - 20).indexOf(File.separator));
             }
             return path;
-        }
-        
-        String getPathAt(int rowIndex) {
-            if(rowIndex == -1) {
-                return "";
-            }
-            return casePaths[rowIndex];
         }
         
     }
