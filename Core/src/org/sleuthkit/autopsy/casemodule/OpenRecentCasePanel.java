@@ -194,7 +194,10 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                     JOptionPane.showMessageDialog(null, "Error: Case " + caseName + " doesn't exist.", "Error", JOptionPane.ERROR_MESSAGE);
                     RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
 
-                    StartupWindow.getInstance().open();
+                     //if case is not opened, open the start window
+                    if (Case.isCaseOpen() == false) {
+                        StartupWindow.getInstance().open();
+                    }
  
                 } else {
                     Case.open(casePath); // open the case

@@ -19,6 +19,7 @@
 
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -58,7 +59,18 @@ class RecentItems implements ActionListener {
             JOptionPane.showMessageDialog(caller, "Error: Case " + caseName + " doesn't exist.", "Error", JOptionPane.ERROR_MESSAGE);
             RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
             
-            StartupWindow.getInstance().open();
+            //if case is not opened, open the start window
+            if (Case.isCaseOpen() == false) {
+                EventQueue.invokeLater(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        StartupWindow.getInstance().open();
+                    }
+                    
+                });
+                
+            }
         }
         else {
             try {
