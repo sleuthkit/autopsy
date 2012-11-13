@@ -18,11 +18,19 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.ComboBoxModel;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import javax.swing.ListCellRenderer;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataListener;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
@@ -34,6 +42,7 @@ public class LocalDiskPanel extends ImageTypePanel {
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private List<LocalDisk> disks;
     private LocalDiskModel model;
+    private int separatorIndex;
 
     /**
      * Creates new form LocalDiskPanel
@@ -62,6 +71,7 @@ public class LocalDiskPanel extends ImageTypePanel {
         disks = new ArrayList<LocalDisk>();
         List<LocalDisk> physical = PlatformUtil.getPhysicalDrives();
         List<LocalDisk> partitions = PlatformUtil.getPartitions();
+        separatorIndex = physical.size() - 1;
         if(physical.isEmpty()) {
             errorLabel.setText("Physical drives were not detected. On some systems it requires admin permissions (or \"Run as administrator\").");
         }
@@ -70,6 +80,7 @@ public class LocalDiskPanel extends ImageTypePanel {
         disks.addAll(partitions);
         model = new LocalDiskModel();
         diskComboBox.setModel(model);
+        diskComboBox.setRenderer(model);
         
         if(physical.isEmpty() && partitions.isEmpty()) {
             if(PlatformUtil.isWindowsOS()) {
@@ -193,7 +204,7 @@ public class LocalDiskPanel extends ImageTypePanel {
         pcs.removePropertyChangeListener(pcl);
     }
     
-    private class LocalDiskModel implements ComboBoxModel {
+    private class LocalDiskModel implements ComboBoxModel, ListCellRenderer {
         LocalDisk selected;
 
         @Override
@@ -223,6 +234,32 @@ public class LocalDiskPanel extends ImageTypePanel {
 
         @Override
         public void removeListDataListener(ListDataListener l) {
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            JPanel panel = new JPanel(new BorderLayout());
+            panel.setBorder(new EmptyBorder(0, 2, 0, 2));
+            JLabel label = new JLabel();
+            if(index == separatorIndex) {
+                panel.add(new JSeparator(JSeparator.HORIZONTAL), BorderLayout.SOUTH);
+            }
+            if (isSelected) {
+                label.setBackground(list.getSelectionBackground());
+                label.setForeground(list.getSelectionForeground());
+                panel.setBackground(list.getSelectionBackground());
+                panel.setForeground(list.getSelectionForeground());
+            } else {
+                label.setBackground(list.getBackground());
+                label.setForeground(list.getForeground());
+                panel.setBackground(list.getBackground());
+                panel.setForeground(list.getForeground());
+            }
+            label.setText(value.toString());
+            label.setOpaque(true);
+            
+            panel.add(label, BorderLayout.CENTER);
+            return panel;
         }
     }
 }
