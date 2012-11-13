@@ -152,6 +152,14 @@ public class Case {
             throw new IllegalStateException("Can't get the current case; there is no case open!");
         }
     }
+    
+    /**
+     * Check if case is currently open
+     * @return true if case is open
+     */
+    public static boolean isCaseOpen() {
+        return currentCase != null;
+    }
 
     /**
      * Updates the current case to the given case and fires off
