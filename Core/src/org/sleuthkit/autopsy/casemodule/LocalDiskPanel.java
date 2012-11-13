@@ -257,6 +257,7 @@ public class LocalDiskPanel extends ImageTypePanel {
             }
             label.setText(value.toString());
             label.setOpaque(true);
+            label.setBorder(new EmptyBorder(2, 0, 2, 0));
             
             panel.add(label, BorderLayout.CENTER);
             return panel;
