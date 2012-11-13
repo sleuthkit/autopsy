@@ -289,7 +289,7 @@ public class PlatformUtil {
                     int b = br.read();
                     if(b!=-1) {
                         String path = "\\\\.\\PhysicalDrive" + n;
-                        drives.add(new LocalDisk("Storage Device " + n, path, SleuthkitJNI.findDeviceSize(path)));
+                        drives.add(new LocalDisk("Drive " + n, path, SleuthkitJNI.findDeviceSize(path)));
                         n++;
                     }
                 } catch(Exception ex) {

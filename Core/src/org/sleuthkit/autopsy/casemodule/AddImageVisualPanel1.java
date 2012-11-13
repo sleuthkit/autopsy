@@ -202,18 +202,15 @@ final class AddImageVisualPanel1 extends JPanel {
         buttonGroup1 = new javax.swing.ButtonGroup();
         jLabel2 = new javax.swing.JLabel();
         nextLabel = new javax.swing.JLabel();
-        typeTabel = new javax.swing.JLabel();
-        typeComboBox = new javax.swing.JComboBox();
-        containerPanel = new javax.swing.JPanel();
-        noFatOrphansCheckbox = new javax.swing.JCheckBox();
         timeZoneLabel = new javax.swing.JLabel();
-        descLabel = new javax.swing.JLabel();
         timeZoneComboBox = new javax.swing.JComboBox();
+        noFatOrphansCheckbox = new javax.swing.JCheckBox();
+        descLabel = new javax.swing.JLabel();
+        inputPanel = new javax.swing.JPanel();
+        typeTabel = new javax.swing.JLabel();
         typePanel = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jSeparator1 = new javax.swing.JSeparator();
-        jLabel3 = new javax.swing.JLabel();
-        jSeparator2 = new javax.swing.JSeparator();
+        typeComboBox = new javax.swing.JComboBox();
+        imgInfoLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.jLabel2.text")); // NOI18N
 
@@ -221,18 +218,21 @@ final class AddImageVisualPanel1 extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(nextLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.nextLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(typeTabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.typeTabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.timeZoneLabel.text")); // NOI18N
+
+        timeZoneComboBox.setMaximumRowCount(30);
 
         org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.noFatOrphansCheckbox.text")); // NOI18N
         noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.noFatOrphansCheckbox.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(timeZoneLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.timeZoneLabel.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.descLabel.text")); // NOI18N
 
-        timeZoneComboBox.setMaximumRowCount(30);
+        inputPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+        org.openide.awt.Mnemonics.setLocalizedText(typeTabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.typeTabel.text")); // NOI18N
 
         typePanel.setMinimumSize(new java.awt.Dimension(0, 60));
+        typePanel.setPreferredSize(new java.awt.Dimension(521, 60));
 
         javax.swing.GroupLayout typePanelLayout = new javax.swing.GroupLayout(typePanel);
         typePanel.setLayout(typePanelLayout);
@@ -242,74 +242,59 @@ final class AddImageVisualPanel1 extends JPanel {
         );
         typePanelLayout.setVerticalGroup(
             typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 144, Short.MAX_VALUE)
+            .addGap(0, 60, Short.MAX_VALUE)
         );
 
-        javax.swing.GroupLayout containerPanelLayout = new javax.swing.GroupLayout(containerPanel);
-        containerPanel.setLayout(containerPanelLayout);
-        containerPanelLayout.setHorizontalGroup(
-            containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(containerPanelLayout.createSequentialGroup()
-                .addGap(20, 20, 20)
-                .addGroup(containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(typePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(containerPanelLayout.createSequentialGroup()
-                        .addGroup(containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(timeZoneLabel)
-                            .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(noFatOrphansCheckbox)
-                            .addGroup(containerPanelLayout.createSequentialGroup()
-                                .addGap(21, 21, 21)
-                                .addComponent(descLabel)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+        javax.swing.GroupLayout inputPanelLayout = new javax.swing.GroupLayout(inputPanel);
+        inputPanel.setLayout(inputPanelLayout);
+        inputPanelLayout.setHorizontalGroup(
+            inputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(inputPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(inputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(inputPanelLayout.createSequentialGroup()
+                        .addComponent(typeTabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 292, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 123, Short.MAX_VALUE))
+                    .addComponent(typePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 544, Short.MAX_VALUE))
                 .addContainerGap())
         );
-        containerPanelLayout.setVerticalGroup(
-            containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(containerPanelLayout.createSequentialGroup()
-                .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        inputPanelLayout.setVerticalGroup(
+            inputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(inputPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(inputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(typeTabel)
+                    .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(timeZoneLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(11, 11, 11)
-                .addComponent(noFatOrphansCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(descLabel))
+                .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.jLabel1.text")); // NOI18N
-
-        jSeparator1.setForeground(new java.awt.Color(102, 102, 102));
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.jLabel3.text")); // NOI18N
-
-        jSeparator2.setForeground(new java.awt.Color(102, 102, 102));
+        imgInfoLabel.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(imgInfoLabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.imgInfoLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(containerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jSeparator2))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jSeparator1))
+                    .addComponent(inputPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addComponent(typeTabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 292, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(timeZoneLabel)
+                                .addGap(18, 18, 18)
+                                .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(noFatOrphansCheckbox)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(21, 21, 21)
+                                .addComponent(descLabel))
+                            .addComponent(imgInfoLabel))
                         .addGap(0, 54, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -317,35 +302,29 @@ final class AddImageVisualPanel1 extends JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel1)
-                    .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(imgInfoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(typeTabel)
-                    .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(inputPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel3)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(8, 8, 8)
-                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(timeZoneLabel)
+                    .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(containerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(noFatOrphansCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(descLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 74, Short.MAX_VALUE)
+                .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
-    private javax.swing.JPanel containerPanel;
     private javax.swing.JLabel descLabel;
-    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel imgInfoLabel;
+    private javax.swing.JPanel inputPanel;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSeparator jSeparator2;
     private javax.swing.JLabel nextLabel;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
     private javax.swing.JComboBox timeZoneComboBox;
