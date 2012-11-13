@@ -61,15 +61,25 @@ public class LocalDiskPanel extends ImageTypePanel {
         errorLabel.setText("");
         disks = new ArrayList<LocalDisk>();
         List<LocalDisk> physical = PlatformUtil.getPhysicalDrives();
-        List<LocalDisk> local = PlatformUtil.getPartitions();
+        List<LocalDisk> partitions = PlatformUtil.getPartitions();
         if(physical.isEmpty()) {
-            errorLabel.setText("Physical drives are not listed. On some systems it requires admin permissions (or \"Run as administrator\").");
+            errorLabel.setText("Physical drives were not detected. On some systems it requires admin permissions (or \"Run as administrator\").");
         }
+        
         disks.addAll(physical);
-        disks.addAll(local);
+        disks.addAll(partitions);
         model = new LocalDiskModel();
         diskComboBox.setModel(model);
-        diskComboBox.setSelectedIndex(0);
+        
+        if(physical.isEmpty() && partitions.isEmpty()) {
+            if(PlatformUtil.isWindowsOS()) {
+                errorLabel.setText("Local drives were not detected.");
+            } else {
+                errorLabel.setText("Local drives were not detected. Auto-detection not supported on this OS.");
+            }
+        } else {
+            diskComboBox.setSelectedIndex(0);
+        }
     }
 
     /**
