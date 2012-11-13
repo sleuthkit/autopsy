@@ -38,6 +38,7 @@ import org.openide.modules.Places;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.LocalDisk;
 import org.sleuthkit.datamodel.SleuthkitJNI;
+import org.sleuthkit.datamodel.TskCoreException;
 
 
 /**
@@ -289,10 +290,14 @@ public class PlatformUtil {
                     int b = br.read();
                     if(b!=-1) {
                         String path = "\\\\.\\PhysicalDrive" + n;
-                        drives.add(new LocalDisk("Drive " + n, path, SleuthkitJNI.findDeviceSize(path)));
+                        try {
+                            drives.add(new LocalDisk("Drive " + n, path, SleuthkitJNI.findDeviceSize(path)));
+                        } catch (TskCoreException ex) {
+                            drives.add(new LocalDisk("Drive " + n, path, 0)); // Return a size of 0 if error
+                        }
                         n++;
                     }
-                } catch(Exception ex) {
+                } catch(IOException ex) {
                     if(breakCount > 4) { // Give up after 4 non-existent drives
                         break;
                     }
