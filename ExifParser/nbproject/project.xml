@@ -11,8 +11,8 @@
                     <build-prerequisite/>
                     <compile-dependency/>
                     <run-dependency>
-                        <release-version>3</release-version>
-                        <specification-version>1.0</specification-version>
+                        <release-version>4</release-version>
+                        <specification-version>2.0</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>
