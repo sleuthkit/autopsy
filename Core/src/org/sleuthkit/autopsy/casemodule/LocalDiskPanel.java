@@ -106,8 +106,8 @@ public class LocalDiskPanel extends ImageTypePanel {
         diskComboBox = new javax.swing.JComboBox();
         errorLabel = new javax.swing.JLabel();
 
-        setMinimumSize(new java.awt.Dimension(0, 60));
-        setPreferredSize(new java.awt.Dimension(485, 60));
+        setMinimumSize(new java.awt.Dimension(0, 65));
+        setPreferredSize(new java.awt.Dimension(485, 65));
 
         org.openide.awt.Mnemonics.setLocalizedText(diskLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.diskLabel.text")); // NOI18N
 
@@ -239,7 +239,6 @@ public class LocalDiskPanel extends ImageTypePanel {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             JPanel panel = new JPanel(new BorderLayout());
-            panel.setBorder(new EmptyBorder(0, 2, 0, 2));
             JLabel label = new JLabel();
             if(index == separatorIndex) {
                 panel.add(new JSeparator(JSeparator.HORIZONTAL), BorderLayout.SOUTH);
@@ -257,7 +256,7 @@ public class LocalDiskPanel extends ImageTypePanel {
             }
             label.setText(value.toString());
             label.setOpaque(true);
-            label.setBorder(new EmptyBorder(2, 0, 2, 0));
+            label.setBorder(new EmptyBorder(2, 2, 2, 2));
             
             panel.add(label, BorderLayout.CENTER);
             return panel;
