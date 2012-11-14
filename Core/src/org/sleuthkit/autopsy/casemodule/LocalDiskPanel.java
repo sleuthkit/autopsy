@@ -68,6 +68,7 @@ public class LocalDiskPanel extends ImageTypePanel {
      */
     private void updateDisks() {
         errorLabel.setText("");
+        diskComboBox.setEnabled(true);
         disks = new ArrayList<LocalDisk>();
         List<LocalDisk> physical = PlatformUtil.getPhysicalDrives();
         List<LocalDisk> partitions = PlatformUtil.getPartitions();
@@ -88,6 +89,7 @@ public class LocalDiskPanel extends ImageTypePanel {
             } else {
                 errorLabel.setText("Local drives were not detected. Auto-detection not supported on this OS.");
             }
+            diskComboBox.setEnabled(false);
         } else {
             diskComboBox.setSelectedIndex(0);
         }
@@ -254,7 +256,7 @@ public class LocalDiskPanel extends ImageTypePanel {
                 panel.setBackground(list.getBackground());
                 panel.setForeground(list.getForeground());
             }
-            label.setText(value.toString());
+            label.setText(value != null ? value.toString() : "");
             label.setOpaque(true);
             label.setBorder(new EmptyBorder(2, 2, 2, 2));
             
