@@ -231,8 +231,8 @@ final class AddImageVisualPanel1 extends JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(typeTabel, org.openide.util.NbBundle.getMessage(AddImageVisualPanel1.class, "AddImageVisualPanel1.typeTabel.text")); // NOI18N
 
-        typePanel.setMinimumSize(new java.awt.Dimension(0, 60));
-        typePanel.setPreferredSize(new java.awt.Dimension(521, 60));
+        typePanel.setMinimumSize(new java.awt.Dimension(0, 65));
+        typePanel.setPreferredSize(new java.awt.Dimension(521, 65));
 
         javax.swing.GroupLayout typePanelLayout = new javax.swing.GroupLayout(typePanel);
         typePanel.setLayout(typePanelLayout);
@@ -242,7 +242,7 @@ final class AddImageVisualPanel1 extends JPanel {
         );
         typePanelLayout.setVerticalGroup(
             typePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 60, Short.MAX_VALUE)
+            .addGap(0, 65, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout inputPanelLayout = new javax.swing.GroupLayout(inputPanel);
@@ -313,7 +313,7 @@ final class AddImageVisualPanel1 extends JPanel {
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 74, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 69, Short.MAX_VALUE)
                 .addComponent(nextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0))
         );

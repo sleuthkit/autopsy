@@ -258,8 +258,13 @@ public class ReportPanel extends javax.swing.JPanel {
         String ext = report.getExtension();
         String original = entry.getValue();
         try {
-            String newpath = FileUtil.copyFile(original, path, name + "-" + report.getName(), ext, true);
-            JOptionPane.showMessageDialog(this, "\n" + report.getName() + " report has been successfully saved to: \n" + newpath);
+            if(report.getName().equals("HTML")) {
+                String newpath = FileUtil.copyFolder(original.substring(0, original.lastIndexOf("\\")), path, name);
+                JOptionPane.showMessageDialog(this, "\n" + report.getName() + " report has been successfully saved to: \n" + newpath);
+            } else {
+                String newpath = FileUtil.copyFile(original, path, name + "-" + report.getName(), ext, true);
+                JOptionPane.showMessageDialog(this, "\n" + report.getName() + " report has been successfully saved to: \n" + newpath);
+            }
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "\n" + report.getName() + " report has failed to save! \n Reason: " + ex);
         }

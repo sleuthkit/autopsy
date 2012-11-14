@@ -71,7 +71,8 @@ public class ImageFilePanel extends ImageTypePanel implements DocumentListener {
         browseButton = new javax.swing.JButton();
         pathTextField = new javax.swing.JTextField();
 
-        setMinimumSize(new java.awt.Dimension(0, 60));
+        setMinimumSize(new java.awt.Dimension(0, 65));
+        setPreferredSize(new java.awt.Dimension(403, 65));
 
         org.openide.awt.Mnemonics.setLocalizedText(pathLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.pathLabel.text")); // NOI18N
 

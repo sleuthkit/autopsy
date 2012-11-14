@@ -127,4 +127,26 @@ public class FileUtil {
         return created.getPath();
 
     }
+    
+    /**
+     * Copy a folder into a new directory.
+     * 
+     * @param source path to the source folder
+     * @param path destination path of the new folder
+     * @param folderName name of the new folder
+     * 
+     * @return path to the new folder if created, null if it was not created
+     * @throws IOException exception thrown if file copying failed
+     */
+    public static String copyFolder(String source, String path, String folderName) throws IOException {
+        String destFolder = path + File.separator + folderName;
+        org.openide.filesystems.FileUtil.createFolder(new File(destFolder));
+        
+        final FileObject sourceFileObj = org.openide.filesystems.FileUtil.createData(new File(source));
+        final FileObject destFolderObj = org.openide.filesystems.FileUtil.createData(new File(destFolder));
+
+        FileObject created = org.openide.filesystems.FileUtil.copyFile(sourceFileObj, destFolderObj, sourceFileObj.getName(), sourceFileObj.getExt());
+        
+        return created.getPath();
+    }
 }
