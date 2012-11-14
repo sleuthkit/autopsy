@@ -1,26 +1,26 @@
----------------- VERSION Current (development) --------------
+---------------- VERSION 3.0.1 --------------
 
 New features:
-- Added physical and logical disk devices to Add image wizard
+- Physical and logical disk devices discovery in Add image wizard
 
 Improvements:
 - Significant performance improvements when adding images.
+- Slight improvements in UI performance for large number of results.
 - Improved stability when running ingest on multiple images.
 - Removed limit on number of results displayed.
 - Thumbnail viewer - added paging and removed limit of images.
-- Slight improvements in UI performance for large number of results.
-- Enable user to select any image file extension when opening image.
-- Add Extract action to Unalloc content file nodes (per file).
-- Build scripts enhancements to include module version tracking.
-- Netbeans RCP upgrade from 7.2 to 7.2.1
 - Better HTML report navigation, handling large reports better.
+- Netbeans RCP upgrade from 7.2 to 7.2.1
+- Build scripts enhancements to include module version tracking.
 
 Bugfixes:
 - Fixed reading content from multiple file attributes (NTFS, HFS).
-- UI fix for keyword search box when case is changed.
-- Thunderbird parser module fixes.
-- Reporting fixes: fixed missing artifacts (keyword search, file bookmarks).
+- Add Extract action to Unalloc content file nodes (per file).
 - Fixes bugs with case re-opening.
+- UI fix for keyword search box when case is changed.
+- Enable user to select any image file extension when opening image.
+- Thunderbird parser module fixes.
+- Reporting fixes: added missing artifacts (keyword search, hash hits, file bookmarks).
 
 
 ---------------- VERSION 3.0.0 --------------
