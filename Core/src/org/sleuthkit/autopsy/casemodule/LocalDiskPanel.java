@@ -39,10 +39,11 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 public class LocalDiskPanel extends ImageTypePanel {
     private static LocalDiskPanel instance;
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private List<LocalDisk> disks;
     private LocalDiskModel model;
     private int separatorIndex;
+    private boolean diskSelected = true;
 
     /**
      * Creates new form LocalDiskPanel
@@ -90,6 +91,7 @@ public class LocalDiskPanel extends ImageTypePanel {
                 errorLabel.setText("Local drives were not detected. Auto-detection not supported on this OS.");
             }
             diskComboBox.setEnabled(false);
+            diskSelected = false;
         } else {
             diskComboBox.setSelectedIndex(0);
         }
@@ -172,7 +174,7 @@ public class LocalDiskPanel extends ImageTypePanel {
      */
     @Override
     public boolean enableNext() {
-        return true;
+        return diskSelected;
     }
     
     /**
@@ -195,9 +197,7 @@ public class LocalDiskPanel extends ImageTypePanel {
     
     @Override
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        for(PropertyChangeListener l: pcs.getPropertyChangeListeners()) {
-            pcs.removePropertyChangeListener(l);
-        }
+        pcs = new PropertyChangeSupport(this);
         pcs.addPropertyChangeListener(pcl);
     }
 
@@ -207,11 +207,16 @@ public class LocalDiskPanel extends ImageTypePanel {
     }
     
     private class LocalDiskModel implements ComboBoxModel, ListCellRenderer {
-        LocalDisk selected;
+        Object selected;
 
         @Override
         public void setSelectedItem(Object anItem) {
-            selected = (LocalDisk) anItem;
+            selected = anItem;
+            if(selected != null) {
+                diskSelected = true;
+            } else {
+                diskSelected = false;
+            }
             pcs.firePropertyChange(AddImageVisualPanel1.EVENT.UPDATE_UI.toString(), false, true);
         }
 
@@ -222,12 +227,16 @@ public class LocalDiskPanel extends ImageTypePanel {
 
         @Override
         public int getSize() {
-            return disks.size();
+            return disks.size() + 1;
         }
 
         @Override
         public Object getElementAt(int index) {
-            return disks.get(index);
+            if(index < disks.size()) {
+                return disks.get(index);
+            } else {
+                return null;
+            }
         }
 
         @Override
