@@ -30,7 +30,7 @@ import javax.swing.event.DocumentListener;
  */
 public class ImageFilePanel extends ImageTypePanel implements DocumentListener {
     private static ImageFilePanel instance;
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private JFileChooser fc = new JFileChooser();
 
     /**
@@ -201,9 +201,7 @@ public class ImageFilePanel extends ImageTypePanel implements DocumentListener {
     
     @Override
     public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        for(PropertyChangeListener l: pcs.getPropertyChangeListeners()) {
-            pcs.removePropertyChangeListener(l);
-        }
+        pcs = new PropertyChangeSupport(this);
         pcs.addPropertyChangeListener(pcl);
     }
     
