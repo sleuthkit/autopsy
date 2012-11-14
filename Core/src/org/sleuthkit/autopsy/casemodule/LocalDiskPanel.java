@@ -227,16 +227,12 @@ public class LocalDiskPanel extends ImageTypePanel {
 
         @Override
         public int getSize() {
-            return disks.size() + 1;
+            return disks.size();
         }
 
         @Override
         public Object getElementAt(int index) {
-            if(index < disks.size()) {
-                return disks.get(index);
-            } else {
-                return null;
-            }
+            return disks.get(index);
         }
 
         @Override
