@@ -318,7 +318,7 @@ public class PlatformUtil {
             File[] files = dev.listFiles();
             for(File f: files) {
                 String name = f.getName();
-                if((name.contains("hd") || name.contains("sd")) && f.canRead()) {
+                if((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 3) {
                     drives.add(new LocalDisk("/dev/" + name, "/dev/" + name, f.getTotalSpace()));
                 }
             }
@@ -344,6 +344,15 @@ public class PlatformUtil {
                     String path = f[i].getPath();
                     String diskPath = "\\\\.\\" + path.substring(0, path.length()-1);
                     drives.add(new LocalDisk(fsv.getSystemDisplayName(f[i]), diskPath, f[i].getTotalSpace()));
+                }
+            }
+        } else {
+            File dev = new File("/dev/");
+            File[] files = dev.listFiles();
+            for(File f: files) {
+                String name = f.getName();
+                if((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 4) {
+                    drives.add(new LocalDisk("/dev/" + name, "/dev/" + name, f.getTotalSpace()));
                 }
             }
         }
