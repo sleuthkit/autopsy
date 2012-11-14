@@ -89,6 +89,7 @@ public class Report {
             ResultSet uniqueresults = tempdbconnect.executeQry("SELECT keyword, exp, preview, list, name, obj_id FROM report ORDER BY keyword ASC");
             String keyword = "";
             while (uniqueresults.next()) {
+                if (ReportFilter.cancel == true) { break; }
                 Long objId = uniqueresults.getLong("obj_id");
                 AbstractFile file = null;
                 try {
