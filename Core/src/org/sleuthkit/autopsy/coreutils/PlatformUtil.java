@@ -357,6 +357,12 @@ public class PlatformUtil {
     /**
      * Are we able to read this drive? Usually related to admin permissions.
      * 
+     * For all drives and partitions, we are using Java's ability to read
+     * the first byte of a drive to determine if TSK would be able to
+     * read the drive during the add image process. This returns whether
+     * the drive is readable or not far faster than validating if TSK can open
+     * the drive. We are assuming the results are almost exactly the same.
+     * 
      * @param diskPath path to the disk we want to read
      * @return true if we successfully read the first byte
      * @throws IOException if we fail to read
