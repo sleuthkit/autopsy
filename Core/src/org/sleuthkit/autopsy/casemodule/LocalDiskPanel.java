@@ -76,6 +76,7 @@ public class LocalDiskPanel extends ImageTypePanel {
         separatorIndex = physical.size() - 1;
         if(physical.isEmpty()) {
             errorLabel.setText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
+            errorLabel.setToolTipText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
         }
         
         disks.addAll(physical);
@@ -86,9 +87,11 @@ public class LocalDiskPanel extends ImageTypePanel {
         
         if(physical.isEmpty() && partitions.isEmpty()) {
             if(PlatformUtil.isWindowsOS()) {
-                errorLabel.setText("Local drives were not detected.");
+                errorLabel.setText("Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
+                errorLabel.setToolTipText("Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
             } else {
-                errorLabel.setText("Local drives were not detected. Auto-detection not supported on this OS.");
+                errorLabel.setText("Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required");
+                errorLabel.setToolTipText("Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required");
             }
             diskComboBox.setEnabled(false);
             diskSelected = false;
