@@ -24,10 +24,13 @@
 # update the version numbers and dependencies.
 # ------------------------------------------------------------
 
+import errno
 import os
 import shutil
+import stat
 import subprocess
 import sys
+import traceback
 from os import remove, close
 from shutil import move
 from tempfile import mkstemp
@@ -685,7 +688,7 @@ def make_dir(dir):
 def del_dir(dir):
     try:
         if os.path.isdir(dir):
-            shutil.rmtree(dir)
+            shutil.rmtree(dir, ignore_errors=False, onerror=handleRemoveReadonly)
             if os.path.isdir(dir):
                 return False
             else:
@@ -693,7 +696,17 @@ def del_dir(dir):
         return True
     except:
         print("Exception thrown when deleting directory")
+        traceback.print_exc()
         return False
+
+# Handle any permisson errors thrown by shutil.rmtree
+def handleRemoveReadonly(func, path, exc):
+  excvalue = exc[1]
+  if func in (os.rmdir, os.remove) and excvalue.errno == errno.EACCES:
+      os.chmod(path, stat.S_IRWXU| stat.S_IRWXG| stat.S_IRWXO) # 0777
+      func(path)
+  else:
+      raise
 
 # Run git clone and git checkout for the tag
 def do_git(tag, tag_dir):
@@ -801,8 +814,13 @@ def main():
     # 2) Get the modules in the clone and the source
     # 3) Generate the xml comparison
     # -----------------------------------------------
-    del_dir("./build/autopsy-update_versions")
-    tag_dir = os.path.abspath("./build/autopsy-update_versions")
+    if not del_dir("./build/" + tag):
+        print("\n\n=========================================")
+        print(" Failed to delete previous Autopsy clone.")
+        print(" Unable to continue...")
+        print("=========================================")
+        return 1
+    tag_dir = os.path.abspath("./build/" + tag)
     if not do_git(tag, tag_dir):
         return 1
     sys.stdout.flush()
