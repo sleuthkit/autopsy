@@ -75,7 +75,7 @@ public class LocalDiskPanel extends ImageTypePanel {
         List<LocalDisk> partitions = PlatformUtil.getPartitions();
         separatorIndex = physical.size() - 1;
         if(physical.isEmpty()) {
-            errorLabel.setText("Physical drives were not detected. On some systems it requires admin permissions (or \"Run as administrator\").");
+            errorLabel.setText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
         }
         
         disks.addAll(physical);
