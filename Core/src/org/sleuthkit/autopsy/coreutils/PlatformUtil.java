@@ -282,34 +282,21 @@ public class PlatformUtil {
         if(PlatformUtil.isWindowsOS()) {
             int n = 0;
             int breakCount = 0;
-            BufferedInputStream br = null;
             while(true) {
-                try {
-                    File tmp = new File("\\\\.\\PhysicalDrive" + n);
-                    br = new BufferedInputStream(new FileInputStream(tmp));
-                    int b = br.read();
-                    if(b!=-1) {
-                        String path = "\\\\.\\PhysicalDrive" + n;
-                        try {
-                            drives.add(new LocalDisk("Drive " + n, path, SleuthkitJNI.findDeviceSize(path)));
-                        } catch (TskCoreException ex) {
-                            drives.add(new LocalDisk("Drive " + n, path, 0)); // Return a size of 0 if error
-                        }
-                        n++;
+                String path = "\\\\.\\PhysicalDrive" + n;
+                if(canReadDrive(path)) {
+                    try {
+                        drives.add(new LocalDisk("Drive " + n, path, SleuthkitJNI.findDeviceSize(path)));
+                    } catch (TskCoreException ex) {
+                        // Don't add the drive because we can't read the size
                     }
-                } catch(IOException ex) {
+                    n++;
+                } else {
                     if(breakCount > 4) { // Give up after 4 non-existent drives
                         break;
                     }
                     breakCount++;
                     n++;
-                } finally {
-                    try {
-                        if(br != null) {
-                            br.close();
-                        }
-                    } catch (IOException ex) {
-                    }
                 }
             }
         // Linux drives
@@ -319,7 +306,10 @@ public class PlatformUtil {
             for(File f: files) {
                 String name = f.getName();
                 if((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 3) {
-                    drives.add(new LocalDisk("/dev/" + name, "/dev/" + name, f.getTotalSpace()));
+                    String path = "/dev/" + name;
+                    if(canReadDrive(path)) {
+                        drives.add(new LocalDisk(path, path, f.getTotalSpace()));
+                    }
                 }
             }
             
@@ -343,7 +333,9 @@ public class PlatformUtil {
                 if(f[i].canRead() && !name.contains("\\\\") && (fsv.isDrive(f[i]) || fsv.isFloppyDrive(f[i]))) {
                     String path = f[i].getPath();
                     String diskPath = "\\\\.\\" + path.substring(0, path.length()-1);
-                    drives.add(new LocalDisk(fsv.getSystemDisplayName(f[i]), diskPath, f[i].getTotalSpace()));
+                    if(canReadDrive(diskPath)) {
+                        drives.add(new LocalDisk(fsv.getSystemDisplayName(f[i]), diskPath, f[i].getTotalSpace()));
+                    }
                 }
             }
         } else {
@@ -352,10 +344,39 @@ public class PlatformUtil {
             for(File f: files) {
                 String name = f.getName();
                 if((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 4) {
-                    drives.add(new LocalDisk("/dev/" + name, "/dev/" + name, f.getTotalSpace()));
+                    String path = "/dev/" + name;
+                    if(canReadDrive(path)) {
+                        drives.add(new LocalDisk(path, path, f.getTotalSpace()));
+                    }
                 }
             }
         }
         return drives;
+    }
+    
+    /**
+     * Are we able to read this drive? Usually related to admin permissions.
+     * 
+     * @param diskPath path to the disk we want to read
+     * @return true if we successfully read the first byte
+     * @throws IOException if we fail to read
+     */
+    private static boolean canReadDrive(String diskPath) {
+        BufferedInputStream br = null;
+        try {
+            File tmp = new File(diskPath);
+            br = new BufferedInputStream(new FileInputStream(tmp));
+            int b = br.read();
+            return b != -1;
+        } catch(IOException ex) {
+            return false;
+        } finally {
+            try {
+                if(br != null) {
+                    br.close();
+                }
+            } catch (IOException ex) {
+            }
+        }
     }
 }
