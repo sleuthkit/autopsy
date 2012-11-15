@@ -85,7 +85,7 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
         informationLabel = new javax.swing.JLabel();
         settingsSeparator = new javax.swing.JSeparator();
         informationSeparator = new javax.swing.JSeparator();
-        jLabel1 = new javax.swing.JLabel();
+        frequencyLabel = new javax.swing.JLabel();
         timeRadioButton1 = new javax.swing.JRadioButton();
         timeRadioButton2 = new javax.swing.JRadioButton();
         timeRadioButton3 = new javax.swing.JRadioButton();
@@ -106,7 +106,7 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
 
         informationLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.informationLabel.text")); // NOI18N
 
-        jLabel1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.jLabel1.text")); // NOI18N
+        frequencyLabel.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.frequencyLabel.text")); // NOI18N
 
         timeRadioButton1.setText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton1.text")); // NOI18N
         timeRadioButton1.setToolTipText(org.openide.util.NbBundle.getMessage(KeywordSearchConfigurationPanel2.class, "KeywordSearchConfigurationPanel2.timeRadioButton1.toolTipText")); // NOI18N
@@ -140,7 +140,7 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
                                 .addGap(141, 141, 141)
                                 .addComponent(filesIndexedValue, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(skipNSRLCheckBox)
-                            .addComponent(jLabel1)
+                            .addComponent(frequencyLabel)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -163,7 +163,7 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(skipNSRLCheckBox)
                 .addGap(13, 13, 13)
-                .addComponent(jLabel1)
+                .addComponent(frequencyLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(timeRadioButton1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -191,9 +191,9 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
     private javax.swing.JLabel chunksValLabel;
     private javax.swing.JLabel filesIndexedLabel;
     private javax.swing.JLabel filesIndexedValue;
+    private javax.swing.JLabel frequencyLabel;
     private javax.swing.JLabel informationLabel;
     private javax.swing.JSeparator informationSeparator;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel settingsLabel;
     private javax.swing.JSeparator settingsSeparator;
     private javax.swing.JCheckBox skipNSRLCheckBox;
@@ -218,6 +218,7 @@ public class KeywordSearchConfigurationPanel2 extends javax.swing.JPanel impleme
         timeRadioButton1.setEnabled(enabled);
         timeRadioButton2.setEnabled(enabled);
         timeRadioButton3.setEnabled(enabled);
+        frequencyLabel.setEnabled(enabled);
     }
 
 
