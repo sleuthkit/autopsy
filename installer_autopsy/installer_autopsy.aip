@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<DOCUMENT Type="Advanced Installer" CreateVersion="9.0.1" version="9.2" Modules="simple" RootPath="." Language="en" Id="{84E12760-98AC-4ACA-B4DE-86E5B5603721}">
+<DOCUMENT Type="Advanced Installer" CreateVersion="9.0.1" version="9.6.1" Modules="simple" RootPath="." Language="en" Id="{84E12760-98AC-4ACA-B4DE-86E5B5603721}">
   <COMPONENT cid="caphyon.advinst.msicomp.MsiPropsComponent">
     <ROW Property="ALLUSERS" Value="2"/>
     <ROW Property="ARPCOMMENTS" Value="This installer database contains the logic and data required to install [|ProductName]." ValueLocId="*"/>
     <ROW Property="ARPPRODUCTICON" Value="autopsy.exe" Type="8"/>
+    <ROW Property="ARPURLINFOABOUT" Value="http://sleuthkit.org/"/>
     <ROW Property="Manufacturer" Value="Sleuthkit" ValueLocId="*"/>
-    <ROW Property="ProductCode" Value="1033:{A43DB280-F186-49B6-BAC2-ADA3D5537410} " Type="16"/>
+    <ROW Property="ProductCode" Value="1033:{26962649-83B3-4A58-AB5C-155FD288635A} " Type="16"/>
     <ROW Property="ProductLanguage" Value="1033"/>
     <ROW Property="ProductName" Value="Autopsy" ValueLocId="*"/>
     <ROW Property="ProductVersion" Value="3.0.1" Type="32"/>
@@ -94,12 +95,12 @@
     <ROW Name="autopsy.exe" SourcePath="..\dist\autopsy-installer\icon.ico" Index="0"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiInstExSeqComponent">
-    <ROW Action="AI_DOWNGRADE" Condition="AI_NEWERPRODUCTFOUND AND (UILevel &lt;&gt; 5)" Sequence="210"/>
     <ROW Action="AI_RESTORE_LOCATION" Condition="APPDIR=&quot;&quot;" Sequence="749"/>
     <ROW Action="AI_STORE_LOCATION" Condition="(Not Installed) OR REINSTALL" Sequence="1501"/>
     <ROW Action="AI_PREPARE_UPGRADE" Condition="AI_UPGRADE=&quot;No&quot; AND (Not Installed)" Sequence="1399"/>
     <ROW Action="AI_ResolveKnownFolders" Sequence="52"/>
     <ROW Action="AI_ResolveLocalizedCredentials" Sequence="51"/>
+    <ROW Action="AI_DOWNGRADE" Condition="AI_NEWERPRODUCTFOUND AND (UILevel &lt;&gt; 5)" Sequence="201"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiInstallUISequenceComponent">
     <ROW Action="AI_RESTORE_LOCATION" Condition="APPDIR=&quot;&quot;" Sequence="749"/>
