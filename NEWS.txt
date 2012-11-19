@@ -5,7 +5,7 @@ New features:
 Improvements:
 
 Bugfixes:
-
+- fixed periodic keyword search during ingest, when it'd run max. 2 times only
 
 ---------------- VERSION 3.0.1 --------------
 
