@@ -344,6 +344,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             }
         } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
+            //this means Solr is not properly initialized
+            return;
         }
 
 
