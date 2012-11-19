@@ -184,10 +184,10 @@ public class ImageFilePanel extends ImageTypePanel implements DocumentListener {
     }
     
     /**
-     * Set the focus of this panel to the desired component.
+     * Set the focus to the pathTextField.
      */
     @Override
-    public void setFocus() {
+    public void select() {
         pathTextField.requestFocusInWindow();
     }
     
