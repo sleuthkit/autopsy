@@ -344,6 +344,8 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             }
         } catch (KeywordSearchModuleException ex) {
             logger.log(Level.WARNING, "Error checking if Solr server is running while initializing ingest", ex);
+            //this means Solr is not properly initialized
+            return;
         }
 
 
@@ -809,7 +811,12 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
 
         @Override
         protected Object doInBackground() throws Exception {
-            logger.log(Level.INFO, "Pending start of new searcher");
+            if (finalRun) {
+               logger.log(Level.INFO, "Pending start of new (final) searcher");
+            }
+            else {
+                logger.log(Level.INFO, "Pending start of new searcher");
+            }
 
             final String displayName = "Keyword Search" + (finalRun ? " - Finalizing" : "");
             progress = ProgressHandleFactory.createHandle(displayName + (" (Pending)"), new Cancellable() {
@@ -1080,7 +1087,10 @@ public final class KeywordSearchIngestModule implements IngestModuleAbstractFile
             } else {
                 //start counting time for a new searcher to start
                 //unless final searcher is pending
-                if (finalSearcher != null) {
+                if (finalSearcher == null) {
+                    //we need a new Timer object, because restarting previus will not cause firing of the action
+                    final int updateIntervalMs = KeywordSearchSettings.getUpdateFrequency().getTime() * 60 * 1000;
+                    searchTimer = new Timer(updateIntervalMs, new SearchTimerAction());
                     searchTimer.start();
                 }
             }
