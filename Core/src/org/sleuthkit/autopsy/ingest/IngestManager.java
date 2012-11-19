@@ -66,7 +66,7 @@ public class IngestManager {
     private IngestManagerStats stats;
     private boolean processUnallocSpace = true;
     //queues
-    private final ImageQueue imageQueue = new ImageQueue();   // list of modules and images to analyze
+    private final IngestScheduler scheduler;
     private final AbstractFileQueue abstractFileQueue = new AbstractFileQueue();
     private final Object queuesLock = new Object();
     //workers
@@ -133,6 +133,8 @@ public class IngestManager {
     private IngestManager() {
         imageIngesters = new ArrayList<IngestImageThread>();
 
+        scheduler = IngestScheduler.getInstance();
+        
         //setup current modules and listeners for modules changes
         initModules();
 
@@ -269,7 +271,7 @@ public class IngestManager {
      * is already running otherwise start/restart the worker
      */
     private synchronized void startAll() {
-        logger.log(Level.INFO, "Image queue: " + this.imageQueue.toString());
+        logger.log(Level.INFO, "Image queue: " + scheduler.IMAGE_SCHEDULER.toString());
         logger.log(Level.INFO, "File queue: " + this.abstractFileQueue.toString());
 
         if (!ingestMonitor.isRunning()) {
@@ -278,43 +280,43 @@ public class IngestManager {
 
         //image ingesters
         // cycle through each image in the queue
-        while (hasNextImage()) {
+        while (scheduler.IMAGE_SCHEDULER.hasNext()) {
             //dequeue
             // get next image and set of modules
-            final Map.Entry<Image, List<IngestModuleImage>> qu =
-                    this.getNextImage();
-
-
+            final IngestScheduler.Image.Task imageTask = scheduler.IMAGE_SCHEDULER.getNext();
+            
             // check if each module for this image is already running
-            //synchronized (this) {
-            for (IngestModuleImage quModule : qu.getValue()) {
+            for (IngestModuleImage taskModule : imageTask.getModules() ) {
                 boolean alreadyRunning = false;
                 for (IngestImageThread worker : imageIngesters) {
                     // ignore threads that are on different images
-                    if (!worker.getImage().equals(qu.getKey())) {
+                    if (!worker.getImage().equals(imageTask.getImage())) {
                         continue; //check next worker
                     }
                     //same image, check module (by name, not id, since different instances)
-                    if (worker.getModule().getName().equals(quModule.getName())) {
+                    if (worker.getModule().getName().equals(taskModule.getName())) {
                         alreadyRunning = true;
-                        logger.log(Level.INFO, "Image Ingester <" + qu.getKey() + ", " + quModule.getName() + "> is already running");
+                        logger.log(Level.INFO, "Image Ingester <" + imageTask.getImage() 
+                                + ", " + taskModule.getName() + "> is already running");
                         break;
                     }
                 }
                 //checked all workers
                 if (alreadyRunning == false) {
-                    logger.log(Level.INFO, "Starting new image Ingester <" + qu.getKey() + ", " + quModule.getName() + ">");
+                    logger.log(Level.INFO, "Starting new image Ingester <" + imageTask.getImage() 
+                            + ", " + taskModule.getName() + ">");
                       //image modules are now initialized per instance
                     
                     IngestModuleInit moduleInit = new IngestModuleInit();
-                    moduleInit.setModuleArgs(quModule.getArguments());
-                    final IngestImageThread newImageWorker = new IngestImageThread(this, qu.getKey(), quModule, moduleInit);
+                    moduleInit.setModuleArgs(taskModule.getArguments());
+                    final IngestImageThread newImageWorker = new IngestImageThread(this,
+                            imageTask.getImage(), taskModule, moduleInit);
 
                     imageIngesters.add(newImageWorker);
 
                     //wrap the module in a worker, that will run init, process and complete on the module
                     newImageWorker.execute();
-                    IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), quModule.getName());
+                    IngestManager.fireModuleEvent(IngestModuleEvent.STARTED.toString(), taskModule.getName());
                 }
             }
         }
@@ -367,7 +369,7 @@ public class IngestManager {
 
         //empty queues
         emptyAbstractFiles();
-        emptyImages();
+        scheduler.IMAGE_SCHEDULER.empty();
 
         //stop module workers
         if (abstractFileIngester != null) {
@@ -609,17 +611,6 @@ public class IngestManager {
         return moduleLoader.getAbstractFileIngestModules();
     }
 
-    /**
-     * Queue up an image to be processed by a given module.
-     *
-     * @param module Module to analyze image
-     * @param image Image to analyze
-     */
-    private void addImage(IngestModuleImage module, Image image) {
-        synchronized (queuesLock) {
-            imageQueue.enqueue(image, module);
-        }
-    }
 
     /**
      * Queue up an image to be processed by a given File module.
@@ -670,39 +661,10 @@ public class IngestManager {
         }
     }
 
-    private void emptyImages() {
-        synchronized (queuesLock) {
-            imageQueue.empty();
-        }
-    }
 
-    /**
-     * get next Image/Module pair to process the queue of Images to process is
-     * maintained internally and could be dynamically sorted as data comes in
-     */
-    private Map.Entry<Image, List<IngestModuleImage>> getNextImage() {
-        Map.Entry<Image, List<IngestModuleImage>> ret = null;
-        synchronized (queuesLock) {
-            ret = imageQueue.dequeue();
-        }
-        return ret;
-    }
 
-    private boolean hasNextImage() {
-        boolean ret = false;
-        synchronized (queuesLock) {
-            ret = imageQueue.hasNext();
-        }
-        return ret;
-    }
+    
 
-    private int getNumImages() {
-        int ret = 0;
-        synchronized (queuesLock) {
-            ret = imageQueue.getCount();
-        }
-        return ret;
-    }
 
     //image worker to remove itself when complete or interrupted
     void removeImageIngestWorker(IngestImageThread worker) {
@@ -931,71 +893,7 @@ public class IngestManager {
         }
     }
 
-    /**
-     * manages queue of pending Images and IngestModuleImage to use on that
-     * image. image / module pairs are added one at a time and internally, it
-     * keeps track of all modules for a given image.
-     */
-    private class ImageQueue {
 
-        final Comparator<Image> sorter = new Comparator<Image>() {
-            @Override
-            public int compare(Image q1, Image q2) {
-                return (int) (q2.getId() - q1.getId());
-
-            }
-        };
-        private TreeMap<Image, List<IngestModuleImage>> imageUnits = new TreeMap<Image, List<IngestModuleImage>>(sorter);
-
-        void enqueue(Image image, IngestModuleImage module) {
-            List<IngestModuleImage> modules = imageUnits.get(image);
-            if (modules == null) {
-                modules = new ArrayList<IngestModuleImage>();
-                imageUnits.put(image, modules);
-            }
-            modules.add(module);
-        }
-
-        void enqueue(Image image, List<IngestModuleImage> modules) {
-            List<IngestModuleImage> oldModules = imageUnits.get(image);
-            if (oldModules == null) {
-                oldModules = new ArrayList<IngestModuleImage>();
-                imageUnits.put(image, oldModules);
-            }
-            oldModules.addAll(modules);
-        }
-
-        boolean hasNext() {
-            return !imageUnits.isEmpty();
-        }
-
-        int getCount() {
-            return imageUnits.size();
-        }
-
-        void empty() {
-            imageUnits.clear();
-        }
-
-        /**
-         * Return a QueueUnit that contains an image and set of modules to run
-         * on it.
-         *
-         * @return
-         */
-        Map.Entry<Image, List<IngestModuleImage>> dequeue() {
-            if (!hasNext()) {
-                throw new UnsupportedOperationException("Image processing queue is empty");
-            }
-
-            return imageUnits.pollFirstEntry();
-        }
-
-        @Override
-        public synchronized String toString() {
-            return "ImageQueue, size: " + Integer.toString(imageUnits.size());
-        }
-    }
 
     /**
      * collects IngestManager statistics during runtime
@@ -1376,7 +1274,9 @@ public class IngestManager {
                             final IngestModuleImage newModuleInstance =
                                     (IngestModuleImage) moduleLoader.getNewIngestModuleInstance(module);
                             if (newModuleInstance != null) {
-                                addImage(newModuleInstance, image);
+                                IngestScheduler.Image.Task imageTask = 
+                                        new IngestScheduler.Image.Task(image, newModuleInstance);
+                                scheduler.IMAGE_SCHEDULER.add(imageTask);
                                 logger.log(Level.INFO, "Added image " + image.getName() + " with module " + module.getName());
 
 
@@ -1414,7 +1314,7 @@ public class IngestManager {
             Logger.getLogger(EnqueueWorker.class.getName()).log(Level.INFO, "Exception!", ex);
             //empty queues
             emptyAbstractFiles();
-            emptyImages();
+            scheduler.IMAGE_SCHEDULER.empty();
         }
     }
 }
