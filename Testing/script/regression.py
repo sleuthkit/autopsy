@@ -14,6 +14,7 @@ from sys import platform as _platform
 import time
 import traceback
 import xml
+from time import localtime, strftime
 from xml.dom.minidom import parse, parseString
 
 #
@@ -38,7 +39,7 @@ from xml.dom.minidom import parse, parseString
 # but do not overwrite any existing variables as they are used frequently.
 #
 
-
+Day = 0
 
 #-------------------------------------------------------------#
 # Parses argv and stores booleans to match command line input #
@@ -56,6 +57,7 @@ class Args:
         self.verbose = False
         self.exception = False
         self.exception_string = ""
+        self.mugen = False
     
     def parse(self):
         sys.argv.pop(0)
@@ -106,6 +108,9 @@ class Args:
                     self.exception_string = arg
                 except:
                     printerror("Error: No exception string given.")
+            elif(arg == "-m" or arg == "--mugen"):
+                printout("Running in mugen mode. Will loop through config file until interrupted.")
+                self.mugen = True
             elif arg == "-h" or arg == "--help":
                 printout(usage())
                 return False
@@ -154,6 +159,8 @@ class TestAutopsy:
         self.ingest_messages = 0
         self.indexed_files = 0
         self.indexed_chunks = 0
+        # Infinite Testing info
+        timer = 0
         
         # Set the timeout to something huge
         # The entire tester should not timeout before this number in ms
@@ -184,7 +191,9 @@ class TestAutopsy:
         string = ""
         for arg in self.ant:
             string += (arg + " ")
-        return string
+        return string    
+
+     
         
     def reset(self):
         # Logs:
@@ -214,6 +223,7 @@ class TestAutopsy:
         # And it's very buggy, so we're being careful
         self.timeout = 24 * 60 * 60 * 1000 * 1000
         self.ant = []
+       
 
 
 
@@ -328,10 +338,13 @@ class Database:
 #      Main testing functions      #
 #----------------------------------#
 
+
+
 # Iterates through an XML configuration file to find all given elements        
 def run_config_test(config_file):
     try:
         parsed = parse(config_file)
+        counts = {}
         if parsed.getElementsByTagName("indir"):
             case.input_dir = parsed.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf-8")
         if parsed.getElementsByTagName("global_csv"):
@@ -346,13 +359,36 @@ def run_config_test(config_file):
         html_add_images(values)
         
         # Run the test for each file in the configuration
-        for element in parsed.getElementsByTagName("image"):
-            value = element.getAttribute("value").encode().decode("utf-8")
-            if file_exists(value):
-                run_test(value)
-            else:
-                printerror("Warning: Image file listed in the configuration does not exist:")
-                printerror(value + "\n")
+        global args
+        if(args.mugen):
+            #set all times an image has been processed to 0
+            for element in parsed.getElementsByTagName("image"):
+                value = element.getAttribute("value").encode().decode("utf-8")
+                counts[value] = 0
+            #Begin infiniloop
+            while(True):
+                for elem in counts.keys():
+                    if(newDay()):
+                        setDay()
+                        gitPull("sleuthkit")
+                        vsBuild()
+                        gitPull("autopsy")
+                        antBuild("datamodel", False)
+                        antBuild("autopsy", True)
+                    if file_exists(elem):
+                        counts[elem]+=1
+                        run_test(elem, counts[elem])
+                    else:
+                        printerror("Warning: Image file listed in the configuration does not exist:")
+                        printerror(elem + "\n")
+        else:
+            for img in values:  
+                if file_exists(img):
+                    run_test(img, 0)
+                else:
+                    printerror("Warning: Image file listed in configuration does not exist:")
+                    printrttot(value + "\n")
+           
     except Exception as e:
         printerror("Error: There was an error running with the configuration file.")
         printerror(str(e) + "\n")
@@ -360,7 +396,7 @@ def run_config_test(config_file):
 
 # Runs the test on the single given file.
 # The path must be guarenteed to be a correct path.
-def run_test(image_file):
+def run_test(image_file, count):
     if not image_type(image_file) != IMGTYPE.UNKNOWN:
         printerror("Error: Image type is unrecognized:")
         printerror(image_file + "\n")
@@ -368,7 +404,7 @@ def run_test(image_file):
         
     # Set the case to work for this test
     case.image_file = image_file
-    case.image_name = case.get_image_name(image_file)
+    case.image_name = case.get_image_name(image_file) + "(" + str(count) + ")"
     case.antlog_dir = make_local_path(case.output_dir, case.image_name, "antlog.txt")
     case.known_bad_path = make_path(case.input_dir, "notablehashes.txt-md5.idx")
     case.keyword_path = make_path(case.input_dir, "notablekeywords.xml")
@@ -377,7 +413,6 @@ def run_test(image_file):
     logging.debug("--------------------")
     logging.debug(case.image_name)
     logging.debug("--------------------")
-    
     run_ant()
     time.sleep(2) # Give everything a second to process
     
@@ -436,7 +471,6 @@ def run_ant():
     os.makedirs(test_case_path)
     if not dir_exists(make_local_path("gold")):
         os.makedirs(make_local_path("gold"))
-    
     case.ant = ["ant"]
     case.ant.append("-q")
     case.ant.append("-f")
@@ -451,6 +485,7 @@ def run_ant():
     case.ant.append("-Dgold_path=" + make_local_path(case.gold))
     case.ant.append("-Dout_path=" + make_local_path(case.output_dir, case.image_name))
     case.ant.append("-Dignore_unalloc=" + "%s" % args.unallocated)
+    case.ant.append("-Dmugen_mode" + str(args.mugen))
     case.ant.append("-Dtest.timeout=" + str(case.timeout))
     
     printout("Ingesting Image:\n" + case.image_file + "\n")
@@ -508,12 +543,20 @@ def rebuild():
         errors.append(str(e) + "\n")
     
     # Rebuild the HTML report
-    html_path = make_local_path(case.output_dir, case.image_name,
-                                  "AutopsyTestCase", "Reports")
-    try:     
-        html_from = get_file_in_dir(html_path, ".html")
-        html_to = make_local_path(case.gold, case.image_name, "standard.html")
-        copy_file(html_from, html_to)
+    htmlfolder = ""
+    for fs in os.listdir(os.path.join(os.getcwd(),case.output_dir, case.image_name, "AutopsyTestCase", "Reports")):
+        if os.path.isdir(os.path.join(os.getcwd(), case.output_dir, case.image_name, "AutopsyTestCase", "Reports", fs)):
+            htmlfolder = fs
+    autopsy_html_path = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder)
+    
+    
+    #html_path = make_local_path(case.output_dir, case.image_name,
+    #                             "AutopsyTestCase", "Reports")
+    try:
+        os.makedirs(os.path.join(os.getcwd(), case.gold, case.image_name, htmlfolder))
+        for file in os.listdir(autopsy_html_path):
+            html_to = make_local_path(case.gold, case.image_name, file)
+            copy_file(get_file_in_dir(autopsy_html_path, file), html_to)
     except FileNotFoundException as e:
         errors.append(e.error)
     except Exception as e:
@@ -584,11 +627,17 @@ def compare_to_gold_db():
 # Using the global case's variables, compare the html report file made by
 # the regression test against the gold standard html report
 def compare_to_gold_html():
-    gold_html_file = make_local_path(case.gold, case.image_name, "standard.html")
-    autopsy_html_path = make_local_path(case.output_dir, case.image_name,
-                                        "AutopsyTestCase", "Reports")
+    gold_html_file = make_local_path(case.gold, case.image_name, "index.html")
+    htmlfolder = ""
+    for fs in os.listdir(os.path.join(os.getcwd(),case.output_dir, case.image_name, "AutopsyTestCase", "Reports")):
+        if os.path.isdir(os.path.join(os.getcwd(), case.output_dir, case.image_name, "AutopsyTestCase", "Reports", fs)):
+            htmlfolder = fs
+    autopsy_html_path = make_local_path(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder) #, "AutopsyTestCase", "Reports", htmlfolder)
+    print autopsy_html_path                                
+    
+    
     try:
-        autopsy_html_file = get_file_in_dir(autopsy_html_path, ".html")
+        autopsy_html_file = get_file_in_dir(autopsy_html_path, "index.html")
                 
         if not file_exists(gold_html_file):
             printerror("Error: No gold html report exists at:")
@@ -598,13 +647,35 @@ def compare_to_gold_html():
             printerror("Error: No case html report exists at:")
             printerror(autopsy_html_file + "\n")
             return
-        
-        errors = []
-        errors = compare_report_files(autopsy_html_file, gold_html_file)
+        #Find all gold .html files belonging to this case
+        ListGoldHTML = []
+        for fs in os.listdir(os.path.join(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder)):
+            if(fs.endswith(".html")):
+                ListGoldHTML.append(os.path.join(case.output_dir, case.image_name, "AutopsyTestCase", "Reports", htmlfolder, fs))
+        #Find all new .html files belonging to this case
+        ListNewHTML = []
+        for fs in os.listdir(os.path.join(case.gold, case.image_name)):
+            if (fs.endswith(".html")):
+                ListNewHTML.append(os.path.join(case.gold, case.image_name, fs))
+        #ensure both reports have the same number of files and are in the same order
+        if(len(ListGoldHTML) != len(ListNewHTML)):
+            printerror("The reports did not have the same number of files. One of the reports may have been corrupted")
+        else:
+            ListGoldHTML.sort()
+            ListNewHTML.sort()
+          
+        total = {"Gold": 0, "New": 0}
+        for x in range(0, len(ListGoldHTML)):
+            count = compare_report_files(ListGoldHTML[x], ListNewHTML[x])
+            total["Gold"]+=count[0]
+            total["New"]+=count[1]
         okay = "The test report matches the gold report."
+        errors=["Gold report had " + str(total["Gold"]) +" errors", "New report had " + str(total["New"]) + " errors."]
         print_report(errors, "REPORT COMPARISON", okay)
-        if not errors:
+        if total["Gold"] == total["New"]:
             case.report_passed = True
+        else:
+            printerror("The reports did not match each other.\n " + errors[0] +" and the " + errors[1])
     except FileNotFoundException as e:
         e.print_error()
     except DirNotFoundException as e:
@@ -1157,6 +1228,63 @@ def html_add_images(full_image_names):
 #         Helper functions         #
 #----------------------------------#
 
+def setDay():
+    global Day
+    Day = int(strftime("%d", localtime()))
+        
+def getLastDay():
+    return Day
+        
+def getDay():
+    return int(strftime("%d", localtime()))
+        
+def newDay():
+    return getLastDay() != getDay()
+
+#Pulls from git
+def gitPull(TskOrAutopsy):
+    global SYS
+    ccwd = ""
+    toPull = "http://www.github.com/sleuthkit/" + TskOrAutopsy
+    call = ["git", "pull", toPull]
+    if TskOrAutopsy == "sleuthkit":
+        ccwd = os.path.join("..", "..", "..", "TSK")
+    else:
+        ccwd = os.path.join("..", "..")
+    subprocess.call(call, stdout=subprocess.PIPE, cwd=ccwd)
+
+#Builds TSK as a win32 applicatiion
+def vsBuild():
+    #Please ensure that the current working directory is $autopsy/testing/script
+    vs = []
+    vs.append("/cygdrive/c/windows/microsoft.NET/framework/v4.0.30319/MSBuild.exe")
+    vs.append(os.path.join("..", "..", "..","TSK", "win32", "Tsk-win.sln"))
+    vs.append("/p:configuration=release")
+    vs.append("/p:platform=win32")
+    vs.append("/t:rebuild")
+    print vs
+    subprocess.call(vs)
+    
+ 
+#Builds Autopsy or the Datamodel
+def antBuild(which, Build):
+    directory = os.path.join("..", "..")
+    ant = []
+    if which == "datamodel":
+        directory = os.path.join("..", "TSK", "bindings", "java")
+    ant.append("ant")
+    ant.append("-f")
+    ant.append(directory)
+    ant.append("clean")
+    if(Build):
+        ant.append("build")
+    else:
+        ant.append("dist")
+    subprocess.call(ant)
+        
+    
+#Watches clock and waits for current ingest to be done
+
 # Verifies a file's existance
 def file_exists(file):
     try:
@@ -1241,6 +1369,16 @@ def get_file_in_dir(dir, ext):
         raise FileNotFoundException(dir)
     except:
         raise DirNotFoundException(dir)
+        
+def find_file_in_dir(dir, name, ext):
+    try: 
+        for file in os.listdir(dir):
+            if file.startswith(name):
+                if file.endswith(ext):
+                    return make_path(dir, file)
+        raise FileNotFoundException(dir)
+    except:
+        raise DirNotFoundException(dir)
 
 # Compares file a to file b and any differences are returned
 # Only works with report html files, as it searches for the first <ul>
@@ -1254,15 +1392,12 @@ def compare_report_files(a_path, b_path):
     
     a_list = split(a, 50)
     b_list = split(b, 50)
-    exceptions = []
     if not len(a_list) == len(b_list):
-        exceptions.append("The reports do not match.")
-        test = "The test HTML report has " + str(len(a_list)) + " segments."
-        gold = "The gold HTML report has " + str(len(b_list)) + " segments."
-        exceptions.append(test)
-        exceptions.append(gold)
-    return exceptions
-
+        ex = (len(a_list), len(b_list))
+        return ex
+    else: 
+        return (0, 0)
+  
 # Split a string into an array of string of the given size
 def split(input, size):
     return [input[start:start+size] for start in range(0, len(input), size)]
@@ -1399,7 +1534,7 @@ def main():
                 printerror("Error: Image file does not exist at:")
                 printerror(args.single_file)
                 return
-            run_test(args.single_file)
+            run_test(args.single_file, 0)
         # If user has not selected a single file, and does not want to ignore
         #  the input directory, continue on to parsing ./input
         if (not args.single) and (not args.ignore):
@@ -1407,7 +1542,7 @@ def main():
                 # Make sure it's not a required hash/keyword file or dir
                 if (not required_input_file(file) and
                     not os.path.isdir(make_path(case.input_dir, file))):
-                    run_test(make_path(case.input_dir, file))
+                    run_test(make_path(case.input_dir, file), 0)
                
         write_html_foot()
 
