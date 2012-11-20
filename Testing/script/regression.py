@@ -1447,6 +1447,7 @@ Options:
   -v            Verbose mode; prints all errors to the screen.
   -e ex         Prints out all errors containing ex.
   -l cfg        Runs from configuration file cfg.
+  -m            Runs in a loop over the configuration file until canceled. Must be used in conjunction with -l
     """
 
 
