@@ -80,11 +80,11 @@
         <property name="proj-path" value="${nbdist.dir}\installer_${app.name}.aip"/>
         <!-- automatically replace version name and productcode in the .aip file -->
             <echo>Product Code: ${guid1}</echo>
-            <replaceregexp  file="${basedir}/installer_${app.name}/installer_${app.name}.aip"
+            <replaceregexp  file="${proj-path}"
                         match="ProductCode&quot; Value=&quot;(\d{4}+:.)\w{8}+-\w{4}+-\w{4}+-\w{4}+-\w{12}+"
                         replace="ProductCode&quot; Value=&quot;\1${guid1}" />
         <echo>Product Version: ${app.version}</echo>                
-        <replaceregexp  file="${basedir}/installer_${app.name}/installer_${app.name}.aip"
+        <replaceregexp  file="${proj-path}"
                         match="ProductVersion&quot; Value=&quot;\d+\.{1}\d+\.{1}\d+"
                         replace="ProductVersion&quot; Value=&quot;${app.version}" />                                  
         <echo message="Adding files to installer..."/>
