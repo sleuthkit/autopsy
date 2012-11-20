@@ -26,15 +26,21 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.logging.Level;
 import javax.swing.ComboBoxModel;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.ListCellRenderer;
+import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataListener;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.datamodel.FsContent;
 
 /**
  * ImageTypePanel for adding a local disk or partition such as \\.\PhysicalDrive0 or  \\.\C:.
@@ -190,42 +196,16 @@ public class LocalDiskPanel extends ImageTypePanel {
         private String LOADING = "Loading local disks...";
         
         private void loadDisks() {
+            // Clear the lists
             errorLabel.setText("");
             disks = new ArrayList<LocalDisk>();
             physical = new ArrayList<LocalDisk>();
             partitions = new ArrayList<LocalDisk>();
+            diskComboBox.setEnabled(false);
             ready = false;
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    diskComboBox.setEnabled(false);
-                    physical = PlatformUtil.getPhysicalDrives();
-                    partitions = PlatformUtil.getPartitions();
-                    disks.addAll(physical);
-                    disks.addAll(partitions);
-                    diskComboBox.setEnabled(true);
-                    enableNext = false;
-                    displayErrors();
-                    ready = true;
-                    diskComboBox.setSelectedIndex(0);
-                }
-            }).start();
-        }
-        
-        private void displayErrors() {
-            if(physical.isEmpty() && partitions.isEmpty()) {
-                if(PlatformUtil.isWindowsOS()) {
-                    errorLabel.setText("Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
-                    errorLabel.setToolTipText("Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
-                } else {
-                    errorLabel.setText("Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required");
-                    errorLabel.setToolTipText("Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required");
-                }
-                diskComboBox.setEnabled(false);
-            } else if(physical.isEmpty()) {
-                errorLabel.setText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
-                errorLabel.setToolTipText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
-            }
+            
+            LocalDiskThread worker = new LocalDiskThread();
+            worker.execute();
         }
 
         @Override
@@ -289,6 +269,63 @@ public class LocalDiskPanel extends ImageTypePanel {
             
             panel.add(label, BorderLayout.CENTER);
             return panel;
+        }
+        
+        class LocalDiskThread extends SwingWorker<Object,Void> {
+            private Logger logger = Logger.getLogger(LocalDiskThread.class.getName());
+
+            @Override
+            protected Object doInBackground() throws Exception {
+                // Populate the lists
+                physical = PlatformUtil.getPhysicalDrives();
+                partitions = PlatformUtil.getPartitions();
+                disks.addAll(physical);
+                disks.addAll(partitions);
+                
+                return null;
+            }
+        
+            private void displayErrors() {
+                if(physical.isEmpty() && partitions.isEmpty()) {
+                    if(PlatformUtil.isWindowsOS()) {
+                        errorLabel.setText("Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
+                        errorLabel.setToolTipText("Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
+                    } else {
+                        errorLabel.setText("Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required");
+                        errorLabel.setToolTipText("Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required");
+                    }
+                    diskComboBox.setEnabled(false);
+                } else if(physical.isEmpty()) {
+                    errorLabel.setText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
+                    errorLabel.setToolTipText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
+                }
+            }
+        
+            @Override
+            protected void done() {
+                try {
+                    super.get(); //block and get all exceptions thrown while doInBackground()
+                } catch (CancellationException ex) {
+                    logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible.");
+                } catch (InterruptedException ex) {
+                    logger.log(Level.INFO, "Loading local disks was interrupted.");
+                } catch (Exception ex) {
+                    logger.log(Level.SEVERE, "Fatal error when loading local disks", ex);
+                } finally {
+                    if (!this.isCancelled()) {
+                        enableNext = false;
+                        displayErrors();
+                        ready = true;
+                        
+                        if(disks.size() > 0) {
+                            diskComboBox.setEnabled(true);
+                            diskComboBox.setSelectedIndex(0);
+                        }
+                    } else {
+                        logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible.");
+                    }
+                }
+            }
         }
     }
 }
