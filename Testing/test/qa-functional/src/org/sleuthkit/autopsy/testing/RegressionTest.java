@@ -25,12 +25,17 @@ import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -42,6 +47,7 @@ import org.netbeans.jemmy.operators.JButtonOperator;
 import org.netbeans.jemmy.operators.JCheckBoxOperator;
 import org.netbeans.jemmy.operators.JDialogOperator;
 import org.netbeans.jemmy.operators.JFileChooserOperator;
+import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
 import org.netbeans.junit.NbModuleSuite;
@@ -54,6 +60,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  * known_bad_path: Path to a database of known bad hashes
  * keyword_path: Path to a keyword list xml file
  * ignore_unalloc: Boolean whether to ignore unallocated space or not
+ * mugen_mode: whether or not this test will run certain keyword settings.
  * 
  * Without these properties set, the test will fail to run correctly.
  * To run this test correctly, you should use the script 'regression.py'
@@ -186,7 +193,7 @@ public class RegressionTest extends TestCase{
         WizardOperator wo = new WizardOperator("Add Image");
         JTableOperator jto = new JTableOperator(wo, 0);
         int row = jto.findCellRow("Keyword Search", 1, 0);
-        jto.clickOnCell(row, 1);
+        jto.clickOnCell(row, 1);        
         JButtonOperator jbo1 = new JButtonOperator(wo, "Advanced");
         jbo1.pushNoBlock();
     }
@@ -202,6 +209,14 @@ public class RegressionTest extends TestCase{
         jfco0.chooseFile(words);
         JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Enable for ingest", 0);
         jcbo.doClick();
+        if(Boolean.parseBoolean(System.getProperty("mugen_mode"))){
+            JTabbedPaneOperator jtpo = new JTabbedPaneOperator(jdo);
+            jtpo.selectPage("String Extraction");
+            JCheckBoxOperator jcbo0 = new JCheckBoxOperator(jtpo, "Arabic (Arabic)");
+            jcbo0.doClick();
+            JCheckBoxOperator jcbo1 = new JCheckBoxOperator(jtpo, "Han (Chinese, Japanese, Korean)");
+            jcbo1.doClick();
+        }
         JButtonOperator jbo2 = new JButtonOperator(jdo, "OK", 0);
         jbo2.pushNoBlock();
         WizardOperator wo = new WizardOperator("Add Image");
@@ -254,22 +269,19 @@ public class RegressionTest extends TestCase{
         logger.info("Generate Report Button");
         JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
         JDialogOperator reportDialogOperator = new JDialogOperator(reportDialog);
-        JCheckBoxOperator jcbo0 = new JCheckBoxOperator(reportDialogOperator, "Excel");
-        jcbo0.doClick();
-        JCheckBoxOperator jcbo1 = new JCheckBoxOperator(reportDialogOperator, "Default XML");
-        jcbo1.doClick();
-        JCheckBoxOperator jcbo2 = new JCheckBoxOperator(reportDialogOperator, "Body File");
-        jcbo2.doClick();
         JButtonOperator jbo0 = new JButtonOperator(reportDialogOperator, "Generate Report");
-        jbo0.pushNoBlock();
+        DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
+        Date date = new Date();
+        String datenotime = dateFormat.format(date);
+        jbo0.pushNoBlock();       
         new Timeout("pausing", 3000).sleep(); // Give it a few seconds to generate
         screenshot("Finished Report");
-        
         JDialog previewDialog = JDialogOperator.waitJDialog("Report Preview", false, false);
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
         JButtonOperator jbo1 = new JButtonOperator(previewDialogOperator, "Close");
         jbo1.pushNoBlock();
         new Timeout("pausing", 3000).sleep(); // Give the program a second to idle to be safe
+        System.setProperty("ReportStr", datenotime);
         screenshot("Done Testing");
     }
     
@@ -282,9 +294,10 @@ public class RegressionTest extends TestCase{
             ImageIO.write(capture, "png", new File(outPath + "\\" + name + ".png"));
             new Timeout("pausing", 1000).sleep(); // give it a second to save
         } catch (IOException ex) {
-            logger.info("IOException taking screenshot.");
+            logger.log(Level.WARNING, "IOException taking screenshot.", ex);
         } catch (AWTException ex) {
-            logger.info("AWTException taking screenshot.");
+            logger.log(Level.WARNING, "AWTException taking screenshot.", ex);
+            
         }
     }
    
