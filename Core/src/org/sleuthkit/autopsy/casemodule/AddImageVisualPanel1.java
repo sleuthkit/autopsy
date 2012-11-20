@@ -100,7 +100,7 @@ final class AddImageVisualPanel1 extends JPanel {
             }
             
         });
-        currentPanel.setFocus();
+        currentPanel.select();
         updateUI(null);
     }
 
@@ -352,7 +352,7 @@ final class AddImageVisualPanel1 extends JPanel {
     private class ImageTypeModel implements ComboBoxModel {
         ImageTypePanel selected;
         ImageTypePanel[] types = ImageTypePanel.getPanels();
-
+        
         @Override
         public void setSelectedItem(Object anItem) {
             selected = (ImageTypePanel) anItem;
@@ -381,6 +381,6 @@ final class AddImageVisualPanel1 extends JPanel {
         @Override
         public void removeListDataListener(ListDataListener l) {
         }
-        
+
     }
 }

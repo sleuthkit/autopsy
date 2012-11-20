@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
@@ -40,17 +42,16 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 public class LocalDiskPanel extends ImageTypePanel {
     private static LocalDiskPanel instance;
     private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-    private List<LocalDisk> disks;
+    private List<LocalDisk> disks = new ArrayList<LocalDisk>();
     private LocalDiskModel model;
-    private int separatorIndex;
-    private boolean diskSelected = true;
+    private boolean enableNext = false;
 
     /**
      * Creates new form LocalDiskPanel
      */
     public LocalDiskPanel() {
         initComponents();
-        updateDisks();
+        customInit();
     }
     
     /**
@@ -60,44 +61,15 @@ public class LocalDiskPanel extends ImageTypePanel {
         if (instance == null) {
             instance = new LocalDiskPanel();
         }
-        instance.updateDisks();
         return instance;
     }
     
-    /**
-     * Update the JComboBox with the list of disks.
-     */
-    private void updateDisks() {
-        errorLabel.setText("");
-        diskComboBox.setEnabled(true);
-        disks = new ArrayList<LocalDisk>();
-        List<LocalDisk> physical = PlatformUtil.getPhysicalDrives();
-        List<LocalDisk> partitions = PlatformUtil.getPartitions();
-        separatorIndex = physical.size() - 1;
-        if(physical.isEmpty()) {
-            errorLabel.setText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
-            errorLabel.setToolTipText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
-        }
-        
-        disks.addAll(physical);
-        disks.addAll(partitions);
+    private void customInit() {
         model = new LocalDiskModel();
         diskComboBox.setModel(model);
         diskComboBox.setRenderer(model);
-        
-        if(physical.isEmpty() && partitions.isEmpty()) {
-            if(PlatformUtil.isWindowsOS()) {
-                errorLabel.setText("Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
-                errorLabel.setToolTipText("Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
-            } else {
-                errorLabel.setText("Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required");
-                errorLabel.setToolTipText("Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required");
-            }
-            diskComboBox.setEnabled(false);
-            diskSelected = false;
-        } else {
-            diskComboBox.setSelectedIndex(0);
-        }
+        errorLabel.setText("");
+        diskComboBox.setEnabled(false);
     }
 
     /**
@@ -177,7 +149,7 @@ public class LocalDiskPanel extends ImageTypePanel {
      */
     @Override
     public boolean enableNext() {
-        return diskSelected;
+        return enableNext;
     }
     
     /**
@@ -189,13 +161,12 @@ public class LocalDiskPanel extends ImageTypePanel {
     }
     
    /**
-     * Set the focus of this panel to the desired component.
+     * Set the focus to the diskComboBox and refreshes the list of disks.
      */
     @Override
-    public void setFocus() {
+    public void select() {
         diskComboBox.requestFocusInWindow();
-        updateDisks(); // called every time the panel is switched to
-                       // so why not update the list while we're here?
+        model.loadDisks();
     }
     
     @Override
@@ -210,32 +181,75 @@ public class LocalDiskPanel extends ImageTypePanel {
     }
     
     private class LocalDiskModel implements ComboBoxModel, ListCellRenderer {
-        Object selected;
+        private Object selected;
+        private boolean ready = false;
+        List<LocalDisk> physical = new ArrayList<LocalDisk>();
+        List<LocalDisk> partitions = new ArrayList<LocalDisk>();
+        
+        //private String SELECT = "Select a local disk:";
+        private String LOADING = "Loading local disks...";
+        
+        private void loadDisks() {
+            errorLabel.setText("");
+            disks = new ArrayList<LocalDisk>();
+            physical = new ArrayList<LocalDisk>();
+            partitions = new ArrayList<LocalDisk>();
+            ready = false;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    diskComboBox.setEnabled(false);
+                    physical = PlatformUtil.getPhysicalDrives();
+                    partitions = PlatformUtil.getPartitions();
+                    disks.addAll(physical);
+                    disks.addAll(partitions);
+                    diskComboBox.setEnabled(true);
+                    enableNext = false;
+                    displayErrors();
+                    ready = true;
+                    diskComboBox.setSelectedIndex(0);
+                }
+            }).start();
+        }
+        
+        private void displayErrors() {
+            if(physical.isEmpty() && partitions.isEmpty()) {
+                if(PlatformUtil.isWindowsOS()) {
+                    errorLabel.setText("Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
+                    errorLabel.setToolTipText("Disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
+                } else {
+                    errorLabel.setText("Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required");
+                    errorLabel.setToolTipText("Local drives were not detected. Auto-detection not supported on this OS  or admin privileges required");
+                }
+                diskComboBox.setEnabled(false);
+            } else if(physical.isEmpty()) {
+                errorLabel.setText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
+                errorLabel.setToolTipText("Some disks were not detected. On some systems it requires admin privileges (or \"Run as administrator\").");
+            }
+        }
 
         @Override
         public void setSelectedItem(Object anItem) {
-            selected = anItem;
-            if(selected != null) {
-                diskSelected = true;
-            } else {
-                diskSelected = false;
+            if(ready) {
+                selected = anItem;
+                enableNext = true;
+                pcs.firePropertyChange(AddImageVisualPanel1.EVENT.UPDATE_UI.toString(), false, true);
             }
-            pcs.firePropertyChange(AddImageVisualPanel1.EVENT.UPDATE_UI.toString(), false, true);
         }
 
         @Override
         public Object getSelectedItem() {
-            return selected;
+            return ready ? selected : LOADING;
         }
 
         @Override
         public int getSize() {
-            return disks.size();
+            return ready ? disks.size() : 1;
         }
 
         @Override
         public Object getElementAt(int index) {
-            return disks.get(index);
+            return ready ? disks.get(index) : LOADING;
         }
 
         @Override
@@ -250,21 +264,26 @@ public class LocalDiskPanel extends ImageTypePanel {
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             JPanel panel = new JPanel(new BorderLayout());
             JLabel label = new JLabel();
-            if(index == separatorIndex) {
+            if(index == physical.size() - 1) {
                 panel.add(new JSeparator(JSeparator.HORIZONTAL), BorderLayout.SOUTH);
             }
+            
             if (isSelected) {
                 label.setBackground(list.getSelectionBackground());
                 label.setForeground(list.getSelectionForeground());
-                panel.setBackground(list.getSelectionBackground());
-                panel.setForeground(list.getSelectionForeground());
             } else {
                 label.setBackground(list.getBackground());
                 label.setForeground(list.getForeground());
-                panel.setBackground(list.getBackground());
-                panel.setForeground(list.getForeground());
             }
-            label.setText(value != null ? value.toString() : "");
+            
+            if(value !=null && value.equals(LOADING)) {
+                Font font = new Font(label.getFont().getName(), Font.ITALIC, label.getFont().getSize()); 
+                label.setText(LOADING);
+                label.setFont(font);
+                label.setBackground(Color.GRAY);
+            } else {
+                label.setText(value != null ? value.toString() : "");
+            }
             label.setOpaque(true);
             label.setBorder(new EmptyBorder(2, 2, 2, 2));
             

@@ -19,16 +19,11 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.SleuthkitJNI;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * The "Add Image" wizard panel3. Presents the
@@ -43,8 +38,6 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      * component from this class, just use getComponent().
      */
     private Component component = null;
-    private Image newImage = null;
-    private boolean ingested = false;
 
     /**
      * Get the visual component for the panel. In this template, the component
@@ -126,23 +119,6 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     @Override
     public void readSettings(WizardDescriptor settings) {
         //logger.log(Level.INFO, "readSettings, will commit image");
-
-        if (newImage != null) //already commited
-        {
-            return;
-        }
-
-        if ((SleuthkitJNI.CaseDbHandle.AddImageProcess) settings.getProperty(AddImageAction.PROCESS_PROP) != null) {
-            // commit anything
-            try {
-                commitImage(settings);
-            } catch (Exception ex) {
-                // Log error/display warning
-                logger.log(Level.SEVERE, "Error adding image to case.", ex);
-            }
-        } else {
-            logger.log(Level.SEVERE, "Missing image process object");
-        }
     }
 
     /**
@@ -160,51 +136,5 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
 
         //save previously selected config
         ingestConfig.save();
-
-        final boolean cancelled = settings.getValue() == WizardDescriptor.CANCEL_OPTION || settings.getValue() == WizardDescriptor.CLOSED_OPTION;
-        //start / enqueue ingest if next/finish pressed
-        if (!cancelled && newImage != null && !ingested) {
-            ingestConfig.setImage(newImage);
-            ingestConfig.start();
-            ingested = true;
-        }
-    }
-
-    /**
-     * Commit the finished AddImageProcess, and cancel the CleanupTask that
-     * would have reverted it.
-     * @param settings property set to get AddImageProcess and CleanupTask from
-     * @throws Exception if commit or adding the image to the case failed
-     */
-    private void commitImage(WizardDescriptor settings) throws Exception {
-
-        String imgPath = (String) settings.getProperty(AddImageAction.IMGPATH_PROP);
-        String timezone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
-        settings.putProperty(AddImageAction.IMAGEID_PROP, "");
-        SleuthkitJNI.CaseDbHandle.AddImageProcess process = (SleuthkitJNI.CaseDbHandle.AddImageProcess) settings.getProperty(AddImageAction.PROCESS_PROP);
-
-        long imageId = 0;
-        try {
-            imageId = process.commit();
-        } 
-        catch (TskException e) {
-            logger.log(Level.WARNING, "Errors occured while committing the image", e);
-        }
-        finally {
-            //commit done, unlock db write in EWT thread
-            //before doing anything else
-            SleuthkitCase.dbWriteUnlock();
-
-            if (imageId != 0) {
-                newImage = Case.getCurrentCase().addImage(imgPath, imageId, timezone);
-                settings.putProperty(AddImageAction.IMAGEID_PROP, imageId);
-            }
-
-            // Can't bail and revert image add after commit, so disable image cleanup
-            // task
-            AddImageAction.CleanupTask cleanupImage = (AddImageAction.CleanupTask) settings.getProperty(AddImageAction.IMAGECLEANUPTASK_PROP);
-            cleanupImage.disable();
-            settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, null);
-        }
     }
 }

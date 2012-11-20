@@ -27,16 +27,16 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -62,6 +62,10 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     private AddImageProcess process;
     private AddImgTask addImageTask;
     private static final Logger logger = Logger.getLogger(AddImageWizardPanel2.class.getName());
+    
+    private Image newImage = null;
+    private IngestConfigurator ingestConfig = Lookup.getDefault().lookup(IngestConfigurator.class);
+    private boolean ingested = false;
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
@@ -121,11 +125,11 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      * Creates the database and adds the image to the XML configuration file.
      *
      */
-    private void startAddImage() {
+    private void startAddImage(WizardDescriptor settings) {
         component.getCrDbProgressBar().setIndeterminate(true);
         component.changeProgressBarTextAndColor("*Adding the image may take some time for large images.", 0, Color.black);
 
-        addImageTask = new AddImgTask();
+        addImageTask = new AddImgTask(settings);
         addImageTask.execute();
     }
 
@@ -196,7 +200,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
 
         getComponent().resetInfoPanel();
 
-        startAddImage();
+        startAddImage(settings);
     }
 
     /**
@@ -228,12 +232,14 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
         private boolean interrupted = false;
         private boolean hasCritError = false;
         private String errorString = null;
+        private WizardDescriptor settings;
         
         private long start;
 
-        protected AddImgTask() {
+        protected AddImgTask(WizardDescriptor settings) {
             this.progressBar = getComponent().getCrDbProgressBar();
             currentCase = Case.getCurrentCase();
+            this.settings = settings;
         }
 
         /**
@@ -361,6 +367,31 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 }
 
                 setDbCreated(true);
+                
+                // Commit the image
+                if (newImage != null) //already commited
+                {
+                    return;
+                }
+
+                if (process != null) {
+                    // commit anything
+                    try {
+                        commitImage(settings);
+                    } catch (Exception ex) {
+                        // Log error/display warning
+                        logger.log(Level.SEVERE, "Error adding image to case.", ex);
+                    }
+                } else {
+                    logger.log(Level.SEVERE, "Missing image process object");
+                }
+                
+                // Start the ingest process
+                if (newImage != null && !ingested) {
+                    ingestConfig.setImage(newImage);
+                    ingestConfig.start();
+                    ingested = true;
+                }
 
             } catch (Exception ex) {
                 //handle unchecked exceptions post image add
@@ -399,6 +430,41 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                 //unlock db write within EWT thread
                 SleuthkitCase.dbWriteUnlock();
             }
+        }
+    }
+
+    /**
+     * Commit the finished AddImageProcess, and cancel the CleanupTask that
+     * would have reverted it.
+     * @param settings property set to get AddImageProcess and CleanupTask from
+     * @throws Exception if commit or adding the image to the case failed
+     */
+    private void commitImage(WizardDescriptor settings) throws Exception {
+
+        String timezone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
+        settings.putProperty(AddImageAction.IMAGEID_PROP, "");
+
+        long imageId = 0;
+        try {
+            imageId = process.commit();
+        } 
+        catch (TskException e) {
+            logger.log(Level.WARNING, "Errors occured while committing the image", e);
+        }
+        finally {
+            //commit done, unlock db write in EWT thread
+            //before doing anything else
+            SleuthkitCase.dbWriteUnlock();
+
+            if (imageId != 0) {
+                newImage = Case.getCurrentCase().addImage(imgPath, imageId, timezone);
+                settings.putProperty(AddImageAction.IMAGEID_PROP, imageId);
+            }
+
+            // Can't bail and revert image add after commit, so disable image cleanup
+            // task
+            cleanupImage.disable();
+            settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, null);
         }
     }
 }

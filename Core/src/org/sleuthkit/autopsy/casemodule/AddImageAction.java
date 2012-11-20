@@ -123,6 +123,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
             dialog.setVisible(false); // hide the old one
         }
         dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
+        dialog.setSize(800, 500);
         dialog.setVisible(true);
         dialog.toFront();
         
