@@ -132,8 +132,12 @@ public class LocalDiskPanel extends ImageTypePanel {
      */
     @Override
     public String getImagePath() {
-        LocalDisk selected = (LocalDisk) diskComboBox.getSelectedItem();
-        return selected.getPath();
+        if(disks.size() > 0) {
+            LocalDisk selected = (LocalDisk) diskComboBox.getSelectedItem();
+            return selected.getPath();
+        } else {
+            return "";
+        }
     }
 
     /**
