@@ -391,6 +391,7 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
                     ingestConfig.setImage(newImage);
                     ingestConfig.start();
                     ingested = true;
+                    getComponent().changeProgressBarTextAndColor("*Image added and Ingest started.", 100, Color.black); // complete progress bar
                 }
 
             } catch (Exception ex) {
