@@ -117,7 +117,7 @@ public class MissingImageDialog extends javax.swing.JDialog {
             }
             
         });
-        currentPanel.setFocus();
+        currentPanel.select();
         updateSelectButton();
     }
     

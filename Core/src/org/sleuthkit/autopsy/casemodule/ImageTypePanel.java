@@ -51,10 +51,9 @@ abstract class ImageTypePanel extends JPanel {
     abstract public boolean enableNext();
     
     /**
-     * Set the focus of this panel to the desired component. Called when this
-     * panel is selected by the user.
+     * Tells this panel it has been selected.
      */
-    abstract public void setFocus();
+    abstract public void select();
     
     @Override
     abstract public void addPropertyChangeListener(PropertyChangeListener pcl);
