@@ -308,7 +308,11 @@ public class PlatformUtil {
                 if((name.contains("hd") || name.contains("sd")) && f.canRead() && name.length() == 3) {
                     String path = "/dev/" + name;
                     if(canReadDrive(path)) {
-                        drives.add(new LocalDisk(path, path, f.getTotalSpace()));
+                        try {
+                            drives.add(new LocalDisk(path, path, SleuthkitJNI.findDeviceSize(path)));
+                        } catch (TskCoreException ex) {
+                            // Don't add the drive because we can't read the size
+                        }
                     }
                 }
             }
