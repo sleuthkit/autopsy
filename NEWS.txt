@@ -3,6 +3,7 @@
 New features:
 
 Improvements:
+- Add Image Wizard - better work-flow, better device size reporting
 
 Bugfixes:
 - fixed periodic keyword search during ingest, when it'd run max. 2 times only
