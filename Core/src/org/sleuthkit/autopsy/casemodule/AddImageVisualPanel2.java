@@ -95,6 +95,14 @@ final class AddImageVisualPanel2 extends JPanel {
         progressLabel.setForeground(color);
         crDbProgressBar.setValue(value);
     }
+    
+    /**
+     * append progress text to progress label
+     * @param text 
+     */
+    public void appendProgressText(String text) {
+        progressLabel.setText(progressLabel.getText() + " " + text);
+    }
 
     
 
