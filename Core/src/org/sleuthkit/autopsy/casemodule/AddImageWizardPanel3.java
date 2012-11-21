@@ -195,6 +195,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
             ingested = true;
             ingestConfig.setImage(newImage);
             ingestConfig.start();
+            wizPanel.getComponent().appendProgressText(" Ingest started.");
         }
     }
 
