@@ -42,7 +42,6 @@ import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -271,7 +270,9 @@ public class IngestManager {
      * is already running otherwise start/restart the worker
      */
     private synchronized void startAll() {
-        logger.log(Level.INFO, "Image queue: " + scheduler.IMAGE_SCHEDULER.toString());
+        final IngestScheduler.ImageScheduler imageScheduler = scheduler.getImageScheduler();
+        
+        logger.log(Level.INFO, "Image queue: " + imageScheduler.toString());
         logger.log(Level.INFO, "File queue: " + this.abstractFileQueue.toString());
 
         if (!ingestMonitor.isRunning()) {
@@ -280,10 +281,10 @@ public class IngestManager {
 
         //image ingesters
         // cycle through each image in the queue
-        while (scheduler.IMAGE_SCHEDULER.hasNext()) {
+        while (imageScheduler.hasNext()) {
             //dequeue
             // get next image and set of modules
-            final IngestScheduler.Image.Task imageTask = scheduler.IMAGE_SCHEDULER.getNext();
+            final IngestScheduler.ImageScheduler.Task imageTask = imageScheduler.next();
             
             // check if each module for this image is already running
             for (IngestModuleImage taskModule : imageTask.getModules() ) {
@@ -369,7 +370,7 @@ public class IngestManager {
 
         //empty queues
         emptyAbstractFiles();
-        scheduler.IMAGE_SCHEDULER.empty();
+        scheduler.getImageScheduler().empty();
 
         //stop module workers
         if (abstractFileIngester != null) {
@@ -1258,6 +1259,9 @@ public class IngestManager {
         }
 
         private void queueAll(List<IngestModuleAbstract> modules, final List<Image> images) {
+            
+            final IngestScheduler.ImageScheduler imageScheduler = scheduler.getImageScheduler();
+            
             int processed = 0;
             for (Image image : images) {
                 final String imageName = image.getName();
@@ -1274,9 +1278,9 @@ public class IngestManager {
                             final IngestModuleImage newModuleInstance =
                                     (IngestModuleImage) moduleLoader.getNewIngestModuleInstance(module);
                             if (newModuleInstance != null) {
-                                IngestScheduler.Image.Task imageTask = 
-                                        new IngestScheduler.Image.Task(image, newModuleInstance);
-                                scheduler.IMAGE_SCHEDULER.add(imageTask);
+                                IngestScheduler.ImageScheduler.Task imageTask = 
+                                        new IngestScheduler.ImageScheduler.Task(image, newModuleInstance);
+                                imageScheduler.add(imageTask);
                                 logger.log(Level.INFO, "Added image " + image.getName() + " with module " + module.getName());
 
 
@@ -1314,7 +1318,7 @@ public class IngestManager {
             Logger.getLogger(EnqueueWorker.class.getName()).log(Level.INFO, "Exception!", ex);
             //empty queues
             emptyAbstractFiles();
-            scheduler.IMAGE_SCHEDULER.empty();
+            scheduler.getImageScheduler().empty();
         }
     }
 }
