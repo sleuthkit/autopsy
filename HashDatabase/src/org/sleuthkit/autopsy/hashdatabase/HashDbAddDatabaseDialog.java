@@ -242,7 +242,7 @@ class HashDbAddDatabaseDialog extends javax.swing.JDialog {
                 String derivedName = SleuthkitJNI.getDatabaseName(filePath);
                 databasePathTextField.setText(filePath);
                 databaseNameTextField.setText(derivedName);
-                if (filePath.toLowerCase().contains("nsrl")) {
+                if (derivedName.toLowerCase().contains("nsrl")) {
                     nsrlRadioButton.setSelected(true);
                     nsrlRadioButtonActionPerformed(null);
                 }
