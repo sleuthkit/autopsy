@@ -37,9 +37,10 @@ import org.sleuthkit.datamodel.TskException;
  *
  * @author dfickling
  */
-class HashDbAddDatabaseDialog extends javax.swing.JDialog {
+final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
 
     private JFileChooser fc = new JFileChooser();
+    private String databaseName;
     private static final Logger logger = Logger.getLogger(HashDbAddDatabaseDialog.class.getName());
     /**
      * Creates new form HashDbAddDatabaseDialog
@@ -61,7 +62,7 @@ class HashDbAddDatabaseDialog extends javax.swing.JDialog {
         fc.setMultiSelectionEnabled(false);
     }
     
-    void display() {
+    String display() {
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
         // set the popUp window / JFrame
@@ -72,6 +73,7 @@ class HashDbAddDatabaseDialog extends javax.swing.JDialog {
         setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
         
         this.setVisible(true);
+        return databaseName;
     }
 
     /**
@@ -310,6 +312,7 @@ class HashDbAddDatabaseDialog extends javax.swing.JDialog {
         } else if(type == DBType.NSRL) {
             HashDbXML.getCurrent().setNSRLSet(db);
         }
+        databaseName = databaseNameTextField.getText();
         this.dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
