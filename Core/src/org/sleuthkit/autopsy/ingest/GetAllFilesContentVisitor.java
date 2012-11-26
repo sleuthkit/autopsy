@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.File;
@@ -88,20 +89,25 @@ class GetAllFilesContentVisitor extends GetFilesContentVisitor {
             queryB.append(")");
         }
         
+        ResultSet rs = null;
         try {
             final String query = queryB.toString();
             logger.log(Level.INFO, "Executing query: " + query);
-            ResultSet rs = sc.runQuery(query);
+            rs = sc.runQuery(query);
             List<AbstractFile> contents = sc.resultSetToAbstractFiles(rs);
-            Statement s = rs.getStatement();
-            rs.close();
-            if (s != null) {
-                s.close();
-            }
             return contents;
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Couldn't get all files in FileSystem", ex);
             return Collections.emptySet();
+        }
+        finally {
+            if (rs != null) {
+                try {
+                    sc.closeRunQuery(rs);
+                } catch (SQLException ex) {
+                    logger.log(Level.WARNING, "Couldn't close result set after getting all files in FileSystem", ex);
+                }
+            }
         }
     }
 }
