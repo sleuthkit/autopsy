@@ -24,33 +24,26 @@ import java.beans.PropertyChangeSupport;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
+import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ProcessTask;
+import org.sleuthkit.autopsy.ingest.IngestScheduler.FileScheduler.ScheduledTask;
+import org.sleuthkit.autopsy.ingest.IngestScheduler.ImageScheduler.Task;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * IngestManager sets up and manages ingest modules runs them in a background
@@ -67,8 +60,6 @@ public class IngestManager {
     private boolean processUnallocSpace = true;
     //queues
     private final IngestScheduler scheduler;
-    private final AbstractFileQueue abstractFileQueue = new AbstractFileQueue();
-    private final Object queuesLock = new Object();
     //workers
     private IngestAbstractFileThread abstractFileIngester;
     private List<IngestImageThread> imageIngesters;
@@ -134,7 +125,7 @@ public class IngestManager {
         imageIngesters = new ArrayList<IngestImageThread>();
 
         scheduler = IngestScheduler.getInstance();
-        
+
         //setup current modules and listeners for modules changes
         initModules();
 
@@ -220,8 +211,7 @@ public class IngestManager {
     }
 
     /**
-     * Multiple image version of execute() method.
-     * Enqueues multiple images and
+     * Multiple image version of execute() method. Enqueues multiple images and
      * associated modules at once
      *
      * @param modules modules to execute on every image
@@ -271,8 +261,11 @@ public class IngestManager {
      * is already running otherwise start/restart the worker
      */
     private synchronized void startAll() {
-        logger.log(Level.INFO, "Image queue: " + scheduler.IMAGE_SCHEDULER.toString());
-        logger.log(Level.INFO, "File queue: " + this.abstractFileQueue.toString());
+        final IngestScheduler.ImageScheduler imageScheduler = scheduler.getImageScheduler();
+        final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
+
+        logger.log(Level.INFO, "Image queue: " + imageScheduler.toString());
+        logger.log(Level.INFO, "File queue: " + fileScheduler.toString());
 
         if (!ingestMonitor.isRunning()) {
             ingestMonitor.start();
@@ -280,13 +273,13 @@ public class IngestManager {
 
         //image ingesters
         // cycle through each image in the queue
-        while (scheduler.IMAGE_SCHEDULER.hasNext()) {
+        while (imageScheduler.hasNext()) {
             //dequeue
             // get next image and set of modules
-            final IngestScheduler.Image.Task imageTask = scheduler.IMAGE_SCHEDULER.getNext();
-            
+            final IngestScheduler.ImageScheduler.Task imageTask = imageScheduler.next();
+
             // check if each module for this image is already running
-            for (IngestModuleImage taskModule : imageTask.getModules() ) {
+            for (IngestModuleImage taskModule : imageTask.getModules()) {
                 boolean alreadyRunning = false;
                 for (IngestImageThread worker : imageIngesters) {
                     // ignore threads that are on different images
@@ -296,17 +289,17 @@ public class IngestManager {
                     //same image, check module (by name, not id, since different instances)
                     if (worker.getModule().getName().equals(taskModule.getName())) {
                         alreadyRunning = true;
-                        logger.log(Level.INFO, "Image Ingester <" + imageTask.getImage() 
+                        logger.log(Level.INFO, "Image Ingester <" + imageTask.getImage()
                                 + ", " + taskModule.getName() + "> is already running");
                         break;
                     }
                 }
                 //checked all workers
                 if (alreadyRunning == false) {
-                    logger.log(Level.INFO, "Starting new image Ingester <" + imageTask.getImage() 
+                    logger.log(Level.INFO, "Starting new image Ingester <" + imageTask.getImage()
                             + ", " + taskModule.getName() + ">");
-                      //image modules are now initialized per instance
-                    
+                    //image modules are now initialized per instance
+
                     IngestModuleInit moduleInit = new IngestModuleInit();
                     moduleInit.setModuleArgs(taskModule.getArguments());
                     final IngestImageThread newImageWorker = new IngestImageThread(this,
@@ -325,7 +318,7 @@ public class IngestManager {
 
         //AbstractFile ingester
         boolean startAbstractFileIngester = false;
-        if (hasNextAbstractFile()) {
+        if (fileScheduler.hasNext()) {
             if (abstractFileIngester
                     == null) {
                 startAbstractFileIngester = true;
@@ -348,8 +341,7 @@ public class IngestManager {
                 moduleInit.setModuleArgs(s.getArguments());
                 try {
                     s.init(moduleInit);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     logger.log(Level.SEVERE, "File ingest module failed init(): " + s.getName());
                 }
             }
@@ -368,8 +360,8 @@ public class IngestManager {
         }
 
         //empty queues
-        emptyAbstractFiles();
-        scheduler.IMAGE_SCHEDULER.empty();
+        scheduler.getFileScheduler().empty();
+        scheduler.getImageScheduler().empty();
 
         //stop module workers
         if (abstractFileIngester != null) {
@@ -509,16 +501,16 @@ public class IngestManager {
     public boolean isModuleRunning(final IngestModuleAbstract module) {
 
         if (module.getType() == IngestModuleAbstract.ModuleType.AbstractFile) {
+            IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
 
-            synchronized (queuesLock) {
-                if (abstractFileQueue.hasModuleEnqueued((IngestModuleAbstractFile) module)) {
-                    //has work enqueued, so running
-                    return true;
-                } else {
-                    //not in the queue, but could still have bkg work running
-                    return module.hasBackgroundJobsRunning();
-                }
+            if (fileScheduler.hasModuleEnqueued((IngestModuleAbstractFile) module)) {
+                //has work enqueued, so running
+                return true;
+            } else {
+                //not in the queue, but could still have bkg work running
+                return module.hasBackgroundJobsRunning();
             }
+
 
         } else {
             //image module
@@ -611,61 +603,6 @@ public class IngestManager {
         return moduleLoader.getAbstractFileIngestModules();
     }
 
-
-    /**
-     * Queue up an image to be processed by a given File module.
-     *
-     * @param module module for which to enqueue the files
-     * @param abstractFiles files to enqueue
-     */
-    private void addAbstractFile(IngestModuleAbstractFile module, Collection<AbstractFile> abstractFiles) {
-        synchronized (queuesLock) {
-            for (AbstractFile abstractFile : abstractFiles) {
-                abstractFileQueue.enqueue(abstractFile, module);
-            }
-        }
-    }
-
-    /**
-     * get next file/dir and associated list of modules to process the queue of
-     * AbstractFile to process is maintained internally and could be dynamically
-     * sorted as data comes in
-     */
-    private Map.Entry<AbstractFile, List<IngestModuleAbstractFile>> getNextAbstractFile() {
-        Map.Entry<AbstractFile, List<IngestModuleAbstractFile>> ret = null;
-        synchronized (queuesLock) {
-            ret = abstractFileQueue.dequeue();
-        }
-        return ret;
-    }
-
-    private boolean hasNextAbstractFile() {
-        boolean ret = false;
-        synchronized (queuesLock) {
-            ret = abstractFileQueue.hasNext();
-        }
-        return ret;
-    }
-
-    private int getNumAbstractFiles() {
-        int ret = 0;
-        synchronized (queuesLock) {
-            ret = abstractFileQueue.getCount();
-        }
-        return ret;
-    }
-
-    private void emptyAbstractFiles() {
-        synchronized (queuesLock) {
-            abstractFileQueue.empty();
-        }
-    }
-
-
-
-    
-
-
     //image worker to remove itself when complete or interrupted
     void removeImageIngestWorker(IngestImageThread worker) {
         //remove worker
@@ -673,227 +610,6 @@ public class IngestManager {
             imageIngesters.remove(worker);
         }
     }
-
-    /**
-     * Priority determination for AbstractFile
-     */
-    private static class AbstractFilePriotity {
-
-        enum Priority {
-
-            LOW, MEDIUM, HIGH
-        };
-        static final List<Pattern> LOW_PRI_PATHS = new ArrayList<Pattern>();
-        static final List<Pattern> MEDIUM_PRI_PATHS = new ArrayList<Pattern>();
-        static final List<Pattern> HIGH_PRI_PATHS = new ArrayList<Pattern>();
-
-        static {
-            LOW_PRI_PATHS.add(Pattern.compile("^\\/Windows", Pattern.CASE_INSENSITIVE));
-
-            MEDIUM_PRI_PATHS.add(Pattern.compile("^\\/Program Files", Pattern.CASE_INSENSITIVE));
-            MEDIUM_PRI_PATHS.add(Pattern.compile("^pagefile", Pattern.CASE_INSENSITIVE));
-            MEDIUM_PRI_PATHS.add(Pattern.compile("^hiberfil", Pattern.CASE_INSENSITIVE));
-
-            HIGH_PRI_PATHS.add(Pattern.compile("^\\/Users", Pattern.CASE_INSENSITIVE));
-            HIGH_PRI_PATHS.add(Pattern.compile("^\\/Documents and Settings", Pattern.CASE_INSENSITIVE));
-            HIGH_PRI_PATHS.add(Pattern.compile("^\\/home", Pattern.CASE_INSENSITIVE));
-            HIGH_PRI_PATHS.add(Pattern.compile("^\\/ProgramData", Pattern.CASE_INSENSITIVE));
-            HIGH_PRI_PATHS.add(Pattern.compile("^\\/Windows\\/Temp", Pattern.CASE_INSENSITIVE));
-        }
-
-        static Priority getPriority(final AbstractFile abstractFile) {
-            if (!abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.FS)) {
-                //non-fs files, such as representing unalloc space
-                return Priority.MEDIUM;
-            }
-            final String path = ((FsContent) abstractFile).getParentPath();
-
-            if (path == null) {
-                return Priority.MEDIUM;
-            }
-
-            for (Pattern p : HIGH_PRI_PATHS) {
-                Matcher m = p.matcher(path);
-                if (m.find()) {
-                    return Priority.HIGH;
-                }
-            }
-
-            for (Pattern p : MEDIUM_PRI_PATHS) {
-                Matcher m = p.matcher(path);
-                if (m.find()) {
-                    return Priority.MEDIUM;
-                }
-            }
-
-            for (Pattern p : LOW_PRI_PATHS) {
-                Matcher m = p.matcher(path);
-                if (m.find()) {
-                    return Priority.LOW;
-                }
-            }
-
-            //default is medium
-            return Priority.MEDIUM;
-        }
-    }
-
-    /**
-     * manages queue of pending AbstractFile and list of associated
-     * IngestModuleAbstractFile to use on that content sorted based on
-     * AbstractFilePriotity
-     */
-    private class AbstractFileQueue {
-        private final Comparator<AbstractFile> sorter = new Comparator<AbstractFile>() {
-            @Override
-            public int compare(AbstractFile q1, AbstractFile q2) {
-                AbstractFilePriotity.Priority p1 = AbstractFilePriotity.getPriority(q1);
-                AbstractFilePriotity.Priority p2 = AbstractFilePriotity.getPriority(q2);
-                if (p1 == p2) {
-                    return (int) (q2.getId() - q1.getId());
-                } else {
-                    return p2.ordinal() - p1.ordinal();
-                }
-
-            }
-        };
-        
-         private final TreeMap<AbstractFile, List<IngestModuleAbstractFile>> abstractFileUnits 
-                = new TreeMap<AbstractFile, List<IngestModuleAbstractFile>>(sorter);
-         
-         private final int FAT_NTFS_FLAGS = 
-                        TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12.getValue()
-                        | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue()
-                        | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue()
-                        | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_NTFS.getValue();
-
-        void enqueue(AbstractFile aFile, IngestModuleAbstractFile module) {
-            if (shouldEnqueue(aFile) == false) {
-                return;
-            }
-            //AbstractFileUnits.put(AbstractFile, Collections.singletonList(module));
-            List<IngestModuleAbstractFile> modules = abstractFileUnits.get(aFile);
-            if (modules == null) {
-                modules = new ArrayList<IngestModuleAbstractFile>();
-                abstractFileUnits.put(aFile, modules);
-            }
-            modules.add(module);
-        }
-
-        void enqueue(AbstractFile aFile, List<IngestModuleAbstractFile> modules) {
-            if (shouldEnqueue(aFile) == false) {
-                return;
-            }
-
-            List<IngestModuleAbstractFile> oldModules = abstractFileUnits.get(aFile);
-            if (oldModules == null) {
-                oldModules = new ArrayList<IngestModuleAbstractFile>();
-                abstractFileUnits.put(aFile, oldModules);
-            }
-            oldModules.addAll(modules);
-        }
-        
-        /**
-         * Check if the file meets criteria to be enqueued, or is a special file that we should skip
-         * @param aFile file to check if should be qneueued of skipped 
-         * @return true if should be enqueued, false otherwise
-         */
-        private boolean shouldEnqueue(AbstractFile aFile) {
-            if (aFile.isVirtual() == false && aFile.isFile() == true) {
-                final File f = (File) aFile;
-                
-                //skip files in root dir, starting with $, containing : (not default attributes)
-                //with meta address < 32, i.e. some special large NTFS and FAT files
-                final TskData.TSK_FS_TYPE_ENUM fsType = f.getFileSystem().getFs_type();
-
-                if ( (fsType.getValue() & FAT_NTFS_FLAGS) == 0) {
-                    //not fat or ntfs, accept all files
-                    return true;
-                }
-                
-                boolean isInRootDir = false;
-                try {
-                    isInRootDir = f.getParentDirectory().isRoot();
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Could not check if should enqueue the file: " + f.getName(), ex );
-                }
-                
-                if (isInRootDir && f.getMeta_addr() < 32) {
-                    String name = f.getName();
-                    
-                    if (name.length() > 0 
-                            && name.charAt(0) == '$'
-                            && name.contains(":")) {
-                        return false;
-                    }
-                }
-                else {
-                    return true;
-                }
-                
-            }
-            
-            
-            return true;
-        }
-
-        boolean hasNext() {
-            return !abstractFileUnits.isEmpty();
-        }
-
-        int getCount() {
-            return abstractFileUnits.size();
-        }
-
-        void empty() {
-            abstractFileUnits.clear();
-        }
-
-        /**
-         * Returns next AbstractFile and list of associated modules
-         *
-         * @return
-         */
-        Map.Entry<AbstractFile, List<IngestModuleAbstractFile>> dequeue() {
-            if (!hasNext()) {
-                throw new UnsupportedOperationException("AbstractFile processing queue is empty");
-            }
-
-            //logger.log(Level.INFO, "DEQUE: " + remove.content.getParentPath() + " SIZE: " + toString());
-            return (abstractFileUnits.pollFirstEntry());
-        }
-
-        /**
-         * checks if the module has any work enqueued
-         *
-         * @param module to check for
-         * @return true if the module is enqueued to do work
-         */
-        boolean hasModuleEnqueued(IngestModuleAbstractFile module) {
-            for (List<IngestModuleAbstractFile> list : abstractFileUnits.values()) {
-                if (list.contains(module)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public synchronized String toString() {
-            return "AbstractFileQueue, size: " + Integer.toString(abstractFileUnits.size());
-        }
-
-        public String printQueue() {
-            StringBuilder sb = new StringBuilder();
-            /*for (QueueUnit<AbstractFile, IngestModuleAbstractFile> u : AbstractFileUnits) {
-             sb.append(u.toString());
-             sb.append("\n");
-             }*/
-            return sb.toString();
-        }
-    }
-
-
 
     /**
      * collects IngestManager statistics during runtime
@@ -1080,24 +796,28 @@ public class IngestManager {
                 }
             });
 
+            final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
+
             progress.start();
             progress.switchToIndeterminate();
-            int numAbstractFiles = getNumAbstractFiles();
-            progress.switchToDeterminate(numAbstractFiles);
+            int totalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
+            progress.switchToDeterminate(totalEnqueuedFiles);
             int processedFiles = 0;
             //process AbstractFiles queue
-            while (hasNextAbstractFile()) {
-                Map.Entry<AbstractFile, List<IngestModuleAbstractFile>> unit = getNextAbstractFile();
+            while (fileScheduler.hasNext()) {
+                final ProcessTask fileTask = fileScheduler.next();
                 //clear return values from modules for last file
                 synchronized (abstractFileModulesRetValues) {
                     abstractFileModulesRetValues.clear();
                 }
 
-                final AbstractFile fileToProcess = unit.getKey();
+                final AbstractFile fileToProcess = fileTask.file;
+                
+                //logger.log(Level.INFO, "NEXT FILE: " + fileToProcess.getName());
 
                 progress.progress(fileToProcess.getName(), processedFiles);
 
-                for (IngestModuleAbstractFile module : unit.getValue()) {
+                for (IngestModuleAbstractFile module : fileTask.scheduledTask.modules) {
                     //process the file with every file module
                     if (isCancelled()) {
                         logger.log(Level.INFO, "Terminating file ingest due to cancellation.");
@@ -1120,15 +840,26 @@ public class IngestManager {
                         stats.addError(module);
                     }
                 }
-                int newAbstractFiles = getNumAbstractFiles();
-                if (newAbstractFiles > numAbstractFiles) {
+                /*
+                int newAbstractFiles = fileScheduler.getFilesEnqueuedEst();
+                if (newAbstractFiles > totalEnqueuedFiles) {
                     //update progress bar if new enqueued
-                    numAbstractFiles = newAbstractFiles + processedFiles + 1;
+                    totalEnqueuedFiles = newAbstractFiles + processedFiles + 1;
                     progress.switchToIndeterminate();
-                    progress.switchToDeterminate(numAbstractFiles);
+                    progress.switchToDeterminate(totalEnqueuedFiles);
                 }
                 ++processedFiles;
-                --numAbstractFiles;
+                --totalEnqueuedFiles;
+                */
+                processedFiles = fileScheduler.getFilesDequeued();
+                int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
+                if (totalEnqueuedFiles != newTotalEnqueuedFiles) {
+                    //update if new enqueued
+                    totalEnqueuedFiles = newTotalEnqueuedFiles;
+                    progress.switchToIndeterminate();
+                    progress.switchToDeterminate(totalEnqueuedFiles);
+                }
+                
             } //end of this AbstractFile
             logger.log(Level.INFO, "Done background processing");
             return null;
@@ -1170,7 +901,8 @@ public class IngestManager {
                         logger.log(Level.INFO, "Ingest messages count: " + ui.getMessagesCount());
                     }
 
-                    IngestManager.this.postMessage(IngestMessage.createManagerMessage("File Ingest Complete", stats.toHtmlString()));
+                    IngestManager.this.postMessage(IngestMessage.createManagerMessage("File Ingest Complete",
+                            stats.toHtmlString()));
                 }
             }
 
@@ -1188,7 +920,7 @@ public class IngestManager {
                 IngestManager.fireModuleEvent(IngestModuleEvent.STOPPED.toString(), s.getName());
             }
             //empty queues
-            emptyAbstractFiles();
+            scheduler.getFileScheduler().empty();
         }
     }
 
@@ -1197,7 +929,6 @@ public class IngestManager {
 
         List<IngestModuleAbstract> modules;
         final List<Image> images;
-        int total;
 
         EnqueueWorker(final List<IngestModuleAbstract> modules, final List<Image> images) {
             this.modules = modules;
@@ -1220,8 +951,7 @@ public class IngestManager {
                 }
             });
 
-            total = modules.size() * images.size();
-            progress.start(total);
+            progress.start(2 * images.size());
             //progress.switchToIndeterminate();
             queueAll(modules, images);
             return null;
@@ -1258,63 +988,75 @@ public class IngestManager {
         }
 
         private void queueAll(List<IngestModuleAbstract> modules, final List<Image> images) {
+
+            final IngestScheduler.ImageScheduler imageScheduler = scheduler.getImageScheduler();
+            final IngestScheduler.FileScheduler fileScheduler = scheduler.getFileScheduler();
+
             int processed = 0;
             for (Image image : images) {
                 final String imageName = image.getName();
-                Collection<AbstractFile> files = null;
+
+                final List<IngestModuleImage> imageMods = new ArrayList<IngestModuleImage>();
+                final List<IngestModuleAbstractFile> fileMods = new ArrayList<IngestModuleAbstractFile>();
+
                 for (IngestModuleAbstract module : modules) {
                     if (isCancelled()) {
                         logger.log(Level.INFO, "Terminating ingest queueing due to cancellation.");
                         return;
                     }
+
                     final String moduleName = module.getName();
                     progress.progress(moduleName + " " + imageName, processed);
+
                     switch (module.getType()) {
                         case Image:
                             final IngestModuleImage newModuleInstance =
                                     (IngestModuleImage) moduleLoader.getNewIngestModuleInstance(module);
                             if (newModuleInstance != null) {
-                                IngestScheduler.Image.Task imageTask = 
-                                        new IngestScheduler.Image.Task(image, newModuleInstance);
-                                scheduler.IMAGE_SCHEDULER.add(imageTask);
-                                logger.log(Level.INFO, "Added image " + image.getName() + " with module " + module.getName());
-
-
-                                //addImage((IngestModuleImage) module, image);
+                                imageMods.add(newModuleInstance);
                             } else {
                                 logger.log(Level.INFO, "Error loading module and adding image " + image.getName() + " with module " + module.getName());
                             }
+
                             break;
+
                         case AbstractFile:
-                            if (files == null) {
-                                long start = System.currentTimeMillis();
-                                files = new GetAllFilesContentVisitor(processUnallocSpace).visit(image);
-                                logger.info("Get all files took " + (System.currentTimeMillis() - start) + "ms");
-                            }
                             //enqueue the same singleton AbstractFile module
-                            logger.log(Level.INFO, "Adding image " + image.getName() + " with " + files.size() + " number of AbstractFile to module " + module.getName());
-                            addAbstractFile((IngestModuleAbstractFile) module, files);
+                            logger.log(Level.INFO, "Adding image " + image.getName()
+                                    + " number of AbstractFile to module " + module.getName());
+
+                            fileMods.add((IngestModuleAbstractFile) module);
                             break;
                         default:
                             logger.log(Level.SEVERE, "Unexpected module type: " + module.getType().name());
                     }
-                    progress.progress(moduleName + " " + imageName, ++processed);
-                }
-                if (files != null) {
-                    files.clear();
-                }
-            }
+
+                }//for modules
+
+                //queue to schedulers
+                final Task task = new Task(image, imageMods);
+                logger.log(Level.INFO, "Queing image ingest task: " + task);
+                progress.progress("Image Ingest" + " " + imageName, processed);
+                imageScheduler.add(task);
+                progress.progress("Image Ingest" + " " + imageName, ++processed);
+
+                final ScheduledTask fTask = new ScheduledTask(image, fileMods, getProcessUnallocSpace());
+                logger.log(Level.INFO, "Queing file ingest task: " + fTask);
+                progress.progress("File Ingest" + " " + imageName, processed);
+                fileScheduler.add(fTask);
+                progress.progress("File Ingest" + " " + imageName, ++processed);
+
+            } //for images
+
 
             //logger.log(Level.INFO, AbstractFileQueue.printQueue());
-
-            progress.progress("Sorting files", processed);
         }
 
         private void handleInterruption(Exception ex) {
             Logger.getLogger(EnqueueWorker.class.getName()).log(Level.INFO, "Exception!", ex);
             //empty queues
-            emptyAbstractFiles();
-            scheduler.IMAGE_SCHEDULER.empty();
+            scheduler.getFileScheduler().empty();
+            scheduler.getImageScheduler().empty();
         }
     }
 }
