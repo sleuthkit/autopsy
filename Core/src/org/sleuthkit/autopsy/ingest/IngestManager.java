@@ -840,25 +840,16 @@ public class IngestManager {
                         stats.addError(module);
                     }
                 }
-                /*
-                int newAbstractFiles = fileScheduler.getFilesEnqueuedEst();
-                if (newAbstractFiles > totalEnqueuedFiles) {
-                    //update progress bar if new enqueued
-                    totalEnqueuedFiles = newAbstractFiles + processedFiles + 1;
+
+                int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
+                if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
+                    //update if new enqueued
+                    totalEnqueuedFiles = newTotalEnqueuedFiles + processedFiles + 1;
                     progress.switchToIndeterminate();
                     progress.switchToDeterminate(totalEnqueuedFiles);
                 }
                 ++processedFiles;
                 --totalEnqueuedFiles;
-                */
-                processedFiles = fileScheduler.getFilesDequeued();
-                int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
-                if (totalEnqueuedFiles != newTotalEnqueuedFiles) {
-                    //update if new enqueued
-                    totalEnqueuedFiles = newTotalEnqueuedFiles;
-                    progress.switchToIndeterminate();
-                    progress.switchToDeterminate(totalEnqueuedFiles);
-                }
                 
             } //end of this AbstractFile
             logger.log(Level.INFO, "Done background processing");
