@@ -68,6 +68,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
     // flag to control the availiablity of next action
     private boolean imgAdded; // initalized to false in readSettings()
     
+    private CurrentDirectoryFetcher fetcher;
     private AddImageProcess process;
     private AddImageAction action;
     private AddImgTask addImageTask;
@@ -198,6 +199,46 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
             wizPanel.getComponent().appendProgressText(" Ingest started.");
         }
     }
+    
+      /**
+     * Class for getting the currently processing directory.
+     * 
+     */
+    
+    private class CurrentDirectoryFetcher extends SwingWorker<Integer,Integer> {
+        AddImgTask task;
+		
+        CurrentDirectoryFetcher(AddImgTask task){
+            this.task = task;
+        }
+        
+        /**
+         * @return the currently processing directory
+         */
+        @Override
+        protected Integer doInBackground(){
+            try{
+                while(task.progressBar.getValue() < 100 || task.progressBar.isIndeterminate()){
+                    
+                    EventQueue.invokeLater(new Runnable() {
+
+                        @Override
+                        public void run() {        
+                             wizPanel.getComponent().changeCurrentDir(process.currentDirectory());
+                        }
+                        
+                  
+                    });
+                            
+                    Thread.sleep(2 * 1000);
+                }
+                return 1;
+            }
+            catch(InterruptedException ie){
+                return -1;
+            }
+        }
+    }
 
     /**
      * Thread that will make the JNI call to ingest the image.
@@ -263,9 +304,11 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
 
 
             process = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
+            fetcher = new CurrentDirectoryFetcher(this);
             cancelledWhileRunning.enable();
             try {
                 wizPanel.setStateStarted();
+                fetcher.execute();
                 process.run(new String[]{imgPath});
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Core errors occurred while running add image. ", ex);
