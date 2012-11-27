@@ -52,7 +52,6 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
             panels.add(new AddImageWizardPanel1());
             panels.add(new AddImageWizardPanel3(action, wizPanel));
             panels.add(wizPanel);
-            panels.add(new AddImageWizardPanel4());
 
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
