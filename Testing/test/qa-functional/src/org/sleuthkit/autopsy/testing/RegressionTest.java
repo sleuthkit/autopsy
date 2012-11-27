@@ -69,6 +69,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 public class RegressionTest extends TestCase{
     
     private static final Logger logger = Logger.getLogger(RegressionTest.class.getName());
+    long start;
     
     /** Constructor required by JUnit */
     public RegressionTest(String name) {
@@ -84,12 +85,12 @@ public class RegressionTest extends TestCase{
                 enableModules(".*");
         conf = conf.addTest("testNewCaseWizardOpen",
                 "testNewCaseWizard",
-                "testAddImageWizard1",
+                "testStartAddImage",
                 "testConfigureIngest1",
                 "testConfigureHash",
                 "testConfigureIngest2",
                 "testConfigureSearch",
-                "testConfigureIngest2a",
+                "testAddImageWizard1",
                 "testIngest",
                 "testGenerateReportToolbar",
                 "testGenerateReportButton"
@@ -130,22 +131,26 @@ public class RegressionTest extends TestCase{
         jtfo2.typeText("000"); // Set the case number
         JTextFieldOperator jtfo3 = new JTextFieldOperator(wo, 1);
         jtfo3.typeText("Examiner 1"); // Set the case examiner
+        start = System.currentTimeMillis();
         wo.btFinish().clickMouse();
     }
     
-    public void testAddImageWizard1() {
-        logger.info("AddImageWizard 1");
+    public void testStartAddImage() {
+        logger.info("Starting Add Image process");
         WizardOperator wo = new WizardOperator("Add Image");
         JTextFieldOperator jtfo0 = new JTextFieldOperator(wo, 0);
         String imageDir = System.getProperty("img_path");
         ((JTextField)jtfo0.getSource()).setText(imageDir);
         wo.btNext().clickMouse();
-        long start = System.currentTimeMillis();
-        while(!wo.btNext().isEnabled()) {
+    }
+    
+    public void testAddImageWizard1() {
+        WizardOperator wo = new WizardOperator("Add Image");
+        while(!wo.btFinish().isEnabled()) {
             new Timeout("pausing", 1000).sleep(); // give it a second (or five) to process
         }
         logger.info("Add image took " + (System.currentTimeMillis()-start) + "ms");
-        wo.btNext().clickMouse();
+        wo.btFinish().clickMouse();
     }
     
     public void testConfigureIngest1() {
@@ -207,8 +212,13 @@ public class RegressionTest extends TestCase{
         jbo0.pushNoBlock();
         JFileChooserOperator jfco0 = new JFileChooserOperator();
         jfco0.chooseFile(words);
+        JTableOperator jto = new JTableOperator(jdo, 0);
+        jto.clickOnCell(0, 0);    
         JCheckBoxOperator jcbo = new JCheckBoxOperator(jdo, "Enable for ingest", 0);
-        jcbo.doClick();
+        if(!jcbo.isSelected()) {
+            jcbo.doClick();
+        }
+        new Timeout("pausing", 1000).sleep(); // give it a second to process
         if(Boolean.parseBoolean(System.getProperty("mugen_mode"))){
             JTabbedPaneOperator jtpo = new JTabbedPaneOperator(jdo);
             jtpo.selectPage("String Extraction");
@@ -216,14 +226,16 @@ public class RegressionTest extends TestCase{
             jcbo0.doClick();
             JCheckBoxOperator jcbo1 = new JCheckBoxOperator(jtpo, "Han (Chinese, Japanese, Korean)");
             jcbo1.doClick();
+            new Timeout("pausing", 1000).sleep(); // give it a second to process
         }
         JButtonOperator jbo2 = new JButtonOperator(jdo, "OK", 0);
         jbo2.pushNoBlock();
         WizardOperator wo = new WizardOperator("Add Image");
         JCheckBoxOperator jbco0 = new JCheckBoxOperator(wo, "Process Unallocated Space");
-        jbco0.setSelected(!Boolean.parseBoolean(System.getProperty("ignore_unalloc"))); //ignore unallocated space or not. Set with Regression.py -u
+        if(Boolean.parseBoolean(System.getProperty("ignore_unalloc"))) {
+            jbco0.doClick();
+        }
         wo.btNext().clickMouse();
-        wo.btFinish().clickMouse();
     }
     
     public void testIngest() {
