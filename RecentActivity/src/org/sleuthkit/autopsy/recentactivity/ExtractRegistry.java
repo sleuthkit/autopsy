@@ -133,6 +133,14 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error querying the database for registry files: {0}", ex);
         }
+        
+//        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+//        List<FsContent> Regfiles = null;
+//        try {
+//            Regfiles = fileManager.findFiles("ntuser.dat", "Recent");
+//        } catch (TskCoreException ex) {
+//            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
+//        }
 
         int j = 0;
 

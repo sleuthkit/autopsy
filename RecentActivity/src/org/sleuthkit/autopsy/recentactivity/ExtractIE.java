@@ -75,9 +75,6 @@ public class ExtractIE extends Extract implements IngestModuleImage {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
     private IngestServices services;
-    private String indexDatQueryStr = "select * from tsk_files where name LIKE '%index.dat%'";
-    private String favoriteQuery = "select * from `tsk_files` where parent_path LIKE '%/Favorites%' and name LIKE '%.url'";
-    private String cookiesQuery = "select * from `tsk_files` where parent_path LIKE '%/Cookies%' and name LIKE '%.txt'";
     private String recentQuery = "select * from `tsk_files` where parent_path LIKE '%/Recent%' and name LIKE '%.lnk'";
     //sleauthkit db handle
     SleuthkitCase tempDb;
@@ -131,14 +128,21 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     // This gets the favorite info
     private void getBookmark(Image image, IngestImageWorkerController controller) {
 
-        List<FsContent> FavoriteList = this.extractFiles(image, favoriteQuery);
         int errors = 0;
+        
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+        List<FsContent> favoritesFiles = null;
+        try {
+            favoritesFiles = fileManager.findFiles("%.url", "Favorites");
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
+        }
 
-        for (FsContent Favorite : FavoriteList) {
+        for (FsContent favoritesFile : favoritesFiles) {
             if (controller.isCancelled()) {
                 break;
             }
-            Content fav = Favorite;
+            Content fav = favoritesFile;
             byte[] t = new byte[(int) fav.getSize()];
             try {
                 final int bytesRead = fav.read(t, 0, fav.getSize());
@@ -154,8 +158,8 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             if (m.find()) {
                 url = m.group(1);
             }
-            String name = Favorite.getName();
-            Long datetime = Favorite.getCrtime();
+            String name = favoritesFile.getName();
+            Long datetime = favoritesFile.getCrtime();
             String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
             String domain = Util.extractDomain(url);
@@ -169,7 +173,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", name));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
-            this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, Favorite, bbattributes);
+            this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, favoritesFile, bbattributes);
 
             services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
         }
@@ -181,14 +185,21 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     //Cookies section
     // This gets the cookies info
     private void getCookie(Image image, IngestImageWorkerController controller) {
+        
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+        List<FsContent> cookiesFiles = null;
+        try {
+            cookiesFiles = fileManager.findFiles("%.txt", "Cookies");
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
+        }
 
-        List<FsContent> CookiesList = this.extractFiles(image, cookiesQuery);
         int errors = 0;
-        for (FsContent Cookie : CookiesList) {
+        for (FsContent cookiesFile : cookiesFiles) {
             if (controller.isCancelled()) {
                 break;
             }
-            Content fav = Cookie;
+            Content fav = cookiesFile;
             byte[] t = new byte[(int) fav.getSize()];
             try {
                 final int bytesRead = fav.read(t, 0, fav.getSize());
@@ -200,7 +211,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             String url = values.length > 2 ? values[2] : "";
             String value = values.length > 1 ? values[1] : "";
             String name = values.length > 0 ? values[0] : "";
-            Long datetime = Cookie.getCrtime();
+            Long datetime = cookiesFile.getCrtime();
             String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
             String domain = Util.extractDomain(url);
@@ -217,7 +228,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", (name != null) ? name : ""));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "Internet Explorer"));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", domain));
-            this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, Cookie, bbattributes);
+            this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
         }
         if (errors > 0) {
             this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Internet Explorer cookies.");
@@ -229,26 +240,33 @@ public class ExtractIE extends Extract implements IngestModuleImage {
     //Recent Documents section
     // This gets the recent object info
     private void getRecentDocuments(Image image, IngestImageWorkerController controller) {
+        
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+        List<FsContent> recentFiles = null;
+        try {
+            recentFiles = fileManager.findFiles("%.lnk", "Recent");
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
+        }
 
-        List<FsContent> RecentList = this.extractFiles(image, recentQuery);
-
-        for (FsContent Recent : RecentList) {
+        for (FsContent recentFile : recentFiles) {
             if (controller.isCancelled()) {
                 break;
             }
-            Content fav = Recent;
+            Content fav = recentFile;
             JLNK lnk = new JLnkParser(new ReadContentInputStream(fav), (int) fav.getSize()).parse();
             String path = lnk.getBestPath();
-            Long datetime = Recent.getCrtime();
+            Long datetime = recentFile.getCrtime();
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", path));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", Util.getFileName(path)));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(path)));
+            long id = Util.findID(path);
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", id));
             //TODO Revisit usage of deprecated constructor as per TSK-583
             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Date Created", datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", datetime));
-            this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, Recent, bbattributes);
+            this.addArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT, recentFile, bbattributes);
         }
 
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT));
@@ -286,7 +304,6 @@ public class ExtractIE extends Extract implements IngestModuleImage {
         File resultsDir = new File(PASCO_RESULTS_PATH);
         resultsDir.mkdirs();
 
-        Collection<FsContent> FsContentCollection = null;
         tempDb = currentCase.getSleuthkitCase();
         Collection<FileSystem> imageFS = tempDb.getFileSystems(image);
         List<String> fsIds = new LinkedList<String>();
@@ -305,24 +322,25 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 allFS += ")";
             }
         }
+
+        // get index.dat files
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
+        List<FsContent> indexFiles = null;
         try {
-            ResultSet rs = tempDb.runQuery(indexDatQueryStr + allFS);
-            FsContentCollection = tempDb.resultSetToFsContents(rs);
-            rs.close();
-            rs.getStatement().close();
-        } catch (SQLException ex) {
-            logger.log(Level.SEVERE, "Error reading database for Internet Explorer history artifacts: {0}", ex);
+            indexFiles = fileManager.findFiles("index.dat");
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
         }
+
         String temps;
         String indexFileName;
-
-        for (FsContent fsc : FsContentCollection) {
+        for (FsContent indexFile : indexFiles) {
             // Since each result represent an index.dat file,
             // just create these files with the following notation:
             // index<Number>.dat (i.e. index0.dat, index1.dat,..., indexN.dat)
             // Write each index.dat file to a temp directory.
             //BlackboardArtifact bbart = fsc.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
-            indexFileName = "index" + Integer.toString((int) fsc.getId()) + ".dat";
+            indexFileName = "index" + Integer.toString((int) indexFile.getId()) + ".dat";
             //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
             temps = currentCase.getTempDirectory() + File.separator + indexFileName;
             File datFile = new File(temps);
@@ -331,12 +349,12 @@ public class ExtractIE extends Extract implements IngestModuleImage {
                 break;
             }
             try {
-                ContentUtils.writeToFile(fsc, datFile);
+                ContentUtils.writeToFile(indexFile, datFile);
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e);
             }
 
-            String filename = "pasco2Result." + fsc.getId() + ".txt";
+            String filename = "pasco2Result." + indexFile.getId() + ".txt";
             boolean bPascProcSuccess = executePasco(temps, filename);
             pascoResults.add(filename);
 
