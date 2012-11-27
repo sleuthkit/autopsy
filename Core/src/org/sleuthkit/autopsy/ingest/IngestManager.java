@@ -844,12 +844,15 @@ public class IngestManager {
                 int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
                 if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
                     //update if new enqueued
-                    totalEnqueuedFiles = newTotalEnqueuedFiles;// + processedFiles + 1;
+                    totalEnqueuedFiles = newTotalEnqueuedFiles + 1;// + processedFiles + 1;
                     processedFiles = 0;
                     progress.switchToIndeterminate();
                     progress.switchToDeterminate(totalEnqueuedFiles);
                 }
-                ++processedFiles;
+                if (processedFiles < totalEnqueuedFiles) { //fix for now to handle the same image enqueued twice
+                    
+                    ++processedFiles;
+                }
                 //--totalEnqueuedFiles;
                 
             } //end of this AbstractFile
