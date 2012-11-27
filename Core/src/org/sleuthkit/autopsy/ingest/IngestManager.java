@@ -844,12 +844,13 @@ public class IngestManager {
                 int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
                 if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
                     //update if new enqueued
-                    totalEnqueuedFiles = newTotalEnqueuedFiles + processedFiles + 1;
+                    totalEnqueuedFiles = newTotalEnqueuedFiles;// + processedFiles + 1;
+                    processedFiles = 0;
                     progress.switchToIndeterminate();
                     progress.switchToDeterminate(totalEnqueuedFiles);
                 }
                 ++processedFiles;
-                --totalEnqueuedFiles;
+                //--totalEnqueuedFiles;
                 
             } //end of this AbstractFile
             logger.log(Level.INFO, "Done background processing");
