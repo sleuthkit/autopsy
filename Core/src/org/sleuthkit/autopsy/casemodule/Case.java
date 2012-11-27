@@ -50,6 +50,7 @@ import org.openide.util.Lookup;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationCleanDialog;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
@@ -124,6 +125,7 @@ public class Case {
     private SleuthkitCase db;
     // Track the current case (only set with changeCase() method)
     private static Case currentCase = null;
+    private Services services;
     
     private static final Logger logger = Logger.getLogger(Case.class.getName());
 
@@ -137,6 +139,7 @@ public class Case {
         this.configFilePath = configFilePath;
         this.xmlcm = xmlcm;
         this.db = db;
+        this.services = new Services(db);
     }
 
     /**
@@ -330,6 +333,13 @@ public class Case {
         } catch (Exception ex) {
             throw new CaseActionException("Error adding image to the case", ex);
         }
+    }
+    
+    /**
+     * @return The Services object for this case.
+     */
+    public Services getServices() {
+        return services;
     }
 
     /**
