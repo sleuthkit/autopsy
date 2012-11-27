@@ -40,6 +40,7 @@ final class AddImageVisualPanel2 extends JPanel {
     private String nonCriticalErrors = null;
     private JLabel progressLabel = null;
     private JButton errorButton = null;
+    String CurrentDir = null;
 
     /**
      * Creates new form AddImageVisualPanel2
@@ -96,12 +97,8 @@ final class AddImageVisualPanel2 extends JPanel {
         crDbProgressBar.setValue(value);
     }
     
-    /**
-     * append progress text to progress label
-     * @param text 
-     */
-    public void appendProgressText(String text) {
-        progressLabel.setText(progressLabel.getText() + " " + text);
+    void changeCurrentDir(String dir){
+        this.LABEL_CURRENTDIR_DYNAMIC.setText(dir.trim().isEmpty() ? "Folder Info Unavailable" : dir);
     }
 
     
@@ -142,6 +139,8 @@ final class AddImageVisualPanel2 extends JPanel {
         crDbLabel = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         infoPanel = new javax.swing.JPanel();
+        LABEL_CURRENTDIR_DYNAMIC = new javax.swing.JLabel();
+        LABEL_CURRENTDIR_STATIC = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.jLabel5.text")); // NOI18N
 
@@ -161,6 +160,11 @@ final class AddImageVisualPanel2 extends JPanel {
             .addGap(0, 47, Short.MAX_VALUE)
         );
 
+        org.openide.awt.Mnemonics.setLocalizedText(LABEL_CURRENTDIR_DYNAMIC, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.LABEL_CURRENTDIR_DYNAMIC.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(LABEL_CURRENTDIR_STATIC, org.openide.util.NbBundle.getMessage(AddImageVisualPanel2.class, "AddImageVisualPanel2.LABEL_CURRENTDIR_STATIC.text")); // NOI18N
+        LABEL_CURRENTDIR_STATIC.setFocusable(false);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -168,14 +172,18 @@ final class AddImageVisualPanel2 extends JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(crDbProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(infoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(crDbLabel)
                             .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 552, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel5))
-                        .addGap(0, 36, Short.MAX_VALUE))
-                    .addComponent(crDbProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, 588, Short.MAX_VALUE)
-                    .addComponent(infoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(jLabel5)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(LABEL_CURRENTDIR_STATIC)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(LABEL_CURRENTDIR_DYNAMIC)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -189,12 +197,18 @@ final class AddImageVisualPanel2 extends JPanel {
                 .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(crDbProgressBar, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(LABEL_CURRENTDIR_DYNAMIC)
+                    .addComponent(LABEL_CURRENTDIR_STATIC))
+                .addGap(9, 9, 9)
                 .addComponent(infoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(24, 24, 24))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel LABEL_CURRENTDIR_DYNAMIC;
+    private javax.swing.JLabel LABEL_CURRENTDIR_STATIC;
     private javax.swing.JLabel crDbLabel;
     private javax.swing.JProgressBar crDbProgressBar;
     private javax.swing.JPanel infoPanel;
