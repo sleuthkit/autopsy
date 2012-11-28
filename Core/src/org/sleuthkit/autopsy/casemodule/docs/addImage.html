@@ -18,24 +18,26 @@
             <li>
                 The first panel will ask you to browse for the image on your machine.
                 You will also need to specify the timezone that the disk image came from so that the dates and times can be properly displayed and converted.
+                As soon as you click 'Next >', Autopsy will begin analyzing the disk image and populating the database in the background.
                 <br />
                 <img src="AddImageWizard1_Help.png" alt="Add Image Wizard Panel 1 Help" />
             </li>
             <li>
-                The second panel is when Autopsy is analyzing the disk image and populating the database with basic information.
-                This can take a few minutes for large images.
+                The second panel allows you to choose which ingest modules to run on the image.
+                Refer to the <a href="nbdocs:/org/sleuthkit/autopsy/ingest/docs/ingest-about.html">Image Ingest</a> part of the help guide for more details.
                 <br />
-                <img src="AddImageWizard2_Help.png" alt="Add Image Wizard Panel 2 Help" />
+                <img src="AddImageWizard2_Help.png" alt="Add Image Wizard Panel 3 Help" />
             </li>
             <li>
-                The third panel allows you to choose which ingest modules to run on the image.
-                Refer to the <a href="nbdocs:/org/sleuthkit/autopsy/ingest/docs/ingest-about.html">Image Ingest</a>part of the help guide for more details.
+                The third panel provides a progress bar and information about the image Autopsy is currently processing.
+                If small enough, the image may have already finished processing, allowing you to continue past this panel.
+                However, it may be necessary to wait for a short time while the database is populated.
                 <br />
-			    <img src="AddImageWizard3_Help.png" alt="Add Image Wizard Panel 3 Help" />
+                <img src="AddImageWizard3_Help.png" alt="Add Image Wizard Panel 2 Help" />
             </li>
  		    <li>
-                Once you select the ingest modules that you want to use, they will run in the background.
-                You can choose to add another image or exit the Add Image wizard.
+                Once the image finishes adding, the ingest modules you selected will automatically run in the background.
+                If the image is processed before you select ingest modules, Autopsy will wait until you have done so.
             </li> 
         </ul>
         </p>
