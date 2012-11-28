@@ -4,6 +4,9 @@
  */
 package org.sleuthkit.autopsy.casemodule.services;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -12,7 +15,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Abstraction to facilitate access to files and directories.
  */
-public class FileManager {
+public class FileManager implements Closeable {
 	
 	private SleuthkitCase tskCase;
 
@@ -26,7 +29,10 @@ public class FileManager {
 	 * given fileName
 	 */
 	public List<FsContent> findFiles(String fileName) throws TskCoreException {
-		return tskCase.findFiles(fileName);
+            if (tskCase == null) {
+                throw new TskCoreException("Attemtped to use FileManager after it was closed.");
+            }
+            return tskCase.findFiles(fileName);
 	}
 	
 	/**
@@ -36,7 +42,10 @@ public class FileManager {
 	 * fileName and whose parent directory contains dirName.
 	 */
 	public List<FsContent> findFiles(String fileName, String dirName) throws TskCoreException {
-		return tskCase.findFiles(fileName, dirName);
+            if (tskCase == null) {
+                throw new TskCoreException("Attemtped to use FileManager after it was closed.");
+            }
+            return tskCase.findFiles(fileName, dirName);
 	}
 	
 	/**
@@ -46,7 +55,10 @@ public class FileManager {
 	 * fileName and that were inside a directory described by parentFsContent.
 	 */
 	public List<FsContent> findFiles(String fileName, FsContent parentFsContent) throws TskCoreException {
-		return findFiles(fileName, parentFsContent.getName());
+            if (tskCase == null) {
+                throw new TskCoreException("Attemtped to use FileManager after it was closed.");
+            }
+            return findFiles(fileName, parentFsContent.getName());
 	}
 	
 	/**
@@ -55,7 +67,15 @@ public class FileManager {
 	 * @return a list of FsContent that have the given file path.
 	 */
 	public List<FsContent> openFiles(String filePath) throws TskCoreException {
-		return tskCase.openFiles(filePath);
+            if (tskCase == null) {
+                throw new TskCoreException("Attemtped to use FileManager after it was closed.");
+            }
+            return tskCase.openFiles(filePath);
 	}
+
+    @Override
+    public void close() throws IOException {
+        tskCase = null;
+    }
 	
 }

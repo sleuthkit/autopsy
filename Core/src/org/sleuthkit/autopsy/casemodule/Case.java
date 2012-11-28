@@ -360,6 +360,7 @@ public class Case {
         try {
             this.xmlcm.close(); // close the xmlcm
             this.db.close();
+            services.close();
         } catch (Exception e) {
             throw new CaseActionException("Error while trying to close the current case.", e);
         }
