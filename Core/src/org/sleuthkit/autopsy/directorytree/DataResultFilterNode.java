@@ -160,7 +160,7 @@ public class DataResultFilterNode extends FilterNode {
             List<Action> actions = new ArrayList<Action>();
             actions.add(new NewWindowViewAction("View in New Window", vol));
             actions.addAll(ShowDetailActionVisitor.getActions(vol.getLookup().lookup(Content.class)));
-
+            actions.add(new ExtractUnallocAction("Extract Unallocated Space as Single File", vol));
             return actions;
         }
 
