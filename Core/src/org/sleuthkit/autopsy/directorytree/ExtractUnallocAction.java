@@ -53,6 +53,7 @@ public final class ExtractUnallocAction extends AbstractAction{
 
     private static List<LayoutFile> llf;
     private static Content vol;
+    volatile static boolean running = false;
     private static final Logger logger = Logger.getLogger(ExtractUnallocAction.class.getName());
     
     ExtractUnallocAction(String title, VolumeNode volume) {
@@ -76,6 +77,10 @@ public final class ExtractUnallocAction extends AbstractAction{
                 String UnallocName = imgName + "-Unalloc-" + imgObjID + "-" + volumeID + ".dat";
                 //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat
                 File unalloc = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + UnallocName);
+                if(running){
+                    JOptionPane.showMessageDialog(new Frame(), "Extract is already running on this volume. Please select a different volume.");
+                    return;
+                }
                 if (unalloc.exists()) {
                     int res = JOptionPane.showConfirmDialog(new Frame(), "The Unalloc File for this volume, " + UnallocName + " already exists, do you want to replace it?");
                     if (res == JOptionPane.YES_OPTION) {
@@ -84,7 +89,7 @@ public final class ExtractUnallocAction extends AbstractAction{
                         return;
                     }
                 }                
-                ExtractUnallocWorker uw = new ExtractUnallocWorker(unalloc, this);
+                ExtractUnallocWorker uw = new ExtractUnallocWorker(unalloc);
                 uw.execute();
             }catch (TskCoreException tce) {
                 logger.log(Level.WARNING, "Could not create Unalloc File; error getting image info", tce);
@@ -111,14 +116,13 @@ public final class ExtractUnallocAction extends AbstractAction{
      */
     private class ExtractUnallocWorker extends SwingWorker<Integer, Integer> {
         
-        ExtractUnallocAction ua;
         File path;
         private ProgressHandle progress;
         private boolean canceled = false;
 
-        ExtractUnallocWorker(File path, ExtractUnallocAction ua) {
+        ExtractUnallocWorker(File path) {
             this.path = path;
-            this.ua = ua;
+            running = true;
         }
 
         @Override
@@ -167,6 +171,8 @@ public final class ExtractUnallocAction extends AbstractAction{
             } catch (TskCoreException tce) {
                 logger.log(Level.WARNING, "Could not create Unalloc File; error getting image info", tce);
                 return -1;
+            }finally{
+                running = false;
             }
             return 1;
         }
@@ -257,7 +263,7 @@ public final class ExtractUnallocAction extends AbstractAction{
         public int compare(LayoutFile o1, LayoutFile o2) {
             if(o1.getId() == o2.getId()){
                 return 0;
-            }
+            } 
             if(o1.getId() > o2.getId()){
                 return -1;
             }
