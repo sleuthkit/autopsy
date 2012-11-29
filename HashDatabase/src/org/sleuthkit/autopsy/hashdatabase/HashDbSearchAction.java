@@ -32,21 +32,21 @@ import org.sleuthkit.datamodel.FsContent;
 /**
  * Searches for FsContent Files with the same MD5 hash as the given Node's
  * FsContent's MD5 hash. This action should only be available from Nodes with
- * specific Content attached; it is manually programmed into a Node's available actions.
+ * specific Content attached; it is manually programmed into a Node's available
+ * actions.
  */
 public class HashDbSearchAction extends CallableSystemAction implements HashSearchProvider {
 
     private static final InitializeContentVisitor initializeCV = new InitializeContentVisitor();
     private FsContent fsContent;
-
     private static HashDbSearchAction instance = null;
 
     HashDbSearchAction() {
         super();
     }
-    
+
     public static HashDbSearchAction getDefault() {
-        if(instance == null){
+        if (instance == null) {
             instance = new HashDbSearchAction();
         }
         return instance;
@@ -60,7 +60,7 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
     }
 
     /**
-     * Returns the FsContent if it is supported, otherwise null. It should 
+     * Returns the FsContent if it is supported, otherwise null. It should
      * realistically never return null or a Directory, only a File.
      */
     private static class InitializeContentVisitor extends ContentVisitor.Default<FsContent> {
@@ -82,28 +82,21 @@ public class HashDbSearchAction extends CallableSystemAction implements HashSear
     }
 
     /**
-     * Find all files with the same MD5 hash as this' fsContent. fsContent should
-     * be previously set by calling the search function, which in turn calls performAction.
+     * Find all files with the same MD5 hash as this' fsContent. fsContent
+     * should be previously set by calling the search function, which in turn
+     * calls performAction.
      */
     @Override
     public void performAction() {
-        // Make sure all files have an md5 hash
-        if(HashDbSearcher.allFilesMd5Hashed()) {
+        // Make sure at least 1 file has an md5 hash
+        if (HashDbSearcher.countFilesMd5Hashed() > 0) {
             doSearch();
-        // and if not, warn the user
-        } else if(HashDbSearcher.countFilesMd5Hashed() > 0) {
-            Object selected = JOptionPane.showConfirmDialog(null, "Not all files have MD5 hashes. "
-                    + "Search results will be incomplete.\n"
-                    + "Would you like to search anyway?", "File Search by MD5 Hash", JOptionPane.YES_NO_OPTION);
-            if(selected.equals(JOptionPane.YES_OPTION)) {
-                doSearch();
-            }
         } else {
-                JOptionPane.showMessageDialog(null, "No files currently have an MD5 hash.",
-                        "File Search by MD5 Hash", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "No files currently have an MD5 hash calculated, run HashDB ingest first.",
+                    "File Search by MD5 Hash", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     private void doSearch() {
         HashDbSearchThread hashThread = new HashDbSearchThread(fsContent);
         hashThread.execute();
