@@ -840,25 +840,20 @@ public class IngestManager {
                         stats.addError(module);
                     }
                 }
-                /*
-                int newAbstractFiles = fileScheduler.getFilesEnqueuedEst();
-                if (newAbstractFiles > totalEnqueuedFiles) {
-                    //update progress bar if new enqueued
-                    totalEnqueuedFiles = newAbstractFiles + processedFiles + 1;
-                    progress.switchToIndeterminate();
-                    progress.switchToDeterminate(totalEnqueuedFiles);
-                }
-                ++processedFiles;
-                --totalEnqueuedFiles;
-                */
-                processedFiles = fileScheduler.getFilesDequeued();
+
                 int newTotalEnqueuedFiles = fileScheduler.getFilesEnqueuedEst();
-                if (totalEnqueuedFiles != newTotalEnqueuedFiles) {
+                if (newTotalEnqueuedFiles > totalEnqueuedFiles) {
                     //update if new enqueued
-                    totalEnqueuedFiles = newTotalEnqueuedFiles;
+                    totalEnqueuedFiles = newTotalEnqueuedFiles + 1;// + processedFiles + 1;
+                    processedFiles = 0;
                     progress.switchToIndeterminate();
                     progress.switchToDeterminate(totalEnqueuedFiles);
                 }
+                if (processedFiles < totalEnqueuedFiles) { //fix for now to handle the same image enqueued twice
+                    
+                    ++processedFiles;
+                }
+                //--totalEnqueuedFiles;
                 
             } //end of this AbstractFile
             logger.log(Level.INFO, "Done background processing");
