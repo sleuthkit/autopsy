@@ -98,7 +98,7 @@ public class Firefox extends Extract implements IngestModuleImage {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> historyFiles = null;
         try {
-            historyFiles = fileManager.findFiles("%places.sqlite%", "Firefox");
+            historyFiles = fileManager.findFiles(image, "%places.sqlite%", "Firefox");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching internet history files for Firefox.");
         }
@@ -154,7 +154,7 @@ public class Firefox extends Extract implements IngestModuleImage {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> bookmarkFiles = null;
         try {
-            bookmarkFiles = fileManager.findFiles("%places.sqlite%", "Firefox");
+            bookmarkFiles = fileManager.findFiles(image, "%places.sqlite%", "Firefox");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching bookmark files for Firefox.");
         }
@@ -209,7 +209,7 @@ public class Firefox extends Extract implements IngestModuleImage {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> cookiesFiles = null;
         try {
-            cookiesFiles = fileManager.findFiles("%cookies.sqlite%", "Firefox");
+            cookiesFiles = fileManager.findFiles(image, "%cookies.sqlite%", "Firefox");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching cookies files for Firefox.");
         }
@@ -287,7 +287,7 @@ public class Firefox extends Extract implements IngestModuleImage {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> downloadsFiles = null;
         try {
-            downloadsFiles = fileManager.findFiles("%cookies.sqlite%", "Firefox");
+            downloadsFiles = fileManager.findFiles(image, "%cookies.sqlite%", "Firefox");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'downloads' files for Firefox.");
         }
@@ -324,7 +324,7 @@ public class Firefox extends Extract implements IngestModuleImage {
                     //TODO Revisit usage of deprecated constructor as per TSK-583
                     //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("startTime").toString()))));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", (Long.valueOf(result.get("startTime").toString()))));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(urldecodedtarget)));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(image, urldecodedtarget)));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", urldecodedtarget));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "FireFox"));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("source").toString() != null) ? result.get("source").toString() : ""))));

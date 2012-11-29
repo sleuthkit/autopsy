@@ -133,7 +133,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> favoritesFiles = null;
         try {
-            favoritesFiles = fileManager.findFiles("%.url", "Favorites");
+            favoritesFiles = fileManager.findFiles(image, "%.url", "Favorites");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
         }
@@ -189,7 +189,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> cookiesFiles = null;
         try {
-            cookiesFiles = fileManager.findFiles("%.txt", "Cookies");
+            cookiesFiles = fileManager.findFiles(image, "%.txt", "Cookies");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
         }
@@ -244,7 +244,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> recentFiles = null;
         try {
-            recentFiles = fileManager.findFiles("%.lnk", "Recent");
+            recentFiles = fileManager.findFiles(image, "%.lnk", "Recent");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
         }
@@ -261,7 +261,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
             Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", path));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", Util.getFileName(path)));
-            long id = Util.findID(path);
+            long id = Util.findID(image, path);
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", id));
             //TODO Revisit usage of deprecated constructor as per TSK-583
             //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID(), "RecentActivity", "Date Created", datetime));
@@ -327,7 +327,7 @@ public class ExtractIE extends Extract implements IngestModuleImage {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> indexFiles = null;
         try {
-            indexFiles = fileManager.findFiles("index.dat");
+            indexFiles = fileManager.findFiles(image, "index.dat");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
         }

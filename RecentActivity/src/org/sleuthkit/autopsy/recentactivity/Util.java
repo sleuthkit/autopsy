@@ -31,22 +31,19 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-//import org.apache.commons.lang.NullArgumentException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.report.SQLiteDBConnect;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -190,7 +187,7 @@ public class Util {
         return path;
     }
     
-    public static long findID(String path) {
+    public static long findID(Image image, String path) {
         String parent_path = path.replace('\\', '/'); // fix Chrome paths
         if (parent_path.length() > 2 && parent_path.charAt(1) == ':') {
             parent_path = parent_path.substring(2); // remove drive letter (e.g., 'C:')
@@ -203,7 +200,7 @@ public class Util {
         FileManager fileManager = Case.getCurrentCase().getServices().getFileManager();
         List<FsContent> files = null;
         try {
-            files = fileManager.findFiles(name, parent_path);
+            files = fileManager.findFiles(image, name, parent_path);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history.");
         }

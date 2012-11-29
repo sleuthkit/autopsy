@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -28,11 +29,11 @@ public class FileManager implements Closeable {
 	 * @return a list of FsContent for files/directories whose name matches the
 	 * given fileName
 	 */
-	public List<FsContent> findFiles(String fileName) throws TskCoreException {
+	public List<FsContent> findFiles(Image image, String fileName) throws TskCoreException {
             if (tskCase == null) {
                 throw new TskCoreException("Attemtped to use FileManager after it was closed.");
             }
-            return tskCase.findFiles(fileName);
+            return tskCase.findFiles(image, fileName);
 	}
 	
 	/**
@@ -41,11 +42,11 @@ public class FileManager implements Closeable {
 	 * @return a list of FsContent for files/directories whose name matches
 	 * fileName and whose parent directory contains dirName.
 	 */
-	public List<FsContent> findFiles(String fileName, String dirName) throws TskCoreException {
+	public List<FsContent> findFiles(Image image, String fileName, String dirName) throws TskCoreException {
             if (tskCase == null) {
                 throw new TskCoreException("Attemtped to use FileManager after it was closed.");
             }
-            return tskCase.findFiles(fileName, dirName);
+            return tskCase.findFiles(image, fileName, dirName);
 	}
 	
 	/**
@@ -54,11 +55,11 @@ public class FileManager implements Closeable {
 	 * @return a list of FsContent for files/directories whose name matches
 	 * fileName and that were inside a directory described by parentFsContent.
 	 */
-	public List<FsContent> findFiles(String fileName, FsContent parentFsContent) throws TskCoreException {
+	public List<FsContent> findFiles(Image image, String fileName, FsContent parentFsContent) throws TskCoreException {
             if (tskCase == null) {
                 throw new TskCoreException("Attemtped to use FileManager after it was closed.");
             }
-            return findFiles(fileName, parentFsContent.getName());
+            return findFiles(image, fileName, parentFsContent.getName());
 	}
 	
 	/**
@@ -66,11 +67,11 @@ public class FileManager implements Closeable {
 	 * optionally include the image and volume names.
 	 * @return a list of FsContent that have the given file path.
 	 */
-	public List<FsContent> openFiles(String filePath) throws TskCoreException {
+	public List<FsContent> openFiles(Image image, String filePath) throws TskCoreException {
             if (tskCase == null) {
                 throw new TskCoreException("Attemtped to use FileManager after it was closed.");
             }
-            return tskCase.openFiles(filePath);
+            return tskCase.openFiles(image, filePath);
 	}
 
     @Override
