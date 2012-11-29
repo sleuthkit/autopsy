@@ -205,11 +205,16 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      * 
      */
     
-    private class CurrentDirectoryFetcher extends SwingWorker<Integer,Integer> {
+    private static class CurrentDirectoryFetcher extends SwingWorker<Integer,Integer> {
         AddImgTask task;
+        JProgressBar prog;
+        AddImageVisualPanel2 wiz;
+        AddImageProcess proc;
 		
-        CurrentDirectoryFetcher(AddImgTask task){
-            this.task = task;
+        CurrentDirectoryFetcher(JProgressBar prog, AddImageVisualPanel2 wiz, AddImageProcess proc){
+            this.wiz = wiz;
+            this.proc = proc;
+            this.prog = prog;
         }
         
         /**
@@ -218,13 +223,13 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
         @Override
         protected Integer doInBackground(){
             try{
-                while(task.progressBar.getValue() < 100 || task.progressBar.isIndeterminate()){
+                while(prog.getValue() < 100 || prog.isIndeterminate()){ //TODO Rely on state variable in AddImgTask class
                     
                     EventQueue.invokeLater(new Runnable() {
 
                         @Override
                         public void run() {        
-                             wizPanel.getComponent().changeCurrentDir(process.currentDirectory());
+                             wiz.changeCurrentDir(proc.currentDirectory());
                         }
                         
                   
@@ -304,7 +309,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
 
 
             process = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
-            fetcher = new CurrentDirectoryFetcher(this);
+            fetcher = new CurrentDirectoryFetcher(this.progressBar, wizPanel.getComponent(), process);
             cancelledWhileRunning.enable();
             try {
                 wizPanel.setStateStarted();
