@@ -25,6 +25,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.SwingWorker;
@@ -39,6 +40,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLEditorKit.HTMLFactory;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.ProgressHandleFactory;
+import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
 
 /**
@@ -320,7 +322,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      */
     void setSources(List<MarkupSource> sources) {
         sourceComboBox.removeAllItems();
-        setPanelText(null);
+        setPanelText(null, false);
 
         for (MarkupSource ms : sources) {
             sourceComboBox.addItem(ms);
@@ -351,16 +353,29 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         return (MarkupSource) sourceComboBox.getSelectedItem();
     }
 
-    private void setPanelText(String text) {
-        if (text == null ) {
+    private void setPanelText(String text, boolean detectDirection) {
+        if (text == null) {
             text = "";
         }
-        
-        //detect text direction using first 1024 chars and set it
-        final int maxOrientChars = Math.min(text.length(), 1024);
-        final String orientDetectText = text.substring(0, maxOrientChars);
-        extractedTextPane.applyComponentOrientation(TextUtil.getTextDirection(orientDetectText));
-        
+
+        if (detectDirection) {
+            //detect text direction using first 1024 chars and set it
+            //get first up to 1024 chars, strip <pre> tag and unescape html to get the string on which to detect
+            final int len = text.length();
+            final int prefixLen = "<pre>".length();
+            if (len > prefixLen) {
+                final int maxOrientChars = Math.min(len, 1024);
+                final String orientDetectText = EscapeUtil.unEscapeHtml(text.substring(prefixLen, maxOrientChars));
+                ComponentOrientation direction = TextUtil.getTextDirection(orientDetectText);
+                //logger.log(Level.INFO, "ORIENTATION LEFT TO RIGHT: " + direction.isLeftToRight());
+                extractedTextPane.applyComponentOrientation(direction);
+            } else {
+                extractedTextPane.applyComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+            }
+        } else {
+            extractedTextPane.applyComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+        }
+
         extractedTextPane.setText(text);
         extractedTextPane.setCaretPosition(0);
     }
@@ -572,16 +587,15 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         }
     }
 
-    
     /**
-     * Gets and sets new markup.  Updates GUI in GUI thread and gets markup in background thread.
-     * To be invoked from GUI thread only.
+     * Gets and sets new markup. Updates GUI in GUI thread and gets markup in
+     * background thread. To be invoked from GUI thread only.
      */
     private void setMarkup(MarkupSource source) {
-        setPanelText("<span style='font-style:italic'>Loading text... Please wait</span>");
+        setPanelText("<span style='font-style:italic'>Loading text... Please wait</span>", false);
         new SetMarkup(source).execute();
     }
-    
+
     /**
      * Swingworker to get makrup source content String from Solr in background
      * thread and then set the panel text in the EDT Helps not to block the UI
@@ -603,7 +617,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             progress.setDisplayName("Loading text");
             progress.start();
             progress.switchToIndeterminate();
-            
+
             markup = source.getMarkup();
             return null;
         }
@@ -613,9 +627,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             //super.done();
             progress.finish();
             if (markup != null) {
-                setPanelText(markup);
+                setPanelText(markup, true);
             } else {
-                setPanelText("");
+                setPanelText("", false);
             }
             updateControls(source);
 
