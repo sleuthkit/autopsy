@@ -20,6 +20,10 @@ needed even if you have a 64-bit system).
 Note: Netbeans IDE is not required to build and run Autopsy,
 but it is a recommended IDE to use for development of Autopsy modules.
 
+1d) (opetional) If you are going to package Autopsy, then you'll also
+need to set JRE_HOME to the root JRE directory. 
+
+
 
 2) Get Sleuth Kit Setup
 2a) Download and build the release version of Libewf2 (20120304 or
