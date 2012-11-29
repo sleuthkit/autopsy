@@ -19,6 +19,7 @@
 
 package org.sleuthkit.autopsy.casemodule;
 
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -228,6 +229,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
         recentCasesWindow.add(welcomeWindow);
         recentCasesWindow.pack();
         recentCasesWindow.setResizable(false);
+        recentCasesWindow.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
         recentCasesWindow.setVisible(true);
     }//GEN-LAST:event_openRecentButtonActionPerformed
 

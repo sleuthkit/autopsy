@@ -100,7 +100,7 @@ final class AddImageVisualPanel1 extends JPanel {
             }
             
         });
-        currentPanel.setFocus();
+        currentPanel.select();
         updateUI(null);
     }
 
@@ -268,7 +268,7 @@ final class AddImageVisualPanel1 extends JPanel {
                     .addComponent(typeTabel)
                     .addComponent(typeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(typePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -304,7 +304,7 @@ final class AddImageVisualPanel1 extends JPanel {
                 .addContainerGap()
                 .addComponent(imgInfoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(inputPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(inputPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(timeZoneLabel)
@@ -352,7 +352,7 @@ final class AddImageVisualPanel1 extends JPanel {
     private class ImageTypeModel implements ComboBoxModel {
         ImageTypePanel selected;
         ImageTypePanel[] types = ImageTypePanel.getPanels();
-
+        
         @Override
         public void setSelectedItem(Object anItem) {
             selected = (ImageTypePanel) anItem;
@@ -381,6 +381,6 @@ final class AddImageVisualPanel1 extends JPanel {
         @Override
         public void removeListDataListener(ListDataListener l) {
         }
-        
+
     }
 }

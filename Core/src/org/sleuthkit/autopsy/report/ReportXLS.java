@@ -328,7 +328,7 @@ public class ReportXLS implements ReportModule {
             
             sheetTagFile.setDefaultColumnStyle(1, defaultstyle);
             sheetTagFile.createRow(0).setRowStyle(style);
-            sheetTagFile.getRow(0).createCell(0).setCellValue("Description");
+            sheetTagFile.getRow(0).createCell(0).setCellValue("Comment");
             sheetTagFile.getRow(0).createCell(1).setCellValue("File Name");
             sheetTagFile.getRow(0).createCell(2).setCellValue("Path");
 
@@ -520,7 +520,7 @@ public class ReportXLS implements ReportModule {
                 if(entry.getKey().getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_TAG_FILE.getTypeID()){
                     countedTagFile++;
                     Row temp = sheetTagFile.createRow(countedTagFile);
-                    temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID()));
+                    temp.createCell(0).setCellValue(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID()));
                     temp.createCell(1).setCellValue(file.getName());
                     temp.createCell(2).setCellValue(file.getUniquePath());
                 }

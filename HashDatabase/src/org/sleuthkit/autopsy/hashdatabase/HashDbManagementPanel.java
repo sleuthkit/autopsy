@@ -610,8 +610,11 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
     private javax.swing.JCheckBox useForIngestCheckbox;
     // End of variables declaration//GEN-END:variables
     private void importHashSet(java.awt.event.ActionEvent evt) {
-        new HashDbAddDatabaseDialog().display();
-        hashSetTableModel.resync();
+        String name = new HashDbAddDatabaseDialog().display();
+        if(name != null) {
+            hashSetTableModel.selectRowByName(name);
+        }
+        resync();
     }
     
     /** 
@@ -681,6 +684,29 @@ final class HashDbManagementPanel extends javax.swing.JPanel implements OptionsP
                 }
             } else {
                 return xmlHandle.getKnownBadSets().get(rowIndex);
+            }
+        }
+        
+        // Selects the row with the given name
+        private void selectRowByName(String name) {
+            HashDb NSRL = xmlHandle.getNSRLSet();
+            List<HashDb> bad = xmlHandle.getKnownBadSets();
+            if(NSRL != null) {
+                if(NSRL.getName().equals(name)) {
+                    setSelection(0);
+                } else {
+                    for(int i=0; i<bad.size(); i++) {
+                        if(bad.get(i).getName().equals(name)) {
+                            setSelection(i + 1);
+                        }
+                    }
+                }
+            } else {
+                for(int i=0; i<bad.size(); i++) {
+                    if(bad.get(i).getName().equals(name)) {
+                        setSelection(i);
+                    }
+                }
             }
         }
         

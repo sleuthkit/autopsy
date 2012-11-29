@@ -153,7 +153,7 @@ class ViewContextAction extends AbstractAction {
                 return visit(drctr.getFileSystem());
             } else {
                 try {
-                    return visit(drctr.getParentDirectory());
+                    return drctr.getParentDirectory().accept(this);
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Couldn't get directory's parent directory", ex);
                 }
@@ -168,7 +168,7 @@ class ViewContextAction extends AbstractAction {
                 return visit(file.getFileSystem());
             } else {
                 try {
-                    return visit(file.getParentDirectory());
+                    return file.getParentDirectory().accept(this);
                 } catch (TskException ex) {
                     logger.log(Level.WARNING, "Couldn't get file's parent directory", ex);
                 }

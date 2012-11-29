@@ -64,7 +64,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="imgInfoLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="inputPanel" min="-2" max="-2" attributes="0"/>
+              <Component id="inputPanel" max="32767" attributes="0"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="timeZoneLabel" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -157,7 +157,7 @@
                       <Component id="typeComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Component id="typePanel" min="-2" max="-2" attributes="0"/>
+                  <Component id="typePanel" max="32767" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
           </Group>

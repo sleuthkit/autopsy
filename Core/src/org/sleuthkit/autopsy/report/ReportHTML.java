@@ -1054,7 +1054,7 @@ public class ReportHTML implements ReportModule {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "filebookmarks.html"), "UTF-8"));
             out.write(generateHead("File Bookmarks (" + countFileBookmarks + ")"));
             String title = "<h3>File Bookmarks (" + countFileBookmarks + ")</h3>\n";
-            String tableHeader = getTableHead("Description", "File Name", "Path");
+            String tableHeader = getTableHead("Comment", "File Name", "Path");
             out.write(title);
             out.write(tableHeader);
             
@@ -1066,7 +1066,7 @@ public class ReportHTML implements ReportModule {
                 TreeMap<Integer, String> attributes = getAttributes(entry.getValue());
                 StringBuilder row = new StringBuilder();
                 row.append("<tr>\n");
-                row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID())).append("</td>\n");
+                row.append("<td>").append(attributes.get(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID())).append("</td>\n");
                 row.append("<td>").append(file != null ? file.getName() : "").append("</td>\n");
                 row.append("<td>").append(file !=null ? file.getUniquePath() : "").append("</td>\n");
                 row.append("</tr>\n");
