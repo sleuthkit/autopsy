@@ -323,8 +323,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
 
             ProcessResult ret = ProcessResult.OK;
             boolean processFile = true;
-            if (fsContent.getSize() == 0
-                    || fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
+            if (fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
                 processFile = false;
             }
             if (processFile && (nsrlIsSet || knownBadIsSet)) {
