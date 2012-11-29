@@ -53,6 +53,7 @@ final class AddImageVisualPanel2 extends JPanel {
         infoPanel.add(progressLabel);
         infoPanel.add(Box.createRigidArea(new Dimension(10, 10))); //spacer
         this.jScrollPane1.setBorder(null);
+        this.TextArea_CurrentDirectory.setBackground(this.getBackground());
     }
 
     void resetInfoPanel() {
@@ -108,7 +109,7 @@ final class AddImageVisualPanel2 extends JPanel {
      * @param dir the text to update with
      */
     public void changeCurrentDir(String dir){
-        this.TextArea_CurrentDirectory.setText(dir.trim().isEmpty() ? "Folder Information Unavailable" : dir);
+        this.TextArea_CurrentDirectory.setText(dir);
     }
 
     
