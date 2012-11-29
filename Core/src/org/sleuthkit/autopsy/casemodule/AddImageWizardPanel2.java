@@ -19,59 +19,27 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Color;
-import java.awt.EventQueue;
-import java.awt.Window;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.JProgressBar;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
-import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskDataException;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * The "Add Image" wizard panel2. Handles processing the image in a worker
  * thread, and any errors that may occur during the add process.
  */
 class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
-
-    // the paths of the image files to be added
-    private String imgPath;
-    // the time zone where the image is added
-    private String timeZone;
-    //whether to not process FAT filesystem orphans
-    private boolean noFatOrphans;
-    // task that will clean up the created database file if the wizard is cancelled before it finishes
-    private AddImageAction.CleanupTask cleanupImage; // initialized to null in readSettings()
-    // flag to control the availiablity of next action
-    private boolean imgAdded; // initalized to false in readSettings()
-    private AddImageProcess process;
-    private AddImgTask addImageTask;
-    private static final Logger logger = Logger.getLogger(AddImageWizardPanel2.class.getName());
+    private boolean imgAdded;
+    
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
     private AddImageVisualPanel2 component;
-    private AddImageAction action;
-
-    AddImageWizardPanel2(AddImageAction action) {
-        this.action = action;
-    }
 
     /**
      * Get the visual component for the panel. In this template, the component
@@ -118,25 +86,18 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
     }
 
     /**
-     * Creates the database and adds the image to the XML configuration file.
-     *
+     * Updates the UI to display the add image process has begun.
      */
-    private void startAddImage() {
+    void setStateStarted() {
         component.getCrDbProgressBar().setIndeterminate(true);
         component.changeProgressBarTextAndColor("*Adding the image may take some time for large images.", 0, Color.black);
-
-        addImageTask = new AddImgTask();
-        addImageTask.execute();
     }
 
     /**
-     * Sets the isDbCreated variable in this class and also invoke
-     * fireChangeEvent() method.
-     *
-     * @param created whether the database already created or not
+     * Updates the UI to display the add image process is over.
      */
-    private void setDbCreated(Boolean created) {
-        imgAdded = created;
+    void setStateFinished() {
+        imgAdded = true;
         fireChangeEvent();
     }
     private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1); // or can use ChangeSupport in NB 6.0
@@ -188,15 +149,6 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
-        cleanupImage = null;
-        imgAdded = false;
-        imgPath = (String) settings.getProperty(AddImageAction.IMGPATH_PROP);
-        timeZone = settings.getProperty(AddImageAction.TIMEZONE_PROP).toString();
-        noFatOrphans = ((Boolean) settings.getProperty(AddImageAction.NOFATORPHANS_PROP)).booleanValue();
-
-        getComponent().resetInfoPanel();
-
-        startAddImage();
     }
 
     /**
@@ -205,200 +157,10 @@ class AddImageWizardPanel2 implements WizardDescriptor.Panel<WizardDescriptor> {
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-
-        // Store process so it can be committed if wizard finishes
-        settings.putProperty(AddImageAction.PROCESS_PROP, process);
-
-        // Need to make the cleanup accessible to the finished wizard so it can
-        // be cancelled if all goes well, and availble if we return to this
-        // panel so the the previously added image can be reverted
-        settings.putProperty(AddImageAction.IMAGECLEANUPTASK_PROP, cleanupImage);
-        
         getComponent().resetInfoPanel();
     }
 
-    /**
-     * Thread that will make the JNI call to ingest the image.
-     */
-    private class AddImgTask extends SwingWorker<Integer, Integer> {
 
-        private JProgressBar progressBar;
-        private Case currentCase;
-        // true if the process was requested to stop
-        private boolean interrupted = false;
-        private boolean hasCritError = false;
-        private String errorString = null;
-        
-        private long start;
+ 
 
-        protected AddImgTask() {
-            this.progressBar = getComponent().getCrDbProgressBar();
-            currentCase = Case.getCurrentCase();
-        }
-
-        /**
-         * Starts the addImage process, but does not commit the results.
-         *
-         * @return
-         * @throws Exception
-         */
-        @Override
-        protected Integer doInBackground() {
-            start = System.currentTimeMillis();
-            this.setProgress(0);
-
-
-            // Add a cleanup task to interupt the backgroud process if the
-            // wizard exits while the background process is running.
-            AddImageAction.CleanupTask cancelledWhileRunning = action.new CleanupTask() {
-                @Override
-                void cleanup() throws Exception {
-                    logger.log(Level.INFO, "Add image process interrupted.");
-                    addImageTask.interrupt(); //it might take time to truly interrupt
-                }
-            };
-
-
-            try {
-                //lock DB for writes in EWT thread
-                //wait until lock acquired in EWT
-                EventQueue.invokeAndWait(new Runnable() {
-                    @Override
-                    public void run() {
-                        SleuthkitCase.dbWriteLock();
-                    }
-                });
-            } catch (InterruptedException ex) {
-                logger.log(Level.WARNING, "Errors occurred while running add image, could not acquire lock. ", ex);
-                return 0;
-
-            } catch (InvocationTargetException ex) {
-                logger.log(Level.WARNING, "Errors occurred while running add image, could not acquire lock. ", ex);
-                return 0;
-            }
-
-
-            process = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
-            cancelledWhileRunning.enable();
-            try {
-                process.run(new String[]{imgPath});
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Core errors occurred while running add image. ", ex);
-                //critical core/system error and process needs to be interrupted
-                hasCritError = true;
-                errorString = ex.getMessage();
-            } catch (TskDataException ex) {
-                logger.log(Level.WARNING, "Data errors occurred while running add image. ", ex);
-                errorString = ex.getMessage();
-            } finally {
-                // process is over, doesn't need to be dealt with if cancel happens
-                cancelledWhileRunning.disable();
-            }
-            this.setProgress(100);
-            return 0;
-        }
-
-        /**
-         *
-         * (called by EventDispatch Thread after doInBackground finishes)
-         */
-        @Override
-        protected void done() {
-            progressBar.setIndeterminate(false);
-
-            // attempt actions that might fail and force the process to stop
-
-            try {
-                //get() will block until doInBackground done and throw any exceptions 
-                //that were thrown in the background task
-                //if process was stopped, stop should have been complete (otherwise, unsafe to revert() )
-                get();
-                logger.log(Level.INFO, "Adding image took " + (System.currentTimeMillis() - start) + " ms.");
-            } catch (InterruptedException e) {
-            } catch (ExecutionException e) {
-            } finally {
-                if (interrupted || hasCritError) {
-                    logger.log(Level.INFO, "Handling errors or interruption that occured in add image process");
-                    revert();
-                    if (hasCritError) {
-                        //core error
-                         getComponent().setErrors(errorString, true);
-                    }
-                    return;
-                } else if (errorString != null) {
-                    //data error (non-critical)
-                    logger.log(Level.INFO, "Handling non-critical errors that occured in add image process");
-                    getComponent().setErrors(errorString, false);
-                }
-            }
-
-
-            try {
-                // When everything happens without an error:
-
-                // the add-image process needs to be reverted if the wizard doesn't finish
-                cleanupImage = action.new CleanupTask() {
-                    //note, CleanupTask runs inside EWT thread
-                    @Override
-                    void cleanup() throws Exception {
-                        logger.log(Level.INFO, "Running cleanup task after add image process");
-                        revert();
-                    }
-                };
-                cleanupImage.enable();
-
-                if (errorString == null) 
-                    getComponent().changeProgressBarTextAndColor("*Image added.", 100, Color.black); // complete progress bar
-
-                // Get attention for the process finish
-                java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
-                AddImageVisualPanel2 panel = getComponent();
-                if (panel != null) {
-                    Window w = SwingUtilities.getWindowAncestor(panel);
-                    if (w != null) {
-                        w.toFront();
-                    }
-                }
-
-                setDbCreated(true);
-
-            } catch (Exception ex) {
-                //handle unchecked exceptions post image add
-
-                logger.log(Level.WARNING, "Unexpected errors occurred while running post add image cleanup. ", ex);
-
-                getComponent().changeProgressBarTextAndColor("*Failed to add image.", 0, Color.black); // set error message
-
-                // Log error/display warning
-                Logger logger = Logger.getLogger(AddImgTask.class.getName());
-                logger.log(Level.SEVERE, "Error adding image to case", ex);
-            } finally {
-            }
-        }
-
-        void interrupt() throws Exception {
-            interrupted = true;
-            try {
-                logger.log(Level.INFO, "interrupt() add image process");
-                process.stop();  //it might take time to truly stop processing and writing to db
-            } catch (TskException ex) {
-                throw new Exception("Error stopping add-image process.", ex);
-            }
-        }
-
-        //runs in EWT
-        void revert() {
-            try {
-                logger.log(Level.INFO, "Revert after add image process");
-                try {
-                    process.revert();
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error reverting add image process", ex);
-                }
-            } finally {
-                //unlock db write within EWT thread
-                SleuthkitCase.dbWriteUnlock();
-            }
-        }
-    }
 }

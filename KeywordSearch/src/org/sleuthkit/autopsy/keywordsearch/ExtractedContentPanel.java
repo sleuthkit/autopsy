@@ -356,8 +356,10 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             text = "";
         }
         
-        //detect text direction and set it
-        extractedTextPane.applyComponentOrientation(TextUtil.getTextDirection(text));
+        //detect text direction using first 1024 chars and set it
+        final int maxOrientChars = Math.min(text.length(), 1024);
+        final String orientDetectText = text.substring(0, maxOrientChars);
+        extractedTextPane.applyComponentOrientation(TextUtil.getTextDirection(orientDetectText));
         
         extractedTextPane.setText(text);
         extractedTextPane.setCaretPosition(0);

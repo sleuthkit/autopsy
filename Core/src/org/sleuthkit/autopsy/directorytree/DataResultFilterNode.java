@@ -412,6 +412,11 @@ public class DataResultFilterNode extends FilterNode {
                 return null;
             }
         }
+        
+        @Override
+        public AbstractAction visit(LayoutDirectoryNode ldn) {
+            return openChild(ldn);
+        }
 
         @Override
         public AbstractAction visit(FileSearchFilterNode fsfn) {

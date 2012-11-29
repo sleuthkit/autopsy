@@ -1,3 +1,14 @@
+---------------- VERSION Current (development) --------------
+
+New features:
+
+Improvements:
+- Add Image Wizard - better work-flow, better device size reporting
+- File Ingest: reduced file queuing time and memory usage
+
+Bugfixes:
+- fixed periodic keyword search during ingest, when it'd run max. 2 times only
+
 ---------------- VERSION 3.0.1 --------------
 
 New features:
