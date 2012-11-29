@@ -102,7 +102,7 @@ public class Chrome extends Extract implements IngestModuleImage {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> historyFiles = null;
         try {
-            historyFiles = fileManager.findFiles("History", "Chrome");
+            historyFiles = fileManager.findFiles(image, "History", "Chrome");
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
         }
@@ -156,7 +156,7 @@ public class Chrome extends Extract implements IngestModuleImage {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> bookmarkFiles = null;
         try {
-            bookmarkFiles = fileManager.findFiles("Bookmarks", "Chrome");
+            bookmarkFiles = fileManager.findFiles(image, "Bookmarks", "Chrome");
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
         }
@@ -229,7 +229,7 @@ public class Chrome extends Extract implements IngestModuleImage {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> cookiesFiles = null;
         try {
-            cookiesFiles = fileManager.findFiles("Cookies", "Chrome");
+            cookiesFiles = fileManager.findFiles(image, "Cookies", "Chrome");
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
         }
@@ -288,7 +288,7 @@ public class Chrome extends Extract implements IngestModuleImage {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> historyFiles = null;
         try {
-            historyFiles = fileManager.findFiles("History", "Chrome");
+            historyFiles = fileManager.findFiles(image, "History", "Chrome");
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
         }
@@ -315,7 +315,7 @@ public class Chrome extends Extract implements IngestModuleImage {
                 for (HashMap<String, Object> result : tempList) {
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "Recent Activity", (result.get("full_path").toString())));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "Recent Activity", Util.findID((result.get("full_path").toString()))));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "Recent Activity", Util.findID(image, (result.get("full_path").toString()))));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? result.get("url").toString() : "")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "Recent Activity", ((result.get("url").toString() != null) ? EscapeUtil.decodeURL(result.get("url").toString()) : "")));
                     Long time = (Long.valueOf(result.get("start_time").toString()));
@@ -348,7 +348,7 @@ public class Chrome extends Extract implements IngestModuleImage {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> signonFiles = null;
         try {
-            signonFiles = fileManager.findFiles("signons.sqlite", "Chrome");
+            signonFiles = fileManager.findFiles(image, "signons.sqlite", "Chrome");
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error when trying to get Chrome history files.", ex);
         }

@@ -111,7 +111,7 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> allRegistryFiles = new ArrayList<FsContent>();
         try {
-            allRegistryFiles.addAll(fileManager.findFiles("ntuser.dat"));
+            allRegistryFiles.addAll(fileManager.findFiles(image, "ntuser.dat"));
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'ntuser.dat' file.");
         }
@@ -121,26 +121,14 @@ public class ExtractRegistry extends Extract implements IngestModuleImage {
         String[] regFileNames = new String[] {"system", "software", "security", "sam", "default"};
         for (String regFileName : regFileNames) {
             try {
-                allRegistryFiles.addAll(fileManager.findFiles(regFileName, "%/system32/config%"));
+                allRegistryFiles.addAll(fileManager.findFiles(image, regFileName, "%/system32/config%"));
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error fetching registry file: " + regFileName);
             }
         }
         
-        // filter out those registry files that are not from this image
-        List<FsContent> regFiles = new ArrayList<FsContent>();
-        for (FsContent regFile : allRegistryFiles) {
-            try {
-                if (regFile.getImage().equals(image)) {
-                    regFiles.add(regFile);
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Error when trying to get image from FsContent object.");
-            }
-        }
-
         int j = 0;
-        for (FsContent regFile : regFiles) {
+        for (FsContent regFile : allRegistryFiles) {
             String regFileName = regFile.getName();
             String temps = currentCase.getTempDirectory() + "\\" + regFileName;
             try {
