@@ -55,7 +55,7 @@ final class HashDbAddDatabaseDialog extends javax.swing.JDialog {
     void customizeComponents() {
         fc.setDragEnabled(false);
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        String[] EXTENSION = new String[] { "txt", "idx", "hash", "Hash" };
+        String[] EXTENSION = new String[] { "txt", "idx", "hash", "Hash", "hsh"};
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
                 "Hash Database File", EXTENSION);
         fc.setFileFilter(filter);

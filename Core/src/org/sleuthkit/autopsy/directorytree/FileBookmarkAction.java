@@ -119,8 +119,8 @@ public class FileBookmarkAction extends AbstractAction {
 
             BlackboardAttribute attr1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TAG_NAME.getTypeID(),
                     "", Bookmarks.FILE_BOOKMARK_TAG_NAME);
-            BlackboardAttribute attr2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION.getTypeID(),
-                    "", "No Description");
+            BlackboardAttribute attr2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT.getTypeID(),
+                    "", "No Comment");
             attrs.add(attr1);
             attrs.add(attr2);
             bookArt.addAttributes(attrs);

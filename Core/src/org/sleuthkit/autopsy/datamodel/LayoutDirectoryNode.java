@@ -38,7 +38,7 @@ public class LayoutDirectoryNode extends AbstractAbstractFileNode<LayoutDirector
         super(ld);
 
         this.setDisplayName(nameForLayoutFile(ld));
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png");
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png");
     }
 
     @Override
@@ -79,8 +79,27 @@ public class LayoutDirectoryNode extends AbstractAbstractFileNode<LayoutDirector
         return TYPE.CONTENT;
     }
 
+    @Override
+    public boolean isLeafTypeNode() {
+        return true;
+    }
+    
+    
+
+    //TODO consider extend AbstractFsContent node and use that
+    //first need methods such as getDirType() to be pushed to AbstractFile class
     private static void fillPropertyMap(Map<String, Object> map, LayoutDirectory content) {
         map.put(LayoutContentPropertyType.NAME.toString(), content.getName());
         map.put(LayoutContentPropertyType.SIZE.toString(), content.getSize());
+        
+        map.put(AbstractFsContentNode.FsContentPropertyType.LOCATION.toString(), DataConversion.getformattedPath(ContentUtils.getDisplayPath(content), 0, 1));
+        map.put(AbstractFsContentNode.FsContentPropertyType.MOD_TIME.toString(),  ContentUtils.getStringTime(0, content));
+        map.put(AbstractFsContentNode.FsContentPropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(0, content));
+        map.put(AbstractFsContentNode.FsContentPropertyType.ACCESS_TIME.toString(), ContentUtils.getStringTime(0, content));
+        map.put(AbstractFsContentNode.FsContentPropertyType.CREATED_TIME.toString(), ContentUtils.getStringTime(0, content));
+        map.put(AbstractFsContentNode.FsContentPropertyType.FLAGS_DIR.toString(), content.getDirFlagsAsString());
+        map.put(AbstractFsContentNode.FsContentPropertyType.FLAGS_META.toString(), content.getMetaFlagsAsString());
+        map.put(AbstractFsContentNode.FsContentPropertyType.TYPE_DIR.toString(), content.getDirTypeAsString());
+        map.put(AbstractFsContentNode.FsContentPropertyType.TYPE_META.toString(), content.getMetaTypeAsString());
     }
 }

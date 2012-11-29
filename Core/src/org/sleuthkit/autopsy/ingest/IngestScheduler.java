@@ -129,7 +129,7 @@ class IngestScheduler {
         }
 
         @Override
-        public String toString() {
+        public synchronized String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("\nRootDirs(sorted), size: ").append(rootProcessTasks.size());
             for (ProcessTask task : rootProcessTasks) {
@@ -450,7 +450,7 @@ class IngestScheduler {
 
         }
 
-        private void updateQueues() {
+        private synchronized void updateQueues() {
             //if file queue is empty, grab the next one from the dir stack
             //if dir stack is empty, grab one from root dir queue first
             //when pop from dir stack, get children of popped, and push them back onto stack
