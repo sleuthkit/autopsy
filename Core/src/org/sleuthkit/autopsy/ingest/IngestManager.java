@@ -371,7 +371,7 @@ public class IngestManager {
                     try {
                         s.stop();
                     } catch (Exception e) {
-                        logger.log(Level.WARNING, "Exception while stopping module: " + s.getName(), e);
+                        logger.log(Level.WARNING, "Unexpected exception while stopping module: " + s.getName(), e);
                     }
                 }
 
@@ -379,10 +379,11 @@ public class IngestManager {
             //stop fs ingester thread
             boolean cancelled = abstractFileIngester.cancel(true);
             if (!cancelled) {
-                logger.log(Level.WARNING, "Unable to cancel file ingest worker");
-            } else {
-                abstractFileIngester = null;
+                logger.log(Level.INFO, "Unable to cancel file ingest worker, likely already stopped");
             }
+            
+            abstractFileIngester = null;
+            
         }
 
         List<IngestImageThread> toStop = new ArrayList<IngestImageThread>();
