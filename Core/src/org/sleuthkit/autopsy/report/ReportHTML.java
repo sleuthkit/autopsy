@@ -1194,10 +1194,6 @@ public class ReportHTML implements ReportModule {
 
     @Override
     public void getPreview(String path) {
-        try {
-            Desktop.getDesktop().open(new File(path));
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+        BrowserControl.openUrl(path);
     }
 }
