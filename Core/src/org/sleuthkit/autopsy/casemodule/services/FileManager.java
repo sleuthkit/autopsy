@@ -6,7 +6,6 @@ package org.sleuthkit.autopsy.casemodule.services;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
@@ -29,7 +28,7 @@ public class FileManager implements Closeable {
 	 * @return a list of FsContent for files/directories whose name matches the
 	 * given fileName
 	 */
-	public List<FsContent> findFiles(Image image, String fileName) throws TskCoreException {
+	public synchronized List<FsContent> findFiles(Image image, String fileName) throws TskCoreException {
             if (tskCase == null) {
                 throw new TskCoreException("Attemtped to use FileManager after it was closed.");
             }
@@ -42,7 +41,7 @@ public class FileManager implements Closeable {
 	 * @return a list of FsContent for files/directories whose name matches
 	 * fileName and whose parent directory contains dirName.
 	 */
-	public List<FsContent> findFiles(Image image, String fileName, String dirName) throws TskCoreException {
+	public synchronized List<FsContent> findFiles(Image image, String fileName, String dirName) throws TskCoreException {
             if (tskCase == null) {
                 throw new TskCoreException("Attemtped to use FileManager after it was closed.");
             }
@@ -55,7 +54,7 @@ public class FileManager implements Closeable {
 	 * @return a list of FsContent for files/directories whose name matches
 	 * fileName and that were inside a directory described by parentFsContent.
 	 */
-	public List<FsContent> findFiles(Image image, String fileName, FsContent parentFsContent) throws TskCoreException {
+	public synchronized List<FsContent> findFiles(Image image, String fileName, FsContent parentFsContent) throws TskCoreException {
             if (tskCase == null) {
                 throw new TskCoreException("Attemtped to use FileManager after it was closed.");
             }
@@ -67,7 +66,7 @@ public class FileManager implements Closeable {
 	 * optionally include the image and volume names.
 	 * @return a list of FsContent that have the given file path.
 	 */
-	public List<FsContent> openFiles(Image image, String filePath) throws TskCoreException {
+	public synchronized List<FsContent> openFiles(Image image, String filePath) throws TskCoreException {
             if (tskCase == null) {
                 throw new TskCoreException("Attemtped to use FileManager after it was closed.");
             }
@@ -75,7 +74,7 @@ public class FileManager implements Closeable {
 	}
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         tskCase = null;
     }
 	
