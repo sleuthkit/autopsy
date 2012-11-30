@@ -154,7 +154,7 @@ public class Firefox extends Extract implements IngestModuleImage {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> bookmarkFiles = null;
         try {
-            bookmarkFiles = fileManager.findFiles(image, "%places.sqlite%", "Firefox");
+            bookmarkFiles = fileManager.findFiles(image, "places.sqlite", "Firefox");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching bookmark files for Firefox.");
         }
@@ -209,7 +209,7 @@ public class Firefox extends Extract implements IngestModuleImage {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> cookiesFiles = null;
         try {
-            cookiesFiles = fileManager.findFiles(image, "%cookies.sqlite%", "Firefox");
+            cookiesFiles = fileManager.findFiles(image, "cookies.sqlite", "Firefox");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching cookies files for Firefox.");
         }
@@ -287,7 +287,7 @@ public class Firefox extends Extract implements IngestModuleImage {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> downloadsFiles = null;
         try {
-            downloadsFiles = fileManager.findFiles(image, "%cookies.sqlite%", "Firefox");
+            downloadsFiles = fileManager.findFiles(image, "downloads.sqlite", "Firefox");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'downloads' files for Firefox.");
         }
