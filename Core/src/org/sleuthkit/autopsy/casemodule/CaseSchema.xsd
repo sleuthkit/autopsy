@@ -6,9 +6,9 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
 <!-- definition of simple elements -->
-<xs:element name="Name" type="xs:string"/>
+<xs:element name="Name" type="String"/>
 
-<xs:element name="Number" type="Integer" nillable="true"/>
+<xs:element name="Number" type="String" nillable="true"/>
 
 <xs:element name="Examiner" type="String" nillable="true"/>
 

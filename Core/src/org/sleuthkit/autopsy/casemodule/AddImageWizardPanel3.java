@@ -202,26 +202,31 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
      * Class for getting the currently processing directory.
      *
      */
-    private class CurrentDirectoryFetcher extends SwingWorker<Integer, Integer> {
-
+    
+    private static class CurrentDirectoryFetcher extends SwingWorker<Integer,Integer> {
         AddImgTask task;
-
-        CurrentDirectoryFetcher(AddImgTask task) {
-            this.task = task;
+        JProgressBar prog;
+        AddImageVisualPanel2 wiz;
+        AddImageProcess proc;
+		
+        CurrentDirectoryFetcher(JProgressBar prog, AddImageVisualPanel2 wiz, AddImageProcess proc){
+            this.wiz = wiz;
+            this.proc = proc;
+            this.prog = prog;
         }
 
         /**
          * @return the currently processing directory
          */
         @Override
-        protected Integer doInBackground() {
-            try {
-                while (task.progressBar.getValue() < 100 || task.progressBar.isIndeterminate()) {
-
+        protected Integer doInBackground(){
+            try{
+                while(prog.getValue() < 100 || prog.isIndeterminate()){ //TODO Rely on state variable in AddImgTask class
+                    
                     EventQueue.invokeLater(new Runnable() {
                         @Override
                         public void run() {
-                            wizPanel.getComponent().changeCurrentDir(process.currentDirectory());
+                            wiz.changeCurrentDir(proc.currentDirectory());
                         }
                     });
 
@@ -232,7 +237,17 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 return -1;
             }
         }
+
+        /**
+         * When done, set the Wizards processing tags to be invisible
+         */
+        @Override
+        protected void done() {
+            wiz.setProcessInvis();
+        }
     }
+
+
 
     /**
      * Thread that will make the JNI call to ingest the image.
@@ -298,7 +313,7 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
 
 
             process = currentCase.makeAddImageProcess(timeZone, true, noFatOrphans);
-            fetcher = new CurrentDirectoryFetcher(this);
+            fetcher = new CurrentDirectoryFetcher(this.progressBar, wizPanel.getComponent(), process);
             cancelledWhileRunning.enable();
             try {
                 wizPanel.setStateStarted();

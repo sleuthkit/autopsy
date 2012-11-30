@@ -44,11 +44,7 @@ import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Volume;
 
-/**
- * 
- *
- * @author jantonius
- */
+
 class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Action>> {
     
     private static ShowDetailActionVisitor instance = new ShowDetailActionVisitor();
@@ -231,11 +227,32 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
 
     @Override
     public List<? extends Action> visit(final Volume vol) {
-        final String title = "Volume Details";
+        List<AbstractAction> lst = new ArrayList<AbstractAction>();
+        lst.add(new VolumeDetailsAction("Volume Details", vol));
+        lst.add(new ExtractUnallocAction("Extract Unallocated Space to Single File", vol));
+        return lst;
+    }
+       
 
-        return Collections.singletonList(new AbstractAction(title) {
+    @Override
+    protected List<? extends Action> defaultVisit(Content di) {
+        return new ArrayList<Action>();
+    }
+}
 
-            @Override
+
+ class VolumeDetailsAction extends AbstractAction{
+     
+     String title;
+     Volume vol;
+     
+     VolumeDetailsAction(String title, Volume vol){
+         super(title);
+         this.title = title;
+         this.vol = vol;
+     }
+     
+                 @Override
             public void actionPerformed(ActionEvent e) {
                 Logger.noteAction(ShowDetailActionVisitor.class);
 
@@ -289,11 +306,4 @@ class ShowDetailActionVisitor extends ContentVisitor.Default<List<? extends Acti
                 popUpWindow.setVisible(true);
 
             }
-        });
-    }
-
-    @Override
-    protected List<? extends Action> defaultVisit(Content di) {
-        return new ArrayList<Action>();
-    }
-}
+ }
