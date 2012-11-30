@@ -20,7 +20,7 @@ public class Services implements Closeable {
     
     // NOTE: all new services added to Services class must be added to this list
     // of services.
-    List<Closeable> services = new ArrayList<Closeable>();
+    private List<Closeable> services = new ArrayList<Closeable>();
     
     // services
     private FileManager fileManager;
