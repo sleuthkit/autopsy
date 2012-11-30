@@ -911,14 +911,83 @@ public class ReportHTML implements ReportModule {
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(folder + "keywords.html"), "UTF-8"));
             out.write(generateHead("Keyword Hit Artifacts (" + countKeywords + ")"));
-            String title = "<h3>Keyword Hits (" + countKeywords + ")</h3>\n";
+            String title = "<div id=\"header\">Keyword Hits (" + countKeywords + ")</div>\n<div id=\"content\">\n";
             out.write(title);
             
-            Report key = new Report();
-            key.getGroupedKeywordHit(out);
+            ResultSet lists = skCase.runQuery("SELECT att.value_text AS list " +
+                                              "FROM blackboard_attributes AS att, blackboard_artifacts AS art " +
+                                              "WHERE att.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " " +
+                                                    "AND art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " " +
+                                                    "AND att.artifact_id = art.artifact_id " + 
+                                              "GROUP BY list");
+            StringBuilder keywordLists = new StringBuilder();
+            keywordLists.append("<h3>Keyword Lists:</h3>\n<ul>");
+            while(lists.next()) {
+                if (ReportFilter.cancel == true) { break; }
+                String list = lists.getString("list");
+                keywordLists.append("<li><a href=\"#").append(list).append("\">").append(list).append("</a></li>\n");
+            }
+            keywordLists.append("</ul>");
+            out.write(keywordLists.toString());
+            
+            ResultSet rs = skCase.runQuery("SELECT art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list " +
+                                           "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3 " +
+                                           "WHERE (att1.artifact_id = art.artifact_id) " +
+                                                 "AND (att2.artifact_id = art.artifact_id) " + 
+                                                 "AND (att3.artifact_id = art.artifact_id) " + 
+                                                 "AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") " +
+                                                 "AND (att2.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " +
+                                                 "AND (att3.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") " +
+                                                 "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " +
+                                           "ORDER BY list, keyword");
+            String currentKeyword = "";
+            String currentList = "";
+            while (rs.next()) {
+                if (ReportFilter.cancel == true) { break; }
+                Long objId = rs.getLong("obj_id");
+                String keyword = rs.getString("keyword");
+                String preview = rs.getString("preview");
+                String list = rs.getString("list");
+                
+                AbstractFile file = null;
+                try {
+                    file = skCase.getAbstractFileById(objId);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Could not get AbstractFile from TSK ", ex);
+                }
+                StringBuilder table = new StringBuilder();
+                
+                if(!list.equals(currentList)) {
+                    if(!currentList.equals("")) {
+                        table.append("</table style=\"border-bottom: 1px solid #07A;\"></div>");
+                    }
+                    currentList = list;
+                    currentKeyword = ""; // reset the current keyword because it's a new list
+                    table.append("<br /><br />\n");
+                    table.append("<h1><a name=\"").append(currentList).append("\">").append(currentList).append("</a></h1>\n");
+                    table.append("<div class=\"keyword_list\"><table>");
+                }
+                if (!keyword.equals(currentKeyword)) {
+                    if(!currentKeyword.equals("")) {
+                        table.append("<tr><td colspan=\"3\" class=\"blank\"></td></tr>\n");
+                    }
+                    currentKeyword = keyword;
+                    table.append("<tr><td colspan=\"3\" class=\"keyword\">").append(currentKeyword).append("</td></tr>\n");
+                    table.append("<tr><th>File Name</th><th>Preview</th><th>Path</th></tr>\n");
+                }
+                table.append("<tr><td>").append(file.getName()).append("</td>\n");
+                String previewreplace = EscapeUtil.escapeHtml(preview);
+                table.append("<td>").append(previewreplace.replaceAll("<!", "")).append("</td>").append("<td>").append(file != null ? file.getUniquePath() : "").append("</td>").append("</tr>\n");
+                out.write(table.toString());
+            }
+            out.write("</table><br /><br />");
             
             out.write(TABLE_FOOT);
             out.write(HTML_FOOT);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to get tsk file information for keywords.html.");
+        } catch (SQLException ex) {
+            logger.log(Level.SEVERE, "Unable to query database for keyword hits.");
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Could not find keywords.html file to write to.");
         } catch (UnsupportedEncodingException ex) {
