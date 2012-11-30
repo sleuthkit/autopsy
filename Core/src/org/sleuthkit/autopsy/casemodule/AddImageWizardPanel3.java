@@ -226,24 +226,30 @@ class AddImageWizardPanel3 implements WizardDescriptor.Panel<WizardDescriptor> {
                 while(prog.getValue() < 100 || prog.isIndeterminate()){ //TODO Rely on state variable in AddImgTask class
                     
                     EventQueue.invokeLater(new Runnable() {
-
                         @Override
-                        public void run() {        
-                             wiz.changeCurrentDir(proc.currentDirectory());
+                        public void run() {
+                            wiz.changeCurrentDir(proc.currentDirectory());
                         }
-                        
-                  
                     });
-                            
+
                     Thread.sleep(2 * 1000);
                 }
                 return 1;
-            }
-            catch(InterruptedException ie){
+            } catch (InterruptedException ie) {
                 return -1;
             }
         }
+
+        /**
+         * When done, set the Wizards processing tags to be invisible
+         */
+        @Override
+        protected void done() {
+            wiz.setProcessInvis();
+        }
     }
+
+
 
     /**
      * Thread that will make the JNI call to ingest the image.

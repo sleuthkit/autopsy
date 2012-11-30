@@ -111,6 +111,14 @@ final class AddImageVisualPanel2 extends JPanel {
     public void changeCurrentDir(String dir){
         this.TextArea_CurrentDirectory.setText(dir);
     }
+    
+    /**
+     * Sets the CurrentlyProcessing tag and text area to be invisible
+     */
+    public void setProcessInvis(){
+        this.Label_CurrentDirectory_Static.setVisible(false);
+        this.TextArea_CurrentDirectory.setVisible(false);
+    }
 
     
 
