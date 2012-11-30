@@ -45,21 +45,32 @@ import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.LayoutDirectory;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.Volume;
 
 /**
  * Extracts all the unallocated space as a single file
  */
 public final class ExtractUnallocAction extends AbstractAction{
 
-    private static List<LayoutFile> llf;
-    private static Content vol;
+    private List<LayoutFile> llf;
+    long VolumeId;
+    String ImageName;
+    long ImageId;
     volatile static boolean running = false;
     private static final Logger logger = Logger.getLogger(ExtractUnallocAction.class.getName());
     
-    ExtractUnallocAction(String title, VolumeNode volume) {
+    public ExtractUnallocAction(String title, Volume volu){
         super(title);
-        vol = volume.getLookup().lookup(Content.class);
-        llf = getUnallocFiles(vol);
+        VolumeId = volu.getId();
+        try{
+            ImageName = volu.getImage().getName();
+            ImageId = volu.getImage().getId();
+        } catch(TskCoreException tce){
+            logger.log(Level.WARNING, "Unable to properly create ExtractUnallocAction, extraction may be incomplete", tce);
+            ImageName = "";
+            ImageId = 0;
+        }
+        llf = getUnallocFiles(volu);
         Collections.sort(llf, new SortObjId());
     }
 
@@ -70,15 +81,11 @@ public final class ExtractUnallocAction extends AbstractAction{
     @Override
     public void actionPerformed(ActionEvent e) {
         if (llf != null && llf.size() > 0) {
-            try {
-                String imgName = vol.getImage().getName();   //Image Name
-                long imgObjID = vol.getImage().getId();      //Image ID
-                long volumeID = vol.getId();                 //Volume ID
-                String UnallocName = imgName + "-Unalloc-" + imgObjID + "-" + volumeID + ".dat";
+                String UnallocName = ImageName + "-Unalloc-" + ImageId + "-" + VolumeId + ".dat";
                 //Format for single Unalloc File is ImgName-Unalloc-ImgObjectID-VolumeID.dat
                 File unalloc = new File(Case.getCurrentCase().getCaseDirectory() + File.separator + "Export" + File.separator + UnallocName);
                 if(running){
-                    JOptionPane.showMessageDialog(new Frame(), "Extract is already running on this volume. Please select a different volume.");
+                    JOptionPane.showMessageDialog(new Frame(), "Unallocated Space is already running on this volume. Please select a different volume.");
                     return;
                 }
                 if (unalloc.exists()) {
@@ -91,11 +98,8 @@ public final class ExtractUnallocAction extends AbstractAction{
                 }                
                 ExtractUnallocWorker uw = new ExtractUnallocWorker(unalloc);
                 uw.execute();
-            }catch (TskCoreException tce) {
-                logger.log(Level.WARNING, "Could not create Unalloc File; error getting image info", tce);
-            }
         } else {
-            logger.log(Level.WARNING, "Tried to get unallocated content from volume ID " + vol.getId() + ", but its list of unallocated files was empty or null");
+            logger.log(Level.WARNING, "Tried to get unallocated content from volume ID " + VolumeId + ", but its list of unallocated files was empty or null");
         }
     }
 
@@ -183,7 +187,7 @@ public final class ExtractUnallocAction extends AbstractAction{
         /**
          * If the volume has no FileSystem, then it will call this method to return the single instance of unallocated space.
          * @param lf the LayoutFile the visitor encountered
-         * @return A list<LayoutFile> of size 1
+         * @return A list<LayoutFile> of size 1, returns null if it fails
          */
         @Override
         public List<LayoutFile> visit(final org.sleuthkit.datamodel.LayoutFile lf) {
@@ -197,7 +201,7 @@ public final class ExtractUnallocAction extends AbstractAction{
         /**
          * If the visitor finds a FileSystem, it will filter the results for directories and return on the Root Dir.
          * @param fs the FileSystem the visitor encountered
-         * @return A list<LayoutFile> containing the layout files from subsequent Visits()
+         * @return A list<LayoutFile> containing the layout files from subsequent Visits(), returns null if it fails
          */
         @Override
         public List<LayoutFile> visit(FileSystem fs) {
@@ -216,7 +220,7 @@ public final class ExtractUnallocAction extends AbstractAction{
         /**
          * LayoutDirectory has all the Layout(Unallocated) files
          * @param ld LayoutDirectory the visitor encountered
-         * @return A list<LayoutFile> containing all the LayoutFile in ld
+         * @return A list<LayoutFile> containing all the LayoutFile in ld, returns null if it fails
          */
         @Override
         public List<LayoutFile> visit(LayoutDirectory ld){
@@ -227,7 +231,7 @@ public final class ExtractUnallocAction extends AbstractAction{
                 }
                 return lflst;
             } catch(TskCoreException tce){
-                logger.log(Level.WARNING, "Could not get list of Layout Files, failed at visiting Layout Directory in " + vol.getId(), tce);
+                logger.log(Level.WARNING, "Could not get list of Layout Files, failed at visiting Layout Directory", tce);
             }
             return null;
         }
@@ -235,7 +239,7 @@ public final class ExtractUnallocAction extends AbstractAction{
         /**
          * The only time this visitor should ever encounter a directory is when parsing over Root
          * @param dir the directory this visitor encountered
-         * @return A list<LayoutFile> containing LayoutFiles encountered during subsequent Visits()
+         * @return A list<LayoutFile> containing LayoutFiles encountered during subsequent Visits(), returns null if it fails
          */
         @Override
         public List<LayoutFile> visit(Directory dir) {
