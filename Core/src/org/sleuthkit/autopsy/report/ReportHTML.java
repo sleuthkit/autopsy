@@ -22,7 +22,6 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import java.awt.Desktop;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -46,9 +45,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import org.openide.filesystems.FileUtil;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.*;
@@ -330,7 +327,7 @@ public class ReportHTML implements ReportModule {
             index.append("<frameset cols=\"300px,*\">\n");
             index.append("<frame src=\"nav.html\" name=\"nav\">\n");
             index.append("<frame src=\"summary.html\" name=\"content\">\n");
-            index.append("<noframes>Your browser is not compatible with out frame setup.<br />\n");
+            index.append("<noframes>Your browser is not compatible with our frame setup.<br />\n");
             index.append("Please see <a href=\"nav.html\">the navigation page</a> for artifact links,<br />\n");
             index.append("and <a href=\"summary.html\">the summary page</a> for a case summary.</noframes>\n");
             index.append("</frameset>\n");
@@ -925,7 +922,11 @@ public class ReportHTML implements ReportModule {
             while(lists.next()) {
                 if (ReportFilter.cancel == true) { break; }
                 String list = lists.getString("list");
-                keywordLists.append("<li><a href=\"#").append(list).append("\">").append(list).append("</a></li>\n");
+                if(list.isEmpty()) {
+                    keywordLists.append("<li><a href=\"#User Searches\">User Searches</a></li>\n");
+                } else {
+                    keywordLists.append("<li><a href=\"#").append(list).append("\">").append(list).append("</a></li>\n");
+                }
             }
             keywordLists.append("</ul>");
             out.write(keywordLists.toString());
@@ -957,15 +958,15 @@ public class ReportHTML implements ReportModule {
                 }
                 StringBuilder table = new StringBuilder();
                 
-                if(!list.equals(currentList)) {
-                    if(!currentList.equals("")) {
-                        table.append("</table style=\"border-bottom: 1px solid #07A;\"></div>");
+                if((!list.equals(currentList) && !list.isEmpty()) || (list.isEmpty() && !currentList.equals("User Searches"))) {
+                    if(!currentList.isEmpty()) {
+                        table.append("</table></div>");
                     }
-                    currentList = list;
+                    currentList = list.isEmpty() ? "User Searches" : list;
                     currentKeyword = ""; // reset the current keyword because it's a new list
                     table.append("<br /><br />\n");
                     table.append("<h1><a name=\"").append(currentList).append("\">").append(currentList).append("</a></h1>\n");
-                    table.append("<div class=\"keyword_list\"><table>");
+                    table.append("<div class=\"keyword_list\"><table style=\"border-bottom: 1px solid #07A;\">");
                 }
                 if (!keyword.equals(currentKeyword)) {
                     if(!currentKeyword.equals("")) {
