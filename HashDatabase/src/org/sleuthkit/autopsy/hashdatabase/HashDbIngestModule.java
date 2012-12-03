@@ -69,6 +69,8 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
     static long lookuptime = 0;
     private Map<Integer, HashDb> knownBadSets = new HashMap<Integer, HashDb>();
     private HashDbManagementPanel panel;
+    
+    private final Hash hasher = new Hash();
 
     private HashDbIngestModule() {
         count = 0;
@@ -323,8 +325,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
 
             ProcessResult ret = ProcessResult.OK;
             boolean processFile = true;
-            if (fsContent.getSize() == 0
-                    || fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
+            if (fsContent.getKnown().equals(TskData.FileKnown.BAD)) {
                 processFile = false;
             }
             if (processFile && (nsrlIsSet || knownBadIsSet)) {
@@ -333,7 +334,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
                     String md5Hash = fsContent.getMd5Hash();
                     if (md5Hash == null || md5Hash.isEmpty()) {
                         long calcstart = System.currentTimeMillis();
-                        md5Hash = Hash.calculateMd5(fsContent);
+                        md5Hash = hasher.calculateMd5(fsContent);
                         calctime += (System.currentTimeMillis() - calcstart);
                     }
                     TskData.FileKnown status = TskData.FileKnown.UKNOWN;
@@ -375,7 +376,7 @@ public class HashDbIngestModule implements IngestModuleAbstractFile {
                     String md5Hash = fsContent.getMd5Hash();
                     if (md5Hash == null || md5Hash.isEmpty()) {
                         long calcstart = System.currentTimeMillis();
-                        Hash.calculateMd5(fsContent);
+                        hasher.calculateMd5(fsContent);
                         calctime += (System.currentTimeMillis() - calcstart);
                     }
                     ret = ProcessResult.OK;
