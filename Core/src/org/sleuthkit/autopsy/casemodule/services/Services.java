@@ -11,8 +11,7 @@ import java.util.List;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- *
- * @author mciver
+ * A class to manage various services.
  */
 public class Services implements Closeable {
     
@@ -29,7 +28,7 @@ public class Services implements Closeable {
         this.tskCase = tskCase;
     }
     
-    public FileManager getFileManager() {
+    public synchronized FileManager getFileManager() {
         if (fileManager == null) {
             fileManager = new FileManager(tskCase);
             services.add(fileManager);
