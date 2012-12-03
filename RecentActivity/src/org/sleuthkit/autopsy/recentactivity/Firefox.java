@@ -282,8 +282,6 @@ public class Firefox extends Extract implements IngestModuleImage {
     // This gets the downloads info
     private void getDownload(Image image, IngestImageWorkerController controller) {
 
-        //List<FsContent> downloadsFiles = this.extractFiles(image, "select * from tsk_files where name LIKE 'downloads.sqlite' and name NOT LIKE '%journal%' and parent_path LIKE '%Firefox%'");
-        
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<FsContent> downloadsFiles = null;
         try {
@@ -291,7 +289,7 @@ public class Firefox extends Extract implements IngestModuleImage {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'downloads' files for Firefox.");
         }
-        
+
         if (downloadsFiles == null) {
             return;
         }
@@ -325,7 +323,7 @@ public class Firefox extends Extract implements IngestModuleImage {
                     //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("startTime").toString()))));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "RecentActivity", (Long.valueOf(result.get("startTime").toString()))));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID.getTypeID(), "RecentActivity", Util.findID(image, urldecodedtarget)));
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", urldecodedtarget));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH.getTypeID(), "RecentActivity", ((result.get("target").toString() != null) ? result.get("target").toString() : "")));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID(), "RecentActivity", "FireFox"));
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), "RecentActivity", (Util.extractDomain((result.get("source").toString() != null) ? result.get("source").toString() : ""))));
                     this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
@@ -337,10 +335,11 @@ public class Firefox extends Extract implements IngestModuleImage {
             if (errors > 0) {
                 this.addErrorMessage(this.getName() + ": Error parsing " + errors + " Firefox web history artifacts.");
             }
-            ++j;
+            j++;
             dbFile.delete();
+            break;
         }
-
+        
         services.fireModuleDataEvent(new ModuleDataEvent("Recent Activity", BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
     }
 
