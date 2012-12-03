@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.sleuthkit.autopsy.directorytree.ExtractUnallocAction;
 import org.sleuthkit.datamodel.Volume;
 
 /**
@@ -66,6 +67,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
     public Action[] getActions(boolean popup) {
         return new Action[]{ //new ShowDetailAction("Volume Details", this.getName(), this),
                 //new ShowDetailAction("File System Details", this.getName(), this)
+            //new ExtractUnallocAction("Extract Unallocated Files to single Single", this)
                 };
     }
 
