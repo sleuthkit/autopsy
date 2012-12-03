@@ -292,20 +292,9 @@ public class HashDbSearchPanel extends javax.swing.JPanel implements ActionListe
     boolean search() {
         // Check if any hashed have been entered
         if(hashTable.getRowCount()!=0) {
-            // Make sure all files have an md5 hash
-            if(HashDbSearcher.allFilesMd5Hashed()) {
-                return doSearch();
-            // and if not, warn the user
-            } else if(HashDbSearcher.countFilesMd5Hashed() > 0) {
-                errorField.setVisible(false);
-                Object selected = JOptionPane.showConfirmDialog(null, "Not all files have MD5 hashes. "
-                        + "Search results will be incomplete.\n"
-                        + "Would you like to search anyway?", "File Search by MD5 Hash", JOptionPane.YES_NO_OPTION);
-                if(selected.equals(JOptionPane.YES_OPTION)) {
-                    return doSearch();
-                } else {
-                    return false;
-                }
+            // Make sure at least 1 file has an md5 hash
+           if(HashDbSearcher.countFilesMd5Hashed() > 0) {
+               return doSearch();
             } else {
                 JOptionPane.showMessageDialog(null, "No files currently have an MD5 hash.",
                         "File Search by MD5 Hash", JOptionPane.ERROR_MESSAGE);

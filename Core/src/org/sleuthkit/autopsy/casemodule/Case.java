@@ -165,11 +165,13 @@ public class Case {
 
         String oldCaseName = oldCase != null ? oldCase.name : "";
 
+        doCaseChange(null); //closes windows, etc
         pcs.firePropertyChange(CASE_CURRENT_CASE, oldCase, null);
-        doCaseChange(null);
+        
 
-        pcs.firePropertyChange(CASE_NAME, oldCaseName, "");
         doCaseNameChange("");
+        pcs.firePropertyChange(CASE_NAME, oldCaseName, "");
+        
 
 
 
@@ -827,14 +829,16 @@ public class Case {
                 Case.runAddImageAction();
             }
         } else { // case is closed
+            // close all top components first
+            CoreComponentControl.closeCoreWindows();
+            
             // disable these menus
             CallableSystemAction.get(AddImageAction.class).setEnabled(false); // Add Image menu
             CallableSystemAction.get(CaseCloseAction.class).setEnabled(false); // Case Close menu
             CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false); // Case Properties menu
             CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false); // Delete Case menu
 
-            // close all top components
-            CoreComponentControl.closeCoreWindows();
+            
 
             Frame f = WindowManager.getDefault().getMainWindow();
             f.setTitle(Case.getAppName()); // set the window name to just application name
