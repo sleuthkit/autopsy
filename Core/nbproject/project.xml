@@ -183,6 +183,7 @@
             </module-dependencies>
             <public-packages>
                 <package>org.sleuthkit.autopsy.casemodule</package>
+                <package>org.sleuthkit.autopsy.casemodule.services</package>
                 <package>org.sleuthkit.autopsy.core</package>
                 <package>org.sleuthkit.autopsy.corecomponentinterfaces</package>
                 <package>org.sleuthkit.autopsy.corecomponents</package>
